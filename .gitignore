@@ -1,0 +1,21 @@
+# This is a key line for monorepos with a root node_modules
+node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Build artifacts for all projects (general)
+dist/
+build/
+coverage/
+
+# Next.js specific
+.next/
+
+# React/Vite specific
+.vite/

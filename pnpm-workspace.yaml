@@ -1,0 +1,10 @@
+packages:
+  - 'backend/warehouse-server'
+  - 'frontend/admin'
+  - 'frontend/warehouse-app'
+  
+onlyBuiltDependencies:
+  - '@swc/core'
+  - esbuild
+  - sharp
+  - unrs-resolver
