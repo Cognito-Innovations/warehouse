@@ -1,5 +1,5 @@
 import {
-  People as PeopleIcon,
+  Groups as GroupsIcon,
   HourglassEmpty as DraftIcon,
   Warning as WarningIcon,
   FileDownload as ShipRequestIcon,
@@ -14,7 +14,7 @@ import type { ChartConfig } from '../components/Dashboard/DashboardCharts';
 import type { MetricCardProps } from '../components/Dashboard/MetricCard';
 
 export const metricsData: MetricCardProps[] = [
-  { title: 'Customers', value: '21951', subtitle: 'Total', color: '#22c55e', bgColor: '#dcfce7', icon: <PeopleIcon /> },
+  { title: 'Customers', value: '21951', subtitle: 'Total', color: '#22c55e', bgColor: '#dcfce7', icon: <GroupsIcon /> },
   { title: 'Draft', value: '29', subtitle: 'Packages', color: '#ec4899', bgColor: '#fce7f3', icon: <DraftIcon /> },
   { title: 'Action Required', value: '49', subtitle: 'Packages', color: '#ef4444', bgColor: '#fee2e2', icon: <WarningIcon /> },
   { title: 'Ship Request', value: '13', subtitle: 'Shipment', color: '#ec4899', bgColor: '#fce7f3', icon: <ShipRequestIcon /> },

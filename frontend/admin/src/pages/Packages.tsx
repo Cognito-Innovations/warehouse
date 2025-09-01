@@ -1,46 +1,53 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import TopNavbar from '../components/Layout/TopNavbar';
-import { StatusCards, SearchFilters, PackagesTable } from '../components/Packages';
-import RegisterPackageModal from '../components/RegisterPackageModal';
+import RegisterPackageModal from '../components/Modals/RegisterPackageModal';
+import { StatusCards, PackagesTable } from '../components/Packages';
+import PreArrivals from './PreArrivals';
+import { useTabContext } from '../App';
 
-interface PackagesProps {
-  onToggleSidebar: () => void;
-}
-
-const Packages: React.FC<PackagesProps> = ({ onToggleSidebar }) => {
+const Packages: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('Action Required');
+  const [searchValue, setSearchValue] = useState('');
+  const { activeTab } = useTabContext();
 
   const handleRegisterPackage = () => {
     setOpen(true);
   };
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value);
   };
 
-  const handleClearFilters = () => {
-    setStatusFilter('Action Required');
+  const renderContent = () => {
+    if (activeTab === 'pre-arrivals') {
+      return <PreArrivals />;
+    }
+    return (
+      <>
+        <StatusCards onRegisterPackage={handleRegisterPackage} />
+        <PackagesTable />
+      </>
+    );
   };
 
   return (
-    <Box>
-      {/* Header */}
-      <TopNavbar title="Packages" subtitle="/ All" onToggleSidebar={onToggleSidebar} />
-
-      {/* Status Cards */}
-      <StatusCards onRegisterPackage={handleRegisterPackage} />
-
-      {/* Search and Filters */}
-      <SearchFilters
-        statusFilter={statusFilter}
-        onStatusFilterChange={handleStatusFilterChange}
-        onClearFilters={handleClearFilters}
+    <Box sx={{ 
+      width: '100%', 
+      maxWidth: '100%',
+      // border: '3px solid green', // Debug border
+      // backgroundColor: 'rgba(0,255,0,0.1)' // Debug background
+    }}>
+      {/* Header with Page Title and Search */}
+      <TopNavbar 
+        pageTitle={activeTab === 'pre-arrivals' ? 'Pre Arrivals' : 'Packages'}
+        pageSubtitle={activeTab === 'pre-arrivals' ? 'Pre Arrivals / All' : 'All'}
+        searchValue={searchValue}
+        onSearchChange={handleSearchChange}
       />
 
-      {/* Packages Table */}
-      <PackagesTable />
+      {/* Conditional Content */}
+      {renderContent()}
 
       <RegisterPackageModal open={open} onClose={() => setOpen(false)} />
     </Box>
