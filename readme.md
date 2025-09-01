@@ -27,3 +27,16 @@ for example -
 pnpm --filter warehouse-app dev
 pnpm --filter admin dev
 pnpm --filter warehouse-server dev
+
+## Library installation
+
+pnpm --filter [project-name] add [libaries]
+
+for example -
+
+pnpm --filter admin add @mui/material @emotion/react @emotion/styled 
+
+## Theme selection
+
+Admin using Material UI (https://mui.com/material-ui/getting-started/usage/)
+Nextjs using SCSS or Tailwind CSS
