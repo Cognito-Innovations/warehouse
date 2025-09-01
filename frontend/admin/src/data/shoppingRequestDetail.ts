@@ -1,0 +1,40 @@
+export const requestDetailData = {
+  id: 'SR/IN/2025177',
+  status: 'REQUESTED',
+  customer: {
+    name: 'Ismail Asif',
+    id: '248-549',
+    email: 'asifaleem2906@gmail.com',
+    phone: '9966303, 9656099',
+  },
+  remarks: 'Each items is for INR 45',
+  items: [
+    {
+      name: 'Boroline Antiseptic Cream 20g',
+      link: '#',
+      colorSize: 'Color: Green Pack / White Cream\nSize: 20g',
+      details: 'Moisturizer, Hand Cream, Lip Balm',
+      available: '',
+      status: '',
+      quantity: 50,
+      unitPrice: 0.00,
+      total: 0.00,
+    },
+  ],
+  summary: {
+    subTotal: 0.00,
+    commission: 0.00,
+    gst: 0.00,
+    total: 0.00,
+  },
+  tracking: [
+    { status: 'Requested', details: 'Requested by Ismail Asif', timestamp: 'Aug 30, 2025, 6:47:05 PM', completed: true },
+    { status: 'Quotation Ready', details: 'Quotation is not ready yet!', completed: false },
+    { status: 'Quotation Confirmed', details: 'Quotation is not confirmed yet!', completed: false },
+    { status: 'Invoiced', details: 'Waiting for raise invoice', completed: false },
+    { status: 'Pending Payment Approval', details: 'Waiting for upload payment slip', completed: false },
+    { status: 'Payment Approved', details: 'Waiting for payment approval', completed: false },
+    { status: 'Order placed', details: 'Waiting for complete', completed: false },
+  ],
+  actionLogs: [],
+};
