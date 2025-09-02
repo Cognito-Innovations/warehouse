@@ -1,139 +1,164 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
-  Card,
   Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Chip,
   IconButton,
+  Pagination,
 } from '@mui/material';
 import {
   Info as InfoIcon,
   Print as PrintIcon,
   MoreVert as MoreIcon,
 } from '@mui/icons-material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { packages, getStatusColor } from '../../data/packages';
 
 const PackagesTable: React.FC = () => {
-  const columns: GridColDef[] = [
-    { field: 'id', headerName: '#', width: 50 },
-    {
-      field: 'packageNo',
-      headerName: 'Package No.',
-      width: 190,
-      renderCell: (params) => (
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {params.value}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Rack: {params.row.status}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'trackingNo',
-      headerName: 'Tracking No.',
-      width: 200,
-      renderCell: (params) => (
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {params.value}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {params.row.carrier}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'customer',
-      headerName: 'Customer',
-      width: 200,
-      renderCell: (params) => (
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {params.value}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {params.row.customerCode}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'receivedAt',
-      headerName: 'Received At',
-      width: 200,
-      renderCell: (params) => (
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {params.value}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {params.row.time}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 150,
-      renderCell: (params) => {
-        const status = getStatusColor(params.row.statusType);
-        return (
-          <Chip
-            label={params.row.statusType}
-            size="small"
-            sx={{
-              color: status.color,
-              bgcolor: status.bgColor,
-              fontWeight: 600,
-              fontSize: '0.75rem',
-            }}
-          />
-        );
-      },
-    },
-    {
-      field: 'actions',
-      headerName: '',
-      width: 120,
-      renderCell: () => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton size="small" sx={{ bgcolor: '#6366f1', color: 'white' }}>
-            <InfoIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" sx={{ bgcolor: '#3b82f6', color: 'white' }}>
-            <PrintIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" sx={{ bgcolor: '#3b82f6', color: 'white' }}>
-            <MoreIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ];
+  const [page, setPage] = useState(1);
+  const [rowsPerPage] = useState(15);
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
+
+  const paginatedData = packages.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage
+  );
 
   return (
-    <Card>
-      <Box sx={{ height: 600, width: '100%' }}>
-        <DataGrid
-          rows={packages}
-          columns={columns}
-          checkboxSelection
-          disableRowSelectionOnClick
-          sx={{ border: 'none','& .MuiDataGrid-cell': { borderBottom: '1px solid #f1f5f9' },
-            '& .MuiDataGrid-columnHeaders': {
-              bgcolor: '#f8fafc',
-              borderBottom: '1px solid #e2e8f0',
-            },
-          }}
-        />
+    <Box sx={{ 
+      width: '100%', 
+      maxWidth: '100%',
+      border: '3px solid blue', // Debug border
+      backgroundColor: 'rgba(0,0,255,0.1)' // Debug background
+    }}>
+      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                <TableCell sx={{ fontWeight: 600, color: '#374151' }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Package No.</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Tracking No.</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Customer</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Received At</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {paginatedData.map((row) => (
+                <TableRow key={row.id} sx={{ '&:hover': { bgcolor: '#f9fafb' } }}>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+                      {row.id}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+                        {row.packageNo}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Rack: {row.status}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+                        {row.trackingNo}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {row.carrier}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+                        {row.customer}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {row.customerCode}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+                        {row.receivedAt}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {row.time}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    {(() => {
+                      const status = getStatusColor(row.statusType);
+                      return (
+                        <Chip
+                          label={row.statusType}
+                          size="small"
+                          sx={{
+                            color: status.color,
+                            bgcolor: status.bgColor,
+                            fontWeight: 500,
+                            fontSize: '0.75rem',
+                          }}
+                        />
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <IconButton size="small" sx={{ bgcolor: '#6366f1', color: 'white' }}>
+                        <InfoIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" sx={{ bgcolor: '#3b82f6', color: 'white' }}>
+                        <PrintIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" sx={{ bgcolor: '#3b82f6', color: 'white' }}>
+                        <MoreIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      {/* Pagination */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
+        <Typography variant="body2" color="text.secondary">
+          Items per page: {rowsPerPage}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {((page - 1) * rowsPerPage) + 1} - {Math.min(page * rowsPerPage, packages.length)} of {packages.length}
+          </Typography>
+          <Pagination
+            count={Math.ceil(packages.length / rowsPerPage)}
+            page={page}
+            onChange={handlePageChange}
+            size="small"
+            showFirstButton
+            showLastButton
+          />
+        </Box>
       </Box>
-    </Card>
+    </Box>
   );
 };
 

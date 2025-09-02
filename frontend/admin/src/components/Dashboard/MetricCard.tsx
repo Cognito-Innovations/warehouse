@@ -23,16 +23,18 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, color, 
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+        <Typography sx={{ fontWeight: 600, mb: 0.5 }}>
           {title}
+          <Typography  variant="subtitle1">
+            {subtitle}
+          </Typography>
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {subtitle}
-        </Typography>
-      </Box>
-      <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer' }}>
+        <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer', textDecoration: "underline", textUnderlineOffset: 4, textUnderlinePosition: 5}}>
         View →
       </Typography>
+
+      </Box>
+
       <Box />
     </CardContent>
   </Card>
