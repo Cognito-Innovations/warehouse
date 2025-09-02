@@ -1,38 +1,63 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import Button from '@mui/material/Button';
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
-import './App.css'
+import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+import Box from '@mui/material/Box';
+import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+import Packages from './pages/Packages';
+import Dashboard from './pages/Dashboard';
+import Sidebar from './components/Sidebar/Sidebar';
+
+import { menuItems } from "./data/menuItems";
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#6366f1',
+    },
+    secondary: {
+      main: '#ec4899',
+    },
+    background: {
+      default: '#f8fafc',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+  },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+        },
+      },
+    },
+  },
+});
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const handleSidebarToggle = () => { setSidebarExpanded(!sidebarExpanded) };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <Button onClick={()=>setCount(prev=>Number(prev) + 1)} variant="contained">Hello world {count}</Button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+          <Sidebar expanded={sidebarExpanded} logo={'S'} name={'ShopMe'} menuItems={menuItems} />
+          <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+            <Routes>
+              <Route path="/" element={<Dashboard onToggleSidebar={handleSidebarToggle} />} />
+              <Route path="/packages" element={<Packages onToggleSidebar={handleSidebarToggle} />} />
+            </Routes>
+          </Box>
+        </Box>
+      </Router>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
