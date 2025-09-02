@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, IconButton } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 
-import { useTabContext } from '../../App';
+// import { useTabContext } from '../../App';
 
 import PageTitle from './PageTitle';
 import SearchBar from './SearchBar';
@@ -18,13 +18,14 @@ interface TopNavbarProps {
 }
 
 const TopNavbar: React.FC<TopNavbarProps> = ({ pageTitle, pageSubtitle, searchValue, onSearchChange }) => {
-  const { togglePageSidebar } = useTabContext();
+  //TODO: Don't use this way, correct it
+  // const { togglePageSidebar } = useTabContext();
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
       {/* Left Side: Hamburger and Title */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         {/* Hamburger Menu */}
-        <IconButton onClick={togglePageSidebar} sx={{ color: '#64748b', '&:hover': { bgcolor: '#f8fafc' }, p: 1}}>
+        <IconButton  sx={{ color: '#64748b', '&:hover': { bgcolor: '#f8fafc' }, p: 1}}>
           <MenuIcon />
         </IconButton>
 
