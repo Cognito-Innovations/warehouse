@@ -32,9 +32,10 @@ export const menuItems: MenuItem[] = [
   {
     text: 'Shipments',
     icon: ShipmentsIcon,
-    defaultPath: '/shipments/export',
+    defaultPath: '/shipments',
     subMenu: [
-      { text: 'Export', icon: ExportIcon, path: '/shipments/export' },
+      { text: 'Shipments', icon: ExportIcon, path: '/shipments' },
+      { text: 'Shipment Export', icon: ExportIcon, path: '/shipments/export' },
     ],
   },
   { text: 'Requests', icon: RequestsIcon, path: '/requests' },

@@ -3,22 +3,24 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Box } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 import Packages from './pages/Packages';
 import Dashboard from './pages/Dashboard';
+import Customers from './pages/Customers';
+import CustomerDetailPage from './pages/CustomerDetailPage';
+import ShoppingRequests from './pages/ShoppingRequests';
+import ShoppingRequestDetail from './pages/ShoppingRequestDetail';
+import MySuiteContent from './components/mySuite/MySuiteContent';
+import Shipments from './pages/Shipments';
+import ShipmentExport from './pages/ShipmentExport';
 
 import Sidebar from './components/Sidebar/Sidebar';
 
 import { menuItems } from "./data/menuItems";
 
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import Customers from './pages/Customers';
-import ShoppingRequests from './pages/ShoppingRequests';
-import MySuiteContent from './components/mySuite/MySuiteContent';
-import Shipment from './pages/Shipment';
 import themeConfig from './utils/themeConfig';
-
 
 function App() {
   return (
@@ -42,11 +44,13 @@ function App() {
             <Route path="/packages/all" element={<Packages />} />
             {/* TODO: Move this prearrivals to a separate page */}
             <Route path="/packages/pre-arrivals" element={<Packages />} />
-            <Route path="/shipments" element={<Shipment />} />
-            <Route path="/shipments/export" element={<Shipment />} />
+            <Route path="/shipments" element={<Shipments />} />
+            <Route path="/shipments/export" element={<ShipmentExport />} />
             <Route path="/requests" element={<ShoppingRequests />} />
+            <Route path="/requests/:id" element={<ShoppingRequestDetail />} />
             <Route path="/suite" element={<MySuiteContent />} />
             <Route path="/customers" element={<Customers />} />
+            <Route path="/customers/:id" element={<CustomerDetailPage />} />
             <Route path="/reports" element={<Dashboard />} />
             <Route path="/master" element={<Dashboard />} />
           </Routes>

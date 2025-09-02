@@ -1,8 +1,7 @@
-import {
-  Paper, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Typography, IconButton, Box
-} from '@mui/material';
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, IconButton, Box } from '@mui/material';
 import { VisibilityOutlined as ViewIcon, MoreVertOutlined as MoreIcon } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
+
 import { getStatusChipColor, type Customer } from '../../data/customers';
 
 const StatusBadge = ({ status }: { status: boolean }) => {
@@ -41,9 +40,11 @@ const CustomerTable = ({ rows }: { rows: Customer[] }) => (
               <TableCell><StatusBadge status={c.isVerified} /></TableCell>
               <TableCell><StatusBadge status={c.isActive} /></TableCell>
               <TableCell align="center">
-                <IconButton size="small" sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' } }}>
-                  <ViewIcon fontSize="small" />
-                </IconButton>
+                <Link to={`/customers/${c.suiteNo}`} style={{ textDecoration: "none" }}>
+                  <IconButton size="small" sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' } }}>
+                    <ViewIcon fontSize="small" />
+                  </IconButton>
+                </Link>
                 <IconButton size="small" sx={{ color: '#000' }}>
                   <MoreIcon fontSize="small" />
                 </IconButton>

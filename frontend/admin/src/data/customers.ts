@@ -8,9 +8,12 @@ export interface Customer {
   provider?: 'Google' | null;
   isVerified: boolean;
   isActive: boolean;
+  gender?: 'male' | 'female';
+  dob?: string;
 }
 
 export const customers: Customer[] = [
+  { suiteNo: '761-993', name: 'Mohamed ilhaam', id: 'A242946', email: 'ilkaan19ds@gmail.com', phone: '7722724', dob: 'Nov 1, 1994', gender: 'male', emailVerifiedOn: '', isVerified: true, isActive: true },
   { suiteNo: '149-421', name: 'Ishem Ahmed', email: 'hssnishm@gmail.com', emailVerifiedOn: 'Email verified on Aug 31, 2025, 5:29:11 PM', isVerified: false, isActive: true },
   { suiteNo: '941-999', name: 'Ubaidha Thooba', email: 'ubaidhathooba@gmail.com', emailVerifiedOn: 'Email verified on Aug 31, 2025, 3:57:30 PM', isVerified: false, isActive: true },
   { suiteNo: '446-481', name: 'Mariyam Rizleen', email: 'rizleen@gmail.com', emailVerifiedOn: 'Email verified on Aug 31, 2025, 2:05:23 PM', isVerified: false, isActive: true },
