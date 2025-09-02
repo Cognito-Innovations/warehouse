@@ -4,14 +4,10 @@ import TopNavbar from '../components/Layout/TopNavbar';
 import RequestSummary from '../components/ShoppingRequests/RequestSummary';
 import RequestTable from '../components/ShoppingRequests/RequestTable';
 
-interface ShoppingRequestsProps {
-  onToggleSidebar: () => void;
-}
-
-const ShoppingRequests: React.FC<ShoppingRequestsProps> = ({ onToggleSidebar }) => {
+const ShoppingRequests: React.FC = () => {
   return (
     <Box>
-      <TopNavbar title="Shopping Request" onToggleSidebar={onToggleSidebar} />
+      <TopNavbar pageTitle="Shopping Request" pageSubtitle="/ All" />
       <RequestSummary />
       <RequestTable />
     </Box>

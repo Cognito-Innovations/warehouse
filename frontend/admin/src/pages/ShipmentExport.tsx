@@ -5,11 +5,7 @@ import ShipmentExportTable from '../components/ShipmentExport/ShipmentExportTabl
 import { shipmentExports } from '../data/shipmentExports';
 import ViewShipmentExport from '../components/ShipmentExport/ViewShipmentExport';
 
-interface ShipmentExportProps {
-  onToggleSidebar: () => void;
-}
-
-const ShipmentExport: React.FC<ShipmentExportProps> = ({ onToggleSidebar }) => {
+const ShipmentExport: React.FC = () => {
   const [viewShipmentId, setViewShipmentId] = useState<string | null>(null);
 
   const handleViewShipment = (id: string) => {
@@ -23,15 +19,14 @@ const ShipmentExport: React.FC<ShipmentExportProps> = ({ onToggleSidebar }) => {
       {viewShipmentId && selectedShipment ? (
         <>
           <TopNavbar 
-            title="Shipment" 
-            subtitle="/ Export / View" 
-            onToggleSidebar={onToggleSidebar} 
+            pageTitle="Shipment" 
+            pageSubtitle="/ Export / View" 
           />
           <ViewShipmentExport shipment={selectedShipment} />
         </>
       ) : (
         <>
-          <TopNavbar title="Shipment" subtitle="/ Export" onToggleSidebar={onToggleSidebar} />
+          <TopNavbar pageTitle="Shipment" pageSubtitle="/ Export" />
           <ShipmentExportTable onViewShipment={handleViewShipment} />
         </>
       )}

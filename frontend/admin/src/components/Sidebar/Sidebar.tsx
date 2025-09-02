@@ -34,7 +34,8 @@ const Sidebar: React.FC<SidebarProps> = ({ logo, menuItems }) => {
     <Box sx={{ 
       display: 'flex',
       height: '100vh',
-      bgcolor: '#fff'
+      bgcolor: '#fff',
+      flexShrink: 0
     }}>
       {/* Main Sidebar */}
       <Box sx={{ 

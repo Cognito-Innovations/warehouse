@@ -7,17 +7,14 @@ import RequestDetailContent from '../components/ShoppingRequests/Detail/RequestD
 import { requestDetailData } from '../data/shoppingRequestDetail';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
-interface ShoppingRequestDetailProps {
-  onToggleSidebar: () => void;
-}
 
-const ShoppingRequestDetail: React.FC<ShoppingRequestDetailProps> = ({ onToggleSidebar }) => {
+const ShoppingRequestDetail: React.FC = () => {
   const { id } = useParams();
   const requestDetail = requestDetailData;
 
   return (
     <Box>
-      <TopNavbar title="Shopping Request" onToggleSidebar={onToggleSidebar} />
+      <TopNavbar pageTitle="Shopping Request" pageSubtitle="/ All" />
       <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ my: 2 }}>
         <Link underline="hover" color="inherit" href="/requests">
           Shopping Requests

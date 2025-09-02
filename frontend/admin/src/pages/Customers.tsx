@@ -5,12 +5,12 @@ import TopNavbar from '../components/Layout/TopNavbar';
 import CustomerFilters from '../components/Customers/CustomerFilters';
 import CustomerTable from '../components/Customers/CustomerTable';
 
-const Customers = ({ onToggleSidebar }: { onToggleSidebar: () => void }) => {
+const Customers = () => {
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>(customers);
 
   return (
     <Box>
-      <TopNavbar title="Customers" subtitle="/ All" onToggleSidebar={onToggleSidebar} />
+      <TopNavbar pageTitle="Customers" pageSubtitle="/ All" />
       <CustomerFilters onFilter={setFilteredCustomers} />
       <CustomerTable rows={filteredCustomers} />
     </Box>

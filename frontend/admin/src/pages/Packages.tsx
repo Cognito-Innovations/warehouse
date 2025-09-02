@@ -21,6 +21,9 @@ const Packages: React.FC = () => {
     <Box sx={{ 
       width: '100%', 
       maxWidth: '100%',
+      minHeight: '100%',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       <TopNavbar 
         searchValue={searchValue}

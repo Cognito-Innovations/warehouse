@@ -5,16 +5,12 @@ import StatusCards from '../components/Shipments/StatusCards';
 import SearchFilters from '../components/Shipments/SearchFilters';
 import ShipmentsTable from '../components/Shipments/ShipmentsTable';
 
-interface ShipmentsProps {
-  onToggleSidebar: () => void;
-}
-
-const Shipments: React.FC<ShipmentsProps> = ({ onToggleSidebar }) => {
+const Shipments = () => {
   const [statusFilter, setStatusFilter] = useState<string>('All');
 
   return (
     <Box>
-      <TopNavbar title="Shipments" subtitle="/ All" onToggleSidebar={onToggleSidebar} />
+      <TopNavbar pageTitle="Shipments" pageSubtitle="/ All" />
 
       <StatusCards onSelectStatus={setStatusFilter} />
 
