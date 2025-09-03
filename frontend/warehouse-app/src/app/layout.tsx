@@ -1,8 +1,8 @@
+import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-
-import Providers from "./providers";
-import "./globals.css";
+import ThemeProvider from "../components/ThemeProvider";
+import Header from "../components/Navbar/Header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,20 +15,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shopme",
-  description: "Simplified Shopping and Shipping Experience",
+  title: "ShopMe - Warehouse Management",
+  description: "Warehouse management application for ShopMe",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
-       <Providers> {children} </Providers>
+      <head>
+        <meta name="emotion-insertion-point" content="" />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <ThemeProvider>
+          <Header />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
