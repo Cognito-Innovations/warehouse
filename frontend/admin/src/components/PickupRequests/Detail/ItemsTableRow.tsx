@@ -8,23 +8,23 @@ const ItemsTableRow = ({ item }: { item: any }) => (
         <Checkbox defaultChecked sx={{p:0, pt: '2px', pr: 1, alignSelf: 'flex-start'}}/>
         <Box>
           <Typography variant="body2" fontWeight={500}>{item.name}</Typography>
-          <Link href={item.url} target="_blank" rel="noopener noreferrer" variant="caption" underline="hover">View link</Link>
+          <Link href={item.link} variant="caption" underline="hover">View link</Link>
           <br/>
           <Link href="#" variant="caption" underline="hover">Cancel all items</Link>
         </Box>
       </Box>
     </TableCell>
     <TableCell sx={{width: '25%'}}>
-      <Typography variant="body2">{item.color || item.size}</Typography>
+      <Typography variant="body2">{item.colorSize}</Typography>
       <Typography variant="caption" color="text.secondary">{item.details}</Typography>
     </TableCell>
     <TableCell>{item.available}</TableCell>
     <TableCell>{item.status}</TableCell>
     <TableCell>{item.quantity}</TableCell>
-    <TableCell>${item.unitPrice ? item.unitPrice.toFixed(2) : "0.00"}</TableCell>
+    <TableCell>${item.unitPrice.toFixed(2)}</TableCell>
     <TableCell>
       <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-        ${item.total ? item.total.toFixed(2) : "0.00"}
+        ${item.total.toFixed(2)}
         <IconButton size="small"><MoreVertIcon/></IconButton>
       </Box>
     </TableCell>

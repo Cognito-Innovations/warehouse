@@ -35,3 +35,28 @@ export const deleteRack = async (id: string): Promise<{ success: boolean }> => {
   const response = await api.delete<{ success: boolean }>(`/racks/${id}`);
   return response.data;
 };
+
+export const getPickupRequests = async () => {
+  const response = await api.get('/pickup-requests');
+  return response.data;
+};
+
+export const getPickupRequestById = async (id: string) => {
+  const response = await api.get(`/pickup-requests/detail/${id}`);
+  return response.data;
+};
+
+export const updatePickupRequestStatus = async (id: string, status: string, price?: number) => {
+  const response = await api.patch(`/pickup-requests/${id}/status`, { status, price });
+  return response.data;
+};
+
+export const getAllShoppingRequests = async () => {
+  const response = await api.get("/shopping-requests");
+  return response.data;
+};
+
+export const getShoppingRequestByCode = async (code: string) => {
+  const response = await api.get(`/shopping-requests/detail/by-code/${encodeURIComponent(code)}`);
+  return response.data;
+};

@@ -38,7 +38,15 @@ export const menuItems: MenuItem[] = [
       { text: 'Shipment Export', icon: ExportIcon, path: '/shipments/export' },
     ],
   },
-  { text: 'Requests', icon: RequestsIcon, path: '/requests' },
+  { 
+    text: 'Requests', 
+    icon: RequestsIcon, 
+    path: '/requests' ,
+    subMenu: [
+      { text: 'Shopping Requests', icon: ExportIcon, path: '/requests' },
+      { text: 'Pickup Requests', icon: ExportIcon, path: '/pickups' },
+    ],
+  },
   { text: 'My Suite', icon: SuiteIcon, path: '/suite' },
   { text: 'Customers', icon: CustomersIcon, path: '/customers' },
   { text: 'Reports', icon: ReportsIcon, path: '/reports' },

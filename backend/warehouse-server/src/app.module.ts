@@ -8,6 +8,8 @@ import { PackagesService } from './packages/packages.service';
 import { RacksService } from './racks/racks.service';
 import { SuppliersService } from './suppliers/suppliers.service';
 import { CountriesService } from './countries/countries.service';
+import { PickupRequestsService } from './pickup-requests/pickup-requests.service';
+import { ShoppingRequestsService } from './shopping-requests/shopping-requests.service';
 
 import { AppController } from './app.controller';
 import { UsersController } from './users/users.controller';
@@ -15,10 +17,12 @@ import { PackagesController } from './packages/packages.controller';
 import { RacksController } from './racks/racks.controller';
 import { SuppliersController } from './suppliers/suppliers.controller';
 import { CountriesController } from './countries/countries.controller';
+import { PickupRequestsController } from './pickup-requests/pickup-requests.controller';
+import { ShoppingRequestsController } from './shopping-requests/shopping-requests.controller';
 
 @Module({
   imports: [AuthModule],
-  controllers: [AppController, UsersController, PackagesController, RacksController, SuppliersController, CountriesController],
-  providers: [AppService, UsersService, PackagesService, RacksService, SuppliersService, CountriesService],
+  controllers: [AppController, UsersController, PackagesController, RacksController, SuppliersController, CountriesController, PickupRequestsController, ShoppingRequestsController],
+  providers: [AppService, UsersService, PackagesService, RacksService, SuppliersService, CountriesService, PickupRequestsService, ShoppingRequestsService],
 })
 export class AppModule {}

@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ShoppingBag as ShoppingBagIcon, History as HistoryIcon, Search as SearchIcon, Add as AddIcon, Delete as DeleteIcon, HourglassEmpty as HourglassIcon } from '@mui/icons-material';
 import HowItWorksModal from '../../components/Modals/HowItWorksModal/HowItWorksModal';
+import { getShoppingRequestsByUser } from '@/lib/api.service';
+import { useSession } from 'next-auth/react';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -20,9 +22,25 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export default function AssistedShopping() {
+  const { data: session } = useSession();
   const [value, setValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isHowItWorksModalOpen, setIsHowItWorksModalOpen] = useState(false);
+  const [shoppingRequests, setShoppingRequests] = useState<any[]>([]);
+
+  const fetchRequests = async () => {
+    try {
+      const user_id = (session?.user as any)?.user_id;
+      const data = await getShoppingRequestsByUser(user_id);
+      setShoppingRequests(data);
+    } catch (error) {
+      console.error("Error fetching shopping requests:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
 
   const handleChange = (newValue: number) => {
     setValue(newValue);
@@ -41,16 +59,6 @@ export default function AssistedShopping() {
   const tabs = [
     { label: 'Shopping Requests', count: 1, icon: <ShoppingBagIcon /> },
     { label: 'History', count: 0, icon: <HistoryIcon /> },
-  ];
-
-  const shoppingRequests = [
-    {
-      id: 'SR/SG/2025118',
-      date: '02-Sep-25',
-      items: 2,
-      status: 'Requested',
-      statusColor: 'text-orange-600'
-    }
   ];
 
   const renderSearchBar = () => (

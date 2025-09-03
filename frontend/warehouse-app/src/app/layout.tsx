@@ -1,8 +1,12 @@
+"use client";
+
 import "./globals.css";
-import type { Metadata } from "next";
+// import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { usePathname } from "next/navigation";
 import ThemeProvider from "../components/ThemeProvider";
 import Header from "../components/Navbar/Header";
+import Providers from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,22 +18,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "ShopMe - Warehouse Management",
-  description: "Warehouse management application for ShopMe",
-};
+// export const metadata: Metadata = {
+//   title: "ShopMe - Warehouse Management",
+//   description: "Warehouse management application for ShopMe",
+// };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const pathname = usePathname();
+
+  const hideHeader = pathname === "/";
+
   return (
     <html lang="en">
       <head>
         <meta name="emotion-insertion-point" content="" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <ThemeProvider>
-          <Header />
-          {children}
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider>
+            {!hideHeader && <Header /> }
+            {children}
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

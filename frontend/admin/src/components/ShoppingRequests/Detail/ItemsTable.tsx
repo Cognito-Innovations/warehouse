@@ -7,7 +7,7 @@ import ItemsTableSummary from './ItemsTableSummary';
 
 const headers = ["Item Name", "Color/Size", "Available", "Status", "Quantity", "Unit Price", "Total"];
 
-const ItemsTable = ({ items, summary }: { items: any[], summary: any }) => (
+const ItemsTable = ({ details }) => (
   <Card sx={{ mt: 3 }}>
     <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <Typography variant="h6" fontWeight={600}>Links / Items</Typography>
@@ -21,11 +21,11 @@ const ItemsTable = ({ items, summary }: { items: any[], summary: any }) => (
           </TableRow>
         </TableHead>
         <TableBody>
-          {items.map((item, i) => <ItemsTableRow key={i} item={item} />)}
+          {details.items_data.map((item, i) => <ItemsTableRow key={i} item={item} />)}
         </TableBody>
       </Table>
     </TableContainer>
-    <ItemsTableSummary summary={summary} />
+    <ItemsTableSummary summary={details.summary} />
   </Card>
 );
 

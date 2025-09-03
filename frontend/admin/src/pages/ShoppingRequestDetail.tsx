@@ -1,29 +1,37 @@
-import React from 'react';
-import { Box, Breadcrumbs, Link, Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Box } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
 import TopNavbar from '../components/Layout/TopNavbar';
 import RequestDetailHeader from '../components/ShoppingRequests/Detail/RequestDetailHeader.tsx';
 import RequestDetailContent from '../components/ShoppingRequests/Detail/RequestDetailContent.tsx';
-import { requestDetailData } from '../data/shoppingRequestDetail';
-
+import { getShoppingRequestByCode } from '../services/api.services.ts';
 
 const ShoppingRequestDetail: React.FC = () => {
   const { id } = useParams();
-  const requestDetail = requestDetailData;
+  const [shoppingRequest, setShoppingRequest] = useState<any | null>(null);
+
+  const fetchRequest = async () => {
+    if (!id) return;
+    try {
+      const data = await getShoppingRequestByCode(id);
+      setShoppingRequest(data);
+    } catch (err) {
+      console.error("Error fetching shopping request:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRequest();
+  }, [id]);
+
+  if (!shoppingRequest) return <div>Loading...</div>;
 
   return (
     <Box>
       <TopNavbar pageTitle="Shopping Request" pageSubtitle="All" />
-      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ my: 2 }}>
-        <Link underline="hover" color="inherit" href="/requests">
-          Shopping Requests
-        </Link>
-        <Typography color="text.primary">{id}</Typography>
-      </Breadcrumbs>
-      <RequestDetailHeader request={requestDetail} />
-      <RequestDetailContent requestDetail={requestDetail} />
+      <RequestDetailHeader request={shoppingRequest} />
+      <RequestDetailContent request={shoppingRequest} />
     </Box>
   );
 };

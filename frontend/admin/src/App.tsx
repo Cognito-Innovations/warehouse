@@ -21,6 +21,8 @@ import Sidebar from './components/Sidebar/Sidebar';
 import { menuItems } from "./data/menuItems";
 
 import themeConfig from './utils/themeConfig';
+import PickupRequests from './pages/PickupRequests';
+import PickupRequestDetail from './pages/PickupRequestDetail';
 
 function App() {
   return (
@@ -48,6 +50,8 @@ function App() {
             <Route path="/shipments/export" element={<ShipmentExport />} />
             <Route path="/requests" element={<ShoppingRequests />} />
             <Route path="/requests/:id" element={<ShoppingRequestDetail />} />
+            <Route path="/pickups" element={<PickupRequests />} />
+            <Route path="/pickups/:id" element={<PickupRequestDetail />} />
             <Route path="/suite" element={<MySuiteContent />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/customers/:id" element={<CustomerDetailPage />} />
