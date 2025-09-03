@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
+
 import TopNavbar from '../components/Layout/TopNavbar';
 import StatusCards from '../components/Shipments/StatusCards';
 import SearchFilters from '../components/Shipments/SearchFilters';
@@ -10,7 +11,7 @@ const Shipments = () => {
 
   return (
     <Box>
-      <TopNavbar pageTitle="Shipments" pageSubtitle="/ All" />
+      <TopNavbar pageTitle="Shipments" pageSubtitle="All" />
 
       <StatusCards onSelectStatus={setStatusFilter} />
 

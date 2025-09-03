@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -23,6 +23,8 @@ import {
   Add as AddIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
+import { createPackage, getRacks, getSuppliers, getUsers} from '../../services/api.services';
+import type { Rack, Supplier, User } from '../../types';
 
 interface RegisterPackageModalProps {
   open: boolean;
@@ -43,6 +45,69 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     shopInvoiceReceived: false,
     remarks: '',
   });
+
+  const [users, setUsers] = useState<User[]>([]);
+  const [racks, setRacks] = useState<Rack[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+
+  const fetchUsers = async () => {
+    try {
+      const data = await getUsers();
+      setUsers(data);
+    } catch (err) {
+      console.error('Failed to fetch users', err);
+    }
+  };
+
+  const fetchRacks = async () => {
+    try {
+      const data = await getRacks();
+      setRacks(data);
+    } catch (err) {
+      console.error('Failed to fetch racks', err);
+    }
+  };
+
+  const fetchSuppliers = async () => {
+    try {
+      const data = await getSuppliers();
+      setSuppliers(data);
+    } catch (err) {
+      console.error('Failed to fetch suppliers', err);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      fetchUsers();
+      fetchRacks();
+      fetchSuppliers();
+    }
+  }, [open]);
+
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        customer: formData.customer,
+        rack_slot: formData.rackSlot,
+        vendor: formData.vendor,
+        weight: formData.weight,
+        length: formData.length,
+        width: formData.width,
+        height: formData.height,
+        volumetric_weight: formData.volumetricWeight,
+        allow_customer_items: formData.allowCustomerItems,
+        shop_invoice_received: formData.shopInvoiceReceived,
+        remarks: formData.remarks,
+      };
+
+      await createPackage(payload);
+
+      onClose();
+    } catch (err) {
+      console.error('Failed to register package', err);
+    }
+  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -80,9 +145,11 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
                 label="Select Customer"
                 onChange={(e) => handleInputChange('customer', e.target.value)}
               >
-                <MenuItem value="customer1">Ibrahim Sifan</MenuItem>
-                <MenuItem value="customer2">Hawwa Nuzhath</MenuItem>
-                <MenuItem value="customer3">PAC Dabare</MenuItem>
+                {users.map(user => (
+                  <MenuItem key={user.id} value={user.id}>
+                    {user.name}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -96,10 +163,11 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
                 label="Rack Slot"
                 onChange={(e) => handleInputChange('rackSlot', e.target.value)}
               >
-                <MenuItem value="A1">A1</MenuItem>
-                <MenuItem value="A2">A2</MenuItem>
-                <MenuItem value="B1">B1</MenuItem>
-                <MenuItem value="B2">B2</MenuItem>
+                {racks.map(rack => (
+                  <MenuItem key={rack.id} value={rack.id}>
+                    {rack.label}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -117,9 +185,11 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
                   label="Select Vendor / Supplier"
                   onChange={(e) => handleInputChange('vendor', e.target.value)}
                 >
-                  <MenuItem value="amazon">Amazon India</MenuItem>
-                  <MenuItem value="myntra">Myntra</MenuItem>
-                  <MenuItem value="xpress">Xpress Bees</MenuItem>
+                  {suppliers.map(supplier => (
+                    <MenuItem key={supplier.id} value={supplier.id}>
+                      {supplier.supplier_name}, {supplier.country}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <Button
@@ -275,6 +345,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
             bgcolor: '#6366f1',
             px: 4,
           }}
+          onClick={handleSubmit}
         >
           Register
         </Button>

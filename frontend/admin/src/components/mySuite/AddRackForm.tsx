@@ -1,15 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, TextField, Button, Stack, Typography } from '@mui/material';
 
 interface AddRackFormProps {
-  onAdd: (label: string, colorCode: string) => void;
+  onSubmit: (label: string, colorCode: string) => void;
   onCancel: () => void;
+  initialLabel?: string;
+  initialColor?: string;
+  mode?: 'add' | 'edit';
 }
 
-const AddRackForm: React.FC<AddRackFormProps> = ({ onAdd, onCancel }) => {
+const AddRackForm: React.FC<AddRackFormProps> = ({
+  onSubmit, 
+  onCancel, 
+  initialLabel = '', 
+  initialColor = '#000000', 
+  mode = 'add'
+}) => {
   const [label, setLabel] = useState('');
   const [colorCode, setColorCode] = useState('#000000');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    setLabel(initialLabel);
+    setColorCode(initialColor);
+  }, [initialLabel, initialColor]);
 
   const handleSubmit = () => {
     if (!label.trim()) {
@@ -17,7 +31,7 @@ const AddRackForm: React.FC<AddRackFormProps> = ({ onAdd, onCancel }) => {
       return;
     }
     setError('');
-    onAdd(label, colorCode);
+    onSubmit(label, colorCode);
   };
 
   return (
@@ -52,7 +66,7 @@ const AddRackForm: React.FC<AddRackFormProps> = ({ onAdd, onCancel }) => {
             Cancel
           </Button>
           <Button variant="contained" color="primary" onClick={handleSubmit}>
-            Add
+            {mode === 'edit' ? 'Update' : 'Add'}
           </Button>
         </Stack>
       </Stack>
