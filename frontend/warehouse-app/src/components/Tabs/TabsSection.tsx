@@ -1,32 +1,39 @@
-'use client';
+"use client";
+import { toast } from "sonner";
+import React, { useState, useMemo, useEffect } from "react";
+import { shipmentsData } from "../../data/shipmentsData";
 
-import React, { useState } from 'react';
-import { Inventory as PackageIcon, LocalShipping as ShipmentIcon, History as HistoryIcon, Search as SearchIcon } from '@mui/icons-material';
-import PrePackageArrivalOTPModal from '../Modals/PrePackageArrivalOTPModal/PrePackageArrivalOTPModal';
+import usePreArrival from "../../hooks/usePreArrival";
+import PrePackageArrivalOTPModal from "../Modals/PrePackageArrivalOTPModal/PrePackageArrivalOTPModal";
+import { Inventory as PackageIcon, LocalShipping as ShipmentIcon, History as HistoryIcon } from "@mui/icons-material";
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div role="tabpanel" hidden={value !== index} id={`simple-tabpanel-${index}`} aria-labelledby={`simple-tab-${index}`} {...other}>
-      {value === index && <div className="p-6">{children}</div>}
-    </div>
-  );
-}
+// Import extracted components
+import TabPanel from "./TabPanel";
+import TabNavigation from "./TabNavigation";
+import SearchAndFilter from "./SearchAndFilter";
+import EmptyState from "./EmptyState";
+import ShipmentsTable from "./ShipmentsTable";
 
 const TabsSection = () => {
   const [value, setValue] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isOTPModalOpen, setIsOTPModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState<string>("all");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submitPreArrival, loading: submitting, error: submitError } = usePreArrival({ customer: "Rohit Sharma", suite: "102-529" });
+
+  const filteredShipments = useMemo(() => {
+    return shipmentsData.filter((s) => {
+      const matchesFilter = selectedFilter === "all" || s.status === selectedFilter;
+      const matchesSearch =
+        !searchTerm || s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.id.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesFilter && matchesSearch;
+    });
+  }, [selectedFilter, searchTerm]);
 
   const handleChange = (newValue: number) => {
     setValue(newValue);
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
   const handleShareOTPClick = () => {
@@ -37,98 +44,81 @@ const TabsSection = () => {
     setIsOTPModalOpen(false);
   };
 
-  const handleOTPSubmit = (data: any) => {
-    console.log('OTP Form submitted:', data);
+  const handleOTPSubmit = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      await submitPreArrival(data);
+      setIsOTPModalOpen(false);
+      toast.success("OTP sent successfully!");
+    } catch (err) {
+      toast.error("Failed to send OTP", {
+        description: err instanceof Error ? err.message : "An unexpected error occurred. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const tabs = [
-    { label: 'Packages', count: 0, icon: <PackageIcon /> },
-    { label: 'Shipments', count: 0, icon: <ShipmentIcon /> },
-    { label: 'History', count: 0, icon: <HistoryIcon /> },
+    { label: "Packages", count: 0, icon: <PackageIcon /> },
+    { label: "Shipments", count: 0, icon: <ShipmentIcon /> },
+    { label: "History", count: 0, icon: <HistoryIcon /> },
   ];
-
-  const renderEmptyState = (icon: React.ReactNode, message: string) => (
-    <div className="flex flex-col items-center justify-center min-h-[300px] text-gray-500">
-      <div className="text-6xl text-gray-300 mb-4">
-        {icon}
-      </div>
-      <h3 className="text-lg font-medium text-gray-600">{message}</h3>
-    </div>
-  );
-
-  const renderSearchBar = () => (
-    <div className="relative mb-4">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <SearchIcon className="h-5 w-5 text-gray-400" />
-      </div>
-      <input
-        type="text"
-        placeholder={`Search ${tabs[value].label.toLowerCase()}...`}
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-      />
-    </div>
-  );
 
   return (
     <div className="max-w-7xl mx-auto">
       {/* Navigation Tabs */}
-      <div className="bg-purple-700 rounded-lg p-1 mb-3">
-        <div className="flex">
-          {tabs.map((tab, index) => (
-            <button key={tab.label}
-              className={`flex items-center justify-center gap-2 py-1 text-sm leading-5 font-medium text-purple-700 rounded-lgtransition-all duration-300 rounded-md flex-1 ${
-                value === index
-                  ? 'bg-white text-purple-700 shadow-sm'
-                  : 'bg-transparent text-white hover:bg-purple-600'
-              }`}
-              onClick={() => handleChange(index)}
-            >
-              <span className={`text-lg ${value === index ? 'text-purple-700' : 'text-white'}`}>
-                {tab.icon}
-              </span>
-              <span>{tab.label} ({tab.count})</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <TabNavigation tabs={tabs} value={value} onChange={handleChange}/>
 
-  
-
-      {/* Content Area */}
-      <div className="bg-white border border-gray-200 rounded-lg min-h-[400px]">
-        <TabPanel value={value} index={0}>
-          {renderEmptyState(<PackageIcon />, 'No Packages Available')}
-        </TabPanel>
-
-        <TabPanel value={value} index={1}>
-          {renderSearchBar()}
-          {renderEmptyState(<ShipmentIcon />, 'No Shipments Available')}
-        </TabPanel>
-
-        <TabPanel value={value} index={2}>
-          {renderSearchBar()}
-          {renderEmptyState(<HistoryIcon />, 'No History Available')}
-        </TabPanel>
-      </div>
-
+      {/* Search + Filter: show for Shipments and History */}
+      {(value === 1 || value === 2) && (
+        <SearchAndFilter
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          placeholder={`Search ${tabs[value].label.toLowerCase()}...`}
+        />
+      )}
+      
       {/* Share OTP Button - Only show on Packages tab */}
       {value === 0 && (
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={handleShareOTPClick}
-            className="bg-purple-700 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors duration-200"
-          >
+        <div className="flex justify-end my-3">
+          <button onClick={handleShareOTPClick} className="inline-flex bg-purple-600 hover:bg-purple-700 min-w-12 text-white items-center px-3 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none">
             Share OTP
           </button>
         </div>
       )}
+
+      {/* Content Area */}
+      <div className="bg-white border border-gray-200 rounded-lg min-h-[300px]">
+        <TabPanel value={value} index={0}>
+          <EmptyState icon={<PackageIcon />} message="No Packages Available" />
+        </TabPanel>
+
+        <TabPanel value={value} index={1}>
+          {filteredShipments.length === 0 ? (
+            <EmptyState icon={<ShipmentIcon />} message="No Shipments Available" />
+          ) : (
+            <ShipmentsTable shipments={filteredShipments} />
+          )}
+        </TabPanel>
+
+        <TabPanel value={value} index={2}>
+          {filteredShipments.length === 0 ? (
+            <EmptyState icon={<HistoryIcon />} message="No History Available" />
+          ) : (
+            <ShipmentsTable shipments={filteredShipments} />
+          )}
+        </TabPanel>
+      </div>
+
       {/* OTP Modal */}
-      <PrePackageArrivalOTPModal
-        isOpen={isOTPModalOpen}
-        onClose={handleOTPModalClose}
+      <PrePackageArrivalOTPModal 
+        isOpen={isOTPModalOpen} 
+        onClose={handleOTPModalClose} 
         onSubmit={handleOTPSubmit}
+        isLoading={isSubmitting}
       />
     </div>
   );

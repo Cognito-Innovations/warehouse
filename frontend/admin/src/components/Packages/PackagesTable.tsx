@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -20,12 +21,22 @@ import {
 } from '@mui/icons-material';
 import { packages, getStatusColor } from '../../data/packages';
 
-const PackagesTable: React.FC = () => {
+interface PackagesTableProps {
+  // onPackageInfoClick prop removed - now using navigation
+}
+
+const PackagesTable: React.FC<PackagesTableProps> = () => {
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(15);
+  const navigate = useNavigate();
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
+  };
+
+  const handleInfoClick = (packageData: any) => {
+    // Navigate to package detail page instead of opening modal
+    navigate(`/packages/${packageData.id}`);
   };
 
   const paginatedData = packages.slice(
@@ -34,12 +45,7 @@ const PackagesTable: React.FC = () => {
   );
 
   return (
-    <Box sx={{ 
-      width: '100%', 
-      maxWidth: '100%',
-      border: '3px solid blue', // Debug border
-      backgroundColor: 'rgba(0,0,255,0.1)' // Debug background
-    }}>
+    <Box sx={{ width: '100%',  maxWidth: '100%' }}>
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>
         <TableContainer>
           <Table>
@@ -121,7 +127,11 @@ const PackagesTable: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1 }}>
-                      <IconButton size="small" sx={{ bgcolor: '#6366f1', color: 'white' }}>
+                      <IconButton 
+                        size="small" 
+                        sx={{ bgcolor: '#6366f1', color: 'white' }}
+                        onClick={() => handleInfoClick(row)}
+                      >
                         <InfoIcon fontSize="small" />
                       </IconButton>
                       <IconButton size="small" sx={{ bgcolor: '#3b82f6', color: 'white' }}>

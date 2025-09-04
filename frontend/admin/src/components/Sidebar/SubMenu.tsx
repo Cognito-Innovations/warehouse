@@ -42,7 +42,9 @@ const SubMenu: React.FC<SubMenuProps> = ({ title, items, level = 0 }) => {
       borderRight: '1px solid #e2e8f0',
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '100vh'
+      height: '100vh',
+      overflow: 'hidden',
+      position: 'relative' // Make it relative to the main sidebar
     }}>
       {/* Header */}
       <Box sx={{ 

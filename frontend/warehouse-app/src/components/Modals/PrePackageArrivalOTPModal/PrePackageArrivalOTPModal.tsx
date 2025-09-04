@@ -1,12 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { Close as CloseIcon, Inventory as PackageIcon } from '@mui/icons-material';
+import { Loader2 } from "lucide-react";
 
 interface PrePackageArrivalOTPModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: OTPFormData) => void;
+  onSubmit: (data: {
+    customer?: string;
+    suite?: string;
+    otp: string | number;
+    tracking_no?: string | null;
+    estimate_arrival_time?: string | null;
+    details?: string | null;
+  }) => void;
+  isLoading?: boolean;
 }
 
 interface OTPFormData {
@@ -16,17 +25,26 @@ interface OTPFormData {
   otherDetails: string;
 }
 
-const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({
-  isOpen,
-  onClose,
-  onSubmit
-}) => {
+const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
   const [formData, setFormData] = useState<OTPFormData>({
     otp: '',
     trackingNumber: '',
     estimatedArrivalTime: '',
     otherDetails: ''
   });
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        otp: '',
+        trackingNumber: '',
+        estimatedArrivalTime: '',
+        otherDetails: ''
+      });
+      setError(null);
+    }
+  }, [isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -38,8 +56,25 @@ const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
-    onClose();
+    setError(null);
+
+    if (!formData.otp) {
+      setError("Please enter the OTP.");
+      return;
+    }
+
+    // prepare payload and hand to parent via onSubmit (no network here)
+    const payload = {
+      otp: formData.otp,
+      tracking_no: formData.trackingNumber || null,
+      estimate_arrival_time: formData.estimatedArrivalTime || null,
+      details: formData.otherDetails || null,
+      status: "pending",
+      // customer / suite can be merged by parent/hook if missing
+    };
+
+    onSubmit(payload);
+    // parent (or hook) should handle closing on success; keep modal open until parent closes to allow error handling
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -138,25 +173,25 @@ const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({
 
           {/* Action Buttons */}
           <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
-            >
+            <button type="button" onClick={onClose} disabled={isLoading} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors">
               Cancel
             </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-purple-700 text-white rounded-md text-sm font-medium hover:bg-purple-600 transition-colors flex items-center gap-2"
-            >
-              <PackageIcon className="w-4 h-4" />
-              Submit
+            <button type="submit" disabled={isLoading} className="px-6 py-2 bg-purple-700 text-white rounded-md text-sm font-medium hover:bg-purple-600 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+              {isLoading ? (
+                <>
+                  <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                  Sending...
+                </>
+              ) : (
+                "Share OTP"
+              )}
             </button>
           </div>
+
+          {error && <div className="mt-4 text-sm text-red-600">{error}</div>}
         </form>
       </div>
     </div>
   );
 };
-
 export default PrePackageArrivalOTPModal;

@@ -19,9 +19,9 @@ export default function ProfileAlert() {
       </div>
       
       <Link href="/profile" className="no-underline">
-        <button className="flex items-center gap-1 text-red-600 text-sm font-medium hover:bg-red-100 px-3 py-2 rounded-md transition-colors duration-200">
+        <button className="flex items-center gap-1 text-red-600 text-sm font-medium hover:text-red-800 px-3 py-2 rounded-md transition-colors duration-200">
           Profile
-          <ArrowForward className="w-4 h-4" />
+          <ArrowForward sx={{width: "1rem", height: "1rem"}} />
         </button>
       </Link>
     </div>

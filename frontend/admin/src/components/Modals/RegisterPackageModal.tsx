@@ -1,30 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  Box,
-  Typography,
-  IconButton,
-  Divider,
-  Grid,
-} from '@mui/material';
-import {
-  Close as CloseIcon,
-  Add as AddIcon,
-  Info as InfoIcon,
-} from '@mui/icons-material';
-import { createPackage, getRacks, getSuppliers, getUsers} from '../../services/api.services';
-import type { Rack, Supplier, User } from '../../types';
+import React, { useEffect, useState } from "react";
+import PackageInfoModal from "./PackageInfoModal";
+import type { Rack, Supplier, User } from "../../types";
+import { createPackage, getRacks, getSuppliers, getUsers } from "../../services/api.services";
+import { toast } from "sonner";
+
+import { Close as CloseIcon } from "@mui/icons-material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box } from "@mui/material";
+import FormFields from "./RegisterPackageModal/FormFields";
+
+import WeightSection from "./RegisterPackageModal/WeightSection";
+import OptionsSection from "./RegisterPackageModal/OptionsSection";
+import AddSupplierModal from "./RegisterPackageModal/AddSupplierModal";
 
 interface RegisterPackageModalProps {
   open: boolean;
@@ -33,29 +19,38 @@ interface RegisterPackageModalProps {
 
 const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClose }) => {
   const [formData, setFormData] = useState({
-    customer: '',
-    rackSlot: '',
-    vendor: '',
-    weight: '',
-    length: '',
-    width: '',
-    height: '',
-    volumetricWeight: '',
+    customer: "",
+    rackSlot: "",
+    vendor: "",
+    weight: "",
+    length: "",
+    width: "",
+    height: "",
+    volumetricWeight: "",
     allowCustomerItems: false,
     shopInvoiceReceived: false,
-    remarks: '',
+    remarks: "",
   });
+
+  // pieces array: each piece has actual weight + volumetric dimensions + vol weight
+  const [pieces, setPieces] = useState([
+    { weight: "", length: "", width: "", height: "", volumetricWeight: "" },
+  ]);
 
   const [users, setUsers] = useState<User[]>([]);
   const [racks, setRacks] = useState<Rack[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [packageInfoOpen, setPackageInfoOpen] = useState(false);
+  const [addSupplierOpen, setAddSupplierOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchUsers = async () => {
     try {
       const data = await getUsers();
       setUsers(data);
     } catch (err) {
-      console.error('Failed to fetch users', err);
+      console.error("Failed to fetch users", err);
     }
   };
 
@@ -64,7 +59,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       const data = await getRacks();
       setRacks(data);
     } catch (err) {
-      console.error('Failed to fetch racks', err);
+      console.error("Failed to fetch racks", err);
     }
   };
 
@@ -73,7 +68,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       const data = await getSuppliers();
       setSuppliers(data);
     } catch (err) {
-      console.error('Failed to fetch suppliers', err);
+      console.error("Failed to fetch suppliers", err);
     }
   };
 
@@ -85,272 +80,302 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     }
   }, [open]);
 
+  // Reset form data when modal opens
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        customer: "",
+        rackSlot: "",
+        vendor: "",
+        weight: "",
+        length: "",
+        width: "",
+        height: "",
+        volumetricWeight: "",
+        allowCustomerItems: false,
+        shopInvoiceReceived: false,
+        remarks: "",
+      });
+      setPieces([
+        { weight: "", length: "", width: "", height: "", volumetricWeight: "" },
+      ]);
+      setErrors({});
+    }
+  }, [open]);
+
   const handleSubmit = async () => {
+    // Validate required fields
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.customer) {
+      newErrors.customer = "Select Customer is required";
+    }
+    if (!formData.rackSlot) {
+      newErrors.rackSlot = "Rack Slot is required";
+    }
+    if (!formData.vendor) {
+      newErrors.vendor = "Select Vendor is required";
+    }
+
+    // Check if at least one piece has weight
+    const hasWeight = pieces.some(piece => piece.weight && parseFloat(piece.weight) > 0);
+    if (!hasWeight) {
+      newErrors.weight = "Weight can't be empty";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
+      // Calculate total weight from pieces
+      const totalWeight = pieces.reduce((sum, piece) => {
+        return sum + (parseFloat(piece.weight) || 0);
+      }, 0);
+
+      // Calculate total volumetric weight from pieces
+      const totalVolWeight = pieces.reduce((sum, piece) => {
+        const volWeight = calculateVolumetricWeight(piece.length, piece.width, piece.height);
+        return sum + (parseFloat(volWeight) || 0);
+      }, 0);
+
       const payload = {
         customer: formData.customer,
         rack_slot: formData.rackSlot,
         vendor: formData.vendor,
-        weight: formData.weight,
-        length: formData.length,
-        width: formData.width,
-        height: formData.height,
-        volumetric_weight: formData.volumetricWeight,
+        weight: totalWeight.toString(),
+        length: pieces[0]?.length || "",
+        width: pieces[0]?.width || "",
+        height: pieces[0]?.height || "",
+        volumetric_weight: totalVolWeight.toString(),
         allow_customer_items: formData.allowCustomerItems,
         shop_invoice_received: formData.shopInvoiceReceived,
         remarks: formData.remarks,
+        pieces: pieces.map(piece => ({
+          weight: piece.weight,
+          length: piece.length,
+          width: piece.width,
+          height: piece.height,
+          volumetric_weight: piece.volumetricWeight
+        }))
       };
 
       await createPackage(payload);
-
+      toast.success("Package registered successfully!");
       onClose();
     } catch (err) {
-      console.error('Failed to register package', err);
+      console.error("Failed to register package", err);
+      toast.error("Failed to register package. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Validate that the value exists in the available options for select fields
+    if (field === "customer" && typeof value === "string") {
+      if (value && !users.some(user => user.id === value)) {
+        return; // Don't set invalid customer value
+      }
+    }
+    if (field === "rackSlot" && typeof value === "string") {
+      if (value && !racks.some(rack => rack.id === value)) {
+        return; // Don't set invalid rack value
+      }
+    }
+    if (field === "vendor" && typeof value === "string") {
+      if (value && !suppliers.some(supplier => supplier.id === value)) {
+        return; // Don't set invalid vendor value
+      }
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handlePieceChange = (index: number, field: string, value: string) => {
+    setPieces((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+
+      // Auto-calculate volumetric weight when dimensions change
+      if (field === 'length' || field === 'width' || field === 'height') {
+        const piece = next[index];
+        const volWeight = calculateVolumetricWeight(piece.length, piece.width, piece.height);
+        next[index].volumetricWeight = volWeight;
+      }
+
+      return next;
+    });
+  };
+
+  const handleAddPiece = () => {
+    setPieces((prev) => [
+      ...prev,
+      { weight: "", length: "", width: "", height: "", volumetricWeight: "" },
+    ]);
+  };
+
+  const handleRemovePiece = (index: number) => {
+    if (pieces.length > 1) {
+      setPieces((prev) => prev.filter((_, idx) => idx !== index));
+    }
+  };
+
+  const calculateVolumetricWeight = (length: string, width: string, height: string) => {
+    const l = parseFloat(length) || 0;
+    const w = parseFloat(width) || 0;
+    const h = parseFloat(height) || 0;
+
+    if (l > 0 && w > 0 && h > 0) {
+      // Standard volumetric weight calculation: (L × W × H) / 5000 (for cm to kg)
+      return ((l * w * h) / 5000).toFixed(2);
+    }
+    return "0.00";
+  };
+
+  const calculateTotals = () => {
+    const totalWeight = pieces.reduce((sum, piece) => {
+      return sum + (parseFloat(piece.weight) || 0);
+    }, 0);
+
+    const totalVolWeight = pieces.reduce((sum, piece) => {
+      const volWeight = calculateVolumetricWeight(piece.length, piece.width, piece.height);
+      return sum + (parseFloat(volWeight) || 0);
+    }, 0);
+
+    return {
+      totalWeight: totalWeight.toFixed(2),
+      totalVolWeight: totalVolWeight.toFixed(2)
+    };
+  };
+
+  const handleAddSupplier = () => {
+    setAddSupplierOpen(true);
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: { borderRadius: 3 }
-      }}
-    >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+    <>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+      <Dialog 
+        open={open} 
+        onClose={isSubmitting ? undefined : onClose} 
+        maxWidth="md" 
+        fullWidth 
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 2 }}>
+        <Typography component="span" sx={{ fontWeight: 600, fontSize: "1.25rem" }}>
           Register Package
         </Typography>
-        <IconButton onClick={onClose} size="small">
+        <IconButton onClick={onClose} size="small" disabled={isSubmitting}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
+
       <Divider />
-      
+
       <DialogContent sx={{ pt: 3 }}>
-        <Grid container spacing={3}>
-          {/* Customer Selection */}
-          <Grid size= {{xs: 12, sm:6 }}>
-            <FormControl fullWidth required>
-              <InputLabel>Select Customer</InputLabel>
-              <Select
-                value={formData.customer}
-                label="Select Customer"
-                onChange={(e) => handleInputChange('customer', e.target.value)}
-              >
-                {users.map(user => (
-                  <MenuItem key={user.id} value={user.id}>
-                    {user.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+        <Grid container spacing={2}>
+          <FormFields
+            formData={formData}
+            errors={errors}
+            users={users}
+            racks={racks}
+            suppliers={suppliers}
+            onInputChange={handleInputChange}
+            onAddSupplier={handleAddSupplier}
+          />
 
-          {/* Rack Slot */}
-          <Grid size= {{xs: 12, sm:6 }}>
-            <FormControl fullWidth required>
-              <InputLabel>Rack Slot</InputLabel>
-              <Select
-                value={formData.rackSlot}
-                label="Rack Slot"
-                onChange={(e) => handleInputChange('rackSlot', e.target.value)}
-              >
-                {racks.map(rack => (
-                  <MenuItem key={rack.id} value={rack.id}>
-                    {rack.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+          <WeightSection
+            pieces={pieces}
+            onPieceChange={handlePieceChange}
+            onAddPiece={handleAddPiece}
+            onRemovePiece={handleRemovePiece}
+            calculateTotals={calculateTotals}
+            errors={errors}
+          />
 
-          {/* Reference Tracking */}
-          <Grid size= {{xs: 12 }}>
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-              Reference Tracking
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-              <FormControl sx={{ minWidth: 200 }}>
-                <InputLabel>Select Vendor / Supplier</InputLabel>
-                <Select
-                  value={formData.vendor}
-                  label="Select Vendor / Supplier"
-                  onChange={(e) => handleInputChange('vendor', e.target.value)}
-                >
-                  {suppliers.map(supplier => (
-                    <MenuItem key={supplier.id} value={supplier.id}>
-                      {supplier.supplier_name}, {supplier.country}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                sx={{ 
-                  borderRadius: '50%',
-                  minWidth: 40,
-                  width: 40,
-                  height: 40,
-                  p: 0,
-                }}
-              >
-              </Button>
-            </Box>
-            <Typography variant="caption" color="text.secondary">
-              Vendor tracking no. by store, amazon tracking
-            </Typography>
-          </Grid>
-
-          {/* Weight Section */}
-          <Grid size= {{xs: 12 }}>
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-              Piece(s) Actual Weight and Volumetric Weight
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid size= {{xs: 12, sm:6 }}>
-                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-                  Actual Weight
-                </Typography>
-                <TextField
-                  fullWidth
-                  placeholder="Weight (KG)"
-                  value={formData.weight}
-                  onChange={(e) => handleInputChange('weight', e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid size= {{xs: 12, sm:6 }}>
-                <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-                  Volumetric Weight
-                </Typography>
-                <TextField
-                  fullWidth
-                  placeholder="Vol. Weight"
-                  value={formData.volumetricWeight}
-                  onChange={(e) => handleInputChange('volumetricWeight', e.target.value)}
-                  size="small"
-                  disabled
-                />
-              </Grid>
-            </Grid>
-            
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid size= {{xs: 4 }}>
-                <TextField
-                  fullWidth
-                  placeholder="Length (CM)"
-                  value={formData.length}
-                  onChange={(e) => handleInputChange('length', e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid size= {{xs: 4 }}>
-                <TextField
-                  fullWidth
-                  placeholder="Width (CM)"
-                  value={formData.width}
-                  onChange={(e) => handleInputChange('width', e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid size= {{xs: 4 }}>
-                <TextField
-                  fullWidth
-                  placeholder="Height (CM)"
-                  value={formData.height}
-                  onChange={(e) => handleInputChange('height', e.target.value)}
-                  size="small"
-                />
-              </Grid>
-            </Grid>
-          </Grid>
-
-          {/* Additional Options */}
-          <Grid size= {{xs: 12 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <Button
-                variant="outlined"
-                size="small"
-                sx={{ textTransform: 'none', borderRadius: 2 }}
-              >
-                Add New Model
-              </Button>
-              <IconButton size="small">
-                <InfoIcon fontSize="small" />
-              </IconButton>
-            </Box>
-            
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={formData.allowCustomerItems}
-                  onChange={(e) => handleInputChange('allowCustomerItems', e.target.checked)}
-                />
-              }
-              label="Allow customer to add items?"
-            />
-            
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={formData.shopInvoiceReceived}
-                  onChange={(e) => handleInputChange('shopInvoiceReceived', e.target.checked)}
-                />
-              }
-              label="Shop Invoice Received?"
-            />
-          </Grid>
-
-          {/* Remarks */}
-          <Grid size= {{xs: 12 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-              Remarks
-            </Typography>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              placeholder="Add remarks..."
-              value={formData.remarks}
-              onChange={(e) => handleInputChange('remarks', e.target.value)}
-            />
-          </Grid>
+          <OptionsSection
+            formData={formData}
+            onInputChange={handleInputChange}
+          />
         </Grid>
       </DialogContent>
-      
+
       <Divider />
-      
-      <DialogActions sx={{ p: 3, gap: 2 }}>
+
+      <DialogActions sx={{ p: 3, gap: 1 }}>
         <Button
           variant="outlined"
           onClick={onClose}
-          sx={{ textTransform: 'none', borderRadius: 2 }}
+          disabled={isSubmitting}
+          sx={{ textTransform: "none", borderRadius: 2 }}
         >
           Cancel
         </Button>
         <Button
           variant="contained"
-          sx={{ 
-            textTransform: 'none', 
+          disabled={isSubmitting}
+          sx={{
+            textTransform: "none",
             borderRadius: 2,
-            bgcolor: '#6366f1',
+            bgcolor: "#8b5cf6",
             px: 4,
+            "&:hover": { bgcolor: "#7c3aed" },
+            "&:disabled": { bgcolor: "#d1d5db" },
           }}
           onClick={handleSubmit}
         >
-          Register
+          {isSubmitting ? (
+            <>
+              <Box
+                component="span"
+                sx={{
+                  width: 16,
+                  height: 16,
+                  border: "2px solid #ffffff",
+                  borderTop: "2px solid transparent",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                  mr: 1,
+                }}
+              />
+              Registering...
+            </>
+          ) : (
+            "Register"
+          )}
         </Button>
       </DialogActions>
+
+      {/* Package Info Modal */}
+      <PackageInfoModal
+        open={packageInfoOpen}
+        onClose={() => setPackageInfoOpen(false)}
+      />
+
+      {/* Add Supplier Modal */}
+      <AddSupplierModal
+        open={addSupplierOpen}
+        onClose={() => setAddSupplierOpen(false)}
+      />
     </Dialog>
+    </>
   );
 };
 

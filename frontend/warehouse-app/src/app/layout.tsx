@@ -1,8 +1,9 @@
 import "./globals.css";
+import { Toaster } from "sonner";
 import type { Metadata } from "next";
+import Header from "../components/Navbar/Header";
 import { Geist, Geist_Mono } from "next/font/google";
 import ThemeProvider from "../components/ThemeProvider";
-import Header from "../components/Navbar/Header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +29,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ThemeProvider>
           <Header />
-          {children}
+          <Toaster>
+            {children}
+          </Toaster>
         </ThemeProvider>
       </body>
     </html>
