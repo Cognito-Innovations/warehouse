@@ -379,6 +379,10 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       <AddSupplierModal
         open={addSupplierOpen}
         onClose={() => setAddSupplierOpen(false)}
+        onSupplierCreated={() => {
+          fetchSuppliers(); // Refresh suppliers list
+          setAddSupplierOpen(false);
+        }}
       />
     </Dialog>
     </>

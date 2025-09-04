@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, CircularProgress, Alert } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { Box, Grid, CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton, Typography } from '@mui/material';
+import { useParams, useNavigate } from 'react-router-dom';
 import TopNavbar from '../components/Layout/TopNavbar';
 import UploadModal from '../components/PackageDetail/UploadModal';
 import AddItemModal from '../components/PackageDetail/AddItemModal';
@@ -14,6 +14,7 @@ import { getPackageById, updatePackageStatus, addPackageItem, updatePackageItem,
 
 const PackageDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   // State for package data
   const [packageData, setPackageData] = useState<any>(null);
@@ -24,6 +25,7 @@ const PackageDetail: React.FC = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ id: string, name: string, url: string, type: string }>>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Action Log status management
   const [actionLogStatus, setActionLogStatus] = useState<'Action Required' | 'In Review' | 'Ready to Send' | 'Request Ship' | 'Shipped' | 'Discarded' | 'Draft'>('Action Required');
@@ -38,6 +40,9 @@ const PackageDetail: React.FC = () => {
     amount: '',
     total: ''
   });
+
+  // State for discard confirmation
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
 
   // Fetch documents
   const fetchDocuments = async () => {
@@ -99,9 +104,31 @@ const PackageDetail: React.FC = () => {
     }
   };
 
+  const handleDirectFileSelect = async (files: FileList) => {
+    if (!id || files.length === 0) return;
+    
+    try {
+      const fileArray = Array.from(files);
+      const response = await uploadPackageDocuments(id, fileArray);
+      
+      // Transform the response to match our UI format
+      const newDocuments = response.documents?.map((doc: any) => ({
+        id: doc.id,
+        name: doc.document_name,
+        url: doc.document_url,
+        type: doc.document_type
+      })) || [];
+      
+      setUploadedDocuments(prev => [...prev, ...newDocuments]);
+    } catch (err) {
+      console.error('Failed to upload documents:', err);
+    }
+  };
+
   const handleUpload = async () => {
     if (!id || selectedFiles.length === 0) return;
     
+    setIsUploading(true);
     try {
       const response = await uploadPackageDocuments(id, selectedFiles);
       
@@ -119,7 +146,41 @@ const PackageDetail: React.FC = () => {
     } catch (err) {
       console.error('Failed to upload documents:', err);
       setError('Failed to upload documents');
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDiscard = () => {
+    setDiscardDialogOpen(true);
+  };
+
+  const handleConfirmDiscard = async () => {
+    if (!id) return;
+    
+    try {
+      await updatePackageStatus(id, 'Discarded');
+      setActionLogStatus('Discarded');
+      setDiscardDialogOpen(false);
+      // Navigate back to packages page after successful discard
+      navigate('/packages');
+    } catch (err) {
+      console.error('Failed to discard package:', err);
+      setError('Failed to discard package');
+    }
+  };
+
+  const handleCancelDiscard = () => {
+    setDiscardDialogOpen(false);
+  };
+
+  const handlePrintLabel = () => {
+    // TODO: Implement print label functionality
+    console.log('Print label functionality coming soon');
   };
 
   const handleRemoveDocument = async (documentId: string) => {
@@ -342,7 +403,12 @@ const PackageDetail: React.FC = () => {
     <Box sx={{ p: 1 }}>
       <TopNavbar />
       {/* Package Header - Full Width */}
-      <PackageHeader packageData={displayPackageData} actionLogStatus={actionLogStatus} />
+              <PackageHeader 
+          packageData={displayPackageData} 
+          actionLogStatus={actionLogStatus}
+          onDiscard={handleDiscard}
+          onPrintLabel={handlePrintLabel}
+        />
 
       <Grid container spacing={2}>
         {/* Left Column - Main Content */}
@@ -371,6 +437,7 @@ const PackageDetail: React.FC = () => {
             onStatusChange={handleStatusChange}
             onOpenUploadModal={handleOpenUploadModal}
             onRemoveDocument={handleRemoveDocument}
+            onFileSelect={handleDirectFileSelect}
           />
 
           {/* Photos / Documents */}
@@ -388,6 +455,8 @@ const PackageDetail: React.FC = () => {
         onClose={handleCloseUploadModal}
         onFileSelect={handleFileSelect}
         onUpload={handleUpload}
+        onRemoveFile={handleRemoveFile}
+        isUploading={isUploading}
       />
 
       {/* Add Item Modal */}
@@ -399,6 +468,50 @@ const PackageDetail: React.FC = () => {
         onSave={handleSaveItem}
         onInputChange={handleItemInputChange}
       />
+
+      {/* Discard Confirmation Dialog */}
+      <Dialog
+        open={discardDialogOpen}
+        onClose={handleCancelDiscard}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 2 }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: '#1e293b' }}>
+          Discard Package
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ color: '#64748b', mb: 2 }}>
+            Are you sure you want to discard this package? This action will change the package status to "Discarded" and cannot be undone.
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 500 }}>
+            Package ID: {packageData?.custom_package_id || packageData?.id}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, gap: 1 }}>
+          <MuiButton
+            variant="outlined"
+            onClick={handleCancelDiscard}
+            sx={{ textTransform: 'none', borderRadius: 1 }}
+          >
+            Cancel
+          </MuiButton>
+          <MuiButton
+            variant="contained"
+            onClick={handleConfirmDiscard}
+            sx={{
+              bgcolor: '#ef4444',
+              '&:hover': { bgcolor: '#dc2626' },
+              textTransform: 'none',
+              borderRadius: 1
+            }}
+          >
+            Discard Package
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

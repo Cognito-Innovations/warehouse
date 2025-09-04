@@ -17,6 +17,18 @@ export const getSuppliers = async (): Promise<Supplier[]> => {
   return response.data;
 };
 
+export const createSupplier = async (supplier: {
+  country: string;
+  supplier_name: string;
+  contact_number?: string;
+  postal_code?: string;
+  address?: string;
+  website?: string;
+}): Promise<Supplier> => {
+  const response = await api.post<Supplier>('/suppliers', supplier);
+  return response.data;
+};
+
 export const getCountries = async (): Promise<Array<{ id: string; country: string }>> => {
   const response = await api.get<Array<{ id: string; country: string }>>('/countries');
   return response.data;

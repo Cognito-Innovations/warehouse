@@ -121,7 +121,7 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
             </Grid>
           </Grid>
 
-                     {/* Status Indicator */}
+          {/* Status Indicator */}
            {packageData.status && (
              <Box sx={{ bgcolor: '#f0fdf4', p: 2, borderRadius: 2, border: '1px solid #84cc16', width: "220px" }}>
                <Typography variant="body2" sx={{ fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
