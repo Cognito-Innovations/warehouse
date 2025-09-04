@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import AddressSection from "../../../components/Navbar/AddressSection";
-import { createShoppingRequest } from "@/lib/api.service";
+import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
 import { useSession } from "next-auth/react";
 
 interface ShoppingItem {
@@ -84,17 +84,34 @@ export default function CreateShoppingRequest() {
     request_code: `SR/${selectedCountry.substring(0, 2).toUpperCase()}/${Date.now()}`,
     country: selectedCountry,
     items: items.length,
-    items_data: items,
     remarks,
     status: "REQUESTED",
   };
 
     try {
-    await createShoppingRequest(shoppingRequest);
-    router.push("/assisted-shopping");
-  } catch (error) {
-    console.error("Error creating shopping request:", error);
-  }
+      const requestRes = await createShoppingRequest(shoppingRequest);
+      const requestId = requestRes[0].id;
+
+      await Promise.all(
+        items.map((item) =>
+          createShoppingRequestProduct({
+            shopping_request_id: requestId,
+            name: item.name,
+            url: item.url,
+            quantity: Number(item.quantity),
+            size: item.size,
+            color: item.color,
+            variants: item.otherVariants,
+            if_not_available_quantity: item.ifNotAvailableQuantity,
+            if_not_available_color: item.ifNotAvailableColor,
+          })
+        )
+      );
+
+      router.push("/assisted-shopping");
+    } catch (error) {
+      console.error("Error creating shopping request:", error);
+    }
   };
 
   return (

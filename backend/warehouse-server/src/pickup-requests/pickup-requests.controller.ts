@@ -32,5 +32,4 @@ export class PickupRequestsController {
   ) {
     return this.pickupRequestsService.updateStatus(id, body.status, body.price);
   }
-
 }

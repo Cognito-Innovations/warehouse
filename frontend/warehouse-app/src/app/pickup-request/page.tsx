@@ -15,7 +15,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import HistoryIcon from '@mui/icons-material/History';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import { getPickupRequestsByUser } from '@/lib/api.service';
 import { useSession } from 'next-auth/react';
 import { formatDateTime } from '@/lib/utils';

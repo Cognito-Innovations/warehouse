@@ -5,6 +5,8 @@ import { ShoppingBag as ShoppingBagIcon, History as HistoryIcon, Search as Searc
 import HowItWorksModal from '../../components/Modals/HowItWorksModal/HowItWorksModal';
 import { getShoppingRequestsByUser } from '@/lib/api.service';
 import { useSession } from 'next-auth/react';
+import { formatDateTime } from '@/lib/utils';
+import Link from 'next/link';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -22,15 +24,16 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export default function AssistedShopping() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [value, setValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isHowItWorksModalOpen, setIsHowItWorksModalOpen] = useState(false);
   const [shoppingRequests, setShoppingRequests] = useState<any[]>([]);
 
+  const user_id = (session?.user as any)?.user_id;
+
   const fetchRequests = async () => {
     try {
-      const user_id = (session?.user as any)?.user_id;
       const data = await getShoppingRequestsByUser(user_id);
       setShoppingRequests(data);
     } catch (error) {
@@ -39,6 +42,7 @@ export default function AssistedShopping() {
   };
 
   useEffect(() => {
+    if (!user_id || status === "loading") return; 
     fetchRequests();
   }, []);
 
@@ -79,29 +83,35 @@ export default function AssistedShopping() {
   const renderShoppingRequests = () => (
     <div className="space-y-4">
       {shoppingRequests.map((request) => (
-        <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <div>
-              <p className="font-semibold text-gray-900">{request.id}</p>
-              <p className="text-sm text-gray-600">{request.date}</p>
+        <Link 
+          href={`/assisted-shopping/${encodeURIComponent(request.request_code)}`} 
+          key={request.request_code}
+          className="block transition-all duration-200 hover:shadow-md hover:border-purple-200 rounded-lg"
+        >
+          <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div>
+                {/* <p className="font-semibold text-gray-900">{request.id}</p> */}
+                <p className="text-sm text-gray-600">{formatDateTime(request.created_at)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">{request.items} Items</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-600">{request.items} Items</p>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <HourglassIcon className={`w-5 h-5 ${request.statusColor}`} />
+                <span className={`text-sm font-medium ${request.statusColor}`}>{request.status}</span>
+              </div>
+              <button
+                onClick={() => handleDeleteRequest(request.id)}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <DeleteIcon className="w-4 h-4" />
+              </button>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <HourglassIcon className={`w-5 h-5 ${request.statusColor}`} />
-              <span className={`text-sm font-medium ${request.statusColor}`}>{request.status}</span>
-            </div>
-            <button
-              onClick={() => handleDeleteRequest(request.id)}
-              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <DeleteIcon className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        </Link>
       ))}
     </div>
   );

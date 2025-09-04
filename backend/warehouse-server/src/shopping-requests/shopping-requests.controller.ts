@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Patch } from '@nestjs/common';
 import { ShoppingRequestsService } from './shopping-requests.service';
 
 @Controller('shopping-requests')
@@ -24,4 +24,21 @@ export class ShoppingRequestsController {
   async findOneByCode(@Param('requestCode') requestCode: string) {
     return this.shoppingRequestsService.getShoppingRequestByCode(requestCode);
   }
+
+  @Patch(':id/status')
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string}
+  ) {
+    return this.shoppingRequestsService.updateStatus(id, body.status);
+  }
+
+  @Patch(':id/slips')
+  async addPaymentSlip(
+    @Param('id') id: string,
+    @Body() body: { url: string }
+  ) {
+    return this.shoppingRequestsService.addPaymentSlip(id, body.url);
+  }
+
 }

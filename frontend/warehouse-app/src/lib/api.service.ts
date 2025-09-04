@@ -37,7 +37,27 @@ export const createShoppingRequest = async (request: any) => {
   return res.data;
 };
 
+export const createShoppingRequestProduct = async (product: any) => {
+  const res = await api.post("/products", product);
+  return res.data;
+};
+
 export const getShoppingRequestsByUser = async (userId: string) => {
   const res = await api.get(`/shopping-requests/${userId}`);
+  return res.data;
+};
+
+export const getShoppingRequestById = async (requestCode: string) => {
+  const res = await api.get(`/shopping-requests/detail/by-code/${requestCode}`);
+  return res.data;
+}
+
+export const updateShoppingRequestStatus = async (id: string, status: string) => {
+  const res = await api.patch(`/shopping-requests/${id}/status`, { status });
+  return res.data;
+};
+
+export const addPaymentSlip = async (id: string, url: string) => {
+  const res = await api.patch(`/shopping-requests/${id}/slips`, { url });
   return res.data;
 };
