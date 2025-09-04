@@ -75,11 +75,19 @@ export const statusOptions = [
 
 export const getStatusColor = (status: string) => {
   switch (status) {
+    case 'Action Required':
+      return { color: '#ef4444', bgColor: '#fee2e2' };
     case 'ACTION REQUIRED':
       return { color: '#ef4444', bgColor: '#fee2e2' };
+    case 'In Review':
+      return { color: '#3b82f6', bgColor: '#dbeafe' };
     case 'IN REVIEW':
       return { color: '#3b82f6', bgColor: '#dbeafe' };
+    case 'Ready to Send':
+      return { color: '#22c55e', bgColor: '#dcfce7' };
     case 'READY TO SEND':
+      return { color: '#22c55e', bgColor: '#dcfce7' };
+    case 'Ship Requested':
       return { color: '#22c55e', bgColor: '#dcfce7' };
     case 'SHIP REQUESTED':
       return { color: '#22c55e', bgColor: '#dcfce7' };
