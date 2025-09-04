@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
-import { supabase } from '../supabase/supabase.client';
+import { dbClient } from '../supabase/supabase.client';
 
 @Injectable()
 export class CountriesService {
   async createCountry(country: string) {
-    const { data, error } = await supabase
+    const { data, error } = await dbClient
       .from('countries')
       .insert({ country })
       .select();
@@ -16,7 +16,7 @@ export class CountriesService {
 
   async createCountriesBulk(countries: string[]) {
     const bulkData = countries.map(c => ({ country: c }));
-    const { data, error } = await supabase
+    const { data, error } = await dbClient
       .from('countries')
       .insert(bulkData)
       .select();
@@ -26,7 +26,7 @@ export class CountriesService {
   }
 
   async getAllCountries() {
-    const { data, error } = await supabase.from('countries').select('*');
+    const { data, error } = await dbClient.from('countries').select('*');
 
     if (error) throw new Error(error.message);
     return data;

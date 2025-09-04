@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { supabase } from '../supabase/supabase.client';
+import { dbClient } from '../supabase/supabase.client';
 
 interface Supplier {
   id?: string;
@@ -15,7 +15,7 @@ interface Supplier {
 @Injectable()
 export class SuppliersService {
   async createSupplier(supplier: Supplier) {
-    const { data, error } = await supabase
+    const { data, error } = await dbClient
       .from('suppliers')
       .insert(supplier)
       .select();
@@ -25,7 +25,7 @@ export class SuppliersService {
   }
 
   async getAllSuppliers() {
-    const { data, error } = await supabase.from('suppliers').select('*');
+    const { data, error } = await dbClient.from('suppliers').select('*');
 
     if (error) throw new Error(error.message);
     return data;

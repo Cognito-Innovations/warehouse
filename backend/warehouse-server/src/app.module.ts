@@ -18,7 +18,21 @@ import { CountriesController } from './countries/countries.controller';
 
 @Module({
   imports: [AuthModule],
-  controllers: [AppController, UsersController, PackagesController, RacksController, SuppliersController, CountriesController],
-  providers: [AppService, UsersService, PackagesService, RacksService, SuppliersService, CountriesService],
+  controllers: [
+    AppController,
+    UsersController,
+    PackagesController,
+    RacksController,
+    SuppliersController,
+    CountriesController,
+  ],
+  providers: [
+    AppService,
+    UsersService,
+    PackagesService,
+    RacksService,
+    SuppliersService,
+    CountriesService,
+  ],
 })
 export class AppModule {}

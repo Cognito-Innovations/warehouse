@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { supabase } from '../supabase/supabase.client';
+import { dbClient } from '../supabase/supabase.client';
 
 interface Package {
   id?: string;
@@ -20,7 +20,7 @@ interface Package {
 @Injectable()
 export class PackagesService {
   async createPackage(pkg: Package) {
-    const { data, error } = await supabase
+    const { data, error } = await dbClient
       .from('packages')
       .insert(pkg)
       .select();
@@ -30,7 +30,7 @@ export class PackagesService {
   }
 
   async getAllPackages() {
-    const { data, error } = await supabase.from('packages').select('*');
+    const { data, error } = await dbClient.from('packages').select('*');
 
     if (error) throw new Error(error.message);
     return data;

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { supabase } from '../supabase/supabase.client';
+import { dbClient } from '../supabase/supabase.client';
 
 interface Rack {
   id?: string;
@@ -12,7 +12,7 @@ interface Rack {
 @Injectable()
 export class RacksService {
   async createRack(rack: Rack) {
-    const { data, error } = await supabase
+    const { data, error } = await dbClient
       .from('racks')
       .insert(rack)
       .select();
@@ -22,14 +22,14 @@ export class RacksService {
   }
 
   async getAllRacks() {
-    const { data, error } = await supabase.from('racks').select('*');
+    const { data, error } = await dbClient.from('racks').select('*');
 
     if (error) throw new Error(error.message);
     return data;
   }
 
   async updateRack(id: string, rack: Partial<Rack>) {
-    const { data, error } = await supabase
+    const { data, error } = await dbClient
       .from('racks')
       .update(rack)
       .eq('id', id)
@@ -40,7 +40,7 @@ export class RacksService {
   }
 
   async deleteRack(id: string) {
-    const { error } = await supabase.from('racks').delete().eq('id', id);
+    const { error } = await dbClient.from('racks').delete().eq('id', id);
     if (error) throw new Error(error.message);
     return { success: true };
   }
