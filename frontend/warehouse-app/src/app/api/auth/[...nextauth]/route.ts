@@ -21,11 +21,26 @@ const handler = NextAuth({
             image: user.image
           }),
         });
-        console.log("User API response:", await res.json());
+        const data = await res.json();
+        (user as any).user_id = data[0]?.id ?? data.id;
       } catch (err) {
         console.error("Error calling Nest backend:", err);
       }
       return true;
+    },
+
+    async jwt({ token, user }) {
+      if (user) {
+        token.user_id = (user as any).user_id;
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (token?.user_id) {
+        (session.user as any).user_id = token.user_id;
+      }
+      return session;
     },
   },
 });

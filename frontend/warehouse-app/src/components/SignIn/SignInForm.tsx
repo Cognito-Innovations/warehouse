@@ -59,7 +59,7 @@ export default function SignInForm() {
         fullWidth
         variant="outlined"
         startIcon={<img src="/google-icon.svg" alt="Google" style={{ width: 20, height: 20 }} />}
-        onClick={() => signIn("google")}
+        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
         sx={{
           ...buttonStyles,
           borderColor: "#E5E7EB",

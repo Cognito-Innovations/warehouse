@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import AddressSection from "../../../components/Navbar/AddressSection";
+import { createShoppingRequest } from "@/lib/api.service";
+import { useSession } from "next-auth/react";
 
 interface ShoppingItem {
   id: string;
@@ -20,6 +22,7 @@ interface ShoppingItem {
 
 export default function CreateShoppingRequest() {
   const router = useRouter();
+  const { data: session } = useSession();  
   const [selectedCountry, setSelectedCountry] = useState("Singapore");
   const [items, setItems] = useState<ShoppingItem[]>([
     {
@@ -71,26 +74,27 @@ export default function CreateShoppingRequest() {
     setSelectedCountry(country);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create shopping request object
-    const shoppingRequest = {
-      id: `SR/${selectedCountry.substring(0, 2).toUpperCase()}/${Date.now()}`,
-      date: new Date().toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "2-digit",
-      }),
-      items: items.length,
-      status: "Requested",
-      itemsData: items,
-      remarks,
-      country: selectedCountry,
-    };
+    const userId = (session?.user as any)?.user_id;
 
-    console.log("Shopping Request Submitted:", shoppingRequest);
+    const shoppingRequest = {
+    user_id: userId, 
+    request_code: `SR/${selectedCountry.substring(0, 2).toUpperCase()}/${Date.now()}`,
+    country: selectedCountry,
+    items: items.length,
+    items_data: items,
+    remarks,
+    status: "REQUESTED",
+  };
+
+    try {
+    await createShoppingRequest(shoppingRequest);
     router.push("/assisted-shopping");
+  } catch (error) {
+    console.error("Error creating shopping request:", error);
+  }
   };
 
   return (

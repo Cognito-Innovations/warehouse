@@ -4,15 +4,22 @@ import ItemsTable from './ItemsTable';
 import TrackingStatus from './TrackingStatus';
 import ActionLogs from './ActionLogs';
 
-const RequestDetailContent = ({ requestDetail }: { requestDetail: any }) => (
+interface RequestData {
+  details: any; 
+  status: string;
+  // trackingHistory: TrackingHistoryItem[];
+}
+
+const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) => (
   <Grid container spacing={3}>
     <Grid spacing={{ xs: 12, lg: 8 }} >
-      <CustomerInfo customer={requestDetail.customer} remarks={requestDetail.remarks} />
-      <ItemsTable items={requestDetail.items} summary={requestDetail.summary} />
+      <CustomerInfo details={request}/>
+      <ItemsTable details={request} />
     </Grid>
+
     <Grid spacing={{ xs: 12, lg: 4 }} >
-      <TrackingStatus tracking={requestDetail.tracking} />
-      <ActionLogs logs={requestDetail.actionLogs} />
+      <TrackingStatus details={request} />
+      <ActionLogs logs={requestAnimationFrame.logs || ""} />
     </Grid>
   </Grid>
 );
