@@ -1,4 +1,5 @@
 import type { Package, Rack, Supplier, User } from '../types';
+import type { PreArrival } from '../types/PreArrival';
 import api from './axios';
 
 export const getUsers = async (): Promise<User[]> => {
@@ -33,5 +34,21 @@ export const updateRack = async (id: string, rack: Partial<Rack>): Promise<Rack>
 
 export const deleteRack = async (id: string): Promise<{ success: boolean }> => {
   const response = await api.delete<{ success: boolean }>(`/racks/${id}`);
+  return response.data;
+};
+
+// Pre-Arrival API functions
+export const getPreArrivals = async (): Promise<PreArrival[]> => {
+  const response = await api.get<PreArrival[]>('/pre-arrival');
+  return response.data;
+};
+
+export const getPreArrivalById = async (id: string): Promise<PreArrival> => {
+  const response = await api.get<PreArrival>(`/pre-arrival/${id}`);
+  return response.data;
+};
+
+export const markPreArrivalAsReceived = async (id: string): Promise<PreArrival> => {
+  const response = await api.patch<PreArrival>(`/pre-arrival/${id}`, { status: 'received' });
   return response.data;
 };

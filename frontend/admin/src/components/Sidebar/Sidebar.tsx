@@ -8,18 +8,22 @@ import type { MenuItem } from '../../data/menuItems';
 export interface SidebarProps {
   logo: string;
   menuItems: MenuItem[];
+  onSubMenuToggle?: (isOpen: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ logo, menuItems }) => {
+const Sidebar: React.FC<SidebarProps> = ({ logo, menuItems, onSubMenuToggle }) => {
   const drawerWidth = 72; // Always closed, showing only icons
   const [activeSubMenu, setActiveSubMenu] = useState<number | null>(null);
   const location = useLocation();
 
   const handleMenuItemClick = (index: number, item: MenuItem) => {
     if (item.subMenu) {
-      setActiveSubMenu(activeSubMenu === index ? null : index);
+      const newActiveSubMenu = activeSubMenu === index ? null : index;
+      setActiveSubMenu(newActiveSubMenu);
+      onSubMenuToggle?.(newActiveSubMenu !== null);
     } else if (item.path) {
       setActiveSubMenu(null);
+      onSubMenuToggle?.(false);
     }
   };
 
@@ -32,9 +36,13 @@ const Sidebar: React.FC<SidebarProps> = ({ logo, menuItems }) => {
 
   return (
     <Box sx={{ 
+      position: 'fixed',
+      top: 0,
+      left: 0,
       display: 'flex',
       height: '100vh',
       bgcolor: '#fff',
+      zIndex: 1000,
       flexShrink: 0
     }}>
       {/* Main Sidebar */}
@@ -44,7 +52,9 @@ const Sidebar: React.FC<SidebarProps> = ({ logo, menuItems }) => {
         bgcolor: '#fff', 
         borderRight: '1px solid #e2e8f0',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        height: '100vh',
+        overflow: 'hidden'
       }}>
         {/* Header */}
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 64 }}>
