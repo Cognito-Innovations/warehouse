@@ -1,7 +1,9 @@
 "use client";
 
 import "./globals.css";
-// import type { Metadata } from "next";
+import { Toaster } from "sonner";
+import type { Metadata } from "next";
+import Header from "../components/Navbar/Header";
 import { Geist, Geist_Mono } from "next/font/google";
 import { usePathname } from "next/navigation";
 import ThemeProvider from "../components/ThemeProvider";

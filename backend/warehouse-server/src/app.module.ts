@@ -4,25 +4,27 @@ import { AuthModule } from './auth/auth.module';
 
 import { AppService } from './app.service';
 import { UsersService } from './users/users.service';
-import { PackagesService } from './packages/packages.service';
 import { RacksService } from './racks/racks.service';
+import { PackagesService } from './packages/packages.service';
 import { SuppliersService } from './suppliers/suppliers.service';
 import { CountriesService } from './countries/countries.service';
+import { PreArrivalService } from './pre-arrivals/pre-arrivals.service';
 import { PickupRequestsService } from './pickup-requests/pickup-requests.service';
 import { ShoppingRequestsService } from './shopping-requests/shopping-requests.service';
 
 import { AppController } from './app.controller';
 import { UsersController } from './users/users.controller';
-import { PackagesController } from './packages/packages.controller';
 import { RacksController } from './racks/racks.controller';
+import { PackagesController } from './packages/packages.controller';
 import { SuppliersController } from './suppliers/suppliers.controller';
 import { CountriesController } from './countries/countries.controller';
+import { PreArrivaController } from './pre-arrivals/pre-arrivals.controller';
 import { PickupRequestsController } from './pickup-requests/pickup-requests.controller';
 import { ShoppingRequestsController } from './shopping-requests/shopping-requests.controller';
 
 @Module({
   imports: [AuthModule],
-  controllers: [AppController, UsersController, PackagesController, RacksController, SuppliersController, CountriesController, PickupRequestsController, ShoppingRequestsController],
-  providers: [AppService, UsersService, PackagesService, RacksService, SuppliersService, CountriesService, PickupRequestsService, ShoppingRequestsService],
+  controllers: [AppController, UsersController, PackagesController, RacksController, SuppliersController, CountriesController, PreArrivaController, PickupRequestsController, ShoppingRequestsController],
+  providers: [AppService, UsersService, PackagesService, RacksService, SuppliersService, CountriesService, PreArrivalService, PickupRequestsService, ShoppingRequestsService],
 })
 export class AppModule {}
