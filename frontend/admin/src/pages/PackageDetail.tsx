@@ -367,7 +367,7 @@ const PackageDetail: React.FC = () => {
 
   // Transform package data for display
   const displayPackageData = {
-    id: packageData.custom_package_id || packageData.id,
+    id: packageData.package_id || packageData.id,
     status: packageData.status,
     customer: packageData.customer?.name || 'Unknown',
     suite: packageData.customer?.suite_no || 'N/A',
@@ -487,7 +487,7 @@ const PackageDetail: React.FC = () => {
             Are you sure you want to discard this package? This action will change the package status to "Discarded" and cannot be undone.
           </Typography>
           <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 500 }}>
-            Package ID: {packageData?.custom_package_id || packageData?.id}
+            Package ID: {packageData?.package_id || packageData?.id}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 1 }}>

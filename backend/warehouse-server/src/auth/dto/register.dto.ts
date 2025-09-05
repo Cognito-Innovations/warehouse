@@ -9,5 +9,10 @@ export class RegisterDto {
   password: string;
 
   @IsString()
-  country: string;
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  country?: string;
 }

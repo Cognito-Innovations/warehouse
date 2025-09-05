@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { PackageDocumentsController } from './package-documents.controller';
-import { PackageDocumentsService } from './package-documents.service';
+import { PackageDocumentsService } from './service/package-documents.service';
+import { PackageDocumentsController } from './controller/package-documents.controller';
+
 
 @Module({
   controllers: [PackageDocumentsController],

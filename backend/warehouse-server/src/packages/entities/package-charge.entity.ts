@@ -8,7 +8,8 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 import { Package } from './package.entity';
-import { User } from './user.entity';
+import { User } from 'src/users/entity/user.entity';
+
 
 @Entity('package_charges')
 export class PackageCharge {

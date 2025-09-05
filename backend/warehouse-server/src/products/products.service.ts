@@ -25,7 +25,7 @@ export class ProductsService {
     return {
       id: savedProduct.id,
       shopping_request_id: savedProduct.shopping_request_id,
-      product_name: savedProduct.product_name,
+      product_name: savedProduct.name,
       description: savedProduct.description,
       unit_price: savedProduct.unit_price,
       quantity: savedProduct.quantity,
@@ -51,7 +51,7 @@ export class ProductsService {
     return {
       id: updatedProduct.id,
       shopping_request_id: updatedProduct.shopping_request_id,
-      product_name: updatedProduct.product_name,
+      product_name: updatedProduct.name,
       description: updatedProduct.description,
       unit_price: updatedProduct.unit_price,
       quantity: updatedProduct.quantity,

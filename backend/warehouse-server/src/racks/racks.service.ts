@@ -25,7 +25,6 @@ export class RacksService {
       label: savedRack.label,
       color: savedRack.color,
       created_at: savedRack.created_at,
-      updated_at: savedRack.updated_at,
     };
   }
 
@@ -39,7 +38,6 @@ export class RacksService {
       label: rack.label,
       color: rack.color,
       created_at: rack.created_at,
-      updated_at: rack.updated_at,
     }));
   }
 
@@ -59,7 +57,6 @@ export class RacksService {
       label: updatedRack.label,
       color: updatedRack.color,
       created_at: updatedRack.created_at,
-      updated_at: updatedRack.updated_at,
     };
   }
 

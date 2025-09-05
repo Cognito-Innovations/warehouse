@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PackageDocument } from './entities/package-document.entity';
-import { CreatePackageDocumentDto } from './dto/create-package-document.dto';
-import { PackageDocumentResponseDto } from './dto/package-document-response.dto';
+
+import { PackageDocument } from '../entities';
 import { PackageActionLogsService } from './package-action-logs.service';
-import { DocumentUploadService } from '../shared/document-upload.service';
+import { DocumentUploadService } from 'src/shared/document-upload.service';
+import { CreatePackageDocumentDto } from '../dto/create-package-document.dto';
+import { PackageDocumentResponseDto } from '../dto/package-document-response.dto';
+
 
 @Injectable()
 export class PackageDocumentsService {
@@ -15,11 +17,11 @@ export class PackageDocumentsService {
     private readonly actionLogsService: PackageActionLogsService,
     private readonly documentUploadService: DocumentUploadService,
   ) {}
-  async uploadDocuments(packageId: string, files: any[]) {
+  async uploadDocuments(package_id: string, files: any[]) {
     // Use the generic document upload service
     const result = await this.documentUploadService.uploadDocuments(files, {
       entityType: 'package',
-      entityId: packageId,
+      entityId: package_id,
       category: 'action_required',
       isRequired: true,
       uploadedBy: 'c051bbaf-b3ab-4d7f-b5cc-6511ce5ea40e', // TODO: Get from auth context
@@ -29,7 +31,7 @@ export class PackageDocumentsService {
     for (const document of result.documents) {
       try {
         await this.actionLogsService.createActionLog({
-          package_id: packageId,
+          package_id: package_id,
           file_name: document.document_name,
           file_url: document.document_url,
           file_type: document.document_type,
@@ -47,11 +49,11 @@ export class PackageDocumentsService {
   }
 
   async createDocument(
-    packageId: string,
+    package_id: string,
     createDocumentDto: CreatePackageDocumentDto,
   ): Promise<PackageDocumentResponseDto> {
     const packageDocument = this.packageDocumentRepository.create({
-      package_id: packageId,
+      package_id: package_id,
       document_name: createDocumentDto.name,
       original_filename: createDocumentDto.name,
       document_url: createDocumentDto.url,
@@ -86,11 +88,11 @@ export class PackageDocumentsService {
   }
 
   async deleteDocument(
-    packageId: string,
+    package_id: string,
     documentId: string,
   ): Promise<{ success: boolean }> {
     const packageDocument = await this.packageDocumentRepository.findOne({
-      where: { id: documentId, package_id: packageId },
+      where: { id: documentId, package_id: package_id },
     });
 
     if (!packageDocument) {
@@ -102,9 +104,9 @@ export class PackageDocumentsService {
     return { success: true };
   }
 
-  async getDocuments(packageId: string): Promise<PackageDocumentResponseDto[]> {
+  async getDocuments(package_id: string): Promise<PackageDocumentResponseDto[]> {
     const documents = await this.packageDocumentRepository.find({
-      where: { package_id: packageId },
+      where: { package_id: package_id },
       order: { created_at: 'DESC' },
     });
 

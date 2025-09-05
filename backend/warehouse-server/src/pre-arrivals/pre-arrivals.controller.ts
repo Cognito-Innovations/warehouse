@@ -1,9 +1,11 @@
 import { PreArrivalService } from './pre-arrivals.service';
-import { Body, Controller, Get, Post, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param, Patch, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreatePreArrivalDto } from './dto/create-pre-arrival.dto';
 import { PreArrivalResponseDto } from './dto/pre-arrival-response.dto';
 
 @Controller('pre-arrival')
+@UseGuards(JwtAuthGuard)
 export class PreArrivaController {
   constructor(private readonly preArrivalService: PreArrivalService) {}
 

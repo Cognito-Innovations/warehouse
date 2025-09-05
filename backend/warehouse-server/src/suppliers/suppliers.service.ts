@@ -27,7 +27,6 @@ export class SuppliersService {
       country: savedSupplier.country,
       supplier_name: savedSupplier.supplier_name,
       created_at: savedSupplier.created_at,
-      updated_at: savedSupplier.updated_at,
     };
   }
 
@@ -41,7 +40,6 @@ export class SuppliersService {
       country: supplier.country,
       supplier_name: supplier.supplier_name,
       created_at: supplier.created_at,
-      updated_at: supplier.updated_at,
     }));
   }
 }

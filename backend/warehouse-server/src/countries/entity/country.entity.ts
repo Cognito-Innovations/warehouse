@@ -12,7 +12,7 @@ export class Country {
   id: string;
 
   @Column({ unique: true })
-  name: string;
+  country: string;
 
   @CreateDateColumn()
   created_at: Date;

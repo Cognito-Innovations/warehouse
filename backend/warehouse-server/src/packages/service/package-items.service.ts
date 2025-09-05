@@ -1,13 +1,12 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PackageItem } from './entities/package-item.entity';
-import { CreatePackageItemDto } from './dto/create-package-item.dto';
-import { UpdatePackageItemDto } from './dto/update-package-item.dto';
-import { PackageItemResponseDto } from './dto/package-item-response.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import {Injectable, NotFoundException } from '@nestjs/common';
+
+import { PackageItem } from '../entities';
+import { CreatePackageItemDto } from '../dto/create-package-item.dto';
+import { UpdatePackageItemDto } from '../dto/update-package-item.dto';
+import { PackageItemResponseDto } from '../dto/package-item-response.dto';
+
 
 @Injectable()
 export class PackageItemsService {
@@ -16,13 +15,13 @@ export class PackageItemsService {
     private readonly packageItemRepository: Repository<PackageItem>,
   ) {}
   async createItem(
-    packageId: string,
+    package_id: string,
     createItemDto: CreatePackageItemDto,
   ): Promise<PackageItemResponseDto> {
-    // For now, we'll assume the packageId is valid and proceed
+    // For now, we'll assume the package_id is valid and proceed
     // In a real implementation, you'd verify the package exists first
     const packageItem = this.packageItemRepository.create({
-      package_id: packageId,
+      package_id: package_id,
       name: createItemDto.name,
       quantity: createItemDto.quantity,
       unit_price: createItemDto.unit_price,
@@ -44,12 +43,12 @@ export class PackageItemsService {
   }
 
   async updateItem(
-    packageId: string,
+    package_id: string,
     itemId: string,
     updateItemDto: UpdatePackageItemDto,
   ): Promise<PackageItemResponseDto> {
     const packageItem = await this.packageItemRepository.findOne({
-      where: { id: itemId, package_id: packageId },
+      where: { id: itemId, package_id: package_id },
     });
 
     if (!packageItem) {
@@ -76,11 +75,11 @@ export class PackageItemsService {
   }
 
   async deleteItem(
-    packageId: string,
+    package_id: string,
     itemId: string,
   ): Promise<{ success: boolean }> {
     const packageItem = await this.packageItemRepository.findOne({
-      where: { id: itemId, package_id: packageId },
+      where: { id: itemId, package_id: package_id },
     });
 
     if (!packageItem) {
@@ -93,12 +92,12 @@ export class PackageItemsService {
   }
 
   async bulkUpload(
-    packageId: string,
+    package_id: string,
     items: CreatePackageItemDto[],
   ): Promise<{ items: PackageItemResponseDto[] }> {
     const packageItems = items.map((item) =>
       this.packageItemRepository.create({
-        package_id: packageId,
+        package_id: package_id,
         name: item.name,
         quantity: item.quantity,
         unit_price: item.unit_price,
@@ -122,9 +121,9 @@ export class PackageItemsService {
     };
   }
 
-  async getItems(packageId: string): Promise<PackageItemResponseDto[]> {
+  async getItems(package_id: string): Promise<PackageItemResponseDto[]> {
     const items = await this.packageItemRepository.find({
-      where: { package_id: packageId },
+      where: { package_id: package_id },
       order: { created_at: 'DESC' },
     });
 

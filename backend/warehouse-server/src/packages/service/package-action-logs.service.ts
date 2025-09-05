@@ -4,9 +4,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PackageActionLog } from './entities/package-action-log.entity';
-import { CreatePackageActionLogDto } from './dto/create-package-action-log.dto';
-import { PackageActionLogResponseDto } from './dto/package-action-log-response.dto';
+
+import { PackageActionLog } from '../entities';
+import { CreatePackageActionLogDto } from '../dto/create-package-action-log.dto';
+import { PackageActionLogResponseDto } from '../dto/package-action-log-response.dto';
+
 
 @Injectable()
 export class PackageActionLogsService {
@@ -83,12 +85,12 @@ export class PackageActionLogsService {
   }
 
   async getActionLogs(
-    packageId: string,
+    package_id: string,
   ): Promise<PackageActionLogResponseDto[]> {
     // First verify package exists - we'll need to inject Package repository for this
-    // For now, we'll assume the packageId is valid and proceed
+    // For now, we'll assume the package_id is valid and proceed
     const actionLogs = await this.actionLogRepository.find({
-      where: { package_id: packageId },
+      where: { package_id: package_id },
       order: { uploaded_at: 'DESC' },
     });
 

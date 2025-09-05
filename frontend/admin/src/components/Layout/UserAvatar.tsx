@@ -18,6 +18,9 @@ import {
   Logout as LogoutIcon,
   AccountCircle as AccountIcon
 } from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface UserAvatarProps {
   userName?: string;
@@ -25,11 +28,16 @@ interface UserAvatarProps {
 }
 
 const UserAvatar: React.FC<UserAvatarProps> = ({ 
-  userName = "User Name",
-  userEmail = "user@example.com"
+  userName,
+  userEmail
 }) => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const avatarRef = useRef<HTMLDivElement>(null);
+
+  const displayName = userName || user?.name || "User Name";
+  const displayEmail = userEmail || user?.email || "user@example.com";
 
   const handleAvatarClick = () => {
     setMenuOpen(!menuOpen);
@@ -39,10 +47,35 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     setMenuOpen(false);
   };
 
-  const handleMenuAction = (action: string) => {
-    console.log(`Action: ${action}`);
+  const handleMenuAction = async (action: string) => {
     setMenuOpen(false);
-    // Handle different actions here
+    
+    switch (action) {
+      case 'profile':
+        // Navigate to profile page
+        console.log('Navigate to profile');
+        break;
+      case 'account':
+        // Navigate to account settings
+        console.log('Navigate to account settings');
+        break;
+      case 'settings':
+        // Navigate to preferences
+        console.log('Navigate to preferences');
+        break;
+      case 'logout':
+        try {
+          await logout();
+          toast.success('Logged out successfully');
+          navigate('/login');
+        } catch (error) {
+          console.error('Logout error:', error);
+          toast.error('Failed to logout');
+        }
+        break;
+      default:
+        console.log(`Action: ${action}`);
+    }
   };
 
   return (
@@ -74,10 +107,10 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
                 </Avatar>
                 <Box>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                    {userName}
+                    {displayName}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {userEmail}
+                    {displayEmail}
                   </Typography>
                 </Box>
               </Box>
