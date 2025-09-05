@@ -14,6 +14,7 @@ import { PreArrivalsModule } from './pre-arrivals/pre-arrivals.module';
 import { ShoppingRequestsModule } from './shopping-requests/shopping-requests.module';
 import { ProductsModule } from './products/products.module';
 import { PickupRequestsModule } from './pickup-requests/pickup-requests.module';
+import { ShipmentExportModule } from './shipment-export/shipment-export.module';
 
 import { AppService } from './app.service';
 
@@ -34,6 +35,7 @@ import { AppController } from './app.controller';
     ShoppingRequestsModule,
     ProductsModule,
     PickupRequestsModule,
+    ShipmentExportModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,11 +1,10 @@
-
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Box } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { useState } from 'react';
 
 import Packages from './pages/Packages';
 import Dashboard from './pages/Dashboard';
@@ -27,8 +26,7 @@ import PackageDetail from './pages/PackageDetail';
 import { Toaster } from 'sonner';
 import PickupRequests from './pages/PickupRequests';
 import PickupRequestDetail from './pages/PickupRequestDetail';
-import ShipmentDetail from './pages/ShipmentDetail';
-
+import ViewShipmentExportPage from './pages/ViewShipmentExportPage';
 
 function App() {
   const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
@@ -61,8 +59,9 @@ function App() {
             {/* TODO: Move this prearrivals to a separate page */}
             <Route path="/packages/pre-arrivals" element={<PreArrivals />} />
             <Route path="/shipments" element={<Shipments />} />
-            <Route path="/shipments/:id" element={<ShipmentDetail />} />
+            {/* <Route path="/shipments/:id" element={<ShipmentDetail />} /> */}
             <Route path="/shipments/export" element={<ShipmentExport />} />
+            <Route path="/shipment/export/:id" element={<ViewShipmentExportPage />} />
             <Route path="/requests" element={<ShoppingRequests />} />
             <Route path="/requests/:id" element={<ShoppingRequestDetail />} />
             <Route path="/pickups" element={<PickupRequests />} />

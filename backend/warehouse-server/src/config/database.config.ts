@@ -13,6 +13,8 @@ import { PackageItem } from '../packages/entities/package-item.entity';
 import { PackageDocument } from '../packages/entities/package-document.entity';
 import { PackageMeasurement } from '../packages/entities/package-measurement.entity';
 import { PackageCharge } from '../packages/entities/package-charge.entity';
+import { ShipmentExport } from 'src/shipment-export/shipment-export.entity';
+import { ShipmentExportBox } from 'src/shipment-export/shipment-export-box.entity';
 import {
   UserDocument,
   RackDocument,
@@ -51,6 +53,8 @@ export const databaseConfig: TypeOrmModuleOptions = {
     // PreArrivalDocument,
     // PickupRequestDocument,
     ShoppingRequestDocument,
+    ShipmentExport,
+    ShipmentExportBox
   ],
   synchronize: process.env.NODE_ENV !== 'production', // Only in development
   logging: process.env.NODE_ENV === 'development',
