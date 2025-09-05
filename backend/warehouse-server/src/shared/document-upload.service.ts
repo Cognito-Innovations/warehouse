@@ -3,7 +3,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CloudinaryService } from './cloudinary.service';
-import { Package } from '../packages/package.entity';
+import { Package } from '../packages/entities/package.entity';
 import {
   UserDocument,
   RackDocument,
@@ -16,8 +16,7 @@ import { PackageDocument } from '../packages/entities/package-document.entity';
 import {
   DocumentUploadOptions,
   DocumentMetadataDto,
-  DocumentUploadResponseDto,
-  DocumentDeleteResponseDto,
+  DocumentMetadata,
 } from './dto';
 
 // Re-export types from DTOs for backward compatibility
@@ -172,7 +171,9 @@ export class DocumentUploadService {
           category: savedDocument.category,
           is_required: savedDocument.is_required,
           uploaded_by: savedDocument.uploaded_by,
-          uploaded_at: savedDocument.created_at.toISOString(),
+          uploaded_at: savedDocument.created_at,
+          created_at: savedDocument.created_at,
+          updated_at: savedDocument.updated_at,
         };
 
         documents.push(documentMetadata);
@@ -192,7 +193,7 @@ export class DocumentUploadService {
   async getDocuments(
     entityType: string,
     entityId: string,
-  ): Promise<DocumentMetadata[]> {
+  ): Promise<any[]> {
     // For now, only support package documents
     if (entityType !== 'package') {
       throw new BadRequestException(

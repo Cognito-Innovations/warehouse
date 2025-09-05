@@ -19,13 +19,6 @@ import { PickupRequestsModule } from './pickup-requests/pickup-requests.module';
 import { ShipmentExportModule } from './shipment-export/shipment-export.module';
 
 import { AppService } from './app.service';
-import { PackageItemsService } from './packages/package-items.service';
-import { PackageDocumentsService } from './packages/package-documents.service';
-import { PackageActionLogsService } from './packages/package-action-logs.service';
-import { PreArrivalService } from './pre-arrivals/pre-arrivals.service';
-import { PickupRequestsService } from './pickup-requests/pickup-requests.service';
-import { ShoppingRequestsService } from './shopping-requests/shopping-requests.service';
-import { ProductsService } from './products/products.service';
 
 import { AppController } from './app.controller';
 import { PackageItemsController } from './packages/controller/package-items.controller';

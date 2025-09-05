@@ -17,7 +17,7 @@ export class PackageDocument {
   @Column()
   package_id: string;
 
-  @ManyToOne('Package', (packageEntity) => packageEntity.documents)
+  @ManyToOne('Package', (packageEntity: any) => packageEntity.documents)
   @JoinColumn({ name: 'package_id' })
   package: any;
 

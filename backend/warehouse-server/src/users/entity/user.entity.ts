@@ -57,7 +57,6 @@ export class User {
   @Column({ nullable: true })
   country: string;
 
-  
   @CreateDateColumn()
   created_at: Date;
 

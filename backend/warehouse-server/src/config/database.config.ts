@@ -1,18 +1,15 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 import { Rack } from '../racks/rack.entity';
-import { User } from '../users/entity/user.entity';
+import { User } from '../users/user.entity';
 import { Product } from '../products/product.entity';
 import { Supplier } from '../suppliers/supplier.entity';
-import { User } from '../users/user.entity';
 // import { Package } from '../packages/package.entity';
 import { PreArrival } from '../pre-arrivals/pre-arrival.entity';
 import { PackageItem } from '../packages/entities/package-item.entity';
 import { PickupRequest } from '../pickup-requests/pickup-request.entity';
-import { PackageDocument } from '../packages/entities/package-document.entity';
 import { ShoppingRequest } from '../shopping-requests/shopping-request.entity';
 import { PackageActionLog } from '../packages/entities/package-action-log.entity';
-import { PackageItem } from '../packages/entities/package-item.entity';
 import { PackageDocument } from '../packages/entities/package-document.entity';
 import { PackageMeasurement } from '../packages/entities/package-measurement.entity';
 import { PackageCharge } from '../packages/entities/package-charge.entity';

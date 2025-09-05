@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DocumentUploadService } from './document-upload.service';
 import { DocumentUploadController } from './document-upload.controller';
 import { CloudinaryService } from './cloudinary.service';
-import { Package } from '../packages/package.entity';
+import { Package } from '../packages/entities/package.entity';
 import { PackageDocument } from '../packages/entities/package-document.entity';
 import {
   UserDocument,
@@ -26,9 +26,6 @@ import {
       PickupRequestDocument,
       ShoppingRequestDocument,
     ]),
-  ],
-  imports: [
-    TypeOrmModule.forFeature([PackageDocument, Package]),
   ],
   controllers: [DocumentUploadController],
   providers: [DocumentUploadService, CloudinaryService],
