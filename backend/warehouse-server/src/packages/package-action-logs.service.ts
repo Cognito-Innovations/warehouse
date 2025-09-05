@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PackageActionLog } from './entities/package-action-log.entity';
@@ -54,7 +51,9 @@ export class PackageActionLogsService {
     });
 
     if (!actionLog) {
-      throw new NotFoundException(`Action log with id ${actionLogId} not found`);
+      throw new NotFoundException(
+        `Action log with id ${actionLogId} not found`,
+      );
     }
 
     actionLog.is_completed = true;
@@ -117,7 +116,9 @@ export class PackageActionLogsService {
     });
 
     if (!actionLog) {
-      throw new NotFoundException(`Action log with id ${actionLogId} not found`);
+      throw new NotFoundException(
+        `Action log with id ${actionLogId} not found`,
+      );
     }
 
     await this.actionLogRepository.softDelete(actionLogId);

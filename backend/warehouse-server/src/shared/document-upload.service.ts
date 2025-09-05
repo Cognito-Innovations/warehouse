@@ -159,7 +159,8 @@ export class DocumentUploadService {
         documents.push(document as DocumentMetadataDto);
       } catch (error) {
         console.error(`Error processing file ${file.originalname}:`, error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new BadRequestException(
           `Failed to upload ${file.originalname}: ${errorMessage}`,
         );
