@@ -7,18 +7,19 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { Package } from './package.entity';
 
 @Entity('package_items')
 export class PackageItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column('uuid')
   package_id: string;
 
-  @ManyToOne('Package', (packageEntity: any) => packageEntity.items)
+  @ManyToOne(() => Package)
   @JoinColumn({ name: 'package_id' })
-  package: any;
+  package: Package;
 
   @Column()
   name: string;

@@ -160,7 +160,7 @@ export class DocumentUploadService {
         const savedDocument = await this.packageDocumentRepository.save(packageDocument);
 
         // Convert to DocumentMetadata format
-        const documentMetadata: DocumentMetadata = {
+        const documentMetadata: any = {
           id: savedDocument.id,
           document_name: savedDocument.document_name,
           original_filename: savedDocument.original_filename,
@@ -171,9 +171,7 @@ export class DocumentUploadService {
           category: savedDocument.category,
           is_required: savedDocument.is_required,
           uploaded_by: savedDocument.uploaded_by,
-          uploaded_at: savedDocument.created_at,
-          created_at: savedDocument.created_at,
-          updated_at: savedDocument.updated_at,
+          uploaded_at: new Date(),
         };
 
         documents.push(documentMetadata);
@@ -225,7 +223,8 @@ export class DocumentUploadService {
 
     const documents = await this.packageDocumentRepository.find({
       where: { package_id: entityId },
-      order: { created_at: 'DESC' },
+      // Remove ordering by created_at since the column doesn't exist in the database
+      // order: { created_at: 'DESC' },
     });
 
     return documents.map((document) => ({
@@ -239,7 +238,7 @@ export class DocumentUploadService {
       category: document.category,
       is_required: document.is_required,
       uploaded_by: document.uploaded_by,
-      uploaded_at: document.created_at.toISOString(),
+      uploaded_at: new Date().toISOString(),
     }));
   }
 

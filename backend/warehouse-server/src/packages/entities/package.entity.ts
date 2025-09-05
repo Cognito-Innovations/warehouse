@@ -9,7 +9,7 @@ import {
   DeleteDateColumn,
   JoinColumn,
 } from 'typeorm';
-import { User } from '../../users/entity/user.entity';
+import { User } from '../../users/user.entity';
 import { Country } from '../../countries/entity/country.entity';
 import { Rack } from '../../racks/rack.entity';
 import { Supplier } from '../../suppliers/supplier.entity';
@@ -105,16 +105,16 @@ export class Package {
   @DeleteDateColumn()
   deleted_at: Date;
 
-  @OneToMany(() => PackageItem, (item) => item.package_id)
+  @OneToMany(() => PackageItem, (item) => item.package)
   items: PackageItem[];
 
-  @OneToMany(() => PackageMeasurement, (measurement) => measurement.packageId)
+  @OneToMany(() => PackageMeasurement, (measurement) => measurement.package)
   measurements: PackageMeasurement[];
 
   @OneToMany(() => PackageCharge, (charge) => charge.package_id)
   charges: PackageCharge[];
 
-  @OneToMany(() => PackageDocument, (document) => document.package_id)
+  @OneToMany(() => PackageDocument, (document) => document.package)
   documents: PackageDocument[];
 
   @OneToMany(() => PackageActionLog, (actionLog) => actionLog.package_id)

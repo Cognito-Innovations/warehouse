@@ -48,7 +48,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   };
 
   const handleInfoClick = (packageData: any) => { 
-    navigate(`/packages/${packageData.package_id}`);
+    navigate(`/packages/${packageData.id}`);
   };
 
   const fetchPackages = async () => {

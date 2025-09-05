@@ -38,9 +38,6 @@ export class PackageActionLogsService {
       completed_at: savedActionLog.completed_at,
       completed_by: savedActionLog.completed_by,
       uploaded_at: savedActionLog.uploaded_at,
-      created_at: savedActionLog.created_at,
-      updated_at: savedActionLog.updated_at,
-      deleted_at: savedActionLog.deleted_at,
     };
   }
 
@@ -77,9 +74,6 @@ export class PackageActionLogsService {
       completed_at: updatedActionLog.completed_at,
       completed_by: updatedActionLog.completed_by,
       uploaded_at: updatedActionLog.uploaded_at,
-      created_at: updatedActionLog.created_at,
-      updated_at: updatedActionLog.updated_at,
-      deleted_at: updatedActionLog.deleted_at,
     };
   }
 
@@ -106,9 +100,6 @@ export class PackageActionLogsService {
       completed_at: log.completed_at,
       completed_by: log.completed_by,
       uploaded_at: log.uploaded_at,
-      created_at: log.created_at,
-      updated_at: log.updated_at,
-      deleted_at: log.deleted_at,
     }));
   }
 

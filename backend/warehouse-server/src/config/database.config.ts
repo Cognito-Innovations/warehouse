@@ -1,10 +1,11 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
+import { Country } from '../countries/entity/country.entity';
 import { Rack } from '../racks/rack.entity';
 import { User } from '../users/user.entity';
 import { Product } from '../products/product.entity';
 import { Supplier } from '../suppliers/supplier.entity';
-// import { Package } from '../packages/package.entity';
+import { Package } from '../packages/entities/package.entity';
 import { PreArrival } from '../pre-arrivals/pre-arrival.entity';
 import { PackageItem } from '../packages/entities/package-item.entity';
 import { PickupRequest } from '../pickup-requests/pickup-request.entity';
@@ -33,25 +34,25 @@ export const databaseConfig: TypeOrmModuleOptions = {
   password: process.env.DB_PASSWORD || 'password',
   database: process.env.DB_NAME || 'warehouse',
   entities: [
-    // Country,
-    // Rack,
-    // Supplier,
+    Country,
+    Rack,
+    Supplier,
     User,
-    // Package,
-    // PreArrival,
+    Package,
+    PreArrival,
     ShoppingRequest,
     Product,
-    // PickupRequest,
-    // PackageActionLog,
-    // PackageItem,
-    // PackageDocument,
-    // PackageMeasurement,
-    // PackageCharge,
+    PickupRequest,
+    PackageActionLog,
+    PackageItem,
+    PackageDocument,
+    PackageMeasurement,
+    PackageCharge,
     UserDocument,
-    // RackDocument,
-    // SupplierDocument,
-    // PreArrivalDocument,
-    // PickupRequestDocument,
+    RackDocument,
+    SupplierDocument,
+    PreArrivalDocument,
+    PickupRequestDocument,
     ShoppingRequestDocument,
     ShipmentExport,
     ShipmentExportBox
