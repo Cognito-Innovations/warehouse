@@ -6,6 +6,7 @@ export class ProductResponseDto {
   unit_price?: number;
   quantity: number;
   url?: string;
+  available?: boolean;
   created_at: Date;
   updated_at: Date;
 }

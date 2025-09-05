@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Card,
   Table,
@@ -8,19 +8,33 @@ import {
   TableCell,
   TablePagination,
 } from '@mui/material';
-import { shipmentExports } from '../../data/shipmentExports';
 import ShipmentExportFilters from './ShipmentExportFilters';
 import ShipmentExportTableBody from './ShipmentExportTableBody';
 import dayjs, { Dayjs } from 'dayjs';
+import { getShipmentExports } from '../../services/api.services';
 
-interface ShipmentExportTableProps {
-  onViewShipment: (id: string) => void;
-}
-
-const ShipmentExportTable: React.FC<ShipmentExportTableProps> = ({ onViewShipment }) => {
+const ShipmentExportTable: React.FC = () => {
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+
+  const fetchExports = async () => {
+    setLoading(true);
+    try {
+      const data = await getShipmentExports();
+      setRows(data);
+    } catch (err) {
+      console.error('Failed to fetch shipment exports:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExports();
+  }, []);
 
   const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
   
@@ -30,10 +44,10 @@ const ShipmentExportTable: React.FC<ShipmentExportTableProps> = ({ onViewShipmen
   };
 
   const filteredRows = selectedDate
-    ? shipmentExports.filter((row) =>
+    ? rows.filter((row) =>
         dayjs(row.date).format('YYYY-MM-DD') === selectedDate.format('YYYY-MM-DD')
       )
-    : shipmentExports;
+    : rows;
 
   const visibleRows = filteredRows.slice(
     page * rowsPerPage,
@@ -42,7 +56,7 @@ const ShipmentExportTable: React.FC<ShipmentExportTableProps> = ({ onViewShipmen
 
   return (
     <>
-      <ShipmentExportFilters selectedDate={selectedDate} onDateChange={setSelectedDate} />
+      <ShipmentExportFilters selectedDate={selectedDate} onDateChange={setSelectedDate} onUpdate={fetchExports} />
       <Card>
         <TableContainer>
           <Table>
@@ -54,16 +68,15 @@ const ShipmentExportTable: React.FC<ShipmentExportTableProps> = ({ onViewShipmen
                 <TableCell>Count</TableCell>
                 <TableCell>Created By</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
-            <ShipmentExportTableBody rows={visibleRows} onViewShipment={onViewShipment} />
+            <ShipmentExportTableBody rows={visibleRows} loading={loading} onUpdate={fetchExports} />
           </Table>
         </TableContainer>
         <TablePagination
           rowsPerPageOptions={[15, 25, 50]}
           component="div"
-          count={shipmentExports.length}
+          count={filteredRows.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

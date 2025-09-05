@@ -29,6 +29,9 @@ export class Product {
   @Column({ type: 'text', nullable: true })
   url: string;
 
+  @Column({ type: 'boolean', nullable: true })
+  available: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 

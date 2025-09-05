@@ -1,13 +1,14 @@
-import { Box, TableCell, TableRow, Checkbox, Link, Typography, TextField, Button } from '@mui/material';
+import { Box, TableCell, TableRow, Checkbox, Link, Typography, TextField, Button, Chip } from '@mui/material';
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import { useEffect, useState } from 'react';
 import DropdownMenu from '../../common/DropdownMenu';
 import Modal from '../../common/Modal';
-import { updateProductUnitPrice } from '../../../services/api.services'
+import { updateProduct } from '../../../services/api.services'
 
 const ItemsTableRow = ({ item, index }: { item: any, index: number }) => {
   const [open, setOpen] = useState(false);
   const [unitPrice, setUnitPrice] = useState(item.unit_price || 0);
+  const [available, setAvailable] = useState(item.available || false);
 
   useEffect(() => {
     if (item.unit_price) {
@@ -19,7 +20,7 @@ const ItemsTableRow = ({ item, index }: { item: any, index: number }) => {
 
   const handleSave = async () => {
     try {
-      await updateProductUnitPrice(item.id, unitPrice);
+      await updateProduct(item.id, unitPrice, available);
       setOpen(false);
     } catch (err) {
       console.error("Failed to update unit price:", err);
@@ -50,7 +51,17 @@ const ItemsTableRow = ({ item, index }: { item: any, index: number }) => {
         <Typography variant="body2">{item.color || item.size}</Typography>
         <Typography variant="caption" color="text.secondary">{item.details}</Typography>
       </TableCell>
-      <TableCell>{item.available}</TableCell>
+      <TableCell>
+        {item.available ? (
+          <Chip
+            label="YES"
+            size="small"
+            sx={{ backgroundColor: "#d4edda", color: "#155724", fontWeight: 500 }}
+          />
+        ) : (
+          "-"
+        )}
+      </TableCell>
       <TableCell>{item.status}</TableCell>
       <TableCell>{item.quantity}</TableCell>
       <TableCell>${unitPrice.toFixed(2)}</TableCell>
@@ -68,7 +79,7 @@ const ItemsTableRow = ({ item, index }: { item: any, index: number }) => {
       </TableCell>
     </TableRow>
 
-     <Modal open={open} onClose={() => setOpen(false)} title="Edit Unit Price">
+     <Modal open={open} onClose={() => setOpen(false)} title="Update Item/Link">
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField
           label="Unit Price"
@@ -78,6 +89,16 @@ const ItemsTableRow = ({ item, index }: { item: any, index: number }) => {
           fullWidth
           size="small"
         />
+        <Typography variant="caption" color="text.secondary">
+          Unit price in dollar($)
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Checkbox
+            checked={available}
+            onChange={(e) => setAvailable(e.target.checked)}
+          />
+          <Typography>Available?</Typography>
+        </Box>
         <Button variant="contained" size="small" onClick={handleSave}>
           Save
         </Button>

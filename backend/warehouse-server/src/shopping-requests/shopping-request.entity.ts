@@ -4,23 +4,27 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { User } from 'src/users/user.entity';
 
 @Entity('shopping_requests')
 export class ShoppingRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  //TODO: Remove nullable
-  @Column({ nullable: true })
+  @Column()
   user_id: string;
 
-  //TODO: add unique and remove nullable
-  @Column({ nullable: true })
+  @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
+  @Column({ unique: true })
   request_code: string;
 
-  //TODO: Remove nullable
-  @Column({ nullable: true })
+  @Column()
   country: string;
 
   @Column({ default: 0 })

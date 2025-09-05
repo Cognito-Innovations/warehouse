@@ -35,9 +35,9 @@ export class ProductsService {
     };
   }
 
-  async updateUnitPrice(
+  async updateProduct(
     id: string,
-    unitPrice: number,
+    updates: { unit_price?: number; available?: boolean },
   ): Promise<ProductResponseDto> {
     const product = await this.productRepository.findOne({ where: { id } });
 
@@ -45,7 +45,13 @@ export class ProductsService {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
 
-    product.unit_price = unitPrice;
+     if (updates.unit_price !== undefined) {
+      product.unit_price = updates.unit_price;
+    }
+    if (updates.available !== undefined) {
+      product.available = updates.available;
+    }
+
     const updatedProduct = await this.productRepository.save(product);
 
     return {
@@ -56,6 +62,7 @@ export class ProductsService {
       unit_price: updatedProduct.unit_price,
       quantity: updatedProduct.quantity,
       url: updatedProduct.url,
+      available: updatedProduct.available,
       created_at: updatedProduct.created_at,
       updated_at: updatedProduct.updated_at,
     };

@@ -14,11 +14,11 @@ export class ProductsController {
     return this.service.createProduct(createProductDto);
   }
 
-  @Patch(':id/unit-price')
-  async updateUnitPrice(
+  @Patch(':id')
+  async updateProduct(
     @Param('id') id: string,
-    @Body('unit_price') unitPrice: number,
+    @Body() body: { unit_price?: number; available?: boolean },
   ): Promise<ProductResponseDto> {
-    return this.service.updateUnitPrice(id, unitPrice);
+    return this.service.updateProduct(id, body);
   }
 }
