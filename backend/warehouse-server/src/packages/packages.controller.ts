@@ -27,8 +27,12 @@ export class PackagesController {
   @Patch(':id/status')
   async updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: string; updated_by: string }
+    @Body() body: { status: string; updated_by: string },
   ): Promise<PackageResponseDto> {
-    return this.packagesService.updatePackageStatus(id, body.status, body.updated_by);
+    return this.packagesService.updatePackageStatus(
+      id,
+      body.status,
+      body.updated_by,
+    );
   }
 }

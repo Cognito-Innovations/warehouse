@@ -8,12 +8,16 @@ export class CountriesController {
   constructor(private readonly countriesService: CountriesService) {}
 
   @Post()
-  async create(@Body() createCountryDto: CreateCountryDto): Promise<CountryResponseDto> {
+  async create(
+    @Body() createCountryDto: CreateCountryDto,
+  ): Promise<CountryResponseDto> {
     return this.countriesService.createCountry(createCountryDto);
   }
 
   @Post('bulk')
-  async createBulk(@Body() body: { countries: string[] }): Promise<CountryResponseDto[]> {
+  async createBulk(
+    @Body() body: { countries: string[] },
+  ): Promise<CountryResponseDto[]> {
     return this.countriesService.createCountriesBulk(body.countries);
   }
 

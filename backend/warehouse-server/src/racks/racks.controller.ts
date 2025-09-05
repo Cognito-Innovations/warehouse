@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { RacksService } from './racks.service';
 import { CreateRackDto } from './dto/create-rack.dto';
 import { RackResponseDto } from './dto/rack-response.dto';
@@ -20,7 +28,7 @@ export class RacksController {
   @Put(':id')
   async update(
     @Param('id') id: string,
-    @Body() updateData: Partial<CreateRackDto>
+    @Body() updateData: Partial<CreateRackDto>,
   ): Promise<RackResponseDto> {
     return this.racksService.updateRack(id, updateData);
   }

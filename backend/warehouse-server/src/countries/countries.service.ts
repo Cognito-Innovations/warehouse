@@ -12,13 +12,15 @@ export class CountriesService {
     private readonly countryRepository: Repository<Country>,
   ) {}
 
-  async createCountry(createCountryDto: CreateCountryDto): Promise<CountryResponseDto> {
+  async createCountry(
+    createCountryDto: CreateCountryDto,
+  ): Promise<CountryResponseDto> {
     const country = this.countryRepository.create({
       name: createCountryDto.name,
     });
 
     const savedCountry = await this.countryRepository.save(country);
-    
+
     return {
       id: savedCountry.id,
       name: savedCountry.name,
@@ -27,14 +29,16 @@ export class CountriesService {
     };
   }
 
-  async createCountriesBulk(countries: string[]): Promise<CountryResponseDto[]> {
-    const countryEntities = countries.map(name => 
-      this.countryRepository.create({ name })
+  async createCountriesBulk(
+    countries: string[],
+  ): Promise<CountryResponseDto[]> {
+    const countryEntities = countries.map((name) =>
+      this.countryRepository.create({ name }),
     );
-    
+
     const savedCountries = await this.countryRepository.save(countryEntities);
-    
-    return savedCountries.map(country => ({
+
+    return savedCountries.map((country) => ({
       id: country.id,
       name: country.name,
       created_at: country.created_at,
@@ -46,8 +50,8 @@ export class CountriesService {
     const countries = await this.countryRepository.find({
       order: { name: 'ASC' },
     });
-    
-    return countries.map(country => ({
+
+    return countries.map((country) => ({
       id: country.id,
       name: country.name,
       created_at: country.created_at,

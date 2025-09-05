@@ -9,6 +9,10 @@ import { CountriesModule } from './countries/countries.module';
 import { RacksModule } from './racks/racks.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { PackagesModule } from './packages/packages.module';
+import { PreArrivalsModule } from './pre-arrivals/pre-arrivals.module';
+import { ShoppingRequestsModule } from './shopping-requests/shopping-requests.module';
+import { ProductsModule } from './products/products.module';
+import { PickupRequestsModule } from './pickup-requests/pickup-requests.module';
 
 import { AppService } from './app.service';
 import { PackageItemsService } from './packages/package-items.service';
@@ -37,6 +41,10 @@ import { ProductsController } from './products/products.controller';
     RacksModule,
     SuppliersModule,
     PackagesModule,
+    PreArrivalsModule,
+    ShoppingRequestsModule,
+    ProductsModule,
+    PickupRequestsModule,
   ],
   controllers: [
     AppController,

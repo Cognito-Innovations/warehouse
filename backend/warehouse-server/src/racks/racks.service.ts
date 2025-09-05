@@ -19,7 +19,7 @@ export class RacksService {
     });
 
     const savedRack = await this.rackRepository.save(rack);
-    
+
     return {
       id: savedRack.id,
       label: savedRack.label,
@@ -33,8 +33,8 @@ export class RacksService {
     const racks = await this.rackRepository.find({
       order: { label: 'ASC' },
     });
-    
-    return racks.map(rack => ({
+
+    return racks.map((rack) => ({
       id: rack.id,
       label: rack.label,
       color: rack.color,
@@ -43,14 +43,17 @@ export class RacksService {
     }));
   }
 
-  async updateRack(id: string, updateData: Partial<CreateRackDto>): Promise<RackResponseDto> {
+  async updateRack(
+    id: string,
+    updateData: Partial<CreateRackDto>,
+  ): Promise<RackResponseDto> {
     await this.rackRepository.update(id, updateData);
     const updatedRack = await this.rackRepository.findOne({ where: { id } });
-    
+
     if (!updatedRack) {
       throw new Error('Rack not found');
     }
-    
+
     return {
       id: updatedRack.id,
       label: updatedRack.label,
@@ -62,11 +65,11 @@ export class RacksService {
 
   async deleteRack(id: string): Promise<{ success: boolean }> {
     const result = await this.rackRepository.delete(id);
-    
+
     if (result.affected === 0) {
       throw new Error('Rack not found');
     }
-    
+
     return { success: true };
   }
 }

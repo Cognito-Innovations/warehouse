@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+} from 'typeorm';
 import { Package } from './package.entity';
 import { User } from './user.entity';
 
@@ -10,7 +18,7 @@ export class PackageCharge {
   @Column()
   package_id: string;
 
-  @ManyToOne(() => Package, package_ => package_.charges)
+  @ManyToOne(() => Package, (package_) => package_.charges)
   package: Package;
 
   @Column()

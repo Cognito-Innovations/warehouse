@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Package } from './package.entity';
@@ -12,10 +16,12 @@ export class PackagesService {
     private readonly packageRepository: Repository<Package>,
   ) {}
 
-  async createPackage(createPackageDto: CreatePackageDto): Promise<PackageResponseDto> {
+  async createPackage(
+    createPackageDto: CreatePackageDto,
+  ): Promise<PackageResponseDto> {
     // Generate custom package ID (will be stored in a separate field)
     const customPackageId = await this.generatePackageId();
-    
+
     // Create the package using TypeORM entity
     const packageEntity = this.packageRepository.create({
       customer: createPackageDto.customer,
@@ -47,8 +53,8 @@ export class PackagesService {
     const packages = await this.packageRepository.find({
       order: { created_at: 'DESC' },
     });
-    
-    return packages.map(pkg => ({
+
+    return packages.map((pkg) => ({
       id: pkg.id,
       customer: pkg.customer,
       rack_slot: pkg.rack_slot,
@@ -64,14 +70,19 @@ export class PackagesService {
 
   async getPackageById(id: string): Promise<PackageResponseDto> {
     // Check if the input is a UUID format
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
-    
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        id,
+      );
+
     let packageEntity: Package | null;
-    
+
     if (isUUID) {
       packageEntity = await this.packageRepository.findOne({ where: { id } });
     } else {
-      packageEntity = await this.packageRepository.findOne({ where: { custom_package_id: id } });
+      packageEntity = await this.packageRepository.findOne({
+        where: { custom_package_id: id },
+      });
     }
 
     if (!packageEntity) {
@@ -92,16 +103,25 @@ export class PackagesService {
     };
   }
 
-  async updatePackageStatus(id: string, status: string, updated_by: string): Promise<PackageResponseDto> {
+  async updatePackageStatus(
+    id: string,
+    status: string,
+    updated_by: string,
+  ): Promise<PackageResponseDto> {
     // Check if the input is a UUID format
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
-    
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        id,
+      );
+
     let packageEntity: Package | null;
-    
+
     if (isUUID) {
       packageEntity = await this.packageRepository.findOne({ where: { id } });
     } else {
-      packageEntity = await this.packageRepository.findOne({ where: { custom_package_id: id } });
+      packageEntity = await this.packageRepository.findOne({
+        where: { custom_package_id: id },
+      });
     }
 
     if (!packageEntity) {
@@ -131,17 +151,17 @@ export class PackagesService {
     const timestamp = Date.now().toString().slice(-8);
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     const packageId = `${prefix}${timestamp}${random}`;
-    
+
     // Check if this custom ID already exists
     const existingPackage = await this.packageRepository.findOne({
-      where: { custom_package_id: packageId }
+      where: { custom_package_id: packageId },
     });
-    
+
     if (existingPackage) {
       // If exists, generate a new one recursively
       return this.generatePackageId();
     }
-    
+
     return packageId;
   }
 

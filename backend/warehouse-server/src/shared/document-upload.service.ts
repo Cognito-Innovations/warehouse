@@ -3,7 +3,14 @@ import { supabase } from '../supabase/supabase.client';
 import { CloudinaryService } from './cloudinary.service';
 
 export interface DocumentUploadOptions {
-  entityType: 'package' | 'user' | 'rack' | 'supplier' | 'pre-arrival' | 'pickup-request' | 'shopping-request';
+  entityType:
+    | 'package'
+    | 'user'
+    | 'rack'
+    | 'supplier'
+    | 'pre-arrival'
+    | 'pickup-request'
+    | 'shopping-request';
   entityId: string;
   category?: string;
   isRequired?: boolean;
@@ -35,13 +42,13 @@ export class DocumentUploadService {
 
   private getTableName(entityType: string): string {
     const tableMap = {
-      'package': 'package_documents',
-      'user': 'user_documents',
-      'rack': 'rack_documents',
-      'supplier': 'supplier_documents',
+      package: 'package_documents',
+      user: 'user_documents',
+      rack: 'rack_documents',
+      supplier: 'supplier_documents',
       'pre-arrival': 'pre_arrival_documents',
       'pickup-request': 'pickup_request_documents',
-      'shopping-request': 'shopping_request_documents'
+      'shopping-request': 'shopping_request_documents',
     };
     return tableMap[entityType] || 'general_documents';
   }
@@ -50,16 +57,23 @@ export class DocumentUploadService {
     return `${entityType}_id`;
   }
 
-  async uploadDocuments(files: any[], options: DocumentUploadOptions): Promise<{ documents: DocumentMetadata[] }> {
-    const bucketName = options.bucketName || this.getBucketName(options.entityType);
+  async uploadDocuments(
+    files: any[],
+    options: DocumentUploadOptions,
+  ): Promise<{ documents: DocumentMetadata[] }> {
+    const bucketName =
+      options.bucketName || this.getBucketName(options.entityType);
     const tableName = this.getTableName(options.entityType);
     const entityIdField = this.getEntityIdField(options.entityType);
-    
+
     // For packages, we need to handle custom package IDs
     let actualEntityId = options.entityId;
     if (options.entityType === 'package') {
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(options.entityId);
-      
+      const isUUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          options.entityId,
+        );
+
       if (!isUUID) {
         // If it's a custom package ID, get the actual package ID first
         const { data: packageData, error: packageError } = await supabase
@@ -69,31 +83,45 @@ export class DocumentUploadService {
           .single();
 
         if (packageError || !packageData) {
-          throw new BadRequestException(`Package with id ${options.entityId} not found`);
+          throw new BadRequestException(
+            `Package with id ${options.entityId} not found`,
+          );
         }
-        
+
         actualEntityId = packageData.id;
       }
     }
-    
+
     const documents: DocumentMetadata[] = [];
-    
+
     for (const file of files) {
       try {
         // Validate file type
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+        const allowedTypes = [
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'application/pdf',
+        ];
         if (!allowedTypes.includes(file.mimetype)) {
-          throw new Error(`Invalid file type: ${file.mimetype}. Only images and PDFs are allowed.`);
+          throw new Error(
+            `Invalid file type: ${file.mimetype}. Only images and PDFs are allowed.`,
+          );
         }
 
         // Validate file size (10MB max as per your schema)
         if (file.size > 10 * 1024 * 1024) {
-          throw new Error(`File too large: ${file.originalname}. Maximum size is 10MB.`);
+          throw new Error(
+            `File too large: ${file.originalname}. Maximum size is 10MB.`,
+          );
         }
 
         // Upload file to Cloudinary
         const folder = `warehouse/${options.entityType}/${options.entityId}`;
-        const uploadResult = await this.cloudinaryService.uploadFile(file, folder);
+        const uploadResult = await this.cloudinaryService.uploadFile(
+          file,
+          folder,
+        );
 
         // Save document record to database
         const documentData = {
@@ -106,7 +134,7 @@ export class DocumentUploadService {
           mime_type: file.mimetype,
           category: options.category || 'general',
           is_required: options.isRequired || false,
-          uploaded_by: options.uploadedBy
+          uploaded_by: options.uploadedBy,
           // Note: We'll store the Cloudinary public_id in a separate field if needed
         };
 
@@ -117,27 +145,37 @@ export class DocumentUploadService {
           .single();
 
         if (documentError) {
-          throw new Error(`Failed to save document record: ${documentError.message}`);
+          throw new Error(
+            `Failed to save document record: ${documentError.message}`,
+          );
         }
 
         documents.push(document);
       } catch (error) {
         console.error(`Error processing file ${file.originalname}:`, error);
-        throw new BadRequestException(`Failed to upload ${file.originalname}: ${error.message}`);
+        throw new BadRequestException(
+          `Failed to upload ${file.originalname}: ${error.message}`,
+        );
       }
     }
 
     return { documents };
   }
 
-  async getDocuments(entityType: string, entityId: string): Promise<DocumentMetadata[]> {
+  async getDocuments(
+    entityType: string,
+    entityId: string,
+  ): Promise<DocumentMetadata[]> {
     const tableName = this.getTableName(entityType);
     const entityIdField = this.getEntityIdField(entityType);
 
     // For packages, we need to handle custom package IDs
     if (entityType === 'package') {
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(entityId);
-      
+      const isUUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          entityId,
+        );
+
       if (!isUUID) {
         // If it's a custom package ID, get the actual package ID first
         const { data: packageData, error: packageError } = await supabase
@@ -147,9 +185,11 @@ export class DocumentUploadService {
           .single();
 
         if (packageError || !packageData) {
-          throw new BadRequestException(`Package with id ${entityId} not found`);
+          throw new BadRequestException(
+            `Package with id ${entityId} not found`,
+          );
         }
-        
+
         entityId = packageData.id;
       }
     }
@@ -162,13 +202,19 @@ export class DocumentUploadService {
       .order('uploaded_at', { ascending: false });
 
     if (error) {
-      throw new BadRequestException(`Failed to get documents: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to get documents: ${error.message}`,
+      );
     }
 
     return data;
   }
 
-  async deleteDocument(entityType: string, entityId: string, documentId: string): Promise<{ success: boolean }> {
+  async deleteDocument(
+    entityType: string,
+    entityId: string,
+    documentId: string,
+  ): Promise<{ success: boolean }> {
     const tableName = this.getTableName(entityType);
     const entityIdField = this.getEntityIdField(entityType);
     const bucketName = this.getBucketName(entityType);
@@ -176,8 +222,11 @@ export class DocumentUploadService {
     // For packages, we need to handle custom package IDs
     let actualEntityId = entityId;
     if (entityType === 'package') {
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(entityId);
-      
+      const isUUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          entityId,
+        );
+
       if (!isUUID) {
         // If it's a custom package ID, get the actual package ID first
         const { data: packageData, error: packageError } = await supabase
@@ -187,9 +236,11 @@ export class DocumentUploadService {
           .single();
 
         if (packageError || !packageData) {
-          throw new BadRequestException(`Package with id ${entityId} not found`);
+          throw new BadRequestException(
+            `Package with id ${entityId} not found`,
+          );
         }
-        
+
         actualEntityId = packageData.id;
       }
     }
@@ -209,7 +260,9 @@ export class DocumentUploadService {
     // Delete file from Cloudinary using the URL
     if (document.document_url) {
       try {
-        const publicId = this.cloudinaryService.extractPublicId(document.document_url);
+        const publicId = this.cloudinaryService.extractPublicId(
+          document.document_url,
+        );
         await this.cloudinaryService.deleteFile(publicId);
       } catch (error) {
         console.error('Failed to delete file from Cloudinary:', error);
@@ -224,7 +277,9 @@ export class DocumentUploadService {
       .eq(entityIdField, actualEntityId);
 
     if (error) {
-      throw new BadRequestException(`Failed to delete document: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to delete document: ${error.message}`,
+      );
     }
 
     return { success: true };

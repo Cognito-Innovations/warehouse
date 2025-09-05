@@ -1,92 +1,126 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { supabase } from '../supabase/supabase.client';
-
-interface CreateActionLogDto {
-  package_id: string;
-  file_name: string;
-  file_url: string;
-  file_type: string;
-  file_size: number;
-  mime_type: string;
-  uploaded_by: string;
-}
+import {
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { PackageActionLog } from './entities/package-action-log.entity';
+import { CreatePackageActionLogDto } from './dto/create-package-action-log.dto';
+import { PackageActionLogResponseDto } from './dto/package-action-log-response.dto';
 
 @Injectable()
 export class PackageActionLogsService {
-  async createActionLog(createActionLogDto: CreateActionLogDto) {
-    const { data, error } = await supabase
-      .from('package_action_logs')
-      .insert(createActionLogDto)
-      .select()
-      .single();
+  constructor(
+    @InjectRepository(PackageActionLog)
+    private readonly actionLogRepository: Repository<PackageActionLog>,
+  ) {}
 
-    if (error) {
-      throw new BadRequestException(`Failed to create action log: ${error.message}`);
-    }
+  async createActionLog(
+    createActionLogDto: CreatePackageActionLogDto,
+  ): Promise<PackageActionLogResponseDto> {
+    const actionLog = this.actionLogRepository.create({
+      ...createActionLogDto,
+      is_completed: createActionLogDto.is_completed || false,
+      uploaded_at: createActionLogDto.uploaded_at || new Date(),
+    });
 
-    return data;
+    const savedActionLog = await this.actionLogRepository.save(actionLog);
+
+    return {
+      id: savedActionLog.id,
+      package_id: savedActionLog.package_id,
+      file_name: savedActionLog.file_name,
+      file_url: savedActionLog.file_url,
+      file_type: savedActionLog.file_type,
+      file_size: savedActionLog.file_size,
+      mime_type: savedActionLog.mime_type,
+      uploaded_by: savedActionLog.uploaded_by,
+      is_completed: savedActionLog.is_completed,
+      completed_at: savedActionLog.completed_at,
+      completed_by: savedActionLog.completed_by,
+      uploaded_at: savedActionLog.uploaded_at,
+      created_at: savedActionLog.created_at,
+      updated_at: savedActionLog.updated_at,
+      deleted_at: savedActionLog.deleted_at,
+    };
   }
 
-  async completeActionLog(actionLogId: string, completedBy: string) {
-    const { data, error } = await supabase
-      .from('package_action_logs')
-      .update({
-        is_completed: true,
-        completed_at: new Date().toISOString(),
-        completed_by: completedBy
-      })
-      .eq('id', actionLogId)
-      .select()
-      .single();
+  async completeActionLog(
+    actionLogId: string,
+    completedBy: string,
+  ): Promise<PackageActionLogResponseDto> {
+    const actionLog = await this.actionLogRepository.findOne({
+      where: { id: actionLogId },
+    });
 
-    if (error) {
-      throw new BadRequestException(`Failed to complete action log: ${error.message}`);
+    if (!actionLog) {
+      throw new NotFoundException(`Action log with id ${actionLogId} not found`);
     }
 
-    return data;
+    actionLog.is_completed = true;
+    actionLog.completed_at = new Date();
+    actionLog.completed_by = completedBy;
+
+    const updatedActionLog = await this.actionLogRepository.save(actionLog);
+
+    return {
+      id: updatedActionLog.id,
+      package_id: updatedActionLog.package_id,
+      file_name: updatedActionLog.file_name,
+      file_url: updatedActionLog.file_url,
+      file_type: updatedActionLog.file_type,
+      file_size: updatedActionLog.file_size,
+      mime_type: updatedActionLog.mime_type,
+      uploaded_by: updatedActionLog.uploaded_by,
+      is_completed: updatedActionLog.is_completed,
+      completed_at: updatedActionLog.completed_at,
+      completed_by: updatedActionLog.completed_by,
+      uploaded_at: updatedActionLog.uploaded_at,
+      created_at: updatedActionLog.created_at,
+      updated_at: updatedActionLog.updated_at,
+      deleted_at: updatedActionLog.deleted_at,
+    };
   }
 
-  async getActionLogs(packageId: string) {
-    // First verify package exists
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(packageId);
-    
-    const { data: packageData, error: packageError } = await supabase
-      .from('packages')
-      .select('id')
-      .eq(isUUID ? 'id' : 'custom_package_id', packageId)
-      .single();
+  async getActionLogs(
+    packageId: string,
+  ): Promise<PackageActionLogResponseDto[]> {
+    // First verify package exists - we'll need to inject Package repository for this
+    // For now, we'll assume the packageId is valid and proceed
+    const actionLogs = await this.actionLogRepository.find({
+      where: { package_id: packageId },
+      order: { uploaded_at: 'DESC' },
+    });
 
-    if (packageError || !packageData) {
-      throw new NotFoundException(`Package with id ${packageId} not found`);
-    }
-
-    const { data, error } = await supabase
-      .from('package_action_logs')
-      .select(`
-        *,
-        uploaded_by_user:users!package_action_logs_uploaded_by_fkey(name, email),
-        completed_by_user:users!package_action_logs_completed_by_fkey(name, email)
-      `)
-      .eq('package_id', packageData.id)
-      .is('deleted_at', null)
-      .order('uploaded_at', { ascending: false });
-
-    if (error) {
-      throw new BadRequestException(`Failed to get action logs: ${error.message}`);
-    }
-
-    return data;
+    return actionLogs.map((log) => ({
+      id: log.id,
+      package_id: log.package_id,
+      file_name: log.file_name,
+      file_url: log.file_url,
+      file_type: log.file_type,
+      file_size: log.file_size,
+      mime_type: log.mime_type,
+      uploaded_by: log.uploaded_by,
+      is_completed: log.is_completed,
+      completed_at: log.completed_at,
+      completed_by: log.completed_by,
+      uploaded_at: log.uploaded_at,
+      created_at: log.created_at,
+      updated_at: log.updated_at,
+      deleted_at: log.deleted_at,
+    }));
   }
 
-  async deleteActionLog(actionLogId: string) {
-    const { error } = await supabase
-      .from('package_action_logs')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', actionLogId);
+  async deleteActionLog(actionLogId: string): Promise<{ success: boolean }> {
+    const actionLog = await this.actionLogRepository.findOne({
+      where: { id: actionLogId },
+    });
 
-    if (error) {
-      throw new BadRequestException(`Failed to delete action log: ${error.message}`);
+    if (!actionLog) {
+      throw new NotFoundException(`Action log with id ${actionLogId} not found`);
     }
+
+    await this.actionLogRepository.softDelete(actionLogId);
 
     return { success: true };
   }

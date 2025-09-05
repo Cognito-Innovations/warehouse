@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 import { PackageItem } from './package-item.entity';
 import { PackageMeasurement } from './package-measurement.entity';
@@ -77,18 +86,18 @@ export class Package {
   @DeleteDateColumn()
   deleted_at: Date;
 
-  @OneToMany(() => PackageItem, item => item.package)
+  @OneToMany(() => PackageItem, (item) => item.package)
   items: PackageItem[];
 
-  @OneToMany(() => PackageMeasurement, measurement => measurement.package)
+  @OneToMany(() => PackageMeasurement, (measurement) => measurement.package)
   measurements: PackageMeasurement[];
 
-  @OneToMany(() => PackageCharge, charge => charge.package)
+  @OneToMany(() => PackageCharge, (charge) => charge.package)
   charges: PackageCharge[];
 
-  @OneToMany(() => PackageDocument, document => document.package)
+  @OneToMany(() => PackageDocument, (document) => document.package)
   documents: PackageDocument[];
 
-  @OneToMany(() => PackageActionLog, actionLog => actionLog.package)
+  @OneToMany(() => PackageActionLog, (actionLog) => actionLog.package)
   action_logs: PackageActionLog[];
 }

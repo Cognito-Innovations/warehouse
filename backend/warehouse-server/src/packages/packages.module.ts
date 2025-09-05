@@ -3,11 +3,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PackagesController } from './packages.controller';
 import { PackagesService } from './packages.service';
 import { Package } from './package.entity';
+import { PackageActionLog } from './entities/package-action-log.entity';
+import { PackageItem } from './entities/package-item.entity';
+import { PackageDocument } from './entities/package-document.entity';
+import { PackageActionLogsService } from './package-action-logs.service';
+import { PackageItemsService } from './package-items.service';
+import { PackageDocumentsService } from './package-documents.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Package])],
+  imports: [TypeOrmModule.forFeature([Package, PackageActionLog, PackageItem, PackageDocument])],
   controllers: [PackagesController],
-  providers: [PackagesService],
-  exports: [PackagesService],
+  providers: [PackagesService, PackageActionLogsService, PackageItemsService, PackageDocumentsService],
+  exports: [PackagesService, PackageActionLogsService, PackageItemsService, PackageDocumentsService],
 })
 export class PackagesModule {}

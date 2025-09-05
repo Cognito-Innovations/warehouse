@@ -12,14 +12,16 @@ export class SuppliersService {
     private readonly supplierRepository: Repository<Supplier>,
   ) {}
 
-  async createSupplier(createSupplierDto: CreateSupplierDto): Promise<SupplierResponseDto> {
+  async createSupplier(
+    createSupplierDto: CreateSupplierDto,
+  ): Promise<SupplierResponseDto> {
     const supplier = this.supplierRepository.create({
       country: createSupplierDto.country,
       supplier_name: createSupplierDto.supplier_name,
     });
 
     const savedSupplier = await this.supplierRepository.save(supplier);
-    
+
     return {
       id: savedSupplier.id,
       country: savedSupplier.country,
@@ -33,8 +35,8 @@ export class SuppliersService {
     const suppliers = await this.supplierRepository.find({
       order: { supplier_name: 'ASC' },
     });
-    
-    return suppliers.map(supplier => ({
+
+    return suppliers.map((supplier) => ({
       id: supplier.id,
       country: supplier.country,
       supplier_name: supplier.supplier_name,

@@ -1,4 +1,12 @@
-import { Controller, Post, Put, Delete, Body, Param, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Get,
+} from '@nestjs/common';
 import { PackageItemsService } from './package-items.service';
 
 interface CreatePackageItemDto {
@@ -26,7 +34,7 @@ export class PackageItemsController {
   @Post()
   async createItem(
     @Param('packageId') packageId: string,
-    @Body() createItemDto: CreatePackageItemDto
+    @Body() createItemDto: CreatePackageItemDto,
   ) {
     return this.packageItemsService.createItem(packageId, createItemDto);
   }
@@ -35,15 +43,19 @@ export class PackageItemsController {
   async updateItem(
     @Param('packageId') packageId: string,
     @Param('itemId') itemId: string,
-    @Body() updateItemDto: UpdatePackageItemDto
+    @Body() updateItemDto: UpdatePackageItemDto,
   ) {
-    return this.packageItemsService.updateItem(packageId, itemId, updateItemDto);
+    return this.packageItemsService.updateItem(
+      packageId,
+      itemId,
+      updateItemDto,
+    );
   }
 
   @Delete(':itemId')
   async deleteItem(
     @Param('packageId') packageId: string,
-    @Param('itemId') itemId: string
+    @Param('itemId') itemId: string,
   ) {
     return this.packageItemsService.deleteItem(packageId, itemId);
   }
@@ -51,7 +63,7 @@ export class PackageItemsController {
   @Post('bulk')
   async bulkUpload(
     @Param('packageId') packageId: string,
-    @Body() bulkUploadDto: BulkUploadDto
+    @Body() bulkUploadDto: BulkUploadDto,
   ) {
     return this.packageItemsService.bulkUpload(packageId, bulkUploadDto.items);
   }
