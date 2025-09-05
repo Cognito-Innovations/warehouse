@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { databaseConfig } from './config/database.config';
 
 import { AuthModule } from './auth/auth.module';
 import { SharedModule } from './shared/shared.module';
+import { UsersModule } from './users/users.module';
+import { CountriesModule } from './countries/countries.module';
+import { RacksModule } from './racks/racks.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
+import { PackagesModule } from './packages/packages.module';
 
 import { AppService } from './app.service';
-import { UsersService } from './users/users.service';
-import { RacksService } from './racks/racks.service';
-import { PackagesService } from './packages/packages.service';
-import { SuppliersService } from './suppliers/suppliers.service';
-import { CountriesService } from './countries/countries.service';
 import { PackageItemsService } from './packages/package-items.service';
 import { PackageDocumentsService } from './packages/package-documents.service';
 import { PackageActionLogsService } from './packages/package-action-logs.service';
@@ -18,21 +20,42 @@ import { ShoppingRequestsService } from './shopping-requests/shopping-requests.s
 import { ProductsService } from './products/products.service';
 
 import { AppController } from './app.controller';
-import { UsersController } from './users/users.controller';
-import { RacksController } from './racks/racks.controller';
-import { PackagesController } from './packages/packages.controller';
 import { PackageItemsController } from './packages/package-items.controller';
 import { PackageDocumentsController } from './packages/package-documents.controller';
-import { SuppliersController } from './suppliers/suppliers.controller';
-import { CountriesController } from './countries/countries.controller';
 import { PreArrivaController } from './pre-arrivals/pre-arrivals.controller';
 import { PickupRequestsController } from './pickup-requests/pickup-requests.controller';
 import { ShoppingRequestsController } from './shopping-requests/shopping-requests.controller';
 import { ProductsController } from './products/products.controller';
 
 @Module({
-  imports: [AuthModule, SharedModule],
-  controllers: [AppController, UsersController, PackagesController, PackageItemsController, PackageDocumentsController, RacksController, SuppliersController, CountriesController, PreArrivaController, PickupRequestsController, ShoppingRequestsController, ProductsController],
-  providers: [AppService, UsersService, PackagesService, PackageItemsService, PackageDocumentsService, PackageActionLogsService, RacksService, SuppliersService, CountriesService, PreArrivalService, PickupRequestsService, ShoppingRequestsService, ProductsService],
+  imports: [
+    TypeOrmModule.forRoot(databaseConfig),
+    AuthModule,
+    SharedModule,
+    UsersModule,
+    CountriesModule,
+    RacksModule,
+    SuppliersModule,
+    PackagesModule,
+  ],
+  controllers: [
+    AppController,
+    PackageItemsController,
+    PackageDocumentsController,
+    PreArrivaController,
+    PickupRequestsController,
+    ShoppingRequestsController,
+    ProductsController,
+  ],
+  providers: [
+    AppService,
+    PackageItemsService,
+    PackageDocumentsService,
+    PackageActionLogsService,
+    PreArrivalService,
+    PickupRequestsService,
+    ShoppingRequestsService,
+    ProductsService,
+  ],
 })
 export class AppModule {}

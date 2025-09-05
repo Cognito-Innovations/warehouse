@@ -1,192 +1,129 @@
-import { supabase } from '../supabase/supabase.client';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-
-interface CreatePackageDto {
-  customer: string;
-  rack_slot: string;
-  tracking_no?: string;
-  vendor: string;
-  weight: string;
-  length: string;
-  width: string;
-  height: string;
-  volumetric_weight: string;
-  allow_customer_items: boolean;
-  shop_invoice_received: boolean;
-  remarks: string;
-  pieces: Array<{
-    weight: string;
-    length: string;
-    width: string;
-    height: string;
-    volumetric_weight: string;
-  }>;
-}
-
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Package } from './package.entity';
+import { CreatePackageDto } from './dto/create-package.dto';
+import { PackageResponseDto } from './dto/package-response.dto';
 
 @Injectable()
 export class PackagesService {
-  async createPackage(createPackageDto: CreatePackageDto) {
+  constructor(
+    @InjectRepository(Package)
+    private readonly packageRepository: Repository<Package>,
+  ) {}
+
+  async createPackage(createPackageDto: CreatePackageDto): Promise<PackageResponseDto> {
     // Generate custom package ID (will be stored in a separate field)
     const customPackageId = await this.generatePackageId();
     
-    // First, create the package
-    const packageData = {
-      customer_id: createPackageDto.customer,
-      vendor_id: createPackageDto.vendor,
-      tracking_no: createPackageDto.tracking_no,
-      rack_slot_id: createPackageDto.rack_slot,
-      country: '54e03123-77f4-477f-85d4-083d4701ae39', // Hardcoded default country ID
-      total_weight: parseFloat(createPackageDto.weight) || 0,
-      total_volumetric_weight: parseFloat(createPackageDto.volumetric_weight) || 0,
-      allow_customer_items: createPackageDto.allow_customer_items,
-      shop_invoice_received: createPackageDto.shop_invoice_received,
-      remarks: createPackageDto.remarks,
-      status: 'Action Required',
-      dangerous_good: false,
-      created_by: 'c051bbaf-b3ab-4d7f-b5cc-6511ce5ea40e', // This should come from auth context
-      custom_package_id: customPackageId, // Store custom ID in a separate field
+    // Create the package using TypeORM entity
+    const packageEntity = this.packageRepository.create({
+      customer: createPackageDto.customer,
+      rack_slot: createPackageDto.rack_slot,
+      vendor: createPackageDto.vendor,
+      status: createPackageDto.status || 'Action Required',
+      dangerous_good: createPackageDto.dangerous_good || false,
+      created_by: createPackageDto.created_by,
+      custom_package_id: customPackageId,
+    });
+
+    const savedPackage = await this.packageRepository.save(packageEntity);
+
+    return {
+      id: savedPackage.id,
+      customer: savedPackage.customer,
+      rack_slot: savedPackage.rack_slot,
+      vendor: savedPackage.vendor,
+      status: savedPackage.status,
+      dangerous_good: savedPackage.dangerous_good,
+      created_by: savedPackage.created_by,
+      custom_package_id: savedPackage.custom_package_id,
+      created_at: savedPackage.created_at,
+      updated_at: savedPackage.updated_at,
     };
-
-    const { data: packageResult, error: packageError } = await supabase
-      .from('packages')
-      .insert(packageData)
-      .select()
-      .single();
-
-    if (packageError) throw new Error(packageError.message);
-
-    // Then, create package measurements for each piece
-    if (createPackageDto.pieces && createPackageDto.pieces.length > 0) {
-      const measurementsData = createPackageDto.pieces.map((piece, index) => {
-        const weight = parseFloat(piece.weight) || 0;
-        const volumetricWeight = piece.volumetric_weight ? parseFloat(piece.volumetric_weight) : null;
-        const length = piece.length ? parseFloat(piece.length) : null;
-        const width = piece.width ? parseFloat(piece.width) : null;
-        const height = piece.height ? parseFloat(piece.height) : null;
-
-        // Check if we have valid dimensions (all > 0)
-        const hasValidDimensions = length && width && height && 
-          length > 0 && width > 0 && height > 0;
-
-        return {
-          package_id: packageResult.id,
-          piece_number: index + 1,
-          weight: weight, // Required
-          volumetric_weight: volumetricWeight, // Optional
-          length: hasValidDimensions ? length : null, // Optional
-          width: hasValidDimensions ? width : null, // Optional
-          height: hasValidDimensions ? height : null, // Optional
-          has_measurements: hasValidDimensions,
-          measurement_verified: false,
-        };
-      });
-
-      const { error: measurementsError } = await supabase
-        .from('package_measurements')
-        .insert(measurementsData);
-
-      if (measurementsError) {
-        console.error('Failed to create package measurements:', measurementsError);
-        throw new Error(`Package created but failed to save measurements: ${measurementsError.message}`);
-      }
-    }
-
-    return packageResult;
   }
 
-  async getAllPackages() {
-    const { data, error } = await supabase
-      .from('packages')
-      .select(`
-        *,
-        customer:users!packages_customer_id_fkey(*),
-        creator:users!packages_created_by_fkey(*),
-        rack_slot:racks!packages_rack_slot_id_fkey(id, label, color, count),
-        vendor:suppliers!packages_vendor_id_fkey(id, supplier_name, country, contact_number, postal_code, address, website),
-        items:package_items(*),
-        measurements:package_measurements(*),
-        charges:package_charges(*),
-        documents:package_documents(*),
-        action_logs:package_action_logs(*)
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) throw new Error(error.message);
-    return data;
+  async getAllPackages(): Promise<PackageResponseDto[]> {
+    const packages = await this.packageRepository.find({
+      order: { created_at: 'DESC' },
+    });
+    
+    return packages.map(pkg => ({
+      id: pkg.id,
+      customer: pkg.customer,
+      rack_slot: pkg.rack_slot,
+      vendor: pkg.vendor,
+      status: pkg.status,
+      dangerous_good: pkg.dangerous_good,
+      created_by: pkg.created_by,
+      custom_package_id: pkg.custom_package_id,
+      created_at: pkg.created_at,
+      updated_at: pkg.updated_at,
+    }));
   }
 
-  async getPackageById(id: string) {
+  async getPackageById(id: string): Promise<PackageResponseDto> {
     // Check if the input is a UUID format
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
     
-    let query = supabase
-      .from('packages')
-      .select(`
-        *,
-        customer:users!packages_customer_id_fkey(*),
-        creator:users!packages_created_by_fkey(*),
-        rack_slot:racks!packages_rack_slot_id_fkey(id, label, color, count),
-        vendor:suppliers!packages_vendor_id_fkey(id, supplier_name, country, contact_number, postal_code, address, website),
-        items:package_items(*),
-        measurements:package_measurements(*),
-        charges:package_charges(*),
-        documents:package_documents(*),
-        action_logs:package_action_logs(*)
-      `);
-
+    let packageEntity: Package | null;
+    
     if (isUUID) {
-      // Search by UUID
-      query = query.eq('id', id);
+      packageEntity = await this.packageRepository.findOne({ where: { id } });
     } else {
-      // Search by custom package ID
-      query = query.eq('custom_package_id', id);
+      packageEntity = await this.packageRepository.findOne({ where: { custom_package_id: id } });
     }
 
-    const { data, error } = await query.single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        throw new NotFoundException(`Package with id ${id} not found`);
-      }
-      throw new Error(error.message);
+    if (!packageEntity) {
+      throw new NotFoundException('Package not found');
     }
-    return data;
+
+    return {
+      id: packageEntity.id,
+      customer: packageEntity.customer,
+      rack_slot: packageEntity.rack_slot,
+      vendor: packageEntity.vendor,
+      status: packageEntity.status,
+      dangerous_good: packageEntity.dangerous_good,
+      created_by: packageEntity.created_by,
+      custom_package_id: packageEntity.custom_package_id,
+      created_at: packageEntity.created_at,
+      updated_at: packageEntity.updated_at,
+    };
   }
 
-  async updatePackageStatus(id: string, status: string, updated_by: string) {
-    // First check if package exists
-    const existingPackage = await this.getPackageById(id);
-    if (!existingPackage) {
-      throw new NotFoundException(`Package with id ${id} not found`);
-    }
-
+  async updatePackageStatus(id: string, status: string, updated_by: string): Promise<PackageResponseDto> {
     // Check if the input is a UUID format
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
     
-    let query = supabase
-      .from('packages')
-      .update({ 
-        status, 
-        updated_by,
-        updated_at: new Date().toISOString(),
-      });
-
+    let packageEntity: Package | null;
+    
     if (isUUID) {
-      // Update by UUID
-      query = query.eq('id', id);
+      packageEntity = await this.packageRepository.findOne({ where: { id } });
     } else {
-      // Update by custom package ID
-      query = query.eq('custom_package_id', id);
+      packageEntity = await this.packageRepository.findOne({ where: { custom_package_id: id } });
     }
 
-    const { data, error } = await query.select().single();
-
-    if (error) {
-      throw new BadRequestException(error.message);
+    if (!packageEntity) {
+      throw new NotFoundException('Package not found');
     }
 
-    return data;
+    // Update the status
+    packageEntity.status = status;
+    const updatedPackage = await this.packageRepository.save(packageEntity);
+
+    return {
+      id: updatedPackage.id,
+      customer: updatedPackage.customer,
+      rack_slot: updatedPackage.rack_slot,
+      vendor: updatedPackage.vendor,
+      status: updatedPackage.status,
+      dangerous_good: updatedPackage.dangerous_good,
+      created_by: updatedPackage.created_by,
+      custom_package_id: updatedPackage.custom_package_id,
+      created_at: updatedPackage.created_at,
+      updated_at: updatedPackage.updated_at,
+    };
   }
 
   private async generatePackageId(): Promise<string> {
@@ -196,22 +133,20 @@ export class PackagesService {
     const packageId = `${prefix}${timestamp}${random}`;
     
     // Check if this custom ID already exists
-    const { data: existingPackage } = await supabase
-      .from('packages')
-      .select('custom_package_id')
-      .eq('custom_package_id', packageId)
-      .single();
+    const existingPackage = await this.packageRepository.findOne({
+      where: { custom_package_id: packageId }
+    });
     
-    // If ID exists, generate a new one recursively
     if (existingPackage) {
+      // If exists, generate a new one recursively
       return this.generatePackageId();
     }
     
     return packageId;
   }
 
-  private generateTrackingNumber(): string {
-    const prefix = 'PKG';
+  private async generateTrackingNumber(): Promise<string> {
+    const prefix = 'TRK';
     const timestamp = Date.now().toString().slice(-8);
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `${prefix}${timestamp}${random}`;

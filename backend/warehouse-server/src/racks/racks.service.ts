@@ -1,47 +1,72 @@
 import { Injectable } from '@nestjs/common';
-
-import { supabase } from '../supabase/supabase.client';
-
-interface Rack {
-  id?: string;
-  label: string;
-  color: string;
-  count?: number;
-}
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Rack } from './rack.entity';
+import { CreateRackDto } from './dto/create-rack.dto';
+import { RackResponseDto } from './dto/rack-response.dto';
 
 @Injectable()
 export class RacksService {
-  async createRack(rack: Rack) {
-    const { data, error } = await supabase
-      .from('racks')
-      .insert(rack)
-      .select();
+  constructor(
+    @InjectRepository(Rack)
+    private readonly rackRepository: Repository<Rack>,
+  ) {}
 
-    if (error) throw new Error(error.message);
-    return data;
+  async createRack(createRackDto: CreateRackDto): Promise<RackResponseDto> {
+    const rack = this.rackRepository.create({
+      label: createRackDto.label,
+      color: createRackDto.color,
+    });
+
+    const savedRack = await this.rackRepository.save(rack);
+    
+    return {
+      id: savedRack.id,
+      label: savedRack.label,
+      color: savedRack.color,
+      created_at: savedRack.created_at,
+      updated_at: savedRack.updated_at,
+    };
   }
 
-  async getAllRacks() {
-    const { data, error } = await supabase.from('racks').select('*');
-
-    if (error) throw new Error(error.message);
-    return data;
+  async getAllRacks(): Promise<RackResponseDto[]> {
+    const racks = await this.rackRepository.find({
+      order: { label: 'ASC' },
+    });
+    
+    return racks.map(rack => ({
+      id: rack.id,
+      label: rack.label,
+      color: rack.color,
+      created_at: rack.created_at,
+      updated_at: rack.updated_at,
+    }));
   }
 
-  async updateRack(id: string, rack: Partial<Rack>) {
-    const { data, error } = await supabase
-      .from('racks')
-      .update(rack)
-      .eq('id', id)
-      .select();
-
-    if (error) throw new Error(error.message);
-    return data[0];
+  async updateRack(id: string, updateData: Partial<CreateRackDto>): Promise<RackResponseDto> {
+    await this.rackRepository.update(id, updateData);
+    const updatedRack = await this.rackRepository.findOne({ where: { id } });
+    
+    if (!updatedRack) {
+      throw new Error('Rack not found');
+    }
+    
+    return {
+      id: updatedRack.id,
+      label: updatedRack.label,
+      color: updatedRack.color,
+      created_at: updatedRack.created_at,
+      updated_at: updatedRack.updated_at,
+    };
   }
 
-  async deleteRack(id: string) {
-    const { error } = await supabase.from('racks').delete().eq('id', id);
-    if (error) throw new Error(error.message);
+  async deleteRack(id: string): Promise<{ success: boolean }> {
+    const result = await this.rackRepository.delete(id);
+    
+    if (result.affected === 0) {
+      throw new Error('Rack not found');
+    }
+    
     return { success: true };
   }
 }
