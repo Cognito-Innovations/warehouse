@@ -11,12 +11,16 @@ interface PackageDetailsSectionProps {
     createdBy: string;
     createdAt: string;
     status?: string;
-    slotInfo?: string;
+    rack?: string,
+    count?: number;
     measurements?: {
       pieceNumber: number;
       weight: string;
       volumetricWeight: string;
       hasMeasurements: boolean;
+      length?: number;
+      width?: number;
+      height?: number;
     }[];
   };
 }
@@ -46,7 +50,6 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
   };
 
   const handleSave = () => {
-    // Here you would typically save the data to your backend
     console.log('Saving package data:', formData);
     handleCloseModal();
   };
@@ -118,78 +121,82 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
             </Grid>
           </Grid>
 
-                     {/* Status Indicator */}
+          {/* Status Indicator */}
            {packageData.status && (
-             <Box sx={{
-               bgcolor: '#f0fdf4',
-               p: 2,
-               borderRadius: 2,
-               border: '1px solid #84cc16',
-               width: "220px"
-             }}>
+             <Box sx={{ bgcolor: '#f0fdf4', p: 2, borderRadius: 2, border: '1px solid #84cc16', width: "220px" }}>
                <Typography variant="body2" sx={{ fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
-                 {"PACKAGE ARRIVED"} →
+                 {packageData.rack} →
                </Typography>
-               {packageData.slotInfo && (
-                 <Typography variant="body2" sx={{ fontWeight: 500, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
-                   {packageData.slotInfo}
-                 </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {`Slot has ${packageData.count} pkgs`}
+                </Typography>
                  
-               )}
              </Box>
            )}
 
-                     {/* Measurements Table */}
+          {/* Measurements Table */}
            <Box sx={{ mt: 3 }}>
              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#1e293b' }}>
-               {packageData.measurements?.length || 1} Piece Measurements
+               {packageData.measurements?.length || 0} Piece Measurements
              </Typography>
-             <TableContainer>
-               <Table size="small">
-                 <TableHead>
-                   <TableRow>
-                     <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>#</TableCell>
-                     <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Weight</TableCell>
-                     <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Volumetric Weight (LxWxH)</TableCell>
-                   </TableRow>
-                 </TableHead>
-                 <TableBody>
-                   {packageData.measurements && packageData.measurements.length > 0 ? (
-                     packageData.measurements.map((measurement, index) => (
+             
+             {packageData.measurements && packageData.measurements.length > 0 ? (
+               <TableContainer>
+                 <Table size="small">
+                   <TableHead>
+                     <TableRow>
+                       <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>#</TableCell>
+                       <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Weight</TableCell>
+                       <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Dimensions (L×W×H)</TableCell>
+                       <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Volumetric Weight</TableCell>
+                     </TableRow>
+                   </TableHead>
+                   <TableBody>
+                     {packageData.measurements.map((measurement, index) => (
                        <TableRow key={index}>
                          <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{measurement.pieceNumber}</TableCell>
                          <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{measurement.weight}</TableCell>
+                         <TableCell>
+                           {measurement.hasMeasurements && measurement.length && measurement.width && measurement.height ? (
+                             <Typography component="span" sx={{ color: '#1e293b' }}>
+                               {measurement.length}×{measurement.width}×{measurement.height} cm
+                             </Typography>
+                           ) : (
+                             <Typography component="span" sx={{ color: '#ef4444', fontSize: '0.875rem' }}>
+                               No dimensions
+                             </Typography>
+                           )}
+                         </TableCell>
                          <TableCell>
                            {measurement.hasMeasurements ? (
                              <Typography component="span" sx={{ color: '#1e293b' }}>
                                {measurement.volumetricWeight}
                              </Typography>
                            ) : (
-                             <>
-                               <Typography component="span" sx={{ color: '#1e293b' }}>- </Typography>
-                               <Typography component="span" sx={{ color: '#ef4444', fontSize: '0.875rem' }}>
-                                 (No measurements)
-                               </Typography>
-                             </>
+                             <Typography component="span" sx={{ color: '#ef4444', fontSize: '0.875rem' }}>
+                               Not calculated
+                             </Typography>
                            )}
                          </TableCell>
                        </TableRow>
-                     ))
-                   ) : (
-                     <TableRow>
-                       <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>1</TableCell>
-                       <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{packageData.weight}</TableCell>
-                       <TableCell>
-                         <Typography component="span" sx={{ color: '#1e293b' }}>- </Typography>
-                         <Typography component="span" sx={{ color: '#ef4444', fontSize: '0.875rem' }}>
-                           (No measurements)
-                         </Typography>
-                       </TableCell>
-                     </TableRow>
-                   )}
-                 </TableBody>
-               </Table>
-             </TableContainer>
+                     ))}
+                   </TableBody>
+                 </Table>
+               </TableContainer>
+             ) : (
+               <Box sx={{ 
+                 p: 3, 
+                 textAlign: 'center', 
+                 bgcolor: '#f8fafc', 
+                 borderRadius: 2, 
+                 border: '1px solid #e2e8f0' 
+               }}>
+                 <Typography variant="body2" sx={{ color: '#64748b' }}>
+                   No piece measurements available
+                 </Typography>
+               </Box>
+             )}
+             
              <Typography variant="caption" sx={{ mt: 2, display: 'block', color: '#64748b', maxWidth: "250px" }}>
                Created By {packageData.createdBy} on {packageData.createdAt}
              </Typography>

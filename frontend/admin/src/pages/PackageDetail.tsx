@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Box, Grid } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Box, Grid, CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton, Typography } from '@mui/material';
+import { useParams, useNavigate } from 'react-router-dom';
 import TopNavbar from '../components/Layout/TopNavbar';
 import UploadModal from '../components/PackageDetail/UploadModal';
 import AddItemModal from '../components/PackageDetail/AddItemModal';
@@ -10,14 +10,22 @@ import PackageItemsSection from '../components/PackageDetail/PackageItemsSection
 import PackageDetailsSection from '../components/PackageDetail/PackageDetailsSection';
 import PackageChargesSection from '../components/PackageDetail/PackageChargesSection';
 import PhotosDocumentsSection from '../components/PackageDetail/PhotosDocumentsSection';
+import { getPackageById, updatePackageStatus, addPackageItem, updatePackageItem, deletePackageItem, bulkUploadPackageItems, uploadPackageDocuments, getPackageDocuments, deletePackageDocument } from '../services/api.services';
 
 const PackageDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  // State for package data
+  const [packageData, setPackageData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // State for upload modal and documents
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ id: string, name: string, url: string, type: string }>>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Action Log status management
   const [actionLogStatus, setActionLogStatus] = useState<'Action Required' | 'In Review' | 'Ready to Send' | 'Request Ship' | 'Shipped' | 'Discarded' | 'Draft'>('Action Required');
@@ -25,15 +33,7 @@ const PackageDetail: React.FC = () => {
   // State for Package Items
   const [addItemModalOpen, setAddItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [packageItems, setPackageItems] = useState([
-    {
-      id: '1',
-      name: 'Dinner plate set',
-      quantity: 1,
-      amount: '$60.00',
-      total: '$60.00'
-    }
-  ]);
+  const [packageItems, setPackageItems] = useState<any[]>([]);
   const [newItem, setNewItem] = useState({
     name: '',
     quantity: 1,
@@ -41,31 +41,51 @@ const PackageDetail: React.FC = () => {
     total: ''
   });
 
-  // Mock data - replace with actual API call
-  const packageData = {
-    id: id || 'IN2025635',
-    status: actionLogStatus.toUpperCase().replace(' ', '_'),
-    customer: 'Hussain Munaz',
-    suite: "212-426",
-    email: 'munattey@gmail.com',
-    phone: '9199185',
-    phone2: '9821065, 9199185',
-    trackingNo: 'DLAP1000216978',
-    weight: '0.75Kg',
-    volumetricWeight: '-',
-    dangerousGood: 'No',
-    slotInfo: 'Slot has 292 pkgs',
-    createdBy: 'Udhaya (UGf)',
-    createdAt: 'Sep 2, 2025, 5:08:45 PM',
-    items: [
-      {
-        name: 'Dinner plate set',
-        quantity: 1,
-        amount: '$60.00',
-        total: '$60.00'
-      }
-    ]
+  // State for discard confirmation
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+
+  // Fetch documents
+  const fetchDocuments = async () => {
+    if (!id) return;
+    
+    try {
+      const documents = await getPackageDocuments(id);
+      const formattedDocuments = documents.map((doc: any) => ({
+        id: doc.id,
+        name: doc.document_name,
+        url: doc.document_url,
+        type: doc.document_type
+      }));
+      setUploadedDocuments(formattedDocuments);
+    } catch (err) {
+      console.error('Failed to fetch documents:', err);
+    }
   };
+
+  // Fetch package data
+  useEffect(() => {
+    const fetchPackageData = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getPackageById(id);
+        setPackageData(data);
+        setActionLogStatus(data.status as any);
+        setPackageItems(data.items || []);
+        // Load documents separately
+        await fetchDocuments();
+      } catch (err) {
+        console.error('Failed to fetch package data:', err);
+        setError('Failed to load package details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPackageData();
+  }, [id]);
 
   // Handler functions
   const handleOpenUploadModal = () => {
@@ -84,24 +104,95 @@ const PackageDetail: React.FC = () => {
     }
   };
 
-  const handleUpload = () => {
-    // Simulate upload process
-    const newDocuments = selectedFiles.map((file, index) => ({
-      id: `new-${Date.now()}-${index}`,
-      name: file.name,
-      url: URL.createObjectURL(file),
-      type: file.type.startsWith('image/') ? 'image' : 'pdf'
-    }));
-
-    setUploadedDocuments(prev => [...prev, ...newDocuments]);
-
-    // Don't change status automatically - wait for checkbox
-    setSelectedFiles([]);
-    setUploadModalOpen(false);
+  const handleDirectFileSelect = async (files: FileList) => {
+    if (!id || files.length === 0) return;
+    
+    try {
+      const fileArray = Array.from(files);
+      const response = await uploadPackageDocuments(id, fileArray);
+      
+      // Transform the response to match our UI format
+      const newDocuments = response.documents?.map((doc: any) => ({
+        id: doc.id,
+        name: doc.document_name,
+        url: doc.document_url,
+        type: doc.document_type
+      })) || [];
+      
+      setUploadedDocuments(prev => [...prev, ...newDocuments]);
+    } catch (err) {
+      console.error('Failed to upload documents:', err);
+    }
   };
 
-  const handleRemoveDocument = (documentId: string) => {
-    setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
+  const handleUpload = async () => {
+    if (!id || selectedFiles.length === 0) return;
+    
+    setIsUploading(true);
+    try {
+      const response = await uploadPackageDocuments(id, selectedFiles);
+      
+      // Transform the response to match our UI format
+      const newDocuments = response.documents?.map((doc: any) => ({
+        id: doc.id,
+        name: doc.document_name,
+        url: doc.document_url,
+        type: doc.document_type
+      })) || [];
+      
+      setUploadedDocuments(prev => [...prev, ...newDocuments]);
+      setSelectedFiles([]);
+      setUploadModalOpen(false);
+    } catch (err) {
+      console.error('Failed to upload documents:', err);
+      setError('Failed to upload documents');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDiscard = () => {
+    setDiscardDialogOpen(true);
+  };
+
+  const handleConfirmDiscard = async () => {
+    if (!id) return;
+    
+    try {
+      await updatePackageStatus(id, 'Discarded');
+      setActionLogStatus('Discarded');
+      setDiscardDialogOpen(false);
+      // Navigate back to packages page after successful discard
+      navigate('/packages');
+    } catch (err) {
+      console.error('Failed to discard package:', err);
+      setError('Failed to discard package');
+    }
+  };
+
+  const handleCancelDiscard = () => {
+    setDiscardDialogOpen(false);
+  };
+
+  const handlePrintLabel = () => {
+    // TODO: Implement print label functionality
+    console.log('Print label functionality coming soon');
+  };
+
+  const handleRemoveDocument = async (documentId: string) => {
+    if (!id) return;
+    
+    try {
+      await deletePackageDocument(id, documentId);
+      setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    } catch (err) {
+      console.error('Failed to delete document:', err);
+      setError('Failed to delete document');
+    }
   };
 
   // Package Items handlers
@@ -123,25 +214,49 @@ const PackageDetail: React.FC = () => {
     setAddItemModalOpen(true);
   };
 
-  const handleDeleteItem = (itemId: string) => {
-    setPackageItems(prev => prev.filter(item => item.id !== itemId));
+  const handleDeleteItem = async (itemId: string) => {
+    if (!id) return;
+    
+    try {
+      await deletePackageItem(id, itemId);
+      setPackageItems(prev => prev.filter(item => item.id !== itemId));
+    } catch (err) {
+      console.error('Failed to delete item:', err);
+      setError('Failed to delete item');
+    }
   };
 
-  const handleSaveItem = () => {
-    if (editingItem) {
-      // Update existing item
-      setPackageItems(prev => prev.map(item =>
-        item.id === editingItem.id ? { ...newItem, id: editingItem.id } : item
-      ));
-    } else {
-      // Add new item
-      const item = {
-        ...newItem,
-        id: Date.now().toString()
+  const handleSaveItem = async () => {
+    if (!id) return;
+    
+    try {
+      const itemData = {
+        name: newItem.name,
+        quantity: newItem.quantity,
+        unit_price: parseFloat(newItem.amount.replace('$', '')) || 0,
+        total_price: parseFloat(newItem.total.replace('$', '')) || 0
       };
-      setPackageItems(prev => [...prev, item]);
+
+      if (editingItem) {
+        // Update existing item
+        await updatePackageItem(id, editingItem.id, itemData);
+        setPackageItems(prev => prev.map(item =>
+          item.id === editingItem.id ? { ...newItem, id: editingItem.id } : item
+        ));
+      } else {
+        // Add new item
+        const response = await addPackageItem(id, itemData);
+        const newItemWithId = {
+          ...newItem,
+          id: response.id || Date.now().toString()
+        };
+        setPackageItems(prev => [...prev, newItemWithId]);
+      }
+      handleCloseAddItemModal();
+    } catch (err) {
+      console.error('Failed to save item:', err);
+      setError('Failed to save item');
     }
-    handleCloseAddItemModal();
   };
 
   const handleItemInputChange = (field: string, value: string | number) => {
@@ -160,7 +275,7 @@ const PackageDetail: React.FC = () => {
 
   const handleDownloadFormat = () => {
     // Create Excel-like CSV content
-    const csvContent = "Name,Quantity,Amount,Total\nDinner plate set,1,$60.00,$60.00";
+    const csvContent = "Name,Quantity,Amount,Total";
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -170,36 +285,136 @@ const PackageDetail: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
+
+  // Fix this make it actual data 
   const handleBulkUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.csv,.xlsx,.xls';
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        // Simulate reading the file and parsing data
-        // In real implementation, you would use a library like xlsx to parse the file
-        const mockBulkData = [
-          { id: '2', name: 'Coffee Mug', quantity: 2, amount: '$15.00', total: '$30.00' },
-          { id: '3', name: 'Water Bottle', quantity: 1, amount: '$25.00', total: '$25.00' }
-        ];
-        setPackageItems(prev => [...prev, ...mockBulkData]);
+      if (file && id) {
+        try {
+          // For now, we'll use mock data. In production, you'd parse the CSV/Excel file
+          // using libraries like xlsx or papaparse
+          const mockBulkData = [
+            { name: 'Coffee Mug', quantity: 2, unit_price: 15.00, total_price: 30.00 },
+            { name: 'Water Bottle', quantity: 1, unit_price: 25.00, total_price: 25.00 }
+          ];
+          
+          const response = await bulkUploadPackageItems(id, mockBulkData);
+          
+          // Update local state with the new items
+          const newItems = response.items?.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            amount: `$${item.unit_price.toFixed(2)}`,
+            total: `$${item.total_price.toFixed(2)}`
+          })) || [];
+          
+          setPackageItems(prev => [...prev, ...newItems]);
+        } catch (err) {
+          console.error('Failed to bulk upload items:', err);
+          setError('Failed to upload items');
+        }
       }
     };
     input.click();
+  };
+
+  // Handle status change
+  const handleStatusChange = async (newStatus: string) => {
+    if (!id) return;
+    
+    try {
+      await updatePackageStatus(id, newStatus);
+      setActionLogStatus(newStatus as any);
+      // Update package data with new status
+      setPackageData((prev: any) => ({
+        ...prev,
+        status: newStatus
+      }));
+    } catch (err) {
+      console.error('Failed to update package status:', err);
+      setError('Failed to update package status');
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <Box sx={{ p: 1 }}>
+        <TopNavbar />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+          <CircularProgress />
+        </Box>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (error || !packageData) {
+    return (
+      <Box sx={{ p: 1 }}>
+        <TopNavbar />
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error || 'Package not found'}
+        </Alert>
+      </Box>
+    );
+  }
+
+  // Transform package data for display
+  const displayPackageData = {
+    id: packageData.custom_package_id || packageData.id,
+    status: packageData.status,
+    customer: packageData.customer?.name || 'Unknown',
+    suite: packageData.customer?.suite_no || 'N/A',
+    email: packageData.customer?.email || 'N/A',
+    phone: packageData.customer?.phone_number || 'N/A',
+    phone2: packageData.customer?.phone_number_2 || 'N/A',
+    trackingNo: packageData.tracking_no || 'N/A',
+    weight: `${packageData.total_weight || 0}Kg`,
+    volumetricWeight: packageData.total_volumetric_weight ? `${packageData.total_volumetric_weight}Kg` : '-',
+    dangerousGood: packageData.dangerous_good ? 'Yes' : 'No',
+    rack: packageData.rack_slot?.label ? `${packageData.rack_slot.label}` : 'N/A',
+    count: packageData.rack_slot?.count ? packageData.rack_slot.count : 0,
+    createdBy: packageData.creator?.name || 'Unknown',
+    createdAt: new Date(packageData.created_at).toLocaleString(),
+    vendor: packageData.vendor?.supplier_name || 'Unknown',
+    remarks: packageData.remarks || 'No remarks',
+    allowCustomerItems: packageData.allow_customer_items || false,
+    shopInvoiceReceived: packageData.shop_invoice_received || false,
+    items: packageItems,
+    // Transform measurements data for display
+    measurements: packageData.measurements?.map((measurement: any) => ({
+      pieceNumber: measurement.piece_number,
+      weight: `${measurement.weight || 0}Kg`,
+      volumetricWeight: measurement.volumetric_weight ? `${measurement.volumetric_weight}Kg` : '-',
+      hasMeasurements: measurement.has_measurements || false,
+      length: measurement.length,
+      width: measurement.width,
+      height: measurement.height
+    })) || []
   };
 
   return (
     <Box sx={{ p: 1 }}>
       <TopNavbar />
       {/* Package Header - Full Width */}
-      <PackageHeader packageData={packageData} actionLogStatus={actionLogStatus} />
+              <PackageHeader 
+          packageData={displayPackageData} 
+          actionLogStatus={actionLogStatus}
+          onDiscard={handleDiscard}
+          onPrintLabel={handlePrintLabel}
+        />
 
       <Grid container spacing={2}>
         {/* Left Column - Main Content */}
         <Grid size={{ xs: 12, md: 8 }}>
           {/* Package Details */}
-          <PackageDetailsSection packageData={packageData} />
+          <PackageDetailsSection packageData={displayPackageData} />
 
           {/* Package Items */}
           <PackageItemsSection
@@ -218,10 +433,11 @@ const PackageDetail: React.FC = () => {
           <ActionLogsSection
             actionLogStatus={actionLogStatus}
             uploadedDocuments={uploadedDocuments}
-            packageData={packageData}
-            onStatusChange={(status) => setActionLogStatus(status as typeof actionLogStatus)}
+            packageData={displayPackageData}
+            onStatusChange={handleStatusChange}
             onOpenUploadModal={handleOpenUploadModal}
             onRemoveDocument={handleRemoveDocument}
+            onFileSelect={handleDirectFileSelect}
           />
 
           {/* Photos / Documents */}
@@ -239,6 +455,8 @@ const PackageDetail: React.FC = () => {
         onClose={handleCloseUploadModal}
         onFileSelect={handleFileSelect}
         onUpload={handleUpload}
+        onRemoveFile={handleRemoveFile}
+        isUploading={isUploading}
       />
 
       {/* Add Item Modal */}
@@ -250,6 +468,50 @@ const PackageDetail: React.FC = () => {
         onSave={handleSaveItem}
         onInputChange={handleItemInputChange}
       />
+
+      {/* Discard Confirmation Dialog */}
+      <Dialog
+        open={discardDialogOpen}
+        onClose={handleCancelDiscard}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 2 }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: '#1e293b' }}>
+          Discard Package
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ color: '#64748b', mb: 2 }}>
+            Are you sure you want to discard this package? This action will change the package status to "Discarded" and cannot be undone.
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 500 }}>
+            Package ID: {packageData?.custom_package_id || packageData?.id}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, gap: 1 }}>
+          <MuiButton
+            variant="outlined"
+            onClick={handleCancelDiscard}
+            sx={{ textTransform: 'none', borderRadius: 1 }}
+          >
+            Cancel
+          </MuiButton>
+          <MuiButton
+            variant="contained"
+            onClick={handleConfirmDiscard}
+            sx={{
+              bgcolor: '#ef4444',
+              '&:hover': { bgcolor: '#dc2626' },
+              textTransform: 'none',
+              borderRadius: 1
+            }}
+          >
+            Discard Package
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

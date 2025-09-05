@@ -15,12 +15,14 @@ import AddSupplierModal from "./RegisterPackageModal/AddSupplierModal";
 interface RegisterPackageModalProps {
   open: boolean;
   onClose: () => void;
+  onPackageCreated?: () => void;
 }
 
-const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClose }) => {
+const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClose, onPackageCreated }) => {
   const [formData, setFormData] = useState({
     customer: "",
     rackSlot: "",
+    trackingNo: "",
     vendor: "",
     weight: "",
     length: "",
@@ -72,6 +74,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     }
   };
 
+
   useEffect(() => {
     if (open) {
       fetchUsers();
@@ -86,6 +89,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       setFormData({
         customer: "",
         rackSlot: "",
+        trackingNo:"",
         vendor: "",
         weight: "",
         length: "",
@@ -146,6 +150,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       const payload = {
         customer: formData.customer,
         rack_slot: formData.rackSlot,
+        tracking_no: formData.trackingNo,
         vendor: formData.vendor,
         weight: totalWeight.toString(),
         length: pieces[0]?.length || "",
@@ -166,6 +171,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
 
       await createPackage(payload);
       toast.success("Package registered successfully!");
+      onPackageCreated?.(); // Refresh the data
       onClose();
     } catch (err) {
       console.error("Failed to register package", err);
@@ -373,6 +379,10 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       <AddSupplierModal
         open={addSupplierOpen}
         onClose={() => setAddSupplierOpen(false)}
+        onSupplierCreated={() => {
+          fetchSuppliers(); // Refresh suppliers list
+          setAddSupplierOpen(false);
+        }}
       />
     </Dialog>
     </>

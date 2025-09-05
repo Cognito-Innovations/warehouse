@@ -78,59 +78,76 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems,
         </Box>
       </Box>
 
-      <TableContainer sx={{bgcolor: "#ffffff", borderRadius: 2}}>
-        <Table size="medium">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Name</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Quantity</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Amount</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Total</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {packageItems.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.name}</TableCell>
-                <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.quantity}</TableCell>
-                <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.amount}</TableCell>
-                <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.total}</TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => onEditItem(item)}
-                      sx={{
-                        bgcolor: '#3b82f6',
-                        color: 'white',
-                        width: 32,
-                        height: 32,
-                        '&:hover': { bgcolor: '#2563eb' }
-                      }}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => onDeleteItem(item.id)}
-                      sx={{
-                        bgcolor: '#f97316',
-                        color: 'white',
-                        width: 32,
-                        height: 32,
-                        '&:hover': { bgcolor: '#ea580c' }
-                      }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </TableCell>
+      {packageItems && packageItems.length > 0 ? (
+        <TableContainer sx={{bgcolor: "#ffffff", borderRadius: 2}}>
+          <Table size="medium">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Quantity</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Amount</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Total</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {packageItems.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.name}</TableCell>
+                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.quantity}</TableCell>
+                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.amount}</TableCell>
+                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.total}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => onEditItem(item)}
+                        sx={{
+                          bgcolor: '#3b82f6',
+                          color: 'white',
+                          width: 32,
+                          height: 32,
+                          '&:hover': { bgcolor: '#2563eb' }
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => onDeleteItem(item.id)}
+                        sx={{
+                          bgcolor: '#f97316',
+                          color: 'white',
+                          width: 32,
+                          height: 32,
+                          '&:hover': { bgcolor: '#ea580c' }
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        <Box sx={{ 
+          p: 4, 
+          textAlign: 'center', 
+          bgcolor: '#f8fafc', 
+          borderRadius: 2, 
+          border: '1px solid #e2e8f0' 
+        }}>
+          <Typography variant="body1" sx={{ color: '#64748b', mb: 2 }}>
+            No package items added yet
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+            Click "Add Item" to start adding products to this package
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };

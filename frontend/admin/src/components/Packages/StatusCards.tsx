@@ -12,14 +12,33 @@ import {
   Warning as WarningIcon,
   LocalShipping as ShippingIcon,
   Info as InfoIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
-import { statusCards } from '../../data/packages';
+
+interface StatusCard {
+  title: string;
+  value: number;
+  color: string;
+  bgColor: string;
+  icon: string;
+  status: string;
+}
 
 interface StatusCardsProps {
   onRegisterPackage: () => void;
+  statusCards: StatusCard[];
+  selectedStatus: string | null;
+  onStatusClick: (status: string | null) => void;
+  loading?: boolean;
 }
 
-const StatusCards: React.FC<StatusCardsProps> = ({ onRegisterPackage }) => {
+const StatusCards: React.FC<StatusCardsProps> = ({ 
+  onRegisterPackage, 
+  statusCards, 
+  selectedStatus, 
+  onStatusClick, 
+  loading = false 
+}) => {
   const getIcon = (iconName: string) => {
     switch (iconName) {
       case 'InfoIcon':
@@ -28,6 +47,8 @@ const StatusCards: React.FC<StatusCardsProps> = ({ onRegisterPackage }) => {
         return <WarningIcon />;
       case 'ShippingIcon':
         return <ShippingIcon />;
+      case 'CheckCircleIcon':
+        return <CheckCircleIcon />;
       default:
         return <InfoIcon />;
     }
@@ -56,7 +77,19 @@ const StatusCards: React.FC<StatusCardsProps> = ({ onRegisterPackage }) => {
       
       {statusCards.map((card, index) => (
         <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-          <Card sx={{ height: 120 }}>
+          <Card 
+            sx={{ 
+              height: 120,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease-in-out',
+              border: selectedStatus === card.status ? `2px solid ${card.color}` : '2px solid transparent',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: 3,
+              }
+            }}
+            onClick={() => onStatusClick(selectedStatus === card.status ? null : card.status)}
+          >
             <CardContent sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                 <Box
@@ -74,7 +107,7 @@ const StatusCards: React.FC<StatusCardsProps> = ({ onRegisterPackage }) => {
                   {getIcon(card.icon)}
                 </Box>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', color: card.color }}>
-                  {card.value}
+                  {loading ? '...' : card.value}
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>

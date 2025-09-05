@@ -7,6 +7,7 @@ interface FormFieldsProps {
   formData: {
     customer: string;
     rackSlot: string;
+    trackingNo: string;
     vendor: string;
   };
   errors: { [key: string]: string };
@@ -91,8 +92,8 @@ const FormFields: React.FC<FormFieldsProps> = ({
         <TextField
           fullWidth
           placeholder="Reference Tracking"
-          value={formData.vendor || ""}
-          onChange={(e) => onInputChange("vendor", e.target.value)}
+          value={formData.trackingNo || ""}
+          onChange={(e) => onInputChange("trackingNo", e.target.value)}
           size="medium"
         />
       </Grid>
@@ -140,6 +141,7 @@ const FormFields: React.FC<FormFieldsProps> = ({
           </Button>
         </Box>
       </Grid>
+
     </>
   );
 };
