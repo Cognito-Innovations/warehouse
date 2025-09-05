@@ -38,7 +38,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     // Package,
     // PreArrival,
     ShoppingRequest,
-    // Product,
+    Product,
     // PickupRequest,
     // PackageActionLog,
     // PackageItem,

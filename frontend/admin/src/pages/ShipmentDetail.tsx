@@ -29,7 +29,7 @@ const ShipmentDetail: React.FC = () => {
 
   return (
     <Box>
-      <TopNavbar pageTitle="Shopping Request" pageSubtitle="All" />
+      <TopNavbar pageTitle="Shipment Request" pageSubtitle="All" />
       <RequestDetailHeader request={shoppingRequest} onStatusUpdated={fetchRequest}/>
       <RequestDetailContent request={shoppingRequest} onStatusUpdated={fetchRequest} />
     </Box>

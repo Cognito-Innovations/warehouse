@@ -25,8 +25,8 @@ export class AuthController {
   ): Promise<RegisterResponseDto> {
     return this.authService.register(
       registerDto.image || '',
-      registerDto.email,
       registerDto.name || '',
+      registerDto.email,
       registerDto.password || '123456',
     );
   }

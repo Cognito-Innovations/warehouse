@@ -13,7 +13,6 @@ import {
   IconButton
 } from '@mui/material';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
-import { shoppingRequests } from '../../data/shoppingRequests';
 import RequestTableBody from './RequestTableBody';
 import { getAllShoppingRequests } from '../../services/api.services';
 
@@ -36,7 +35,7 @@ const RequestTable: React.FC = () => {
             time: createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           },
           customer: {
-            name: req.users?.name || 'Unknown',
+            name: req.user?.name || 'Unknown',
             id: req.user_id,
           },
           status: req.status,

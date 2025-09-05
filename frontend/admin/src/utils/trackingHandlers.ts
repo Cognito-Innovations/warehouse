@@ -6,7 +6,7 @@ export const STATUS_HANDLERS: Record<
   }
 > = {
   Requested: (details, step) => ({
-    description: `Requested by ${details.users.name}`,
+    description: `Requested by ${details.user.name}`,
     date: details.created_at,
   }),
 
