@@ -2,7 +2,8 @@ import { IsString, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
 
 export class CreatePackageDto {
   @IsString()
-  @IsNotEmpty()
+  //TODO: Remove comment
+  // @IsNotEmpty()
   customer: string;
 
   @IsString()

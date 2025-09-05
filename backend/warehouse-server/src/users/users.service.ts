@@ -24,6 +24,16 @@ export class UsersService {
       last_logout: user.last_logout,
       created_at: user.created_at,
       country: user.country,
+      role: user.role,
+      image: user.image,
+      suite_no: user.suite_no,
+      identifier: user.identifier,
+      phone_number: user.phone_number,
+      phone_number_2: user.phone_number_2,
+      gender: user.gender,
+      dob: user.dob,
+      verified: user.verified,
+      updated_at: user.updated_at,
     }));
   }
 }

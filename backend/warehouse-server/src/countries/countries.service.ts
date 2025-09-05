@@ -16,14 +16,14 @@ export class CountriesService {
     createCountryDto: CreateCountryDto,
   ): Promise<CountryResponseDto> {
     const country = this.countryRepository.create({
-      name: createCountryDto.name,
+      country: createCountryDto.country,
     });
 
     const savedCountry = await this.countryRepository.save(country);
 
     return {
       id: savedCountry.id,
-      name: savedCountry.name,
+      country: savedCountry.country,
       created_at: savedCountry.created_at,
       updated_at: savedCountry.updated_at,
     };
@@ -33,14 +33,14 @@ export class CountriesService {
     countries: string[],
   ): Promise<CountryResponseDto[]> {
     const countryEntities = countries.map((name) =>
-      this.countryRepository.create({ name }),
+      this.countryRepository.create({ country: name }),
     );
 
     const savedCountries = await this.countryRepository.save(countryEntities);
 
     return savedCountries.map((country) => ({
       id: country.id,
-      name: country.name,
+      country: country.country,
       created_at: country.created_at,
       updated_at: country.updated_at,
     }));
@@ -48,12 +48,12 @@ export class CountriesService {
 
   async getAllCountries(): Promise<CountryResponseDto[]> {
     const countries = await this.countryRepository.find({
-      order: { name: 'ASC' },
+      order: { country: 'ASC' },
     });
 
     return countries.map((country) => ({
       id: country.id,
-      name: country.name,
+      country: country.country,
       created_at: country.created_at,
       updated_at: country.updated_at,
     }));

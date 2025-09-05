@@ -3,7 +3,7 @@ import { Country } from '../countries/country.entity';
 import { Rack } from '../racks/rack.entity';
 import { Supplier } from '../suppliers/supplier.entity';
 import { User } from '../users/user.entity';
-import { Package } from '../packages/package.entity';
+// import { Package } from '../packages/package.entity';
 import { PreArrival } from '../pre-arrivals/pre-arrival.entity';
 import { ShoppingRequest } from '../shopping-requests/shopping-request.entity';
 import { Product } from '../products/product.entity';
@@ -22,6 +22,7 @@ import {
   ShoppingRequestDocument,
 } from '../shared/entities';
 
+//TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
@@ -30,25 +31,25 @@ export const databaseConfig: TypeOrmModuleOptions = {
   password: process.env.DB_PASSWORD || 'password',
   database: process.env.DB_NAME || 'warehouse',
   entities: [
-    Country,
-    Rack,
-    Supplier,
+    // Country,
+    // Rack,
+    // Supplier,
     User,
-    Package,
-    PreArrival,
+    // Package,
+    // PreArrival,
     ShoppingRequest,
-    Product,
-    PickupRequest,
-    PackageActionLog,
-    PackageItem,
-    PackageDocument,
-    PackageMeasurement,
-    PackageCharge,
+    // Product,
+    // PickupRequest,
+    // PackageActionLog,
+    // PackageItem,
+    // PackageDocument,
+    // PackageMeasurement,
+    // PackageCharge,
     UserDocument,
-    RackDocument,
-    SupplierDocument,
-    PreArrivalDocument,
-    PickupRequestDocument,
+    // RackDocument,
+    // SupplierDocument,
+    // PreArrivalDocument,
+    // PickupRequestDocument,
     ShoppingRequestDocument,
   ],
   synchronize: process.env.NODE_ENV !== 'production', // Only in development

@@ -11,13 +11,16 @@ export class ShoppingRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  //TODO: Remove nullable
+  @Column({ nullable: true })
   user_id: string;
 
-  @Column({ unique: true })
+  //TODO: add unique and remove nullable
+  @Column({ nullable: true })
   request_code: string;
 
-  @Column()
+  //TODO: Remove nullable
+  @Column({ nullable: true })
   country: string;
 
   @Column({ default: 0 })

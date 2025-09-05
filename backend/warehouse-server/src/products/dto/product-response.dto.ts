@@ -1,7 +1,7 @@
 export class ProductResponseDto {
   id: string;
   shopping_request_id: string;
-  product_name: string;
+  name: string;
   description?: string;
   unit_price?: number;
   quantity: number;

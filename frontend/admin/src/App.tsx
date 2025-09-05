@@ -27,6 +27,8 @@ import PackageDetail from './pages/PackageDetail';
 import { Toaster } from 'sonner';
 import PickupRequests from './pages/PickupRequests';
 import PickupRequestDetail from './pages/PickupRequestDetail';
+import ShipmentDetail from './pages/ShipmentDetail';
+
 
 function App() {
   const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
@@ -59,6 +61,7 @@ function App() {
             {/* TODO: Move this prearrivals to a separate page */}
             <Route path="/packages/pre-arrivals" element={<PreArrivals />} />
             <Route path="/shipments" element={<Shipments />} />
+            <Route path="/shipments/:id" element={<ShipmentDetail />} />
             <Route path="/shipments/export" element={<ShipmentExport />} />
             <Route path="/requests" element={<ShoppingRequests />} />
             <Route path="/requests/:id" element={<ShoppingRequestDetail />} />
