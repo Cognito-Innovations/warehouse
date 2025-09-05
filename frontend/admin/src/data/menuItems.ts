@@ -41,7 +41,7 @@ export const menuItems: MenuItem[] = [
   { 
     text: 'Requests', 
     icon: RequestsIcon, 
-    path: '/requests' ,
+    defaultPath: '/requests' ,
     subMenu: [
       { text: 'Shopping Requests', icon: ExportIcon, path: '/requests' },
       { text: 'Pickup Requests', icon: ExportIcon, path: '/pickups' },

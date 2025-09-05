@@ -192,3 +192,13 @@ export const getShoppingRequestByCode = async (code: string) => {
   const response = await api.get(`/shopping-requests/detail/by-code/${encodeURIComponent(code)}`);
   return response.data;
 };
+
+export const updateShoppingRequestStatus = async (id: string, status: string) => {
+  const response = await api.patch(`/shopping-requests/${id}/status`, { status });
+  return response.data;
+};
+
+export const updateProductUnitPrice = async (productId: string, unitPrice: number) => {
+  const res = await api.patch(`/products/${productId}/unit-price`, { unit_price: unitPrice });
+  return res.data;
+};

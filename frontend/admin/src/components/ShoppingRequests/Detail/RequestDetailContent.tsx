@@ -3,23 +3,30 @@ import CustomerInfo from './CustomerInfo';
 import ItemsTable from './ItemsTable';
 import TrackingStatus from './TrackingStatus';
 import ActionLogs from './ActionLogs';
+import PaymentSlipsCard from './PaymentSlipsCard';
 
 interface RequestData {
   details: any; 
   status: string;
-  // trackingHistory: TrackingHistoryItem[];
+  payment_slips?: string[];
+  onStatusUpdated?: () => void;
 }
 
-const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) => (
+const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request, onStatusUpdated }) => (
   <Grid container spacing={3}>
-    <Grid spacing={{ xs: 12, lg: 8 }} >
+    <Grid item xs={12} lg={8} >
       <CustomerInfo details={request}/>
+
+      {request.status === "PAYMENT_PENDING" || request.status === "PAYMENT_APPROVED" && (
+        <PaymentSlipsCard details={request || []} onStatusUpdated={onStatusUpdated} />
+      )}
+
       <ItemsTable details={request} />
     </Grid>
 
-    <Grid spacing={{ xs: 12, lg: 4 }} >
+    <Grid item xs={12} lg={4} >
       <TrackingStatus details={request} />
-      <ActionLogs logs={requestAnimationFrame.logs || ""} />
+      <ActionLogs />
     </Grid>
   </Grid>
 );

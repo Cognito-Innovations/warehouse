@@ -149,7 +149,7 @@ const Header = () => {
       {/* Address Section */}
       {pathname === '/assisted-shopping' || pathname ==='/pickup-request' || pathname ==='/pickup-request/create-request' ? (
         <AddressSection />
-      ) : pathname === '/assisted-shopping/create-request' || pathname.startsWith('/pickup-request/')  ? null : (
+      ) : pathname === '/assisted-shopping/create-request' || pathname.startsWith('/pickup-request/') ||  pathname.startsWith('/assisted-shopping/') ? null : (
         <HeaderAddressSection
           addressData={addressData}
           onOpenSavedAddressesModal={handleOpenSavedAddressesModal}

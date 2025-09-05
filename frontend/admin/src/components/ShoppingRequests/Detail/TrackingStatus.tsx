@@ -13,12 +13,22 @@ const TRACKING_STEPS = [
   { label: 'Order placed', defaultDescription: 'Waiting for complete' },
 ];
 
+const STATUS_MAPPING = {
+  PAYMENT_PENDING: 'Pending Payment Approval',
+  QUOTED: 'Quotation Ready',
+};
+
 const TrackingStatus = ({ details }) => {
-  const normalizedStatus = details.status.replace(/_/g, ' ').toLowerCase();
-  const statusToMatch = details.status === 'QUOTED' ? 'Quotation Ready'.toLowerCase() : normalizedStatus;
+  const mappedStatus = STATUS_MAPPING[details.status] || details.status.replace(/_/g, ' ').toLowerCase();
+
+  const statusToMatch =
+    STATUS_MAPPING[details.status] ||
+    (details.status === 'QUOTED'
+      ? 'Quotation Ready'.toLowerCase()
+      : mappedStatus);
 
   const currentStatusIndex = TRACKING_STEPS.findIndex(
-    step => step.label.toLowerCase() === statusToMatch
+    step => step.label.toLowerCase() === statusToMatch.toLowerCase()
   );
 
   return (
