@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Box, Typography, Button, Card, CardContent, IconButton } from '@mui/material';
-import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
+import { Add as AddIcon, Close as CloseIcon, CloudUpload as UploadIcon } from '@mui/icons-material';
 
 interface UploadedDocument {
   id: string;
@@ -19,6 +19,7 @@ interface ActionLogsSectionProps {
   onStatusChange: (status: string) => void;
   onOpenUploadModal: () => void;
   onRemoveDocument: (documentId: string) => void;
+  onFileSelect?: (files: FileList) => void;
 }
 
 const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
@@ -27,8 +28,37 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   packageData,
   onStatusChange,
   onOpenUploadModal,
-  onRemoveDocument
+  onRemoveDocument,
+  onFileSelect
 }) => {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (files: FileList | null) => {
+    if (files && files.length > 0 && onFileSelect) {
+      onFileSelect(files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    handleFileSelect(e.dataTransfer.files);
+  };
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
@@ -114,81 +144,99 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
 
             {/* Content */}
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                  Missing Documents
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: '#8b5cf6',
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Edit
-                </Typography>
-              </Box>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b', mb: 1 }}>
+                Missing Documents
+              </Typography>
 
               <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontSize: '0.875rem' }}>
                 Please upload item invoice
               </Typography>
 
-              {/* Document Previews */}
-              <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                {uploadedDocuments.map((doc) => (
-                  <Box key={doc.id} sx={{ position: 'relative' }}>
-                    <Box
-                      component="img"
-                      sx={{
-                        width: 60,
-                        height: 45,
-                        objectFit: 'cover',
-                        borderRadius: 1,
-                        border: '1px solid #e9ecef'
-                      }}
-                      alt={doc.name}
-                      src={doc.url}
-                    />
-                    <IconButton
-                      size="small"
-                      onClick={() => onRemoveDocument(doc.id)}
-                      sx={{
-                        position: 'absolute',
-                        top: -4,
-                        right: -4,
-                        width: 16,
-                        height: 16,
-                        bgcolor: '#ef4444',
-                        color: 'white',
-                        '&:hover': { bgcolor: '#dc2626' },
-                        '& .MuiSvgIcon-root': { fontSize: 10 }
-                      }}
-                    >
-                      <CloseIcon />
-                    </IconButton>
-                  </Box>
-                ))}
+              {/* Modern Upload Area */}
+              <Box sx={{ mb: 2 }}>
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleFileSelect(e.target.files)}
+                />
 
-                {/* Add Document Button */}
+                {/* Upload Area */}
                 <Box
+                  onClick={handleClick}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                   sx={{
-                    width: 60,
-                    height: 45,
-                    bgcolor: '#f8f9fa',
-                    borderRadius: 1,
-                    border: '1px solid #e9ecef',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    border: `2px dashed ${isDragOver ? '#3b82f6' : '#d1d5db'}`,
+                    borderRadius: 2,
+                    p: 3,
+                    textAlign: 'center',
                     cursor: 'pointer',
-                    '&:hover': { bgcolor: '#e9ecef' }
+                    bgcolor: isDragOver ? '#f0f9ff' : '#fafafa',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      borderColor: '#3b82f6',
+                      bgcolor: '#f0f9ff'
+                    }
                   }}
-                  onClick={onOpenUploadModal}
                 >
-                  <AddIcon sx={{ color: '#64748b', fontSize: 20 }} />
+                  <UploadIcon 
+                    sx={{ 
+                      fontSize: 48, 
+                      color: isDragOver ? '#3b82f6' : '#9ca3af',
+                      mb: 1
+                    }} 
+                  />
+                  <Typography variant="body2" sx={{ color: '#6b7280', mb: 0.5 }}>
+                    {isDragOver ? 'Drop files here' : 'Click to upload or drag and drop'}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                    PNG, JPG, PDF up to 10MB
+                  </Typography>
                 </Box>
+
+                {/* Document Previews */}
+                {uploadedDocuments.length > 0 && (
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
+                    {uploadedDocuments.map((doc) => (
+                      <Box key={doc.id} sx={{ position: 'relative' }}>
+                        <Box
+                          component="img"
+                          sx={{
+                            width: 60,
+                            height: 45,
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            border: '1px solid #e9ecef'
+                          }}
+                          alt={doc.name}
+                          src={doc.url}
+                        />
+                        <IconButton
+                          size="small"
+                          onClick={() => onRemoveDocument(doc.id)}
+                          sx={{
+                            position: 'absolute',
+                            top: -4,
+                            right: -4,
+                            width: 16,
+                            height: 16,
+                            bgcolor: '#ef4444',
+                            color: 'white',
+                            '&:hover': { bgcolor: '#dc2626' },
+                            '& .MuiSvgIcon-root': { fontSize: 10 }
+                          }}
+                        >
+                          <CloseIcon />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
               </Box>
 
               <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.75rem' }}>

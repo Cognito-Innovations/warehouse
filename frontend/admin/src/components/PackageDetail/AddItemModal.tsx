@@ -46,11 +46,11 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        pb: 2
+        pb: 2,
+        fontWeight: 600,
+        color: '#1e293b'
       }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-          {editingItem ? 'Edit Item' : 'Add Item'}
-        </Typography>
+        {editingItem ? 'Edit Item' : 'Add Item'}
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
@@ -72,7 +72,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 padding: '8px 12px',
                 border: '1px solid #d1d5db',
                 borderRadius: '4px',
-                fontSize: '14px'
+                fontSize: '14px',
+                color: '#1e293b',
+                backgroundColor: '#ffffff'
               }}
             />
           </Box>
@@ -92,7 +94,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                   padding: '8px 12px',
                   border: '1px solid #d1d5db',
                   borderRadius: '4px',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  color: '#1e293b',
+                  backgroundColor: '#ffffff'
                 }}
               />
             </Box>
@@ -111,7 +115,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                   padding: '8px 12px',
                   border: '1px solid #d1d5db',
                   borderRadius: '4px',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  color: '#1e293b',
+                  backgroundColor: '#ffffff'
                 }}
               />
             </Box>
@@ -132,7 +138,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 borderRadius: '4px',
                 fontSize: '14px',
                 backgroundColor: '#f9fafb',
-                color: '#6b7280'
+                color: '#1e293b'
               }}
             />
           </Box>

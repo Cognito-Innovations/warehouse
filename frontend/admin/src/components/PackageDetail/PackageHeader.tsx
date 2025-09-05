@@ -14,9 +14,11 @@ interface PackageHeaderProps {
     phone2: string;
   };
   actionLogStatus: string;
+  onDiscard?: () => void;
+  onPrintLabel?: () => void;
 }
 
-const PackageHeader: React.FC<PackageHeaderProps> = ({ packageData, actionLogStatus }) => {
+const PackageHeader: React.FC<PackageHeaderProps> = ({ packageData, actionLogStatus, onDiscard, onPrintLabel }) => {
   return (
     <Card sx={{ mb: 2, borderRadius: 2 }}>
       <CardContent sx={{ px: 3 }}>
@@ -78,6 +80,7 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({ packageData, actionLogSta
             <Button
               variant="contained"
               startIcon={<PrintIcon />}
+              onClick={onPrintLabel}
               sx={{
                 bgcolor: '#8b5cf6',
                 '&:hover': { bgcolor: '#7c3aed' },
@@ -90,9 +93,10 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({ packageData, actionLogSta
             <Button
               variant="contained"
               startIcon={<DeleteIcon />}
+              onClick={onDiscard}
               sx={{
-                bgcolor: '#f97316',
-                '&:hover': { bgcolor: '#ea580c' },
+                bgcolor: '#ef4444',
+                '&:hover': { bgcolor: '#dc2626' },
                 textTransform: 'none',
                 borderRadius: 1,
               }}
