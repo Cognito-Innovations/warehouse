@@ -28,6 +28,7 @@
     "@supabase/supabase-js": "^2.56.1",
     "@types/bcrypt": "^6.0.0",
     "@types/pg": "^8.15.5",
+    "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dotenv": "^17.2.1",

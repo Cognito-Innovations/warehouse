@@ -4,6 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity('package_items')
@@ -13,6 +15,10 @@ export class PackageItem {
 
   @Column()
   package_id: string;
+
+  @ManyToOne('Package', (packageEntity) => packageEntity.items)
+  @JoinColumn({ name: 'package_id' })
+  package: any;
 
   @Column()
   name: string;

@@ -8,18 +8,19 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { Rack } from '../../racks/rack.entity';
 
-@Entity('package_documents')
-export class PackageDocument {
+@Entity('rack_documents')
+export class RackDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  package_id: string;
+  rack_id: string;
 
-  @ManyToOne('Package', (packageEntity) => packageEntity.documents)
-  @JoinColumn({ name: 'package_id' })
-  package: any;
+  @ManyToOne(() => Rack)
+  @JoinColumn({ name: 'rack_id' })
+  rack: Rack;
 
   @Column()
   document_name: string;

@@ -8,18 +8,19 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { PreArrival } from '../../pre-arrivals/pre-arrival.entity';
 
-@Entity('package_documents')
-export class PackageDocument {
+@Entity('pre_arrival_documents')
+export class PreArrivalDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  package_id: string;
+  pre_arrival_id: string;
 
-  @ManyToOne('Package', (packageEntity) => packageEntity.documents)
-  @JoinColumn({ name: 'package_id' })
-  package: any;
+  @ManyToOne(() => PreArrival)
+  @JoinColumn({ name: 'pre_arrival_id' })
+  pre_arrival: PreArrival;
 
   @Column()
   document_name: string;

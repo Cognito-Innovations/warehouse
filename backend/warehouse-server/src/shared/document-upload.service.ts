@@ -1,41 +1,49 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { supabase } from '../supabase/supabase.client';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CloudinaryService } from './cloudinary.service';
+import { Package } from '../packages/package.entity';
+import {
+  UserDocument,
+  RackDocument,
+  SupplierDocument,
+  PreArrivalDocument,
+  PickupRequestDocument,
+  ShoppingRequestDocument,
+} from './entities';
+import { PackageDocument } from '../packages/entities/package-document.entity';
+import {
+  DocumentUploadOptions,
+  DocumentMetadataDto,
+  DocumentUploadResponseDto,
+  DocumentDeleteResponseDto,
+} from './dto';
 
-export interface DocumentUploadOptions {
-  entityType:
-    | 'package'
-    | 'user'
-    | 'rack'
-    | 'supplier'
-    | 'pre-arrival'
-    | 'pickup-request'
-    | 'shopping-request';
-  entityId: string;
-  category?: string;
-  isRequired?: boolean;
-  uploadedBy: string;
-  bucketName?: string;
-}
-
-export interface DocumentMetadata {
-  id: string;
-  document_name: string;
-  original_filename: string;
-  document_url: string;
-  document_type: string;
-  file_size: number;
-  mime_type: string;
-  category: string;
-  is_required: boolean;
-  uploaded_by: string;
-  uploaded_at: string;
-}
+// Re-export types from DTOs for backward compatibility
+export type { DocumentUploadOptions, DocumentMetadata } from './dto';
 
 @Injectable()
 export class DocumentUploadService {
-  constructor(private readonly cloudinaryService: CloudinaryService) {}
-  private getBucketName(entityType: string): string {
+  constructor(
+    private readonly cloudinaryService: CloudinaryService,
+    @InjectRepository(Package)
+    private readonly packageRepository: Repository<Package>,
+    @InjectRepository(PackageDocument)
+    private readonly packageDocumentRepository: Repository<PackageDocument>,
+    @InjectRepository(UserDocument)
+    private readonly userDocumentRepository: Repository<UserDocument>,
+    @InjectRepository(RackDocument)
+    private readonly rackDocumentRepository: Repository<RackDocument>,
+    @InjectRepository(SupplierDocument)
+    private readonly supplierDocumentRepository: Repository<SupplierDocument>,
+    @InjectRepository(PreArrivalDocument)
+    private readonly preArrivalDocumentRepository: Repository<PreArrivalDocument>,
+    @InjectRepository(PickupRequestDocument)
+    private readonly pickupRequestDocumentRepository: Repository<PickupRequestDocument>,
+    @InjectRepository(ShoppingRequestDocument)
+    private readonly shoppingRequestDocumentRepository: Repository<ShoppingRequestDocument>,
+  ) {}
+  private getBucketName(_entityType: string): string {
     // Use the single warehouse bucket for all documents
     return 'wearhouse_bucket';
   }
@@ -57,14 +65,25 @@ export class DocumentUploadService {
     return `${entityType}_id`;
   }
 
+  private getDocumentRepository(entityType: string): Repository<any> {
+    const repositoryMap = {
+      package: this.packageDocumentRepository,
+      user: this.userDocumentRepository,
+      rack: this.rackDocumentRepository,
+      supplier: this.supplierDocumentRepository,
+      'pre-arrival': this.preArrivalDocumentRepository,
+      'pickup-request': this.pickupRequestDocumentRepository,
+      'shopping-request': this.shoppingRequestDocumentRepository,
+    };
+    return repositoryMap[entityType];
+  }
+
   async uploadDocuments(
     files: any[],
     options: DocumentUploadOptions,
-  ): Promise<{ documents: DocumentMetadata[] }> {
-    const bucketName =
-      options.bucketName || this.getBucketName(options.entityType);
-    const tableName = this.getTableName(options.entityType);
+  ): Promise<DocumentUploadResponseDto> {
     const entityIdField = this.getEntityIdField(options.entityType);
+    const documentRepository = this.getDocumentRepository(options.entityType);
 
     // For packages, we need to handle custom package IDs
     let actualEntityId = options.entityId;
@@ -76,13 +95,12 @@ export class DocumentUploadService {
 
       if (!isUUID) {
         // If it's a custom package ID, get the actual package ID first
-        const { data: packageData, error: packageError } = await supabase
-          .from('packages')
-          .select('id')
-          .eq('custom_package_id', options.entityId)
-          .single();
+        const packageData = await this.packageRepository.findOne({
+          where: { custom_package_id: options.entityId },
+          select: ['id'],
+        });
 
-        if (packageError || !packageData) {
+        if (!packageData) {
           throw new BadRequestException(
             `Package with id ${options.entityId} not found`,
           );
@@ -92,7 +110,7 @@ export class DocumentUploadService {
       }
     }
 
-    const documents: DocumentMetadata[] = [];
+    const documents: DocumentMetadataDto[] = [];
 
     for (const file of files) {
       try {
@@ -135,26 +153,15 @@ export class DocumentUploadService {
           category: options.category || 'general',
           is_required: options.isRequired || false,
           uploaded_by: options.uploadedBy,
-          // Note: We'll store the Cloudinary public_id in a separate field if needed
         };
 
-        const { data: document, error: documentError } = await supabase
-          .from(tableName)
-          .insert(documentData)
-          .select()
-          .single();
-
-        if (documentError) {
-          throw new Error(
-            `Failed to save document record: ${documentError.message}`,
-          );
-        }
-
-        documents.push(document);
+        const document = await documentRepository.save(documentData);
+        documents.push(document as DocumentMetadataDto);
       } catch (error) {
         console.error(`Error processing file ${file.originalname}:`, error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         throw new BadRequestException(
-          `Failed to upload ${file.originalname}: ${error.message}`,
+          `Failed to upload ${file.originalname}: ${errorMessage}`,
         );
       }
     }
@@ -165,9 +172,9 @@ export class DocumentUploadService {
   async getDocuments(
     entityType: string,
     entityId: string,
-  ): Promise<DocumentMetadata[]> {
-    const tableName = this.getTableName(entityType);
+  ): Promise<DocumentMetadataDto[]> {
     const entityIdField = this.getEntityIdField(entityType);
+    const documentRepository = this.getDocumentRepository(entityType);
 
     // For packages, we need to handle custom package IDs
     if (entityType === 'package') {
@@ -178,13 +185,12 @@ export class DocumentUploadService {
 
       if (!isUUID) {
         // If it's a custom package ID, get the actual package ID first
-        const { data: packageData, error: packageError } = await supabase
-          .from('packages')
-          .select('id')
-          .eq('custom_package_id', entityId)
-          .single();
+        const packageData = await this.packageRepository.findOne({
+          where: { custom_package_id: entityId },
+          select: ['id'],
+        });
 
-        if (packageError || !packageData) {
+        if (!packageData) {
           throw new BadRequestException(
             `Package with id ${entityId} not found`,
           );
@@ -194,30 +200,26 @@ export class DocumentUploadService {
       }
     }
 
-    const { data, error } = await supabase
-      .from(tableName)
-      .select('*')
-      .eq(entityIdField, entityId)
-      .is('deleted_at', null)
-      .order('uploaded_at', { ascending: false });
+    const documents = await documentRepository.find({
+      where: {
+        [entityIdField]: entityId,
+        deleted_at: null,
+      },
+      order: {
+        created_at: 'DESC',
+      },
+    });
 
-    if (error) {
-      throw new BadRequestException(
-        `Failed to get documents: ${error.message}`,
-      );
-    }
-
-    return data;
+    return documents as DocumentMetadataDto[];
   }
 
   async deleteDocument(
     entityType: string,
     entityId: string,
     documentId: string,
-  ): Promise<{ success: boolean }> {
-    const tableName = this.getTableName(entityType);
+  ): Promise<DocumentDeleteResponseDto> {
     const entityIdField = this.getEntityIdField(entityType);
-    const bucketName = this.getBucketName(entityType);
+    const documentRepository = this.getDocumentRepository(entityType);
 
     // For packages, we need to handle custom package IDs
     let actualEntityId = entityId;
@@ -229,13 +231,12 @@ export class DocumentUploadService {
 
       if (!isUUID) {
         // If it's a custom package ID, get the actual package ID first
-        const { data: packageData, error: packageError } = await supabase
-          .from('packages')
-          .select('id')
-          .eq('custom_package_id', entityId)
-          .single();
+        const packageData = await this.packageRepository.findOne({
+          where: { custom_package_id: entityId },
+          select: ['id'],
+        });
 
-        if (packageError || !packageData) {
+        if (!packageData) {
           throw new BadRequestException(
             `Package with id ${entityId} not found`,
           );
@@ -246,14 +247,15 @@ export class DocumentUploadService {
     }
 
     // Get document to delete file from storage
-    const { data: document, error: docError } = await supabase
-      .from(tableName)
-      .select('document_url')
-      .eq('id', documentId)
-      .eq(entityIdField, actualEntityId)
-      .single();
+    const document = await documentRepository.findOne({
+      where: {
+        id: documentId,
+        [entityIdField]: actualEntityId,
+      },
+      select: ['document_url'],
+    });
 
-    if (docError || !document) {
+    if (!document) {
       throw new BadRequestException(`Document with id ${documentId} not found`);
     }
 
@@ -270,17 +272,10 @@ export class DocumentUploadService {
     }
 
     // Soft delete document record
-    const { error } = await supabase
-      .from(tableName)
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', documentId)
-      .eq(entityIdField, actualEntityId);
-
-    if (error) {
-      throw new BadRequestException(
-        `Failed to delete document: ${error.message}`,
-      );
-    }
+    await documentRepository.softDelete({
+      id: documentId,
+      [entityIdField]: actualEntityId,
+    });
 
     return { success: true };
   }

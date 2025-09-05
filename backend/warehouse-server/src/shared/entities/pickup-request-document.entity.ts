@@ -8,18 +8,19 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { PickupRequest } from '../../pickup-requests/pickup-request.entity';
 
-@Entity('package_documents')
-export class PackageDocument {
+@Entity('pickup_request_documents')
+export class PickupRequestDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  package_id: string;
+  pickup_request_id: string;
 
-  @ManyToOne('Package', (packageEntity) => packageEntity.documents)
-  @JoinColumn({ name: 'package_id' })
-  package: any;
+  @ManyToOne(() => PickupRequest)
+  @JoinColumn({ name: 'pickup_request_id' })
+  pickup_request: PickupRequest;
 
   @Column()
   document_name: string;

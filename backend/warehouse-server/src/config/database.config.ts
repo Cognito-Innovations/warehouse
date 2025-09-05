@@ -11,6 +11,16 @@ import { PickupRequest } from '../pickup-requests/pickup-request.entity';
 import { PackageActionLog } from '../packages/entities/package-action-log.entity';
 import { PackageItem } from '../packages/entities/package-item.entity';
 import { PackageDocument } from '../packages/entities/package-document.entity';
+import { PackageMeasurement } from '../packages/entities/package-measurement.entity';
+import { PackageCharge } from '../packages/entities/package-charge.entity';
+import {
+  UserDocument,
+  RackDocument,
+  SupplierDocument,
+  PreArrivalDocument,
+  PickupRequestDocument,
+  ShoppingRequestDocument,
+} from '../shared/entities';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -32,6 +42,14 @@ export const databaseConfig: TypeOrmModuleOptions = {
     PackageActionLog,
     PackageItem,
     PackageDocument,
+    PackageMeasurement,
+    PackageCharge,
+    UserDocument,
+    RackDocument,
+    SupplierDocument,
+    PreArrivalDocument,
+    PickupRequestDocument,
+    ShoppingRequestDocument,
   ],
   synchronize: process.env.NODE_ENV !== 'production', // Only in development
   logging: process.env.NODE_ENV === 'development',

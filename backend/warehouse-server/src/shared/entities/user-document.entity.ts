@@ -8,18 +8,19 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { User } from '../../users/user.entity';
 
-@Entity('package_documents')
-export class PackageDocument {
+@Entity('user_documents')
+export class UserDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  package_id: string;
+  user_id: string;
 
-  @ManyToOne('Package', (packageEntity) => packageEntity.documents)
-  @JoinColumn({ name: 'package_id' })
-  package: any;
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column()
   document_name: string;

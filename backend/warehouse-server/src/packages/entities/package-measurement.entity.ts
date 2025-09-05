@@ -3,12 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-import { Package } from './package.entity';
-import { User } from './user.entity';
+import { User } from '../../users/user.entity';
 
 @Entity('package_measurements')
 export class PackageMeasurement {
@@ -18,8 +18,9 @@ export class PackageMeasurement {
   @Column()
   package_id: string;
 
-  @ManyToOne(() => Package, (package_) => package_.measurements)
-  package: Package;
+  @ManyToOne('Package', (package_) => package_.measurements)
+  @JoinColumn({ name: 'package_id' })
+  package: any;
 
   @Column()
   piece_number: number;

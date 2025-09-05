@@ -8,12 +8,7 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-import { User } from './user.entity';
-import { PackageItem } from './package-item.entity';
-import { PackageMeasurement } from './package-measurement.entity';
-import { PackageCharge } from './package-charge.entity';
-import { PackageDocument } from './package-document.entity';
-import { PackageActionLog } from './package-action-log.entity';
+import { User } from '../../users/user.entity';
 
 @Entity('packages')
 export class Package {
@@ -86,18 +81,18 @@ export class Package {
   @DeleteDateColumn()
   deleted_at: Date;
 
-  @OneToMany(() => PackageItem, (item) => item.package)
-  items: PackageItem[];
+  @OneToMany('PackageItem', (item) => item.package)
+  items: any[];
 
-  @OneToMany(() => PackageMeasurement, (measurement) => measurement.package)
-  measurements: PackageMeasurement[];
+  @OneToMany('PackageMeasurement', (measurement) => measurement.package)
+  measurements: any[];
 
-  @OneToMany(() => PackageCharge, (charge) => charge.package)
-  charges: PackageCharge[];
+  @OneToMany('PackageCharge', (charge) => charge.package)
+  charges: any[];
 
-  @OneToMany(() => PackageDocument, (document) => document.package)
-  documents: PackageDocument[];
+  @OneToMany('PackageDocument', (document) => document.package)
+  documents: any[];
 
-  @OneToMany(() => PackageActionLog, (actionLog) => actionLog.package)
-  action_logs: PackageActionLog[];
+  @OneToMany('PackageActionLog', (actionLog) => actionLog.package)
+  action_logs: any[];
 }

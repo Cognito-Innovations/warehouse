@@ -8,18 +8,19 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { ShoppingRequest } from '../../shopping-requests/shopping-request.entity';
 
-@Entity('package_documents')
-export class PackageDocument {
+@Entity('shopping_request_documents')
+export class ShoppingRequestDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  package_id: string;
+  shopping_request_id: string;
 
-  @ManyToOne('Package', (packageEntity) => packageEntity.documents)
-  @JoinColumn({ name: 'package_id' })
-  package: any;
+  @ManyToOne(() => ShoppingRequest)
+  @JoinColumn({ name: 'shopping_request_id' })
+  shopping_request: ShoppingRequest;
 
   @Column()
   document_name: string;

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SharedModule } from '../shared/shared.module';
 import { PackagesController } from './packages.controller';
 import { PackagesService } from './packages.service';
 import { Package } from './package.entity';
@@ -11,9 +12,27 @@ import { PackageItemsService } from './package-items.service';
 import { PackageDocumentsService } from './package-documents.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Package, PackageActionLog, PackageItem, PackageDocument])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Package,
+      PackageActionLog,
+      PackageItem,
+      PackageDocument,
+    ]),
+    SharedModule,
+  ],
   controllers: [PackagesController],
-  providers: [PackagesService, PackageActionLogsService, PackageItemsService, PackageDocumentsService],
-  exports: [PackagesService, PackageActionLogsService, PackageItemsService, PackageDocumentsService],
+  providers: [
+    PackagesService,
+    PackageActionLogsService,
+    PackageItemsService,
+    PackageDocumentsService,
+  ],
+  exports: [
+    PackagesService,
+    PackageActionLogsService,
+    PackageItemsService,
+    PackageDocumentsService,
+  ],
 })
 export class PackagesModule {}
