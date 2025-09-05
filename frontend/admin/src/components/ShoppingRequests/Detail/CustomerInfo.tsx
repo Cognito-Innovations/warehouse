@@ -5,15 +5,15 @@ const CustomerInfo = ({ details }) => {
   return (
     <Card sx={{ p: 3 }}>
       <Typography variant="h6" fontWeight={600}>
-        {details.users.name} ({details.user_id})
+        {details.user.name} ({details.user_id})
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
         <MailOutline fontSize="small" color="action" />
-        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>{details.users.email}</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>{details.user.email}</Typography>
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <LocalPhoneOutlined fontSize="small" color="action" />
-        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>{details.users.phone}</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>{details.user.phone}</Typography>
       </Box>
       <Divider sx={{ my: 2 }} />
       <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>

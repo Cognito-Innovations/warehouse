@@ -3,13 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-import { Package } from './package.entity';
-import { User } from 'src/users/entity/user.entity';
-
+import { User } from '../../users/user.entity';
 
 @Entity('package_charges')
 export class PackageCharge {
@@ -19,8 +18,9 @@ export class PackageCharge {
   @Column()
   package_id: string;
 
-  @ManyToOne(() => Package, (package_) => package_.charges)
-  package: Package;
+  @ManyToOne('Package', (package_) => package_.charges)
+  @JoinColumn({ name: 'package_id' })
+  package: any;
 
   @Column()
   summary: string;

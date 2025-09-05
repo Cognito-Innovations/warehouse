@@ -5,6 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity('package_action_logs')
@@ -14,6 +16,10 @@ export class PackageActionLog {
 
   @Column()
   package_id: string;
+
+  @ManyToOne('Package', (packageEntity) => packageEntity.action_logs)
+  @JoinColumn({ name: 'package_id' })
+  package: any;
 
   @Column()
   file_name: string;

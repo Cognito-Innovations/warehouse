@@ -8,9 +8,7 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-import { Package } from './package.entity';
-import { User } from 'src/users/entity/user.entity';
-
+import { User } from '../../users/user.entity';
 
 @Entity('package_measurements')
 export class PackageMeasurement {
@@ -20,9 +18,9 @@ export class PackageMeasurement {
   @Column({ name: 'package_id' })
   packageId: string;
 
-  @ManyToOne(() => Package, (package_) => package_.measurements)
+  @ManyToOne('Package', (package_) => package_.measurements)
   @JoinColumn({ name: 'package_id' })
-  package: Package;
+  package: any;
 
   @Column({nullable: true})
   piece_number: number;

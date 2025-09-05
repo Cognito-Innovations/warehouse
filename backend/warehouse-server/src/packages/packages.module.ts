@@ -22,7 +22,17 @@ import { PackagesController } from './controller/packages.controller';;
     SharedModule,
   ],
   controllers: [PackagesController],
-  providers: [PackagesService, PackageActionLogsService, PackageItemsService, PackageDocumentsService],
-  exports: [PackagesService, PackageActionLogsService, PackageItemsService, PackageDocumentsService],
+  providers: [
+    PackagesService,
+    PackageActionLogsService,
+    PackageItemsService,
+    PackageDocumentsService,
+  ],
+  exports: [
+    PackagesService,
+    PackageActionLogsService,
+    PackageItemsService,
+    PackageDocumentsService,
+  ],
 })
 export class PackagesModule {}

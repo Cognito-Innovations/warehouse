@@ -3,48 +3,81 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CloudinaryService } from './cloudinary.service';
+import { Package } from '../packages/package.entity';
+import {
+  UserDocument,
+  RackDocument,
+  SupplierDocument,
+  PreArrivalDocument,
+  PickupRequestDocument,
+  ShoppingRequestDocument,
+} from './entities';
 import { PackageDocument } from '../packages/entities/package-document.entity';
-import { Package } from '../packages/entities/package.entity';
+import {
+  DocumentUploadOptions,
+  DocumentMetadataDto,
+  DocumentUploadResponseDto,
+  DocumentDeleteResponseDto,
+} from './dto';
 
-export interface DocumentUploadOptions {
-  entityType:
-    | 'package'
-    | 'user'
-    | 'rack'
-    | 'supplier'
-    | 'pre-arrival'
-    | 'pickup-request'
-    | 'shopping-request';
-  entityId: string;
-  category?: string;
-  isRequired?: boolean;
-  uploadedBy: string;
-  bucketName?: string;
-}
-
-export interface DocumentMetadata {
-  id: string;
-  document_name: string;
-  original_filename: string;
-  document_url: string;
-  document_type: string;
-  file_size: number;
-  mime_type: string;
-  category: string;
-  is_required: boolean;
-  uploaded_by: string;
-  uploaded_at: string;
-}
+// Re-export types from DTOs for backward compatibility
+export type { DocumentUploadOptions, DocumentMetadata } from './dto';
 
 @Injectable()
 export class DocumentUploadService {
   constructor(
     private readonly cloudinaryService: CloudinaryService,
-    @InjectRepository(PackageDocument)
-    private readonly packageDocumentRepository: Repository<PackageDocument>,
     @InjectRepository(Package)
     private readonly packageRepository: Repository<Package>,
+    @InjectRepository(PackageDocument)
+    private readonly packageDocumentRepository: Repository<PackageDocument>,
+    @InjectRepository(UserDocument)
+    private readonly userDocumentRepository: Repository<UserDocument>,
+    @InjectRepository(RackDocument)
+    private readonly rackDocumentRepository: Repository<RackDocument>,
+    @InjectRepository(SupplierDocument)
+    private readonly supplierDocumentRepository: Repository<SupplierDocument>,
+    @InjectRepository(PreArrivalDocument)
+    private readonly preArrivalDocumentRepository: Repository<PreArrivalDocument>,
+    @InjectRepository(PickupRequestDocument)
+    private readonly pickupRequestDocumentRepository: Repository<PickupRequestDocument>,
+    @InjectRepository(ShoppingRequestDocument)
+    private readonly shoppingRequestDocumentRepository: Repository<ShoppingRequestDocument>,
   ) {}
+  private getBucketName(_entityType: string): string {
+    // Use the single warehouse bucket for all documents
+    return 'wearhouse_bucket';
+  }
+
+  private getTableName(entityType: string): string {
+    const tableMap = {
+      package: 'package_documents',
+      user: 'user_documents',
+      rack: 'rack_documents',
+      supplier: 'supplier_documents',
+      'pre-arrival': 'pre_arrival_documents',
+      'pickup-request': 'pickup_request_documents',
+      'shopping-request': 'shopping_request_documents',
+    };
+    return tableMap[entityType] || 'general_documents';
+  }
+
+  private getEntityIdField(entityType: string): string {
+    return `${entityType}_id`;
+  }
+
+  private getDocumentRepository(entityType: string): Repository<any> {
+    const repositoryMap = {
+      package: this.packageDocumentRepository,
+      user: this.userDocumentRepository,
+      rack: this.rackDocumentRepository,
+      supplier: this.supplierDocumentRepository,
+      'pre-arrival': this.preArrivalDocumentRepository,
+      'pickup-request': this.pickupRequestDocumentRepository,
+      'shopping-request': this.shoppingRequestDocumentRepository,
+    };
+    return repositoryMap[entityType];
+  }
 
   async uploadDocuments(
     files: any[],
@@ -80,7 +113,7 @@ export class DocumentUploadService {
       actualEntityId = packageData.id;
     }
 
-    const documents: DocumentMetadata[] = [];
+    const documents: DocumentMetadataDto[] = [];
 
     for (const file of files) {
       try {
@@ -145,8 +178,10 @@ export class DocumentUploadService {
         documents.push(documentMetadata);
       } catch (error) {
         console.error(`Error processing file ${file.originalname}:`, error);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new BadRequestException(
-          `Failed to upload ${file.originalname}: ${error.message}`,
+          `Failed to upload ${file.originalname}: ${errorMessage}`,
         );
       }
     }

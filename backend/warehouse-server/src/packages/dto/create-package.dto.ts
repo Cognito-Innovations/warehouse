@@ -25,7 +25,8 @@ export class PackagePieceDto {
 
 export class CreatePackageDto {
   @IsString()
-  @IsNotEmpty()
+  //TODO: Remove comment
+  // @IsNotEmpty()
   customer: string;
 
   @IsString()

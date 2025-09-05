@@ -12,13 +12,16 @@ export class PickupRequestsService {
     private readonly pickupRequestRepository: Repository<PickupRequest>,
   ) {}
 
-  async createPickupRequest(createPickupRequestDto: CreatePickupRequestDto): Promise<PickupRequestResponseDto> {
+  async createPickupRequest(
+    createPickupRequestDto: CreatePickupRequestDto,
+  ): Promise<PickupRequestResponseDto> {
     const pickupRequest = this.pickupRequestRepository.create({
       ...createPickupRequestDto,
       status: createPickupRequestDto.status || 'REQUESTED',
     });
 
-    const savedPickupRequest = await this.pickupRequestRepository.save(pickupRequest);
+    const savedPickupRequest =
+      await this.pickupRequestRepository.save(pickupRequest);
 
     return {
       id: savedPickupRequest.id,
@@ -46,7 +49,7 @@ export class PickupRequestsService {
       order: { created_at: 'DESC' },
     });
 
-    return pickupRequests.map(request => ({
+    return pickupRequests.map((request) => ({
       id: request.id,
       user_id: request.user_id,
       pickup_address: request.pickup_address,
@@ -67,13 +70,15 @@ export class PickupRequestsService {
     }));
   }
 
-  async getPickupRequestsByUser(userId: string): Promise<PickupRequestResponseDto[]> {
+  async getPickupRequestsByUser(
+    userId: string,
+  ): Promise<PickupRequestResponseDto[]> {
     const pickupRequests = await this.pickupRequestRepository.find({
       where: { user_id: userId },
       order: { created_at: 'DESC' },
     });
 
-    return pickupRequests.map(request => ({
+    return pickupRequests.map((request) => ({
       id: request.id,
       user_id: request.user_id,
       pickup_address: request.pickup_address,
@@ -124,7 +129,11 @@ export class PickupRequestsService {
     };
   }
 
-  async updateStatus(id: string, status: string, price?: number): Promise<PickupRequestResponseDto> {
+  async updateStatus(
+    id: string,
+    status: string,
+    price?: number,
+  ): Promise<PickupRequestResponseDto> {
     const pickupRequest = await this.pickupRequestRepository.findOne({
       where: { id },
     });
@@ -134,7 +143,7 @@ export class PickupRequestsService {
     }
 
     pickupRequest.status = status;
-    
+
     if (price !== undefined) {
       pickupRequest.price = price;
     }
@@ -152,7 +161,8 @@ export class PickupRequestsService {
         break;
     }
 
-    const updatedPickupRequest = await this.pickupRequestRepository.save(pickupRequest);
+    const updatedPickupRequest =
+      await this.pickupRequestRepository.save(pickupRequest);
 
     return {
       id: updatedPickupRequest.id,

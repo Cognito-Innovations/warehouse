@@ -6,6 +6,7 @@ import {
   IconButton,
   Box,
   Typography,
+  type Breakpoint,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -14,11 +15,12 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  size?: Breakpoint | false;
 }
 
-const Modal: React.FC<ModalProps> = ({ open, onClose, title, children }) => {
+const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, size = 'xs' }) => {
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth={size} fullWidth>
       <DialogTitle sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
