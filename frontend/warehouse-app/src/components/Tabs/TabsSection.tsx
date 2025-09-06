@@ -83,7 +83,8 @@ const TabsSection = () => {
   }, [(session?.user as any)?.user_id]);
 
   const filteredShipments = useMemo(() => {
-    return shipmentsData.filter((s) => {
+    const shipmentsDataState: any[] = [];
+    return shipmentsDataState.filter((s) => {
       const matchesFilter = selectedFilter === "all" || s.status === selectedFilter;
       const matchesSearch =
         !searchTerm || s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.id.toLowerCase().includes(searchTerm.toLowerCase());
