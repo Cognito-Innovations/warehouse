@@ -1,24 +1,26 @@
+import { Country } from 'src/countries/entity/country.entity';
+import { User } from 'src/users/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
   JoinColumn,
+  ManyToOne,
 } from 'typeorm';
-import { User } from 'src/users/user.entity';
 
 @Entity('pickup_requests')
 export class PickupRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  user_id: string;
+  @ManyToOne(() => Country, { eager: true, nullable: false })
+  @JoinColumn({ name: 'country_id' })
+  country: Country;
 
   @ManyToOne(() => User, { eager: true, nullable: false })
-  @JoinColumn({ name: 'user_id' }) 
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @Column()
@@ -28,16 +30,16 @@ export class PickupRequest {
   supplier_name: string;
 
   @Column()
-  supplier_phone: string;
+  supplier_phone_number: string;
 
   @Column({ nullable: true })
-  alt_phone: string;
+  alt_supplier_phone_number: string;
 
   @Column()
-  pcs_box: number;
+  pcs_box: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  est_weight: number;
+  est_weight: string;
 
   @Column()
   pkg_details: string;
@@ -45,20 +47,8 @@ export class PickupRequest {
   @Column({ type: 'text', nullable: true })
   remarks: string;
 
-  @Column({ default: 'REQUESTED' })
-  status: string;
-
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   price: number;
-
-  @Column({ nullable: true })
-  quoted_at: Date;
-
-  @Column({ nullable: true })
-  confirmed_at: Date;
-
-  @Column({ nullable: true })
-  picked_at: Date;
 
   @CreateDateColumn()
   created_at: Date;

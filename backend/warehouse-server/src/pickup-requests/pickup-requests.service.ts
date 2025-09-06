@@ -1,148 +1,233 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { PickupRequest } from './pickup-request.entity';
 import { CreatePickupRequestDto } from './dto/create-pickup-request.dto';
 import { PickupRequestResponseDto } from './dto/pickup-request-response.dto';
+import {
+  FeatureType,
+  Status,
+  TrackingRequest,
+} from 'src/tracking-requests/tracking-request.entity';
 
 @Injectable()
 export class PickupRequestsService {
   constructor(
     @InjectRepository(PickupRequest)
     private readonly pickupRequestRepository: Repository<PickupRequest>,
+    @InjectRepository(TrackingRequest)
+    private readonly dataSource: DataSource,
   ) {}
 
   async createPickupRequest(
     createPickupRequestDto: CreatePickupRequestDto,
   ): Promise<PickupRequestResponseDto> {
-    const pickupRequest = this.pickupRequestRepository.create({
-      ...createPickupRequestDto,
-      status: createPickupRequestDto.status || 'REQUESTED',
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    const savedPickupRequest =
-      await this.pickupRequestRepository.save(pickupRequest);
+    try {
+      const pickupRequest = queryRunner.manager.create(PickupRequest, {
+        ...createPickupRequestDto,
+      });
 
-    return {
-      id: savedPickupRequest.id,
-      user_id: savedPickupRequest.user_id,
-      pickup_address: savedPickupRequest.pickup_address,
-      supplier_name: savedPickupRequest.supplier_name,
-      supplier_phone: savedPickupRequest.supplier_phone,
-      alt_phone: savedPickupRequest.alt_phone,
-      pcs_box: savedPickupRequest.pcs_box,
-      est_weight: savedPickupRequest.est_weight,
-      pkg_details: savedPickupRequest.pkg_details,
-      remarks: savedPickupRequest.remarks,
-      status: savedPickupRequest.status,
-      price: savedPickupRequest.price,
-      quoted_at: savedPickupRequest.quoted_at,
-      confirmed_at: savedPickupRequest.confirmed_at,
-      picked_at: savedPickupRequest.picked_at,
-      created_at: savedPickupRequest.created_at,
-      updated_at: savedPickupRequest.updated_at,
-    };
+      const savedPickupRequest = await queryRunner.manager.save(
+        PickupRequest,
+        pickupRequest,
+      );
+
+      const trackingRequest = queryRunner.manager.create(TrackingRequest, {
+        user: { id: createPickupRequestDto.user_id },
+        admin: { id: createPickupRequestDto.user_id },
+        feature_type: FeatureType.PickupRequest,
+        status: Status.Requested,
+        feature_fid: savedPickupRequest.id,
+        count: 1,
+      });
+
+      await queryRunner.manager.save(TrackingRequest, trackingRequest);
+
+      // Commit the transaction
+      await queryRunner.commitTransaction();
+
+      // Load the pickup request with relations after transaction
+      const pickupRequestWithRelations =
+        await this.pickupRequestRepository.findOne({
+          where: { id: savedPickupRequest.id },
+          relations: ['user', 'country'],
+        });
+
+      if (!pickupRequestWithRelations) {
+        throw new NotFoundException(
+          'Failed to load pickup request with relations',
+        );
+      }
+
+      return {
+        id: pickupRequestWithRelations.id,
+        country: pickupRequestWithRelations.country?.country,
+        pickup_address: pickupRequestWithRelations.pickup_address,
+        supplier_name: pickupRequestWithRelations.supplier_name,
+        supplier_phone_number: pickupRequestWithRelations.supplier_phone_number,
+        alt_supplier_phone_number:
+          pickupRequestWithRelations.alt_supplier_phone_number,
+        pcs_box: pickupRequestWithRelations.pcs_box,
+        est_weight: pickupRequestWithRelations.est_weight,
+        pkg_details: pickupRequestWithRelations.pkg_details,
+        remarks: pickupRequestWithRelations.remarks,
+        price: pickupRequestWithRelations.price,
+        created_at: pickupRequestWithRelations.created_at,
+        updated_at: pickupRequestWithRelations.updated_at,
+        user: pickupRequestWithRelations.user
+          ? {
+              email: pickupRequestWithRelations.user.email,
+              name: pickupRequestWithRelations.user.name,
+              phone_number: pickupRequestWithRelations.user.phone_number,
+              country: pickupRequestWithRelations.user.country,
+              created_at: pickupRequestWithRelations.user.created_at,
+            }
+          : undefined,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to create pickup request: ${(error as Error).message}`,
+      );
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async getAllPickupRequests(): Promise<PickupRequestResponseDto[]> {
-    const pickupRequests = await this.pickupRequestRepository.find({
-      order: { created_at: 'DESC' },
-      relations: ['user'],
-    });
+    try {
+      const pickupRequests = await this.pickupRequestRepository.find({
+        order: { created_at: 'DESC' },
+        relations: ['user', 'country'],
+      });
 
-    return pickupRequests.map((request) => ({
-      id: request.id,
-      user_id: request.user_id,
-      pickup_address: request.pickup_address,
-      supplier_name: request.supplier_name,
-      supplier_phone: request.supplier_phone,
-      alt_phone: request.alt_phone,
-      pcs_box: request.pcs_box,
-      est_weight: request.est_weight,
-      pkg_details: request.pkg_details,
-      remarks: request.remarks,
-      status: request.status,
-      price: request.price,
-      quoted_at: request.quoted_at,
-      confirmed_at: request.confirmed_at,
-      picked_at: request.picked_at,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
-      user: {
-          email: request.user.email,
-          name: request.user.name,
-          phone_number: request.user.phone_number,
-          country: request.user.country,
-          created_at: request.user.created_at,
-        }
-    }));
+      return pickupRequests.map((request) => ({
+        id: request.id,
+        country: request.country?.country,
+        pickup_address: request.pickup_address,
+        supplier_name: request.supplier_name,
+        supplier_phone_number: request.supplier_phone_number,
+        alt_supplier_phone_number: request.alt_supplier_phone_number,
+        pcs_box: request.pcs_box,
+        est_weight: request.est_weight,
+        pkg_details: request.pkg_details,
+        remarks: request.remarks,
+        price: request.price,
+        created_at: request.created_at,
+        updated_at: request.updated_at,
+        user: request.user
+          ? {
+              email: request.user.email,
+              name: request.user.name,
+              phone_number: request.user.phone_number,
+              country: request.user.country,
+              created_at: request.user.created_at,
+            }
+          : undefined,
+      }));
+    } catch (error) {
+      throw new BadRequestException(
+        `Failed to fetch pickup requests: ${(error as Error).message}`,
+      );
+    }
   }
 
   async getPickupRequestsByUser(
     userId: string,
   ): Promise<PickupRequestResponseDto[]> {
-    const pickupRequests = await this.pickupRequestRepository.find({
-      where: { user_id: userId },
-      order: { created_at: 'DESC' },
-    });
+    try {
+      const pickupRequests = await this.pickupRequestRepository.find({
+        where: { user: { id: userId } },
+        order: { created_at: 'DESC' },
+        relations: ['user', 'country'],
+      });
 
-    return pickupRequests.map((request) => ({
-      id: request.id,
-      user_id: request.user_id,
-      pickup_address: request.pickup_address,
-      supplier_name: request.supplier_name,
-      supplier_phone: request.supplier_phone,
-      alt_phone: request.alt_phone,
-      pcs_box: request.pcs_box,
-      est_weight: request.est_weight,
-      pkg_details: request.pkg_details,
-      remarks: request.remarks,
-      status: request.status,
-      price: request.price,
-      quoted_at: request.quoted_at,
-      confirmed_at: request.confirmed_at,
-      picked_at: request.picked_at,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
-    }));
+      return pickupRequests.map((request) => ({
+        id: request.id,
+        country: request.country?.country,
+        pickup_address: request.pickup_address,
+        supplier_name: request.supplier_name,
+        supplier_phone_number: request.supplier_phone_number,
+        alt_supplier_phone_number: request.alt_supplier_phone_number,
+        pcs_box: request.pcs_box,
+        est_weight: request.est_weight,
+        pkg_details: request.pkg_details,
+        remarks: request.remarks,
+        price: request.price,
+        created_at: request.created_at,
+        updated_at: request.updated_at,
+        user: request.user
+          ? {
+              email: request.user.email,
+              name: request.user.name,
+              phone_number: request.user.phone_number,
+              country: request.user.country,
+              created_at: request.user.created_at,
+            }
+          : undefined,
+      }));
+    } catch (error) {
+      throw new BadRequestException(
+        `Failed to fetch pickup requests for user: ${(error as Error).message}`,
+      );
+    }
   }
 
   async getPickupRequestById(id: string): Promise<PickupRequestResponseDto> {
-    const pickupRequest = await this.pickupRequestRepository.findOne({
-      where: { id },
-      relations: ['user'],
-    });
+    try {
+      const pickupRequest = await this.pickupRequestRepository.findOne({
+        where: { id },
+        relations: ['user', 'country'],
+      });
 
-    if (!pickupRequest) {
-      throw new Error(`Pickup request with id ${id} not found`);
+      if (!pickupRequest) {
+        throw new NotFoundException(`Pickup request with id ${id} not found`);
+      }
+
+      return {
+        id: pickupRequest.id,
+        country: pickupRequest.country?.country,
+        pickup_address: pickupRequest.pickup_address,
+        supplier_name: pickupRequest.supplier_name,
+        supplier_phone_number: pickupRequest.supplier_phone_number,
+        alt_supplier_phone_number: pickupRequest.alt_supplier_phone_number,
+        pcs_box: pickupRequest.pcs_box,
+        est_weight: pickupRequest.est_weight,
+        pkg_details: pickupRequest.pkg_details,
+        remarks: pickupRequest.remarks,
+        price: pickupRequest.price,
+        created_at: pickupRequest.created_at,
+        updated_at: pickupRequest.updated_at,
+        user: pickupRequest.user
+          ? {
+              email: pickupRequest.user.email,
+              name: pickupRequest.user.name,
+              phone_number: pickupRequest.user.phone_number,
+              country: pickupRequest.user.country,
+              created_at: pickupRequest.user.created_at,
+            }
+          : undefined,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to fetch pickup request: ${(error as Error).message}`,
+      );
     }
-
-    return {
-      id: pickupRequest.id,
-      user_id: pickupRequest.user_id,
-      pickup_address: pickupRequest.pickup_address,
-      supplier_name: pickupRequest.supplier_name,
-      supplier_phone: pickupRequest.supplier_phone,
-      alt_phone: pickupRequest.alt_phone,
-      pcs_box: pickupRequest.pcs_box,
-      est_weight: pickupRequest.est_weight,
-      pkg_details: pickupRequest.pkg_details,
-      remarks: pickupRequest.remarks,
-      status: pickupRequest.status,
-      price: pickupRequest.price,
-      quoted_at: pickupRequest.quoted_at,
-      confirmed_at: pickupRequest.confirmed_at,
-      picked_at: pickupRequest.picked_at,
-      created_at: pickupRequest.created_at,
-      updated_at: pickupRequest.updated_at,
-      user: {
-        email: pickupRequest.user.email,
-        name: pickupRequest.user.name,
-        phone_number: pickupRequest.user.phone_number,
-        country: pickupRequest.user.country,
-        created_at: pickupRequest.user.created_at,
-      },
-    };
   }
 
   async updateStatus(
@@ -150,54 +235,128 @@ export class PickupRequestsService {
     status: string,
     price?: number,
   ): Promise<PickupRequestResponseDto> {
-    const pickupRequest = await this.pickupRequestRepository.findOne({
-      where: { id },
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (!pickupRequest) {
-      throw new Error(`Pickup request with id ${id} not found`);
+    try {
+      const pickupRequest = await queryRunner.manager.findOne(PickupRequest, {
+        where: { id },
+        relations: ['user', 'country'],
+      });
+
+      if (!pickupRequest) {
+        throw new NotFoundException(`Pickup request with id ${id} not found`);
+      }
+
+      if (price !== undefined) {
+        pickupRequest.price = price;
+      }
+
+      // Update the status of the pickup request
+      switch (status.toUpperCase()) {
+        case 'QUOTED':
+        case 'CONFIRMED':
+        case 'PICKED':
+          // Status validation - you can add more logic here if needed
+          break;
+        default:
+          throw new BadRequestException(`Invalid status: ${status}`);
+      }
+
+      const updatedPickupRequest = await queryRunner.manager.save(
+        PickupRequest,
+        pickupRequest,
+      );
+
+      // Update the corresponding tracking request
+      const trackingRequest = await queryRunner.manager.findOne(
+        TrackingRequest,
+        {
+          where: {
+            feature_type: FeatureType.PickupRequest,
+            feature_fid: id,
+          },
+        },
+      );
+
+      if (trackingRequest) {
+        // Map pickup request status to tracking request status
+        let trackingStatus: Status;
+        switch (status.toUpperCase()) {
+          case 'QUOTED':
+            trackingStatus = Status.Quoted;
+            break;
+          case 'CONFIRMED':
+            trackingStatus = Status.QuotationConfirmed;
+            break;
+          case 'PICKED':
+            trackingStatus = Status.Shipped;
+            break;
+          default:
+            trackingStatus = Status.InReview;
+        }
+
+        trackingRequest.status = trackingStatus;
+        await queryRunner.manager.save(TrackingRequest, trackingRequest);
+      }
+
+      // Commit the transaction
+      await queryRunner.commitTransaction();
+
+      // Load the updated pickup request with relations after transaction
+      const pickupRequestWithRelations =
+        await this.pickupRequestRepository.findOne({
+          where: { id: updatedPickupRequest.id },
+          relations: ['user', 'country'],
+        });
+
+      if (!pickupRequestWithRelations) {
+        throw new NotFoundException(
+          'Failed to load updated pickup request with relations',
+        );
+      }
+
+      return {
+        id: pickupRequestWithRelations.id,
+        country: pickupRequestWithRelations.country?.country,
+        pickup_address: pickupRequestWithRelations.pickup_address,
+        supplier_name: pickupRequestWithRelations.supplier_name,
+        supplier_phone_number: pickupRequestWithRelations.supplier_phone_number,
+        alt_supplier_phone_number:
+          pickupRequestWithRelations.alt_supplier_phone_number,
+        pcs_box: pickupRequestWithRelations.pcs_box,
+        est_weight: pickupRequestWithRelations.est_weight,
+        pkg_details: pickupRequestWithRelations.pkg_details,
+        remarks: pickupRequestWithRelations.remarks,
+        price: pickupRequestWithRelations.price,
+        created_at: pickupRequestWithRelations.created_at,
+        updated_at: pickupRequestWithRelations.updated_at,
+        user: pickupRequestWithRelations.user
+          ? {
+              email: pickupRequestWithRelations.user.email,
+              name: pickupRequestWithRelations.user.name,
+              phone_number: pickupRequestWithRelations.user.phone_number,
+              country: pickupRequestWithRelations.user.country,
+              created_at: pickupRequestWithRelations.user.created_at,
+            }
+          : undefined,
+      };
+    } catch (error) {
+      // Rollback the transaction on any error
+      await queryRunner.rollbackTransaction();
+
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to update pickup request status: ${(error as Error).message}`,
+      );
+    } finally {
+      await queryRunner.release();
     }
-
-    pickupRequest.status = status;
-
-    if (price !== undefined) {
-      pickupRequest.price = price;
-    }
-
-    const now = new Date();
-    switch (status.toUpperCase()) {
-      case 'QUOTED':
-        pickupRequest.quoted_at = now;
-        break;
-      case 'CONFIRMED':
-        pickupRequest.confirmed_at = now;
-        break;
-      case 'PICKED':
-        pickupRequest.picked_at = now;
-        break;
-    }
-
-    const updatedPickupRequest =
-      await this.pickupRequestRepository.save(pickupRequest);
-
-    return {
-      id: updatedPickupRequest.id,
-      user_id: updatedPickupRequest.user_id,
-      pickup_address: updatedPickupRequest.pickup_address,
-      supplier_name: updatedPickupRequest.supplier_name,
-      supplier_phone: updatedPickupRequest.supplier_phone,
-      alt_phone: updatedPickupRequest.alt_phone,
-      pcs_box: updatedPickupRequest.pcs_box,
-      est_weight: updatedPickupRequest.est_weight,
-      pkg_details: updatedPickupRequest.pkg_details,
-      remarks: updatedPickupRequest.remarks,
-      status: updatedPickupRequest.status,
-      price: updatedPickupRequest.price,
-      quoted_at: updatedPickupRequest.quoted_at,
-      confirmed_at: updatedPickupRequest.confirmed_at,
-      picked_at: updatedPickupRequest.picked_at,
-      created_at: updatedPickupRequest.created_at,
-      updated_at: updatedPickupRequest.updated_at,
-    };
   }
 }

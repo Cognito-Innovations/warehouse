@@ -1,26 +1,22 @@
 export class PickupRequestResponseDto {
   id: string;
-  user_id: string;
+  country?: string;
   pickup_address: string;
   supplier_name: string;
-  supplier_phone: string;
-  alt_phone?: string;
-  pcs_box: number;
-  est_weight?: number;
+  supplier_phone_number: string;
+  alt_supplier_phone_number?: string;
+  pcs_box: string;
+  est_weight?: string;
   pkg_details: string;
   remarks?: string;
-  status: string;
   price?: number;
-  quoted_at?: Date;
-  confirmed_at?: Date;
-  picked_at?: Date;
   created_at: Date;
   updated_at: Date;
   user?: {
     email: string;
     name?: string;
     phone_number: string;
-    country: string;
+    country?: string;
     created_at: Date;
   };
 }

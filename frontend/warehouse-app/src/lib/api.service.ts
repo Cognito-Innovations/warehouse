@@ -19,9 +19,6 @@ const getAuthenticatedApi = async () => {
   const session = await getSession();
   const token = (session as any)?.access_token;
   
-  console.log('Session data:', session);
-  console.log('JWT Token:', token ? token.substring(0, 20) + '...' : 'No token');
-  
   if (!token) {
     throw new Error('No authentication token available');
   }

@@ -5,6 +5,7 @@ import {
   ManyToOne,
   JoinColumn
 } from 'typeorm';
+import { Package } from './package.entity';
 
 @Entity('package_measurements')
 export class PackageMeasurement {
@@ -14,9 +15,9 @@ export class PackageMeasurement {
   @Column({ name: 'package_id' })
   packageId: string;
 
-  @ManyToOne('Package', (package_: any) => package_.measurements)
+  @ManyToOne('Package', (package_: Package) => package_.measurements)
   @JoinColumn({ name: 'package_id' })
-  package: any;
+  package: Package;
 
   @Column({ nullable: true })
   piece_number: number;
@@ -44,7 +45,6 @@ export class PackageMeasurement {
 
   // @Column({ nullable: true, name: 'verifiedId' })
   // verified_by: string;
-  
 
   // @ManyToOne(() => User)
   // verifier: User;

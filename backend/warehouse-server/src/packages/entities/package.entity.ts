@@ -30,12 +30,9 @@ export class Package {
   @Column({ default: 'Action Required' })
   status: string;
 
-  @Column()
-  customer_id: string;
-
   @ManyToOne(() => User, { eager: true })
-  @JoinColumn({ name: 'customer_id' })
-  customer: User;
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column()
   vendor_id: string;
@@ -71,7 +68,7 @@ export class Package {
   country_relation: Country;
 
   @Column({ default: false })
-  allow_customer_items: boolean;
+  allow_user_items: boolean;
 
   @Column({ default: false })
   shop_invoice_received: boolean;
@@ -84,14 +81,11 @@ export class Package {
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'created_by' })
-  creator: User;
-
-  @Column({ nullable: true })
-  updated_by: string;
+  created_by: User;
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'updated_by' })
-  updater: User;
+  updated_by: User;
 
   @Column({ nullable: true })
   package_id: string;
@@ -105,13 +99,16 @@ export class Package {
   @DeleteDateColumn()
   deleted_at: Date;
 
-  @OneToMany(() => PackageItem, (item) => item.package)
+  @OneToMany(() => PackageItem, (item: PackageItem) => item.package)
   items: PackageItem[];
 
-  @OneToMany(() => PackageMeasurement, (measurement) => measurement.package)
+  @OneToMany(
+    () => PackageMeasurement,
+    (measurement: PackageMeasurement) => measurement.package,
+  )
   measurements: PackageMeasurement[];
 
-  @OneToMany(() => PackageCharge, (charge) => charge.package_id)
+  @OneToMany(() => PackageCharge, (charge: PackageCharge) => charge.package_id)
   charges: PackageCharge[];
 
   @OneToMany(() => PackageDocument, (document) => document.package)

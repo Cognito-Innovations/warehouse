@@ -10,6 +10,7 @@ import { PreArrival } from '../pre-arrivals/pre-arrival.entity';
 import { PackageItem } from '../packages/entities/package-item.entity';
 import { PickupRequest } from '../pickup-requests/pickup-request.entity';
 import { ShoppingRequest } from '../shopping-requests/shopping-request.entity';
+import { TrackingRequest } from '../tracking-requests/tracking-request.entity';
 import { PackageActionLog } from '../packages/entities/package-action-log.entity';
 import { PackageDocument } from '../packages/entities/package-document.entity';
 import { PackageMeasurement } from '../packages/entities/package-measurement.entity';
@@ -43,6 +44,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ShoppingRequest,
     Product,
     PickupRequest,
+    TrackingRequest,
     PackageActionLog,
     PackageItem,
     PackageDocument,
@@ -55,8 +57,10 @@ export const databaseConfig: TypeOrmModuleOptions = {
     PickupRequestDocument,
     ShoppingRequestDocument,
     ShipmentExport,
-    ShipmentExportBox
+    ShipmentExportBox,
   ],
-  synchronize: false, // Disable schema synchronization to prevent modifying existing database
+  synchronize: true, // Disable schema synchronization to prevent modifying existing database
+  migrations: ['dist/migrations/*.js'],
+  migrationsRun: false,
   logging: process.env.NODE_ENV === 'development',
 };

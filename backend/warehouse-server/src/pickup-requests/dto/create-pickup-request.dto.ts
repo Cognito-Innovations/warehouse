@@ -1,8 +1,18 @@
-import { IsString, IsNumber, IsOptional, IsPositive } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsPositive,
+  IsNotEmpty,
+  IsUUID,
+} from 'class-validator';
 
 export class CreatePickupRequestDto {
   @IsString()
   user_id: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  country_id: string;
 
   @IsString()
   pickup_address: string;
@@ -11,20 +21,20 @@ export class CreatePickupRequestDto {
   supplier_name: string;
 
   @IsString()
-  supplier_phone: string;
+  supplier_phone_number: string;
 
   @IsOptional()
   @IsString()
-  alt_phone?: string;
+  alt_supplier_phone_number?: string;
 
-  @IsNumber()
+  @IsString()
   @IsPositive()
-  pcs_box: number;
+  pcs_box: string;
 
   @IsOptional()
-  @IsNumber()
+  @IsString()
   @IsPositive()
-  est_weight?: number;
+  est_weight?: string;
 
   @IsString()
   pkg_details: string;
