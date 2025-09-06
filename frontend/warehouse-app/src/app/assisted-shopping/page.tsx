@@ -91,7 +91,7 @@ export default function AssistedShopping() {
           <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <div>
-                {/* <p className="font-semibold text-gray-900">{request.id}</p> */}
+                <p className="font-semibold text-gray-900">{request.request_code}</p>
                 <p className="text-sm text-gray-600">{formatDateTime(request.created_at)}</p>
               </div>
               <div>

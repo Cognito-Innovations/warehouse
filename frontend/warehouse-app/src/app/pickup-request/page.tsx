@@ -100,9 +100,8 @@ export default function PickupRequestPage() {
               InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon color="action" /></InputAdornment> }}
               sx={{ bgcolor: 'white', '.MuiOutlinedInput-root': { borderRadius: '8px' } }}
             />
-            <Link href="/pickup-request/create-request" passHref>
+            <Link href="/pickup-request/create-request">
               <Button
-                component="a"
                 variant="contained"
                 startIcon={<AddIcon />}
                 sx={{

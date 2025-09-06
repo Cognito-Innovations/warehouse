@@ -101,8 +101,8 @@ export class PackagesService {
     if (!customer) {
       throw new BadRequestException('Customer not found');
     }
-
-    const package_id = createPackageDto.package_id || await this.generateCountryBasedpackage_id(customer.country);
+    //Remove the hardcoded country id
+    const package_id = createPackageDto.package_id || await this.generateCountryBasedpackage_id(customer.country || '54e03123-77f4-477f-85d4-083d4701ae39');
     const existingPackage = await this.packageRepository.findOne({
       where: { package_id: package_id },
     });
@@ -127,7 +127,8 @@ export class PackagesService {
     packageEntity.tracking_no = createPackageDto.tracking_no;
     packageEntity.vendor_id = createPackageDto.vendor;
     packageEntity.status = createPackageDto.status || 'Action Required';
-    packageEntity.country = customer.country; // Use country from user profile
+    // Remove the hardcoded country id
+    packageEntity.country = customer.country || '54e03123-77f4-477f-85d4-083d4701ae39'; // Use country from user profile, default to India
     packageEntity.total_weight = createPackageDto.weight ? parseFloat(createPackageDto.weight) : null;
     packageEntity.total_volumetric_weight = createPackageDto.volumetric_weight ? parseFloat(createPackageDto.volumetric_weight) : null;
     packageEntity.dangerous_good = createPackageDto.dangerous_good || false;
@@ -238,6 +239,24 @@ export class PackagesService {
     return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
   }
 
+  async getPackagesByUserAndStatus(userId: string, status: string): Promise<PackageResponseDto[]> {
+    console.log('getPackagesByUserAndStatus called with:', { userId, status });
+    
+    const packages = await this.packageRepository.find({
+      where: {
+        customer_id: userId,
+        status: status,
+      },
+      relations: ['measurements', 'items', 'customer'],
+      order: { created_at: 'DESC' },
+    });
+
+    console.log('Found packages:', packages.length);
+    console.log('Package details:', packages.map(pkg => ({ id: pkg.id, tracking_no: pkg.tracking_no, status: pkg.status, customer_id: pkg.customer_id, customer_name: pkg.customer?.name })));
+
+    return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
+  }
+
   async getPackageById(id: string): Promise<PackageResponseDto> {
     // Check if the input is a UUID format
     const isUUID =
@@ -294,6 +313,8 @@ export class PackagesService {
     status: string,
     updated_by: string,
   ): Promise<PackageResponseDto> {
+    console.log('updatePackageStatus called with:', { id, status, updated_by });
+    
     // Check if the input is a UUID format
     const isUUID =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -314,10 +335,17 @@ export class PackagesService {
       throw new NotFoundException('Package not found');
     }
 
+    console.log('Found package:', { id: packageEntity.id, current_status: packageEntity.status });
+
     // Update the status
     packageEntity.status = status;
     packageEntity.updated_by = updated_by;
+    
+    console.log('Updating package with:', { new_status: status, updated_by });
+    
     const updatedPackage = await this.packageRepository.save(packageEntity);
+    
+    console.log('Package updated successfully:', { id: updatedPackage.id, new_status: updatedPackage.status });
 
     return this.mapPackageToResponseDto(updatedPackage);
   }

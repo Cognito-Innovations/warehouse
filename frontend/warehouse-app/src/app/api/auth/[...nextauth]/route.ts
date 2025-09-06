@@ -12,6 +12,7 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ user }) {
       try {
+        console.log('NextAuth signIn called for user:', user.email);
         const res = await fetch(`${process.env.NEST_BACKEND_URL}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -24,7 +25,11 @@ const handler = NextAuth({
           }),
         });
         const data = await res.json();
+        console.log('Backend response:', data);
         (user as any).user_id = data.user.id;
+        (user as any).access_token = data.access_token;
+        console.log('Stored user_id:', data.user.id);
+        console.log('Stored access_token:', data.access_token ? data.access_token.substring(0, 20) + '...' : 'No token');
       } catch (err) {
         console.error("Error calling Nest backend:", err);
       }
@@ -33,14 +38,19 @@ const handler = NextAuth({
 
     async jwt({ token, user }) {
       if (user) {
+        console.log('JWT callback - user data:', { user_id: (user as any).user_id, has_token: !!(user as any).access_token });
         token.user_id = (user as any).user_id;
+        token.access_token = (user as any).access_token;
       }
+      console.log('JWT callback - token data:', { user_id: token.user_id, has_token: !!token.access_token });
       return token;
     },
 
     async session({ session, token }) {
       if (token?.user_id) {
         (session.user as any).user_id = token.user_id;
+        (session as any).access_token = token.access_token;
+        console.log('Session callback - session data:', { user_id: token.user_id, has_token: !!token.access_token });
       } 
       return session;
     },
