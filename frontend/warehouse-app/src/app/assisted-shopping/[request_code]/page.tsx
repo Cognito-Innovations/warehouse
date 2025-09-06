@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CircularProgress } from '@mui/material';
@@ -25,6 +25,10 @@ export default function ViewShoppingRequestPage() {
   const [request, setRequest] = useState<any>(null);
   const [selectedForQuote, setSelectedForQuote] = useState<any[]>([]); 
   const [loading, setLoading] = useState(true);
+
+  const handleSelectionChange = useCallback((selected: any[]) => {
+    setSelectedForQuote(selected);
+  }, []);
 
   const isQuotation = request?.status === 'QUOTATION_READY';
   const isQuotationConfirmed = request?.status === 'QUOTATION_CONFIRMED';
@@ -110,7 +114,7 @@ export default function ViewShoppingRequestPage() {
 
                 <QuotationItems
                   items={request.shopping_request_products || []}
-                  onSelectionChange={setSelectedForQuote}
+                  onSelectionChange={handleSelectionChange}
                 />
                 <QuotationSummary
                   items={selectedForQuote || []}
@@ -121,7 +125,7 @@ export default function ViewShoppingRequestPage() {
               </>
             ) : (
               <>
-                <ItemsList items={request.shopping_request_products} />
+                <ItemsList items={request.shopping_request_products || []} />
                 {!isQuotationConfirmed && !isInvoiced && <ActionsCard />}
               </>
             )}

@@ -23,7 +23,17 @@ interface ShoppingItem {
 export default function CreateShoppingRequest() {
   const router = useRouter();
   const { data: session } = useSession();  
-  const [selectedCountry, setSelectedCountry] = useState("Singapore");
+  
+  // Load country from localStorage or use default
+  const getInitialCountry = () => {
+    if (typeof window !== 'undefined') {
+      const savedCountry = localStorage.getItem('selectedCountry');
+      return savedCountry || 'India';
+    }
+    return 'India';
+  };
+  
+  const [selectedCountry, setSelectedCountry] = useState(getInitialCountry);
   const [items, setItems] = useState<ShoppingItem[]>([
     {
       id: "1",
@@ -72,6 +82,10 @@ export default function CreateShoppingRequest() {
 
   const handleCountryChange = (country: string) => {
     setSelectedCountry(country);
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedCountry', country);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

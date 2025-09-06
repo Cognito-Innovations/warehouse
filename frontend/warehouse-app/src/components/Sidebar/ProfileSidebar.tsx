@@ -43,15 +43,17 @@ export default function ProfileSidebar() {
     <Paper
       sx={{
         width: 280,
-        height: 'fit-content',
+        height: '100%',
         bgcolor: 'background.paper',
         borderRadius: 0,
         boxShadow: 'none',
         borderRight: '1px solid',
         borderColor: 'grey.200',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <List sx={{ p: 2 }}>
+      <List sx={{ p: 2, flex: 1 }}>
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           

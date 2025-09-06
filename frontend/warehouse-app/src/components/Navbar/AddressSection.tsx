@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactCountryFlag from 'react-country-flag';
 
 interface AddressSectionProps {
@@ -8,10 +8,34 @@ interface AddressSectionProps {
 }
 
 const AddressSection: React.FC<AddressSectionProps> = ({
-  currentCountry = 'Singapore',
+  currentCountry,
   onCountryChange
 }) => {
-  const [selectedCountry, setSelectedCountry] = useState(currentCountry);
+  // Always start with default to avoid hydration mismatch
+  const [selectedCountry, setSelectedCountry] = useState('India');
+  const [isClient, setIsClient] = useState(false);
+
+  // Set client flag and load from localStorage on mount
+  useEffect(() => {
+    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      const savedCountry = localStorage.getItem('selectedCountry');
+      if (savedCountry) {
+        setSelectedCountry(savedCountry);
+      }
+    }
+  }, []);
+
+  // Handle currentCountry prop changes
+  useEffect(() => {
+    if (currentCountry && currentCountry !== selectedCountry) {
+      setSelectedCountry(currentCountry);
+      // Save to localStorage when changed via prop
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('selectedCountry', currentCountry);
+      }
+    }
+  }, [currentCountry, selectedCountry]);
 
   const countries = [
     { name: 'India', code: 'IN' },
@@ -27,6 +51,10 @@ const AddressSection: React.FC<AddressSectionProps> = ({
 
   const handleCountrySelect = (country: string) => {
     setSelectedCountry(country);
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedCountry', country);
+    }
     onCountryChange?.(country);
   };
 
@@ -52,17 +80,21 @@ const AddressSection: React.FC<AddressSectionProps> = ({
           {/* Left Side - Current Country */}
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-gray-100 rounded-full border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
-              <ReactCountryFlag 
-                countryCode={getCountryCode(selectedCountry)}
-                svg
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: '50%',
-                  objectFit: 'cover'
-                }}
-                title={selectedCountry}
-              />
+              {isClient ? (
+                <ReactCountryFlag 
+                  countryCode={getCountryCode(selectedCountry)}
+                  svg
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                  title={selectedCountry}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 rounded-full"></div>
+              )}
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900">{selectedCountry}</h3>
