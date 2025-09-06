@@ -4,12 +4,15 @@ import { Repository } from 'typeorm';
 import { ShoppingRequest } from './shopping-request.entity';
 import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
 import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
+import { Product } from 'src/products/product.entity';
 
 @Injectable()
 export class ShoppingRequestsService {
   constructor(
     @InjectRepository(ShoppingRequest)
     private readonly shoppingRequestRepository: Repository<ShoppingRequest>,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
   ) {}
 
   async createShoppingRequest(
@@ -95,6 +98,10 @@ export class ShoppingRequestsService {
       );
     }
 
+    const shoppingRequestProducts = await this.productRepository.find({
+      where: { shopping_request_id: shoppingRequest.id },
+    });
+
     return {
       id: shoppingRequest.id,
       user_id: shoppingRequest.user_id,
@@ -102,6 +109,7 @@ export class ShoppingRequestsService {
       request_code: shoppingRequest.request_code,
       country: shoppingRequest.country,
       items: shoppingRequest.items,
+      shopping_request_products: shoppingRequestProducts,
       remarks: shoppingRequest.remarks,
       status: shoppingRequest.status,
       payment_slips: shoppingRequest.payment_slips,
