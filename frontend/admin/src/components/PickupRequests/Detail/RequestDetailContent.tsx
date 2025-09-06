@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid } from '@mui/material';
+import { Grid, Box } from '@mui/material';
 import RequestDetails from './RequestDetails';
 import TrackingStatus from './TrackingStatus';
 import { type TrackingHistoryItem } from './TrackingItem';
@@ -11,15 +11,17 @@ interface RequestData {
 }
 
 const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) => (
-  <Grid container spacing={3} mt={3}>
-    <Grid item xs={12} lg={8}>
-      <RequestDetails details={request} />
+  <Box sx={{ p: 3, width: '100%' }}>
+    <Grid container spacing={3} sx={{ alignItems: 'flex-start', width: '100%' }}>
+      <Grid item xs={12} md={6}>
+        <RequestDetails details={request} />
+      </Grid>
+      
+      <Grid item xs={12} md={6}>
+        <TrackingStatus details={request} />
+      </Grid>
     </Grid>
-    
-    <Grid item xs={12} lg={4}>
-      <TrackingStatus details={request} />
-    </Grid>
-  </Grid>
+  </Box>
 );
 
 export default RequestDetailContent;

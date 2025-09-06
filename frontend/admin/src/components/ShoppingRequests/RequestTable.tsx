@@ -105,6 +105,7 @@ const RequestTable: React.FC = () => {
                 <TableCell>Customer</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>No. of Items</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <RequestTableBody rows={visibleRows} />

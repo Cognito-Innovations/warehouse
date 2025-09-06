@@ -13,9 +13,9 @@ export default function ProfileLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Box sx={{ display: 'flex', minHeight: 'calc(100vh - 64px)' }}>
+    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)' }}>
       <ProfileSidebar />
-      <Box sx={{ flex: 1, p: 3 }}>
+      <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
         {children}
       </Box>
     </Box>

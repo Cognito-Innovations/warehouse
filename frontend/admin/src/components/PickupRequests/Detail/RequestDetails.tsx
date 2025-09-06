@@ -44,7 +44,6 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({ details }) => (
       elevation={0}
       sx={{
         width: '100%',
-        minWidth: '650px',
         p: 3,
         borderRadius: 2,
         border: '1px solid #E0E0E0',
@@ -55,7 +54,7 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({ details }) => (
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-          gap: 2.5,
+          gap: 2,
         }}
       >
         <Box sx={{ gridColumn: '1 / -1' }}>

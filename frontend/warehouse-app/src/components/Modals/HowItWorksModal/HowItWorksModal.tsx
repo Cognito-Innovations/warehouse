@@ -82,13 +82,12 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClose }) =>
 
           {/* Action Button */}
           <div className="flex justify-center">
-            <Link href="/assisted-shopping/create-request">
-              <button
-                onClick={onClose}
-                className="bg-purple-700 text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors duration-200"
-              >
-                Shopping Request
-              </button>
+            <Link 
+              href="/assisted-shopping/create-request"
+              className="bg-purple-700 text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors duration-200 inline-block"
+              onClick={onClose}
+            >
+              Shopping Request
             </Link>
           </div>
         </div>

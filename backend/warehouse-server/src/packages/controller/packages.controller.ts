@@ -28,9 +28,34 @@ export class PackagesController {
     return this.packagesService.getAllPackages();
   }
 
+  @Get('debug/all')
+  async debugAllPackages(): Promise<any[]> {
+    console.log('Debug: Getting all packages');
+    const packages = await this.packagesService.getAllPackages();
+    console.log('Debug: Found', packages.length, 'total packages');
+    return packages.map(pkg => ({
+      id: pkg.id,
+      tracking_no: pkg.tracking_no,
+      status: pkg.status,
+      customer_id: pkg.customer?.id,
+      created_at: pkg.created_at
+    }));
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<PackageResponseDto> {
     return this.packagesService.getPackageById(id);
+  }
+
+  @Get('user/:userId/status/:status')
+  async findByUserAndStatus(
+    @Param('userId') userId: string,
+    @Param('status') status: string,
+  ): Promise<PackageResponseDto[]> {
+    console.log('PackagesController: findByUserAndStatus called with:', { userId, status });
+    const result = await this.packagesService.getPackagesByUserAndStatus(userId, status);
+    console.log('PackagesController: returning', result.length, 'packages');
+    return result;
   }
 
   @Patch(':id/status')

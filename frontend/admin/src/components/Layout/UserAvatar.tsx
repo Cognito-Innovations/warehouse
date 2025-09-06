@@ -81,7 +81,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   return (
     <Box sx={{ position: 'relative' }}>
       <IconButton onClick={handleAvatarClick} sx={{ p: 0 }}>
-        <Avatar sx={{ bgcolor: '#64748b', width: 32, height: 32 }}></Avatar>
+        <Avatar sx={{ bgcolor: '#64748b', width: 36, height: 36 }}></Avatar>
       </IconButton>
       
       {/* User Menu Dropdown */}

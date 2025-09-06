@@ -21,7 +21,8 @@ export default function QuotationItems({
 
   useEffect(() => {
     setSelectedIds(items.map(i => i.id));
-    onSelectionChange(items);
+    // Don't call onSelectionChange here as it causes infinite loop
+    // The parent will handle the initial selection
   }, [items]);
 
   const toggle = (id: string) => {

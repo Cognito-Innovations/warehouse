@@ -22,4 +22,24 @@ export class CreateProductDto {
   @IsOptional()
   @IsUrl()
   url?: string;
+
+  @IsOptional()
+  @IsString()
+  size?: string;
+
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @IsOptional()
+  @IsString()
+  variants?: string;
+
+  @IsOptional()
+  @IsString()
+  if_not_available_quantity?: string;
+
+  @IsOptional()
+  @IsString()
+  if_not_available_color?: string;
 }

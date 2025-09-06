@@ -48,30 +48,30 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({ packageData, actionLogSta
 
             {/* Contact Information with Icons */}
             <Stack direction="row" spacing={1} flexWrap="wrap">
-              <Stack direction="row" alignItems="center" spacing={1}>
+              {packageData.customer && <Stack direction="row" alignItems="center" spacing={1}>
                 <PersonIcon sx={{ fontSize: 14, color: '#64748b' }} />
                 <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem' }}>
                   {packageData.customer} ({packageData.suite})
                 </Typography>
-              </Stack>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              </Stack>}
+              {packageData.email && packageData.email !== 'N/A' && <Stack direction="row" alignItems="center" spacing={1}>
                 <EmailIcon sx={{ fontSize: 14, color: '#64748b' }} />
                 <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem' }}>
                   {packageData.email}
                 </Typography>
-              </Stack>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              </Stack>}
+              {packageData.phone && packageData.phone !== 'N/A' && <Stack direction="row" alignItems="center" spacing={1}>
                 <PhoneIcon sx={{ fontSize: 14, color: '#64748b' }} />
                 <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem' }}>
                   {packageData.phone}
                 </Typography>
-              </Stack>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              </Stack>}
+              {packageData.phone2 && packageData.phone2 !== 'N/A' && <Stack direction="row" alignItems="center" spacing={1}>
                 <PhoneIcon sx={{ fontSize: 14, color: '#64748b' }} />
                 <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem' }}>
                   {packageData.phone2}
                 </Typography>
-              </Stack>
+              </Stack>}
             </Stack>
           </Box>
 

@@ -159,7 +159,10 @@ const PreArrivals: React.FC = () => {
 
   return (
     <>
-      <TopNavbar searchValue={searchValue} onSearchChange={handleSearchChange} />
+    <TopNavbar 
+        pageTitle="Pre-Arrivals"
+        pageSubtitle="All"
+      /> 
       <Box sx={{ width: '100%', maxWidth: '100%' }}>
         {/* Filters */}
         <FiltersSection

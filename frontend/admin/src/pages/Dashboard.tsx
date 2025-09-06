@@ -1,18 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Grid } from '@mui/material';
 import TopNavbar from '../components/Layout/TopNavbar';
 import MetricCard from '../components/Dashboard/MetricCard';
 import DashboardCharts from '../components/Dashboard/DashboardCharts';
 import { metricsData, chartsData } from '../data/dashboard';
+import { getPackage, getPickupRequests, getShipmentExports, getUsers } from '../services/api.services';
 
 const Dashboard: React.FC = () => {
-  const metrics = metricsData;
+  const [metrics, setMetrics] = useState(metricsData);
+
   const charts = chartsData;
   const [searchValue, setSearchValue] = useState('');
 
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
   };
+
+  const fetchMetrics = async () => {
+    try {
+      //TODO: Create a dedicated api for fetch all metrics data
+      const users = await getUsers();
+      const packages = await getPackage();
+      const shipments = await getShipmentExports();
+      const pickupRequests = await getPickupRequests();
+      
+      metricsData[0].value = users.length.toString();
+      metricsData[1].value = packages.length.toString();
+      metricsData[3].value = shipments.length.toString();
+      metricsData[8].value = pickupRequests.length.toString();
+      setMetrics([...metricsData]);
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMetrics();
+  }, []);
 
   return (
     <Box>

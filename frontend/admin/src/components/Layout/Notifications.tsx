@@ -62,12 +62,11 @@ const Notifications: React.FC = () => {
 
   return (
     <Box sx={{ position: 'relative', border: '2px solid grey', borderRadius: '50%' }}>
-      <Badge badgeContent={unreadCount} color="error">
-        <IconButton onClick={handleNotificationClick}>
-          <NotificationIcon />
+      <Badge badgeContent={unreadCount} color="error" sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', height: 16, minWidth: 16 } }}>
+        <IconButton onClick={handleNotificationClick} size="small" sx={{ p: 0.5 }}>
+          <NotificationIcon sx={{ fontSize: 22 }} />
         </IconButton>
       </Badge>
-      
       {/* Notification Dropdown */}
       {notificationsOpen && (
         <ClickAwayListener onClickAway={handleClickAway}>
@@ -90,9 +89,10 @@ const Notifications: React.FC = () => {
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Notifications
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              {/* TODO: Uncomment this when fully notifications is implemented */}
+              {/* <Typography variant="body2" color="text.secondary">
                 {unreadCount} unread
-              </Typography>
+              </Typography> */}
             </Box>
             
             <List sx={{ p: 0 }}>
