@@ -21,13 +21,21 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ pageTitle, pageSubtitle, searchVa
   //TODO: Don't use this way, correct it
   // const { togglePageSidebar } = useTabContext();
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+    <Box sx={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'space-between', 
+      mb: 3,
+      position: 'relative',
+      zIndex: 10,
+      p: 2
+    }}>
       {/* Left Side: Hamburger and Title */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         {/* Hamburger Menu */}
-        <IconButton  sx={{ color: '#64748b', '&:hover': { bgcolor: '#f8fafc' }, p: 1}}>
+        {/* <IconButton  sx={{ color: '#64748b', '&:hover': { bgcolor: '#f8fafc' }, p: 1}}>
           <MenuIcon />
-        </IconButton>
+        </IconButton> */}
 
         {/* Page Title */}
         {pageTitle && (

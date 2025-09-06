@@ -68,6 +68,7 @@ const ShipmentExportTable: React.FC = () => {
                 <TableCell>Count</TableCell>
                 <TableCell>Created By</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <ShipmentExportTableBody rows={visibleRows} loading={loading} onUpdate={fetchExports} />

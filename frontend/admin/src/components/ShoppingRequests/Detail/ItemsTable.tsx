@@ -24,7 +24,17 @@ const ItemsTable = ({ details }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((item, i) => <ItemsTableRow key={i} item={item} index={i} />)}
+            {products.length > 0 ? (
+              products.map((item, i) => <ItemsTableRow key={i} item={item} index={i} />)
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No items found
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

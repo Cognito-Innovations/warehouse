@@ -2,14 +2,15 @@ import React from 'react';
 import {
   Box,
   FormControl,
+  InputLabel,
   Select,
   MenuItem,
   Button,
   Typography,
-  IconButton,
+  Chip,
 } from '@mui/material';
-import { Add as AddIcon, AssessmentOutlined, Close as CloseIcon } from '@mui/icons-material';
-import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
+import { Add as AddIcon, AssessmentOutlined } from '@mui/icons-material';
+import { FilterList as FilterIcon } from '@mui/icons-material';
 import { statusOptions } from '../../data/shipments';
 
 interface SearchFiltersProps {
@@ -21,46 +22,67 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus }) => {
   const handleClearFilter = () => setStatus('All');
 
   return (
-    <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-        <IconButton>
-          <FilterAltOutlinedIcon color="action" />
-        </IconButton>
-
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1,
-            bgcolor: '#f8fafc',
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 2,
-          }}>
-          <Typography variant="body2" color="text.secondary">
-            Status:
+    <Box sx={{ 
+      mb: 3, 
+      display: 'flex', 
+      justifyContent: 'space-between', 
+      alignItems: 'center',
+      p: 2,
+      bgcolor: '#f8fafc',
+      borderRadius: 2,
+      border: '1px solid #e2e8f0'
+    }}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <FilterIcon sx={{ color: '#64748b' }} />
+          <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151' }}>
+            Filter by Status:
           </Typography>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <Select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              variant="standard"
-              disableUnderline
-              sx={{ fontWeight: 600 }}
-            >
-              {statusOptions.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {status !== 'All' && (
-            <IconButton size="small" onClick={handleClearFilter}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          )}
         </Box>
+        
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            label="Status"
+          >
+            <MenuItem value="All">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2">All Statuses</Typography>
+              </Box>
+            </MenuItem>
+            {statusOptions.map((option) => (
+              <MenuItem key={option} value={option}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                  <Typography variant="body2" sx={{ flex: 1 }}>
+                    {option}
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {status !== 'All' && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip
+              label={status}
+              onDelete={handleClearFilter}
+              sx={{
+                bgcolor: '#3b82f620',
+                color: '#3b82f6',
+                '& .MuiChip-deleteIcon': {
+                  color: '#3b82f6',
+                },
+              }}
+            />
+          </Box>
+        )}
       </Box>
 
       <Box sx={{ display: 'flex', gap: 2 }}>

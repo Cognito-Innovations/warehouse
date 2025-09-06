@@ -440,9 +440,12 @@ const PackageDetail: React.FC = () => {
 
   return (
     <Box sx={{ p: 1 }}>
-      <TopNavbar />
+      <TopNavbar 
+        pageTitle="Packages"
+        pageSubtitle={packageData.id}
+      />
       {/* Package Header - Full Width */}
-              <PackageHeader 
+        <PackageHeader 
           packageData={displayPackageData} 
           actionLogStatus={actionLogStatus}
           onDiscard={handleDiscard}

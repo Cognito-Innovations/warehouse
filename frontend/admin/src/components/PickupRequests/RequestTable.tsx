@@ -95,6 +95,7 @@ const RequestTable: React.FC = () => {
                 <TableCell>Pickup Location</TableCell>
                 <TableCell>Supplier</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <RequestTableBody rows={visibleRows} />

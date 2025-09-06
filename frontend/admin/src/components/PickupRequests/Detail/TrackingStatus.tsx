@@ -28,7 +28,6 @@ const TrackingStatus: React.FC = ({ details }) => {
         elevation={0}
         sx={{
           width: '100%',
-          minWidth: '500px',
           p: 3,
           borderRadius: 2,
           border: '1px solid #E0E0E0',

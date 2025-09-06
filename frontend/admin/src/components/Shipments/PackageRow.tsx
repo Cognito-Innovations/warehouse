@@ -34,37 +34,71 @@ interface ExpandedItem {
   items: ItemDetail[];
 }
 
-const PackageRow: React.FC<{ item: ExpandedItem; index: number }> = ({ item, index }) => {
+const PackageRow: React.FC<{ item: ExpandedItem; index: number; isLast?: boolean }> = ({ item, index, isLast }) => {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <TableRow sx={{ '& > *': { border: 'none' } }}>
-        <TableCell padding="checkbox">
-          <Checkbox color="primary" />
+      <TableRow sx={{ 
+        '& > *': { 
+          border: 'none',
+          borderBottom: isLast ? 'none' : '1px solid #f1f5f9'
+        },
+        '&:hover': {
+          bgcolor: '#f8fafc'
+        }
+      }}>
+        <TableCell padding="checkbox" sx={{ py: 1.5 }}>
+          <Checkbox color="primary" size="small" />
         </TableCell>
-        <TableCell>
-          <IconButton size="small" onClick={() => setOpen(!open)}>
-            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+        <TableCell sx={{ py: 1.5 }}>
+          <IconButton 
+            size="small" 
+            onClick={() => setOpen(!open)}
+            sx={{
+              bgcolor: open ? '#e2e8f0' : 'transparent',
+              '&:hover': {
+                bgcolor: '#d1d5db'
+              }
+            }}
+          >
+            {open ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
           </IconButton>
         </TableCell>
-        <TableCell>
-          <Typography>{index + 1}. {item.packageNo}</Typography>
+        <TableCell sx={{ py: 1.5 }}>
+          <Typography variant="body2">
+            {index + 1}. {item.packageNo}
+          </Typography>
         </TableCell>
-        <TableCell>{item.rack}</TableCell>
-        <TableCell>
+        <TableCell sx={{ py: 1.5 }}>
+          <Typography variant="body2">{item.rack}</Typography>
+        </TableCell>
+        <TableCell sx={{ py: 1.5 }}>
           <Typography variant="body2">{item.trackingNo}</Typography>
           <Typography variant="caption" color="text.secondary">{item.courier}</Typography>
         </TableCell>
-        <TableCell>
+        <TableCell sx={{ py: 1.5 }}>
           <Typography variant="body2">{item.receivedAt}</Typography>
           <Typography variant="caption" color="text.secondary">{item.receivedTime}</Typography>
         </TableCell>
-        <TableCell align="right">{item.weight}</TableCell>
-        <TableCell align="right">{item.volWeight}</TableCell>
-        <TableCell>
+        <TableCell align="right" sx={{ py: 1.5 }}>
+          <Typography variant="body2">{item.weight}</Typography>
+        </TableCell>
+        <TableCell align="right" sx={{ py: 1.5 }}>
+          <Typography variant="body2">{item.volWeight}</Typography>
+        </TableCell>
+        <TableCell sx={{ py: 1.5 }}>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton size="small" sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' }}}>
+            <IconButton 
+              size="small" 
+              sx={{ 
+                bgcolor: '#7360F2', 
+                color: '#f8f8f8', 
+                '&:hover': { backgroundColor: '#5b48d8' },
+                width: 28,
+                height: 28
+              }}
+            >
               <ViewIcon fontSize="small" />
             </IconButton>
           </Box>

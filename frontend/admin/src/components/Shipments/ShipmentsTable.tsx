@@ -24,8 +24,20 @@ const ShipmentsTable: React.FC<ShipmentsTableProps> = ({ status }) => {
           <TableContainer>
             <Table aria-label="collapsible table">
               <TableHead sx={{ bgcolor: '#f8fafc' }}>
-                <TableRow>
-                  <TableCell padding="checkbox"><Checkbox color="primary" /></TableCell>
+                <TableRow
+                  sx={{
+                    '& > *': {
+                      whiteSpace: { xs: 'nowrap', sm: 'nowrap' },
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      color: '#374151',
+                      py: 2,
+                    },
+                  }}
+                >
+                  <TableCell padding="checkbox">
+                    <Checkbox color="primary" />
+                  </TableCell>
                   <TableCell />
                   <TableCell>Shipment No.</TableCell>
                   <TableCell>Tracking No.</TableCell>
