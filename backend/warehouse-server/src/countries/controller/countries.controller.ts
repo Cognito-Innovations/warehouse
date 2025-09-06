@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { CountriesService } from './countries.service';
-import { CreateCountryDto } from './dto/create-country.dto';
-import { CountryResponseDto } from './dto/country-response.dto';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CreateCountryDto } from '../dto/create-country.dto';
+import { CountryResponseDto } from '../dto/country-response.dto';
+import { CountriesService } from '../service/countries.service';
 
 @Controller('countries')
+@UseGuards(JwtAuthGuard)
 export class CountriesController {
   constructor(private readonly countriesService: CountriesService) {}
 

@@ -6,8 +6,11 @@ import {
   Body,
   Param,
   Get,
+  UseGuards,
 } from '@nestjs/common';
-import { PackageItemsService } from './package-items.service';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PackageItemsService } from '../service/package-items.service';
+
 
 interface CreatePackageItemDto {
   name: string;
@@ -27,26 +30,27 @@ interface BulkUploadDto {
   items: CreatePackageItemDto[];
 }
 
-@Controller('packages/:packageId/items')
+@Controller('packages/:package_id/items')
+@UseGuards(JwtAuthGuard)
 export class PackageItemsController {
   constructor(private readonly packageItemsService: PackageItemsService) {}
 
   @Post()
   async createItem(
-    @Param('packageId') packageId: string,
+    @Param('package_id') package_id: string,
     @Body() createItemDto: CreatePackageItemDto,
   ) {
-    return this.packageItemsService.createItem(packageId, createItemDto);
+    return this.packageItemsService.createItem(package_id, createItemDto);
   }
 
   @Put(':itemId')
   async updateItem(
-    @Param('packageId') packageId: string,
+    @Param('package_id') package_id: string,
     @Param('itemId') itemId: string,
     @Body() updateItemDto: UpdatePackageItemDto,
   ) {
     return this.packageItemsService.updateItem(
-      packageId,
+      package_id,
       itemId,
       updateItemDto,
     );
@@ -54,22 +58,22 @@ export class PackageItemsController {
 
   @Delete(':itemId')
   async deleteItem(
-    @Param('packageId') packageId: string,
+    @Param('package_id') package_id: string,
     @Param('itemId') itemId: string,
   ) {
-    return this.packageItemsService.deleteItem(packageId, itemId);
+    return this.packageItemsService.deleteItem(package_id, itemId);
   }
 
   @Post('bulk')
   async bulkUpload(
-    @Param('packageId') packageId: string,
+    @Param('package_id') package_id: string,
     @Body() bulkUploadDto: BulkUploadDto,
   ) {
-    return this.packageItemsService.bulkUpload(packageId, bulkUploadDto.items);
+    return this.packageItemsService.bulkUpload(package_id, bulkUploadDto.items);
   }
 
   @Get()
-  async getItems(@Param('packageId') packageId: string) {
-    return this.packageItemsService.getItems(packageId);
+  async getItems(@Param('package_id') package_id: string) {
+    return this.packageItemsService.getItems(package_id);
   }
 }

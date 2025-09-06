@@ -1,15 +1,16 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { Country } from '../countries/country.entity';
+
+import { Country } from '../countries/entity/country.entity';
 import { Rack } from '../racks/rack.entity';
-import { Supplier } from '../suppliers/supplier.entity';
 import { User } from '../users/user.entity';
-// import { Package } from '../packages/package.entity';
-import { PreArrival } from '../pre-arrivals/pre-arrival.entity';
-import { ShoppingRequest } from '../shopping-requests/shopping-request.entity';
 import { Product } from '../products/product.entity';
-import { PickupRequest } from '../pickup-requests/pickup-request.entity';
-import { PackageActionLog } from '../packages/entities/package-action-log.entity';
+import { Supplier } from '../suppliers/supplier.entity';
+import { Package } from '../packages/entities/package.entity';
+import { PreArrival } from '../pre-arrivals/pre-arrival.entity';
 import { PackageItem } from '../packages/entities/package-item.entity';
+import { PickupRequest } from '../pickup-requests/pickup-request.entity';
+import { ShoppingRequest } from '../shopping-requests/shopping-request.entity';
+import { PackageActionLog } from '../packages/entities/package-action-log.entity';
 import { PackageDocument } from '../packages/entities/package-document.entity';
 import { PackageMeasurement } from '../packages/entities/package-measurement.entity';
 import { PackageCharge } from '../packages/entities/package-charge.entity';
@@ -33,29 +34,29 @@ export const databaseConfig: TypeOrmModuleOptions = {
   password: process.env.DB_PASSWORD || 'password',
   database: process.env.DB_NAME || 'warehouse',
   entities: [
-    // Country,
-    // Rack,
-    // Supplier,
+    Country,
+    Rack,
+    Supplier,
     User,
-    // Package,
-    // PreArrival,
+    Package,
+    PreArrival,
     ShoppingRequest,
     Product,
     PickupRequest,
-    // PackageActionLog,
-    // PackageItem,
-    // PackageDocument,
-    // PackageMeasurement,
-    // PackageCharge,
+    PackageActionLog,
+    PackageItem,
+    PackageDocument,
+    PackageMeasurement,
+    PackageCharge,
     UserDocument,
-    // RackDocument,
-    // SupplierDocument,
-    // PreArrivalDocument,
-    // PickupRequestDocument,
+    RackDocument,
+    SupplierDocument,
+    PreArrivalDocument,
+    PickupRequestDocument,
     ShoppingRequestDocument,
     ShipmentExport,
     ShipmentExportBox
   ],
-  synchronize: process.env.NODE_ENV !== 'production', // Only in development
+  synchronize: false, // Disable schema synchronization to prevent modifying existing database
   logging: process.env.NODE_ENV === 'development',
 };

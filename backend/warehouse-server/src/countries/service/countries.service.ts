@@ -1,9 +1,10 @@
+import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Country } from './country.entity';
-import { CreateCountryDto } from './dto/create-country.dto';
-import { CountryResponseDto } from './dto/country-response.dto';
+
+import { Country } from '../entity/country.entity';
+import { CreateCountryDto } from '../dto/create-country.dto';
+import { CountryResponseDto } from '../dto/country-response.dto';
 
 @Injectable()
 export class CountriesService {
@@ -32,8 +33,8 @@ export class CountriesService {
   async createCountriesBulk(
     countries: string[],
   ): Promise<CountryResponseDto[]> {
-    const countryEntities = countries.map((name) =>
-      this.countryRepository.create({ country: name }),
+    const countryEntities = countries.map((country) =>
+      this.countryRepository.create({ country: country }),
     );
 
     const savedCountries = await this.countryRepository.save(countryEntities);

@@ -7,9 +7,12 @@ import {
   Get,
   UseInterceptors,
   UploadedFiles,
+  UseGuards,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { PackageDocumentsService } from './package-documents.service';
+import { PackageDocumentsService } from '../service/package-documents.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+
 
 interface CreatePackageDocumentDto {
   name: string;
@@ -18,7 +21,10 @@ interface CreatePackageDocumentDto {
   size: number;
 }
 
-@Controller('packages/:packageId/documents')
+
+
+@Controller('packages/:package_id/documents')
+@UseGuards(JwtAuthGuard)
 export class PackageDocumentsController {
   constructor(
     private readonly packageDocumentsService: PackageDocumentsService,
@@ -47,33 +53,33 @@ export class PackageDocumentsController {
     }),
   )
   async uploadDocuments(
-    @Param('packageId') packageId: string,
+    @Param('package_id') package_id: string,
     @UploadedFiles() files: any[],
   ) {
-    return this.packageDocumentsService.uploadDocuments(packageId, files);
+    return this.packageDocumentsService.uploadDocuments(package_id, files);
   }
 
   @Post()
   async createDocument(
-    @Param('packageId') packageId: string,
+    @Param('package_id') package_id: string,
     @Body() createDocumentDto: CreatePackageDocumentDto,
   ) {
     return this.packageDocumentsService.createDocument(
-      packageId,
+      package_id,
       createDocumentDto,
     );
   }
 
   @Delete(':documentId')
   async deleteDocument(
-    @Param('packageId') packageId: string,
+    @Param('package_id') package_id: string,
     @Param('documentId') documentId: string,
   ) {
-    return this.packageDocumentsService.deleteDocument(packageId, documentId);
+    return this.packageDocumentsService.deleteDocument(package_id, documentId);
   }
 
   @Get()
-  async getDocuments(@Param('packageId') packageId: string) {
-    return this.packageDocumentsService.getDocuments(packageId);
+  async getDocuments(@Param('package_id') package_id: string) {
+    return this.packageDocumentsService.getDocuments(package_id);
   }
 }

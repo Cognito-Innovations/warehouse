@@ -1,12 +1,9 @@
-import { Country } from 'src/countries/country.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  JoinColumn,
-  ManyToOne,
 } from 'typeorm';
 
 @Entity('users')

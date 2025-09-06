@@ -6,12 +6,15 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RacksService } from './racks.service';
 import { CreateRackDto } from './dto/create-rack.dto';
 import { RackResponseDto } from './dto/rack-response.dto';
 
 @Controller('racks')
+@UseGuards(JwtAuthGuard)
 export class RacksController {
   constructor(private readonly racksService: RacksService) {}
 

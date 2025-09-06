@@ -1,8 +1,9 @@
+
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CloudinaryService } from './cloudinary.service';
-import { Package } from '../packages/package.entity';
+import { Package } from '../packages/entities/package.entity';
 import {
   UserDocument,
   RackDocument,
@@ -15,8 +16,7 @@ import { PackageDocument } from '../packages/entities/package-document.entity';
 import {
   DocumentUploadOptions,
   DocumentMetadataDto,
-  DocumentUploadResponseDto,
-  DocumentDeleteResponseDto,
+  DocumentMetadata,
 } from './dto';
 
 // Re-export types from DTOs for backward compatibility
@@ -81,33 +81,35 @@ export class DocumentUploadService {
   async uploadDocuments(
     files: any[],
     options: DocumentUploadOptions,
-  ): Promise<DocumentUploadResponseDto> {
-    const entityIdField = this.getEntityIdField(options.entityType);
-    const documentRepository = this.getDocumentRepository(options.entityType);
+  ): Promise<{ documents: DocumentMetadata[] }> {
+    // For now, only support package documents
+    if (options.entityType !== 'package') {
+      throw new BadRequestException(
+        `Entity type ${options.entityType} not supported yet. Only 'package' is supported.`,
+      );
+    }
 
     // For packages, we need to handle custom package IDs
     let actualEntityId = options.entityId;
-    if (options.entityType === 'package') {
-      const isUUID =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-          options.entityId,
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        options.entityId,
+      );
+
+    if (!isUUID) {
+      // If it's a custom package ID, get the actual package ID first
+      const packageData = await this.packageRepository.findOne({
+        where: { package_id: options.entityId },
+        select: ['id'],
+      });
+
+      if (!packageData) {
+        throw new BadRequestException(
+          `Package with id ${options.entityId} not found`,
         );
-
-      if (!isUUID) {
-        // If it's a custom package ID, get the actual package ID first
-        const packageData = await this.packageRepository.findOne({
-          where: { custom_package_id: options.entityId },
-          select: ['id'],
-        });
-
-        if (!packageData) {
-          throw new BadRequestException(
-            `Package with id ${options.entityId} not found`,
-          );
-        }
-
-        actualEntityId = packageData.id;
       }
+
+      actualEntityId = packageData.id;
     }
 
     const documents: DocumentMetadataDto[] = [];
@@ -141,9 +143,9 @@ export class DocumentUploadService {
           folder,
         );
 
-        // Save document record to database
-        const documentData = {
-          [entityIdField]: actualEntityId,
+        // Save document record to database using TypeORM
+        const packageDocument = this.packageDocumentRepository.create({
+          package_id: actualEntityId,
           document_name: file.originalname,
           original_filename: file.originalname,
           document_url: uploadResult.secure_url,
@@ -153,10 +155,26 @@ export class DocumentUploadService {
           category: options.category || 'general',
           is_required: options.isRequired || false,
           uploaded_by: options.uploadedBy,
+        });
+
+        const savedDocument = await this.packageDocumentRepository.save(packageDocument);
+
+        // Convert to DocumentMetadata format
+        const documentMetadata: any = {
+          id: savedDocument.id,
+          document_name: savedDocument.document_name,
+          original_filename: savedDocument.original_filename,
+          document_url: savedDocument.document_url,
+          document_type: savedDocument.document_type,
+          file_size: savedDocument.file_size,
+          mime_type: savedDocument.mime_type,
+          category: savedDocument.category,
+          is_required: savedDocument.is_required,
+          uploaded_by: savedDocument.uploaded_by,
+          uploaded_at: new Date(),
         };
 
-        const document = await documentRepository.save(documentData);
-        documents.push(document as DocumentMetadataDto);
+        documents.push(documentMetadata);
       } catch (error) {
         console.error(`Error processing file ${file.originalname}:`, error);
         const errorMessage =
@@ -173,87 +191,96 @@ export class DocumentUploadService {
   async getDocuments(
     entityType: string,
     entityId: string,
-  ): Promise<DocumentMetadataDto[]> {
-    const entityIdField = this.getEntityIdField(entityType);
-    const documentRepository = this.getDocumentRepository(entityType);
-
-    // For packages, we need to handle custom package IDs
-    if (entityType === 'package') {
-      const isUUID =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-          entityId,
-        );
-
-      if (!isUUID) {
-        // If it's a custom package ID, get the actual package ID first
-        const packageData = await this.packageRepository.findOne({
-          where: { custom_package_id: entityId },
-          select: ['id'],
-        });
-
-        if (!packageData) {
-          throw new BadRequestException(
-            `Package with id ${entityId} not found`,
-          );
-        }
-
-        entityId = packageData.id;
-      }
+  ): Promise<any[]> {
+    // For now, only support package documents
+    if (entityType !== 'package') {
+      throw new BadRequestException(
+        `Entity type ${entityType} not supported yet. Only 'package' is supported.`,
+      );
     }
 
-    const documents = await documentRepository.find({
-      where: {
-        [entityIdField]: entityId,
-        deleted_at: null,
-      },
-      order: {
-        created_at: 'DESC',
-      },
+    // For packages, we need to handle custom package IDs
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        entityId,
+      );
+
+    if (!isUUID) {
+      // If it's a custom package ID, get the actual package ID first
+      const packageData = await this.packageRepository.findOne({
+        where: { package_id: entityId },
+        select: ['id'],
+      });
+
+      if (!packageData) {
+        throw new BadRequestException(
+          `Package with id ${entityId} not found`,
+        );
+      }
+
+      entityId = packageData.id;
+    }
+
+    const documents = await this.packageDocumentRepository.find({
+      where: { package_id: entityId },
+      // Remove ordering by created_at since the column doesn't exist in the database
+      // order: { created_at: 'DESC' },
     });
 
-    return documents as DocumentMetadataDto[];
+    return documents.map((document) => ({
+      id: document.id,
+      document_name: document.document_name,
+      original_filename: document.original_filename,
+      document_url: document.document_url,
+      document_type: document.document_type,
+      file_size: document.file_size,
+      mime_type: document.mime_type,
+      category: document.category,
+      is_required: document.is_required,
+      uploaded_by: document.uploaded_by,
+      uploaded_at: new Date().toISOString(),
+    }));
   }
 
   async deleteDocument(
     entityType: string,
     entityId: string,
     documentId: string,
-  ): Promise<DocumentDeleteResponseDto> {
-    const entityIdField = this.getEntityIdField(entityType);
-    const documentRepository = this.getDocumentRepository(entityType);
+  ): Promise<{ success: boolean }> {
+    // For now, only support package documents
+    if (entityType !== 'package') {
+      throw new BadRequestException(
+        `Entity type ${entityType} not supported yet. Only 'package' is supported.`,
+      );
+    }
 
     // For packages, we need to handle custom package IDs
     let actualEntityId = entityId;
-    if (entityType === 'package') {
-      const isUUID =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-          entityId,
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        entityId,
+      );
+
+    if (!isUUID) {
+      // If it's a custom package ID, get the actual package ID first
+      const packageData = await this.packageRepository.findOne({
+        where: { package_id: entityId },
+        select: ['id'],
+      });
+
+      if (!packageData) {
+        throw new BadRequestException(
+          `Package with id ${entityId} not found`,
         );
-
-      if (!isUUID) {
-        // If it's a custom package ID, get the actual package ID first
-        const packageData = await this.packageRepository.findOne({
-          where: { custom_package_id: entityId },
-          select: ['id'],
-        });
-
-        if (!packageData) {
-          throw new BadRequestException(
-            `Package with id ${entityId} not found`,
-          );
-        }
-
-        actualEntityId = packageData.id;
       }
+
+      actualEntityId = packageData.id;
     }
 
     // Get document to delete file from storage
-    const document = await documentRepository.findOne({
-      where: {
-        id: documentId,
-        [entityIdField]: actualEntityId,
-      },
-      select: ['document_url'],
+    const document = await this.packageDocumentRepository.findOne({
+      where: { id: documentId, package_id: actualEntityId },
+      select: ['id', 'document_url'],
     });
 
     if (!document) {
@@ -272,11 +299,8 @@ export class DocumentUploadService {
       }
     }
 
-    // Soft delete document record
-    await documentRepository.softDelete({
-      id: documentId,
-      [entityIdField]: actualEntityId,
-    });
+    // Soft delete document record using TypeORM
+    await this.packageDocumentRepository.softDelete(documentId);
 
     return { success: true };
   }

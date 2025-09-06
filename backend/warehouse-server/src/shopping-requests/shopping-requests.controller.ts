@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Param, Post, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Patch, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ShoppingRequestsService } from './shopping-requests.service';
 import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
 import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
 
 @Controller('shopping-requests')
+@UseGuards(JwtAuthGuard)
 export class ShoppingRequestsController {
   constructor(
     private readonly shoppingRequestsService: ShoppingRequestsService,

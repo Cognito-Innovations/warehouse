@@ -48,7 +48,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   };
 
   const handleInfoClick = (packageData: any) => { 
-    navigate(`/packages/${packageData.custom_package_id}`);
+    navigate(`/packages/${packageData.id}`);
   };
 
   const fetchPackages = async () => {
@@ -84,7 +84,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     if (searchValue) {
       const searchLower = searchValue.toLowerCase();
       filtered = filtered.filter(pkg => 
-        pkg.custom_package_id?.toLowerCase().includes(searchLower) ||
+        pkg.package_id?.toLowerCase().includes(searchLower) ||
         pkg.tracking_no?.toLowerCase().includes(searchLower) ||
         pkg.customer?.name?.toLowerCase().includes(searchLower) ||
         pkg.vendor?.supplier_name?.toLowerCase().includes(searchLower)
@@ -171,7 +171,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                     <TableCell>
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                          {row.custom_package_id || row.id}
+                          {row.package_id || row.id}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           Rack: {row.rack_slot?.label || 'N/A'}
@@ -245,6 +245,13 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                   </TableRow>
                 );
               })}
+              {paginatedData.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                    No packages found
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
