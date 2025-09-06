@@ -93,18 +93,12 @@ export default function CreatePickupRequestPage() {
   return (
     <Box sx={{ bgcolor: '#F9FAFB', p: { xs: 2, sm: 3 }, minHeight: '100vh' }}>
       <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2, mt: 2 }}>
-        <Link href="/pickup-request" passHref>
-          <Typography
-            component="a"
-            sx={{
+        <Link href="/pickup-request"  style={{
               textDecoration: 'none',
               color: '#6B7280',
-              '&:hover': { textDecoration: 'underline' },
               fontSize: '0.875rem',
-            }}
-          >
-            Pickup Requests
-          </Typography>
+            }}>
+            Pickup Request
         </Link>
         <Typography color="text.primary" sx={{ fontSize: '0.875rem' }}>
           Create Request

@@ -13,18 +13,18 @@ interface RequestData {
 }
 
 const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request, onStatusUpdated }) => (
-  <Grid container spacing={3}>
-    <Grid item xs={12} lg={8} >
-      <CustomerInfo details={request}/>
+  <Grid container spacing={2}>
+    <Grid item xs={12} lg={8}>
+      <CustomerInfo details={request} />
 
-      {request.status === "PAYMENT_PENDING" || request.status === "PAYMENT_APPROVED" && (
+      {(request.status === "PAYMENT_PENDING" || request.status === "PAYMENT_APPROVED") && (
         <PaymentSlipsCard details={request || []} onStatusUpdated={onStatusUpdated} />
       )}
 
       <ItemsTable details={request} />
     </Grid>
 
-    <Grid item xs={12} lg={4} >
+    <Grid item xs={12} lg={4}>
       <TrackingStatus details={request} />
       <ActionLogs />
     </Grid>

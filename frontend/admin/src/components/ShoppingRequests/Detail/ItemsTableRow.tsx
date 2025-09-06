@@ -64,7 +64,7 @@ const ItemsTableRow = ({ item, index }: { item: any, index: number }) => {
       </TableCell>
       <TableCell>{item.status}</TableCell>
       <TableCell>{item.quantity}</TableCell>
-      <TableCell>${unitPrice.toFixed(2)}</TableCell>
+      <TableCell>${unitPrice}</TableCell>
       <TableCell>
         <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
           ${total.toFixed(2)}

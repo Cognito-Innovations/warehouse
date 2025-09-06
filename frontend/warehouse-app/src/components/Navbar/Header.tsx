@@ -112,29 +112,27 @@ const Header = () => {
   const [selectedCountry, setSelectedCountry] = useState("India");
   const [isClient, setIsClient] = useState(false);
 
-  // FIX THISSS
-
-  // // Set client flag and load from localStorage on mount
-  // useEffect(() => {
-  //   setIsClient(true);
-  //   if (typeof window !== 'undefined') {
-  //     const savedCountry = localStorage.getItem('selectedLocation');
-  //     if (savedCountry) {
-  //       setSelectedCountry(savedCountry);
-  //     }
-  //   }
-  // }, []);
-
-  // // Handle currentCountry prop changes
-  // useEffect(() => {
-  //   if (selected && currentCountry !== selectedCountry) {
-  //     setSelectedCountry(addressData);
-  //     // Save to localStorage when changed via prop
-  //     if (typeof window !== 'undefined') {
-  //       localStorage.setItem('selectedLocation', currentCountry);
-  //     }
-  //   }
-  // }, [addressData, selectedCountry]);
+  useEffect(() => {
+    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      const savedAddress = localStorage.getItem('selectedAddress');
+      if (savedAddress) {
+        try {
+          const parsedAddress = JSON.parse(savedAddress);
+          setAddressData(parsedAddress);
+          setSelectedCountry(parsedAddress.country);
+        } catch (error) {
+          console.error('Error parsing saved address from localStorage:', error);
+        }
+      }
+    }
+  }, []);
+  useEffect(() => {
+    if (isClient && typeof window !== 'undefined') {
+      localStorage.setItem('selectedAddress', JSON.stringify(addressData));
+      setSelectedCountry(addressData.country);
+    }
+  }, [addressData, isClient]);
 
   return (
     <>

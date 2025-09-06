@@ -7,6 +7,7 @@ export class ShoppingRequestResponseDto {
   request_code: string;
   country: string;
   items: number;
+  shopping_request_products?: any[]; // Products related to this shopping request
   remarks?: string;
   status: string;
   payment_slips?: string[];

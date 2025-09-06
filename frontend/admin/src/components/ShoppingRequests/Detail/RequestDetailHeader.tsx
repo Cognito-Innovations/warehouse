@@ -18,7 +18,7 @@ const RequestDetailHeader = ({ request, onStatusUpdated }: { request: any, onSta
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <Typography variant="h5" fontWeight={600}>
-          Shopping Request # {request.id}
+          Shopping Request # {request.request_code}
         </Typography>
         <Chip
           label={getDisplayStatus(request.status)}
