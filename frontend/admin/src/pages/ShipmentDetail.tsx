@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box } from '@mui/material';
+import { Box, Container } from '@mui/material';
 import { useParams } from 'react-router-dom';
 
 import TopNavbar from '../components/Layout/TopNavbar';
@@ -28,10 +28,12 @@ const ShipmentDetail: React.FC = () => {
   if (!shoppingRequest) return <div>Loading...</div>;
 
   return (
-    <Box>
+    <Box sx={{ width: '100%', minHeight: '100vh', padding: "16px" }}>
       <TopNavbar pageTitle="Shipment Request" pageSubtitle="All" />
-      <RequestDetailHeader request={shoppingRequest} onStatusUpdated={fetchRequest}/>
-      <RequestDetailContent request={shoppingRequest} onStatusUpdated={fetchRequest} />
+      <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3 }, py: 3 }}>
+        <RequestDetailHeader request={shoppingRequest} onStatusUpdated={fetchRequest}/>
+        <RequestDetailContent request={shoppingRequest} onStatusUpdated={fetchRequest} />
+      </Container>
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import { Grid } from '@mui/material';
+import { Box, useMediaQuery, useTheme } from '@mui/material';
 import CustomerInfo from './CustomerInfo';
 import ItemsTable from './ItemsTable';
 import TrackingStatus from './TrackingStatus';
@@ -12,23 +12,55 @@ interface RequestData {
   onStatusUpdated?: () => void;
 }
 
-const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request, onStatusUpdated }) => (
-  <Grid container spacing={2}>
-    <Grid item xs={12} lg={8}>
-      <CustomerInfo details={request} />
+interface RequestDetailContentProps {
+  request: RequestData;
+  onStatusUpdated?: () => void;
+}
 
-      {(request.status === "PAYMENT_PENDING" || request.status === "PAYMENT_APPROVED") && (
-        <PaymentSlipsCard details={request || []} onStatusUpdated={onStatusUpdated} />
-      )}
+const RequestDetailContent: React.FC<RequestDetailContentProps> = ({ request, onStatusUpdated }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-      <ItemsTable details={request} />
-    </Grid>
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: isMobile ? 'column' : 'row',
+      gap: 3,
+      width: '100%',
+      padding: "16px"
+    }}>
+      {/* Left Content - 70% on desktop, full width on mobile */}
+      <Box sx={{ 
+        flex: isMobile ? '1' : '0 0 70%',
+        minWidth: 0, // Prevents flex item from overflowing
+      }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <CustomerInfo details={request}/>
 
-    <Grid item xs={12} lg={4}>
-      <TrackingStatus details={request} />
-      <ActionLogs />
-    </Grid>
-  </Grid>
-);
+          {(request.status === "PAYMENT_PENDING" || request.status === "PAYMENT_APPROVED") && (
+            <PaymentSlipsCard 
+              details={request.payment_slips || []} 
+              onStatusUpdated={onStatusUpdated || (() => {})} 
+            />
+          )}
+
+          <ItemsTable details={request} />
+        </Box>
+      </Box>
+
+      {/* Right Content - 30% on desktop, full width on mobile */}
+      <Box sx={{ 
+        flex: isMobile ? '1' : '0 0 28%',
+        minWidth: 0, // Prevents flex item from overflowing
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3
+      }}>
+        <TrackingStatus details={request} />
+        <ActionLogs />
+      </Box>
+    </Box>
+  );
+};
 
 export default RequestDetailContent;

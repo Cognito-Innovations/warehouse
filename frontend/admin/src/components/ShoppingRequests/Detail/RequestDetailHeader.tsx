@@ -16,7 +16,7 @@ const RequestDetailHeader = ({ request, onStatusUpdated }: { request: any, onSta
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', padding:"16px" }}>
         <Typography variant="h5" fontWeight={600}>
           Shopping Request # {request.request_code}
         </Typography>
