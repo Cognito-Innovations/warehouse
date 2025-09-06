@@ -16,6 +16,7 @@ export class RacksService {
     const rack = this.rackRepository.create({
       label: createRackDto.label,
       color: createRackDto.color,
+      count: createRackDto.count,
     });
 
     const savedRack = await this.rackRepository.save(rack);
@@ -24,6 +25,7 @@ export class RacksService {
       id: savedRack.id,
       label: savedRack.label,
       color: savedRack.color,
+      count: savedRack.count,
       created_at: savedRack.created_at,
     };
   }
@@ -37,6 +39,7 @@ export class RacksService {
       id: rack.id,
       label: rack.label,
       color: rack.color,
+      count: rack.count,
       created_at: rack.created_at,
     }));
   }
@@ -56,6 +59,7 @@ export class RacksService {
       id: updatedRack.id,
       label: updatedRack.label,
       color: updatedRack.color,
+      count: updatedRack.count,
       created_at: updatedRack.created_at,
     };
   }

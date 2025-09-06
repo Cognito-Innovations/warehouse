@@ -4,4 +4,5 @@ export class RackResponseDto {
   color: string;
   created_at?: Date;
   updated_at?: Date;
+  count: number;
 }

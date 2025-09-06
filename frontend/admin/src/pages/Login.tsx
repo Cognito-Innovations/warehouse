@@ -128,7 +128,7 @@ const Login: React.FC = () => {
               letterSpacing: '-0.5px',
             }}
           >
-            shopme
+            shopme.mv
           </Typography>
         </Box>
 

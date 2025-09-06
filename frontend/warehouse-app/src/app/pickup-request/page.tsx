@@ -33,12 +33,13 @@ export default function PickupRequestPage() {
   const { data: session, status } = useSession();  
   const [activeTab, setActiveTab] = useState(0);
   const [pickupRequests, setPickupRequests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const user_id = (session?.user as any)?.user_id;
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const data = await getPickupRequestsByUser(user_id);
       setPickupRequests(data);
     } catch (err) {
@@ -50,7 +51,6 @@ export default function PickupRequestPage() {
   
   useEffect(() => {
     if (!user_id || status === "loading") return; 
-    setLoading(true);
     fetchData();
   }, [user_id, status]);
 
@@ -65,6 +65,7 @@ export default function PickupRequestPage() {
       <Typography variant="h6">{message}</Typography>
     </Box>
   );
+
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -116,7 +117,7 @@ export default function PickupRequestPage() {
 
           {loading && <Box sx={{ textAlign: 'center', py: 6 }}><CircularProgress /></Box>}
 
-          {!loading && pickupRequests.length > 0 ? (
+          {!loading && (pickupRequests.length > 0) ? (
             pickupRequests.map((req) => {
               const statusKey = (req.status || "REQUESTED").toUpperCase();
               const { color, icon } = statusConfig[statusKey] || statusConfig.REQUESTED;
@@ -165,7 +166,8 @@ export default function PickupRequestPage() {
           )}
           </TabPanel>
 
-          <Paper elevation={1} sx={{ p: 1.5, borderRadius: '8px' }}>
+          {/* TODO: Add uncomment this when pagination is implemented */}
+          {/* <Paper elevation={1} sx={{ p: 1.5, borderRadius: '8px' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="body2" color="text.secondary" sx={{ pl: 1 }}>Showing 1 to 1 of 1 Requests</Typography>
               <Box>
@@ -173,7 +175,7 @@ export default function PickupRequestPage() {
                 <Button variant="outlined" size="small" sx={{ textTransform: 'none' }}>Next</Button>
               </Box>
             </Box>
-          </Paper>
+          </Paper> */}
 
         <TabPanel value={activeTab} index={1}>
           {renderEmptyState(<HistoryIcon sx={{ fontSize: 'inherit' }} />, 'No History Available')}
@@ -181,4 +183,4 @@ export default function PickupRequestPage() {
       </div>
     </div>
   );
-}
+} 

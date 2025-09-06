@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class CreateRackDto {
   @IsString()
@@ -8,4 +8,7 @@ export class CreateRackDto {
   @IsString()
   @IsNotEmpty()
   color: string;
+
+  @IsNumber()
+  count: number;
 }

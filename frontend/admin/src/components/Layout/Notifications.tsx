@@ -61,7 +61,7 @@ const Notifications: React.FC = () => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative', border: '2px solid grey', borderRadius: '50%' }}>
       <Badge badgeContent={unreadCount} color="error">
         <IconButton onClick={handleNotificationClick}>
           <NotificationIcon />

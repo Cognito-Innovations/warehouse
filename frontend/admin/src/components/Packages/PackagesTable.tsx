@@ -245,6 +245,13 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                   </TableRow>
                 );
               })}
+              {paginatedData.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                    No packages found
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
