@@ -1,38 +1,65 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_GUARD } from '@nestjs/core';
+import { databaseConfig } from './config/database.config';
+import { GlobalAuthGuard } from './auth/guards/global-auth.guard';
 
-import { AuthModule } from './auth/auth.module';
 import { SharedModule } from './shared/shared.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { CountriesModule } from './countries/countries.module';
+import { RacksModule } from './racks/racks.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
+import { PackagesModule } from './packages/packages.module';
+import { PackageItemsModule } from './packages/package-items.module';
+import { PreArrivalsModule } from './pre-arrivals/pre-arrivals.module';
+import { ShoppingRequestsModule } from './shopping-requests/shopping-requests.module';
+import { ProductsModule } from './products/products.module';
+import { PickupRequestsModule } from './pickup-requests/pickup-requests.module';
+import { ShipmentExportModule } from './shipment-export/shipment-export.module';
 
 import { AppService } from './app.service';
-import { UsersService } from './users/users.service';
-import { RacksService } from './racks/racks.service';
-import { PackagesService } from './packages/packages.service';
-import { SuppliersService } from './suppliers/suppliers.service';
-import { CountriesService } from './countries/countries.service';
-import { PackageItemsService } from './packages/package-items.service';
-import { PackageDocumentsService } from './packages/package-documents.service';
-import { PackageActionLogsService } from './packages/package-action-logs.service';
-import { PreArrivalService } from './pre-arrivals/pre-arrivals.service';
-import { PickupRequestsService } from './pickup-requests/pickup-requests.service';
-import { ShoppingRequestsService } from './shopping-requests/shopping-requests.service';
-import { ProductsService } from './products/products.service';
 
 import { AppController } from './app.controller';
-import { UsersController } from './users/users.controller';
-import { RacksController } from './racks/racks.controller';
-import { PackagesController } from './packages/packages.controller';
-import { PackageItemsController } from './packages/package-items.controller';
-import { PackageDocumentsController } from './packages/package-documents.controller';
-import { SuppliersController } from './suppliers/suppliers.controller';
-import { CountriesController } from './countries/countries.controller';
+import { PackageItemsController } from './packages/controller/package-items.controller';
+import { PackageDocumentsController } from './packages/controller/package-documents.controller';
 import { PreArrivaController } from './pre-arrivals/pre-arrivals.controller';
 import { PickupRequestsController } from './pickup-requests/pickup-requests.controller';
 import { ShoppingRequestsController } from './shopping-requests/shopping-requests.controller';
 import { ProductsController } from './products/products.controller';
 
 @Module({
-  imports: [AuthModule, SharedModule],
-  controllers: [AppController, UsersController, PackagesController, PackageItemsController, PackageDocumentsController, RacksController, SuppliersController, CountriesController, PreArrivaController, PickupRequestsController, ShoppingRequestsController, ProductsController],
-  providers: [AppService, UsersService, PackagesService, PackageItemsService, PackageDocumentsService, PackageActionLogsService, RacksService, SuppliersService, CountriesService, PreArrivalService, PickupRequestsService, ShoppingRequestsService, ProductsService],
+  imports: [
+    TypeOrmModule.forRoot(databaseConfig),
+    SharedModule,
+    UsersModule,
+    AuthModule,
+    CountriesModule,
+    RacksModule,
+    SuppliersModule,
+    PackagesModule,
+    PackageItemsModule,
+    PreArrivalsModule,
+    ShoppingRequestsModule,
+    ProductsModule,
+    ShipmentExportModule,
+    PickupRequestsModule,
+  ],
+  controllers: [
+    AppController,
+    PackageItemsController,
+    PackageDocumentsController,
+    PreArrivaController,
+    PickupRequestsController,
+    ShoppingRequestsController,
+    ProductsController,
+  ],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: GlobalAuthGuard,
+    },
+  ],
 })
 export class AppModule {}

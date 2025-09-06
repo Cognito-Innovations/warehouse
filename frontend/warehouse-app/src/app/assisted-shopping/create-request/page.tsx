@@ -90,7 +90,7 @@ export default function CreateShoppingRequest() {
 
     try {
       const requestRes = await createShoppingRequest(shoppingRequest);
-      const requestId = requestRes[0].id;
+      const requestId = requestRes.id;
 
       await Promise.all(
         items.map((item) =>

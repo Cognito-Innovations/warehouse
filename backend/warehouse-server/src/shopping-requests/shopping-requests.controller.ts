@@ -1,44 +1,57 @@
-import { Body, Controller, Get, Param, Post, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Patch, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ShoppingRequestsService } from './shopping-requests.service';
+import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
+import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
 
 @Controller('shopping-requests')
+@UseGuards(JwtAuthGuard)
 export class ShoppingRequestsController {
-  constructor(private readonly shoppingRequestsService: ShoppingRequestsService) {}
+  constructor(
+    private readonly shoppingRequestsService: ShoppingRequestsService,
+  ) {}
 
   @Post()
-  async create(@Body() body: any) {
-    return this.shoppingRequestsService.createShoppingRequest(body);
+  async create(
+    @Body() createShoppingRequestDto: CreateShoppingRequestDto,
+  ): Promise<ShoppingRequestResponseDto> {
+    return this.shoppingRequestsService.createShoppingRequest(
+      createShoppingRequestDto,
+    );
   }
 
   @Get()
-  async findAll() {
+  async findAll(): Promise<ShoppingRequestResponseDto[]> {
     return this.shoppingRequestsService.getAllShoppingRequests();
   }
 
   @Get(':userId')
-  async findByUser(@Param('userId') userId: string) {
+  async findByUser(
+    @Param('userId') userId: string,
+  ): Promise<ShoppingRequestResponseDto[]> {
     return this.shoppingRequestsService.getShoppingRequestsByUser(userId);
   }
 
   @Get('detail/by-code/:requestCode')
-  async findOneByCode(@Param('requestCode') requestCode: string) {
+  async findOneByCode(
+    @Param('requestCode') requestCode: string,
+  ): Promise<ShoppingRequestResponseDto> {
     return this.shoppingRequestsService.getShoppingRequestByCode(requestCode);
   }
 
   @Patch(':id/status')
   async updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: string}
-  ) {
+    @Body() body: { status: string },
+  ): Promise<ShoppingRequestResponseDto> {
     return this.shoppingRequestsService.updateStatus(id, body.status);
   }
 
   @Patch(':id/slips')
   async addPaymentSlip(
     @Param('id') id: string,
-    @Body() body: { url: string }
-  ) {
+    @Body() body: { url: string },
+  ): Promise<ShoppingRequestResponseDto> {
     return this.shoppingRequestsService.addPaymentSlip(id, body.url);
   }
-
 }

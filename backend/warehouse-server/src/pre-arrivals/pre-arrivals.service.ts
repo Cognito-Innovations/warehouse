@@ -1,66 +1,116 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { supabase } from '../supabase/supabase.client';
-
-interface PreArrival {
-  id?: string;
-  customer: string;
-  suite: string;
-  otp: number;
-  tracking_no: string;
-  estimate_arrival_time: string;
-  details?: string;
-  status: "pending" | "received"
-}
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { PreArrival } from './pre-arrival.entity';
+import { CreatePreArrivalDto } from './dto/create-pre-arrival.dto';
+import { PreArrivalResponseDto } from './dto/pre-arrival-response.dto';
 
 @Injectable()
 export class PreArrivalService {
-  async createPrearrival(preArrival: PreArrival) {
-    const { data, error } = await supabase
-      .from('pre_arrival')
-      .insert(preArrival)
-      .select();
-    if (error) throw new Error(error.message);
-    return data;
+  constructor(
+    @InjectRepository(PreArrival)
+    private readonly preArrivalRepository: Repository<PreArrival>,
+  ) {}
+
+  async createPrearrival(
+    createPreArrivalDto: CreatePreArrivalDto,
+  ): Promise<PreArrivalResponseDto> {
+    const preArrival = this.preArrivalRepository.create({
+      ...createPreArrivalDto,
+      status: createPreArrivalDto.status || 'pending',
+    });
+
+    const savedPreArrival = await this.preArrivalRepository.save(preArrival);
+
+    return {
+      id: savedPreArrival.id,
+      customer: savedPreArrival.customer,
+      suite: savedPreArrival.suite,
+      otp: savedPreArrival.otp,
+      tracking_no: savedPreArrival.tracking_no,
+      estimate_arrival_time: savedPreArrival.estimate_arrival_time,
+      details: savedPreArrival.details,
+      status: savedPreArrival.status,
+      created_at: savedPreArrival.created_at,
+      updated_at: savedPreArrival.updated_at,
+    };
   }
 
-  async getAllPrearrival() {
-    const { data, error } = await supabase.from('pre_arrival').select('*');
-    if (error) throw new Error(error.message);
-    return data;
+  async getAllPrearrival(): Promise<PreArrivalResponseDto[]> {
+    const preArrivals = await this.preArrivalRepository.find({
+      order: { created_at: 'DESC' },
+    });
+
+    return preArrivals.map((preArrival) => ({
+      id: preArrival.id,
+      customer: preArrival.customer,
+      suite: preArrival.suite,
+      otp: preArrival.otp,
+      tracking_no: preArrival.tracking_no,
+      estimate_arrival_time: preArrival.estimate_arrival_time,
+      details: preArrival.details,
+      status: preArrival.status,
+      created_at: preArrival.created_at,
+      updated_at: preArrival.updated_at,
+    }));
   }
 
-  async getOTPById(id: string) {
-    const all = await this.getAllPrearrival();
-    const item = Array.isArray(all) ? all.find((p: any) => p.id === id) : null;
-    if (!item) {
+  async getOTPById(id: string): Promise<PreArrivalResponseDto> {
+    const preArrival = await this.preArrivalRepository.findOne({
+      where: { id },
+    });
+
+    if (!preArrival) {
       throw new NotFoundException(`Pre-arrival with id ${id} not found`);
     }
-    return item;
+
+    return {
+      id: preArrival.id,
+      customer: preArrival.customer,
+      suite: preArrival.suite,
+      otp: preArrival.otp,
+      tracking_no: preArrival.tracking_no,
+      estimate_arrival_time: preArrival.estimate_arrival_time,
+      details: preArrival.details,
+      status: preArrival.status,
+      created_at: preArrival.created_at,
+      updated_at: preArrival.updated_at,
+    };
   }
 
-  async updateStatusToReceived(id: string) {
-    const all = await this.getAllPrearrival();
-    const item = Array.isArray(all) ? all.find((p: any) => p.id === id) : null;
-    if (!item) {
+  async updateStatusToReceived(id: string): Promise<PreArrivalResponseDto> {
+    const preArrival = await this.preArrivalRepository.findOne({
+      where: { id },
+    });
+
+    if (!preArrival) {
       throw new NotFoundException(`Pre-arrival with id ${id} not found`);
     }
 
-    if (item.status !== 'pending') {
-      throw new BadRequestException('Status must be "pending" to mark as received');
+    if (preArrival.status !== 'pending') {
+      throw new BadRequestException(
+        'Status must be "pending" to mark as received',
+      );
     }
 
-    // Persist the status update in Supabase and return the updated row.
-    const { data, error } = await supabase
-      .from('pre_arrival')
-      .update({ status: 'received' })
-      .eq('id', id)
-      .select()
-      .single();
+    preArrival.status = 'received';
+    const updatedPreArrival = await this.preArrivalRepository.save(preArrival);
 
-    if (error) {
-      throw new BadRequestException(error.message);
-    }
-
-    return data;
+    return {
+      id: updatedPreArrival.id,
+      customer: updatedPreArrival.customer,
+      suite: updatedPreArrival.suite,
+      otp: updatedPreArrival.otp,
+      tracking_no: updatedPreArrival.tracking_no,
+      estimate_arrival_time: updatedPreArrival.estimate_arrival_time,
+      details: updatedPreArrival.details,
+      status: updatedPreArrival.status,
+      created_at: updatedPreArrival.created_at,
+      updated_at: updatedPreArrival.updated_at,
+    };
   }
 }

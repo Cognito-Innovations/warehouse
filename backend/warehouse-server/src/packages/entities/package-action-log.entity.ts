@@ -1,6 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, DeleteDateColumn } from 'typeorm';
-import { Package } from './package.entity';
-import { User } from './user.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 
 @Entity('package_action_logs')
 export class PackageActionLog {
@@ -10,8 +17,9 @@ export class PackageActionLog {
   @Column()
   package_id: string;
 
-  @ManyToOne(() => Package, package_ => package_.action_logs)
-  package: Package;
+  @ManyToOne('Package', (packageEntity: any) => packageEntity.action_logs)
+  @JoinColumn({ name: 'package_id' })
+  package: any;
 
   @Column()
   file_name: string;
@@ -22,33 +30,34 @@ export class PackageActionLog {
   @Column()
   file_type: string;
 
-  @Column({ type: 'bigint' })
+  @Column()
   file_size: number;
 
   @Column()
   mime_type: string;
 
-  @Column({ default: false })
-  is_completed: boolean;
-
   @Column()
   uploaded_by: string;
 
-  @ManyToOne(() => User)
-  uploader: User;
+  @Column({ default: false })
+  is_completed: boolean;
 
-  @CreateDateColumn()
-  uploaded_at: Date;
-
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ nullable: true })
   completed_at: Date;
 
   @Column({ nullable: true })
   completed_by: string;
 
-  @ManyToOne(() => User)
-  completer: User;
+  @Column({ nullable: true })
+  uploaded_at: Date;
 
-  @DeleteDateColumn()
-  deleted_at: Date;
+  // Timestamp columns removed as they don't exist in the database
+  // @CreateDateColumn()
+  // created_at: Date;
+
+  // @UpdateDateColumn()
+  // updated_at: Date;
+
+  // @DeleteDateColumn()
+  // deleted_at: Date;
 }

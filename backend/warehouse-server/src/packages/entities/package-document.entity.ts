@@ -1,6 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, DeleteDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
+
+} from 'typeorm';
 import { Package } from './package.entity';
-import { User } from './user.entity';
 
 @Entity('package_documents')
 export class PackageDocument {
@@ -10,7 +19,8 @@ export class PackageDocument {
   @Column()
   package_id: string;
 
-  @ManyToOne(() => Package, package_ => package_.documents)
+  @ManyToOne(() => Package)
+  @JoinColumn({ name: 'package_id' })
   package: Package;
 
   @Column()
@@ -25,33 +35,28 @@ export class PackageDocument {
   @Column()
   document_type: string;
 
-  @Column({ type: 'bigint' })
+  @Column()
   file_size: number;
 
   @Column()
   mime_type: string;
 
-  @Column({ nullable: true })
+  @Column()
   category: string;
 
-  @Column({ default: false })
+  @Column()
   is_required: boolean;
-
-  @Column({ nullable: true })
-  thumbnail_url: string;
-
-  @Column({ nullable: true })
-  file_hash: string;
 
   @Column()
   uploaded_by: string;
 
-  @ManyToOne(() => User)
-  uploader: User;
+  // Timestamp columns removed as they don't exist in the database
+  // @CreateDateColumn()
+  // created_at: Date;
 
-  @CreateDateColumn()
-  uploaded_at: Date;
+  // @UpdateDateColumn()
+  // updated_at: Date;
 
-  @DeleteDateColumn()
-  deleted_at: Date;
+  // @DeleteDateColumn()
+  // deleted_at: Date;
 }

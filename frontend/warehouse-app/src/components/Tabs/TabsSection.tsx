@@ -20,6 +20,7 @@ const TabsSection = () => {
   const [isOTPModalOpen, setIsOTPModalOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // TODO: Remove this HARDCODED VALUES 
   const { submitPreArrival, loading: submitting, error: submitError } = usePreArrival({ customer: "Rohit Sharma", suite: "102-529" });
 
   const filteredShipments = useMemo(() => {

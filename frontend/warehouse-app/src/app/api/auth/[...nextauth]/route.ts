@@ -12,17 +12,19 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ user }) {
       try {
-        const res = await fetch(`${process.env.NEST_BACKEND_URL}/users`, {
+        const res = await fetch(`${process.env.NEST_BACKEND_URL}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          //TODO: Remove this password here
           body: JSON.stringify({
             email: user.email,
+            password: "123456",
             name: user.name,
             image: user.image
           }),
         });
         const data = await res.json();
-        (user as any).user_id = data[0]?.id ?? data.id;
+        (user as any).user_id = data.user.id;
       } catch (err) {
         console.error("Error calling Nest backend:", err);
       }
@@ -39,7 +41,7 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (token?.user_id) {
         (session.user as any).user_id = token.user_id;
-      }
+      } 
       return session;
     },
   },

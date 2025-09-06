@@ -23,7 +23,7 @@ const Header = () => {
   const pathname = usePathname();
   
   const navItems = [
-    { name: 'My Suite', path: '/' },
+    { name: 'My Suite', path: '/dashboard' },
     { name: 'Assisted Shopping', path: '/assisted-shopping' },
     { name: 'Pickup Request', path: '/pickup-request' },
     { name: 'Stores', path: '/stores' },

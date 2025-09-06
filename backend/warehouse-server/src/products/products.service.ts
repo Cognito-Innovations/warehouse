@@ -1,27 +1,70 @@
-import { Injectable } from '@nestjs/common';
-import { supabase } from '../supabase/supabase.client';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Product } from './product.entity';
+import { CreateProductDto } from './dto/create-product.dto';
+import { ProductResponseDto } from './dto/product-response.dto';
 
 @Injectable()
 export class ProductsService {
-  async createProduct(product: any) {
-    const { data, error } = await supabase
-      .from('shopping_request_products')
-      .insert(product)
-      .select();
+  constructor(
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
+  ) {}
 
-    if (error) throw new Error(error.message);
-    return data;
+  async createProduct(
+    createProductDto: CreateProductDto,
+  ): Promise<ProductResponseDto> {
+    const product = this.productRepository.create({
+      ...createProductDto,
+      quantity: createProductDto.quantity || 1,
+    });
+
+    const savedProduct = await this.productRepository.save(product);
+
+    return {
+      id: savedProduct.id,
+      shopping_request_id: savedProduct.shopping_request_id,
+      name: savedProduct.name,
+      description: savedProduct.description,
+      unit_price: savedProduct.unit_price,
+      quantity: savedProduct.quantity,
+      url: savedProduct.url,
+      created_at: savedProduct.created_at,
+      updated_at: savedProduct.updated_at,
+    };
   }
 
-  async updateUnitPrice(id: string, unitPrice: number) {
-    const { data, error } = await supabase
-      .from('shopping_request_products')
-      .update({ unit_price: unitPrice })
-      .eq('id', id)
-      .select()
-      .single();
+  async updateProduct(
+    id: string,
+    updates: { unit_price?: number; available?: boolean },
+  ): Promise<ProductResponseDto> {
+    const product = await this.productRepository.findOne({ where: { id } });
 
-    if (error) throw new Error(error.message);
-    return data;
+    if (!product) {
+      throw new NotFoundException(`Product with id ${id} not found`);
+    }
+
+     if (updates.unit_price !== undefined) {
+      product.unit_price = updates.unit_price;
+    }
+    if (updates.available !== undefined) {
+      product.available = updates.available;
+    }
+
+    const updatedProduct = await this.productRepository.save(product);
+
+    return {
+      id: updatedProduct.id,
+      shopping_request_id: updatedProduct.shopping_request_id,
+      name: updatedProduct.name,
+      description: updatedProduct.description,
+      unit_price: updatedProduct.unit_price,
+      quantity: updatedProduct.quantity,
+      url: updatedProduct.url,
+      available: updatedProduct.available,
+      created_at: updatedProduct.created_at,
+      updated_at: updatedProduct.updated_at,
+    };
   }
 }

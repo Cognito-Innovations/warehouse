@@ -53,7 +53,7 @@ const RequestTableBody: React.FC<RequestTableBodyProps> = ({ rows }) => {
             <Typography variant="body2">{formatDateTime(row.created_at)}</Typography>
           </TableCell>
           <TableCell>
-            <Typography variant="caption" color="text.secondary">{row.users.name}</Typography>
+            <Typography variant="caption" color="text.secondary">{row.user.name}</Typography>
           </TableCell>
           <TableCell>
             <Typography variant="body2" fontWeight={500}>{row.pickup_address}</Typography>
