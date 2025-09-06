@@ -198,7 +198,53 @@ export const updateShoppingRequestStatus = async (id: string, status: string) =>
   return response.data;
 };
 
-export const updateProductUnitPrice = async (productId: string, unitPrice: number) => {
-  const res = await api.patch(`/products/${productId}/unit-price`, { unit_price: unitPrice });
+export const updateProduct = async (productId: string, unitPrice?: number, available?: boolean) => {
+  const res = await api.patch(`/products/${productId}`, {
+    ...(unitPrice !== undefined && { unit_price: unitPrice }),
+    ...(available !== undefined && { available }),
+  });
   return res.data;
+};
+
+export const createShipmentExport = async (data: {
+  export_code: string;
+  boxes_count: number;
+  created_by: string;
+  mawb?: string;
+}) => {
+  const res = await api.post('/shipment-exports', data);
+  return res.data;
+};
+
+export const getShipmentExports = async () => {
+  const response = await api.get('/shipment-exports');
+  return response.data;
+};
+
+export const getShipmentExportById = async (id: string) => {
+  const response = await api.get(`/shipment-exports/${id}`);
+  return response.data;
+};
+
+export const updateShipmentExportBox = async (id: number, payload: any) => {
+  const response = await api.patch(`/shipment-export-boxes/${id}`, payload);
+  return response.data;
+};
+
+export const createShipmentExportBox = async (exportId: string, payload: any = {}) => {
+  const response = await api.post(`/shipment-export-boxes/${exportId}`, payload);
+  return response.data;
+};
+
+export const deleteShipmentExportBox = async (id: number) => {
+  await api.delete(`/shipment-export-boxes/${id}`);
+};
+
+export const updateShipmentExport = async (id: string, payload: { mawb?: string }) => {
+  const response = await api.patch(`/shipment-exports/${id}`, payload);
+  return response.data;
+};
+
+export const deleteShipmentExport = async (id: string) => {
+  await api.delete(`/shipment-exports/${id}`);
 };

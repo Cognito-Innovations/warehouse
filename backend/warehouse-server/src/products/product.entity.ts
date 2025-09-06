@@ -15,7 +15,7 @@ export class Product {
   shopping_request_id: string;
 
   @Column()
-  product_name: string;
+  name: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
@@ -28,6 +28,9 @@ export class Product {
 
   @Column({ type: 'text', nullable: true })
   url: string;
+
+  @Column({ type: 'boolean', nullable: true })
+  available: boolean;
 
   @CreateDateColumn()
   created_at: Date;

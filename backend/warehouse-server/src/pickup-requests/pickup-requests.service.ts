@@ -12,13 +12,16 @@ export class PickupRequestsService {
     private readonly pickupRequestRepository: Repository<PickupRequest>,
   ) {}
 
-  async createPickupRequest(createPickupRequestDto: CreatePickupRequestDto): Promise<PickupRequestResponseDto> {
+  async createPickupRequest(
+    createPickupRequestDto: CreatePickupRequestDto,
+  ): Promise<PickupRequestResponseDto> {
     const pickupRequest = this.pickupRequestRepository.create({
       ...createPickupRequestDto,
       status: createPickupRequestDto.status || 'REQUESTED',
     });
 
-    const savedPickupRequest = await this.pickupRequestRepository.save(pickupRequest);
+    const savedPickupRequest =
+      await this.pickupRequestRepository.save(pickupRequest);
 
     return {
       id: savedPickupRequest.id,
@@ -44,9 +47,10 @@ export class PickupRequestsService {
   async getAllPickupRequests(): Promise<PickupRequestResponseDto[]> {
     const pickupRequests = await this.pickupRequestRepository.find({
       order: { created_at: 'DESC' },
+      relations: ['user'],
     });
 
-    return pickupRequests.map(request => ({
+    return pickupRequests.map((request) => ({
       id: request.id,
       user_id: request.user_id,
       pickup_address: request.pickup_address,
@@ -64,16 +68,25 @@ export class PickupRequestsService {
       picked_at: request.picked_at,
       created_at: request.created_at,
       updated_at: request.updated_at,
+      user: {
+          email: request.user.email,
+          name: request.user.name,
+          phone_number: request.user.phone_number,
+          country: request.user.country,
+          created_at: request.user.created_at,
+        }
     }));
   }
 
-  async getPickupRequestsByUser(userId: string): Promise<PickupRequestResponseDto[]> {
+  async getPickupRequestsByUser(
+    userId: string,
+  ): Promise<PickupRequestResponseDto[]> {
     const pickupRequests = await this.pickupRequestRepository.find({
       where: { user_id: userId },
       order: { created_at: 'DESC' },
     });
 
-    return pickupRequests.map(request => ({
+    return pickupRequests.map((request) => ({
       id: request.id,
       user_id: request.user_id,
       pickup_address: request.pickup_address,
@@ -97,6 +110,7 @@ export class PickupRequestsService {
   async getPickupRequestById(id: string): Promise<PickupRequestResponseDto> {
     const pickupRequest = await this.pickupRequestRepository.findOne({
       where: { id },
+      relations: ['user'],
     });
 
     if (!pickupRequest) {
@@ -121,10 +135,21 @@ export class PickupRequestsService {
       picked_at: pickupRequest.picked_at,
       created_at: pickupRequest.created_at,
       updated_at: pickupRequest.updated_at,
+      user: {
+        email: pickupRequest.user.email,
+        name: pickupRequest.user.name,
+        phone_number: pickupRequest.user.phone_number,
+        country: pickupRequest.user.country,
+        created_at: pickupRequest.user.created_at,
+      },
     };
   }
 
-  async updateStatus(id: string, status: string, price?: number): Promise<PickupRequestResponseDto> {
+  async updateStatus(
+    id: string,
+    status: string,
+    price?: number,
+  ): Promise<PickupRequestResponseDto> {
     const pickupRequest = await this.pickupRequestRepository.findOne({
       where: { id },
     });
@@ -134,7 +159,7 @@ export class PickupRequestsService {
     }
 
     pickupRequest.status = status;
-    
+
     if (price !== undefined) {
       pickupRequest.price = price;
     }
@@ -152,7 +177,8 @@ export class PickupRequestsService {
         break;
     }
 
-    const updatedPickupRequest = await this.pickupRequestRepository.save(pickupRequest);
+    const updatedPickupRequest =
+      await this.pickupRequestRepository.save(pickupRequest);
 
     return {
       id: updatedPickupRequest.id,

@@ -1,85 +1,38 @@
-import { Controller, Post, Get, Body, Headers } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { Controller, Post, Body, UseGuards, Get, Request } from '@nestjs/common';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthService } from './service/auth.service';
+import { Public } from './decorators/public.decorator';
+
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import {
-  LoginResponseDto,
-  RegisterResponseDto,
-  RefreshTokenResponseDto,
-  ValidateResponseDto,
-  UserDto,
-} from './dto/auth-response.dto';
+import { AuthResponseDto } from './dto/AuthResponseDto';
+
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('login')
-  async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
-    return this.authService.login(loginDto.email, loginDto.password);
-  }
-
+  @Public()
   @Post('register')
-  async register(
-    @Body() registerDto: RegisterDto,
-  ): Promise<RegisterResponseDto> {
-    return this.authService.register(
-      registerDto.email,
-      registerDto.password,
-      registerDto.country,
-    );
+  async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
+    return this.authService.register(registerDto);
   }
 
-  @Post('logout')
-  async logout(
-    @Headers('authorization') authHeader: string,
-  ): Promise<{ message: string }> {
-    const userId = this.extractUserIdFromToken(authHeader);
-    return this.authService.logout(userId);
+  @Public()
+  @Post('login')
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
+    return this.authService.login(loginDto);
   }
 
-  @Post('refresh')
-  async refreshToken(
-    @Headers('authorization') authHeader: string,
-  ): Promise<RefreshTokenResponseDto> {
-    const userId = this.extractUserIdFromToken(authHeader);
-    return this.authService.refreshToken(userId);
-  }
-
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
-  async getProfile(
-    @Headers('authorization') authHeader: string,
-  ): Promise<UserDto | null> {
-    const userId = this.extractUserIdFromToken(authHeader);
-    return this.authService.validateUser(userId);
+  getProfile(@Request() req) {
+    return req.user;
   }
 
-  @Get('validate')
-  async validate(
-    @Headers('authorization') authHeader: string,
-  ): Promise<ValidateResponseDto> {
-    const userId = this.extractUserIdFromToken(authHeader);
-    const user = await this.authService.validateUser(userId);
-
-    return {
-      valid: !!user,
-      user: user || undefined,
-    };
-  }
-
-  private extractUserIdFromToken(authHeader: string): string {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('Invalid authorization header');
-    }
-
-    const token = authHeader.substring(7);
-    // Simple JWT decode without verification (for demo purposes)
-    // In production, you should verify the token
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.sub;
-    } catch (error) {
-      throw new Error('Invalid token');
-    }
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(@Request() req): Promise<{ message: string }> {
+    return this.authService.logout(req.user.id);
   }
 }

@@ -41,11 +41,13 @@ export class ShoppingRequestsService {
   async getAllShoppingRequests(): Promise<ShoppingRequestResponseDto[]> {
     const shoppingRequests = await this.shoppingRequestRepository.find({
       order: { created_at: 'DESC' },
+      relations: ['user'],
     });
 
     return shoppingRequests.map((request) => ({
       id: request.id,
       user_id: request.user_id,
+      user: request.user,
       request_code: request.request_code,
       country: request.country,
       items: request.items,
@@ -84,6 +86,7 @@ export class ShoppingRequestsService {
   ): Promise<ShoppingRequestResponseDto> {
     const shoppingRequest = await this.shoppingRequestRepository.findOne({
       where: { request_code: requestCode },
+      relations: ['user'],
     });
 
     if (!shoppingRequest) {
@@ -95,6 +98,7 @@ export class ShoppingRequestsService {
     return {
       id: shoppingRequest.id,
       user_id: shoppingRequest.user_id,
+      user: shoppingRequest.user,
       request_code: shoppingRequest.request_code,
       country: shoppingRequest.country,
       items: shoppingRequest.items,

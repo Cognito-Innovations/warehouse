@@ -1,4 +1,3 @@
-export { User } from './user.entity';
 export { Package } from './package.entity';
 export { PackageItem } from './package-item.entity';
 export { PackageMeasurement } from './package-measurement.entity';

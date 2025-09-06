@@ -24,7 +24,7 @@ export interface Supplier {
 
 export interface Package {
   id?: string;
-  custom_package_id?: string;
+  package_id?: string;
   customer_id?: string;
   customer?: {
     id: string;

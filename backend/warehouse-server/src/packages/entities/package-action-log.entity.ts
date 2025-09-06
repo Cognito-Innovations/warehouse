@@ -5,6 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity('package_action_logs')
@@ -14,6 +16,10 @@ export class PackageActionLog {
 
   @Column()
   package_id: string;
+
+  @ManyToOne('Package', (packageEntity: any) => packageEntity.action_logs)
+  @JoinColumn({ name: 'package_id' })
+  package: any;
 
   @Column()
   file_name: string;
@@ -45,12 +51,13 @@ export class PackageActionLog {
   @Column({ nullable: true })
   uploaded_at: Date;
 
-  @CreateDateColumn()
-  created_at: Date;
+  // Timestamp columns removed as they don't exist in the database
+  // @CreateDateColumn()
+  // created_at: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  // @UpdateDateColumn()
+  // updated_at: Date;
 
-  @DeleteDateColumn()
-  deleted_at: Date;
+  // @DeleteDateColumn()
+  // deleted_at: Date;
 }

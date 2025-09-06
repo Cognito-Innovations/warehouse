@@ -5,7 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
+
 } from 'typeorm';
+import { Package } from './package.entity';
 
 @Entity('package_documents')
 export class PackageDocument {
@@ -14,6 +18,10 @@ export class PackageDocument {
 
   @Column()
   package_id: string;
+
+  @ManyToOne(() => Package)
+  @JoinColumn({ name: 'package_id' })
+  package: Package;
 
   @Column()
   document_name: string;
@@ -42,12 +50,13 @@ export class PackageDocument {
   @Column()
   uploaded_by: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  // Timestamp columns removed as they don't exist in the database
+  // @CreateDateColumn()
+  // created_at: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  // @UpdateDateColumn()
+  // updated_at: Date;
 
-  @DeleteDateColumn()
-  deleted_at: Date;
+  // @DeleteDateColumn()
+  // deleted_at: Date;
 }

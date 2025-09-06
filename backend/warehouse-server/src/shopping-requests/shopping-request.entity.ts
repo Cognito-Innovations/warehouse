@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { User } from 'src/users/user.entity';
 
 @Entity('shopping_requests')
 export class ShoppingRequest {
@@ -13,6 +16,10 @@ export class ShoppingRequest {
 
   @Column()
   user_id: string;
+
+  @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column({ unique: true })
   request_code: string;

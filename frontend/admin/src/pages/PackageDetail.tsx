@@ -29,6 +29,7 @@ const PackageDetail: React.FC = () => {
 
   // Action Log status management
   const [actionLogStatus, setActionLogStatus] = useState<'Action Required' | 'In Review' | 'Ready to Send' | 'Request Ship' | 'Shipped' | 'Discarded' | 'Draft'>('Action Required');
+  const [isAdminChecked, setIsAdminChecked] = useState(false);
 
   // State for Package Items
   const [addItemModalOpen, setAddItemModalOpen] = useState(false);
@@ -74,6 +75,10 @@ const PackageDetail: React.FC = () => {
         setPackageData(data);
         setActionLogStatus(data.status as any);
         setPackageItems(data.items || []);
+        
+        // Initialize admin check state based on status
+        // If status is "Ready to Send", checkbox should be checked
+        setIsAdminChecked(data.status === 'Ready to Send');
         // Load documents separately
         await fetchDocuments();
       } catch (err) {
@@ -107,6 +112,7 @@ const PackageDetail: React.FC = () => {
   const handleDirectFileSelect = async (files: FileList) => {
     if (!id || files.length === 0) return;
     
+    setIsUploading(true);
     try {
       const fileArray = Array.from(files);
       const response = await uploadPackageDocuments(id, fileArray);
@@ -120,8 +126,17 @@ const PackageDetail: React.FC = () => {
       })) || [];
       
       setUploadedDocuments(prev => [...prev, ...newDocuments]);
+      
+      // Automatically change status to "In Review" when documents are uploaded
+      if (actionLogStatus === 'Action Required') {
+        await handleStatusChange('In Review');
+        // Reset admin check state since this is automatic, not manual
+        setIsAdminChecked(false);
+      }
     } catch (err) {
       console.error('Failed to upload documents:', err);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -143,6 +158,13 @@ const PackageDetail: React.FC = () => {
       setUploadedDocuments(prev => [...prev, ...newDocuments]);
       setSelectedFiles([]);
       setUploadModalOpen(false);
+      
+      // Automatically change status to "In Review" when documents are uploaded
+      if (actionLogStatus === 'Action Required') {
+        await handleStatusChange('In Review');
+        // Reset admin check state since this is automatic, not manual
+        setIsAdminChecked(false);
+      }
     } catch (err) {
       console.error('Failed to upload documents:', err);
       setError('Failed to upload documents');
@@ -341,6 +363,11 @@ const PackageDetail: React.FC = () => {
     }
   };
 
+  // Handle admin check toggle
+  const handleAdminCheck = (checked: boolean) => {
+    setIsAdminChecked(checked);
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -367,7 +394,7 @@ const PackageDetail: React.FC = () => {
 
   // Transform package data for display
   const displayPackageData = {
-    id: packageData.custom_package_id || packageData.id,
+    id: packageData.package_id || packageData.id,
     status: packageData.status,
     customer: packageData.customer?.name || 'Unknown',
     suite: packageData.customer?.suite_no || 'N/A',
@@ -388,15 +415,27 @@ const PackageDetail: React.FC = () => {
     shopInvoiceReceived: packageData.shop_invoice_received || false,
     items: packageItems,
     // Transform measurements data for display
-    measurements: packageData.measurements?.map((measurement: any) => ({
-      pieceNumber: measurement.piece_number,
-      weight: `${measurement.weight || 0}Kg`,
-      volumetricWeight: measurement.volumetric_weight ? `${measurement.volumetric_weight}Kg` : '-',
-      hasMeasurements: measurement.has_measurements || false,
-      length: measurement.length,
-      width: measurement.width,
-      height: measurement.height
-    })) || []
+    measurements: packageData.measurements?.map((measurement: any) => {
+      // Calculate volumetric weight if not provided
+      let volumetricWeight = '-';
+      if (measurement.volumetric_weight) {
+        volumetricWeight = `${measurement.volumetric_weight}Kg`;
+      } else if (measurement.has_measurements && measurement.length && measurement.width && measurement.height) {
+        // Calculate volumetric weight: (L × W × H) / 5000 (for cm to kg)
+        const calculatedVolWeight = (parseFloat(measurement.length) * parseFloat(measurement.width) * parseFloat(measurement.height)) / 5000;
+        volumetricWeight = `${calculatedVolWeight.toFixed(3)}Kg`;
+      }
+      
+      return {
+        pieceNumber: measurement.piece_number,
+        weight: `${measurement.weight || 0}Kg`,
+        volumetricWeight: volumetricWeight,
+        hasMeasurements: measurement.has_measurements || false,
+        length: measurement.length,
+        width: measurement.width,
+        height: measurement.height
+      };
+    }) || []
   };
 
   return (
@@ -438,6 +477,9 @@ const PackageDetail: React.FC = () => {
             onOpenUploadModal={handleOpenUploadModal}
             onRemoveDocument={handleRemoveDocument}
             onFileSelect={handleDirectFileSelect}
+            isUploading={isUploading}
+            isAdminChecked={isAdminChecked}
+            onAdminCheck={handleAdminCheck}
           />
 
           {/* Photos / Documents */}
@@ -487,7 +529,7 @@ const PackageDetail: React.FC = () => {
             Are you sure you want to discard this package? This action will change the package status to "Discarded" and cannot be undone.
           </Typography>
           <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 500 }}>
-            Package ID: {packageData?.custom_package_id || packageData?.id}
+            Package ID: {packageData?.package_id || packageData?.id}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 1 }}>

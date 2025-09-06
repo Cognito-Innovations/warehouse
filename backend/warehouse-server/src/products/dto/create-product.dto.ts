@@ -5,7 +5,7 @@ export class CreateProductDto {
   shopping_request_id: string;
 
   @IsString()
-  product_name: string;
+  name: string;
 
   @IsOptional()
   @IsString()

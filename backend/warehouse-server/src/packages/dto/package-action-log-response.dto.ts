@@ -11,7 +11,4 @@ export class PackageActionLogResponseDto {
   completed_at?: Date;
   completed_by?: string;
   uploaded_at?: Date;
-  created_at: Date;
-  updated_at: Date;
-  deleted_at?: Date;
 }

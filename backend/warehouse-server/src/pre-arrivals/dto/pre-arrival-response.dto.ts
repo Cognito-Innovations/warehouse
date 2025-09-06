@@ -8,5 +8,5 @@ export class PreArrivalResponseDto {
   details?: string;
   status: 'pending' | 'received';
   created_at: Date;
-  updated_at: Date;
+  updated_at: Date | null;
 }

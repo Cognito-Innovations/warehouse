@@ -18,6 +18,40 @@ export class User {
   password: string;
 
   @Column({ nullable: true })
+  name: string;
+
+  @Column({ default: 'user' })
+  role: string;
+
+  @Column({ nullable: true })
+  image: string;
+
+  //TODO: Remove nullable
+  @Column({ nullable: true })
+  suite_no: string;
+
+  @Column({ nullable: true, default: 'google' })
+  identifier: string;
+
+  @Column({ nullable: true })
+  phone_number: string;
+
+  @Column({ nullable: true })
+  phone_number_2: string;
+
+  @Column({ nullable: true })
+  gender: string;
+
+  @Column({ nullable: true })
+  dob: Date;
+
+  @Column({ nullable: true })
+  verified: boolean;
+
+  //TODO: Uncomment and remove nullable
+  // @ManyToOne(() => Country, { eager: true })
+  // @JoinColumn({ name: 'id' })
+  @Column({ nullable: true })
   country: string;
 
   @Column({ default: false })
