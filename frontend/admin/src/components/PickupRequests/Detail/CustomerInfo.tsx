@@ -8,11 +8,12 @@ interface User {
   id: string;
   name: string;
   email: string;
-  phoneNumbers?: string[];
+  phone_number?: string[];
 }
 
 interface CustomerInfoProps {
   user: User;
+  userId: [];
 }
 
 const InfoItem: React.FC<{ icon: React.ReactElement; text: string }> = ({ icon, text }) => (
@@ -24,14 +25,14 @@ const InfoItem: React.FC<{ icon: React.ReactElement; text: string }> = ({ icon, 
   </Box>
 );
 
-const CustomerInfo: React.FC<CustomerInfoProps> = ({ user }) => {
-  const phoneString = user.phoneNumbers?.join(', ');
+const CustomerInfo: React.FC<CustomerInfoProps> = ({ user, userId }) => {
+  const phoneString = user.phone_number?.join(', ');
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mt: 2 }}>
       <InfoItem
         icon={<PersonOutlineIcon />}
-        text={`${user.name} (${user.id})`}
+        text={`${user.name} (${userId.id})`}
       />
       <InfoItem
         icon={<MailOutlineIcon />}
@@ -45,6 +46,6 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({ user }) => {
       )}
     </Box>
   );
-};
+};  
 
 export default CustomerInfo;

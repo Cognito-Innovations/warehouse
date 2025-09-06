@@ -47,6 +47,7 @@ export class PickupRequestsService {
   async getAllPickupRequests(): Promise<PickupRequestResponseDto[]> {
     const pickupRequests = await this.pickupRequestRepository.find({
       order: { created_at: 'DESC' },
+      relations: ['user'],
     });
 
     return pickupRequests.map((request) => ({
@@ -67,6 +68,13 @@ export class PickupRequestsService {
       picked_at: request.picked_at,
       created_at: request.created_at,
       updated_at: request.updated_at,
+      user: {
+          email: request.user.email,
+          name: request.user.name,
+          phone_number: request.user.phone_number,
+          country: request.user.country,
+          created_at: request.user.created_at,
+        }
     }));
   }
 
@@ -102,6 +110,7 @@ export class PickupRequestsService {
   async getPickupRequestById(id: string): Promise<PickupRequestResponseDto> {
     const pickupRequest = await this.pickupRequestRepository.findOne({
       where: { id },
+      relations: ['user'],
     });
 
     if (!pickupRequest) {
@@ -126,6 +135,13 @@ export class PickupRequestsService {
       picked_at: pickupRequest.picked_at,
       created_at: pickupRequest.created_at,
       updated_at: pickupRequest.updated_at,
+      user: {
+        email: pickupRequest.user.email,
+        name: pickupRequest.user.name,
+        phone_number: pickupRequest.user.phone_number,
+        country: pickupRequest.user.country,
+        created_at: pickupRequest.user.created_at,
+      },
     };
   }
 

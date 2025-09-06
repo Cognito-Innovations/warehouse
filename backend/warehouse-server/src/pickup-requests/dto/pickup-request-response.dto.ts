@@ -16,4 +16,11 @@ export class PickupRequestResponseDto {
   picked_at?: Date;
   created_at: Date;
   updated_at: Date;
+  user?: {
+    email: string;
+    name?: string;
+    phone_number: string;
+    country: string;
+    created_at: Date;
+  };
 }
