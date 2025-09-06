@@ -36,9 +36,10 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ pageTitle, pageSubtitle, searchVa
       </Box>
 
       {/* Center: Search Bar */}
-      <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', mx: 4 }}>
+      {/* TODO: Uncomment this when fully search is implemented */}
+      {/* <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', mx: 4 }}>
         <SearchBar value={searchValue} onChange={onSearchChange}/>
-      </Box>
+      </Box> */}
       
       {/* Right Side: Notifications and Avatar */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

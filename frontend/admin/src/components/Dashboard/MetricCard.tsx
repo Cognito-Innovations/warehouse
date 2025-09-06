@@ -29,9 +29,10 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, color, 
             {subtitle}
           </Typography>
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer', textDecoration: "underline", textUnderlineOffset: 4, textUnderlinePosition: 5}}>
+        {/* TODO: Uncomment this when fully dashboard is implemented */}
+        {/* <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer', textDecoration: "underline", textUnderlineOffset: 4, textUnderlinePosition: 5}}>
         View →
-      </Typography>
+      </Typography> */}
 
       </Box>
 
