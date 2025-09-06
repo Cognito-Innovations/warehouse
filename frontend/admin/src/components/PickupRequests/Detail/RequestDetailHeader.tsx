@@ -113,7 +113,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
         </Box>
       </Box>
 
-      <CustomerInfo user={request.user} />
+      <CustomerInfo user={request.user} userId={request} />
 
       <Modal open={openModal} onClose={handleCloseModal} title="Send Quotation">
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
