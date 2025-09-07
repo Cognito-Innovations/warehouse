@@ -1,4 +1,4 @@
-import { Country } from 'src/countries/entity/country.entity';
+import { Country } from 'src/supported-countries/entity/supported-country.entity';
 import { User } from 'src/users/user.entity';
 import {
   Entity,
@@ -50,9 +50,9 @@ export class PickupRequest {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   price: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
 }

@@ -1,5 +1,5 @@
 import { User } from 'src/users/user.entity';
-import { Country } from 'src/countries/entity/country.entity';
+import { Country } from 'src/supported-countries/entity/supported-country.entity';
 
 import {
   Entity,

@@ -1,4 +1,4 @@
-import { Country } from '../../countries/entity/country.entity';
+import { Country } from '../../supported-countries/entity/supported-country.entity';
 
 export class UserDto {
   id: string;

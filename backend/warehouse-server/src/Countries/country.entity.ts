@@ -6,13 +6,22 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity('countries')
+@Entity('country')
 export class Country {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
-  country: string;
+  @Column()
+  code: string;
+
+  @Column()
+  name: string;
+
+  @Column({ nullable: true })
+  image: string;
+
+  @Column({ nullable: true })
+  phone_code: string;
 
   @CreateDateColumn()
   created_at: Date;

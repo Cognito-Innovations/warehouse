@@ -8,7 +8,7 @@ import {
   DeleteDateColumn,
   JoinColumn,
 } from 'typeorm';
-import { Country } from '../../countries/entity/country.entity';
+import { Country } from '../../supported-countries/entity/supported-country.entity';
 
 @Entity('users')
 export class User {

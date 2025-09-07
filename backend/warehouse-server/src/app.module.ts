@@ -7,7 +7,7 @@ import { GlobalAuthGuard } from './auth/guards/global-auth.guard';
 import { SharedModule } from './shared/shared.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { CountriesModule } from './countries/countries.module';
+import { CountriesModule } from './supported-countries/supported-countries.module';
 import { RacksModule } from './racks/racks.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { PackagesModule } from './packages/packages.module';
@@ -28,6 +28,7 @@ import { PreArrivaController } from './pre-arrivals/pre-arrivals.controller';
 import { PickupRequestsController } from './pickup-requests/pickup-requests.controller';
 import { ShoppingRequestsController } from './shopping-requests/shopping-requests.controller';
 import { ProductsController } from './products/products.controller';
+import { CourierCompaniesModule } from './courier_companies/courier_companies.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ProductsController } from './products/products.controller';
     PickupRequestsModule,
     TrackingRequestsModule,
     ShipmentExportModule,
+    CourierCompaniesModule,
   ],
   controllers: [
     AppController,

@@ -1,5 +1,3 @@
-import { Country } from '../../countries/entity/country.entity';
-
 export class PackageResponseDto {
   id: string;
   tracking_no: string;
@@ -20,7 +18,7 @@ export class PackageResponseDto {
     id: string;
     label: string;
     count: number;
-    color: string
+    color: string;
   };
   slot_info?: string;
   warehouse_location?: string;

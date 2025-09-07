@@ -2,9 +2,9 @@ import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Country } from '../entity/country.entity';
-import { CreateCountryDto } from '../dto/create-country.dto';
-import { CountryResponseDto } from '../dto/country-response.dto';
+import { Country } from './country.entity';
+import { CreateCountryDto } from './dto/create-country.dto';
+import { CountryResponseDto } from './dto/countries-response.dto';
 
 @Injectable()
 export class CountriesService {
@@ -17,31 +17,37 @@ export class CountriesService {
     createCountryDto: CreateCountryDto,
   ): Promise<CountryResponseDto> {
     const country = this.countryRepository.create({
-      country: createCountryDto.country,
+      code: createCountryDto.code,
+      name: createCountryDto.name,
+      image: createCountryDto.image,
+      phone_code: createCountryDto.phone_code,
     });
 
     const savedCountry = await this.countryRepository.save(country);
 
-    return {
-      id: savedCountry.id,
-      country: savedCountry.country,
-      created_at: savedCountry.created_at,
-      updated_at: savedCountry.updated_at,
-    };
+    return savedCountry;
   }
 
   async createCountriesBulk(
-    countries: string[],
+    countries: CreateCountryDto[],
   ): Promise<CountryResponseDto[]> {
     const countryEntities = countries.map((country) =>
-      this.countryRepository.create({ country: country }),
+      this.countryRepository.create({
+        code: country.code,
+        name: country.name,
+        image: country.image,
+        phone_code: country.phone_code,
+      }),
     );
 
     const savedCountries = await this.countryRepository.save(countryEntities);
 
     return savedCountries.map((country) => ({
       id: country.id,
-      country: country.country,
+      code: country.code,
+      name: country.name,
+      image: country.image,
+      phone_code: country.phone_code,
       created_at: country.created_at,
       updated_at: country.updated_at,
     }));
@@ -49,12 +55,15 @@ export class CountriesService {
 
   async getAllCountries(): Promise<CountryResponseDto[]> {
     const countries = await this.countryRepository.find({
-      order: { country: 'ASC' },
+      order: { code: 'ASC' },
     });
 
     return countries.map((country) => ({
       id: country.id,
-      country: country.country,
+      code: country.code,
+      name: country.name,
+      image: country.image,
+      phone_code: country.phone_code,
       created_at: country.created_at,
       updated_at: country.updated_at,
     }));

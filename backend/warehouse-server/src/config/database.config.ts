@@ -1,6 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
-import { Country } from '../countries/entity/country.entity';
 import { Rack } from '../racks/rack.entity';
 import { User } from '../users/user.entity';
 import { Product } from '../products/product.entity';
@@ -25,6 +24,7 @@ import {
   PickupRequestDocument,
   ShoppingRequestDocument,
 } from '../shared/entities';
+import { Country } from 'src/Countries/country.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
