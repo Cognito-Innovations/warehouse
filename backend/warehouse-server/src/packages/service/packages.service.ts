@@ -127,7 +127,7 @@ export class PackagesService {
     packageEntity.vendor_id = createPackageDto.vendor;
     packageEntity.status = createPackageDto.status || 'Action Required';
     // Remove the hardcoded country 
-    packageEntity.country =  '54e03123-77f4-477f-85d4-083d4701ae39'; 
+    packageEntity.country = '54e03123-77f4-477f-85d4-083d4701ae39' // customer.country; -- ONLY UNCOMMENT WHNE DB IS SYNCED WITH THE NEW COUNTRY TABLE and REMOVE THE HARDCODED Value.
     packageEntity.total_weight = createPackageDto.weight ? parseFloat(createPackageDto.weight) : null;
     packageEntity.total_volumetric_weight = createPackageDto.volumetric_weight ? parseFloat(createPackageDto.volumetric_weight) : null;
     packageEntity.dangerous_good = createPackageDto.dangerous_good || false;
