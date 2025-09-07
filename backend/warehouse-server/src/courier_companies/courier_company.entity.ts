@@ -1,5 +1,6 @@
 import { Country } from 'src/Countries/country.entity';
 import {
+  Entity,
   Column,
   CreateDateColumn,
   JoinColumn,
@@ -8,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+@Entity('courier_companies')
 export class CourierCompany {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -15,7 +17,7 @@ export class CourierCompany {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ unique: true })
   address: string;
 
   @Column()

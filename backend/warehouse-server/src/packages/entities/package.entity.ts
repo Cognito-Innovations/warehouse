@@ -10,7 +10,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/user.entity';
-import { Country } from '../../supported-countries/entity/supported-country.entity';
+import { Country } from '../../Countries/country.entity';
 import { Rack } from '../../racks/rack.entity';
 import { Supplier } from '../../suppliers/supplier.entity';
 import { PackageItem } from './package-item.entity';

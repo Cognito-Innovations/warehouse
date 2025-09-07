@@ -2,59 +2,67 @@ import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Country } from '../entity/supported-country.entity';
-import { CreateCountryDto } from '../dto/create-supported-countries.dto';
-import { CountryResponseDto } from '../dto/supported-countries-response.dto';
+import { SupportedCountryCreateDto } from '../dto/create-supported-country.dto';
+import { SupportedCountryResponseDto } from '../dto/supported-countries-response.dto';
+import { SupportedCountry } from '../supported-country.entity';
 
 @Injectable()
-export class CountriesService {
+export class SupportedCountriesService {
   constructor(
-    @InjectRepository(Country)
-    private readonly countryRepository: Repository<Country>,
+    @InjectRepository(SupportedCountry)
+    private readonly supportedCountryRepository: Repository<SupportedCountry>,
   ) {}
 
-  async createCountry(
-    createCountryDto: CreateCountryDto,
-  ): Promise<CountryResponseDto> {
-    const country = this.countryRepository.create({
-      country: createCountryDto.country,
+  async createSupportedCountry(
+    createSupportedCountryDto: SupportedCountryCreateDto,
+  ): Promise<SupportedCountryResponseDto> {
+    const country = this.supportedCountryRepository.create({
+      country: createSupportedCountryDto.country,
+      is_active: createSupportedCountryDto.is_active,
     });
 
-    const savedCountry = await this.countryRepository.save(country);
+    const savedCountry = await this.supportedCountryRepository.save(country);
 
     return {
       id: savedCountry.id,
       country: savedCountry.country,
+      is_active: savedCountry.is_active,
       created_at: savedCountry.created_at,
       updated_at: savedCountry.updated_at,
     };
   }
 
-  async createCountriesBulk(
-    countries: string[],
-  ): Promise<CountryResponseDto[]> {
+  async createSupportedCountriesBulk(
+    countries: SupportedCountryCreateDto[],
+  ): Promise<SupportedCountryResponseDto[]> {
     const countryEntities = countries.map((country) =>
-      this.countryRepository.create({ country: country }),
+      this.supportedCountryRepository.create({
+        country: country.country,
+        is_active: country.is_active,
+      }),
     );
 
-    const savedCountries = await this.countryRepository.save(countryEntities);
+    const savedCountries =
+      await this.supportedCountryRepository.save(countryEntities);
 
     return savedCountries.map((country) => ({
       id: country.id,
       country: country.country,
+      is_active: country.is_active,
       created_at: country.created_at,
       updated_at: country.updated_at,
     }));
   }
 
-  async getAllCountries(): Promise<CountryResponseDto[]> {
-    const countries = await this.countryRepository.find({
-      order: { country: 'ASC' },
+  async getAllSupportedCountries(): Promise<SupportedCountryResponseDto[]> {
+    const countries = await this.supportedCountryRepository.find({
+      order: { country: { code: 'ASC' } },
     });
 
     return countries.map((country) => ({
       id: country.id,
       country: country.country,
+      is_active: country.is_active,
       created_at: country.created_at,
       updated_at: country.updated_at,
     }));

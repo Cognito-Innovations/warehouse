@@ -8,8 +8,8 @@ export interface PickupRequestPayload {
   supplier_name: string;
   supplier_phone: string;
   alt_phone?: string;
-  pcs_box: number;
-  est_weight?: number;
+  pcs_box: string;
+  est_weight?: string;
   pkg_details: string;
   remarks?: string;
 }

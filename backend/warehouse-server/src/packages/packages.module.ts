@@ -13,12 +13,17 @@ import { PackageItemsService } from './service/package-items.service';
 import { PackageDocumentsService } from './service/package-documents.service';
 import { PackageActionLogsService } from './service/package-action-logs.service';
 
-import { PackagesController } from './controller/packages.controller';;
-
+import { PackagesController } from './controller/packages.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Package, PackageActionLog, PackageItem, PackageDocument, PackageMeasurement]),
+    TypeOrmModule.forFeature([
+      Package,
+      PackageActionLog,
+      PackageItem,
+      PackageDocument,
+      PackageMeasurement,
+    ]),
     SharedModule,
   ],
   controllers: [PackagesController],

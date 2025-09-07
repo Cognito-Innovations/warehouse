@@ -150,7 +150,7 @@ export class PackagesService {
     // Remove the hardcoded country id
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     packageEntity.country =
-      customer.country as string || '54e03123-77f4-477f-85d4-083d4701ae39'; // Use country from user profile, default to India
+      (customer.country as string) || '54e03123-77f4-477f-85d4-083d4701ae39'; // Use country from user profile, default to India
     packageEntity.total_weight = createPackageDto.weight
       ? parseFloat(createPackageDto.weight)
       : null;
@@ -177,7 +177,6 @@ export class PackagesService {
 
     try {
       const savedPackage = await this.packageRepository.save(packageEntity);
-      console.log('Saved Pkg: ', savedPackage);
 
       // Handle pieces array if provided
       if (createPackageDto.pieces && createPackageDto.pieces.length > 0) {
@@ -237,7 +236,6 @@ export class PackagesService {
         savedPackage.total_volumetric_weight = totalVolumetricWeight;
         await this.packageRepository.save(savedPackage);
       }
-      console.log('After save: ', savedPackage);
 
       // Load the package with all relations before mapping to response DTO
       const packageWithRelations = await this.packageRepository.findOne({
@@ -251,12 +249,15 @@ export class PackagesService {
 
       return this.mapPackageToResponseDto(packageWithRelations);
     } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (error.code === '23505') {
         // PostgreSQL unique constraint violation
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (error.constraint?.includes('package_id')) {
           throw new BadRequestException(
             `Package ID ${package_id} already exists`,
           );
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         } else if (error.constraint?.includes('tracking_no')) {
           throw new BadRequestException(
             `Tracking number ${createPackageDto.tracking_no} already exists`,
@@ -280,7 +281,6 @@ export class PackagesService {
     userId: string,
     status: string,
   ): Promise<PackageResponseDto[]> {
-    console.log('getPackagesByUserAndStatus called with:', { userId, status });
 
     const packages = await this.packageRepository.find({
       where: {
@@ -290,18 +290,6 @@ export class PackagesService {
       relations: ['measurements', 'items', 'user'],
       order: { created_at: 'DESC' },
     });
-
-    console.log('Found packages:', packages.length);
-    console.log(
-      'Package details:',
-      packages.map((pkg) => ({
-        id: pkg.id,
-        tracking_no: pkg.tracking_no,
-        status: pkg.status,
-        customer_id: pkg.user.id,
-        customer_name: pkg.user?.name,
-      })),
-    );
 
     return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
   }
@@ -359,7 +347,6 @@ export class PackagesService {
     status: string,
     updated_by: string,
   ): Promise<PackageResponseDto> {
-    console.log('updatePackageStatus called with:', { id, status, updated_by });
 
     // Check if the input is a UUID format
     const isUUID =
@@ -381,23 +368,11 @@ export class PackagesService {
       throw new NotFoundException('Package not found');
     }
 
-    console.log('Found package:', {
-      id: packageEntity.id,
-      current_status: packageEntity.status,
-    });
-
     // Update the status
     packageEntity.status = status;
     packageEntity.updated_by = updated_by as unknown as User;
 
-    console.log('Updating package with:', { new_status: status, updated_by });
-
     const updatedPackage = await this.packageRepository.save(packageEntity);
-
-    console.log('Package updated successfully:', {
-      id: updatedPackage.id,
-      new_status: updatedPackage.status,
-    });
 
     return this.mapPackageToResponseDto(updatedPackage);
   }
@@ -451,6 +426,7 @@ export class PackagesService {
       // Fallback to regular package ID generation if country-based fails
       console.warn(
         'Country-based package ID generation failed, using fallback:',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         error.message,
       );
       return this.generatepackage_id();

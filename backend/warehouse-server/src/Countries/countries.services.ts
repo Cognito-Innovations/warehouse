@@ -2,7 +2,7 @@ import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Country } from './country.entity';
+import { Country, CountryCode, CountryPhoneCode } from './country.entity';
 import { CreateCountryDto } from './dto/create-country.dto';
 import { CountryResponseDto } from './dto/countries-response.dto';
 
@@ -17,7 +17,7 @@ export class CountriesService {
     createCountryDto: CreateCountryDto,
   ): Promise<CountryResponseDto> {
     const country = this.countryRepository.create({
-      code: createCountryDto.code,
+      code: createCountryDto.code as CountryCode,
       name: createCountryDto.name,
       image: createCountryDto.image,
       phone_code: createCountryDto.phone_code,
@@ -25,7 +25,15 @@ export class CountriesService {
 
     const savedCountry = await this.countryRepository.save(country);
 
-    return savedCountry;
+    return {
+      id: savedCountry.id,
+      code: savedCountry.code,
+      name: savedCountry.name,
+      image: savedCountry.image,
+      phone_code: savedCountry.phone_code as CountryPhoneCode,
+      created_at: savedCountry.created_at,
+      updated_at: savedCountry.updated_at,
+    };
   }
 
   async createCountriesBulk(
@@ -33,7 +41,7 @@ export class CountriesService {
   ): Promise<CountryResponseDto[]> {
     const countryEntities = countries.map((country) =>
       this.countryRepository.create({
-        code: country.code,
+        code: country.code as CountryCode,
         name: country.name,
         image: country.image,
         phone_code: country.phone_code,
@@ -47,7 +55,7 @@ export class CountriesService {
       code: country.code,
       name: country.name,
       image: country.image,
-      phone_code: country.phone_code,
+      phone_code: country.phone_code as CountryPhoneCode,
       created_at: country.created_at,
       updated_at: country.updated_at,
     }));
@@ -63,7 +71,7 @@ export class CountriesService {
       code: country.code,
       name: country.name,
       image: country.image,
-      phone_code: country.phone_code,
+      phone_code: country.phone_code as CountryPhoneCode,
       created_at: country.created_at,
       updated_at: country.updated_at,
     }));

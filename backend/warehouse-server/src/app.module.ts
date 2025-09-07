@@ -7,7 +7,6 @@ import { GlobalAuthGuard } from './auth/guards/global-auth.guard';
 import { SharedModule } from './shared/shared.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { CountriesModule } from './supported-countries/supported-countries.module';
 import { RacksModule } from './racks/racks.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { PackagesModule } from './packages/packages.module';
@@ -19,9 +18,6 @@ import { PickupRequestsModule } from './pickup-requests/pickup-requests.module';
 import { TrackingRequestsModule } from './tracking-requests/tracking-requests.module';
 import { ShipmentExportModule } from './shipment-export/shipment-export.module';
 
-import { AppService } from './app.service';
-
-import { AppController } from './app.controller';
 import { PackageItemsController } from './packages/controller/package-items.controller';
 import { PackageDocumentsController } from './packages/controller/package-documents.controller';
 import { PreArrivaController } from './pre-arrivals/pre-arrivals.controller';
@@ -29,6 +25,8 @@ import { PickupRequestsController } from './pickup-requests/pickup-requests.cont
 import { ShoppingRequestsController } from './shopping-requests/shopping-requests.controller';
 import { ProductsController } from './products/products.controller';
 import { CourierCompaniesModule } from './courier_companies/courier_companies.module';
+import { CountriesModule } from './Countries/countries.module';
+import { SupportedCountriesModule } from './supported-countries/supported-countries.module';
 
 @Module({
   imports: [
@@ -37,6 +35,8 @@ import { CourierCompaniesModule } from './courier_companies/courier_companies.mo
     UsersModule,
     AuthModule,
     CountriesModule,
+    CourierCompaniesModule,
+    SupportedCountriesModule,
     RacksModule,
     SuppliersModule,
     PackagesModule,
@@ -47,10 +47,8 @@ import { CourierCompaniesModule } from './courier_companies/courier_companies.mo
     PickupRequestsModule,
     TrackingRequestsModule,
     ShipmentExportModule,
-    CourierCompaniesModule,
   ],
   controllers: [
-    AppController,
     PackageItemsController,
     PackageDocumentsController,
     PreArrivaController,
@@ -59,7 +57,6 @@ import { CourierCompaniesModule } from './courier_companies/courier_companies.mo
     ProductsController,
   ],
   providers: [
-    AppService,
     {
       provide: APP_GUARD,
       useClass: GlobalAuthGuard,

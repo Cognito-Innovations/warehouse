@@ -12,9 +12,11 @@ export class CourierCompaniesService {
   ) {}
 
   async create(createCourierCompanyDto: CreateCourierCompanyDto) {
-    const courierCompany = this.courierCompanyRepository.create(
-      createCourierCompanyDto,
-    );
+    console.log('createCourierCompanyDto', createCourierCompanyDto);
+    const courierCompany = this.courierCompanyRepository.create({
+      ...createCourierCompanyDto,
+      country: { id: createCourierCompanyDto.country_id },
+    });
 
     const savedCourierCompany =
       await this.courierCompanyRepository.save(courierCompany);
@@ -23,7 +25,8 @@ export class CourierCompaniesService {
   }
 
   findAll() {
-    return `This action returns all courierCompanies`;
+    const courierCompanies = this.courierCompanyRepository.find();
+    return courierCompanies;
   }
 
   findOne(id: number) {

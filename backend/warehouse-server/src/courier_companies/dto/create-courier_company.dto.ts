@@ -22,6 +22,6 @@ export class CreateCourierCompanyDto {
   country_id: string;
 
   @IsBoolean()
-  @IsNotEmpty()
+  @IsOptional()
   is_active: boolean;
 }

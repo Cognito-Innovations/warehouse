@@ -31,8 +31,9 @@ export class PickupRequestsService {
     await queryRunner.startTransaction();
 
     try {
+      const { admin_id, ...pickupRequestData } = createPickupRequestDto;
       const pickupRequest = queryRunner.manager.create(PickupRequest, {
-        ...createPickupRequestDto,
+        ...pickupRequestData,
       });
 
       const savedPickupRequest = await queryRunner.manager.save(
@@ -42,7 +43,7 @@ export class PickupRequestsService {
 
       const trackingRequest = queryRunner.manager.create(TrackingRequest, {
         user: { id: createPickupRequestDto.user_id },
-        admin: { id: createPickupRequestDto.user_id },
+        admin: { id: admin_id },
         feature_type: FeatureType.PickupRequest,
         status: Status.Requested,
         feature_fid: savedPickupRequest.id,
@@ -69,7 +70,7 @@ export class PickupRequestsService {
 
       return {
         id: pickupRequestWithRelations.id,
-        country: pickupRequestWithRelations.country?.country,
+        country: pickupRequestWithRelations.country?.name,
         pickup_address: pickupRequestWithRelations.pickup_address,
         supplier_name: pickupRequestWithRelations.supplier_name,
         supplier_phone_number: pickupRequestWithRelations.supplier_phone_number,
@@ -115,7 +116,7 @@ export class PickupRequestsService {
 
       return pickupRequests.map((request) => ({
         id: request.id,
-        country: request.country?.country,
+        country: request.country?.name,
         pickup_address: request.pickup_address,
         supplier_name: request.supplier_name,
         supplier_phone_number: request.supplier_phone_number,
@@ -156,7 +157,7 @@ export class PickupRequestsService {
 
       return pickupRequests.map((request) => ({
         id: request.id,
-        country: request.country?.country,
+        country: request.country?.name,
         pickup_address: request.pickup_address,
         supplier_name: request.supplier_name,
         supplier_phone_number: request.supplier_phone_number,
@@ -198,7 +199,7 @@ export class PickupRequestsService {
 
       return {
         id: pickupRequest.id,
-        country: pickupRequest.country?.country,
+        country: pickupRequest.country?.name,
         pickup_address: pickupRequest.pickup_address,
         supplier_name: pickupRequest.supplier_name,
         supplier_phone_number: pickupRequest.supplier_phone_number,
@@ -319,7 +320,7 @@ export class PickupRequestsService {
 
       return {
         id: pickupRequestWithRelations.id,
-        country: pickupRequestWithRelations.country?.country,
+        country: pickupRequestWithRelations.country?.name,
         pickup_address: pickupRequestWithRelations.pickup_address,
         supplier_name: pickupRequestWithRelations.supplier_name,
         supplier_phone_number: pickupRequestWithRelations.supplier_phone_number,

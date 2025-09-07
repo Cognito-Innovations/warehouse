@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Post, Param, Patch, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Patch,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 import { PackagesService } from '../service/packages.service';
@@ -21,7 +31,9 @@ export class PackagesController {
   }
 
   @Get()
-  async findAll(@Query('search') search?: string): Promise<PackageResponseDto[]> {
+  async findAll(
+    @Query('search') search?: string,
+  ): Promise<PackageResponseDto[]> {
     if (search) {
       return this.packagesService.searchPackages(search);
     }
@@ -33,12 +45,12 @@ export class PackagesController {
     console.log('Debug: Getting all packages');
     const packages = await this.packagesService.getAllPackages();
     console.log('Debug: Found', packages.length, 'total packages');
-    return packages.map(pkg => ({
+    return packages.map((pkg) => ({
       id: pkg.id,
       tracking_no: pkg.tracking_no,
       status: pkg.status,
       customer_id: pkg.customer?.id,
-      created_at: pkg.created_at
+      created_at: pkg.created_at,
     }));
   }
 
@@ -52,8 +64,14 @@ export class PackagesController {
     @Param('userId') userId: string,
     @Param('status') status: string,
   ): Promise<PackageResponseDto[]> {
-    console.log('PackagesController: findByUserAndStatus called with:', { userId, status });
-    const result = await this.packagesService.getPackagesByUserAndStatus(userId, status);
+    console.log('PackagesController: findByUserAndStatus called with:', {
+      userId,
+      status,
+    });
+    const result = await this.packagesService.getPackagesByUserAndStatus(
+      userId,
+      status,
+    );
     console.log('PackagesController: returning', result.length, 'packages');
     return result;
   }

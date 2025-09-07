@@ -60,8 +60,8 @@ export default function CreatePickupRequestPage() {
         supplier_name: form.supplier_name,
         supplier_phone: form.supplier_phone,
         alt_phone: form.alt_phone,
-        pcs_box: Number(form.pcs_box),
-        est_weight: Number(form.est_weight),
+        pcs_box: form.pcs_box,
+        est_weight: form.est_weight,
         pkg_details: form.pkg_details,
         remarks: form.remarks,
       });

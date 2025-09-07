@@ -10,7 +10,6 @@ export class CreateCountryDto {
   name: string;
 
   @IsString()
-  @IsNotEmpty()
   image: string;
 
   @IsString()

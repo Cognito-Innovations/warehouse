@@ -4,7 +4,7 @@ import { CreateCountryDto } from './dto/create-country.dto';
 import { CountryResponseDto } from './dto/countries-response.dto';
 import { CountriesService } from './countries.services';
 
-@Controller('country-services')
+@Controller('countries')
 export class CountriesController {
   constructor(private readonly countriesService: CountriesService) {}
 

@@ -25,6 +25,7 @@ import {
   ShoppingRequestDocument,
 } from '../shared/entities';
 import { Country } from 'src/Countries/country.entity';
+import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -36,6 +37,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
   database: process.env.DB_NAME || 'warehouse',
   entities: [
     Country,
+    CourierCompany,
     Rack,
     Supplier,
     User,
