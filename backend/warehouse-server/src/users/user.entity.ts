@@ -45,7 +45,7 @@ export class User {
   @Column({ nullable: true })
   dob: Date;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: false })
   verified: boolean;
 
   //TODO: Uncomment and remove nullable

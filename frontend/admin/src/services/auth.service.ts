@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = import.meta.env?.VITE_BACKEND_URL || 'http://localhost:3001';
 
 // Create axios instance with default config
 const authApi = axios.create({
@@ -8,6 +8,7 @@ const authApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 export interface LoginResponse {
@@ -40,6 +41,13 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       email,
       password,
     });
+
+    // Persist token in cookie so backend can read it
+    const token = response.data?.access_token;
+    if (token) {
+      // Session cookie, accessible by server only conceptually; here we set a client cookie
+      document.cookie = `jwt-token=${token}; path=/; SameSite=Lax`;
+    }
     return response.data;
   } catch (error: any) {
     throw error;
@@ -53,6 +61,11 @@ export const register = async (name: string, email: string, password: string): P
       email,
       password,
     });
+
+    const token = response.data?.access_token;
+    if (token) {
+      document.cookie = `jwt-token=${token}; path=/; SameSite=Lax`;
+    }
     return response.data;
   } catch (error: any) {
     throw error;
@@ -61,21 +74,14 @@ export const register = async (name: string, email: string, password: string): P
 
 export const logout = async (): Promise<void> => {
   try {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      await authApi.post('/logout', {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    }
+    await authApi.post('/logout');
   } catch (error: any) {
     console.error('Logout error:', error);
-    // Even if logout fails on server, clear local storage
   } finally {
-    // Always clear local storage
+    // Clear local storage and cookie
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
+    document.cookie = 'jwt-token=; Max-Age=0; path=/; SameSite=Lax';
   }
 };
 
@@ -89,6 +95,7 @@ export const getStoredUser = (): any | null => {
 };
 
 export const isAuthenticated = (): boolean => {
-  const token = getStoredToken();
-  return !!token;
+  // Consider cookie presence as auth indicator
+  const hasCookie = document.cookie.split('; ').some((c) => c.startsWith('jwt-token='));
+  return hasCookie || !!getStoredToken();
 };

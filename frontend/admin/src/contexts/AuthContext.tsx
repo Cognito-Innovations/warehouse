@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '../types';
-import { getStoredToken, getStoredUser, isAuthenticated, logout as authLogout } from '../services/auth.service';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import type { User } from '../types';
+import {  getStoredUser, isAuthenticated, logout as authLogout } from '../services/auth.service';
 
 interface AuthContextType {
   user: User | null;

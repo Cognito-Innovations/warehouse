@@ -14,25 +14,47 @@ export interface PickupRequestPayload {
   remarks?: string;
 }
 
-// Helper function to get authenticated API instance
+// Cache for session and axios instance
+let cachedSession: any = null;
+let cachedApiInstance: any = null;
+let lastToken: string | null = null;
+
 const getAuthenticatedApi = async () => {
+  // Get fresh session
   const session = await getSession();
   const token = (session as any)?.access_token;
-  
-  console.log('Session data:', session);
-  console.log('JWT Token:', token ? token.substring(0, 20) + '...' : 'No token');
   
   if (!token) {
     throw new Error('No authentication token available');
   }
 
-  return axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-  });
+  // If token changed or no cached instance, create new one
+  if (token !== lastToken || !cachedApiInstance) {
+    // Set JWT token in cookie directly (client-side)
+    if (typeof document !== 'undefined') {
+      document.cookie = `jwt-token=${token}; path=/; max-age=${24 * 60 * 60}; samesite=lax${process.env.NODE_ENV === 'production' ? '; secure' : ''}`;
+    }
+
+    cachedApiInstance = axios.create({
+      baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true,
+    });
+    
+    lastToken = token;
+    cachedSession = session;
+  }
+
+  return cachedApiInstance;
+};
+
+// Function to clear cache (call this on logout)
+export const clearApiCache = () => {
+  cachedSession = null;
+  cachedApiInstance = null;
+  lastToken = null;
 };
 
 export const createPickupRequest = async (payload: PickupRequestPayload) => {
@@ -102,14 +124,15 @@ export const getPackagesByUserAndStatus = async (userId: string, status: string)
 };
 
 export const updatePackageStatus = async (packageId: string, status: string) => {
-  const session = await getSession();
-  const userId = (session?.user as any)?.user_id;
+  const authenticatedApi = await getAuthenticatedApi();
+  
+  // Get user ID from cached session
+  const userId = (cachedSession?.user as any)?.user_id;
   
   if (!userId) {
     throw new Error('No user ID found in session');
   }
   
-  const authenticatedApi = await getAuthenticatedApi();
   const res = await authenticatedApi.patch(`/packages/${packageId}/status`, { 
     status: status,
     updated_by: userId

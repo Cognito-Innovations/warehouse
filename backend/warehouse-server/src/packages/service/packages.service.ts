@@ -119,7 +119,6 @@ export class PackagesService {
       throw new BadRequestException(`Tracking number ${createPackageDto.tracking_no} already exists`);
     }
 
-    // Create the package using TypeORM entity
     const packageEntity = new Package();
     packageEntity.package_id = package_id;
     packageEntity.customer_id = createPackageDto.customer;
@@ -127,8 +126,8 @@ export class PackagesService {
     packageEntity.tracking_no = createPackageDto.tracking_no;
     packageEntity.vendor_id = createPackageDto.vendor;
     packageEntity.status = createPackageDto.status || 'Action Required';
-    // Remove the hardcoded country id
-    packageEntity.country = customer.country || '54e03123-77f4-477f-85d4-083d4701ae39'; // Use country from user profile, default to India
+    // Remove the hardcoded country 
+    packageEntity.country =  '54e03123-77f4-477f-85d4-083d4701ae39'; 
     packageEntity.total_weight = createPackageDto.weight ? parseFloat(createPackageDto.weight) : null;
     packageEntity.total_volumetric_weight = createPackageDto.volumetric_weight ? parseFloat(createPackageDto.volumetric_weight) : null;
     packageEntity.dangerous_good = createPackageDto.dangerous_good || false;

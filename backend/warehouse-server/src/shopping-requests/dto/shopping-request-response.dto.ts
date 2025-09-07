@@ -1,13 +1,20 @@
-import { User } from '../../users/user.entity';
+export interface SafeUser {
+  id: string;
+  email: string;
+  name?: string;
+  image?: string;
+  suite_no?: string | null;
+  verified?: boolean;
+}
 
 export class ShoppingRequestResponseDto {
   id: string;
   user_id: string;
-  user?: User; // Optional user object when fetched with relations
+  user?: SafeUser; 
   request_code: string;
   country: string;
   items: number;
-  shopping_request_products?: any[]; // Products related to this shopping request
+  shopping_request_products?: any[];
   remarks?: string;
   status: string;
   payment_slips?: string[];

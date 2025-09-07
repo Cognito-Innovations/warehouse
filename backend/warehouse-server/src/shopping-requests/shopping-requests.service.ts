@@ -50,13 +50,22 @@ export class ShoppingRequestsService {
     return shoppingRequests.map((request) => ({
       id: request.id,
       user_id: request.user_id,
-      user: request.user,
+      user: request.user
+        ? {
+            id: request.user.id,
+            email: request.user.email,
+            name: request.user.name,
+            image: request.user.image,
+            suite_no: request.user.suite_no,
+            verified: request.user.verified,
+          }
+        : undefined,
       request_code: request.request_code,
       country: request.country,
       items: request.items,
       remarks: request.remarks,
       status: request.status,
-      payment_slips: request.payment_slips,
+      payment_slips: request.payment_slips || [],
       created_at: request.created_at,
       updated_at: request.updated_at,
     }));
@@ -78,7 +87,7 @@ export class ShoppingRequestsService {
       items: request.items,
       remarks: request.remarks,
       status: request.status,
-      payment_slips: request.payment_slips,
+      payment_slips: request.payment_slips || [],
       created_at: request.created_at,
       updated_at: request.updated_at,
     }));
@@ -105,14 +114,23 @@ export class ShoppingRequestsService {
     return {
       id: shoppingRequest.id,
       user_id: shoppingRequest.user_id,
-      user: shoppingRequest.user,
+      user: shoppingRequest.user
+        ? {
+            id: shoppingRequest.user.id,
+            email: shoppingRequest.user.email,
+            name: shoppingRequest.user.name,
+            image: shoppingRequest.user.image,
+            suite_no: shoppingRequest.user.suite_no,
+            verified: shoppingRequest.user.verified,
+          }
+        : undefined,
       request_code: shoppingRequest.request_code,
       country: shoppingRequest.country,
       items: shoppingRequest.items,
       shopping_request_products: shoppingRequestProducts,
       remarks: shoppingRequest.remarks,
       status: shoppingRequest.status,
-      payment_slips: shoppingRequest.payment_slips,
+      payment_slips: shoppingRequest.payment_slips || [],
       created_at: shoppingRequest.created_at,
       updated_at: shoppingRequest.updated_at,
     };
@@ -142,7 +160,7 @@ export class ShoppingRequestsService {
       items: updatedShoppingRequest.items,
       remarks: updatedShoppingRequest.remarks,
       status: updatedShoppingRequest.status,
-      payment_slips: updatedShoppingRequest.payment_slips,
+      payment_slips: updatedShoppingRequest.payment_slips || [],
       created_at: updatedShoppingRequest.created_at,
       updated_at: updatedShoppingRequest.updated_at,
     };
@@ -176,7 +194,7 @@ export class ShoppingRequestsService {
       items: updatedShoppingRequest.items,
       remarks: updatedShoppingRequest.remarks,
       status: updatedShoppingRequest.status,
-      payment_slips: updatedShoppingRequest.payment_slips,
+      payment_slips: updatedShoppingRequest.payment_slips || [],
       created_at: updatedShoppingRequest.created_at,
       updated_at: updatedShoppingRequest.updated_at,
     };
