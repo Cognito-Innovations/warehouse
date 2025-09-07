@@ -22,7 +22,7 @@ export enum CountryPhoneCode {
   NEW_ZEALAND = '+64',
 }
 
-@Entity('country')
+@Entity('countries')
 export class Country {
   @PrimaryGeneratedColumn('uuid')
   id: string;

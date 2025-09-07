@@ -3,6 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CourierCompany } from './courier_company.entity';
 import { CreateCourierCompanyDto } from './dto/create-courier_company.dto';
+import { CourierCompanyResponsesDto } from './dto/get-all-courier_company.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class CourierCompaniesService {
@@ -24,9 +26,15 @@ export class CourierCompaniesService {
     return savedCourierCompany;
   }
 
-  findAll() {
-    const courierCompanies = this.courierCompanyRepository.find();
-    return courierCompanies;
+  async findAll() {
+    const courierCompanies = await this.courierCompanyRepository.find({
+      relations: ['country'],
+      order: { created_at: 'DESC' },
+    });
+
+    return plainToInstance(CourierCompanyResponsesDto, courierCompanies, {
+      excludeExtraneousValues: true,
+    });
   }
 
   findOne(id: number) {

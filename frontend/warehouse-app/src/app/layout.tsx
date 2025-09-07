@@ -19,11 +19,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// export const metadata: Metadata = {
-//   title: "ShopMe - Warehouse Management",
-//   description: "Warehouse management application for ShopMe",
-// };
-
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
 

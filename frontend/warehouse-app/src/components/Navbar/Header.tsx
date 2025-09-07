@@ -3,20 +3,21 @@
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import ReactCountryFlag from "react-country-flag";
 import AddressDetailsModal from "../Modals/AddressDetailsModal/AddressDetailsModal";
 import SavedAddressesModalTailwind from "../Modals/SavedAddressesModal/SavedAddressesModal";
 import HeaderAddressSection from "./HeaderAddressSection";
 import AddressSection from "./AddressSection";
 import { Notifications as NotificationsIcon } from "@mui/icons-material";
+import { getCourierCompanies } from "@/lib/api.service";
 
 interface AddressData {
   id?: string;
-  companyName: string;
-  suite: string;
+  name: string;
   address: string;
-  country: string;
-  phone: string;
+  country_name: string;
+  country_code: string;
+  country_phone_code: string;
+  phone_number: string;
 }
 
 const Header = () => {
@@ -31,63 +32,10 @@ const Header = () => {
   ];
 
   // Address state
-  const [isSavedAddressesModalOpen, setIsSavedAddressesModalOpen] =
-    useState(false);
-  const [isAddressDetailsModalOpen, setIsAddressDetailsModalOpen] =
-    useState(false);
-  const [addressData, setAddressData] = useState<AddressData>({
-    companyName: "India Tech Hub",
-    suite: "SUITE 500-600",
-    address: "123 Tech Park, Bangalore",
-    country: "India",
-    phone: "+91 98765 43210",
-  });
-
-  // Sample saved addresses
-  const defaultSavedAddresses: AddressData[] = [
-    {
-      id: "1",
-      companyName: "India Tech Hub",
-      suite: "SUITE 500-600",
-      address: "123 Tech Park, Bangalore",
-      country: "India",
-      phone: "+91 98765 43210",
-    },
-    {
-      id: "2",
-      companyName: "Tech Corp",
-      suite: "SUITE 100-200",
-      address: "123 Business Ave, Downtown",
-      country: "United States",
-      phone: "+1 555-0123",
-    },
-    {
-      id: "3",
-      companyName: "Global Ltd",
-      suite: "SUITE 50-75",
-      address: "456 Commerce St, City Center",
-      country: "United Kingdom",
-      phone: "+44 20 7946 0958",
-    },
-    {
-      id: "4",
-      companyName: "Asia Pacific",
-      suite: "SUITE 300-400",
-      address: "789 Innovation Rd, Tech District",
-      country: "Singapore",
-      phone: "+65 6123 4567",
-    },
-    {
-      id: "5",
-      companyName: "Neurs HQ",
-      suite: "SUITE 880-476",
-      address: "204ho, 10-5, Siheung-daero 149ga-gil",
-      country: "South Korea",
-      phone: "+82 1026708860",
-    },
-  ];
-
-  const finalSavedAddresses = defaultSavedAddresses;
+  const [addresses, setAddresses] = useState<AddressData[]>([]);
+  const [isSavedAddressesModalOpen, setIsSavedAddressesModalOpen] = useState(false);
+  const [isAddressDetailsModalOpen, setIsAddressDetailsModalOpen] = useState(false);
+  const [addressData, setAddressData] = useState<AddressData>({} as AddressData);
 
   const handleOpenSavedAddressesModal = () => {
     setIsSavedAddressesModalOpen(true);
@@ -112,6 +60,18 @@ const Header = () => {
   const [selectedCountry, setSelectedCountry] = useState("India");
   const [isClient, setIsClient] = useState(false);
 
+  const fetchSavedAddresses = async () => {
+    const savedAddresses = await getCourierCompanies();
+    if(!Object.keys(addressData).length ){
+      handleSelectSavedAddress(savedAddresses[0]);
+    }
+    setAddresses(savedAddresses);
+  };
+
+  useEffect(() => {
+    fetchSavedAddresses();
+  }, []);
+
 
   useEffect(() => {
     setIsClient(true);
@@ -121,7 +81,7 @@ const Header = () => {
         try {
           const parsedAddress = JSON.parse(savedAddress);
           setAddressData(parsedAddress);
-          setSelectedCountry(parsedAddress.country);
+          setSelectedCountry(parsedAddress.country_name);
         } catch (error) {
           console.error('Error parsing saved address from localStorage:', error);
         }
@@ -131,7 +91,7 @@ const Header = () => {
   useEffect(() => {
     if (isClient && typeof window !== 'undefined') {
       localStorage.setItem('selectedAddress', JSON.stringify(addressData));
-      setSelectedCountry(addressData.country);
+      setSelectedCountry(addressData.country_name);
     }
   }, [addressData, isClient]);
 
@@ -140,7 +100,6 @@ const Header = () => {
       {/* Navigation Header */}
       <header className="bg-purple-700 text-white sticky top-0 z-50 shadow-md">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-16">
-          {/* Logo */}
           <Link
             href="/"
             className="text-2xl font-bold text-white hover:opacity-80 transition-opacity"
@@ -200,7 +159,7 @@ const Header = () => {
         isOpen={isSavedAddressesModalOpen}
         onClose={handleCloseSavedAddressesModal}
         onSelectAddress={handleSelectSavedAddress}
-        savedAddresses={finalSavedAddresses}
+        savedAddresses={addresses}
       />
 
       <AddressDetailsModal

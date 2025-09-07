@@ -42,9 +42,7 @@ export class PackagesController {
 
   @Get('debug/all')
   async debugAllPackages(): Promise<any[]> {
-    console.log('Debug: Getting all packages');
     const packages = await this.packagesService.getAllPackages();
-    console.log('Debug: Found', packages.length, 'total packages');
     return packages.map((pkg) => ({
       id: pkg.id,
       tracking_no: pkg.tracking_no,
@@ -64,15 +62,10 @@ export class PackagesController {
     @Param('userId') userId: string,
     @Param('status') status: string,
   ): Promise<PackageResponseDto[]> {
-    console.log('PackagesController: findByUserAndStatus called with:', {
-      userId,
-      status,
-    });
     const result = await this.packagesService.getPackagesByUserAndStatus(
       userId,
       status,
     );
-    console.log('PackagesController: returning', result.length, 'packages');
     return result;
   }
 
