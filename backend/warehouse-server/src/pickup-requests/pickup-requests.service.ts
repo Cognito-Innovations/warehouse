@@ -47,7 +47,7 @@ export class PickupRequestsService {
       const trackingRequest = queryRunner.manager.create(TrackingRequest, {
         user: { id: createPickupRequestDto.user_id },
         feature_type: FeatureType.PickupRequest,
-        status: Status.Requested,
+        status: createPickupRequestDto.status,
         feature_fid: savedPickupRequest.id,
         country: { id: createPickupRequestDto.country_id },
       });
@@ -73,6 +73,7 @@ export class PickupRequestsService {
       return {
         id: pickupRequestWithRelations.id,
         country: pickupRequestWithRelations.country?.name,
+        status: pickupRequestWithRelations.status,
         pickup_address: pickupRequestWithRelations.pickup_address,
         supplier_name: pickupRequestWithRelations.supplier_name,
         supplier_phone_number: pickupRequestWithRelations.supplier_phone_number,
@@ -110,6 +111,7 @@ export class PickupRequestsService {
       return pickupRequests.map((request) => ({
         id: request.id,
         country: request.country?.name,
+        status: request.status,
         pickup_address: request.pickup_address,
         supplier_name: request.supplier_name,
         supplier_phone_number: request.supplier_phone_number,
@@ -193,6 +195,7 @@ export class PickupRequestsService {
       return {
         id: pickupRequest.id,
         country: pickupRequest.country?.name,
+        status: pickupRequest.status,
         pickup_address: pickupRequest.pickup_address,
         supplier_name: pickupRequest.supplier_name,
         supplier_phone_number: pickupRequest.supplier_phone_number,
@@ -263,37 +266,36 @@ export class PickupRequestsService {
         pickupRequest,
       );
 
-      // Update the corresponding tracking request
-      const trackingRequest = await queryRunner.manager.findOne(
-        TrackingRequest,
-        {
-          where: {
-            feature_type: FeatureType.PickupRequest,
-            feature_fid: id,
-          },
-        },
-      );
+      //TODO: create new tracking request logic
+      // const trackingRequest = queryRunner.manager.create(TrackingRequest, {
+      //   user: { id: updatedPickupRequest.user.id },
+      //   feature_type: FeatureType.PickupRequest,
+      //   status: status,
+      //   feature_fid: updatedPickupRequest.id,
+      //   country: { id: updatedPickupRequest.country.id },
+      // });
 
-      if (trackingRequest) {
-        // Map pickup request status to tracking request status
-        let trackingStatus: Status;
-        switch (status.toUpperCase()) {
-          case 'QUOTED':
-            trackingStatus = Status.Quoted;
-            break;
-          case 'CONFIRMED':
-            trackingStatus = Status.QuotationConfirmed;
-            break;
-          case 'PICKED':
-            trackingStatus = Status.Shipped;
-            break;
-          default:
-            trackingStatus = Status.InReview;
-        }
 
-        trackingRequest.status = trackingStatus;
-        await queryRunner.manager.save(TrackingRequest, trackingRequest);
-      }
+      // if (trackingRequest) {
+      //   // Map pickup request status to tracking request status
+      //   let trackingStatus: Status;
+      //   switch (status.toUpperCase()) {
+      //     case 'QUOTED':
+      //       trackingStatus = Status.Quoted;
+      //       break;
+      //     case 'CONFIRMED':
+      //       trackingStatus = Status.QuotationConfirmed;
+      //       break;
+      //     case 'PICKED':
+      //       trackingStatus = Status.Shipped;
+      //       break;
+      //     default:
+      //       trackingStatus = Status.InReview;
+      //   }
+
+      //   trackingRequest.status = trackingStatus;
+      //   await queryRunner.manager.save(TrackingRequest, trackingRequest);
+      // }
 
       // Commit the transaction
       await queryRunner.commitTransaction();
@@ -314,6 +316,7 @@ export class PickupRequestsService {
       return {
         id: pickupRequestWithRelations.id,
         country: pickupRequestWithRelations.country?.name,
+        status: pickupRequestWithRelations.status,
         pickup_address: pickupRequestWithRelations.pickup_address,
         supplier_name: pickupRequestWithRelations.supplier_name,
         supplier_phone_number: pickupRequestWithRelations.supplier_phone_number,

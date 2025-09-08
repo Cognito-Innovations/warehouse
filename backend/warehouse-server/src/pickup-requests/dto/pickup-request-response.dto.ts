@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Status } from '../pickup-request.entity';
 
 class UserInfoDto {
   @ApiProperty({
@@ -95,9 +96,15 @@ export class PickupRequestResponseDto {
 
   @ApiPropertyOptional({
     description: 'Price for the pickup service',
-    example: 25.50,
+    example: 25.5,
   })
   price?: number;
+
+  @ApiPropertyOptional({
+    description: 'Status of the pickup request',
+    example: 'requested',
+  })
+  status?: Status;
 
   @ApiProperty({
     description: 'Creation timestamp',

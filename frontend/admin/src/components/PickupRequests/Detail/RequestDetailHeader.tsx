@@ -86,7 +86,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
         </Box>
 
         <Box sx={{ display: "flex", gap: 1.5 }}>
-          {request.status === "REQUESTED" && (
+          {(request.status).toUpperCase() === "REQUESTED" && (
             <>
               <ActionButton
                 label="Send Quotation"
