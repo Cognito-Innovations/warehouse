@@ -1,4 +1,4 @@
-import { User } from 'src/users/user.entity';
+import { Role, User } from 'src/users/user.entity';
 import { Country } from 'src/Countries/country.entity';
 
 import {
@@ -48,10 +48,6 @@ export class TrackingRequest {
   country: Country;
 
   @ManyToOne(() => User, { eager: true })
-  @JoinColumn({ name: 'admin_id' })
-  admin: User;
-
-  @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
@@ -67,11 +63,11 @@ export class TrackingRequest {
   })
   status: Status;
 
+  @Column({ default: Role.User })
+  role: Role;
+
   @Column()
   feature_fid: string;
-
-  @Column({ nullable: true, default: 0 })
-  count: number;
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

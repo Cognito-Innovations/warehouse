@@ -1,13 +1,12 @@
 "use client";
 
 import "./globals.css";
-import { Toaster } from "sonner";
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { usePathname } from "next/navigation";
 import ThemeProvider from "../components/ThemeProvider";
 import Header from "../components/Navbar/Header";
 import Providers from "./providers";
+import { AddressProvider } from "../contexts/AddressContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,10 +30,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
-          <ThemeProvider>
-            {!hideHeader && <Header /> }
-            {children}
-          </ThemeProvider>
+          <AddressProvider>
+            <ThemeProvider>
+              {!hideHeader && <Header /> }
+              {children}
+            </ThemeProvider>
+          </AddressProvider>
         </Providers>
       </body>
     </html>

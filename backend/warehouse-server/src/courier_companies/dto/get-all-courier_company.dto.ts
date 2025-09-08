@@ -2,6 +2,7 @@ import { Expose, Transform } from 'class-transformer';
 
 interface CourierCompanyWithCountry {
   country?: {
+    id?: string;
     name?: string;
     code?: string;
     phone_code?: string;
@@ -25,6 +26,12 @@ export class CourierCompanyResponsesDto {
   phone_number: string;
 
   // Flatten country fields directly
+  @Expose()
+  @Transform(
+    ({ obj }: { obj: CourierCompanyWithCountry }) => obj.country?.id || null,
+  )
+  country_id: string | null;
+
   @Expose()
   @Transform(
     ({ obj }: { obj: CourierCompanyWithCountry }) => obj.country?.name || null,

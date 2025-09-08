@@ -18,12 +18,11 @@ export class TrackingRequestsService {
     createTrackingRequestDto: CreateTrackingRequestDto,
   ): Promise<TrackingRequestResponseDto> {
     const trackingRequest = this.trackingRequestRepository.create({
+      country: { id: createTrackingRequestDto.country_id } as any,
       feature_type: createTrackingRequestDto.feature_type,
       status: createTrackingRequestDto.status,
       feature_fid: createTrackingRequestDto.feature_fid,
-      count: createTrackingRequestDto.count || 0,
-      admin: { id: createTrackingRequestDto.admin } as any,
-      user: { id: createTrackingRequestDto.user } as any,
+      user: { id: createTrackingRequestDto.user },
     });
 
     const savedTrackingRequest =
@@ -31,12 +30,11 @@ export class TrackingRequestsService {
 
     return {
       id: savedTrackingRequest.id,
-      admin: savedTrackingRequest.admin,
+      country: savedTrackingRequest.country,
       user: savedTrackingRequest.user,
       feature_type: savedTrackingRequest.feature_type,
       status: savedTrackingRequest.status,
       feature_fid: savedTrackingRequest.feature_fid,
-      count: savedTrackingRequest.count,
       created_at: savedTrackingRequest.created_at,
       updated_at: savedTrackingRequest.updated_at,
     };
@@ -50,12 +48,11 @@ export class TrackingRequestsService {
 
     return trackingRequests.map((request) => ({
       id: request.id,
-      admin: request.admin,
+      country: request.country,
       user: request.user,
       feature_type: request.feature_type,
       status: request.status,
       feature_fid: request.feature_fid,
-      count: request.count,
       created_at: request.created_at,
       updated_at: request.updated_at,
     }));
@@ -75,12 +72,11 @@ export class TrackingRequestsService {
 
     return {
       id: trackingRequest.id,
-      admin: trackingRequest.admin,
+      country: trackingRequest.country,
       user: trackingRequest.user,
       feature_type: trackingRequest.feature_type,
       status: trackingRequest.status,
       feature_fid: trackingRequest.feature_fid,
-      count: trackingRequest.count,
       created_at: trackingRequest.created_at,
       updated_at: trackingRequest.updated_at,
     };
@@ -97,12 +93,11 @@ export class TrackingRequestsService {
 
     return trackingRequests.map((request) => ({
       id: request.id,
-      admin: request.admin,
+      country: request.country,
       user: request.user,
       feature_type: request.feature_type,
       status: request.status,
       feature_fid: request.feature_fid,
-      count: request.count,
       created_at: request.created_at,
       updated_at: request.updated_at,
     }));
@@ -123,12 +118,11 @@ export class TrackingRequestsService {
 
     return trackingRequests.map((request) => ({
       id: request.id,
-      admin: request.admin,
+      country: request.country,
       user: request.user,
       feature_type: request.feature_type,
       status: request.status,
       feature_fid: request.feature_fid,
-      count: request.count,
       created_at: request.created_at,
       updated_at: request.updated_at,
     }));
@@ -152,12 +146,11 @@ export class TrackingRequestsService {
 
     return {
       id: updatedTrackingRequest.id,
-      admin: updatedTrackingRequest.admin,
+      country: updatedTrackingRequest.country,
       user: updatedTrackingRequest.user,
       feature_type: updatedTrackingRequest.feature_type,
       status: updatedTrackingRequest.status,
       feature_fid: updatedTrackingRequest.feature_fid,
-      count: updatedTrackingRequest.count,
       created_at: updatedTrackingRequest.created_at,
       updated_at: updatedTrackingRequest.updated_at,
     };

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { FeatureType, Status } from '../tracking-request.entity';
 import { User } from '../../users/user.entity';
+import { Country } from 'src/Countries/country.entity';
 
 export class TrackingRequestResponseDto {
   @ApiProperty({
@@ -16,6 +17,13 @@ export class TrackingRequestResponseDto {
     additionalProperties: true,
   })
   admin?: User;
+
+  @ApiPropertyOptional({
+    description: 'Country that is being tracked',
+    type: 'object',
+    additionalProperties: true,
+  })
+  country?: Country;
 
   @ApiPropertyOptional({
     description: 'User who owns the tracked item',
@@ -43,12 +51,6 @@ export class TrackingRequestResponseDto {
     example: '123e4567-e89b-12d3-a456-426614174002',
   })
   feature_fid: string;
-
-  @ApiProperty({
-    description: 'Count or quantity being tracked',
-    example: 1,
-  })
-  count: number;
 
   @ApiProperty({
     description: 'Creation timestamp',

@@ -1,9 +1,8 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import { getSession } from 'next-auth/react';
+import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
+import { getSession } from "next-auth/react";
 
 export interface PickupRequestPayload {
   user_id: string;
-  admin_id: string;
   country_id: string;
   pickup_address: string;
   supplier_name: string;
@@ -21,7 +20,7 @@ const createAuthenticatedApi = (): AxiosInstance => {
   const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
 
@@ -33,10 +32,10 @@ const createAuthenticatedApi = (): AxiosInstance => {
         const token = (session as any)?.access_token;
         
         if (token) {
-          config.headers.set('Authorization', `Bearer ${token}`);
+          config.headers.set("Authorization", `Bearer ${token}`);
         }
       } catch (error) {
-        console.error('Error getting session for API request:', error);
+        console.error("Error getting session for API request:", error);
       }
       
       return config;
@@ -54,7 +53,7 @@ const createAuthenticatedApi = (): AxiosInstance => {
     (error) => {
       if (error.response?.status === 401) {
         // Handle unauthorized access
-        console.error('Unauthorized access - token may be expired');
+        console.error("Unauthorized access - token may be expired");
         // You can redirect to login or refresh token here
       }
       return Promise.reject(error);
@@ -68,7 +67,7 @@ const createAuthenticatedApi = (): AxiosInstance => {
 const authenticatedApi = createAuthenticatedApi();
 
 export const createPickupRequest = async (payload: PickupRequestPayload) => {
-  const res = await authenticatedApi.post('/pickup-requests', payload);
+  const res = await authenticatedApi.post("/pickup-requests", payload);
   return res.data;
 };
 
@@ -127,7 +126,7 @@ export const updatePackageStatus = async (packageId: string, status: string) => 
   const userId = (session?.user as any)?.user_id;
   
   if (!userId) {
-    throw new Error('No user ID found in session');
+    throw new Error("No user ID found in session");
   }
   
   const res = await authenticatedApi.patch(`/packages/${packageId}/status`, { 

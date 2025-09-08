@@ -112,7 +112,7 @@ export class PickupRequestsController {
         },
         price: {
           type: 'number',
-          example: 25.50,
+          example: 25.5,
           description: 'Optional price for the pickup service',
         },
       },

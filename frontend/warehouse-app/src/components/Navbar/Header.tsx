@@ -9,6 +9,8 @@ import HeaderAddressSection from "./HeaderAddressSection";
 import AddressSection from "./AddressSection";
 import { Notifications as NotificationsIcon } from "@mui/icons-material";
 import { getCourierCompanies } from "@/lib/api.service";
+import { useAddressAPI } from "../../hooks/useAddressAPI";
+import { useAddressForm } from "@/hooks/useAddressForm";
 
 interface AddressData {
   id?: string;
@@ -21,7 +23,16 @@ interface AddressData {
 }
 
 const Header = () => {
+  const {updateAddress} = useAddressForm();
+
   const pathname = usePathname();
+  const { 
+    selectedAddress, 
+    savedAddresses, 
+    selectedCountry,
+    selectAddress,
+    selectCountry 
+  } = useAddressAPI();
 
   const navItems = [
     { name: "My Suite", path: "/dashboard" },
@@ -31,11 +42,9 @@ const Header = () => {
     { name: "Rate Calculator", path: "/rate-calculator" },
   ];
 
-  // Address state
-  const [addresses, setAddresses] = useState<AddressData[]>([]);
+  // Modal state
   const [isSavedAddressesModalOpen, setIsSavedAddressesModalOpen] = useState(false);
   const [isAddressDetailsModalOpen, setIsAddressDetailsModalOpen] = useState(false);
-  const [addressData, setAddressData] = useState<AddressData>({} as AddressData);
 
   const handleOpenSavedAddressesModal = () => {
     setIsSavedAddressesModalOpen(true);
@@ -45,8 +54,9 @@ const Header = () => {
     setIsSavedAddressesModalOpen(false);
   };
 
-  const handleSelectSavedAddress = (selectedAddress: AddressData) => {
-    setAddressData(selectedAddress);
+  const handleSelectSavedAddress = (address: AddressData) => {
+    updateAddress(address);
+    selectAddress(address);
   };
 
   const handleOpenAddressDetailsModal = () => {
@@ -57,43 +67,12 @@ const Header = () => {
     setIsAddressDetailsModalOpen(false);
   };
 
-  const [selectedCountry, setSelectedCountry] = useState("India");
   const [isClient, setIsClient] = useState(false);
-
-  const fetchSavedAddresses = async () => {
-    const savedAddresses = await getCourierCompanies();
-    if(!Object.keys(addressData).length ){
-      handleSelectSavedAddress(savedAddresses[0]);
-    }
-    setAddresses(savedAddresses);
-  };
-
-  useEffect(() => {
-    fetchSavedAddresses();
-  }, []);
 
 
   useEffect(() => {
     setIsClient(true);
-    if (typeof window !== 'undefined') {
-      const savedAddress = localStorage.getItem('selectedAddress');
-      if (savedAddress) {
-        try {
-          const parsedAddress = JSON.parse(savedAddress);
-          setAddressData(parsedAddress);
-          setSelectedCountry(parsedAddress.country_name);
-        } catch (error) {
-          console.error('Error parsing saved address from localStorage:', error);
-        }
-      }
-    }
   }, []);
-  useEffect(() => {
-    if (isClient && typeof window !== 'undefined') {
-      localStorage.setItem('selectedAddress', JSON.stringify(addressData));
-      setSelectedCountry(addressData.country_name);
-    }
-  }, [addressData, isClient]);
 
   return (
     <>
@@ -148,7 +127,7 @@ const Header = () => {
         pathname.startsWith("/pickup-request/") ||
         pathname.startsWith("/assisted-shopping/") ? null : (
         <HeaderAddressSection
-          addressData={addressData}
+          addressData={selectedAddress || {} as AddressData}
           onOpenSavedAddressesModal={handleOpenSavedAddressesModal}
           onOpenAddressDetailsModal={handleOpenAddressDetailsModal}
         />
@@ -159,13 +138,13 @@ const Header = () => {
         isOpen={isSavedAddressesModalOpen}
         onClose={handleCloseSavedAddressesModal}
         onSelectAddress={handleSelectSavedAddress}
-        savedAddresses={addresses}
+        savedAddresses={savedAddresses}
       />
 
       <AddressDetailsModal
         isOpen={isAddressDetailsModalOpen}
         onClose={handleCloseAddressDetailsModal}
-        addressData={addressData}
+        addressData={selectedAddress || {} as AddressData}
       />
     </>
   );

@@ -20,6 +20,7 @@ export class PickupRequestsService {
     @InjectRepository(PickupRequest)
     private readonly pickupRequestRepository: Repository<PickupRequest>,
     @InjectRepository(TrackingRequest)
+    private readonly trackingRequestRepository: Repository<TrackingRequest>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -31,9 +32,11 @@ export class PickupRequestsService {
     await queryRunner.startTransaction();
 
     try {
-      const { admin_id, ...pickupRequestData } = createPickupRequestDto;
+      const pickupRequestData = createPickupRequestDto;
       const pickupRequest = queryRunner.manager.create(PickupRequest, {
         ...pickupRequestData,
+        user: { id: createPickupRequestDto.user_id },
+        country: { id: createPickupRequestDto.country_id },
       });
 
       const savedPickupRequest = await queryRunner.manager.save(
@@ -43,11 +46,10 @@ export class PickupRequestsService {
 
       const trackingRequest = queryRunner.manager.create(TrackingRequest, {
         user: { id: createPickupRequestDto.user_id },
-        admin: { id: admin_id },
         feature_type: FeatureType.PickupRequest,
         status: Status.Requested,
         feature_fid: savedPickupRequest.id,
-        count: 1,
+        country: { id: createPickupRequestDto.country_id },
       });
 
       await queryRunner.manager.save(TrackingRequest, trackingRequest);
@@ -83,15 +85,6 @@ export class PickupRequestsService {
         price: pickupRequestWithRelations.price,
         created_at: pickupRequestWithRelations.created_at,
         updated_at: pickupRequestWithRelations.updated_at,
-        user: pickupRequestWithRelations.user
-          ? {
-              email: pickupRequestWithRelations.user.email,
-              name: pickupRequestWithRelations.user.name,
-              phone_number: pickupRequestWithRelations.user.phone_number,
-              country: pickupRequestWithRelations.user.country,
-              created_at: pickupRequestWithRelations.user.created_at,
-            }
-          : undefined,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();

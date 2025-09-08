@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import ReactCountryFlag from 'react-country-flag';
+import { useAddressAPI } from '../../hooks/useAddressAPI';
 
 interface AddressSectionProps {
   currentCountry?: string;
@@ -11,66 +12,34 @@ const AddressSection: React.FC<AddressSectionProps> = ({
   currentCountry,
   onCountryChange
 }) => {
-  // Always start with default to avoid hydration mismatch
-  const [selectedCountry, setSelectedCountry] = useState('India');
+  const { 
+    selectedCountry, 
+    availableCountries, 
+    selectCountry 
+  } = useAddressAPI();
+  
   const [isClient, setIsClient] = useState(false);
 
-  // Set client flag and load from localStorage on mount
+  // Set client flag on mount
   useEffect(() => {
     setIsClient(true);
-    if (typeof window !== 'undefined') {
-      const savedCountry = localStorage.getItem('selectedCountry');
-      if (savedCountry) {
-        setSelectedCountry(savedCountry);
-      }
-    }
   }, []);
 
   // Handle currentCountry prop changes
   useEffect(() => {
     if (currentCountry && currentCountry !== selectedCountry) {
-      setSelectedCountry(currentCountry);
-      // Save to localStorage when changed via prop
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('selectedCountry', currentCountry);
-      }
+      selectCountry(currentCountry);
     }
-  }, [currentCountry, selectedCountry]);
-
-  const countries = [
-    { name: 'India', code: 'IN' },
-    { name: 'Singapore', code: 'SG' },
-    { name: 'Sri Lanka', code: 'LK' },
-    { name: 'USA', code: 'US' },
-    { name: 'Malaysia', code: 'MY' },
-    { name: 'UAE', code: 'AE' },
-    { name: 'China', code: 'CN' },
-    { name: 'Indonesia', code: 'ID' },
-    { name: 'Thailand', code: 'TH' }
-  ];
+  }, [currentCountry, selectedCountry, selectCountry]);
 
   const handleCountrySelect = (country: string) => {
-    setSelectedCountry(country);
-    // Save to localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('selectedCountry', country);
-    }
+    selectCountry(country);
     onCountryChange?.(country);
   };
 
   const getCountryCode = (country: string) => {
-    const countryMap: { [key: string]: string } = {
-      'India': 'IN',
-      'Singapore': 'SG',
-      'Sri Lanka': 'LK',
-      'USA': 'US',
-      'Malaysia': 'MY',
-      'UAE': 'AE',
-      'China': 'CN',
-      'Indonesia': 'ID',
-      'Thailand': 'TH'
-    };
-    return countryMap[country] || 'SG';
+    const countryInfo = availableCountries.find(c => c.name === country);
+    return countryInfo?.code || '';
   };
 
   return (
@@ -105,7 +74,7 @@ const AddressSection: React.FC<AddressSectionProps> = ({
           {/* Right Side - Country Selection */}
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
-              {countries.map((country) => (
+              {availableCountries.map((country) => (
                 <button
                   key={country.name}
                   onClick={() => handleCountrySelect(country.name)}

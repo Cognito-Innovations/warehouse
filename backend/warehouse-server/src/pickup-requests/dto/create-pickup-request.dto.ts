@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsOptional,
-  IsPositive,
-  IsNotEmpty,
-  IsUUID,
-} from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePickupRequestDto {
@@ -14,13 +8,6 @@ export class CreatePickupRequestDto {
   })
   @IsString()
   user_id: string;
-
-  @ApiProperty({
-    description: 'Admin ID who is creating the pickup request',
-    example: '123e4567-e89b-12d3-a456-426614174001',
-  })
-  @IsUUID()
-  admin_id: string;
 
   @ApiProperty({
     description: 'Country ID for the pickup location',
@@ -61,19 +48,17 @@ export class CreatePickupRequestDto {
 
   @ApiProperty({
     description: 'Number of pieces/boxes to be picked up',
-    example: '2',
+    example: '2/10',
   })
   @IsString()
-  @IsPositive()
   pcs_box: string;
 
   @ApiPropertyOptional({
     description: 'Estimated weight of the package',
-    example: '5.5',
+    example: '5.5 kgs',
   })
   @IsOptional()
   @IsString()
-  @IsPositive()
   est_weight?: string;
 
   @ApiProperty({

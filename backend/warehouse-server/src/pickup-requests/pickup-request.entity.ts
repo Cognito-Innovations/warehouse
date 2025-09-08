@@ -38,7 +38,7 @@ export class PickupRequest {
   @Column()
   pcs_box: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ type: 'text', nullable: true })
   est_weight: string;
 
   @Column()

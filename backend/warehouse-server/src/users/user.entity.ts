@@ -6,6 +6,11 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+export enum Role {
+  Admin = 'admin',
+  User = 'user',
+}
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -21,7 +26,7 @@ export class User {
   name: string;
 
   @Column({ default: 'user' })
-  role: string;
+  role: Role;
 
   @Column({ nullable: true })
   image: string;
