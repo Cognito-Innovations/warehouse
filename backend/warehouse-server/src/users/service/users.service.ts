@@ -57,7 +57,10 @@ export class UsersService {
       throw new ConflictException('User with this email already exists');
     }
 
-    const user = this.userRepository.create(createUserDto);
+    const user = this.userRepository.create({
+      ...createUserDto,
+      country: createUserDto.country ? { id: createUserDto.country } as any : undefined,
+    });
     return this.userRepository.save(user);
   }
 
@@ -81,7 +84,10 @@ export class UsersService {
       }
     }
 
-    Object.assign(user, updateUserDto);
+    Object.assign(user, {
+      ...updateUserDto,
+      country: updateUserDto.country ? { id: updateUserDto.country } as any : user.country,
+    });
     return this.userRepository.save(user);
   }
 

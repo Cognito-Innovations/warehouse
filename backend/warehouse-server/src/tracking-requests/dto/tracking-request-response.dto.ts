@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { FeatureType, Status } from '../tracking-request.entity';
+import { FeatureType, TrackingStatus } from '../tracking-request.entity';
 import { User } from '../../users/user.entity';
 import { Country } from 'src/Countries/country.entity';
 
@@ -41,10 +41,10 @@ export class TrackingRequestResponseDto {
 
   @ApiProperty({
     description: 'Current status of the tracking request',
-    enum: Status,
-    example: Status.Requested,
+    enum: TrackingStatus,
+    example: TrackingStatus.Requested,
   })
-  status: Status;
+  status: TrackingStatus;
 
   @ApiProperty({
     description: 'Feature ID that is being tracked',
@@ -56,11 +56,11 @@ export class TrackingRequestResponseDto {
     description: 'Creation timestamp',
     example: '2024-01-15T10:30:00Z',
   })
-  created_at: Date;
+  created_at: number;
 
   @ApiProperty({
     description: 'Last update timestamp',
     example: '2024-01-15T14:45:00Z',
   })
-  updated_at: Date;
+  updated_at: number;
 }

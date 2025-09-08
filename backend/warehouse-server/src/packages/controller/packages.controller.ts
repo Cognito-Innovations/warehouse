@@ -9,18 +9,53 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 import { PackagesService } from '../service/packages.service';
 import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
 
+@ApiTags('Packages')
 @Controller('packages')
 @UseGuards(JwtAuthGuard)
 export class PackagesController {
   constructor(private readonly packagesService: PackagesService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new package' })
+  @ApiCreatedResponse({
+    description: 'Package created successfully',
+    type: PackageResponseDto,
+  })
+  @ApiBody({
+    type: CreatePackageDto,
+    examples: {
+      Basic: {
+        summary: 'Basic package',
+        value: {
+          user: '123e4567-e89b-12d3-a456-426614174000',
+          rack_slot: 'A1',
+          vendor: 'Amazon',
+          tracking_no: 'TRACK123456',
+          status: 'IN_WAREHOUSE',
+          remarks: 'Fragile items',
+          pieces: [
+            { weight: '5kg', length: '30', width: '20', height: '10' },
+          ],
+        },
+      },
+    },
+  })
   async create(
     @Body() createPackageDto: CreatePackageDto,
     @Request() req,
@@ -31,6 +66,14 @@ export class PackagesController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get all packages or search' })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Search by tracking number or vendor',
+    example: 'TRACK123456',
+  })
+  @ApiOkResponse({ type: [PackageResponseDto] })
   async findAll(
     @Query('search') search?: string,
   ): Promise<PackageResponseDto[]> {
@@ -53,11 +96,18 @@ export class PackagesController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get package by ID' })
+  @ApiParam({ name: 'id', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOkResponse({ type: PackageResponseDto })
   async findOne(@Param('id') id: string): Promise<PackageResponseDto> {
     return this.packagesService.getPackageById(id);
   }
 
   @Get('user/:userId/status/:status')
+  @ApiOperation({ summary: 'Get packages by user and status' })
+  @ApiParam({ name: 'userId', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiParam({ name: 'status', example: 'IN_TRANSIT' })
+  @ApiOkResponse({ type: [PackageResponseDto] })
   async findByUserAndStatus(
     @Param('userId') userId: string,
     @Param('status') status: string,
@@ -70,6 +120,19 @@ export class PackagesController {
   }
 
   @Patch(':id/status')
+  @ApiOperation({ summary: 'Update package status' })
+  @ApiParam({ name: 'id', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', example: 'DELIVERED' },
+        updated_by: { type: 'string', example: 'admin-user-id' },
+      },
+      required: ['status', 'updated_by'],
+    },
+  })
+  @ApiOkResponse({ type: PackageResponseDto })
   async updateStatus(
     @Param('id') id: string,
     @Body() body: { status: string; updated_by: string },

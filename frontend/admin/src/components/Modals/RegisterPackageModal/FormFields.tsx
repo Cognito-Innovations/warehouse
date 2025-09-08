@@ -110,7 +110,7 @@ const FormFields: React.FC<FormFieldsProps> = ({
             >
               {suppliers.map((supplier) => (
                 <MenuItem key={supplier.id} value={supplier.id}>
-                  {supplier.supplier_name}, {supplier.country}
+                  {supplier.supplier_name}, {supplier.country.name}
                 </MenuItem>
               ))}
             </Select>

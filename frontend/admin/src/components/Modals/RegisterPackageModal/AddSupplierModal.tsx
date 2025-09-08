@@ -36,7 +36,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ open, onClose, onSu
     website: '',
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [countries, setCountries] = useState<Array<{ id: string; country: string }>>([]);
+  const [countries, setCountries] = useState<Array<{ id: string; name: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchCountries = async () => {
@@ -163,7 +163,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ open, onClose, onSu
               >
                 {countries.map((country) => (
                   <MenuItem key={country.id} value={country.id}>
-                    {country.country}
+                    {country.name}
                   </MenuItem>
                 ))}
               </Select>

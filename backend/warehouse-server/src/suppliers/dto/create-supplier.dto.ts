@@ -8,7 +8,7 @@ export class CreateSupplierDto {
   @IsString()
   @IsNotEmpty()
   supplier_name: string;
-
+ 
   @IsOptional()
   @IsString()
   contact_number?: string;

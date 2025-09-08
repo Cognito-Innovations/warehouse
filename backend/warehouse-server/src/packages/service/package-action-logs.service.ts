@@ -20,7 +20,9 @@ export class PackageActionLogsService {
     const actionLog = this.actionLogRepository.create({
       ...createActionLogDto,
       is_completed: createActionLogDto.is_completed || false,
-      uploaded_at: createActionLogDto.uploaded_at || new Date(),
+      uploaded_at: createActionLogDto.uploaded_at
+      ? Math.floor(new Date(createActionLogDto.uploaded_at).getTime() / 1000)
+      : Math.floor(Date.now() / 1000),
     });
 
     const savedActionLog = await this.actionLogRepository.save(actionLog);

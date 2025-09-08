@@ -1,17 +1,14 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-} from 'typeorm';
+import { Country } from 'src/Countries/country.entity';
+import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('suppliers')
 export class Supplier {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  country: string;
+  @ManyToOne(() => Country, { eager: true, nullable: false })
+  @JoinColumn({ name: 'country_id' })
+  country: Country;
 
   @Column()
   supplier_name: string;
@@ -28,6 +25,12 @@ export class Supplier {
   @Column({ nullable: true })
   website: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @Column({ type: 'bigint' })
+  created_at: number;
+  
+  @BeforeInsert()
+  setCreatedAt() {
+    const now = Math.floor(Date.now() / 1000); // epoch seconds
+    this.created_at = now;
+  }
 }

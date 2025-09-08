@@ -1,6 +1,6 @@
-export const formatDateTime = (dateString?: string) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
+export const formatDateTime = (timestamp?: string | number) => {
+  if (!timestamp) return '';
+  const date = new Date(Number(timestamp) * 1000);
   return date.toLocaleString(undefined, {
     year: 'numeric',
     month: 'short',

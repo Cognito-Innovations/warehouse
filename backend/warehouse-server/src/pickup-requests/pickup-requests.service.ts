@@ -5,13 +5,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { PickupRequest } from './pickup-request.entity';
+import { PickupRequest, PickupRequestStatus } from './pickup-request.entity';
 import { CreatePickupRequestDto } from './dto/create-pickup-request.dto';
 import { PickupRequestResponseDto } from './dto/pickup-request-response.dto';
 import {
   FeatureType,
-  Status,
   TrackingRequest,
+  TrackingStatus,
 } from 'src/tracking-requests/tracking-request.entity';
 
 @Injectable()
@@ -47,7 +47,7 @@ export class PickupRequestsService {
       const trackingRequest = queryRunner.manager.create(TrackingRequest, {
         user: { id: createPickupRequestDto.user_id },
         feature_type: FeatureType.PickupRequest,
-        status: Status.Requested,
+        status: TrackingStatus.Requested,
         feature_fid: savedPickupRequest.id,
         country: { id: createPickupRequestDto.country_id },
       });
@@ -83,6 +83,7 @@ export class PickupRequestsService {
         pkg_details: pickupRequestWithRelations.pkg_details,
         remarks: pickupRequestWithRelations.remarks,
         price: pickupRequestWithRelations.price,
+        status: pickupRequestWithRelations.status,
         created_at: pickupRequestWithRelations.created_at,
         updated_at: pickupRequestWithRelations.updated_at,
       };
@@ -119,6 +120,7 @@ export class PickupRequestsService {
         pkg_details: request.pkg_details,
         remarks: request.remarks,
         price: request.price,
+        status: request.status,
         created_at: request.created_at,
         updated_at: request.updated_at,
         user: request.user
@@ -126,7 +128,7 @@ export class PickupRequestsService {
               email: request.user.email,
               name: request.user.name,
               phone_number: request.user.phone_number,
-              country: request.user.country,
+              country: request.user.country?.name,
               created_at: request.user.created_at,
             }
           : undefined,
@@ -160,6 +162,7 @@ export class PickupRequestsService {
         pkg_details: request.pkg_details,
         remarks: request.remarks,
         price: request.price,
+        status: request.status,
         created_at: request.created_at,
         updated_at: request.updated_at,
         user: request.user
@@ -167,7 +170,7 @@ export class PickupRequestsService {
               email: request.user.email,
               name: request.user.name,
               phone_number: request.user.phone_number,
-              country: request.user.country,
+              country: request.user.country?.name,
               created_at: request.user.created_at,
             }
           : undefined,
@@ -202,6 +205,7 @@ export class PickupRequestsService {
         pkg_details: pickupRequest.pkg_details,
         remarks: pickupRequest.remarks,
         price: pickupRequest.price,
+        status: pickupRequest.status,
         created_at: pickupRequest.created_at,
         updated_at: pickupRequest.updated_at,
         user: pickupRequest.user
@@ -209,7 +213,7 @@ export class PickupRequestsService {
               email: pickupRequest.user.email,
               name: pickupRequest.user.name,
               phone_number: pickupRequest.user.phone_number,
-              country: pickupRequest.user.country,
+              country: pickupRequest.user.country?.name,
               created_at: pickupRequest.user.created_at,
             }
           : undefined,
@@ -250,9 +254,13 @@ export class PickupRequestsService {
       // Update the status of the pickup request
       switch (status.toUpperCase()) {
         case 'QUOTED':
+          pickupRequest.status = PickupRequestStatus.Quoted;
+          break;
         case 'CONFIRMED':
+          pickupRequest.status = PickupRequestStatus.Confirmed;
+          break;
         case 'PICKED':
-          // Status validation - you can add more logic here if needed
+          pickupRequest.status = PickupRequestStatus.Picked;
           break;
         default:
           throw new BadRequestException(`Invalid status: ${status}`);
@@ -276,19 +284,19 @@ export class PickupRequestsService {
 
       if (trackingRequest) {
         // Map pickup request status to tracking request status
-        let trackingStatus: Status;
+        let trackingStatus: TrackingStatus;
         switch (status.toUpperCase()) {
           case 'QUOTED':
-            trackingStatus = Status.Quoted;
+            trackingStatus = TrackingStatus.Quoted;
             break;
           case 'CONFIRMED':
-            trackingStatus = Status.QuotationConfirmed;
+            trackingStatus = TrackingStatus.QuotationConfirmed;
             break;
           case 'PICKED':
-            trackingStatus = Status.Shipped;
+            trackingStatus = TrackingStatus.Shipped;
             break;
           default:
-            trackingStatus = Status.InReview;
+            trackingStatus = TrackingStatus.InReview;
         }
 
         trackingRequest.status = trackingStatus;
@@ -324,6 +332,7 @@ export class PickupRequestsService {
         pkg_details: pickupRequestWithRelations.pkg_details,
         remarks: pickupRequestWithRelations.remarks,
         price: pickupRequestWithRelations.price,
+        status: pickupRequestWithRelations.status,
         created_at: pickupRequestWithRelations.created_at,
         updated_at: pickupRequestWithRelations.updated_at,
         user: pickupRequestWithRelations.user
@@ -331,7 +340,7 @@ export class PickupRequestsService {
               email: pickupRequestWithRelations.user.email,
               name: pickupRequestWithRelations.user.name,
               phone_number: pickupRequestWithRelations.user.phone_number,
-              country: pickupRequestWithRelations.user.country,
+              country: pickupRequestWithRelations.user.country?.name,
               created_at: pickupRequestWithRelations.user.created_at,
             }
           : undefined,

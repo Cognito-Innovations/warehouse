@@ -1,16 +1,10 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from 'src/users/user.entity';
+import { Country } from 'src/Countries/country.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 @Entity('shopping_requests')
-export class ShoppingRequest {
+export class ShoppingRequest extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -21,11 +15,19 @@ export class ShoppingRequest {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @ManyToOne(() => User, { eager: true, nullable: true })
+  @JoinColumn({ name: 'admin_id' })
+  admin: User;
+
+  // @ManyToOne(() => Country, { eager: true, nullable: false })
+  // @JoinColumn({ name: 'country_id' })
+  // country: Country;
+
+  @Column({ type: 'text', nullable: true })
+  country: string;
+
   @Column({ unique: true })
   request_code: string;
-
-  @Column()
-  country: string;
 
   @Column({ default: 0 })
   items: number;
@@ -38,10 +40,4 @@ export class ShoppingRequest {
 
   @Column({ type: 'json', nullable: true })
   payment_slips: string[];
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 }

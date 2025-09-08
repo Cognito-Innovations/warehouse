@@ -16,6 +16,13 @@ export default function TrackingStatus({ details }: TrackingStatusProps) {
       description: formatDateTime(details.created_at),
     },
     {
+      key: 'QUOTED',
+      label: 'QUOTATION READY',
+      description: details.price
+        ? `Quotation: ${details.price}`
+        : 'Waiting for quotation',
+    },
+    {
       key: 'CONFIRMED',
       label: 'CONFIRMED',
       description: details.confirmed_at

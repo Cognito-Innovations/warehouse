@@ -5,6 +5,6 @@ export class PackageItemResponseDto {
   quantity: number;
   unit_price: number;
   total_price: number;
-  created_at: Date;
-  updated_at: Date;
+  created_at: number;
+  updated_at: number;
 }

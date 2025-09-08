@@ -1,6 +1,6 @@
 import { IsEnum, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { FeatureType, Status } from '../tracking-request.entity';
+import { FeatureType, TrackingStatus } from '../tracking-request.entity';
 import { Role } from 'src/users/user.entity';
 import { Country } from 'src/Countries/country.entity';
 import { JoinColumn, ManyToOne } from 'typeorm';
@@ -34,11 +34,11 @@ export class CreateTrackingRequestDto {
 
   @ApiProperty({
     description: 'Current status of the tracking request',
-    enum: Status,
-    example: Status.Requested,
+    enum: TrackingStatus,
+    example: TrackingStatus.Requested,
   })
-  @IsEnum(Status)
-  status: Status;
+  @IsEnum(TrackingStatus)
+  status: TrackingStatus;
 
   @ApiProperty({
     description: 'Feature ID that is being tracked',

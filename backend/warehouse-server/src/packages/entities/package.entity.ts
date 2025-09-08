@@ -4,8 +4,6 @@ import {
   Column,
   ManyToOne,
   OneToMany,
-  CreateDateColumn,
-  UpdateDateColumn,
   DeleteDateColumn,
   JoinColumn,
 } from 'typeorm';
@@ -18,9 +16,10 @@ import { PackageCharge } from './package-charge.entity';
 import { PackageDocument } from './package-document.entity';
 import { PackageActionLog } from './package-action-log.entity';
 import { PackageMeasurement } from './package-measurement.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 @Entity('packages')
-export class Package {
+export class Package extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -60,12 +59,9 @@ export class Package {
   @Column({ type: 'decimal', precision: 10, scale: 3, nullable: true })
   total_volumetric_weight: number | null;
 
-  @Column()
-  country: string;
-
-  @ManyToOne(() => Country, { eager: true })
-  @JoinColumn({ name: 'country' })
-  country_relation: Country;
+  @ManyToOne(() => Country, { eager: true, nullable: false })
+  @JoinColumn({ name: 'country_id' })
+  country: Country;
 
   @Column({ default: false })
   allow_user_items: boolean;
@@ -90,14 +86,8 @@ export class Package {
   @Column({ nullable: true })
   package_id: string;
 
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
-
-  @DeleteDateColumn()
-  deleted_at: Date;
+  @DeleteDateColumn({ type: 'bigint', nullable: true })
+  deleted_at: number | null;
 
   @OneToMany(() => PackageItem, (item: PackageItem) => item.package)
   items: PackageItem[];

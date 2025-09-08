@@ -122,7 +122,7 @@ export class AuthService {
 
     //TODO: Remove this country id hardcoded here
     const user = this.userRepository.create({
-      country: '54e03123-77f4-477f-85d4-083d4701ae39',
+      country: { id: '4bffc336-6ebf-420d-8865-df7fb72f5dac' } as any,
       name,
       image,
       email,

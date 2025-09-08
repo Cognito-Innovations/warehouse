@@ -6,6 +6,6 @@ export class CountryResponseDto {
   name: string;
   image: string;
   phone_code: CountryPhoneCode;
-  created_at?: Date;
-  updated_at?: Date;
+  created_at?: number;
+  updated_at?: number;
 }

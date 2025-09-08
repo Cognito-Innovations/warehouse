@@ -1,15 +1,8 @@
 import { Role, User } from 'src/users/user.entity';
 import { Country } from 'src/Countries/country.entity';
 
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  JoinColumn,
-  ManyToOne,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, JoinColumn, ManyToOne } from 'typeorm';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 export enum FeatureType {
   ShoppingRequest = 'shopping-request',
@@ -21,7 +14,7 @@ export enum FeatureType {
   User = 'user',
 }
 
-export enum Status {
+export enum TrackingStatus {
   Accepted = 'accepted',
   ActionRequired = 'action_required',
   Cancelled = 'cancelled',
@@ -39,7 +32,7 @@ export enum Status {
 }
 
 @Entity('tracking_request')
-export class TrackingRequest {
+export class TrackingRequest extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -59,19 +52,13 @@ export class TrackingRequest {
 
   @Column({
     type: 'enum',
-    enum: Status,
+    enum: TrackingStatus,
   })
-  status: Status;
+  status: TrackingStatus;
 
   @Column({ default: Role.User })
   role: Role;
 
   @Column()
   feature_fid: string;
-
-  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  created_at: Date;
-
-  @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  updated_at: Date;
 }

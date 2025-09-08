@@ -2,15 +2,14 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
 import { Package } from './package.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 @Entity('package_items')
-export class PackageItem {
+export class PackageItem extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -32,10 +31,4 @@ export class PackageItem {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total_price: number;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 }

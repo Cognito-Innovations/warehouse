@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { TrackingRequestsService } from './tracking-requests.service';
 import { CreateTrackingRequestDto } from './dto/create-tracking-request.dto';
 import { UpdateTrackingRequestDto } from './dto/update-tracking-request.dto';
@@ -30,6 +30,21 @@ export class TrackingRequestsController {
   @ApiResponse({
     status: 400,
     description: 'Bad request - Invalid input data',
+  })
+  @ApiBody({
+    type: CreateTrackingRequestDto,
+    examples: {
+      Example1: {
+        summary: 'Create tracking request for a pickup',
+        value: {
+          user: '123e4567-e89b-12d3-a456-426614174001',
+          feature_type: 'pickup-request',
+          country_id: '123e4567-e89b-12d3-a456-426614174002',
+          status: 'requested',
+          feature_fid: '123e4567-e89b-12d3-a456-426614174003',
+        },
+      },
+    },
   })
   async create(
     @Body()
@@ -137,6 +152,17 @@ export class TrackingRequestsController {
   @ApiResponse({
     status: 400,
     description: 'Invalid input data',
+  })
+  @ApiBody({
+    type: UpdateTrackingRequestDto,
+    examples: {
+      Example1: {
+        summary: 'Update tracking request status',
+        value: {
+          status: 'shipped',
+        },
+      },
+    },
   })
   async update(
     @Param('id')

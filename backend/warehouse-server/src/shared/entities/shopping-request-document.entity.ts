@@ -2,16 +2,15 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
 import { ShoppingRequest } from '../../shopping-requests/shopping-request.entity';
+import { BaseTimestampEntity } from './base-timestamp.entity';
 
 @Entity('shopping_request_documents')
-export class ShoppingRequestDocument {
+export class ShoppingRequestDocument extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -49,12 +48,6 @@ export class ShoppingRequestDocument {
   @Column()
   uploaded_by: string;
 
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
-
-  @DeleteDateColumn()
-  deleted_at: Date;
+  @DeleteDateColumn({ type: 'bigint', nullable: true })
+  deleted_at: number | null;
 }

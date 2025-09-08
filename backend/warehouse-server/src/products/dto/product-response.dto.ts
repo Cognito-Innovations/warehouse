@@ -32,9 +32,9 @@ export class ProductResponseDto {
   
   @IsDate()
   @IsOptional()
-  created_at: Date;
+  created_at: number;
   
   @IsDate()
   @IsOptional()
-  updated_at: Date;
+  updated_at: number;
 }

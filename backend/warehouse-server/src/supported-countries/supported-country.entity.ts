@@ -1,16 +1,9 @@
 import { Country } from 'src/Countries/country.entity';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  JoinColumn,
-  ManyToOne,
-} from 'typeorm';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
+import { Entity, PrimaryGeneratedColumn, Column, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('supported-country')
-export class SupportedCountry {
+export class SupportedCountry extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -20,10 +13,4 @@ export class SupportedCountry {
 
   @Column({ default: true })
   is_active: boolean;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 }
