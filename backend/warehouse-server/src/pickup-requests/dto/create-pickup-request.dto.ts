@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsNotEmpty, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Status } from '../pickup-request.entity';
 
 export class CreatePickupRequestDto {
   @ApiProperty({
@@ -83,5 +84,5 @@ export class CreatePickupRequestDto {
   })
   @IsOptional()
   @IsString()
-  status?: string;
+  status?: Status;
 }

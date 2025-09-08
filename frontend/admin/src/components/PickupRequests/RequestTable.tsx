@@ -29,6 +29,7 @@ const RequestTable: React.FC = () => {
     try {
       setLoading(true);
       const data = await getPickupRequests();
+
       setRequests(data);
     } catch (err) {
       console.error('Failed to fetch pickup requests', err);

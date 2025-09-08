@@ -10,6 +10,13 @@ import {
   ManyToOne,
 } from 'typeorm';
 
+export enum Status {
+  QuotationConfirmed = 'quotation_confirmed',
+  Quoted = 'quoted',
+  Requested = 'requested',
+  Shipped = 'shipped',
+}
+
 @Entity('pickup_requests')
 export class PickupRequest {
   @PrimaryGeneratedColumn('uuid')
@@ -43,6 +50,12 @@ export class PickupRequest {
 
   @Column()
   pkg_details: string;
+
+  @Column({
+    type: 'enum',
+    enum: Status,
+  })
+  status: Status;
 
   @Column({ type: 'text', nullable: true })
   remarks: string;

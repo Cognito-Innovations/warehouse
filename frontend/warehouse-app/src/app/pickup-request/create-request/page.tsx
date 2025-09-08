@@ -59,6 +59,7 @@ export default function CreatePickupRequestPage() {
 
       await createPickupRequest({
         user_id,
+        status: "requested",
         country_id: selectedAddress?.country_id || '', //todo: add selectedCountryId later to get country code dynamically
         pickup_address: form.pickup_address,
         supplier_name: form.supplier_name,
