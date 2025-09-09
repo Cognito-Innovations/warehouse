@@ -10,7 +10,8 @@ import {
   Box,
   TextField,
   MenuItem,
-  IconButton
+  IconButton,
+  CircularProgress
 } from '@mui/material';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import RequestTableBody from './RequestTableBody';
@@ -28,6 +29,7 @@ const RequestTable: React.FC = () => {
     try {
       setLoading(true);
       const data = await getPickupRequests();
+
       setRequests(data);
     } catch (err) {
       console.error('Failed to fetch pickup requests', err);
@@ -83,6 +85,9 @@ const RequestTable: React.FC = () => {
                 <MenuItem value="PICKED">Picked</MenuItem>
             </TextField>
         </Box>
+        {loading && <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <CircularProgress />
+    </Box>}
 
       <Card>
         <TableContainer>

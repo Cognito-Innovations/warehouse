@@ -1,5 +1,3 @@
-import { Country } from '../../countries/entity/country.entity';
-
 export class UserDto {
   id: string;
   email: string;

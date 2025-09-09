@@ -5,11 +5,11 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
-  DeleteDateColumn,
   JoinColumn,
 } from 'typeorm';
-import { Country } from '../../countries/entity/country.entity';
+import { Country } from '../../Countries/country.entity';
 
+//TODO: Country should be a relation
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -33,7 +33,7 @@ export class User {
   @Column()
   suite_no: string;
 
-  @Column({ nullable: true, default: "admin" })
+  @Column({ nullable: true, default: 'admin' })
   identifier: string;
 
   @Column({ nullable: true })
@@ -51,11 +51,9 @@ export class User {
   @Column({ default: false })
   verified: boolean;
 
-  //TODO: Uncomment and remove nullable
-  // @ManyToOne(() => Country, { eager: true })
-  // @JoinColumn({ name: 'id' })
-  @Column({ nullable: true })
-  country: string;
+  @ManyToOne(() => Country, { eager: true })
+  @JoinColumn({ name: 'country_id' })
+  country: Country;
 
   @CreateDateColumn()
   created_at: Date;

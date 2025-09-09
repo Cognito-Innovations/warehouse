@@ -1,4 +1,11 @@
-import { Controller, Post, Body, UseGuards, Get, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Request,
+} from '@nestjs/common';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './service/auth.service';
 import { Public } from './decorators/public.decorator';
@@ -6,7 +13,6 @@ import { Public } from './decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/AuthResponseDto';
-
 
 @Controller('auth')
 export class AuthController {
@@ -24,15 +30,15 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Get('profile')
+  // getProfile(@Request() req) {
+  //   return req.user;
+  // }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('logout')
-  async logout(@Request() req): Promise<{ message: string }> {
-    return this.authService.logout(req.user.id);
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Post('logout')
+  // async logout(@Request() req): Promise<{ message: string }> {
+  //   return this.authService.logout(req.user.id);
+  // }
 }

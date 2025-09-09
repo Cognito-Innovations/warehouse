@@ -1,0 +1,219 @@
+"use client";
+import React, { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
+
+// Types
+export interface AddressData {
+  id?: string;
+  country_id?: string;
+  name: string;
+  address: string;
+  country_name: string;
+  country_code: string;
+  country_phone_code: string;
+  phone_number: string;
+}
+
+export interface Country {
+  name: string;
+  code: string;
+  phone_code: string;
+}
+
+export interface AddressState {
+  id: string;
+  selectedCountry: string;
+  availableCountries: Country[];
+  savedAddresses: AddressData[];
+  selectedAddress: AddressData | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+// Action Types
+export type AddressAction =
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'SET_COUNTRIES'; payload: Country[] }
+  | { type: 'SET_ADDRESSES'; payload: AddressData[] }
+  | { type: 'SELECT_COUNTRY'; payload: string }
+  | { type: 'SELECT_ADDRESS'; payload: AddressData | null }
+  | { type: 'UPDATE_ADDRESS'; payload: AddressData }
+  | { type: 'ADD_ADDRESS'; payload: AddressData }
+  | { type: 'REMOVE_ADDRESS'; payload: string };
+
+// Initial State
+const initialState: AddressState = {
+  id: "",
+  selectedCountry: "India",
+  availableCountries: [
+    { name: "India", code: "IN", phone_code: "+91" },
+  ],
+  savedAddresses: [],
+  selectedAddress: null,
+  isLoading: false,
+  error: null,
+};
+
+// Reducer
+function addressReducer(state: AddressState, action: AddressAction): AddressState {
+  switch (action.type) {
+
+    case "SET_LOADING":
+      return { ...state, isLoading: action.payload };
+    
+    case "SET_ERROR":
+      return { ...state, error: action.payload, isLoading: false };
+    
+    case "SET_COUNTRIES":
+      return { ...state, availableCountries: action.payload };
+    
+    case "SET_ADDRESSES":
+      return { 
+        ...state, 
+        savedAddresses: action.payload,
+        selectedAddress: action.payload.length > 0 ? action.payload[0] : null,
+        isLoading: false 
+      };
+    
+    case "SELECT_COUNTRY":
+      return { 
+        ...state, 
+        selectedCountry: action.payload,
+        error: null 
+      };
+    
+    case "SELECT_ADDRESS":
+      return { ...state, selectedAddress: action.payload };
+    
+    case "UPDATE_ADDRESS":
+      return {
+        ...state,
+        savedAddresses: state.savedAddresses.map(addr =>
+          addr.id === action.payload.id ? action.payload : addr
+        ),
+        selectedAddress: state.selectedAddress?.id === action.payload.id 
+          ? action.payload 
+          : state.selectedAddress
+      };
+    
+    case "ADD_ADDRESS":
+      return {
+        ...state,
+        savedAddresses: [...state.savedAddresses, action.payload]
+      };
+    
+    case "REMOVE_ADDRESS":
+      return {
+        ...state,
+        savedAddresses: state.savedAddresses.filter(addr => addr.id !== action.payload),
+        selectedAddress: state.selectedAddress?.id === action.payload 
+          ? null 
+          : state.selectedAddress
+      };
+    
+    default:
+      return state;
+  }
+}
+
+// Context
+const AddressContext = createContext<{
+  state: AddressState;
+  dispatch: React.Dispatch<AddressAction>;
+} | null>(null);
+
+// Provider Component
+interface AddressProviderProps {
+  children: ReactNode;
+}
+
+export const AddressProvider: React.FC<AddressProviderProps> = ({ children }) => {
+  const [state, dispatch] = useReducer(addressReducer, initialState);
+
+  // Load saved country from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedCountry = localStorage.getItem("selectedCountry");
+      if (savedCountry) {
+        dispatch({ type: "SELECT_COUNTRY", payload: savedCountry });
+      }
+    }
+  }, []);
+
+  // Save country to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("selectedCountry", state.selectedCountry);
+    }
+  }, [state.selectedCountry]);
+
+  return (
+    <AddressContext.Provider value={{ state, dispatch }}>
+      {children}
+    </AddressContext.Provider>
+  );
+};
+
+// Custom Hook
+export const useAddress = () => {
+  const context = useContext(AddressContext);
+  if (!context) {
+    throw new Error("useAddress must be used within an AddressProvider");
+  }
+  return context;
+};
+
+// Selector Hooks for better performance
+export const useSelectedCountry = () => {
+  const { state } = useAddress();
+  return state.selectedCountry;
+};
+
+export const useSelectedAddress = () => {
+  const { state } = useAddress();
+  return state.selectedAddress;
+};
+
+export const useSavedAddresses = () => {
+  const { state } = useAddress();
+  return state.savedAddresses;
+};
+
+export const useAvailableCountries = () => {
+  const { state } = useAddress();
+  return state.availableCountries;
+};
+
+// Action Creators
+export const useAddressActions = () => {
+  const { dispatch } = useAddress();
+
+  return {
+    setLoading: (loading: boolean) => 
+      dispatch({ type: "SET_LOADING", payload: loading }),
+    
+    setError: (error: string | null) => 
+      dispatch({ type: "SET_ERROR", payload: error }),
+    
+    setCountries: (countries: Country[]) => 
+      dispatch({ type: "SET_COUNTRIES", payload: countries }),
+    
+    setAddresses: (addresses: AddressData[]) => 
+      dispatch({ type: "SET_ADDRESSES", payload: addresses }),
+    
+    selectCountry: (country: string) => 
+      dispatch({ type: "SELECT_COUNTRY", payload: country }),
+    
+    selectAddress: (address: AddressData | null) => 
+      dispatch({ type: "SELECT_ADDRESS", payload: address }),
+    
+    updateAddress: (address: AddressData) => 
+      dispatch({ type: "UPDATE_ADDRESS", payload: address }),
+    
+    addAddress: (address: AddressData) => 
+      dispatch({ type: "ADD_ADDRESS", payload: address }),
+    
+    removeAddress: (id: string) => 
+      dispatch({ type: "REMOVE_ADDRESS", payload: id }),
+  };
+};

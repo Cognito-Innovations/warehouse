@@ -2,7 +2,6 @@
 import { toast } from "sonner";
 import React, { useState, useMemo, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { shipmentsData } from "../../data/shipmentsData";
 import { getPackagesByUserAndStatus, updatePackageStatus, getShipmentsByUser } from "../../lib/api.service";
 
 import usePreArrival from "../../hooks/usePreArrival";
@@ -32,22 +31,15 @@ const TabsSection = () => {
 
   const fetchPackages = async () => {
     const userId = (session?.user as any)?.user_id;
-    console.log("Fetching packages for userId:", userId);
-    console.log("Session data:", session);
-    
     if (!userId) {
-      console.log("No userId found, skipping fetch");
       return;
     }
     
     setPackagesLoading(true);
     try {
-      console.log("Calling API with userId:", userId, "status: Ready to Send");
       const data = await getPackagesByUserAndStatus(userId, "Ready to Send");
-      console.log("API response:", data);
       setPackages(data);
     } catch (error) {
-      console.error("Error fetching packages:", error);
       toast.error("Failed to fetch packages");
     } finally {
       setPackagesLoading(false);
@@ -56,21 +48,16 @@ const TabsSection = () => {
 
   const fetchShipments = async () => {
     const userId = (session?.user as any)?.user_id;
-    console.log("Fetching shipments for userId:", userId);
     
     if (!userId) {
-      console.log("No userId found, skipping fetch");
       return;
     }
     
     setShipmentsLoading(true);
     try {
-      console.log("Calling API with userId:", userId, "status: Request Ship");
       const data = await getShipmentsByUser(userId);
-      console.log("Shipments API response:", data);
       setShipments(data);
     } catch (error) {
-      console.error("Error fetching shipments:", error);
       toast.error("Failed to fetch shipments");
     } finally {
       setShipmentsLoading(false);
@@ -122,14 +109,12 @@ const TabsSection = () => {
 
   const handleRequestShip = async (packageId: string) => {
     try {
-      console.log("Requesting ship for package:", packageId);
       await updatePackageStatus(packageId, "Request Ship");
       toast.success("Ship request submitted successfully!");
       // Refresh packages and shipments after status change
       fetchPackages();
       fetchShipments();
     } catch (error) {
-      console.error("Error requesting ship:", error);
       toast.error("Failed to request ship. Please try again.");
     }
   };

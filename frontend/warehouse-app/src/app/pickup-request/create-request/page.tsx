@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useSession } from "next-auth/react"; 
 import { useRouter } from 'next/navigation';
+import { useAddressAPI } from '@/hooks/useAddressAPI';
 
 const FormLabel = ({ children, htmlFor }: { children: React.ReactNode; htmlFor: string }) => (
   <Typography
@@ -26,14 +27,16 @@ const FormLabel = ({ children, htmlFor }: { children: React.ReactNode; htmlFor: 
 );
 
 export default function CreatePickupRequestPage() {
+  const {selectedAddress} =  useAddressAPI();
   const { data: session } = useSession();  
   const router = useRouter();
+
 
   const [form, setForm] = useState({
     pickup_address: '',
     supplier_name: '',
-    supplier_phone: '',
-    alt_phone: '',
+    supplier_phone_number: '',
+    alt_supplier_phone_number: '',
     pcs_box: '',
     est_weight: '',
     pkg_details: '',
@@ -56,12 +59,14 @@ export default function CreatePickupRequestPage() {
 
       await createPickupRequest({
         user_id,
+        status: "requested",
+        country_id: selectedAddress?.country_id || '', //todo: add selectedCountryId later to get country code dynamically
         pickup_address: form.pickup_address,
         supplier_name: form.supplier_name,
-        supplier_phone: form.supplier_phone,
-        alt_phone: form.alt_phone,
-        pcs_box: Number(form.pcs_box),
-        est_weight: Number(form.est_weight),
+        supplier_phone_number: form.supplier_phone_number,
+        alt_supplier_phone_number: form.alt_supplier_phone_number,
+        pcs_box: form.pcs_box,
+        est_weight: form.est_weight,
         pkg_details: form.pkg_details,
         remarks: form.remarks,
       });
@@ -69,8 +74,8 @@ export default function CreatePickupRequestPage() {
       setForm({
         pickup_address: '',
         supplier_name: '',
-        supplier_phone: '',
-        alt_phone: '',
+        supplier_phone_number: '',
+        alt_supplier_phone_number: '',
         pcs_box: '',
         est_weight: '',
         pkg_details: '',
@@ -85,7 +90,8 @@ export default function CreatePickupRequestPage() {
   const isFormValid =
     form.pickup_address.trim() &&
     form.supplier_name.trim() &&
-    form.supplier_phone.trim() &&
+    form.supplier_phone_number.trim() &&
+    form.alt_supplier_phone_number.trim() &&
     form.pcs_box.trim() &&
     form.est_weight.trim() &&
     form.pkg_details.trim();
@@ -115,7 +121,7 @@ export default function CreatePickupRequestPage() {
             <FormLabel htmlFor="pickup-address">Pickup Address *</FormLabel>
             <TextField
               id="pickup_address"
-              value={form.pickup_address}
+              value={form.pickup_address || ''}
               onChange={handleChange}
               fullWidth
               placeholder="Enter full address"
@@ -135,7 +141,7 @@ export default function CreatePickupRequestPage() {
             <FormLabel htmlFor="supplier-name">Supplier Name *</FormLabel>
             <TextField
               id="supplier_name"
-              value={form.supplier_name}
+              value={form.supplier_name || ''}
               onChange={handleChange}
               fullWidth
               placeholder="Enter supplier/shop name"
@@ -148,8 +154,8 @@ export default function CreatePickupRequestPage() {
             <Box sx={{ flex: 1 }}>
               <FormLabel htmlFor="supplier-phone">Supplier Phone Number *</FormLabel>
               <TextField
-                id="supplier_phone"
-                value={form.supplier_phone}
+                id="supplier_phone_number"
+                value={form.supplier_phone_number || ''}
                 onChange={handleChange}
                 fullWidth
                 placeholder="Enter supplier contact number"
@@ -160,8 +166,8 @@ export default function CreatePickupRequestPage() {
             <Box sx={{ flex: 1 }}>
               <FormLabel htmlFor="alt-phone">Alternative Phone Number (Optional)</FormLabel>
               <TextField
-                id="alt_phone"
-                value={form.alt_phone}
+                id="alt_supplier_phone_number"
+                value={form.alt_supplier_phone_number || ''}
                 onChange={handleChange}
                 fullWidth
                 placeholder="Enter supplier alternative contact number"
@@ -175,7 +181,7 @@ export default function CreatePickupRequestPage() {
               <FormLabel htmlFor="pcs-box">No. of Pcs/Box *</FormLabel>
               <TextField
                 id="pcs_box"
-                value={form.pcs_box}
+                value={form.pcs_box || ''}
                 onChange={handleChange}
                 fullWidth
                 placeholder="Enter number of pcs/box to pickup"
@@ -187,7 +193,7 @@ export default function CreatePickupRequestPage() {
               <FormLabel htmlFor="est-weight">Estimate weight (Kg) *</FormLabel>
               <TextField
                 id="est_weight"
-                value={form.est_weight}
+                value={form.est_weight || ''}
                 onChange={handleChange}
                 fullWidth
                 placeholder="Enter Estimate weight in Kg"
@@ -201,7 +207,7 @@ export default function CreatePickupRequestPage() {
             <FormLabel htmlFor="pkg-details">Package Details *</FormLabel>
             <TextField
               id="pkg_details"
-              value={form.pkg_details}
+              value={form.pkg_details || ''}
               onChange={handleChange}
               fullWidth
               placeholder="Enter package details"
@@ -223,7 +229,7 @@ export default function CreatePickupRequestPage() {
             <FormLabel htmlFor="remarks">Remarks (optional)</FormLabel>
             <TextField
               id="remarks"
-              value={form.remarks}
+              value={form.remarks || ''}
               onChange={handleChange}
               fullWidth
               placeholder="Enter any remark or request"

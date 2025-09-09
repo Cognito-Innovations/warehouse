@@ -1,6 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
-import { Country } from '../countries/entity/country.entity';
 import { Rack } from '../racks/rack.entity';
 import { User } from '../users/user.entity';
 import { Product } from '../products/product.entity';
@@ -10,6 +9,7 @@ import { PreArrival } from '../pre-arrivals/pre-arrival.entity';
 import { PackageItem } from '../packages/entities/package-item.entity';
 import { PickupRequest } from '../pickup-requests/pickup-request.entity';
 import { ShoppingRequest } from '../shopping-requests/shopping-request.entity';
+import { TrackingRequest } from '../tracking-requests/tracking-request.entity';
 import { PackageActionLog } from '../packages/entities/package-action-log.entity';
 import { PackageDocument } from '../packages/entities/package-document.entity';
 import { PackageMeasurement } from '../packages/entities/package-measurement.entity';
@@ -24,6 +24,8 @@ import {
   PickupRequestDocument,
   ShoppingRequestDocument,
 } from '../shared/entities';
+import { Country } from 'src/Countries/country.entity';
+import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -35,6 +37,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
   database: process.env.DB_NAME || 'warehouse',
   entities: [
     Country,
+    CourierCompany,
     Rack,
     Supplier,
     User,
@@ -43,6 +46,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ShoppingRequest,
     Product,
     PickupRequest,
+    TrackingRequest,
     PackageActionLog,
     PackageItem,
     PackageDocument,
@@ -55,8 +59,10 @@ export const databaseConfig: TypeOrmModuleOptions = {
     PickupRequestDocument,
     ShoppingRequestDocument,
     ShipmentExport,
-    ShipmentExportBox
+    ShipmentExportBox,
   ],
-  synchronize: false, // Disable schema synchronization to prevent modifying existing database
+  synchronize: true, // Disable schema synchronization to prevent modifying existing database
+  migrations: ['dist/migrations/*.js'],
+  migrationsRun: false,
   logging: process.env.NODE_ENV === 'development',
 };

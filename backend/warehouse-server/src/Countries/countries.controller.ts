@@ -1,15 +1,15 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { CreateCountryDto } from '../dto/create-country.dto';
-import { CountryResponseDto } from '../dto/country-response.dto';
-import { CountriesService } from '../service/countries.service';
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Public } from 'src/auth/decorators/public.decorator';
+import { CreateCountryDto } from './dto/create-country.dto';
+import { CountryResponseDto } from './dto/countries-response.dto';
+import { CountriesService } from './countries.services';
 
 @Controller('countries')
-@UseGuards(JwtAuthGuard)
 export class CountriesController {
   constructor(private readonly countriesService: CountriesService) {}
 
   @Post()
+  @Public()
   async create(
     @Body() createCountryDto: CreateCountryDto,
   ): Promise<CountryResponseDto> {
@@ -18,7 +18,7 @@ export class CountriesController {
 
   @Post('bulk')
   async createBulk(
-    @Body() body: { countries: string[] },
+    @Body() body: { countries: CreateCountryDto[] },
   ): Promise<CountryResponseDto[]> {
     return this.countriesService.createCountriesBulk(body.countries);
   }

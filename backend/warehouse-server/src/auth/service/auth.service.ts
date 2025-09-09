@@ -4,11 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { UsersService } from '../../users/service/users.service';
-import {
-  Injectable,
-  UnauthorizedException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthResponseDto } from '../dto/AuthResponseDto';
 
 @Injectable()
@@ -19,8 +15,11 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    console.log('Register called with:', { email: registerDto.email, name: registerDto.name });
-    
+    console.log('Register called with:', {
+      email: registerDto.email,
+      name: registerDto.name,
+    });
+
     const existingUser = await this.usersService.findByEmail(registerDto.email);
     if (existingUser) {
       const updatedUser = await this.usersService.update(existingUser.id, {
@@ -34,8 +33,11 @@ export class AuthService {
       // Generate JWT token for existing user
       const payload = { email: updatedUser.email, sub: updatedUser.id };
       const access_token = this.jwtService.sign(payload);
-      
-      console.log('Generated JWT token for existing user:', access_token.substring(0, 20) + '...');
+
+      console.log(
+        'Generated JWT token for existing user:',
+        access_token.substring(0, 20) + '...',
+      );
 
       return {
         access_token,
@@ -59,7 +61,8 @@ export class AuthService {
 
     const user = await this.usersService.create({
       ...registerDto,
-      password: passwordToUse,
+      password: hashedPassword,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       country: registerDto.country || 'India', // Set default country to India
       verified: registerDto.verified !== undefined ? registerDto.verified : false, // Use provided verified status or default to false
     });
@@ -67,8 +70,11 @@ export class AuthService {
     // Generate JWT token
     const payload = { email: user.email, sub: user.id };
     const access_token = this.jwtService.sign(payload);
-    
-    console.log('Generated JWT token for new user:', access_token.substring(0, 20) + '...');
+
+    console.log(
+      'Generated JWT token for new user:',
+      access_token.substring(0, 20) + '...',
+    );
 
     return {
       access_token,

@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsNumber, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class PackagePieceDto {
@@ -27,7 +34,7 @@ export class CreatePackageDto {
   @IsString()
   //TODO: Remove comment
   // @IsNotEmpty()
-  customer: string;
+  user: string;
 
   @IsString()
   @IsNotEmpty()
@@ -72,7 +79,7 @@ export class CreatePackageDto {
 
   @IsBoolean()
   @IsOptional()
-  allow_customer_items?: boolean;
+  allow_user_items?: boolean;
 
   @IsBoolean()
   @IsOptional()

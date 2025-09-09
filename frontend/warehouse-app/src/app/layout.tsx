@@ -1,10 +1,9 @@
 import "./globals.css";
-import { Toaster } from "sonner";
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import ThemeProvider from "../components/ThemeProvider";
 import ClientLayout from "../components/ClientLayout";
 import Providers from "./providers";
+import { AddressProvider } from "../contexts/AddressContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,11 +15,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// export const metadata: Metadata = {
-//   title: "ShopMe - Warehouse Management",
-//   description: "Warehouse management application for ShopMe",
-// };
-
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
@@ -29,11 +23,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
-          <ThemeProvider>
-            <ClientLayout>
-              {children}
-            </ClientLayout>
+          <AddressProvider>
+            <ThemeProvider>
+              <ClientLayout>
+                {children}
+              </ClientLayout>
           </ThemeProvider>
+          </AddressProvider>
         </Providers>
       </body>
     </html>
