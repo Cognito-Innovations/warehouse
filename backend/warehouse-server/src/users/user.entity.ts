@@ -1,9 +1,11 @@
+import { Country } from 'src/Countries/country.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
 export enum Role {
@@ -12,7 +14,7 @@ export enum Role {
 }
 
 @Entity('users')
-export class User {
+export class User extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -53,11 +55,9 @@ export class User {
   @Column({ nullable: true, default: false })
   verified: boolean;
 
-  //TODO: Uncomment and remove nullable
-  // @ManyToOne(() => Country, { eager: true })
-  // @JoinColumn({ name: 'id' })
-  @Column({ nullable: true })
-  country: string;
+  @ManyToOne(() => Country, { eager: true })
+  @JoinColumn({ name: 'country_id' })
+  country: Country;
 
   @Column({ default: false })
   is_logged_in: boolean;
@@ -67,10 +67,4 @@ export class User {
 
   @Column({ nullable: true })
   last_logout: Date;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 }

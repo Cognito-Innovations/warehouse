@@ -1,15 +1,23 @@
-import { IsBoolean, IsDate, IsNumber, IsOptional, IsString, IsUrl, IsUUID } from "class-validator";
+import {
+  IsBoolean,
+  IsDate,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+} from 'class-validator';
 
 export class ProductResponseDto {
   @IsUUID()
   id: string;
-  
+
   @IsString()
   shopping_request_id: string;
 
   @IsString()
   name: string;
-  
+
   @IsOptional()
   @IsString()
   description?: string;
@@ -29,12 +37,12 @@ export class ProductResponseDto {
   @IsOptional()
   @IsBoolean()
   available?: boolean;
-  
+
   @IsDate()
   @IsOptional()
-  created_at: Date;
-  
+  created_at: number;
+
   @IsDate()
   @IsOptional()
-  updated_at: Date;
+  updated_at: number;
 }

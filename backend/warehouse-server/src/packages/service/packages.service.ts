@@ -9,6 +9,7 @@ import { Package, PackageMeasurement } from '../entities';
 import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
 import { User } from 'src/users/user.entity';
+import { Country } from 'src/Countries/country.entity';
 
 @Injectable()
 export class PackagesService {
@@ -30,14 +31,14 @@ export class PackagesService {
             email: pkg.user.email,
             name: pkg.user.name,
             suite_no: pkg.user.suite_no,
-            country: pkg.user.country,
+            country: pkg.user.country?.name,
           }
         : undefined,
       vendor: pkg.vendor
         ? {
             id: pkg.vendor.id,
             supplier_name: pkg.vendor.supplier_name,
-            country: pkg.vendor.country,
+            country: pkg.vendor.country?.name,
           }
         : undefined,
       rack_slot: pkg.rack_slot
@@ -106,20 +107,24 @@ export class PackagesService {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const customer = await this.packageRepository.manager
       .createQueryBuilder()
-      .select('country')
+      .select('users.country_id', 'country_id')
       .from('users', 'users')
-      .where('id = :customerId', { customerId: createPackageDto.user })
+      .where('users.id = :customerId', { customerId: createPackageDto.user })
       .getRawOne();
 
     if (!customer) {
       throw new BadRequestException('Customer not found');
     }
+
+    const DEFAULT_COUNTRY_ID = '4bffc336-6ebf-420d-8865-df7fb72f5dac';
+    const countryId = customer.country_id || DEFAULT_COUNTRY_ID;
+
     //Remove the hardcoded country id
     const package_id =
       createPackageDto.package_id ||
       (await this.generateCountryBasedpackage_id(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        customer.country || '54e03123-77f4-477f-85d4-083d4701ae39',
+        customer.country_id,
       ));
     const existingPackage = await this.packageRepository.findOne({
       where: { package_id: package_id },
@@ -147,9 +152,8 @@ export class PackagesService {
     packageEntity.vendor_id = createPackageDto.vendor;
     packageEntity.status = createPackageDto.status || 'Action Required';
     // Remove the hardcoded country id
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    packageEntity.country =
-      (customer.country as string) || '54e03123-77f4-477f-85d4-083d4701ae39'; // Use country from user profile, default to India
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    packageEntity.country = { id: countryId } as Country;
     packageEntity.total_weight = createPackageDto.weight
       ? parseFloat(createPackageDto.weight)
       : null;
@@ -157,7 +161,7 @@ export class PackagesService {
       ? parseFloat(createPackageDto.volumetric_weight)
       : null;
     packageEntity.dangerous_good = createPackageDto.dangerous_good || false;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     packageEntity.allow_user_items = createPackageDto.allow_user_items || false;
     packageEntity.shop_invoice_received =
       createPackageDto.shop_invoice_received || false;
@@ -171,7 +175,7 @@ export class PackagesService {
     }
 
     // Set the relationship (TypeORM will handle the foreign key)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     packageEntity.created_by = createPackageDto.created_by as unknown as User;
 
     try {
@@ -280,7 +284,6 @@ export class PackagesService {
     userId: string,
     status: string,
   ): Promise<PackageResponseDto[]> {
-
     const packages = await this.packageRepository.find({
       where: {
         user: { id: userId },
@@ -346,7 +349,6 @@ export class PackagesService {
     status: string,
     updated_by: string,
   ): Promise<PackageResponseDto> {
-
     // Check if the input is a UUID format
     const isUUID =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -384,9 +386,9 @@ export class PackagesService {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const country = await this.packageRepository.manager
         .createQueryBuilder()
-        .select('country')
+        .select('countries.code', 'code')
         .from('countries', 'countries')
-        .where('id = :countryId', { countryId })
+        .where('countries.id = :countryId', { countryId })
         .getRawOne();
 
       if (!country) {
@@ -395,7 +397,7 @@ export class PackagesService {
 
       // Extract country code (first 3 characters, uppercase)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const countryCode = country.country.substring(0, 3).toUpperCase();
+      const countryCode = country.code.substring(0, 3).toUpperCase();
 
       // Get the next sequence number for this country
       const lastPackage = await this.packageRepository

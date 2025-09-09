@@ -1,4 +1,3 @@
-
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -157,7 +156,8 @@ export class DocumentUploadService {
           uploaded_by: options.uploadedBy,
         });
 
-        const savedDocument = await this.packageDocumentRepository.save(packageDocument);
+        const savedDocument =
+          await this.packageDocumentRepository.save(packageDocument);
 
         // Convert to DocumentMetadata format
         const documentMetadata: any = {
@@ -188,10 +188,7 @@ export class DocumentUploadService {
     return { documents };
   }
 
-  async getDocuments(
-    entityType: string,
-    entityId: string,
-  ): Promise<any[]> {
+  async getDocuments(entityType: string, entityId: string): Promise<any[]> {
     // For now, only support package documents
     if (entityType !== 'package') {
       throw new BadRequestException(
@@ -213,9 +210,7 @@ export class DocumentUploadService {
       });
 
       if (!packageData) {
-        throw new BadRequestException(
-          `Package with id ${entityId} not found`,
-        );
+        throw new BadRequestException(`Package with id ${entityId} not found`);
       }
 
       entityId = packageData.id;
@@ -269,9 +264,7 @@ export class DocumentUploadService {
       });
 
       if (!packageData) {
-        throw new BadRequestException(
-          `Package with id ${entityId} not found`,
-        );
+        throw new BadRequestException(`Package with id ${entityId} not found`);
       }
 
       actualEntityId = packageData.id;

@@ -14,7 +14,11 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { updateShoppingRequestStatus } from "../../../services/api.services";
 
 interface PaymentSlipsCardProps {
-  details: string[];
+  details: {
+    id: string;
+    status: string;
+    payment_slips?: string[];
+  };
   onStatusUpdated: () => void;
 }
 

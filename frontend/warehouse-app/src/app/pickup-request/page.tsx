@@ -151,7 +151,7 @@ export default function PickupRequestPage() {
                       }}>
                         {icon}
                         <Typography variant="body2" sx={{ fontWeight: 'bold', color }}>
-                          {req.status}
+                          {req.status?.toUpperCase()}
                         </Typography>
                       </Box>
                     

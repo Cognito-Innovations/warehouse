@@ -30,7 +30,7 @@ class UserInfoDto {
     description: 'User creation date',
     example: '2024-01-15T10:30:00Z',
   })
-  created_at: Date;
+  created_at: number;
 }
 
 export class PickupRequestResponseDto {
@@ -107,16 +107,22 @@ export class PickupRequestResponseDto {
   status?: Status;
 
   @ApiProperty({
+    description: 'Current status of the pickup request',
+    example: 'requested',
+  })
+  status: string;
+
+  @ApiProperty({
     description: 'Creation timestamp',
     example: '2024-01-15T10:30:00Z',
   })
-  created_at: Date;
+  created_at: number;
 
   @ApiProperty({
     description: 'Last update timestamp',
     example: '2024-01-15T14:45:00Z',
   })
-  updated_at: Date;
+  updated_at: number;
 
   @ApiPropertyOptional({
     description: 'User information who created the request',

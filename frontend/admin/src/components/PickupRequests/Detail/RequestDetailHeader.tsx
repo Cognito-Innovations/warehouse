@@ -29,6 +29,8 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
   const [openModal, setOpenModal] = useState(false);
   const [price, setPrice] = useState('');
 
+  const normalizedStatus = request.status.toUpperCase();
+
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => setOpenModal(false);
 
@@ -73,10 +75,10 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
             Pickup Request #: {request.id}
           </Typography>
           <Chip
-            label={request.status}
+            label={normalizedStatus}
             size="small"
             sx={{
-              ...getChipStyles(request.status),
+              ...getChipStyles(normalizedStatus),
               fontWeight: '600',
               textTransform: 'uppercase',
               fontSize: '0.7rem',
@@ -98,11 +100,11 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
             </>
           )}
 
-          {request.status === "QUOTED" && (
+          {normalizedStatus === "QUOTED" && (
             <ActionButton label="Reject" color="danger" />
           )}
 
-          {request.status === "CONFIRMED" && (
+          {normalizedStatus === "CONFIRMED" && (
             <ActionButton
               label="Complete"
               onClick={handleComplete}

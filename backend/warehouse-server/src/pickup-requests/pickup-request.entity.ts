@@ -1,24 +1,23 @@
 import { Country } from 'src/Countries/country.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import { User } from 'src/users/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   JoinColumn,
   ManyToOne,
 } from 'typeorm';
 
-export enum Status {
-  QuotationConfirmed = 'quotation_confirmed',
-  Quoted = 'quoted',
+export enum PickupRequestStatus {
   Requested = 'requested',
-  Shipped = 'shipped',
+  Quoted = 'quoted',
+  Confirmed = 'confirmed',
+  Picked = 'picked',
 }
 
 @Entity('pickup_requests')
-export class PickupRequest {
+export class PickupRequest extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -29,6 +28,10 @@ export class PickupRequest {
   @ManyToOne(() => User, { eager: true, nullable: false })
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => User, { eager: true, nullable: true })
+  @JoinColumn({ name: 'admin_id' })
+  admin: User;
 
   @Column()
   pickup_address: string;
@@ -53,19 +56,14 @@ export class PickupRequest {
 
   @Column({
     type: 'enum',
-    enum: Status,
+    enum: PickupRequestStatus,
+    default: PickupRequestStatus.Requested,
   })
-  status: Status;
+  status: PickupRequestStatus;
 
   @Column({ type: 'text', nullable: true })
   remarks: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   price: number;
-
-  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  created_at: Date;
-
-  @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  updated_at: Date;
 }

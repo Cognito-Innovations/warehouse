@@ -7,6 +7,6 @@ export class PreArrivalResponseDto {
   estimate_arrival_time: string;
   details?: string;
   status: 'pending' | 'received';
-  created_at: Date;
-  updated_at: Date | null;
+  created_at: number;
+  updated_at: number | null;
 }

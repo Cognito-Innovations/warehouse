@@ -16,8 +16,8 @@ export class SuppliersService {
     createSupplierDto: CreateSupplierDto,
   ): Promise<SupplierResponseDto> {
     const supplier = this.supplierRepository.create({
-      country: createSupplierDto.country,
-      supplier_name: createSupplierDto.supplier_name,
+      ...createSupplierDto,
+      country: { id: createSupplierDto.country },
     });
 
     const savedSupplier = await this.supplierRepository.save(supplier);

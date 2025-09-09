@@ -60,7 +60,7 @@ export default function CreatePickupRequestPage() {
       await createPickupRequest({
         user_id,
         status: "requested",
-        country_id: selectedAddress?.country_id || '', //todo: add selectedCountryId later to get country code dynamically
+        country_id: selectedAddress?.country_id || '4bffc336-6ebf-420d-8865-df7fb72f5dac', //todo: add selectedCountryId later to get country code dynamically
         pickup_address: form.pickup_address,
         supplier_name: form.supplier_name,
         supplier_phone_number: form.supplier_phone_number,
@@ -88,13 +88,12 @@ export default function CreatePickupRequestPage() {
   };
 
   const isFormValid =
-    form.pickup_address.trim() &&
-    form.supplier_name.trim() &&
-    form.supplier_phone_number.trim() &&
-    form.alt_supplier_phone_number.trim() &&
-    form.pcs_box.trim() &&
-    form.est_weight.trim() &&
-    form.pkg_details.trim();
+  !!form.pickup_address.trim() &&
+  !!form.supplier_name.trim() &&
+  !!form.supplier_phone_number.trim() &&
+  !!form.pcs_box.trim() &&
+  !!form.est_weight.trim() &&
+  !!form.pkg_details.trim();
 
   return (
     <Box sx={{ bgcolor: '#F9FAFB', p: { xs: 2, sm: 3 }, minHeight: '100vh' }}>

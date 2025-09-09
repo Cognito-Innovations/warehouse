@@ -3,15 +3,14 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  CreateDateColumn,
-  UpdateDateColumn,
   JoinColumn,
 } from 'typeorm';
 import { Country } from '../../Countries/country.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 //TODO: Country should be a relation
 @Entity('users')
-export class User {
+export class User extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -54,12 +53,6 @@ export class User {
   @ManyToOne(() => Country, { eager: true })
   @JoinColumn({ name: 'country_id' })
   country: Country;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 
   @Column({ nullable: true })
   is_logged_in: boolean;

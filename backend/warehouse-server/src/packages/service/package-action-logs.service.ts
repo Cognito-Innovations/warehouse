@@ -6,7 +6,6 @@ import { PackageActionLog } from '../entities';
 import { CreatePackageActionLogDto } from '../dto/create-package-action-log.dto';
 import { PackageActionLogResponseDto } from '../dto/package-action-log-response.dto';
 
-
 @Injectable()
 export class PackageActionLogsService {
   constructor(
@@ -20,7 +19,9 @@ export class PackageActionLogsService {
     const actionLog = this.actionLogRepository.create({
       ...createActionLogDto,
       is_completed: createActionLogDto.is_completed || false,
-      uploaded_at: createActionLogDto.uploaded_at || new Date(),
+      uploaded_at: createActionLogDto.uploaded_at
+        ? Math.floor(new Date(createActionLogDto.uploaded_at).getTime() / 1000)
+        : Math.floor(Date.now() / 1000),
     });
 
     const savedActionLog = await this.actionLogRepository.save(actionLog);

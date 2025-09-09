@@ -13,6 +13,8 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiCreatedResponse,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PickupRequestsService } from './pickup-requests.service';
@@ -35,6 +37,27 @@ export class PickupRequestsController {
   @ApiResponse({
     status: 400,
     description: 'Bad request - Invalid input data',
+  })
+  @ApiBody({
+    type: CreatePickupRequestDto,
+    examples: {
+      Amazon: {
+        summary: 'Amazon supplier request',
+        value: {
+          user_id: '123e4567-e89b-12d3-a456-426614174000',
+          country_id: '123e4567-e89b-12d3-a456-426614174001',
+          pickup_address: '123 Main Street, New York, NY 10001',
+          supplier_name: 'Amazon',
+          supplier_phone_number: '+1-555-123-4567',
+          alt_supplier_phone_number: '+1-555-987-6543',
+          pcs_box: '2',
+          est_weight: '5.5',
+          pkg_details: 'Electronics - Laptop and accessories',
+          remarks: 'Please call before pickup',
+          status: 'REQUESTED',
+        },
+      },
+    },
   })
   async create(
     @Body() createPickupRequestDto: CreatePickupRequestDto,
@@ -62,8 +85,7 @@ export class PickupRequestsController {
     description: 'User ID to filter pickup requests',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'List of pickup requests for the specified user',
     type: [PickupRequestResponseDto],
   })
@@ -80,8 +102,7 @@ export class PickupRequestsController {
     description: 'Pickup request ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Pickup request details',
     type: PickupRequestResponseDto,
   })
@@ -119,8 +140,7 @@ export class PickupRequestsController {
       required: ['status'],
     },
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Pickup request status updated successfully',
     type: PickupRequestResponseDto,
   })

@@ -2,16 +2,15 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
 import { Rack } from '../../racks/rack.entity';
+import { BaseTimestampEntity } from './base-timestamp.entity';
 
 @Entity('rack_documents')
-export class RackDocument {
+export class RackDocument extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -49,12 +48,6 @@ export class RackDocument {
   @Column()
   uploaded_by: string;
 
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
-
-  @DeleteDateColumn()
-  deleted_at: Date;
+  @DeleteDateColumn({ type: 'bigint', nullable: true })
+  deleted_at: number | null;
 }

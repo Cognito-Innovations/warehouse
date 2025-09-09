@@ -9,10 +9,10 @@ export interface DocumentMetadata {
   category: string;
   is_required: boolean;
   uploaded_by: string;
-  uploaded_at: Date;
-  created_at: Date;
-  updated_at: Date;
-  deleted_at?: Date;
+  uploaded_at: number;
+  created_at: number;
+  updated_at: number;
+  deleted_at?: number;
 }
 
 export class DocumentMetadataDto {
@@ -26,10 +26,10 @@ export class DocumentMetadataDto {
   category: string;
   is_required: boolean;
   uploaded_by: string;
-  uploaded_at: Date;
-  created_at: Date;
-  updated_at: Date;
-  deleted_at?: Date;
+  uploaded_at: number;
+  created_at: number;
+  updated_at: number;
+  deleted_at?: number;
 }
 
 export class DocumentUploadResponseDto {

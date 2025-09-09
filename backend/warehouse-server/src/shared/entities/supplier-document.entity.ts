@@ -2,16 +2,15 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
 import { Supplier } from '../../suppliers/supplier.entity';
+import { BaseTimestampEntity } from './base-timestamp.entity';
 
 @Entity('supplier_documents')
-export class SupplierDocument {
+export class SupplierDocument extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -49,12 +48,6 @@ export class SupplierDocument {
   @Column()
   uploaded_by: string;
 
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
-
-  @DeleteDateColumn()
-  deleted_at: Date;
+  @DeleteDateColumn({ type: 'bigint', nullable: true })
+  deleted_at: number | null;
 }

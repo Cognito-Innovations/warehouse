@@ -82,21 +82,23 @@ export default function ViewRequestPage() {
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <RequestDetails details={details} />
 
-            {details.status === "QUOTED" && (
+            {details.status.toUpperCase() === "QUOTED" && (
               <QuotedPriceCard price={details.price} />
             )}
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
-              <Button
-                variant="contained"
-                color="error"
-                startIcon={<DeleteIcon />}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
-              >
-                Delete Request
-              </Button>
+              {details.status.toUpperCase() !== "PICKED" && (        
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  Delete Request
+                </Button>
+              )}
 
-              {details.status === "QUOTED" && (
+              {details.status.toUpperCase() === "QUOTED" && (
                 <Button
                   variant="contained"
                   color="primary"

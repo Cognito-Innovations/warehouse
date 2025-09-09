@@ -44,16 +44,25 @@ export class ShipmentExportsService {
   }
 
   async getAllExports(): Promise<ShipmentExport[]> {
-    return this.exportRepo.find({ relations: ['boxes'], order: { created_at: 'DESC' } });
+    return this.exportRepo.find({
+      relations: ['boxes'],
+      order: { created_at: 'DESC' },
+    });
   }
 
   async getExportById(id: string): Promise<ShipmentExport> {
-    const exp = await this.exportRepo.findOne({ where: { id }, relations: ['boxes'] })
+    const exp = await this.exportRepo.findOne({
+      where: { id },
+      relations: ['boxes'],
+    });
     if (!exp) throw new NotFoundException(`Export with id ${id} not found`);
     return exp;
   }
 
-  async updateExport(id: string, payload: Partial<{ mawb: string }>): Promise<ShipmentExport> {
+  async updateExport(
+    id: string,
+    payload: Partial<{ mawb: string }>,
+  ): Promise<ShipmentExport> {
     const exp = await this.exportRepo.findOne({ where: { id } });
     if (!exp) throw new NotFoundException(`Export with id ${id} not found`);
 

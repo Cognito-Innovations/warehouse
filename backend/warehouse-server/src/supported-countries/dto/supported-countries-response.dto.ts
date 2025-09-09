@@ -4,6 +4,6 @@ export class SupportedCountryResponseDto {
   id: string;
   country: Country;
   is_active: boolean;
-  created_at?: Date;
-  updated_at?: Date;
+  created_at?: number;
+  updated_at?: number;
 }

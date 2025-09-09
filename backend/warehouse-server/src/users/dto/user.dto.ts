@@ -1,3 +1,5 @@
+import { Country } from 'src/Countries/country.entity';
+
 export class UserDto {
   id: string;
   email: string;
@@ -10,7 +12,7 @@ export class UserDto {
   gender?: string;
   dob?: Date;
   verified: boolean;
-  country: string;
-  created_at?: Date;
-  updated_at?: Date;
+  country: Country;
+  created_at?: number;
+  updated_at?: number;
 }

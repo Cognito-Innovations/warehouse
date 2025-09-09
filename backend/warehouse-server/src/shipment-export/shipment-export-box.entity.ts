@@ -1,16 +1,28 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, ManyToOne
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ShipmentExport } from './shipment-export.entity';
+import { User } from 'src/users/user.entity';
+import { Country } from 'src/Countries/country.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 @Entity('shipment_export_boxes')
-export class ShipmentExportBox {
+export class ShipmentExportBox extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => ShipmentExport, shipmentExport => shipmentExport.boxes, { onDelete: 'CASCADE' })
+  @ManyToOne(() => ShipmentExport, (shipmentExport) => shipmentExport.boxes, {
+    onDelete: 'CASCADE',
+  })
   shipmentExport: ShipmentExport;
+
+  @ManyToOne(() => User, { eager: true, nullable: true })
+  @JoinColumn({ name: 'admin_id' })
+  admin: User;
 
   @Column({ nullable: true })
   label: string;
@@ -29,10 +41,4 @@ export class ShipmentExportBox {
 
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   mass_weight: number;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 }

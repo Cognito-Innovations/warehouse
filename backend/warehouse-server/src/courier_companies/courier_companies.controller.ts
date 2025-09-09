@@ -1,5 +1,12 @@
 import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiBody,
+} from '@nestjs/swagger';
 import { CourierCompaniesService } from './courier_companies.service';
 import { CreateCourierCompanyDto } from './dto/create-courier_company.dto';
 import { CourierCompanyResponsesDto } from './dto/get-all-courier_company.dto';
@@ -15,9 +22,25 @@ export class CourierCompaniesController {
   @Public()
   @Post()
   @ApiOperation({ summary: 'Create a new courier company' })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     description: 'Courier company created successfully',
+    type: CourierCompanyResponsesDto,
+  })
+  @ApiBody({
+    type: CreateCourierCompanyDto,
+    examples: {
+      FedEx: {
+        summary: 'Example for FedEx',
+        value: {
+          name: 'FedEx',
+          address: '123 FedEx Street, New York, USA',
+          phone_number: '+1-555-1234',
+          email: 'support@fedex.com',
+          country_id: 'uuid-of-country',
+          is_active: true,
+        },
+      },
+    },
   })
   create(@Body() createCourierCompanyDto: CreateCourierCompanyDto) {
     return this.courierCompaniesService.create(createCourierCompanyDto);
@@ -37,12 +60,20 @@ export class CourierCompaniesController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get courier company by ID' })
+  @ApiOkResponse({
+    description: 'Details of a courier company',
+    type: CourierCompanyResponsesDto,
+  })
   findOne(@Param('id') id: string) {
     return this.courierCompaniesService.findOne(+id);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete courier company' })
+  @ApiOperation({ summary: 'Delete courier company by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Courier company deleted successfully',
+  })
   remove(@Param('id') id: string) {
     return this.courierCompaniesService.remove(+id);
   }

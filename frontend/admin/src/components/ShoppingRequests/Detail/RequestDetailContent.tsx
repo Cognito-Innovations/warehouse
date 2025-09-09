@@ -39,7 +39,7 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({ request, on
 
           {(request.status === "PAYMENT_PENDING" || request.status === "PAYMENT_APPROVED") && (
             <PaymentSlipsCard 
-              details={request.payment_slips || []} 
+              details={request} 
               onStatusUpdated={onStatusUpdated || (() => {})} 
             />
           )}

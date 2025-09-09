@@ -10,7 +10,7 @@ export class PackageDocumentResponseDto {
   category: string;
   is_required: boolean;
   uploaded_by: string;
-  created_at?: Date | null;
-  updated_at?: Date | null;
-  deleted_at?: Date | null;
+  created_at?: number | null;
+  updated_at?: number | null;
+  deleted_at?: number | null;
 }

@@ -25,7 +25,7 @@ export class AuthService {
       const updatedUser = await this.usersService.update(existingUser.id, {
         name: registerDto.name,
         image: registerDto.image,
-        country: existingUser.country || 'India', // Set default country if not set
+        country: existingUser.country?.name || 'India', // Set default country if not set
         is_logged_in: true,
         last_login: new Date(),
       });
@@ -47,7 +47,7 @@ export class AuthService {
           name: updatedUser.name,
           role: updatedUser.role,
           suite_no: updatedUser.suite_no,
-          country: updatedUser.country,
+          country: updatedUser.country?.name,
           verified: updatedUser.verified,
         },
       };
@@ -84,7 +84,7 @@ export class AuthService {
         name: user.name,
         role: user.role,
         suite_no: user.suite_no,
-        country: user.country,
+        country: user.country?.name,
         verified: user.verified,
       },
     };
@@ -130,7 +130,7 @@ export class AuthService {
         name: user.name,
         role: user.role,
         suite_no: user.suite_no,
-        country: user.country,
+        country: user.country?.name,
         verified: user.verified,
       },
     };

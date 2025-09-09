@@ -1,11 +1,6 @@
 import { IsEnum } from 'class-validator';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 export enum CountryCode {
   USA = 'USA',
@@ -23,7 +18,7 @@ export enum CountryPhoneCode {
 }
 
 @Entity('countries')
-export class Country {
+export class Country extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -40,10 +35,4 @@ export class Country {
   @IsEnum(CountryPhoneCode)
   @Column()
   phone_code: string;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 }
