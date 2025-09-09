@@ -39,7 +39,7 @@ const RequestTableBody: React.FC<RequestTableBodyProps> = ({ rows }) => {
           </TableCell>
           <TableCell>
             <Typography variant="body2" fontWeight={500}>{row.customer.name}</Typography>
-            <Typography variant="caption" color="text.secondary">{row.customer.id}</Typography>
+            <Typography variant="caption" color="text.secondary">{row.customer.suite_no}</Typography>
           </TableCell>
           <TableCell>
             <Chip

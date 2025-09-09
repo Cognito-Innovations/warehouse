@@ -15,8 +15,6 @@ import {
 import {
   KeyboardArrowDown as KeyboardArrowDownIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
-  VisibilityOutlined as ViewIcon,
-  MoreVertOutlined as MoreIcon,
 } from '@mui/icons-material';
 import { getStatusAndInvoiceColor } from '../../data/shipments';
 import PackageRow from './PackageRow';

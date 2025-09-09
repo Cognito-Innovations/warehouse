@@ -11,8 +11,10 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: '*',
+    origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:5173'], // Frontend URLs (warehouse-app, admin)
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
   });
   const config = new DocumentBuilder()
     .setTitle('Warehouse API')

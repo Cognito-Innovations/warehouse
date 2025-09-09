@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
@@ -21,9 +22,6 @@ export class AuthService {
 
     const existingUser = await this.usersService.findByEmail(registerDto.email);
     if (existingUser) {
-      console.log('User exists, updating:', existingUser.id);
-      // If user exists, update their info and return JWT token
-      //TODO: Implement the suite_no generation logic here only it increments by 1
       const updatedUser = await this.usersService.update(existingUser.id, {
         name: registerDto.name,
         image: registerDto.image,
@@ -50,18 +48,23 @@ export class AuthService {
           role: updatedUser.role,
           suite_no: updatedUser.suite_no,
           country: updatedUser.country,
+          verified: updatedUser.verified,
         },
       };
     }
 
     console.log('Creating new user');
-    const hashedPassword = await bcrypt.hash(registerDto.password || '', 10);
+    // Check if password is already hashed (from frontend) or needs to be hashed
+    const passwordToUse = registerDto.password?.startsWith('$2') ? 
+      registerDto.password : // Already bcrypt hashed (admin registration)
+      await bcrypt.hash(registerDto.password || '', 10); // Hash if not already hashed (admin registration)
 
     const user = await this.usersService.create({
       ...registerDto,
       password: hashedPassword,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       country: registerDto.country || 'India', // Set default country to India
+      verified: registerDto.verified !== undefined ? registerDto.verified : false, // Use provided verified status or default to false
     });
 
     // Generate JWT token
@@ -82,6 +85,7 @@ export class AuthService {
         role: user.role,
         suite_no: user.suite_no,
         country: user.country,
+        verified: user.verified,
       },
     };
   }
@@ -92,11 +96,18 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(
-      loginDto.password,
-      user.password,
-    );
+    // Check if the stored password is bcrypt hashed or SHA-256 hashed
+    let isPasswordValid = false;
+    
+    if (user.password.startsWith('$2')) {
+      // Password is bcrypt hashed (admin registration or old format)
+      isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    } else {
+      // Password is SHA-256 hashed (warehouse app registration)
+      const hashedInput = crypto.createHash('sha256').update(loginDto.password).digest('hex');
+      isPasswordValid = hashedInput === user.password;
+    }
+    
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -120,6 +131,7 @@ export class AuthService {
         role: user.role,
         suite_no: user.suite_no,
         country: user.country,
+        verified: user.verified,
       },
     };
   }

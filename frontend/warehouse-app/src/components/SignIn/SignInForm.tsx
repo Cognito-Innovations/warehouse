@@ -1,10 +1,98 @@
 "use client";
 
-import { Box, Button, TextField, Typography, Link, Divider } from "@mui/material";
+import { Box, Button, TextField, Typography, Link, Divider, Alert, Snackbar } from "@mui/material";
 import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../contexts/AuthContext";
+import axios from "axios";
+import { hashPassword, generateSequentialSuiteNumber } from "../../utils/auth.utils";
 
 export default function SignInForm() {
+  const router = useRouter();
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { user, loading: authLoading } = useAuth();
   const buttonStyles = { py: 1.5, textTransform: "none", borderRadius: "6px" };
+  useEffect(() => {
+    if (user) {
+      router.replace('/dashboard');
+    }
+  }, [user, router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        // Use NextAuth credentials provider for login
+        const hashedPasswordValue = hashPassword(password);
+        const result = await signIn('credentials', {
+          email,
+          password: hashedPasswordValue,
+          redirect: false,
+        });
+
+        if (result?.ok) {
+          router.replace("/dashboard");
+        } else {
+          setError("Invalid email or password. Please try again.");
+        }
+      } else {
+        // For registration, call backend directly then sign in
+        const hashedPasswordValue = hashPassword(password);
+        const suiteNumber = generateSequentialSuiteNumber();
+        
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'}/auth/register`, {
+          email,
+          password: hashedPasswordValue,
+          name,
+          suite_no: suiteNumber,
+        });
+
+        if (response.data.access_token) {
+          // After successful registration, sign in with credentials
+          const result = await signIn('credentials', {
+            email,
+            password: hashedPasswordValue,
+            redirect: false,
+          });
+
+          if (result?.ok) {
+            router.replace("/dashboard");
+          } else {
+            setError("Registration successful but login failed. Please try logging in.");
+          }
+        } else {
+          setError(response.data.message || "Registration failed");
+        }
+      }
+    } catch (err: any) {
+      console.error('Auth error:', err);
+      setError(err.response?.data?.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = () => {
+    signIn("google", { callbackUrl: "/dashboard" });
+  };
+
+  // Show loading while checking authentication status
+  if (authLoading) {
+    return (
+      <Box sx={{ width: "100%", maxWidth: 380, textAlign: "center" }}>
+        <Typography variant="h6">Loading...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: "100%", maxWidth: 380 }}>
@@ -17,31 +105,74 @@ export default function SignInForm() {
       </Box>
 
       <Typography component="h1" variant="h5" sx={{ mt: 2, mb: 1, fontWeight: "bold" }}>
-        Sign in to your account
+        {isLogin ? "Sign in to your account" : "Create your account"}
       </Typography>
 
-      <TextField margin="normal" required fullWidth label="Email / Suite No" variant="outlined" />
-      <TextField margin="normal" required fullWidth name="password" label="Password" type="password" />
+      <form onSubmit={handleSubmit}>
+        {!isLogin && (
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            label="Full Name"
+            variant="outlined"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={loading}
+          />
+        )}
+        
+        <TextField
+          margin="normal"
+          required
+          fullWidth
+          label="Email"
+          type="email"
+          variant="outlined"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
+        />
+        
+        <TextField
+          margin="normal"
+          required
+          fullWidth
+          name="password"
+          label="Password"
+          type="password"
+          variant="outlined"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
+        />
 
-      <Link
-        href="#"
-        variant="body2"
-        sx={{ display: "block", textAlign: "right", mt: 1, color: "#6D28D9", textDecoration: "none" }}
-      >
-        Forgot your password?
-      </Link>
+        {isLogin && (
+          <Link
+            href="#"
+            variant="body2"
+            sx={{ display: "block", textAlign: "right", mt: 1, color: "#6D28D9", textDecoration: "none" }}
+          >
+            Forgot your password?
+          </Link>
+        )}
 
-      <Button
-        fullWidth
-        variant="contained"
-        sx={{ ...buttonStyles, mt: 3, mb: 1, bgcolor: "#6D28D9", "&:hover": { bgcolor: "#5B21B6" } }}
-      >
-        Sign in
-      </Button>
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          disabled={loading}
+          sx={{ ...buttonStyles, mt: 3, mb: 1, bgcolor: "#6D28D9", "&:hover": { bgcolor: "#5B21B6" } }}
+        >
+          {loading ? "Please wait..." : (isLogin ? "Sign in" : "Register")}
+        </Button>
+      </form>
 
       <Button
         fullWidth
         variant="outlined"
+        onClick={() => setIsLogin(!isLogin)}
+        disabled={loading}
         sx={{
           ...buttonStyles,
           mb: 2,
@@ -50,7 +181,7 @@ export default function SignInForm() {
           "&:hover": { bgcolor: "#F9FAFB" }
         }}
       >
-        Register
+        {isLogin ? "Don't have an account? Register" : "Already have an account? Sign in"}
       </Button>
 
       <Divider sx={{ my: 2, color: "#6B7280" }}>Or continue with</Divider>
@@ -59,7 +190,8 @@ export default function SignInForm() {
         fullWidth
         variant="outlined"
         startIcon={<img src="/google-icon.svg" alt="Google" style={{ width: 20, height: 20 }} />}
-        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+        onClick={handleGoogleSignIn}
+        disabled={loading}
         sx={{
           ...buttonStyles,
           borderColor: "#E5E7EB",
@@ -69,6 +201,17 @@ export default function SignInForm() {
       >
         Sign in with Google
       </Button>
+
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError("")}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setError("")} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
