@@ -45,7 +45,7 @@ export class ProductsService {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
 
-     if (updates.unit_price !== undefined) {
+    if (updates.unit_price !== undefined) {
       product.unit_price = updates.unit_price;
     }
     if (updates.available !== undefined) {

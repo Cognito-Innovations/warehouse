@@ -1,4 +1,8 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -22,9 +26,10 @@ export class GlobalAuthGuard extends AuthGuard('jwt') {
 
   handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
     if (err || !user) {
-      throw new UnauthorizedException('You are not authorized to make this request');
+      throw new UnauthorizedException(
+        'You are not authorized to make this request',
+      );
     }
     return user;
   }
 }
-

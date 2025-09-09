@@ -1,7 +1,13 @@
 import { Role, User } from 'src/users/user.entity';
 import { Country } from 'src/Countries/country.entity';
 
-import { Entity, PrimaryGeneratedColumn, Column, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 export enum FeatureType {

@@ -52,7 +52,6 @@ export class CreatePackageDto {
   @IsOptional()
   status?: string;
 
-
   @IsString()
   @IsOptional()
   weight?: string;

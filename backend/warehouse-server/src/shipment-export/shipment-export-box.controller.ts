@@ -47,7 +47,10 @@ export class ShipmentExportBoxesController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a shipment export box' })
-  @ApiOkResponse({ description: 'Box updated successfully', type: ShipmentExportBox })
+  @ApiOkResponse({
+    description: 'Box updated successfully',
+    type: ShipmentExportBox,
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -61,10 +64,7 @@ export class ShipmentExportBoxesController {
       },
     },
   })
-  async updateBox(
-    @Param('id') id: string,
-    @Body() dto: Partial<CreateBoxDto>,
-  ) {
+  async updateBox(@Param('id') id: string, @Body() dto: Partial<CreateBoxDto>) {
     return this.boxesService.updateBox(id, dto);
   }
 

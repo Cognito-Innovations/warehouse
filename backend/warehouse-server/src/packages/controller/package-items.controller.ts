@@ -95,7 +95,10 @@ export class PackageItemsController {
     schema: {
       type: 'object',
       properties: {
-        items: { type: 'array', items: { $ref: '#/components/schemas/CreatePackageItemDto' } },
+        items: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/CreatePackageItemDto' },
+        },
       },
     },
   })

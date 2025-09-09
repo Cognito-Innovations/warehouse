@@ -1,6 +1,12 @@
 import { Country } from 'src/Countries/country.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 
 export enum Role {
   Admin = 'admin',

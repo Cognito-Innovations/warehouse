@@ -1,4 +1,4 @@
-import { Country } from "src/Countries/country.entity";
+import { Country } from 'src/Countries/country.entity';
 
 export class SupplierResponseDto {
   id: string;

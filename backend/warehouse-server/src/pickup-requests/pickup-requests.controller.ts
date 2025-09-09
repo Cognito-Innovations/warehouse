@@ -56,7 +56,7 @@ export class PickupRequestsController {
           remarks: 'Please call before pickup',
           status: 'REQUESTED',
         },
-      }
+      },
     },
   })
   async create(

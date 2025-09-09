@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -72,7 +80,10 @@ export class ShipmentExportsController {
       },
     },
   })
-  async updateExport(@Param('id') id: string, @Body() payload: Partial<{ mawb: string }>) {
+  async updateExport(
+    @Param('id') id: string,
+    @Body() payload: Partial<{ mawb: string }>,
+  ) {
     return this.exportsService.updateExport(id, payload);
   }
 

@@ -1,5 +1,12 @@
 import { Country } from 'src/Countries/country.entity';
-import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  BeforeInsert,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 
 @Entity('suppliers')
 export class Supplier {
@@ -27,7 +34,7 @@ export class Supplier {
 
   @Column({ type: 'bigint' })
   created_at: number;
-  
+
   @BeforeInsert()
   setCreatedAt() {
     const now = Math.floor(Date.now() / 1000); // epoch seconds

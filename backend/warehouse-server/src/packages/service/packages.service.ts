@@ -153,7 +153,7 @@ export class PackagesService {
     packageEntity.vendor_id = createPackageDto.vendor;
     packageEntity.status = createPackageDto.status || 'Action Required';
     // Remove the hardcoded country id
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     packageEntity.country = { id: countryId } as Country;
     packageEntity.total_weight = createPackageDto.weight
       ? parseFloat(createPackageDto.weight)
@@ -162,7 +162,7 @@ export class PackagesService {
       ? parseFloat(createPackageDto.volumetric_weight)
       : null;
     packageEntity.dangerous_good = createPackageDto.dangerous_good || false;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     packageEntity.allow_user_items = createPackageDto.allow_user_items || false;
     packageEntity.shop_invoice_received =
       createPackageDto.shop_invoice_received || false;
@@ -176,7 +176,7 @@ export class PackagesService {
     }
 
     // Set the relationship (TypeORM will handle the foreign key)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     packageEntity.created_by = createPackageDto.created_by as unknown as User;
 
     try {
@@ -285,7 +285,6 @@ export class PackagesService {
     userId: string,
     status: string,
   ): Promise<PackageResponseDto[]> {
-
     const packages = await this.packageRepository.find({
       where: {
         user: { id: userId },
@@ -351,7 +350,6 @@ export class PackagesService {
     status: string,
     updated_by: string,
   ): Promise<PackageResponseDto> {
-
     // Check if the input is a UUID format
     const isUUID =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(

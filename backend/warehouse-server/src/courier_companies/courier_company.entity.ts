@@ -5,7 +5,7 @@ import {
   Column,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 
 @Entity('courier_companies')

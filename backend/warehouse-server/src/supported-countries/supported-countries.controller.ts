@@ -64,7 +64,11 @@ export class SupportedCountriesController {
               is_active: true,
             },
             {
-              country: { id: 'country-uuid-2', code: 'US', name: 'United States' },
+              country: {
+                id: 'country-uuid-2',
+                code: 'US',
+                name: 'United States',
+              },
               is_active: false,
             },
           ],

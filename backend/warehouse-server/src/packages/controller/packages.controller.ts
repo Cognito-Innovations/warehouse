@@ -49,9 +49,7 @@ export class PackagesController {
           tracking_no: 'TRACK123456',
           status: 'IN_WAREHOUSE',
           remarks: 'Fragile items',
-          pieces: [
-            { weight: '5kg', length: '30', width: '20', height: '10' },
-          ],
+          pieces: [{ weight: '5kg', length: '30', width: '20', height: '10' }],
         },
       },
     },

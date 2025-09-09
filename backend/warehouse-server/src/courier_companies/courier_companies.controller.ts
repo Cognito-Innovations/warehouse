@@ -39,7 +39,7 @@ export class CourierCompaniesController {
           country_id: 'uuid-of-country',
           is_active: true,
         },
-      }
+      },
     },
   })
   create(@Body() createCourierCompanyDto: CreateCourierCompanyDto) {
@@ -70,7 +70,10 @@ export class CourierCompaniesController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete courier company by ID' })
-  @ApiResponse({ status: 200, description: 'Courier company deleted successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Courier company deleted successfully',
+  })
   remove(@Param('id') id: string) {
     return this.courierCompaniesService.remove(+id);
   }

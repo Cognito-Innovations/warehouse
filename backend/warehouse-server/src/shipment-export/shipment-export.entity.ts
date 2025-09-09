@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { ShipmentExportBox } from './shipment-export-box.entity';
 import { User } from 'src/users/user.entity';
 import { Country } from 'src/Countries/country.entity';
@@ -28,6 +35,8 @@ export class ShipmentExport extends BaseTimestampEntity {
   @Column({ default: 'DRAFT' })
   status: string;
 
-  @OneToMany(() => ShipmentExportBox, box => box.shipmentExport, { cascade: true })
+  @OneToMany(() => ShipmentExportBox, (box) => box.shipmentExport, {
+    cascade: true,
+  })
   boxes: ShipmentExportBox[];
 }

@@ -38,7 +38,7 @@ export class PreArrivaController {
           details: 'Electronics shipment',
           status: 'pending',
         },
-      }
+      },
     },
   })
   async create(

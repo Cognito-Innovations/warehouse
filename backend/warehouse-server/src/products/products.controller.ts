@@ -1,4 +1,11 @@
-import { Body, Controller, Post, Patch, Param, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Patch,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -37,7 +44,7 @@ export class ProductsController {
           quantity: 2,
           url: 'https://example.com/mouse',
         },
-      }
+      },
     },
   })
   async create(

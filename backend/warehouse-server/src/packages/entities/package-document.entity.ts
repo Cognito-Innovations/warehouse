@@ -7,7 +7,6 @@ import {
   DeleteDateColumn,
   ManyToOne,
   JoinColumn,
-
 } from 'typeorm';
 import { Package } from './package.entity';
 

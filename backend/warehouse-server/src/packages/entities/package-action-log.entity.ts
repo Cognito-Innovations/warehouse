@@ -4,7 +4,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
-  BeforeInsert
+  BeforeInsert,
 } from 'typeorm';
 
 @Entity('package_action_logs')

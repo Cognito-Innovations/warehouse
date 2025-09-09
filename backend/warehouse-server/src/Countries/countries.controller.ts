@@ -22,7 +22,10 @@ export class CountriesController {
   @Post()
   @Public()
   @ApiOperation({ summary: 'Create a new country' })
-  @ApiCreatedResponse({ description: 'Country created successfully', type: CountryResponseDto })
+  @ApiCreatedResponse({
+    description: 'Country created successfully',
+    type: CountryResponseDto,
+  })
   @ApiBody({
     type: CreateCountryDto,
     examples: {
@@ -34,8 +37,8 @@ export class CountriesController {
           image: 'https://example.com/flags/india.png',
           phone_code: '+91',
         },
-      }
-    }
+      },
+    },
   })
   async create(
     @Body() createCountryDto: CreateCountryDto,

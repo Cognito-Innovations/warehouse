@@ -1,15 +1,15 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Put, 
-  Delete, 
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
   Patch,
-  Body, 
-  Param, 
-  HttpCode, 
+  Body,
+  Param,
+  HttpCode,
   HttpStatus,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
