@@ -14,7 +14,7 @@ export class ShipmentExportsService {
     private readonly boxRepo: Repository<ShipmentExportBox>,
   ) {}
 
-  async createExport(dto: CreateExportDto): Promise<any> {
+  async createExport(dto: CreateExportDto): Promise<ShipmentExport> {
     const exp = this.exportRepo.create({
       ...dto,
       status: 'DRAFT',
@@ -37,10 +37,16 @@ export class ShipmentExportsService {
       await this.boxRepo.save(boxes);
     }
 
-    return this.exportRepo.findOne({
+    const createdExport = await this.exportRepo.findOne({
       where: { id: savedExport.id },
       relations: ['boxes'],
     });
+
+    if (!createdExport) {
+      throw new Error('Unexpected error: created export not found');
+    }
+
+    return createdExport;
   }
 
   async getAllExports(): Promise<ShipmentExport[]> {

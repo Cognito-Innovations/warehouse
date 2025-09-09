@@ -6,7 +6,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from 'src/users/user.entity';
-import { Country } from 'src/Countries/country.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 @Entity('shopping_requests')
@@ -43,7 +42,4 @@ export class ShoppingRequest extends BaseTimestampEntity {
 
   @Column({ default: 'REQUESTED' })
   status: string;
-
-  @Column({ type: 'json', nullable: true })
-  payment_slips: string[];
 }

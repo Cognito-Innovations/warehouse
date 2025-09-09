@@ -5,6 +5,8 @@ import { ShoppingRequest } from './shopping-request.entity';
 import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
 import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
 import { Product } from 'src/products/product.entity';
+import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
+import { DocumentsService } from 'src/documents/documents.service';
 
 @Injectable()
 export class ShoppingRequestsService {
@@ -13,6 +15,7 @@ export class ShoppingRequestsService {
     private readonly shoppingRequestRepository: Repository<ShoppingRequest>,
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    private readonly documentsService: DocumentsService,
   ) {}
 
   async createShoppingRequest(
@@ -35,7 +38,7 @@ export class ShoppingRequestsService {
       items: savedShoppingRequest.items,
       remarks: savedShoppingRequest.remarks,
       status: savedShoppingRequest.status,
-      payment_slips: savedShoppingRequest.payment_slips,
+      payment_slips: [],
       created_at: savedShoppingRequest.created_at,
       updated_at: savedShoppingRequest.updated_at,
     };
@@ -47,28 +50,37 @@ export class ShoppingRequestsService {
       relations: ['user'],
     });
 
-    return shoppingRequests.map((request) => ({
-      id: request.id,
-      user_id: request.user_id,
-      user: request.user
-        ? {
-            id: request.user.id,
-            email: request.user.email,
-            name: request.user.name,
-            image: request.user.image,
-            suite_no: request.user.suite_no,
-            verified: request.user.verified,
-          }
-        : undefined,
-      request_code: request.request_code,
-      country: request.country,
-      items: request.items,
-      remarks: request.remarks,
-      status: request.status,
-      payment_slips: request.payment_slips || [],
-      created_at: request.created_at,
-      updated_at: request.updated_at,
-    }));
+    return Promise.all(
+      shoppingRequests.map(async (request) => {
+        const slips = await this.documentsService.findByFeature(
+          FeatureType.ShoppingRequest,
+          request.id,
+        );
+
+        return {
+          id: request.id,
+          user_id: request.user_id,
+          user: request.user
+            ? {
+                id: request.user.id,
+                email: request.user.email,
+                name: request.user.name,
+                image: request.user.image,
+                suite_no: request.user.suite_no,
+                verified: request.user.verified,
+              }
+            : undefined,
+          request_code: request.request_code,
+          country: request.country,
+          items: request.items,
+          remarks: request.remarks,
+          status: request.status,
+          payment_slips: slips,
+          created_at: request.created_at,
+          updated_at: request.updated_at,
+        };
+      }),
+    );
   }
 
   async getShoppingRequestsByUser(
@@ -79,18 +91,27 @@ export class ShoppingRequestsService {
       order: { created_at: 'DESC' },
     });
 
-    return shoppingRequests.map((request) => ({
-      id: request.id,
-      user_id: request.user_id,
-      request_code: request.request_code,
-      country: request.country,
-      items: request.items,
-      remarks: request.remarks,
-      status: request.status,
-      payment_slips: request.payment_slips || [],
-      created_at: request.created_at,
-      updated_at: request.updated_at,
-    }));
+    return Promise.all(
+      shoppingRequests.map(async (request) => {
+        const slips = await this.documentsService.findByFeature(
+          FeatureType.ShoppingRequest,
+          request.id,
+        );
+
+        return {
+          id: request.id,
+          user_id: request.user_id,
+          request_code: request.request_code,
+          country: request.country,
+          items: request.items,
+          remarks: request.remarks,
+          status: request.status,
+          payment_slips: slips,
+          created_at: request.created_at,
+          updated_at: request.updated_at,
+        };
+      }),
+    );
   }
 
   async getShoppingRequestByCode(
@@ -111,6 +132,11 @@ export class ShoppingRequestsService {
       where: { shopping_request_id: shoppingRequest.id },
     });
 
+    const slips = await this.documentsService.findByFeature(
+      FeatureType.ShoppingRequest,
+      shoppingRequest.id,
+    );
+
     return {
       id: shoppingRequest.id,
       user_id: shoppingRequest.user_id,
@@ -130,7 +156,7 @@ export class ShoppingRequestsService {
       shopping_request_products: shoppingRequestProducts,
       remarks: shoppingRequest.remarks,
       status: shoppingRequest.status,
-      payment_slips: shoppingRequest.payment_slips || [],
+      payment_slips: slips,
       created_at: shoppingRequest.created_at,
       updated_at: shoppingRequest.updated_at,
     };
@@ -152,6 +178,11 @@ export class ShoppingRequestsService {
     const updatedShoppingRequest =
       await this.shoppingRequestRepository.save(shoppingRequest);
 
+    const slips = await this.documentsService.findByFeature(
+      FeatureType.ShoppingRequest,
+      updatedShoppingRequest.id,
+    );
+
     return {
       id: updatedShoppingRequest.id,
       user_id: updatedShoppingRequest.user_id,
@@ -160,43 +191,43 @@ export class ShoppingRequestsService {
       items: updatedShoppingRequest.items,
       remarks: updatedShoppingRequest.remarks,
       status: updatedShoppingRequest.status,
-      payment_slips: updatedShoppingRequest.payment_slips || [],
+      payment_slips: slips,
       created_at: updatedShoppingRequest.created_at,
       updated_at: updatedShoppingRequest.updated_at,
     };
   }
 
   async addPaymentSlip(
-    id: string,
-    url: string,
+    shoppingRequestId: string,
+    dto: {
+      url: string;
+      original_filename: string;
+      document_type?: string;
+      file_size?: number;
+      mime_type?: string;
+    },
+    userId: string,
   ): Promise<ShoppingRequestResponseDto> {
-    const shoppingRequest = await this.shoppingRequestRepository.findOne({
-      where: { id },
+    await this.documentsService.create({
+      uploaded_by: userId,
+      feature_type: FeatureType.ShoppingRequest,
+      feature_fid: shoppingRequestId,
+      document_name: 'Payment Slip',
+      original_filename: dto.original_filename,
+      document_url: dto.url,
+      document_type: dto.document_type || 'slip',
+      file_size: dto.file_size,
+      mime_type: dto.mime_type,
+      category: 'PAYMENT',
+      is_required: false,
     });
 
-    if (!shoppingRequest) {
-      throw new NotFoundException(`Shopping request with id ${id} not found`);
-    }
-
-    const newSlips = shoppingRequest.payment_slips
-      ? [...shoppingRequest.payment_slips, url]
-      : [url];
-
-    shoppingRequest.payment_slips = newSlips;
-    const updatedShoppingRequest =
-      await this.shoppingRequestRepository.save(shoppingRequest);
-
-    return {
-      id: updatedShoppingRequest.id,
-      user_id: updatedShoppingRequest.user_id,
-      request_code: updatedShoppingRequest.request_code,
-      country: updatedShoppingRequest.country,
-      items: updatedShoppingRequest.items,
-      remarks: updatedShoppingRequest.remarks,
-      status: updatedShoppingRequest.status,
-      payment_slips: updatedShoppingRequest.payment_slips || [],
-      created_at: updatedShoppingRequest.created_at,
-      updated_at: updatedShoppingRequest.updated_at,
-    };
+    return this.getShoppingRequestByCode(
+      (
+        await this.shoppingRequestRepository.findOneOrFail({
+          where: { id: shoppingRequestId },
+        })
+      ).request_code,
+    );
   }
 }

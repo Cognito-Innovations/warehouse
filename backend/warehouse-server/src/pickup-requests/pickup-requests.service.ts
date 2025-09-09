@@ -84,7 +84,6 @@ export class PickupRequestsService {
         pkg_details: pickupRequestWithRelations.pkg_details,
         remarks: pickupRequestWithRelations.remarks,
         price: pickupRequestWithRelations.price,
-        status: pickupRequestWithRelations.status,
         created_at: pickupRequestWithRelations.created_at,
         updated_at: pickupRequestWithRelations.updated_at,
       };
@@ -122,7 +121,6 @@ export class PickupRequestsService {
         pkg_details: request.pkg_details,
         remarks: request.remarks,
         price: request.price,
-        status: request.status,
         created_at: request.created_at,
         updated_at: request.updated_at,
         user: request.user
@@ -208,7 +206,6 @@ export class PickupRequestsService {
         pkg_details: pickupRequest.pkg_details,
         remarks: pickupRequest.remarks,
         price: pickupRequest.price,
-        status: pickupRequest.status,
         created_at: pickupRequest.created_at,
         updated_at: pickupRequest.updated_at,
         user: pickupRequest.user
@@ -283,23 +280,22 @@ export class PickupRequestsService {
       //   country: { id: updatedPickupRequest.country.id },
       // });
 
-
-      if (trackingRequest) {
-        // Map pickup request status to tracking request status
-        let trackingStatus: TrackingStatus;
-        switch (status.toUpperCase()) {
-          case 'QUOTED':
-            trackingStatus = TrackingStatus.Quoted;
-            break;
-          case 'CONFIRMED':
-            trackingStatus = TrackingStatus.QuotationConfirmed;
-            break;
-          case 'PICKED':
-            trackingStatus = TrackingStatus.Shipped;
-            break;
-          default:
-            trackingStatus = TrackingStatus.InReview;
-        }
+      // if (trackingRequest) {
+      //   // Map pickup request status to tracking request status
+      //   let trackingStatus: TrackingStatus;
+      //   switch (status.toUpperCase()) {
+      //     case 'QUOTED':
+      //       trackingStatus = TrackingStatus.Quoted;
+      //       break;
+      //     case 'CONFIRMED':
+      //       trackingStatus = TrackingStatus.QuotationConfirmed;
+      //       break;
+      //     case 'PICKED':
+      //       trackingStatus = TrackingStatus.Shipped;
+      //       break;
+      //     default:
+      //       trackingStatus = TrackingStatus.InReview;
+      //   }
 
       //   trackingRequest.status = trackingStatus;
       //   await queryRunner.manager.save(TrackingRequest, trackingRequest);
@@ -335,7 +331,6 @@ export class PickupRequestsService {
         pkg_details: pickupRequestWithRelations.pkg_details,
         remarks: pickupRequestWithRelations.remarks,
         price: pickupRequestWithRelations.price,
-        status: pickupRequestWithRelations.status,
         created_at: pickupRequestWithRelations.created_at,
         updated_at: pickupRequestWithRelations.updated_at,
         user: pickupRequestWithRelations.user

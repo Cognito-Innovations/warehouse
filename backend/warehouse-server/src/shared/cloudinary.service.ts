@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary, UploadApiErrorResponse } from 'cloudinary';
+import { Express } from 'express';
 
 // Cloudinary upload result interface
 interface CloudinaryUploadResult {
@@ -10,6 +11,10 @@ interface CloudinaryUploadResult {
   bytes: number;
   width?: number;
   height?: number;
+}
+
+interface DestroyApiResponse {
+  result: string;
 }
 
 @Injectable()
@@ -34,7 +39,7 @@ export class CloudinaryService {
   }
 
   async uploadFile(
-    file: any,
+    file: Express.Multer.File,
     folder: string = 'warehouse',
   ): Promise<CloudinaryUploadResult> {
     try {
@@ -63,15 +68,19 @@ export class CloudinaryService {
         width: result.width,
         height: result.height,
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as UploadApiErrorResponse).message)
+          : 'Unknown error';
       throw new BadRequestException(
-        `Failed to upload file to Cloudinary: ${error.message}`,
+        `Failed to upload file to Cloudinary: ${message}`,
       );
     }
   }
 
   async uploadMultipleFiles(
-    files: any[],
+    files: Express.Multer.File[],
     folder: string = 'warehouse',
   ): Promise<CloudinaryUploadResult[]> {
     const uploadPromises = files.map((file) => this.uploadFile(file, folder));
@@ -80,22 +89,34 @@ export class CloudinaryService {
 
   async deleteFile(publicId: string): Promise<{ result: string }> {
     try {
-      const result = await cloudinary.uploader.destroy(publicId);
-      return { result: result.result };
-    } catch (error) {
+      const result: { result?: string } = (await cloudinary.uploader.destroy(
+        publicId,
+      )) as DestroyApiResponse;
+      return { result: result.result ?? 'ok' };
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as UploadApiErrorResponse).message)
+          : 'Unknown error';
       throw new BadRequestException(
-        `Failed to delete file from Cloudinary: ${error.message}`,
+        `Failed to delete file from Cloudinary: ${message}`,
       );
     }
   }
 
   async deleteMultipleFiles(publicIds: string[]): Promise<{ result: string }> {
     try {
-      const result = await cloudinary.api.delete_resources(publicIds);
-      return { result: result.result };
-    } catch (error) {
+      const result = (await cloudinary.api.delete_resources(
+        publicIds,
+      )) as DestroyApiResponse;
+      return { result: result.result ?? 'ok' };
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as UploadApiErrorResponse).message)
+          : 'Unknown error';
       throw new BadRequestException(
-        `Failed to delete files from Cloudinary: ${error.message}`,
+        `Failed to delete files from Cloudinary: ${message}`,
       );
     }
   }

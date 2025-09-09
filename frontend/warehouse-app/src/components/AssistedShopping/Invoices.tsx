@@ -20,7 +20,7 @@ export default function Invoices({ invoice, onUpdate }: { invoice: any, onUpdate
 
   useEffect(() => {
     if (invoice?.payment_slips?.length) {
-      setUploadedUrls(invoice.payment_slips);
+      setUploadedUrls(invoice.payment_slips.map((slip: any) => slip.document_url));
     }
   }, [invoice]);
 
@@ -38,8 +38,13 @@ export default function Invoices({ invoice, onUpdate }: { invoice: any, onUpdate
       for (const file of filesArray) {
         const url = await uploadToCloudinary(file);
         if (url) {
+          await addPaymentSlip(invoice.id, {
+            url,
+            original_filename: file.name,
+            mime_type: file.type,
+            file_size: file.size,
+          });
           setUploadedUrls((prev) => [...prev, url]);
-          await addPaymentSlip(invoice.id, url);
           onUpdate?.();
         }
       }
@@ -94,7 +99,7 @@ export default function Invoices({ invoice, onUpdate }: { invoice: any, onUpdate
 
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 flex gap-3 flex-wrap">
             {uploadedUrls.map((url, index) => {
-              const isImage = url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
+              const isImage = typeof url === "string" && url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
 
               return (
               <div

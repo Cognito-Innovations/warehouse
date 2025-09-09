@@ -121,8 +121,13 @@ export const updateShoppingRequestStatus = async (id: string, status: string) =>
   return res.data;
 };
 
-export const addPaymentSlip = async (id: string, url: string) => {
-  const res = await authenticatedApi.patch(`/shopping-requests/${id}/slips`, { url });
+export const addPaymentSlip = async (id: string, data: {
+  url: string;
+  original_filename: string;
+  mime_type?: string;
+  file_size?: number;
+}) => {
+  const res = await authenticatedApi.patch(`/shopping-requests/${id}/slips`, { data });
   return res.data;
 };
 

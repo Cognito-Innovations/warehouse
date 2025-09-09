@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/user.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
+import { Package } from './package.entity';
 
 @Entity('package_charges')
 export class PackageCharge extends BaseTimestampEntity {
@@ -17,9 +18,9 @@ export class PackageCharge extends BaseTimestampEntity {
   @Column()
   package_id: string;
 
-  @ManyToOne('Package', (package_: any) => package_.charges)
+  @ManyToOne(() => Package, (pkg) => pkg.charges)
   @JoinColumn({ name: 'package_id' })
-  package: any;
+  package: Package;
 
   @Column()
   summary: string;

@@ -52,7 +52,7 @@ const ItemsTableRow = ({ item, index }: { item: any, index: number }) => {
         <Typography variant="caption" color="text.secondary">{item.details}</Typography>
       </TableCell>
       <TableCell>
-        {item.available ? (
+        {available ? (
           <Chip
             label="YES"
             size="small"

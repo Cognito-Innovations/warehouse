@@ -12,7 +12,6 @@ import {
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiQuery,
   ApiBody,
@@ -20,10 +19,18 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { Request as ExpressRequest } from 'express';
 
 import { PackagesService } from '../service/packages.service';
 import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
+
+interface AuthenticatedRequest extends ExpressRequest {
+  user: {
+    id: string;
+    email?: string;
+  };
+}
 
 @ApiTags('Packages')
 @Controller('packages')
@@ -56,7 +63,7 @@ export class PackagesController {
   })
   async create(
     @Body() createPackageDto: CreatePackageDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ): Promise<PackageResponseDto> {
     // Get the authenticated user's ID from the JWT token
     createPackageDto.created_by = req.user.id;

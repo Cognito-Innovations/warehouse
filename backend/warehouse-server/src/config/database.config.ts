@@ -26,6 +26,7 @@ import {
 } from '../shared/entities';
 import { Country } from 'src/Countries/country.entity';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
+import { Document } from 'src/documents/documents.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -60,6 +61,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ShoppingRequestDocument,
     ShipmentExport,
     ShipmentExportBox,
+    Document,
   ],
   synchronize: true, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],

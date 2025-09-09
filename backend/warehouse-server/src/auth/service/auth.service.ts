@@ -25,7 +25,7 @@ export class AuthService {
       const updatedUser = await this.usersService.update(existingUser.id, {
         name: registerDto.name,
         image: registerDto.image,
-        country: existingUser.country?.name || 'India', // Set default country if not set
+        country: registerDto.country ?? existingUser.country?.name ?? 'India', // Set default country if not set
         is_logged_in: true,
         last_login: new Date(),
       });
@@ -55,16 +55,15 @@ export class AuthService {
 
     console.log('Creating new user');
     // Check if password is already hashed (from frontend) or needs to be hashed
-    const passwordToUse = registerDto.password?.startsWith('$2') ? 
-      registerDto.password : // Already bcrypt hashed (admin registration)
-      await bcrypt.hash(registerDto.password || '', 10); // Hash if not already hashed (admin registration)
+    const passwordToUse = registerDto.password?.startsWith('$2')
+      ? registerDto.password // Already bcrypt hashed (admin registration)
+      : await bcrypt.hash(registerDto.password || '', 10); // Hash if not already hashed (admin registration)
 
     const user = await this.usersService.create({
       ...registerDto,
-      password: hashedPassword,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      country: registerDto.country || 'India', // Set default country to India
-      verified: registerDto.verified !== undefined ? registerDto.verified : false, // Use provided verified status or default to false
+      password: passwordToUse,
+      country: registerDto.country ?? 'India',
+      verified: registerDto.verified ?? false, // Use provided verified status or default to false
     });
 
     // Generate JWT token
@@ -98,16 +97,19 @@ export class AuthService {
 
     // Check if the stored password is bcrypt hashed or SHA-256 hashed
     let isPasswordValid = false;
-    
+
     if (user.password.startsWith('$2')) {
       // Password is bcrypt hashed (admin registration or old format)
       isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
     } else {
       // Password is SHA-256 hashed (warehouse app registration)
-      const hashedInput = crypto.createHash('sha256').update(loginDto.password).digest('hex');
+      const hashedInput = crypto
+        .createHash('sha256')
+        .update(loginDto.password)
+        .digest('hex');
       isPasswordValid = hashedInput === user.password;
     }
-    
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }

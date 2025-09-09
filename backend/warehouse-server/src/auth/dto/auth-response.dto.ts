@@ -13,8 +13,8 @@ export class UserDto {
   verified?: boolean;
   country?: any; // Should be a CountryDto if available, else 'any'
   is_logged_in: boolean;
-  last_login?: Date;
-  last_logout?: Date;
+  last_login?: number;
+  last_logout?: number;
   created_at: number;
   updated_at: number;
 }

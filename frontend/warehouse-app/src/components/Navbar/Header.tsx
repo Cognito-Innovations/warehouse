@@ -184,11 +184,11 @@ const Header = () => {
     }
   }, [open, notificationOpen]);
   useEffect(() => {
-    if (isClient && typeof window !== 'undefined') {
-      localStorage.setItem('selectedAddress', JSON.stringify(addressData));
-      setSelectedCountry(addressData.country);
+    if (isClient && typeof window !== 'undefined' && selectedAddress) {
+      localStorage.setItem('selectedAddress', JSON.stringify(selectedAddress));
+      selectCountry(selectedAddress.country_name);
     }
-  }, [addressData, isClient]);
+  }, [selectedAddress, isClient]);
 
   return (
     <>

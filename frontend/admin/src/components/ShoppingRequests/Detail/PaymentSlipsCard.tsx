@@ -13,11 +13,18 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { updateShoppingRequestStatus } from "../../../services/api.services";
 
+interface PaymentSlip {
+  id: string;
+  document_url: string;
+  original_filename: string;
+  mime_type: string;
+}
+
 interface PaymentSlipsCardProps {
   details: {
     id: string;
     status: string;
-    payment_slips?: string[];
+    payment_slips?: PaymentSlip[];
   };
   onStatusUpdated: () => void;
 }
@@ -68,14 +75,15 @@ const PaymentSlipsCard: React.FC<PaymentSlipsCardProps> = ({ details, onStatusUp
               gap: 1.5,
             }}
           >
-            {details.payment_slips?.map((url, index) => {
-              const isImage = url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
+            {details.payment_slips?.map((slip, index) => {
+              const url = slip.document_url;
+              const isImage = typeof url === "string" && url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
 
               return (
                 <Box
-                  key={index}
+                  key={slip.id || index}
                   onClick={() => window.open(url, "_blank")}
-                  title={`Payment slip ${index + 1}`}
+                  title={slip.original_filename || `Payment slip ${index + 1}`}
                   sx={{
                     width: 40,
                     height: 40,

@@ -18,7 +18,7 @@ export class PackageDocumentsService {
     private readonly actionLogsService: PackageActionLogsService,
     private readonly documentUploadService: DocumentUploadService,
   ) {}
-  async uploadDocuments(package_id: string, files: any[]) {
+  async uploadDocuments(package_id: string, files: Express.Multer.File[]) {
     // First, resolve the package_id to the actual package UUID
     const packageEntity = await this.packageRepository.findOne({
       where: [
