@@ -144,7 +144,6 @@ export class PackagesService {
       );
     }
 
-    // Create the package using TypeORM entity
     const packageEntity = new Package();
     packageEntity.package_id = package_id;
     packageEntity.user = createPackageDto.user as unknown as User;

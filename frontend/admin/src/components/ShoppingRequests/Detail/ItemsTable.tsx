@@ -7,7 +7,21 @@ import ItemsTableSummary from './ItemsTableSummary';
 
 const headers = ["Item Name", "Color/Size", "Available", "Status", "Quantity", "Unit Price", "Total"];
 
-const ItemsTable = ({ details }) => {
+interface ShoppingRequestProduct {
+  id?: number;
+  name?: string;
+  [key: string]: any;
+}
+
+interface ItemsTableProps {
+  details: {
+    shopping_request_products?: ShoppingRequestProduct[];
+    summary?: any;
+    [key: string]: any;
+  };
+}
+
+const ItemsTable: React.FC<ItemsTableProps> = ({ details }) => {
   const products = details.shopping_request_products ?? [];
 
   return (

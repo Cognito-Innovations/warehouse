@@ -1,10 +1,7 @@
-"use client";
-
 import "./globals.css";
 import { Geist, Geist_Mono } from "next/font/google";
-import { usePathname } from "next/navigation";
 import ThemeProvider from "../components/ThemeProvider";
-import Header from "../components/Navbar/Header";
+import ClientLayout from "../components/ClientLayout";
 import Providers from "./providers";
 import { AddressProvider } from "../contexts/AddressContext";
 
@@ -19,10 +16,6 @@ const geistMono = Geist_Mono({
 });
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const pathname = usePathname();
-
-  const hideHeader = pathname === "/";
-
   return (
     <html lang="en">
       <head>
@@ -32,9 +25,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Providers>
           <AddressProvider>
             <ThemeProvider>
-              {!hideHeader && <Header /> }
-              {children}
-            </ThemeProvider>
+              <ClientLayout>
+                {children}
+              </ClientLayout>
+          </ThemeProvider>
           </AddressProvider>
         </Providers>
       </body>

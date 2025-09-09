@@ -65,6 +65,9 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   const handleClick = () => {
     fileInputRef.current?.click();
   };
+
+  // Checkbox should remain visually checked once moved to Ready to Send or beyond
+  const visualChecked = isAdminChecked || actionLogStatus === 'Ready to Send' || actionLogStatus === 'Request Ship';
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
@@ -103,8 +106,8 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                 width: 16,
                 height: 16,
                 borderRadius: '50%',
-                border: isAdminChecked ? '2px solid #22c55e' : '2px solid #ef4444',
-                bgcolor: isAdminChecked ? '#22c55e' : 'transparent',
+                border: visualChecked ? '2px solid #22c55e' : '2px solid #ef4444',
+                bgcolor: visualChecked ? '#22c55e' : 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -113,7 +116,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                 opacity: uploadedDocuments.length > 0 ? 1 : 0.5,
                 '&:hover': {
                   bgcolor: uploadedDocuments.length > 0
-                    ? (isAdminChecked ? '#16a34a' : '#fef2f2')
+                    ? (visualChecked ? '#16a34a' : '#fef2f2')
                     : 'transparent'
                 }
               }}
@@ -121,21 +124,19 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                 // Only allow clicking if documents are uploaded
                 if (uploadedDocuments.length === 0 || !onAdminCheck) return;
 
-                // Toggle admin check state
-                const newCheckedState = !isAdminChecked;
+                // Toggle visual check state
+                const newCheckedState = !visualChecked;
                 onAdminCheck(newCheckedState);
 
                 // Update status based on admin check
                 if (newCheckedState) {
-                  // Admin checked - move to Ready to Send
                   onStatusChange('Ready to Send');
                 } else {
-                  // Admin unchecked - move back to In Review
                   onStatusChange('In Review');
                 }
               }}
             >
-              {isAdminChecked ? (
+              {visualChecked ? (
                 <Box sx={{
                   width: 8,
                   height: 8,

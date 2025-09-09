@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Box } from '@mui/material';
 
 import TopNavbar from '../components/Layout/TopNavbar';

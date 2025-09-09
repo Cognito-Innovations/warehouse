@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { getSession } from "next-auth/react";
 
+// Interface for the pickup request payload, combining the best types from both examples.
 export interface PickupRequestPayload {
   user_id: string;
   country_id: string;
@@ -8,14 +9,18 @@ export interface PickupRequestPayload {
   supplier_name: string;
   supplier_phone_number: string;
   alt_supplier_phone_number?: string;
-  pcs_box: string;
-  est_weight?: string;
+  pcs_box: number;
+  est_weight?: number;
   pkg_details: string;
   remarks?: string;
   status?: string;
 }
 
-// Create a customized axios instance with interceptors
+/**
+ * Creates a customized Axios instance with a request interceptor
+ * that automatically adds the authentication token from the NextAuth session.
+ * This is the most reliable pattern for client-side API authentication.
+ */
 const createAuthenticatedApi = (): AxiosInstance => {
   const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
@@ -24,11 +29,12 @@ const createAuthenticatedApi = (): AxiosInstance => {
     },
   });
 
-  // Request interceptor to add auth token
+  // Request interceptor to add the authorization token before each request.
   api.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {
       try {
         const session = await getSession();
+        // The token is safely extracted from the session object.
         const token = (session as any)?.access_token;
         
         if (token) {
@@ -45,16 +51,16 @@ const createAuthenticatedApi = (): AxiosInstance => {
     }
   );
 
-  // Response interceptor for error handling
+  // Response interceptor for centralized error handling, like for 401 Unauthorized responses.
   api.interceptors.response.use(
     (response: AxiosResponse) => {
       return response;
     },
     (error) => {
       if (error.response?.status === 401) {
-        // Handle unauthorized access
+        // Log unauthorized access. In a real application, you might redirect
+        // to a login page or trigger a token refresh here.
         console.error("Unauthorized access - token may be expired");
-        // You can redirect to login or refresh token here
       }
       return Promise.reject(error);
     }
@@ -63,8 +69,10 @@ const createAuthenticatedApi = (): AxiosInstance => {
   return api;
 };
 
-// Create the authenticated API instance
+// Create a single, shared instance of the authenticated API.
 const authenticatedApi = createAuthenticatedApi();
+
+// --- Pickup Request Functions ---
 
 export const createPickupRequest = async (payload: PickupRequestPayload) => {
   const res = await authenticatedApi.post("/pickup-requests", payload);
@@ -85,6 +93,8 @@ export const updatePickupRequestStatus = async (id: string, status: string, pric
   const res = await authenticatedApi.patch(`/pickup-requests/${id}/status`, { status, price });
   return res.data;
 };
+
+// --- Shopping Request Functions ---
 
 export const createShoppingRequest = async (request: any) => {
   const res = await authenticatedApi.post("/shopping-requests", request);
@@ -116,6 +126,8 @@ export const addPaymentSlip = async (id: string, url: string) => {
   return res.data;
 };
 
+// --- Package & Shipment Functions ---
+
 export const getPackagesByUserAndStatus = async (userId: string, status: string) => {
   const res = await authenticatedApi.get(`/packages/user/${userId}/status/${status}`);
   return res.data;
@@ -126,6 +138,7 @@ export const updatePackageStatus = async (packageId: string, status: string) => 
   const userId = (session?.user as any)?.user_id;
   
   if (!userId) {
+    // Throw an error if the user ID is not available.
     throw new Error("No user ID found in session");
   }
   
@@ -140,6 +153,8 @@ export const getShipmentsByUser = async (userId: string) => {
   const res = await authenticatedApi.get(`/packages/user/${userId}/status/Request Ship`);
   return res.data;
 };
+
+// --- Other Functions ---
 
 export const getCourierCompanies = async () => {
   const res = await authenticatedApi.get(`/courier-companies`);

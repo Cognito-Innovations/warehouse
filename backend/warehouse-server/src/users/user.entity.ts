@@ -52,7 +52,7 @@ export class User extends BaseTimestampEntity {
   @Column({ nullable: true })
   dob: Date;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: false })
   verified: boolean;
 
   @ManyToOne(() => Country, { eager: true })

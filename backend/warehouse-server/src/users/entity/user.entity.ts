@@ -17,7 +17,7 @@ export class User extends BaseTimestampEntity {
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({ select: false })
   password: string;
 
   @Column({ nullable: true })
