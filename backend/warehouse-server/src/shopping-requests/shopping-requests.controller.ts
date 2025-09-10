@@ -7,6 +7,7 @@ import {
   Patch,
   UseGuards,
   Req,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,6 +24,7 @@ import { ShoppingRequestsService } from './shopping-requests.service';
 import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
 import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
 import { DocumentResponseDto } from 'src/documents/dto/document-response.dto';
+import { ShoppingRequestStatus } from './shopping-request.entity';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -124,7 +126,7 @@ export class ShoppingRequestsController {
   })
   async updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: string },
+    @Body() body: { status: ShoppingRequestStatus },
   ): Promise<ShoppingRequestResponseDto> {
     return this.shoppingRequestsService.updateStatus(id, body.status);
   }
@@ -167,5 +169,14 @@ export class ShoppingRequestsController {
       body.data,
       req.user.id,
     );
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a shopping request' })
+  @ApiOkResponse({
+    description: 'Shopping request deleted successfully',
+  })
+  async delete(@Param('id') id: string): Promise<{ message: string }> {
+    return this.shoppingRequestsService.deleteShoppingRequest(id);
   }
 }

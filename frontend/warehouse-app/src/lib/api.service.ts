@@ -34,6 +34,7 @@ const createAuthenticatedApi = (): AxiosInstance => {
     async (config: InternalAxiosRequestConfig) => {
       try {
         const session = await getSession();
+        console.log("DEBUG Session:", session);
         // The token is safely extracted from the session object.
         const token = (session as any)?.access_token;
         
@@ -131,6 +132,11 @@ export const addPaymentSlip = async (id: string, data: {
   return res.data;
 };
 
+export const deleteShoppingRequest = async (id: string) => {
+  const res = await authenticatedApi.delete(`/shopping-requests/${id}`);
+  return res.data;
+};
+
 // --- Package & Shipment Functions ---
 
 export const getPackagesByUserAndStatus = async (userId: string, status: string) => {
@@ -163,5 +169,12 @@ export const getShipmentsByUser = async (userId: string) => {
 
 export const getCourierCompanies = async () => {
   const res = await authenticatedApi.get(`/courier-companies`);
+  return res.data;
+};
+
+// --- Countries Functions ---
+
+export const getCountries = async () => {
+  const res = await authenticatedApi.get("/countries");
   return res.data;
 };

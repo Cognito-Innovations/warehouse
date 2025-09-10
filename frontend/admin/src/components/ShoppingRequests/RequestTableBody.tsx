@@ -12,6 +12,7 @@ import {
 } from '@mui/icons-material';
 import { getRequestStatusColor } from '../../data/shoppingRequests';
 import { useNavigate } from 'react-router-dom';
+import { formatDateTime } from '../../utils/formatDateTime';
 
 interface RequestTableBodyProps {
   rows: any[];
@@ -27,7 +28,12 @@ const RequestTableBody: React.FC<RequestTableBodyProps> = ({ rows }) => {
   return (
   <TableBody>
     {rows.map((row) => {
-      const status = getRequestStatusColor(row.status);
+      const latestStatus = row.tracking_requests?.length
+          ? row.tracking_requests[row.tracking_requests.length - 1].status
+          : row.status;
+
+      const status = getRequestStatusColor(latestStatus);
+
       return (
         <TableRow key={row.orderNo} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
           <TableCell>
@@ -43,7 +49,7 @@ const RequestTableBody: React.FC<RequestTableBodyProps> = ({ rows }) => {
           </TableCell>
           <TableCell>
             <Chip
-              label={row.status}
+              label={latestStatus}
               size="small"
               sx={{
                 color: status.color,

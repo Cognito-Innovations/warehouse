@@ -108,6 +108,7 @@ const handler = NextAuth({
         console.log('Stored verified status:', data.user.verified);
       } catch (err) {
         console.error("Error calling Nest backend:", err);
+        return false;
       }
       }
       return true;

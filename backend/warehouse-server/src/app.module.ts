@@ -28,6 +28,7 @@ import { CourierCompaniesModule } from './courier_companies/courier_companies.mo
 import { CountriesModule } from './Countries/countries.module';
 import { SupportedCountriesModule } from './supported-countries/supported-countries.module';
 import { DocumentsModule } from './documents/documents.module';
+import { InvoicesModule } from './invoice/invoices.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { DocumentsModule } from './documents/documents.module';
     TrackingRequestsModule,
     ShipmentExportModule,
     DocumentsModule,
+    InvoicesModule,
   ],
   controllers: [
     PackageItemsController,

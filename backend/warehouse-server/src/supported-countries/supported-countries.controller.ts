@@ -9,7 +9,6 @@ import {
 import { SupportedCountryCreateDto } from './dto/create-supported-country.dto';
 import { SupportedCountryResponseDto } from './dto/supported-countries-response.dto';
 import { SupportedCountriesService } from './service/supported-countries.services';
-import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('Supported Countries')
 @Controller('supported-countries')
@@ -19,7 +18,6 @@ export class SupportedCountriesController {
   ) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Create a new supported country' })
   @ApiCreatedResponse({
     description: 'Supported country created successfully',

@@ -17,6 +17,8 @@
     "@types/crypto-js": "^4.2.2",
     "axios": "^1.11.0",
     "crypto-js": "^4.2.0",
+    "jspdf": "^3.0.2",
+    "jspdf-autotable": "^5.0.2",
     "next": "15.5.2",
     "next-auth": "^4.24.11",
     "react": "19.1.0",

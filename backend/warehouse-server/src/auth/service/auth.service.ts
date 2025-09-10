@@ -6,6 +6,7 @@ import { RegisterDto } from '../dto/register.dto';
 import { UsersService } from '../../users/service/users.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthResponseDto } from '../dto/AuthResponseDto';
+import { Country } from 'src/Countries/country.entity';
 
 @Injectable()
 export class AuthService {
@@ -21,11 +22,26 @@ export class AuthService {
     });
 
     const existingUser = await this.usersService.findByEmail(registerDto.email);
+    let countryEntity: Country | null = null;
+    if (registerDto.country) {
+      countryEntity = await this.usersService.findCountryByName(
+        registerDto.country,
+      );
+      if (!countryEntity) {
+        throw new Error(`Country ${registerDto.country} not found`);
+      }
+    } else {
+      // Fallback default to "India"
+      countryEntity = await this.usersService.findCountryByName('India');
+      if (!countryEntity) {
+        throw new Error(`Default country India not found in DB`);
+      }
+    }
     if (existingUser) {
       const updatedUser = await this.usersService.update(existingUser.id, {
         name: registerDto.name,
         image: registerDto.image,
-        country: registerDto.country ?? existingUser.country?.name ?? 'India', // Set default country if not set
+        country: countryEntity.id,
         is_logged_in: true,
         last_login: new Date(),
       });
@@ -62,7 +78,7 @@ export class AuthService {
     const user = await this.usersService.create({
       ...registerDto,
       password: passwordToUse,
-      country: registerDto.country ?? 'India',
+      country: countryEntity.id,
       verified: registerDto.verified ?? false, // Use provided verified status or default to false
     });
 

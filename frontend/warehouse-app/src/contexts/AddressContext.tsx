@@ -1,4 +1,5 @@
 "use client";
+import { getCountries } from "@/lib/api.service";
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
 
 // Types
@@ -65,7 +66,7 @@ function addressReducer(state: AddressState, action: AddressAction): AddressStat
       return { ...state, error: action.payload, isLoading: false };
     
     case "SET_COUNTRIES":
-      return { ...state, availableCountries: action.payload };
+      return { ...state, availableCountries: action.payload, isLoading: false };
     
     case "SET_ADDRESSES":
       return { 
@@ -138,6 +139,27 @@ export const AddressProvider: React.FC<AddressProviderProps> = ({ children }) =>
         dispatch({ type: "SELECT_COUNTRY", payload: savedCountry });
       }
     }
+  }, []);
+
+  // Fetch countries
+  const fetchCountries = async () => {
+    dispatch({ type: "SET_LOADING", payload: true });
+    try {
+      const countries = await getCountries();
+      const formattedCountries: Country[] = countries.map((country: any) => ({
+        name: country.name,
+        code: country.code,
+        phone_code: country.phone_code,   
+      }));
+      dispatch({ type: "SET_COUNTRIES", payload: formattedCountries });
+    } catch (error: any) {
+      dispatch({ type: "SET_ERROR", payload: "Failed to load countries" });
+      console.error("Error fetching countries:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCountries();
   }, []);
 
   // Save country to localStorage when it changes

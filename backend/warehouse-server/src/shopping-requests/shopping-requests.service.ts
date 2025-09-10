@@ -1,12 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ShoppingRequest } from './shopping-request.entity';
+import {
+  ShoppingRequest,
+  ShoppingRequestStatus,
+} from './shopping-request.entity';
 import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
 import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
 import { Product } from 'src/products/product.entity';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
 import { DocumentsService } from 'src/documents/documents.service';
+import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
+import { mapToTrackingStatus } from './status-mapper';
+import { Country } from 'src/Countries/country.entity';
+import { InvoicesService } from 'src/invoice/invoices.service';
+import { Invoice, InvoiceStatus } from 'src/invoice/invoice.entity';
 
 @Injectable()
 export class ShoppingRequestsService {
@@ -15,26 +23,50 @@ export class ShoppingRequestsService {
     private readonly shoppingRequestRepository: Repository<ShoppingRequest>,
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(Country)
+    private readonly countryRepository: Repository<Country>,
     private readonly documentsService: DocumentsService,
+    private readonly trackingRequestsService: TrackingRequestsService,
+    private readonly invoicesService: InvoicesService,
   ) {}
 
   async createShoppingRequest(
     createShoppingRequestDto: CreateShoppingRequestDto,
   ): Promise<ShoppingRequestResponseDto> {
+    const country = await this.countryRepository.findOne({
+      where: { name: createShoppingRequestDto.country },
+    });
+
+    if (!country) {
+      throw new NotFoundException(
+        `Country ${createShoppingRequestDto.country} not found`,
+      );
+    }
+
     const shoppingRequest = this.shoppingRequestRepository.create({
       ...createShoppingRequestDto,
-      status: createShoppingRequestDto.status || 'REQUESTED',
+      country,
+      status:
+        createShoppingRequestDto.status || ShoppingRequestStatus.REQUESTED,
       items: createShoppingRequestDto.items || 0,
     });
 
     const savedShoppingRequest =
       await this.shoppingRequestRepository.save(shoppingRequest);
 
+    await this.trackingRequestsService.createTrackingRequest({
+      feature_type: FeatureType.ShoppingRequest,
+      feature_fid: savedShoppingRequest.id,
+      status: mapToTrackingStatus(savedShoppingRequest.status),
+      user: savedShoppingRequest.user_id,
+      country_id: savedShoppingRequest.country.id,
+    });
+
     return {
       id: savedShoppingRequest.id,
       user_id: savedShoppingRequest.user_id,
       request_code: savedShoppingRequest.request_code,
-      country: savedShoppingRequest.country,
+      country: savedShoppingRequest.country.name,
       items: savedShoppingRequest.items,
       remarks: savedShoppingRequest.remarks,
       status: savedShoppingRequest.status,
@@ -57,6 +89,12 @@ export class ShoppingRequestsService {
           request.id,
         );
 
+        const trackingRequests =
+          await this.trackingRequestsService.getTrackingRequestsByFeature(
+            FeatureType.ShoppingRequest,
+            request.id,
+          );
+
         return {
           id: request.id,
           user_id: request.user_id,
@@ -71,11 +109,12 @@ export class ShoppingRequestsService {
               }
             : undefined,
           request_code: request.request_code,
-          country: request.country,
+          country: request.country.name,
           items: request.items,
           remarks: request.remarks,
           status: request.status,
           payment_slips: slips,
+          tracking_requests: trackingRequests,
           created_at: request.created_at,
           updated_at: request.updated_at,
         };
@@ -98,15 +137,22 @@ export class ShoppingRequestsService {
           request.id,
         );
 
+        const trackingRequests =
+          await this.trackingRequestsService.getTrackingRequestsByFeature(
+            FeatureType.ShoppingRequest,
+            request.id,
+          );
+
         return {
           id: request.id,
           user_id: request.user_id,
           request_code: request.request_code,
-          country: request.country,
+          country: request.country.name,
           items: request.items,
           remarks: request.remarks,
           status: request.status,
           payment_slips: slips,
+          tracking_requests: trackingRequests,
           created_at: request.created_at,
           updated_at: request.updated_at,
         };
@@ -137,6 +183,16 @@ export class ShoppingRequestsService {
       shoppingRequest.id,
     );
 
+    const trackingRequests =
+      await this.trackingRequestsService.getTrackingRequestsByFeature(
+        FeatureType.ShoppingRequest,
+        shoppingRequest.id,
+      );
+
+    const invoice = await this.invoicesService.getInvoiceByShoppingRequestId(
+      shoppingRequest.id,
+    );
+
     return {
       id: shoppingRequest.id,
       user_id: shoppingRequest.user_id,
@@ -151,12 +207,26 @@ export class ShoppingRequestsService {
           }
         : undefined,
       request_code: shoppingRequest.request_code,
-      country: shoppingRequest.country,
+      country: shoppingRequest.country.name,
       items: shoppingRequest.items,
       shopping_request_products: shoppingRequestProducts,
       remarks: shoppingRequest.remarks,
       status: shoppingRequest.status,
       payment_slips: slips,
+      tracking_requests: trackingRequests,
+      invoice: invoice
+        ? {
+            id: invoice.id,
+            invoice_no: invoice.invoice_no,
+            amount: invoice.amount,
+            gst: invoice.gst,
+            total: invoice.total,
+            status: invoice.status,
+            products: invoice.products,
+            created_at: invoice.created_at,
+            updated_at: invoice.updated_at,
+          }
+        : undefined,
       created_at: shoppingRequest.created_at,
       updated_at: shoppingRequest.updated_at,
     };
@@ -164,7 +234,7 @@ export class ShoppingRequestsService {
 
   async updateStatus(
     id: string,
-    status: string,
+    status: ShoppingRequestStatus,
   ): Promise<ShoppingRequestResponseDto> {
     const shoppingRequest = await this.shoppingRequestRepository.findOne({
       where: { id },
@@ -174,24 +244,79 @@ export class ShoppingRequestsService {
       throw new NotFoundException(`Shopping request with id ${id} not found`);
     }
 
-    shoppingRequest.status = status;
+    const normalizedStatus =
+      status.toUpperCase() as keyof typeof ShoppingRequestStatus;
+
+    if (!(normalizedStatus in ShoppingRequestStatus)) {
+      throw new Error(`Invalid status: ${status}`);
+    }
+
+    let invoice: Invoice | null = null;
+    if (normalizedStatus === 'QUOTATION_READY') {
+      invoice = await this.invoicesService.createInvoice(shoppingRequest);
+    }
+
+    shoppingRequest.status = ShoppingRequestStatus[normalizedStatus];
+
     const updatedShoppingRequest =
       await this.shoppingRequestRepository.save(shoppingRequest);
+
+    if (normalizedStatus === 'PAYMENT_APPROVED') {
+      invoice = await this.invoicesService.getInvoiceByShoppingRequestId(id);
+      if (invoice) {
+        invoice.status = InvoiceStatus.PAID;
+        await this.invoicesService.updateInvoice(invoice);
+      }
+    }
+
+    await this.trackingRequestsService.createTrackingRequest({
+      feature_type: FeatureType.ShoppingRequest,
+      feature_fid: id,
+      status: mapToTrackingStatus(updatedShoppingRequest.status),
+      user: updatedShoppingRequest.user_id,
+      country_id: updatedShoppingRequest.country.id,
+    });
 
     const slips = await this.documentsService.findByFeature(
       FeatureType.ShoppingRequest,
       updatedShoppingRequest.id,
     );
 
+    const trackingRequests =
+      await this.trackingRequestsService.getTrackingRequestsByFeature(
+        FeatureType.ShoppingRequest,
+        updatedShoppingRequest.id,
+      );
+
+    if (!invoice) {
+      invoice = await this.invoicesService.getInvoiceByShoppingRequestId(
+        updatedShoppingRequest.id,
+      );
+    }
+
     return {
       id: updatedShoppingRequest.id,
       user_id: updatedShoppingRequest.user_id,
       request_code: updatedShoppingRequest.request_code,
-      country: updatedShoppingRequest.country,
+      country: updatedShoppingRequest.country.name,
       items: updatedShoppingRequest.items,
       remarks: updatedShoppingRequest.remarks,
       status: updatedShoppingRequest.status,
       payment_slips: slips,
+      tracking_requests: trackingRequests,
+      invoice: invoice
+        ? {
+            id: invoice.id,
+            invoice_no: invoice.invoice_no,
+            amount: invoice.amount,
+            gst: invoice.gst,
+            total: invoice.total,
+            status: invoice.status,
+            products: invoice.products,
+            created_at: invoice.created_at,
+            updated_at: invoice.updated_at,
+          }
+        : undefined,
       created_at: updatedShoppingRequest.created_at,
       updated_at: updatedShoppingRequest.updated_at,
     };
@@ -229,5 +354,21 @@ export class ShoppingRequestsService {
         })
       ).request_code,
     );
+  }
+
+  async deleteShoppingRequest(id: string): Promise<{ message: string }> {
+    const shoppingRequest = await this.shoppingRequestRepository.findOne({
+      where: { id },
+    });
+
+    if (!shoppingRequest) {
+      throw new NotFoundException(`Shopping request with id ${id} not found`);
+    }
+
+    await this.productRepository.delete({ shopping_request_id: id });
+
+    await this.shoppingRequestRepository.delete(id);
+
+    return { message: 'Shopping request deleted successfully' };
   }
 }

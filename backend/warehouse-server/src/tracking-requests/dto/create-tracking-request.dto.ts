@@ -2,8 +2,6 @@ import { IsEnum, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { FeatureType, TrackingStatus } from '../tracking-request.entity';
 import { Role } from 'src/users/user.entity';
-import { Country } from 'src/Countries/country.entity';
-import { JoinColumn, ManyToOne } from 'typeorm';
 
 export class CreateTrackingRequestDto {
   @ApiProperty({
@@ -28,9 +26,8 @@ export class CreateTrackingRequestDto {
     description: 'Country ID that is being tracked',
     example: '123e4567-e89b-12d3-a456-426614174002',
   })
-  @ManyToOne(() => Country, { eager: true })
-  @JoinColumn({ name: 'country_id' })
-  country_id: Country;
+  @IsUUID()
+  country_id: string;
 
   @ApiProperty({
     description: 'Current status of the tracking request',

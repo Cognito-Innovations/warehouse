@@ -132,4 +132,8 @@ export class UsersService {
     }
     return user;
   }
+
+  async findCountryByName(name: string): Promise<Country | null> {
+    return this.countryRepository.findOne({ where: { name } });
+  }
 }

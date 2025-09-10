@@ -3,10 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { ShoppingBag as ShoppingBagIcon, History as HistoryIcon, Search as SearchIcon, Add as AddIcon, Delete as DeleteIcon, HourglassEmpty as HourglassIcon } from '@mui/icons-material';
 import HowItWorksModal from '../../components/Modals/HowItWorksModal/HowItWorksModal';
-import { getShoppingRequestsByUser } from '@/lib/api.service';
+import { deleteShoppingRequest, getShoppingRequestsByUser } from '@/lib/api.service';
 import { useSession } from 'next-auth/react';
 import { formatDateTime } from '@/lib/utils';
 import Link from 'next/link';
+import { CircularProgress } from '@mui/material';
+import { toast } from 'sonner';
+import ConfirmDialog from '@/components/Modals/ConfirmDialog';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -29,15 +32,21 @@ export default function AssistedShopping() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isHowItWorksModalOpen, setIsHowItWorksModalOpen] = useState(false);
   const [shoppingRequests, setShoppingRequests] = useState<any[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const user_id = (session?.user as any)?.user_id;
 
   const fetchRequests = async () => {
+    setIsLoading(true);
     try {
       const data = await getShoppingRequestsByUser(user_id);
       setShoppingRequests(data);
     } catch (error) {
       console.error("Error fetching shopping requests:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -55,9 +64,23 @@ export default function AssistedShopping() {
     setIsHowItWorksModalOpen(true);
   };
 
-  const handleDeleteRequest = (requestId: string) => {
-    console.log('Delete request:', requestId);
-    // Handle delete request logic here
+  const handleDeleteRequest = async (requestId: string) => {
+    if (!deleteId) return;
+
+    try {
+      await deleteShoppingRequest(requestId);
+      setShoppingRequests((prev) => prev.filter((r) => r.id !== requestId));
+      toast.success("Shopping request deleted successfully!");
+    } catch (error) {
+      console.error('Error deleting shopping request:', error);
+      toast.error("Failed to delete request", {
+        description:
+          error instanceof Error ? error.message : "Please try again later.",
+      });
+    } finally {
+      setConfirmOpen(false);
+      setDeleteId(null);
+    }
   };
 
   const tabs = [
@@ -104,7 +127,11 @@ export default function AssistedShopping() {
                 <span className={`text-sm font-medium ${request.statusColor}`}>{request.status}</span>
               </div>
               <button
-                onClick={() => handleDeleteRequest(request.id)}
+                onClick={(e) => {
+                  e.preventDefault(); 
+                  setDeleteId(request.id);
+                  setConfirmOpen(true);
+                }}
                 className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <DeleteIcon className="w-4 h-4" />
@@ -168,25 +195,29 @@ export default function AssistedShopping() {
               </div>
 
               {/* Shopping Requests List */}
-              {shoppingRequests.length > 0 ? (
-                <>
-                  {renderShoppingRequests()}
-                  
-                  {/* Pagination */}
-                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-                    <p className="text-sm text-gray-600">
-                      Showing 1 to {shoppingRequests.length} of {shoppingRequests.length} Requests
-                    </p>
-                    <div className="flex space-x-2">
-                      <button className="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded disabled:opacity-50" disabled>
-                        Previous
-                      </button>
-                      <button className="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded disabled:opacity-50" disabled>
-                        Next
-                      </button>
-                    </div>
+              {isLoading ? (
+                  <div className="flex justify-center items-center min-h-screen bg-gray-50">
+                    <CircularProgress />
                   </div>
-                </>
+                ) : shoppingRequests.length > 0 ? (
+                  <>
+                    {renderShoppingRequests()}
+                    
+                    {/* Pagination */}
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                      <p className="text-sm text-gray-600">
+                        Showing 1 to {shoppingRequests.length} of {shoppingRequests.length} Requests
+                      </p>
+                      <div className="flex space-x-2">
+                        <button className="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded disabled:opacity-50" disabled>
+                          Previous
+                        </button>
+                        <button className="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded disabled:opacity-50" disabled>
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  </>
               ) : (
                 renderEmptyState(<ShoppingBagIcon />, 'No Shopping Requests Available')
               )}
@@ -203,6 +234,16 @@ export default function AssistedShopping() {
         <HowItWorksModal
           isOpen={isHowItWorksModalOpen}
           onClose={() => setIsHowItWorksModalOpen(false)}
+        />
+
+        <ConfirmDialog 
+          open={confirmOpen}
+          title="Delete Request"
+          message="Are you sure you want to delete this shopping request? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={() => deleteId && handleDeleteRequest(deleteId)}
+          onClose={() => setConfirmOpen(false)}
         />
       </div>
     </div>
