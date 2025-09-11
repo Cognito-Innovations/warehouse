@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Edit as EditIcon } from '@mui/icons-material';
-import { Box, Typography, Grid, Card, CardContent, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
+import { Box, Typography, Grid, Card, CardContent, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, CircularProgress } from '@mui/material';
+import { getRacks, updatePackage } from '../../services/api.services';
+import type { Rack } from '../../types';
 
 interface PackageDetailsSectionProps {
   packageData: {
+    actual_id: string;
     trackingNo: string;
     weight: string;
     volumetricWeight: string;
@@ -23,16 +26,41 @@ interface PackageDetailsSectionProps {
       height?: number;
     }[];
   };
+  onRefresh: () => void;
 }
 
-const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageData }) => {
+const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageData, onRefresh }) => {
   const [openModal, setOpenModal] = useState(false);
+  const [racks, setRacks] = useState<Rack[]>([]);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    trackingNo: packageData.trackingNo,
-    weight: packageData.weight,
-    volumetricWeight: packageData.volumetricWeight,
-    dangerousGood: packageData.dangerousGood,
+    trackingNo: packageData.trackingNo || "",
+    weight: packageData.weight || "",
+    volumetricWeight: packageData.volumetricWeight || "",
+    dangerousGood: packageData.dangerousGood === "Yes" ? "true" : "false",
+    rackSlot: "",
   });
+
+  const fetchRacks = async () => {
+    try {
+      const data = await getRacks();
+      setRacks(data);
+    
+      const matchedRack = data.find((r) => r.label === packageData.rack);
+      setFormData((prev) => ({
+        ...prev,
+        rackSlot: matchedRack?.id || '',
+      }));
+    } catch (err) {
+      console.error("Failed to fetch racks", err);
+    }
+  };
+
+  useEffect(() => {
+    if (openModal) {
+      fetchRacks();
+    }
+  }, [openModal, packageData.rack]);
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -49,14 +77,29 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
     }));
   };
 
-  const handleSave = () => {
-    console.log('Saving package data:', formData);
-    handleCloseModal();
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload = {
+        tracking_no: formData.trackingNo,
+        weight: formData.weight,
+        volumetric_weight: formData.volumetricWeight,
+        dangerous_good: formData.dangerousGood === "true",
+        rack_slot: formData.rackSlot,
+      };
+
+      await updatePackage(packageData.actual_id, payload);
+      onRefresh();
+      handleCloseModal();
+    } catch (err) {
+      console.error("Failed to update package", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <>
-
       <Card sx={{ mb: 3, px: 1 }}>
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -122,7 +165,7 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
           </Grid>
 
           {/* Status Indicator */}
-           {packageData.status && (
+           {packageData.rack && (
              <Box sx={{ bgcolor: '#f0fdf4', p: 2, borderRadius: 2, border: '1px solid #84cc16', width: "220px" }}>
                <Typography variant="body2" sx={{ fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
                  {packageData.rack} →
@@ -244,13 +287,31 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
+                  select
                   fullWidth
                   label="Dangerous Good"
                   value={formData.dangerousGood}
-                  onChange={handleInputChange('dangerousGood')}
-                  variant="outlined"
-                  sx={{ mb: 2 }}
-                />
+                  onChange={handleInputChange("dangerousGood")}
+                  SelectProps={{ native: true }}
+                >
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Rack Slot"
+                  value={formData.rackSlot}
+                  onChange={handleInputChange('rackSlot')}
+                >
+                  {racks.map((rack) => (
+                    <MenuItem key={rack.id} value={rack.id}>
+                      {rack.label} ({rack.count} pkgs)
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
             </Grid>
           </Box>
@@ -262,13 +323,17 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
           <Button
             onClick={handleSave}
             variant="contained"
+            disabled={saving}
             sx={{
               bgcolor: '#3b82f6',
               '&:hover': { bgcolor: '#2563eb' },
-              textTransform: 'none'
+              textTransform: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
             }}
           >
-            Save Changes
+            {saving ? <CircularProgress size={20} sx={{ color: 'white' }} /> : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -11,36 +11,23 @@ import {
   Typography,
 } from "@mui/material";
 import { InvoiceRow, type InvoiceDetails } from "./InvoiceRow";
-import { updateShoppingRequestStatus } from "../../../services/api.services";
-import { useState } from "react";
 
 export default function InvoiceTable({
-  id,
   invoice,
   payment_slips,
   status,
+  isApprovingPayment,
+  onApprovePayment,
   onStatusUpdated,
 }: {
   id: string;
   invoice: InvoiceDetails;
   payment_slips: string[];
   status: string;
+  isApprovingPayment: boolean;
+  onApprovePayment: () => void;
   onStatusUpdated: () => void;
 }) {
-  const [approving, setApproving] = useState(false);
-
-  const handleApprove = async () => {
-    try {
-      setApproving(true);
-      await updateShoppingRequestStatus(id, "PAYMENT_APPROVED");
-      onStatusUpdated();
-    } catch (err) {
-      console.error("Error approving payment:", err);
-    } finally {
-      setApproving(false);
-    }
-  };
-
   return (
     <Box>
       <Box
@@ -53,14 +40,14 @@ export default function InvoiceTable({
           Invoices
         </Typography>
 
-        {status === "PAYMENT_PENDING" && (
+        {status === "Payment Pending" && (
           <Button
             variant="contained"
             size="small"
-            onClick={handleApprove}
-            disabled={approving}
+            onClick={onApprovePayment}
+            disabled={isApprovingPayment}
           >
-            {approving ? "Approving..." : "Approve Payment"}
+            {isApprovingPayment ? "Approving..." : "Approve Payment"}
           </Button>
         )}
       </Box>

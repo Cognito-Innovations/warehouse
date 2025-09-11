@@ -16,13 +16,14 @@ import {
   CircularProgress,
 } from '@mui/material';
 import {
-  Info as InfoIcon,
+  VisibilityOutlined as ViewIcon,
   Print as PrintIcon,
   MoreVert as MoreIcon,
 } from '@mui/icons-material';
 import { getPackage } from '../../services/api.services';
 import { getStatusColor } from '../../data/packages';
 import PackageFilter from './PackageFilter';
+import { formatDateTime } from '../../utils/formatDateTime';
 
 interface PackagesTableProps {
   selectedStatus?: string | null;
@@ -105,22 +106,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     setPage(1); // Reset to first page when filters change
   }, [packages, selectedStatus, searchValue]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return {
-      date: date.toLocaleDateString('en-GB', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: '2-digit' 
-      }),
-      time: date.toLocaleTimeString([], { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      })
-    };
-  };
-
   const paginatedData = filteredPackages.slice(
     (page - 1) * rowsPerPage,
     page * rowsPerPage
@@ -160,7 +145,10 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
             </TableHead>
             <TableBody>
               {paginatedData.map((row, index) => {
-                const formattedDate = formatDate(row.created_at);
+                const formattedDate = formatDateTime(row.created_at);
+                if (!formatDateTime) return null;
+
+                const [date, time] = formattedDate.split(", ");
                 return (
                   <TableRow key={row.id} sx={{ '&:hover': { bgcolor: '#f9fafb' } }}>
                     <TableCell>
@@ -201,10 +189,10 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                     <TableCell>
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                          {formattedDate.date}
+                          {date}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {formattedDate.time}
+                          {time}
                         </Typography>
                       </Box>
                     </TableCell>
@@ -232,7 +220,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                           sx={{ bgcolor: '#6366f1', color: 'white' }}
                           onClick={() => handleInfoClick(row)}
                         >
-                          <InfoIcon fontSize="small" />
+                          <ViewIcon fontSize="small" />
                         </IconButton>
                         <IconButton size="small" sx={{ bgcolor: '#3b82f6', color: 'white' }}>
                           <PrintIcon fontSize="small" />

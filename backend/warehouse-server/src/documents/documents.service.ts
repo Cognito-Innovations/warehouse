@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { Document } from './documents.entity';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { DocumentResponseDto } from './dto/document-response.dto';
@@ -49,12 +49,19 @@ export class DocumentsService {
   async findByFeature(
     featureType: string,
     featureFid: string,
+    category?: string,
   ): Promise<DocumentResponseDto[]> {
+    const whereCondition: FindOptionsWhere<Document> = {
+      feature_type: featureType as FeatureType,
+      feature_fid: featureFid,
+    };
+
+    if (category) {
+      whereCondition.category = category;
+    }
+
     const docs = await this.documentRepository.find({
-      where: {
-        feature_type: featureType as FeatureType,
-        feature_fid: featureFid,
-      },
+      where: whereCondition,
       order: { created_at: 'DESC' },
       relations: ['uploaded_by'],
     });

@@ -35,7 +35,7 @@ export class Invoice extends BaseTimestampEntity {
   @Column({ type: 'enum', enum: InvoiceStatus, default: InvoiceStatus.UNPAID })
   status: InvoiceStatus;
 
-  @ManyToOne(() => ShoppingRequest, { eager: true })
+  @ManyToOne(() => ShoppingRequest, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'shopping_request_id' })
   shopping_request: ShoppingRequest;
 

@@ -12,7 +12,6 @@ import {
 } from '@mui/icons-material';
 import { getRequestStatusColor } from '../../data/shoppingRequests';
 import { useNavigate } from 'react-router-dom';
-import { formatDateTime } from '../../utils/formatDateTime';
 
 interface RequestTableBodyProps {
   rows: any[];

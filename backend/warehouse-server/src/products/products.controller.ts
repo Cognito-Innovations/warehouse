@@ -79,7 +79,11 @@ export class ProductsController {
   })
   async updateProduct(
     @Param('id') id: string,
-    @Body() body: { unit_price?: number; available?: boolean },
+    @Body() body: {
+      unit_price?: number;
+      available?: boolean;
+      currency?: string;
+    },
   ): Promise<ProductResponseDto> {
     return this.service.updateProduct(id, body);
   }

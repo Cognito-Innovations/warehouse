@@ -18,7 +18,7 @@ export class PackageCharge extends BaseTimestampEntity {
   @Column()
   package_id: string;
 
-  @ManyToOne(() => Package, (pkg) => pkg.charges)
+  @ManyToOne(() => Package, (pkg) => pkg.charges, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'package_id' })
   package: Package;
 

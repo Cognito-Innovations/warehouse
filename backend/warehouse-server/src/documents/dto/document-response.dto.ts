@@ -2,6 +2,13 @@ import { ApiProperty } from '@nestjs/swagger';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
 import { User } from 'src/users/user.entity';
 
+export class DocumentSummaryDto {
+  id: string;
+  document_name: string;
+  document_url: string;
+  category?: string;
+}
+
 export class DocumentResponseDto {
   @ApiProperty()
   id: string;

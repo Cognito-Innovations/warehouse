@@ -1,9 +1,12 @@
 import { Country } from 'src/Countries/country.entity';
+import { DocumentSummaryDto } from 'src/documents/dto/document-response.dto';
 
 export class PackageResponseDto {
   id: string;
   tracking_no: string;
   status: string;
+  shipment_id?: string | null;
+  shipment_uuid?: string | null;
   customer?: {
     id: string;
     email: string;
@@ -22,6 +25,7 @@ export class PackageResponseDto {
     count: number;
     color: string;
   };
+  documents?: DocumentSummaryDto[];
   slot_info?: string;
   warehouse_location?: string;
   total_weight?: number | null;

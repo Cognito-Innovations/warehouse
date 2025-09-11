@@ -1,17 +1,19 @@
-import { Box, TableCell, TableRow, Checkbox, Link, Typography, TextField, Button, Chip, CircularProgress } from '@mui/material';
+import { Box, TableCell, TableRow, Checkbox, Link, Typography, TextField, Button, Chip, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import { useEffect, useState } from 'react';
 import DropdownMenu from '../../common/DropdownMenu';
 import Modal from '../../common/Modal';
-import { updateProduct } from '../../../services/api.services'
+import { getCountries } from '../../../services/api.services'
 
-const ItemsTableRow = ({ item, index }: { item: any, index: number }) => {
+const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, onUpdate: (updates: any) => void }) => {
   const [open, setOpen] = useState(false);
   const [unitPrice, setUnitPrice] = useState(item.unit_price || 0);
   const [available, setAvailable] = useState(item.available || false);
   const [checked, setChecked] = useState(false);
   const [error, setError] = useState("");
   const [remarkOpen, setRemarkOpen] = useState(false);
+  const [currency, setCurrency] = useState(item.currency || "");
+  const [countries, setCountries] = useState<{ id: string; code: string; name: string }[]>([]);
   const [loading, setLoading] = useState(false); 
 
   useEffect(() => {
@@ -20,24 +22,23 @@ const ItemsTableRow = ({ item, index }: { item: any, index: number }) => {
     }
   }, [item.unit_price]);
 
+  const fetchCountries = async () => {
+    try {
+      const data = await getCountries();
+      setCountries(data);
+    } catch (err) {
+      console.error("Failed to load countries", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCountries();
+  }, []);
+
   const handleEditClick = () => setOpen(true);
 
   const handleSave = async () => {
-    if (!unitPrice || unitPrice <= 0) {
-      setError("Unit Price is mandatory and must be greater than 0");
-      return;
-    }
-    setError("");
-
-    try {
-      setLoading(true);
-      await updateProduct(item.id, unitPrice, available);
-      setOpen(false);
-    } catch (err) {
-      console.error("Failed to update unit price:", err);
-    } finally {
-      setLoading(false);
-    }
+    onUpdate({ unit_price: unitPrice, currency, available });
   };
 
   const total = item.quantity * unitPrice;
@@ -131,6 +132,47 @@ const ItemsTableRow = ({ item, index }: { item: any, index: number }) => {
             maxLength: 9
           }}
         />
+        <FormControl fullWidth size="small">
+          <InputLabel id="currency-label">Select Currency</InputLabel>
+          <Select
+            labelId="currency-label"
+            value={currency || ""}
+            onChange={(e) => setCurrency(e.target.value)}
+            label="Select Currency"
+            MenuProps={{
+              disablePortal: true,
+              PaperProps: {
+                sx: {
+                  maxHeight: 100,
+                  '&::-webkit-scrollbar': {
+                    width: 6,
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: '#888',
+                    borderRadius: 8,
+                  },
+                  '&::-webkit-scrollbar-thumb:hover': {
+                    backgroundColor: '#555',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: '#f1f1f1',
+                    borderRadius: 8,
+                  },
+                },
+              },
+            }}
+          >
+            <MenuItem value="">
+              <em>Select Currency</em>
+            </MenuItem>
+            {countries.map((c) => (
+              <MenuItem key={c.id} value={c.code}>
+                {c.code} - {c.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Checkbox
             checked={available}

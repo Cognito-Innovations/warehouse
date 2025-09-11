@@ -27,6 +27,10 @@ export class ProductResponseDto {
   unit_price?: number;
 
   @IsOptional()
+  @IsString()
+  currency?: string | null; 
+
+  @IsOptional()
   @IsNumber()
   quantity: number;
 

@@ -8,7 +8,6 @@ import {
   Typography,
   InputAdornment,
   IconButton,
-  Alert,
   CircularProgress,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
@@ -231,27 +230,6 @@ const Login: React.FC = () => {
               'LOGIN'
             )}
           </Button>
-
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Don't have an account?{' '}
-              <Button
-                variant="text"
-                onClick={() => navigate('/register')}
-                sx={{
-                  color: '#8b5cf6',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    textDecoration: 'underline',
-                  },
-                }}
-              >
-                Sign Up
-              </Button>
-            </Typography>
-          </Box>
         </Box>
       </Card>
     </Box>

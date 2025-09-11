@@ -144,6 +144,11 @@ export const getPackagesByUserAndStatus = async (userId: string, status: string)
   return res.data;
 };
 
+export const getPackagesByShipmentId = async (shipmentId: string) => {
+  const res = await authenticatedApi.get(`/packages/shipments/id/${shipmentId}`);
+  return res.data;
+};
+
 export const updatePackageStatus = async (packageId: string, status: string) => {
   const session = await getSession();
   const userId = (session?.user as any)?.user_id;
@@ -163,6 +168,24 @@ export const updatePackageStatus = async (packageId: string, status: string) => 
 export const getShipmentsByUser = async (userId: string) => {
   const res = await authenticatedApi.get(`/packages/user/${userId}/status/Request Ship`);
   return res.data;
+};
+
+export const addPackagePaymentSlip = async (
+  shipmentUuid: string,
+  data: {
+    url: string;
+    original_filename: string;
+    mime_type?: string;
+    file_size?: number;
+  }
+) => {
+  const res = await authenticatedApi.patch(`/packages/shipments/${shipmentUuid}/slips`, { data });
+  return res.data;
+};
+
+export const getPaymentSlips = async (shipmentUuid: string): Promise<any[]> => {
+  const response = await authenticatedApi.get(`/packages/shipments/${shipmentUuid}/slips`);
+  return response.data;
 };
 
 // --- Other Functions ---

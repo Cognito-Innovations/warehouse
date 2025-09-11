@@ -10,6 +10,10 @@ import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
 import { User } from 'src/users/user.entity';
 import { Country } from 'src/Countries/country.entity';
+import { UpdatePackageDto } from '../dto/update-package.dto';
+import { Rack } from 'src/racks/rack.entity';
+import { DocumentsService } from 'src/documents/documents.service';
+import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
 
 @Injectable()
 export class PackagesService {
@@ -18,6 +22,11 @@ export class PackagesService {
     private readonly packageRepository: Repository<Package>,
     @InjectRepository(PackageMeasurement)
     private readonly packageMeasurementRepository: Repository<PackageMeasurement>,
+    @InjectRepository(Rack)
+    private readonly rackRepository: Repository<Rack>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly documentsService: DocumentsService,
   ) {}
 
   private mapPackageToResponseDto(pkg: Package): PackageResponseDto {
@@ -25,6 +34,8 @@ export class PackagesService {
       id: pkg.id,
       tracking_no: pkg.tracking_no,
       status: pkg.status,
+      shipment_id: pkg.shipment_id,
+      shipment_uuid: pkg.shipment_uuid,
       customer: pkg.user
         ? {
             id: pkg.user.id,
@@ -49,6 +60,13 @@ export class PackagesService {
             color: pkg.rack_slot.color,
           }
         : undefined,
+      documents:
+        pkg.documents?.map((doc) => ({
+          id: doc.id,
+          document_name: doc.document_name,
+          document_url: doc.document_url,
+          category: doc.category,
+        })) || [],
       slot_info: pkg.slot_info,
       warehouse_location: pkg.warehouse_location,
       total_weight: pkg.total_weight,
@@ -370,6 +388,16 @@ export class PackagesService {
     packageEntity.status = status;
     packageEntity.updated_by = updated_by as unknown as User;
 
+    // Generate shipment_id if "Request Ship"
+    if (status === 'Request Ship') {
+      if (!packageEntity.shipment_id) {
+        packageEntity.shipment_id = await this.generateShipmentId();
+      }
+      if (!packageEntity.shipment_uuid) {
+        packageEntity.shipment_uuid = crypto.randomUUID();
+      }
+    }
+
     const updatedPackage = await this.packageRepository.save(packageEntity);
 
     return this.mapPackageToResponseDto(updatedPackage);
@@ -453,4 +481,176 @@ export class PackagesService {
   //   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
   //   return `${prefix}${timestamp}${random}`;
   // }
+
+  async updatePackageInfo(
+    id: string,
+    dto: UpdatePackageDto,
+    updated_by: string,
+  ) {
+    const pkg = await this.packageRepository.findOne({ where: { id } });
+    if (!pkg) throw new NotFoundException('Package not found');
+    if (dto.tracking_no) pkg.tracking_no = dto.tracking_no;
+    if (dto.weight) pkg.total_weight = parseFloat(dto.weight);
+    if (dto.volumetric_weight) 
+      pkg.total_volumetric_weight = parseFloat(dto.volumetric_weight);
+    if (typeof dto.dangerous_good !== 'undefined') {
+      pkg.dangerous_good = dto.dangerous_good;
+    };
+    if (dto.rack_slot) {
+      const rack = await this.rackRepository.findOne({
+        where: { id: dto.rack_slot },
+      });
+      if (!rack) throw new NotFoundException('Rack not found');
+      pkg.rack_slot = rack;
+    }
+    const user = await this.userRepository.findOne({
+      where: { id: updated_by },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    pkg.updated_by = user;
+    return await this.packageRepository.save(pkg);
+  }
+
+  private async generateShipmentId(): Promise<string> {
+    const prefix = 'SHP';
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const shipmentId = `${prefix}${timestamp}${random}`;
+    
+    const existing = await this.packageRepository.findOne({
+      where: { shipment_id: shipmentId },
+    });
+
+    if (existing) {
+      return this.generateShipmentId();
+    }
+
+    return shipmentId;
+  }
+
+  async addShipmentDocument(
+    shipment_uuid: string,
+    dto: {
+      url: string;
+      original_filename: string;
+      document_type?: string;
+      file_size?: number;
+      mime_type?: string;
+    },
+    userId: string,
+  ) {
+    const pkg = await this.packageRepository.findOne({ where: { shipment_uuid } });
+    if (!pkg) {
+      throw new NotFoundException(`----Package not found with shipment_uuid: ${shipment_uuid}`);
+    }
+
+    await this.documentsService.create({
+      uploaded_by: userId,
+      feature_type: FeatureType.Package,
+      feature_fid: shipment_uuid,
+      document_name: 'Shipment Document',
+      original_filename: dto.original_filename,
+      document_url: dto.url,
+      document_type: dto.document_type || 'photo',
+      file_size: dto.file_size,
+      mime_type: dto.mime_type,
+      category: 'SHIPMENT',
+      is_required: false,
+    });
+
+    return this.documentsService.findByFeature(FeatureType.Package, shipment_uuid);
+  }
+
+  async getPackagesByShipmentId(shipmentId: string): Promise<PackageResponseDto[]> {
+    const packages = await this.packageRepository.find({
+      where: { shipment_id: shipmentId },
+      relations: ['measurements', 'items', 'documents', 'charges', 'action_logs'],
+      order: { created_at: 'DESC' },
+    });
+
+    if (!packages || packages.length === 0) {
+      throw new NotFoundException(`No packages found for shipment_id: ${shipmentId}`);
+    }
+
+    return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
+  }
+
+  async getPackagesByShipmentUuid(shipmentUuid: string): Promise<PackageResponseDto[]> {
+    const packages = await this.packageRepository.find({
+      where: { shipment_uuid: shipmentUuid },
+      relations: ['measurements', 'items', 'documents', 'charges', 'action_logs'],
+      order: { created_at: 'DESC' },
+    });
+
+    if (!packages || packages.length === 0) {
+      throw new NotFoundException(`No packages found for shipment_uuid: ${shipmentUuid}`);
+    }
+
+    return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
+  }
+
+  async addPaymentSlip(
+    shipment_uuid: string,
+    dto: {
+      url: string;
+      original_filename: string;
+      document_type?: string;
+      file_size?: number;
+      mime_type?: string;
+    },
+    userId: string,
+  ): Promise<PackageResponseDto> {
+    const pkg = await this.packageRepository.findOne({
+      where: { shipment_uuid },
+    });
+
+    if (!pkg) {
+      throw new NotFoundException(`Package not found with shipment_uuid: ${shipment_uuid}`);
+    }
+
+    await this.documentsService.create({
+      uploaded_by: userId,
+      feature_type: FeatureType.Package,
+      feature_fid: shipment_uuid,
+      document_name: 'Payment Slip',
+      original_filename: dto.original_filename,
+      document_url: dto.url,
+      document_type: dto.document_type || 'slip',
+      file_size: dto.file_size,
+      mime_type: dto.mime_type,
+      category: 'SHIPMENT PAYMENT',
+      is_required: false,
+    });
+  
+    const packageWithRelations = await this.packageRepository.findOne({
+      where: { shipment_uuid },
+      relations: ['measurements', 'items', 'documents', 'charges', 'action_logs'],
+    });
+
+    if (!packageWithRelations) {
+      throw new NotFoundException(`Package not found after adding slip`);
+    }
+
+    return this.mapPackageToResponseDto(packageWithRelations);
+  }
+
+  async findByTrackingNumberAndStatus(
+    trackingNumber: string,
+    status: string,
+  ): Promise<PackageResponseDto> {
+    const pkg = await this.packageRepository.findOne({
+      where: {
+        tracking_no: trackingNumber,
+        status: status,
+      },
+    });
+
+    if (!pkg) {
+      throw new NotFoundException(
+        `Package with tracking number ${trackingNumber} and status ${status} not found.`,
+      );
+    }
+    return this.mapPackageToResponseDto(pkg);
+  }
+
 }

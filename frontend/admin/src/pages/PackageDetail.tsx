@@ -10,7 +10,12 @@ import PackageItemsSection from '../components/PackageDetail/PackageItemsSection
 import PackageDetailsSection from '../components/PackageDetail/PackageDetailsSection';
 import PackageChargesSection from '../components/PackageDetail/PackageChargesSection';
 import PhotosDocumentsSection from '../components/PackageDetail/PhotosDocumentsSection';
-import { getPackageById, updatePackageStatus, addPackageItem, updatePackageItem, deletePackageItem, bulkUploadPackageItems, uploadPackageDocuments, getPackageDocuments, deletePackageDocument } from '../services/api.services';
+import { getPackageById, updatePackageStatus, addPackageItem, updatePackageItem, deletePackageItem, bulkUploadPackageItems, uploadPackageDocuments, getPackageDocuments, deletePackageDocument, getPaymentSlips } from '../services/api.services';
+import { formatDateTime } from '../utils/formatDateTime';
+import Modal from '../components/common/Modal';
+import RaiseInvoiceModal from '../components/PackageDetail/RaiseInvoiceModal';
+import { toast } from 'sonner';
+import InvoiceTable from '../components/ShoppingRequests/Detail/InvoiceTable';
 
 const PackageDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +33,7 @@ const PackageDetail: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   // Action Log status management
-  const [actionLogStatus, setActionLogStatus] = useState<'Action Required' | 'In Review' | 'Ready to Send' | 'Request Ship' | 'Shipped' | 'Discarded' | 'Draft'>('Action Required');
+  const [actionLogStatus, setActionLogStatus] = useState<'Action Required' | 'In Review' | 'Ready To Send' | 'Request Ship' | 'Shipped' | 'Discarded' | 'Draft'>('Action Required');
   const [isAdminChecked, setIsAdminChecked] = useState(false);
 
   // State for Package Items
@@ -44,6 +49,10 @@ const PackageDetail: React.FC = () => {
 
   // State for discard confirmation
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [isApprovingPayment, setIsApprovingPayment] = useState(false);
+  const [paymentSlips, setPaymentSlips] = useState<any[]>([]);
 
   // Fetch documents
   const fetchDocuments = async () => {
@@ -63,32 +72,43 @@ const PackageDetail: React.FC = () => {
     }
   };
 
+  const fetchPaymentSlips = async (shipment_uuid: string) => {
+    try {
+      const slips = await getPaymentSlips(shipment_uuid);
+      setPaymentSlips(slips);
+    } catch (err) {
+      console.error('Failed to fetch payment slips:', err);
+      toast.error('Failed to load payment slips.');
+    }
+  };
+
+  const fetchPackageData = async () => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getPackageById(id);
+      setPackageData(data);
+      setActionLogStatus(data.status as any);
+      setPackageItems(data.items || []);
+      
+      // Initialize admin check state based on status
+      // If status is "Ready to Send", checkbox should be checked
+      setIsAdminChecked(data.status === 'Ready To Send');
+      // Load documents separately
+      await fetchPaymentSlips(data.shipment_uuid);
+      await fetchDocuments();
+    } catch (err) {
+      console.error('Failed to fetch package data:', err);
+      setError('Failed to load package details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch package data
   useEffect(() => {
-    const fetchPackageData = async () => {
-      if (!id) return;
-      
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getPackageById(id);
-        setPackageData(data);
-        setActionLogStatus(data.status as any);
-        setPackageItems(data.items || []);
-        
-        // Initialize admin check state based on status
-        // If status is "Ready to Send", checkbox should be checked
-        setIsAdminChecked(data.status === 'Ready to Send');
-        // Load documents separately
-        await fetchDocuments();
-      } catch (err) {
-        console.error('Failed to fetch package data:', err);
-        setError('Failed to load package details');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPackageData();
   }, [id]);
 
@@ -368,6 +388,25 @@ const PackageDetail: React.FC = () => {
     setIsAdminChecked(checked);
   };
 
+  const handleOpenInvoiceModal = () => setIsInvoiceModalOpen(true);
+  const handleCloseInvoiceModal = () => setIsInvoiceModalOpen(false);
+
+  const handleApprovePayment = async () => {
+    if (!id) return;
+    setIsApprovingPayment(true);
+    try {
+      await updatePackageStatus(id, 'Payment Approved');
+      const updatedData = await getPackageById(id);
+      setPackageData(updatedData);
+      toast.success('Payment approved successfully!');
+    } catch (err) {
+      console.error('Failed to approve payment:', err);
+      toast.error('Failed to approve payment.');
+    } finally {
+      setIsApprovingPayment(false);
+    }
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -395,6 +434,9 @@ const PackageDetail: React.FC = () => {
   // Transform package data for display
   const displayPackageData = {
     id: packageData.package_id || packageData.id,
+    actual_id: packageData.id,
+    shipment_id: packageData.shipment_id,
+    shipment_uuid: packageData.shipment_uuid,
     status: packageData.status,
     customer: packageData.customer?.name || 'Unknown',
     suite: packageData.customer?.suite_no || 'N/A',
@@ -407,8 +449,8 @@ const PackageDetail: React.FC = () => {
     dangerousGood: packageData.dangerous_good ? 'Yes' : 'No',
     rack: packageData.rack_slot?.label ? `${packageData.rack_slot.label}` : 'N/A',
     count: packageData.rack_slot?.count ? packageData.rack_slot.count : 0,
-    createdBy: packageData.creator?.name || 'Unknown',
-    createdAt: new Date(packageData.created_at).toLocaleString(),
+    createdBy: packageData.created_by?.name || 'Unknown',
+    createdAt: formatDateTime(Number(packageData.created_at) * 1000),
     vendor: packageData.vendor?.supplier_name || 'Unknown',
     remarks: packageData.remarks || 'No remarks',
     allowCustomerItems: packageData.allow_customer_items || false,
@@ -438,6 +480,16 @@ const PackageDetail: React.FC = () => {
     }) || []
   };
 
+  const showInvoiceTable = 
+    ['Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed']
+      .includes(packageData.status);
+
+  const hasPhotoDocuments = uploadedDocuments.length > 0;
+  const excludedStatuses = ['Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed'];
+  const showRaiseInvoiceButton = !excludedStatuses.includes(packageData.status) && hasPhotoDocuments;
+  const showApprovePaymentButton = packageData.status === 'Payment Pending';
+  const showPrintCarrierLabelButton = ['Payment Approved', 'Ready To Ship', 'Departed'].includes(packageData.status);
+
   return (
     <Box sx={{ p: 1 }}>
       <TopNavbar 
@@ -450,13 +502,29 @@ const PackageDetail: React.FC = () => {
           actionLogStatus={actionLogStatus}
           onDiscard={handleDiscard}
           onPrintLabel={handlePrintLabel}
+          onRaiseInvoice={handleOpenInvoiceModal}
+          onApprovePayment={handleApprovePayment}
+          showRaiseInvoiceButton={showRaiseInvoiceButton}
+          showApprovePaymentButton={showApprovePaymentButton}
+          showPrintCarrierLabelButton={showPrintCarrierLabelButton}
+          isApprovingPayment={isApprovingPayment}
+          onRefresh={async () => {
+            const updated = await getPackageById(displayPackageData.id);
+            setPackageData(updated);
+          }}
         />
 
       <Grid container spacing={2}>
         {/* Left Column - Main Content */}
         <Grid size={{ xs: 12, md: 8 }}>
           {/* Package Details */}
-          <PackageDetailsSection packageData={displayPackageData} />
+          <PackageDetailsSection 
+            packageData={displayPackageData}
+            onRefresh={async () => {
+              const updated = await getPackageById(displayPackageData.id);
+              setPackageData(updated);
+            }}
+          />
 
           {/* Package Items */}
           <PackageItemsSection
@@ -467,6 +535,21 @@ const PackageDetail: React.FC = () => {
             onEditItem={handleEditItem}
             onDeleteItem={handleDeleteItem}
           />
+
+          {showInvoiceTable && (
+            <InvoiceTable 
+              id={displayPackageData.actual_id}
+              invoice={packageData.invoice || {id: "temp", invoice_no: "-", amount: 0, gst: 0, total: 0, status: "UNPAID"}}
+              payment_slips={paymentSlips}
+              status={packageData.status}
+              isApprovingPayment={isApprovingPayment}
+              onApprovePayment={handleApprovePayment}
+              onStatusUpdated={async () => {
+                const updated = await getPackageById(displayPackageData.id);
+                setPackageData(updated);
+                await fetchPaymentSlips(updated.shipment_uuid);
+              }} />
+            )}
         </Grid>
 
         {/* Right Column - Sidebar */}
@@ -486,7 +569,10 @@ const PackageDetail: React.FC = () => {
           />
 
           {/* Photos / Documents */}
-          <PhotosDocumentsSection />
+          <PhotosDocumentsSection 
+            packageData={displayPackageData}
+            onUploadSuccess={fetchPackageData}
+          />
 
           {/* Package Charges */}
           <PackageChargesSection />
@@ -513,6 +599,22 @@ const PackageDetail: React.FC = () => {
         onSave={handleSaveItem}
         onInputChange={handleItemInputChange}
       />
+
+      <Modal
+        open={isInvoiceModalOpen}
+        onClose={handleCloseInvoiceModal}
+        title="Raise Invoice"
+        size="md"
+      >
+        <RaiseInvoiceModal 
+          packageData={displayPackageData} 
+          onClose={handleCloseInvoiceModal} 
+          onUpdated={async () => {
+            const updated = await getPackageById(displayPackageData.id);
+            setPackageData(updated);
+          }}
+        />
+      </Modal>
 
       {/* Discard Confirmation Dialog */}
       <Dialog

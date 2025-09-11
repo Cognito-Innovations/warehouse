@@ -18,6 +18,7 @@ export class ProductsService {
     const product = this.productRepository.create({
       ...createProductDto,
       quantity: createProductDto.quantity || 1,
+      currency: createProductDto.currency || null,
     });
 
     const savedProduct = await this.productRepository.save(product);
@@ -28,6 +29,7 @@ export class ProductsService {
       name: savedProduct.name,
       description: savedProduct.description,
       unit_price: savedProduct.unit_price,
+      currency: savedProduct.currency,
       quantity: savedProduct.quantity,
       url: savedProduct.url,
       size: savedProduct.size,
@@ -42,7 +44,7 @@ export class ProductsService {
 
   async updateProduct(
     id: string,
-    updates: { unit_price?: number; available?: boolean },
+    updates: { unit_price?: number; available?: boolean; currency?: string },
   ): Promise<ProductResponseDto> {
     const product = await this.productRepository.findOne({ where: { id } });
 
@@ -56,6 +58,9 @@ export class ProductsService {
     if (updates.available !== undefined) {
       product.available = updates.available;
     }
+    if (updates.currency !== undefined) {
+      product.currency = updates.currency;
+    }
 
     const updatedProduct = await this.productRepository.save(product);
 
@@ -65,11 +70,12 @@ export class ProductsService {
       name: updatedProduct.name,
       description: updatedProduct.description,
       unit_price: updatedProduct.unit_price,
+      currency: updatedProduct.currency,
       quantity: updatedProduct.quantity,
       url: updatedProduct.url,
       size: updatedProduct.size,
       color: updatedProduct.color,
-      variants: updatedProduct.variants,
+      variants: updatedProduct.variants,  
       if_not_available_quantity: updatedProduct.if_not_available_quantity,
       if_not_available_color: updatedProduct.if_not_available_color,
       available: updatedProduct.available,

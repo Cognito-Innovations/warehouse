@@ -4,10 +4,12 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { ShipmentExport } from './shipment-export.entity';
 import { User } from 'src/users/user.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
+import { Package } from 'src/packages/entities';
 
 @Entity('shipment_export_boxes')
 export class ShipmentExportBox extends BaseTimestampEntity {
@@ -22,6 +24,11 @@ export class ShipmentExportBox extends BaseTimestampEntity {
   @ManyToOne(() => User, { eager: true, nullable: true })
   @JoinColumn({ name: 'admin_id' })
   admin: User;
+
+  @OneToMany(() => Package, (pkg) => pkg.shipmentExportBox, {
+    cascade: false,
+  })
+  packages: Package[];
 
   @Column({ nullable: true })
   label: string;

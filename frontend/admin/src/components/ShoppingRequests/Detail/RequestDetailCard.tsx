@@ -154,13 +154,17 @@ const RequestDetailCard = ({ request, onStatusUpdated }: { request: any, onStatu
         </Grid>
       </Box>
 
-      <Divider sx={{ my: 2 }} />
-      <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-        Customer Remarks
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        {request.remarks || "No remarks"}
-      </Typography>
+      {request.remarks && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+            Customer Remarks
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {request.remarks}
+          </Typography>
+        </>
+      )}
     </Card>
   );
 };
