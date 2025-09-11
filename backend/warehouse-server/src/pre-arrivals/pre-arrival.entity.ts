@@ -1,13 +1,8 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('pre_arrival')
-export class PreArrival {
+export class PreArrival extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -31,10 +26,4 @@ export class PreArrival {
 
   @Column({ default: 'pending' })
   status: 'pending' | 'received';
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 }

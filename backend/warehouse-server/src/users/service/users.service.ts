@@ -1,16 +1,23 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../user.entity';
 import { UserDto } from '../dto/user.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { Country } from 'src/Countries/country.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Country)
+    private readonly countryRepository: Repository<Country>,
   ) {}
 
   async getAllUsers(): Promise<UserDto[]> {
@@ -37,16 +44,16 @@ export class UsersService {
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ 
-      where: { id }
+    return this.userRepository.findOne({
+      where: { id },
     });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ 
-      where: { 
-        email: email
-      }
+    return this.userRepository.findOne({
+      where: {
+        email: email,
+      },
     });
   }
 
@@ -57,7 +64,22 @@ export class UsersService {
       throw new ConflictException('User with this email already exists');
     }
 
-    const user = this.userRepository.create(createUserDto);
+    let country: Country | null = null;
+    if (createUserDto.country) {
+      country = await this.countryRepository.findOne({
+        where: { name: createUserDto.country },
+      });
+
+      if (!country) {
+        throw new NotFoundException(
+          `Country ${createUserDto.country} not found`,
+        );
+      }
+    }
+    const user = this.userRepository.create({
+      ...createUserDto,
+      country: country ?? undefined,
+    });
     return this.userRepository.save(user);
   }
 
@@ -73,15 +95,18 @@ export class UsersService {
       updateUserDto.email &&
       updateUserDto.email !== user.email
     ) {
-      const existingUser = await this.findByEmail(
-        updateUserDto.email as string,
-      );
+      const existingUser = await this.findByEmail(updateUserDto.email);
       if (existingUser) {
         throw new ConflictException('User with this email already exists');
       }
     }
 
-    Object.assign(user, updateUserDto);
+    Object.assign(user, {
+      ...updateUserDto,
+      country: updateUserDto.country
+        ? ({ id: updateUserDto.country } as Pick<Country, 'id'>)
+        : user.country,
+    });
     return this.userRepository.save(user);
   }
 
@@ -97,12 +122,18 @@ export class UsersService {
   async restore(id: string): Promise<User> {
     const result = await this.userRepository.restore(id);
     if (result.affected === 0) {
-      throw new NotFoundException(`User with ID ${id} not found or not deleted`);
+      throw new NotFoundException(
+        `User with ID ${id} not found or not deleted`,
+      );
     }
     const user = await this.findById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     return user;
+  }
+
+  async findCountryByName(name: string): Promise<Country | null> {
+    return this.countryRepository.findOne({ where: { name } });
   }
 }

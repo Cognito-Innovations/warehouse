@@ -5,11 +5,13 @@ import { formatDateTime } from '@/lib/utils';
 interface RequestHeaderProps {
   request: {
     id: string;
+    request_code: string;
     created_at: string;
     items: number;
     status: string;
     country: string;
   };
+  onDelete?: (id: string) => void; 
 }
 
 const statusStyles: { [key: string]: string } = {
@@ -22,15 +24,15 @@ const statusStyles: { [key: string]: string } = {
   ORDER_PLACED: 'bg-blue-100 text-blue-700 border border-blue-200',
 };
 
-const RequestHeader: React.FC<RequestHeaderProps> = ({ request }) => {
+const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onDelete }) => {
   const statusClassName =
-    statusStyles[request.status] || 'bg-gray-100 text-gray-700';
+    statusStyles[request.status.toUpperCase()] || 'bg-gray-100 text-gray-700';
 
   return (
     <div className="bg-white p-4 rounded-lg border border-gray-200 flex justify-between items-center">
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-12 gap-y-2">
         <div>
-          <p className="font-semibold text-gray-900">{request.id}</p>
+          <p className="font-semibold text-gray-900">{request.request_code}</p>
           <p className="text-sm text-gray-500">
             {formatDateTime(request.created_at)}
           </p>
@@ -48,13 +50,15 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({ request }) => {
           <span
             className={`px-3 py-1 text-sm font-semibold rounded-md ${statusClassName}`}
           >
-            {request.status}
+            {request.status.toUpperCase()}
           </span>
         </div>
       </div>
 
-      {request.status === 'REQUESTED' && (
-        <button className="flex items-center gap-1.5 text-red-600 bg-red-50 rounded-md px-3 py-1.5 hover:bg-red-100 transition-colors duration-200">
+      {request.status.toUpperCase() === 'REQUESTED' && (
+        <button
+          onClick={() => onDelete?.(request.id)} 
+          className="flex items-center gap-1.5 text-red-600 bg-red-50 rounded-md px-3 py-1.5 hover:bg-red-100 transition-colors duration-200">
           <DeleteIcon sx={{ fontSize: 18 }} />
           <span className="text-sm font-medium whitespace-nowrap">
             Delete Request

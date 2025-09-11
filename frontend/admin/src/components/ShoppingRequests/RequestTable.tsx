@@ -10,7 +10,9 @@ import {
   Box,
   TextField,
   MenuItem,
-  IconButton
+  IconButton,
+  CircularProgress,
+  Typography
 } from '@mui/material';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import RequestTableBody from './RequestTableBody';
@@ -21,13 +23,15 @@ const RequestTable: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [statusFilter, setStatusFilter] = useState('All');
+  const [loading, setLoading] = useState(true);
 
   const fetchRequests = async () => {
     try {
+      setLoading(true);
       const data = await getAllShoppingRequests();
 
       const mapped = data.map((req: any) => {
-        const createdAt = new Date(req.created_at);
+        const createdAt = new Date(Number(req.created_at) * 1000);
         return {
           orderNo: req.request_code,
           requestedAt: {
@@ -36,7 +40,7 @@ const RequestTable: React.FC = () => {
           },
           customer: {
             name: req.user?.name || 'Unknown',
-            id: req.user_id,
+            suite_no: req.user.suite_no || '',
           },
           status: req.status,
           noOfItems: req.items,
@@ -46,6 +50,8 @@ const RequestTable: React.FC = () => {
       setRows(mapped);
     } catch (err) {
       console.error("Error fetching shopping requests:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,33 +100,45 @@ const RequestTable: React.FC = () => {
               <MenuItem value="ORDER PLACED">Order Placed</MenuItem>
           </TextField>
       </Box>
-      
-      <Card>
-        <TableContainer>
-          <Table>
-            <TableHead sx={{ bgcolor: '#f8fafc' }}>
-              <TableRow>
-                <TableCell>Order No.</TableCell>
-                <TableCell>Requested At</TableCell>
-                <TableCell>Customer</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>No. of Items</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <RequestTableBody rows={visibleRows} />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[15, 25, 50]}
-          component="div"
-          count={filteredRows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Card>
+
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : filteredRows.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="body1" color="text.secondary">
+            No shopping requests available
+          </Typography>
+        </Box>
+      ) : (
+        <Card>
+          <TableContainer>
+            <Table>
+              <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                <TableRow>
+                  <TableCell>Order No.</TableCell>
+                  <TableCell>Requested At</TableCell>
+                  <TableCell>Customer</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>No. of Items</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <RequestTableBody rows={visibleRows} />
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[15, 25, 50]}
+            component="div"
+            count={filteredRows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Card>
+      )}
     </>
   );
 };

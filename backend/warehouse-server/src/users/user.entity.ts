@@ -1,13 +1,21 @@
+import { IsNumber, IsOptional } from 'class-validator';
+import { Country } from 'src/Countries/country.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
+export enum Role {
+  Admin = 'admin',
+  User = 'user',
+}
+
 @Entity('users')
-export class User {
+export class User extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -21,7 +29,7 @@ export class User {
   name: string;
 
   @Column({ default: 'user' })
-  role: string;
+  role: Role;
 
   @Column({ nullable: true })
   image: string;
@@ -45,27 +53,21 @@ export class User {
   @Column({ nullable: true })
   dob: Date;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: false })
   verified: boolean;
 
-  //TODO: Uncomment and remove nullable
-  // @ManyToOne(() => Country, { eager: true })
-  // @JoinColumn({ name: 'id' })
-  @Column({ nullable: true })
-  country: string;
+  @ManyToOne(() => Country, { eager: true })
+  @JoinColumn({ name: 'country_id' })
+  country: Country;
 
   @Column({ default: false })
   is_logged_in: boolean;
 
-  @Column({ nullable: true })
-  last_login: Date;
+  @IsOptional()
+  @IsNumber()
+  last_login?: number;
 
-  @Column({ nullable: true })
-  last_logout: Date;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
+  @IsOptional()
+  @IsNumber()
+  last_logout?: number;
 }

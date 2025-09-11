@@ -24,7 +24,7 @@ const DetailItem: React.FC<DetailItemProps> = ({ label, value }) => (
 interface PickupDetails {
   pickup_address: string;
   supplier_name: string;
-  supplier_phone: string;
+  supplier_phone_number: string;
   pcs_box: number;
   est_weight: string;
   pkg_details: string;
@@ -62,7 +62,7 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({ details }) => (
         </Box>
 
         <DetailItem label="Supplier" value={details.supplier_name} />
-        <DetailItem label="Supplier Contact" value={details.supplier_phone} />
+        <DetailItem label="Supplier Contact" value={details.supplier_phone_number} />
         <DetailItem label="No. of PCS" value={details.pcs_box} />
         <DetailItem label="Est. Weight" value={details.est_weight} />
 

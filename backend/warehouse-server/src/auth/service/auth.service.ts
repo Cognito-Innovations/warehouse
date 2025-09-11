@@ -1,14 +1,12 @@
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { UsersService } from '../../users/service/users.service';
-import {
-  Injectable,
-  UnauthorizedException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthResponseDto } from '../dto/AuthResponseDto';
+import { Country } from 'src/Countries/country.entity';
 
 @Injectable()
 export class AuthService {
@@ -18,16 +16,32 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    console.log('Register called with:', { email: registerDto.email, name: registerDto.name });
-    
+    console.log('Register called with:', {
+      email: registerDto.email,
+      name: registerDto.name,
+    });
+
     const existingUser = await this.usersService.findByEmail(registerDto.email);
+    let countryEntity: Country | null = null;
+    if (registerDto.country) {
+      countryEntity = await this.usersService.findCountryByName(
+        registerDto.country,
+      );
+      if (!countryEntity) {
+        throw new Error(`Country ${registerDto.country} not found`);
+      }
+    } else {
+      // Fallback default to "India"
+      countryEntity = await this.usersService.findCountryByName('India');
+      if (!countryEntity) {
+        throw new Error(`Default country India not found in DB`);
+      }
+    }
     if (existingUser) {
-      console.log('User exists, updating:', existingUser.id);
-      // If user exists, update their info and return JWT token
       const updatedUser = await this.usersService.update(existingUser.id, {
         name: registerDto.name,
         image: registerDto.image,
-        country: existingUser.country || 'India', // Set default country if not set
+        country: countryEntity.id,
         is_logged_in: true,
         last_login: new Date(),
       });
@@ -35,8 +49,11 @@ export class AuthService {
       // Generate JWT token for existing user
       const payload = { email: updatedUser.email, sub: updatedUser.id };
       const access_token = this.jwtService.sign(payload);
-      
-      console.log('Generated JWT token for existing user:', access_token.substring(0, 20) + '...');
+
+      console.log(
+        'Generated JWT token for existing user:',
+        access_token.substring(0, 20) + '...',
+      );
 
       return {
         access_token,
@@ -46,25 +63,33 @@ export class AuthService {
           name: updatedUser.name,
           role: updatedUser.role,
           suite_no: updatedUser.suite_no,
-          country: updatedUser.country,
+          country: updatedUser.country?.name,
+          verified: updatedUser.verified,
         },
       };
     }
 
     console.log('Creating new user');
-    const hashedPassword = await bcrypt.hash(registerDto.password || '', 10);
+    // Check if password is already hashed (from frontend) or needs to be hashed
+    const passwordToUse = registerDto.password?.startsWith('$2')
+      ? registerDto.password // Already bcrypt hashed (admin registration)
+      : await bcrypt.hash(registerDto.password || '', 10); // Hash if not already hashed (admin registration)
 
     const user = await this.usersService.create({
       ...registerDto,
-      password: hashedPassword,
-      country: registerDto.country || 'India', // Set default country to India
+      password: passwordToUse,
+      country: countryEntity.id,
+      verified: registerDto.verified ?? false, // Use provided verified status or default to false
     });
 
     // Generate JWT token
     const payload = { email: user.email, sub: user.id };
     const access_token = this.jwtService.sign(payload);
-    
-    console.log('Generated JWT token for new user:', access_token.substring(0, 20) + '...');
+
+    console.log(
+      'Generated JWT token for new user:',
+      access_token.substring(0, 20) + '...',
+    );
 
     return {
       access_token,
@@ -74,7 +99,8 @@ export class AuthService {
         name: user.name,
         role: user.role,
         suite_no: user.suite_no,
-        country: user.country,
+        country: user.country?.name,
+        verified: user.verified,
       },
     };
   }
@@ -85,11 +111,21 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(
-      loginDto.password,
-      user.password,
-    );
+    // Check if the stored password is bcrypt hashed or SHA-256 hashed
+    let isPasswordValid = false;
+
+    if (user.password.startsWith('$2')) {
+      // Password is bcrypt hashed (admin registration or old format)
+      isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    } else {
+      // Password is SHA-256 hashed (warehouse app registration)
+      const hashedInput = crypto
+        .createHash('sha256')
+        .update(loginDto.password)
+        .digest('hex');
+      isPasswordValid = hashedInput === user.password;
+    }
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -112,7 +148,8 @@ export class AuthService {
         name: user.name,
         role: user.role,
         suite_no: user.suite_no,
-        country: user.country,
+        country: user.country?.name,
+        verified: user.verified,
       },
     };
   }

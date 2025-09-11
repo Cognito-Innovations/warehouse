@@ -1,4 +1,5 @@
 import { IsString, IsNumber, IsOptional, IsArray } from 'class-validator';
+import { ShoppingRequestStatus } from '../shopping-request.entity';
 
 export class CreateShoppingRequestDto {
   @IsString()
@@ -20,7 +21,7 @@ export class CreateShoppingRequestDto {
 
   @IsOptional()
   @IsString()
-  status?: string;
+  status?: ShoppingRequestStatus;
 
   @IsOptional()
   @IsArray()

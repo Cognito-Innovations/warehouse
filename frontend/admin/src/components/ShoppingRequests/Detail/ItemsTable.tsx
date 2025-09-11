@@ -1,21 +1,36 @@
 import {
-  Box, Card, Typography, Table, TableBody,
-  TableContainer, TableHead, TableRow, TableCell, Button,
+  Card, Typography, Table, TableBody, TableContainer,
+  TableHead, TableRow, TableCell,
 } from '@mui/material';
 import ItemsTableRow from './ItemsTableRow';
 import ItemsTableSummary from './ItemsTableSummary';
 
 const headers = ["Item Name", "Color/Size", "Available", "Status", "Quantity", "Unit Price", "Total"];
 
-const ItemsTable = ({ details }) => {
+interface ShoppingRequestProduct {
+  id?: number;
+  name?: string;
+  [key: string]: any;
+}
+
+interface ItemsTableProps {
+  details: {
+    shopping_request_products?: ShoppingRequestProduct[];
+    summary?: any;
+    [key: string]: any;
+  };
+}
+
+const ItemsTable: React.FC<ItemsTableProps> = ({ details }) => {
   const products = details.shopping_request_products ?? [];
 
   return (
     <Card sx={{ mt: 3 }}>
-      <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* TODO: Uncomment when functionality implemented */}
+      {/* <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6" fontWeight={600}>Links / Items</Typography>
         <Button variant="contained" size="small" sx={{textTransform: 'none'}}>Map Items</Button>
-      </Box>
+      </Box> */}
       <TableContainer>
         <Table>
           <TableHead sx={{ bgcolor: '#f8fafc' }}>
@@ -25,7 +40,13 @@ const ItemsTable = ({ details }) => {
           </TableHead>
           <TableBody>
             {products.length > 0 ? (
-              products.map((item, i) => <ItemsTableRow key={i} item={item} index={i} />)
+              products.map((item, i) => ( 
+                <ItemsTableRow 
+                  key={i} 
+                  item={{...item, remarks: details.remarks }} 
+                  index={i}
+                />
+              ))
             ) : (
               <TableRow>
                 <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4 }}>

@@ -4,12 +4,14 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 interface DropdownMenuProps {
   options: { label: string; onClick: () => void }[];
+  disabled?: boolean;
 }
 
-const DropdownMenu: React.FC<DropdownMenuProps> = ({ options }) => {
+const DropdownMenu: React.FC<DropdownMenuProps> = ({ options, disabled }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
+    if (disabled) return;
     setAnchorEl(event.currentTarget);
   };
 

@@ -10,7 +10,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { GlobalAuthGuard } from './guards/global-auth.guard';
 import { AuthController } from './auth.controller';
 
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),

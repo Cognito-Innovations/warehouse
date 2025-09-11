@@ -15,7 +15,7 @@ import type { PickupRequest } from '../../types';
 import { formatDateTime } from '../../utils/formatDateTime';
 
 export const getStatusColor = (status: string) => {
-  switch (status) {
+  switch (status.toUpperCase()) {
     case 'REQUESTED':
       return { color: '#F59E0B', bgColor: '#FEF3C7' }; // yellow
     case 'PAID':

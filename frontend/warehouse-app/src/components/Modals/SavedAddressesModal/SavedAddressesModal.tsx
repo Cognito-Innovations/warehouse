@@ -6,11 +6,12 @@ import ReactCountryFlag from 'react-country-flag';
 
 interface AddressData {
   id?: string;
-  companyName: string;
-  suite: string;
+  name: string;
   address: string;
-  country: string;
-  phone: string;
+  country_name: string;
+  country_code: string;
+  country_phone_code: string;
+  phone_number: string;
 }
 
 interface SavedAddressesModalProps {
@@ -38,20 +39,7 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
     onClose();
   };
 
-  const getCountryCode = (country: string) => {
-    const countryMap: { [key: string]: string } = {
-      'South Korea': 'KR',
-      'United States': 'US',
-      'United Kingdom': 'GB',
-      'Japan': 'JP',
-      'China': 'CN',
-      'Singapore': 'SG',
-      'Australia': 'AU',
-      'Canada': 'CA',
-      'India': 'IN'
-    };
-    return countryMap[country] || 'KR';
-  };
+ 
   if (!isOpen) return null;
 
   return (
@@ -84,22 +72,21 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-8 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
                     <ReactCountryFlag
-                      countryCode={getCountryCode(address.country)}
+                      countryCode={address.country_code}
                       svg
                       style={{
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover'
                       }}
-                      title={address.country}
+                      title={address.country_name}
                     />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1">{address.companyName}</h3>
-                    <p className="text-sm text-gray-600 mb-1">{address.suite}</p>
+                    <h3 className="font-semibold text-gray-900 mb-1">{address.name}</h3>
                     <p className="text-sm text-gray-600 mb-1">{address.address}</p>
-                    <p className="text-sm text-gray-600 mb-1">{address.country}</p>
-                    <p className="text-sm text-gray-600">{address.phone}</p>
+                    <p className="text-sm text-gray-600 mb-1">{address.country_name}</p>
+                    <p className="text-sm text-gray-600">{address.phone_number}</p>
                   </div>
                 </div>
               </div>

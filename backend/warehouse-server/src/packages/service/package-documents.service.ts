@@ -8,7 +8,6 @@ import { DocumentUploadService } from 'src/shared/document-upload.service';
 import { CreatePackageDocumentDto } from '../dto/create-package-document.dto';
 import { PackageDocumentResponseDto } from '../dto/package-document-response.dto';
 
-
 @Injectable()
 export class PackageDocumentsService {
   constructor(
@@ -19,18 +18,20 @@ export class PackageDocumentsService {
     private readonly actionLogsService: PackageActionLogsService,
     private readonly documentUploadService: DocumentUploadService,
   ) {}
-  async uploadDocuments(package_id: string, files: any[]) {
+  async uploadDocuments(package_id: string, files: Express.Multer.File[]) {
     // First, resolve the package_id to the actual package UUID
     const packageEntity = await this.packageRepository.findOne({
       where: [
         { package_id: package_id },
         { tracking_no: package_id },
-        { id: package_id }
-      ]
+        { id: package_id },
+      ],
     });
 
     if (!packageEntity) {
-      throw new NotFoundException(`Package not found with identifier: ${package_id}`);
+      throw new NotFoundException(
+        `Package not found with identifier: ${package_id}`,
+      );
     }
 
     // Use the generic document upload service
@@ -72,12 +73,14 @@ export class PackageDocumentsService {
       where: [
         { package_id: package_id },
         { tracking_no: package_id },
-        { id: package_id }
-      ]
+        { id: package_id },
+      ],
     });
 
     if (!packageEntity) {
-      throw new NotFoundException(`Package not found with identifier: ${package_id}`);
+      throw new NotFoundException(
+        `Package not found with identifier: ${package_id}`,
+      );
     }
 
     const packageDocument = this.packageDocumentRepository.create({
@@ -124,12 +127,14 @@ export class PackageDocumentsService {
       where: [
         { package_id: package_id },
         { tracking_no: package_id },
-        { id: package_id }
-      ]
+        { id: package_id },
+      ],
     });
 
     if (!packageEntity) {
-      throw new NotFoundException(`Package not found with identifier: ${package_id}`);
+      throw new NotFoundException(
+        `Package not found with identifier: ${package_id}`,
+      );
     }
 
     const packageDocument = await this.packageDocumentRepository.findOne({
@@ -145,18 +150,22 @@ export class PackageDocumentsService {
     return { success: true };
   }
 
-  async getDocuments(package_id: string): Promise<PackageDocumentResponseDto[]> {
+  async getDocuments(
+    package_id: string,
+  ): Promise<PackageDocumentResponseDto[]> {
     // First, resolve the package_id to the actual package UUID
     const packageEntity = await this.packageRepository.findOne({
       where: [
         { package_id: package_id },
         { tracking_no: package_id },
-        { id: package_id }
-      ]
+        { id: package_id },
+      ],
     });
 
     if (!packageEntity) {
-      throw new NotFoundException(`Package not found with identifier: ${package_id}`);
+      throw new NotFoundException(
+        `Package not found with identifier: ${package_id}`,
+      );
     }
 
     const documents = await this.packageDocumentRepository.find({

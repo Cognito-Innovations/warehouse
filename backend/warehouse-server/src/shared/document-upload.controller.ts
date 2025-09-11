@@ -13,6 +13,7 @@ import {
   DocumentUploadService,
   DocumentUploadOptions,
 } from './document-upload.service';
+import { EntityType } from './dto';
 
 interface UploadDocumentsDto {
   category?: string;
@@ -65,11 +66,11 @@ export class DocumentUploadController {
   async uploadDocuments(
     @Param('entityType') entityType: string,
     @Param('entityId') entityId: string,
-    @UploadedFiles() files: any[],
+    @UploadedFiles() files: Express.Multer.File[],
     @Body() uploadDto: UploadDocumentsDto,
   ) {
     const options: DocumentUploadOptions = {
-      entityType: entityType as any,
+      entityType: entityType as EntityType,
       entityId,
       category: uploadDto.category,
       isRequired: uploadDto.isRequired,

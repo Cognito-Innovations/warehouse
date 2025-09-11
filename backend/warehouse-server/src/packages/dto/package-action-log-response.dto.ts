@@ -10,5 +10,5 @@ export class PackageActionLogResponseDto {
   is_completed: boolean;
   completed_at?: Date;
   completed_by?: string;
-  uploaded_at?: Date;
+  uploaded_at?: number;
 }

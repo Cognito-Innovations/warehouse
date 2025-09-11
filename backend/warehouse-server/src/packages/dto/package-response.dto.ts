@@ -1,4 +1,4 @@
-import { Country } from '../../countries/entity/country.entity';
+import { Country } from 'src/Countries/country.entity';
 
 export class PackageResponseDto {
   id: string;
@@ -20,13 +20,13 @@ export class PackageResponseDto {
     id: string;
     label: string;
     count: number;
-    color: string
+    color: string;
   };
   slot_info?: string;
   warehouse_location?: string;
   total_weight?: number | null;
   total_volumetric_weight?: number | null;
-  country: string;
+  country: Country;
   allow_customer_items: boolean;
   shop_invoice_received: boolean;
   remarks?: string | null;
@@ -42,8 +42,8 @@ export class PackageResponseDto {
     name?: string;
   };
   package_id: string;
-  created_at?: Date;
-  updated_at?: Date;
+  created_at?: number;
+  updated_at?: number;
   measurements?: PackageMeasurementResponseDto[];
   items?: PackageItemResponseDto[];
 }
@@ -67,6 +67,6 @@ export class PackageItemResponseDto {
   quantity: number;
   unit_price: number;
   total_price: number;
-  created_at: Date;
-  updated_at: Date;
+  created_at: number;
+  updated_at: number;
 }

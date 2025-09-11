@@ -1,4 +1,11 @@
-import { IsEmail, IsString, IsOptional, IsBoolean, IsDate, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  IsOptional,
+  IsBoolean,
+  MinLength,
+} from 'class-validator';
+import { Column } from 'typeorm';
 
 export class RegisterDto {
   @IsOptional()
@@ -46,7 +53,7 @@ export class RegisterDto {
   gender?: string;
 
   @IsOptional()
-  @IsDate()
+  @Column({ type: 'bigint' })
   dob?: Date;
 
   @IsOptional()
@@ -54,25 +61,26 @@ export class RegisterDto {
   verified?: boolean;
 
   @IsOptional()
-  country?: any; // Should be a CountryDto if available, else 'any'
+  @IsString()
+  country?: string;
 
   @IsOptional()
   @IsBoolean()
   is_logged_in?: boolean;
 
   @IsOptional()
-  @IsDate()
-  last_login?: Date;
+  @Column({ type: 'bigint' })
+  last_login?: number;
 
   @IsOptional()
-  @IsDate()
-  last_logout?: Date;
+  @Column({ type: 'bigint' })
+  last_logout?: number;
 
   @IsOptional()
-  @IsDate()
-  created_at?: Date;
+  @Column({ type: 'bigint' })
+  created_at?: number;
 
   @IsOptional()
-  @IsDate()
-  updated_at?: Date;
+  @Column({ type: 'bigint' })
+  updated_at?: number;
 }

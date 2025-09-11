@@ -14,7 +14,7 @@ export class ShipmentExportsService {
     private readonly boxRepo: Repository<ShipmentExportBox>,
   ) {}
 
-  async createExport(dto: CreateExportDto): Promise<any> {
+  async createExport(dto: CreateExportDto): Promise<ShipmentExport> {
     const exp = this.exportRepo.create({
       ...dto,
       status: 'DRAFT',
@@ -37,23 +37,38 @@ export class ShipmentExportsService {
       await this.boxRepo.save(boxes);
     }
 
-    return this.exportRepo.findOne({
+    const createdExport = await this.exportRepo.findOne({
       where: { id: savedExport.id },
       relations: ['boxes'],
     });
+
+    if (!createdExport) {
+      throw new Error('Unexpected error: created export not found');
+    }
+
+    return createdExport;
   }
 
   async getAllExports(): Promise<ShipmentExport[]> {
-    return this.exportRepo.find({ relations: ['boxes'], order: { created_at: 'DESC' } });
+    return this.exportRepo.find({
+      relations: ['boxes'],
+      order: { created_at: 'DESC' },
+    });
   }
 
   async getExportById(id: string): Promise<ShipmentExport> {
-    const exp = await this.exportRepo.findOne({ where: { id }, relations: ['boxes'] })
+    const exp = await this.exportRepo.findOne({
+      where: { id },
+      relations: ['boxes'],
+    });
     if (!exp) throw new NotFoundException(`Export with id ${id} not found`);
     return exp;
   }
 
-  async updateExport(id: string, payload: Partial<{ mawb: string }>): Promise<ShipmentExport> {
+  async updateExport(
+    id: string,
+    payload: Partial<{ mawb: string }>,
+  ): Promise<ShipmentExport> {
     const exp = await this.exportRepo.findOne({ where: { id } });
     if (!exp) throw new NotFoundException(`Export with id ${id} not found`);
 

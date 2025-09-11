@@ -7,5 +7,6 @@ export class AuthResponseDto {
     role: string;
     suite_no: string;
     country: string;
+    verified: boolean;
   };
 }

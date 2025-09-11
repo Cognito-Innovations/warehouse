@@ -11,9 +11,17 @@ const TRACKING_STEPS = [
 ];
 
 const TrackingStatus: React.FC = ({ details }) => {
-  const normalizedStatus = details.status.replace(/_/g, ' ').toLowerCase();
-  const statusToMatch = details.status === 'QUOTED' ? 'Quotation Ready'.toLowerCase() : normalizedStatus;
+  const normalizedStatus = details.status.toLowerCase();
 
+  const statusMap: Record<string, string> = {
+    requested: "requested",
+    quoted: "quotation ready",
+    confirmed: "confirmed",
+    picked: "picked",
+  };
+
+  const statusToMatch = statusMap[normalizedStatus] ?? normalizedStatus;
+ 
   const currentStatusIndex = TRACKING_STEPS.findIndex(
     step => step.label.toLowerCase() === statusToMatch
   );

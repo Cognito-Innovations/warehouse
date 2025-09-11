@@ -122,8 +122,8 @@ export default function PickupRequestPage() {
               const { color, icon } = statusConfig[statusKey] || statusConfig.REQUESTED;
 
               return (
-                <Link href={`/pickup-request/${req.id}`} passHref>
-                  <Paper key={req.id} variant="outlined" sx={{ p: 2, borderRadius: '8px', mb: 2 }}>
+                <Link key={req.id} href={`/pickup-request/${req.id}`} passHref>
+                  <Paper variant="outlined" sx={{ p: 2, borderRadius: '8px', mb: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', width: '100%', gap: 3 }}>
 
                       <Box sx={{ flexShrink: 0, width: '15%' }}>
@@ -151,7 +151,7 @@ export default function PickupRequestPage() {
                       }}>
                         {icon}
                         <Typography variant="body2" sx={{ fontWeight: 'bold', color }}>
-                          {req.status}
+                          {req.status?.toUpperCase()}
                         </Typography>
                       </Box>
                     

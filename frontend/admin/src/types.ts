@@ -12,9 +12,17 @@ export interface Rack {
   count: number;
 }
 
+export interface Country {
+  id: string,
+  name: string,
+  code: string,
+  image?: string,
+  phone_code: string
+}
+
 export interface Supplier {
   id: string;
-  country: string;
+  country: Country;
   supplier_name: string;
   contact_number?: string;
   postal_code?: string;

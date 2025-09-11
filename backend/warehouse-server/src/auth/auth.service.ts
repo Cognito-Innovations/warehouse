@@ -10,6 +10,7 @@ import {
   RefreshTokenResponseDto,
   UserDto,
 } from './dto/auth-response.dto';
+import { Country } from 'src/Countries/country.entity';
 
 @Injectable()
 export class AuthService {
@@ -32,8 +33,9 @@ export class AuthService {
     }
 
     // Update login status
+    const now = Math.floor(Date.now() / 1000);
     user.is_logged_in = true;
-    user.last_login = new Date();
+    user.last_login = now;
     await this.userRepository.save(user);
 
     const payload = {
@@ -119,16 +121,19 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const now = Math.floor(Date.now() / 1000);
 
     //TODO: Remove this country id hardcoded here
     const user = this.userRepository.create({
-      country: '54e03123-77f4-477f-85d4-083d4701ae39',
+      country: {
+        id: '4bffc336-6ebf-420d-8865-df7fb72f5dac',
+      } as Pick<Country, 'id'>,
       name,
       image,
       email,
       password: hashedPassword,
       is_logged_in: true,
-      last_login: new Date(),
+      last_login: now,
     });
 
     const savedUser = await this.userRepository.save(user);
@@ -181,7 +186,7 @@ export class AuthService {
     }
 
     user.is_logged_in = false;
-    user.last_logout = new Date();
+    user.last_logout = Math.floor(Date.now() / 1000);
     await this.userRepository.save(user);
 
     return { message: 'Logout successful' };

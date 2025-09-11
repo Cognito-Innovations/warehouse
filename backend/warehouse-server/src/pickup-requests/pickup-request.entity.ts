@@ -1,25 +1,37 @@
+import { Country } from 'src/Countries/country.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
+import { User } from 'src/users/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
   JoinColumn,
+  ManyToOne,
 } from 'typeorm';
-import { User } from 'src/users/user.entity';
+
+export enum PickupRequestStatus {
+  Requested = 'requested',
+  Quoted = 'quoted',
+  Confirmed = 'confirmed',
+  Picked = 'picked',
+}
 
 @Entity('pickup_requests')
-export class PickupRequest {
+export class PickupRequest extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  user_id: string;
+  @ManyToOne(() => Country, { eager: true, nullable: false })
+  @JoinColumn({ name: 'country_id' })
+  country: Country;
 
   @ManyToOne(() => User, { eager: true, nullable: false })
-  @JoinColumn({ name: 'user_id' }) 
+  @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => User, { eager: true, nullable: true })
+  @JoinColumn({ name: 'admin_id' })
+  admin: User;
 
   @Column()
   pickup_address: string;
@@ -28,41 +40,30 @@ export class PickupRequest {
   supplier_name: string;
 
   @Column()
-  supplier_phone: string;
+  supplier_phone_number: string;
 
   @Column({ nullable: true })
-  alt_phone: string;
+  alt_supplier_phone_number: string;
 
   @Column()
-  pcs_box: number;
+  pcs_box: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  est_weight: number;
+  @Column({ type: 'text', nullable: true })
+  est_weight: string;
 
   @Column()
   pkg_details: string;
 
+  @Column({
+    type: 'enum',
+    enum: PickupRequestStatus,
+    default: PickupRequestStatus.Requested,
+  })
+  status: PickupRequestStatus;
+
   @Column({ type: 'text', nullable: true })
   remarks: string;
 
-  @Column({ default: 'REQUESTED' })
-  status: string;
-
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   price: number;
-
-  @Column({ nullable: true })
-  quoted_at: Date;
-
-  @Column({ nullable: true })
-  confirmed_at: Date;
-
-  @Column({ nullable: true })
-  picked_at: Date;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 }

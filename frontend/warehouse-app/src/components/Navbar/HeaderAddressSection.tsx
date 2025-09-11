@@ -5,11 +5,12 @@ import ReactCountryFlag from 'react-country-flag';
 
 interface AddressData {
   id?: string;
-  companyName: string;
-  suite: string;
+  name: string;
   address: string;
-  country: string;
-  phone: string;
+  country_name: string;
+  country_code: string;
+  country_phone_code: string;
+  phone_number: string;
 }
 
 interface HeaderAddressSectionProps {
@@ -23,20 +24,6 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
   onOpenSavedAddressesModal,
   onOpenAddressDetailsModal
 }) => {
-  const getCountryCode = (country: string) => {
-    const countryMap: { [key: string]: string } = {
-      'South Korea': 'KR',
-      'United States': 'US',
-      'United Kingdom': 'GB',
-      'Japan': 'JP',
-      'China': 'CN',
-      'Singapore': 'SG',
-      'Australia': 'AU',
-      'Canada': 'CA',
-      'India': 'IN'
-    };
-    return countryMap[country] || 'KR';
-  };
 
   return (
     <div className="bg-white border-b border-gray-200">
@@ -46,7 +33,7 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
           <div className="flex flex-col items-center gap-4">
             <div className="w-20 h-20 bg-gray-100 rounded-full border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
               <ReactCountryFlag 
-                countryCode={getCountryCode(addressData.country)}
+                countryCode={addressData.country_code}
                 svg
                 style={{
                   width: '100%',
@@ -54,7 +41,7 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
                   borderRadius: '50%',
                   objectFit: 'cover'
                 }}
-                title={addressData.country}
+                title={addressData.country_name}
               />
             </div>
             <button 
@@ -67,11 +54,10 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
         
           {/* Address Information */}
           <div className="flex-1">
-            <h3 className="text-xl font-semibold text-gray-800">{addressData.companyName}</h3>
-            <p className="text-sm text-gray-600 mb-1">{addressData.suite}</p>
+            <h3 className="text-xl font-semibold text-gray-800">{addressData.name}</h3>
             <p className="text-sm text-gray-600 mb-1">{addressData.address}</p>
-            <p className="text-sm text-gray-600 mb-1">{addressData.country}</p>
-            <p className="text-sm text-gray-600 mb-1">{addressData.phone}</p>
+            <p className="text-sm text-gray-600 mb-1">{addressData.country_name}</p>
+            <p className="text-sm text-gray-600 mb-1">{addressData.phone_number}</p>
 
             <div className="flex items-center gap-4">
               <button 

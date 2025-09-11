@@ -1,4 +1,3 @@
-
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,6 +16,7 @@ import {
   DocumentUploadOptions,
   DocumentMetadataDto,
   DocumentMetadata,
+  EntityType,
 } from './dto';
 
 // Re-export types from DTOs for backward compatibility
@@ -48,7 +48,7 @@ export class DocumentUploadService {
     return 'wearhouse_bucket';
   }
 
-  private getTableName(entityType: string): string {
+  private getTableName(entityType: EntityType): string {
     const tableMap = {
       package: 'package_documents',
       user: 'user_documents',
@@ -65,7 +65,7 @@ export class DocumentUploadService {
     return `${entityType}_id`;
   }
 
-  private getDocumentRepository(entityType: string): Repository<any> {
+  private getDocumentRepository(entityType: EntityType): Repository<any> {
     const repositoryMap = {
       package: this.packageDocumentRepository,
       user: this.userDocumentRepository,
@@ -79,7 +79,7 @@ export class DocumentUploadService {
   }
 
   async uploadDocuments(
-    files: any[],
+    files: Express.Multer.File[],
     options: DocumentUploadOptions,
   ): Promise<{ documents: DocumentMetadata[] }> {
     // For now, only support package documents
@@ -157,10 +157,11 @@ export class DocumentUploadService {
           uploaded_by: options.uploadedBy,
         });
 
-        const savedDocument = await this.packageDocumentRepository.save(packageDocument);
+        const savedDocument =
+          await this.packageDocumentRepository.save(packageDocument);
 
         // Convert to DocumentMetadata format
-        const documentMetadata: any = {
+        const documentMetadata: DocumentMetadataDto = {
           id: savedDocument.id,
           document_name: savedDocument.document_name,
           original_filename: savedDocument.original_filename,
@@ -171,7 +172,9 @@ export class DocumentUploadService {
           category: savedDocument.category,
           is_required: savedDocument.is_required,
           uploaded_by: savedDocument.uploaded_by,
-          uploaded_at: new Date(),
+          uploaded_at: Date.now(),
+          created_at: Date.now(),
+          updated_at: Date.now(),
         };
 
         documents.push(documentMetadata);
@@ -188,10 +191,7 @@ export class DocumentUploadService {
     return { documents };
   }
 
-  async getDocuments(
-    entityType: string,
-    entityId: string,
-  ): Promise<any[]> {
+  async getDocuments(entityType: string, entityId: string): Promise<any[]> {
     // For now, only support package documents
     if (entityType !== 'package') {
       throw new BadRequestException(
@@ -213,9 +213,7 @@ export class DocumentUploadService {
       });
 
       if (!packageData) {
-        throw new BadRequestException(
-          `Package with id ${entityId} not found`,
-        );
+        throw new BadRequestException(`Package with id ${entityId} not found`);
       }
 
       entityId = packageData.id;
@@ -269,9 +267,7 @@ export class DocumentUploadService {
       });
 
       if (!packageData) {
-        throw new BadRequestException(
-          `Package with id ${entityId} not found`,
-        );
+        throw new BadRequestException(`Package with id ${entityId} not found`);
       }
 
       actualEntityId = packageData.id;

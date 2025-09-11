@@ -2,12 +2,11 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
   ManyToOne,
   JoinColumn,
+  BeforeInsert,
 } from 'typeorm';
+import { Package } from './package.entity';
 
 @Entity('package_action_logs')
 export class PackageActionLog {
@@ -17,9 +16,9 @@ export class PackageActionLog {
   @Column()
   package_id: string;
 
-  @ManyToOne('Package', (packageEntity: any) => packageEntity.action_logs)
+  @ManyToOne(() => Package, (pkg) => pkg.action_logs)
   @JoinColumn({ name: 'package_id' })
-  package: any;
+  package: Package;
 
   @Column()
   file_name: string;
@@ -48,8 +47,13 @@ export class PackageActionLog {
   @Column({ nullable: true })
   completed_by: string;
 
-  @Column({ nullable: true })
-  uploaded_at: Date;
+  @Column({ type: 'bigint', nullable: true })
+  uploaded_at: number;
+
+  @BeforeInsert()
+  setUploadedAt() {
+    this.uploaded_at = Math.floor(Date.now() / 1000); // epoch seconds
+  }
 
   // Timestamp columns removed as they don't exist in the database
   // @CreateDateColumn()

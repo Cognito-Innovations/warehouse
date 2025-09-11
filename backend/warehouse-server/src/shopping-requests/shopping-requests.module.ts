@@ -4,9 +4,18 @@ import { ShoppingRequestsController } from './shopping-requests.controller';
 import { ShoppingRequestsService } from './shopping-requests.service';
 import { ShoppingRequest } from './shopping-request.entity';
 import { Product } from 'src/products/product.entity';
+import { DocumentsModule } from 'src/documents/documents.module';
+import { TrackingRequestsModule } from 'src/tracking-requests/tracking-requests.module';
+import { Country } from 'src/Countries/country.entity';
+import { InvoicesModule } from 'src/invoice/invoices.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ShoppingRequest, Product])],
+  imports: [
+    TypeOrmModule.forFeature([ShoppingRequest, Product, Country]),
+    DocumentsModule,
+    TrackingRequestsModule,
+    InvoicesModule,
+  ],
   controllers: [ShoppingRequestsController],
   providers: [ShoppingRequestsService],
   exports: [ShoppingRequestsService],

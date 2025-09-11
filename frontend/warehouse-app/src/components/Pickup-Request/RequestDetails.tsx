@@ -50,7 +50,10 @@ export default function RequestDetails({ details }: RequestDetailsProps) {
             Supplier Contact
           </Typography>
           <Typography variant="body2" fontWeight="bold">
-            {details.supplier_phone} / {details.alt_phone || 'null'}
+            {[details.supplier_phone_number, details.alt_supplier_phone_number]
+              .filter(Boolean)
+              .join(' / ')
+            }
           </Typography>
         </Box>
         <Box>

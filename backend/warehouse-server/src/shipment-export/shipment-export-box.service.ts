@@ -14,9 +14,13 @@ export class ShipmentExportBoxesService {
     private readonly exportRepo: Repository<ShipmentExport>,
   ) {}
 
-  async createBox(exportId: string, dto: CreateBoxDto): Promise<ShipmentExportBox> {
+  async createBox(
+    exportId: string,
+    dto: CreateBoxDto,
+  ): Promise<ShipmentExportBox> {
     const exp = await this.exportRepo.findOne({ where: { id: exportId } });
-    if (!exp) throw new NotFoundException(`Export with id ${exportId} not found`);
+    if (!exp)
+      throw new NotFoundException(`Export with id ${exportId} not found`);
 
     const box = this.boxRepo.create({
       ...dto,
@@ -26,7 +30,10 @@ export class ShipmentExportBoxesService {
     return this.boxRepo.save(box);
   }
 
-  async updateBox(id: string, dto: Partial<CreateBoxDto>): Promise<ShipmentExportBox> {
+  async updateBox(
+    id: string,
+    dto: Partial<CreateBoxDto>,
+  ): Promise<ShipmentExportBox> {
     const box = await this.boxRepo.findOne({ where: { id } });
     if (!box) throw new NotFoundException(`Box with id ${id} not found`);
 

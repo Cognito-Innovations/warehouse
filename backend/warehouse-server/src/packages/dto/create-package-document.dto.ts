@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsBoolean, IsPositive } from 'class-validator';
+import { IsString, IsNumber, IsPositive } from 'class-validator';
 
 export class CreatePackageDocumentDto {
   @IsString()

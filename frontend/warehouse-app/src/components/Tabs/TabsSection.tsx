@@ -2,7 +2,6 @@
 import { toast } from "sonner";
 import React, { useState, useMemo, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { shipmentsData } from "../../data/shipmentsData";
 import { getPackagesByUserAndStatus, updatePackageStatus, getShipmentsByUser } from "../../lib/api.service";
 
 import usePreArrival from "../../hooks/usePreArrival";
@@ -15,6 +14,7 @@ import TabNavigation from "./TabNavigation";
 import SearchAndFilter from "./SearchAndFilter";
 import EmptyState from "./EmptyState";
 import ShipmentsTable from "./ShipmentsTable";
+import { formatDateTime } from "@/lib/utils";
 
 const TabsSection = () => {
   const { data: session } = useSession();
@@ -32,22 +32,15 @@ const TabsSection = () => {
 
   const fetchPackages = async () => {
     const userId = (session?.user as any)?.user_id;
-    console.log("Fetching packages for userId:", userId);
-    console.log("Session data:", session);
-    
     if (!userId) {
-      console.log("No userId found, skipping fetch");
       return;
     }
     
     setPackagesLoading(true);
     try {
-      console.log("Calling API with userId:", userId, "status: Ready to Send");
       const data = await getPackagesByUserAndStatus(userId, "Ready to Send");
-      console.log("API response:", data);
       setPackages(data);
     } catch (error) {
-      console.error("Error fetching packages:", error);
       toast.error("Failed to fetch packages");
     } finally {
       setPackagesLoading(false);
@@ -56,21 +49,16 @@ const TabsSection = () => {
 
   const fetchShipments = async () => {
     const userId = (session?.user as any)?.user_id;
-    console.log("Fetching shipments for userId:", userId);
     
     if (!userId) {
-      console.log("No userId found, skipping fetch");
       return;
     }
     
     setShipmentsLoading(true);
     try {
-      console.log("Calling API with userId:", userId, "status: Request Ship");
       const data = await getShipmentsByUser(userId);
-      console.log("Shipments API response:", data);
       setShipments(data);
     } catch (error) {
-      console.error("Error fetching shipments:", error);
       toast.error("Failed to fetch shipments");
     } finally {
       setShipmentsLoading(false);
@@ -122,14 +110,12 @@ const TabsSection = () => {
 
   const handleRequestShip = async (packageId: string) => {
     try {
-      console.log("Requesting ship for package:", packageId);
       await updatePackageStatus(packageId, "Request Ship");
       toast.success("Ship request submitted successfully!");
       // Refresh packages and shipments after status change
       fetchPackages();
       fetchShipments();
     } catch (error) {
-      console.error("Error requesting ship:", error);
       toast.error("Failed to request ship. Please try again.");
     }
   };
@@ -194,9 +180,9 @@ const TabsSection = () => {
                       </div>
                       <div className="flex flex-col items-end space-y-2">
                         <div className="text-right">
-                          <p className="text-sm text-gray-500">Created: {new Date(pkg.created_at).toLocaleDateString()}</p>
+                          <p className="text-sm text-gray-500">Created: {formatDateTime(pkg.created_at)}</p>
                           {pkg.country && (
-                            <p className="text-sm text-gray-500">Country: {pkg.country}</p>
+                            <p className="text-sm text-gray-500">Country: {pkg.country?.name}</p>
                           )}
                         </div>
                         <button
@@ -243,7 +229,7 @@ const TabsSection = () => {
                         <div className="text-right">
                           <p className="text-sm text-gray-500">Created: {new Date(shipment.created_at).toLocaleDateString()}</p>
                           {shipment.country && (
-                            <p className="text-sm text-gray-500">Country: {shipment.country}</p>
+                            <p className="text-sm text-gray-500">Country: {shipment.country?.name}</p>
                           )}
                         </div>
                         {/* <div className="flex gap-2">

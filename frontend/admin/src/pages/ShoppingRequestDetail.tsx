@@ -3,9 +3,9 @@ import { Box } from '@mui/material';
 import { useParams } from 'react-router-dom';
 
 import TopNavbar from '../components/Layout/TopNavbar';
-import RequestDetailHeader from '../components/ShoppingRequests/Detail/RequestDetailHeader.tsx';
 import RequestDetailContent from '../components/ShoppingRequests/Detail/RequestDetailContent.tsx';
 import { getShoppingRequestByCode } from '../services/api.services.ts';
+import RequestDetailCard from '../components/ShoppingRequests/Detail/RequestDetailCard.tsx';
 
 const ShoppingRequestDetail: React.FC = () => {
   const { id } = useParams();
@@ -30,7 +30,7 @@ const ShoppingRequestDetail: React.FC = () => {
   return (
     <Box>
       <TopNavbar pageTitle="Shopping Request" pageSubtitle="All" />
-      <RequestDetailHeader request={shoppingRequest} onStatusUpdated={fetchRequest}/>
+      <RequestDetailCard request={shoppingRequest} onStatusUpdated={fetchRequest}/>
       <RequestDetailContent request={shoppingRequest} onStatusUpdated={fetchRequest} />
     </Box>
   );

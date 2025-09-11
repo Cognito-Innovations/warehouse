@@ -15,6 +15,7 @@ const PickupRequestDetail: React.FC = () => {
     if (!id) return;
     try {
       const data = await getPickupRequestById(id);
+
       setPickupRequest(data);
     } catch (err) {
       console.error(err);

@@ -1,9 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert } from 'typeorm';
 
 @Entity('racks')
 export class Rack {
@@ -19,6 +14,12 @@ export class Rack {
   @Column({ nullable: true, default: 0 })
   count: number;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @Column({ type: 'bigint' })
+  created_at: number;
+
+  @BeforeInsert()
+  setCreatedAt() {
+    const now = Math.floor(Date.now() / 1000); // epoch seconds
+    this.created_at = now;
+  }
 }

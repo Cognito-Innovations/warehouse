@@ -4,23 +4,23 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
 import { User } from '../../users/user.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
+import { Package } from './package.entity';
 
 @Entity('package_charges')
-export class PackageCharge {
+export class PackageCharge extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
   package_id: string;
 
-  @ManyToOne('Package', (package_: any) => package_.charges)
+  @ManyToOne(() => Package, (pkg) => pkg.charges)
   @JoinColumn({ name: 'package_id' })
-  package: any;
+  package: Package;
 
   @Column()
   summary: string;
@@ -58,12 +58,6 @@ export class PackageCharge {
   @ManyToOne(() => User)
   payer: User;
 
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
-
-  @DeleteDateColumn()
-  deleted_at: Date;
+  @DeleteDateColumn({ type: 'bigint', nullable: true })
+  deleted_at: number | null;
 }

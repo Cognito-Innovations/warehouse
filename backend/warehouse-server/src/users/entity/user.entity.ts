@@ -3,22 +3,21 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
   JoinColumn,
 } from 'typeorm';
-import { Country } from '../../countries/entity/country.entity';
+import { Country } from '../../Countries/country.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
+//TODO: Country should be a relation
 @Entity('users')
-export class User {
+export class User extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({ select: false })
   password: string;
 
   @Column({ nullable: true })
@@ -33,7 +32,7 @@ export class User {
   @Column()
   suite_no: string;
 
-  @Column({ nullable: true, default: "admin" })
+  @Column({ nullable: true, default: 'admin' })
   identifier: string;
 
   @Column({ nullable: true })
@@ -51,17 +50,9 @@ export class User {
   @Column({ default: false })
   verified: boolean;
 
-  //TODO: Uncomment and remove nullable
-  // @ManyToOne(() => Country, { eager: true })
-  // @JoinColumn({ name: 'id' })
-  @Column({ nullable: true })
-  country: string;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
+  @ManyToOne(() => Country, { eager: true })
+  @JoinColumn({ name: 'country_id' })
+  country: Country;
 
   @Column({ nullable: true })
   is_logged_in: boolean;

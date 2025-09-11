@@ -30,6 +30,11 @@ export class ProductsService {
       unit_price: savedProduct.unit_price,
       quantity: savedProduct.quantity,
       url: savedProduct.url,
+      size: savedProduct.size,
+      color: savedProduct.color,
+      variants: savedProduct.variants,
+      if_not_available_quantity: savedProduct.if_not_available_quantity,
+      if_not_available_color: savedProduct.if_not_available_color,
       created_at: savedProduct.created_at,
       updated_at: savedProduct.updated_at,
     };
@@ -45,7 +50,7 @@ export class ProductsService {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
 
-     if (updates.unit_price !== undefined) {
+    if (updates.unit_price !== undefined) {
       product.unit_price = updates.unit_price;
     }
     if (updates.available !== undefined) {
@@ -62,6 +67,11 @@ export class ProductsService {
       unit_price: updatedProduct.unit_price,
       quantity: updatedProduct.quantity,
       url: updatedProduct.url,
+      size: updatedProduct.size,
+      color: updatedProduct.color,
+      variants: updatedProduct.variants,
+      if_not_available_quantity: updatedProduct.if_not_available_quantity,
+      if_not_available_color: updatedProduct.if_not_available_color,
       available: updatedProduct.available,
       created_at: updatedProduct.created_at,
       updated_at: updatedProduct.updated_at,

@@ -4,13 +4,11 @@ import {
   Column,
   ManyToOne,
   OneToMany,
-  CreateDateColumn,
-  UpdateDateColumn,
   DeleteDateColumn,
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/user.entity';
-import { Country } from '../../countries/entity/country.entity';
+import { Country } from '../../Countries/country.entity';
 import { Rack } from '../../racks/rack.entity';
 import { Supplier } from '../../suppliers/supplier.entity';
 import { PackageItem } from './package-item.entity';
@@ -18,9 +16,10 @@ import { PackageCharge } from './package-charge.entity';
 import { PackageDocument } from './package-document.entity';
 import { PackageActionLog } from './package-action-log.entity';
 import { PackageMeasurement } from './package-measurement.entity';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 @Entity('packages')
-export class Package {
+export class Package extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -30,12 +29,9 @@ export class Package {
   @Column({ default: 'Action Required' })
   status: string;
 
-  @Column()
-  customer_id: string;
-
   @ManyToOne(() => User, { eager: true })
-  @JoinColumn({ name: 'customer_id' })
-  customer: User;
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column()
   vendor_id: string;
@@ -63,15 +59,12 @@ export class Package {
   @Column({ type: 'decimal', precision: 10, scale: 3, nullable: true })
   total_volumetric_weight: number | null;
 
-  @Column()
-  country: string;
-
-  @ManyToOne(() => Country, { eager: true })
-  @JoinColumn({ name: 'country' })
-  country_relation: Country;
+  @ManyToOne(() => Country, { eager: true, nullable: false })
+  @JoinColumn({ name: 'country_id' })
+  country: Country;
 
   @Column({ default: false })
-  allow_customer_items: boolean;
+  allow_user_items: boolean;
 
   @Column({ default: false })
   shop_invoice_received: boolean;
@@ -84,34 +77,28 @@ export class Package {
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'created_by' })
-  creator: User;
-
-  @Column({ nullable: true })
-  updated_by: string;
+  created_by: User;
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'updated_by' })
-  updater: User;
+  updated_by: User;
 
   @Column({ nullable: true })
   package_id: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @DeleteDateColumn({ type: 'bigint', nullable: true })
+  deleted_at: number | null;
 
-  @UpdateDateColumn()
-  updated_at: Date;
-
-  @DeleteDateColumn()
-  deleted_at: Date;
-
-  @OneToMany(() => PackageItem, (item) => item.package)
+  @OneToMany(() => PackageItem, (item: PackageItem) => item.package)
   items: PackageItem[];
 
-  @OneToMany(() => PackageMeasurement, (measurement) => measurement.package)
+  @OneToMany(
+    () => PackageMeasurement,
+    (measurement: PackageMeasurement) => measurement.package,
+  )
   measurements: PackageMeasurement[];
 
-  @OneToMany(() => PackageCharge, (charge) => charge.package_id)
+  @OneToMany(() => PackageCharge, (charge: PackageCharge) => charge.package_id)
   charges: PackageCharge[];
 
   @OneToMany(() => PackageDocument, (document) => document.package)

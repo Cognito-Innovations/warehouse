@@ -1,16 +1,29 @@
-import { User } from '../../users/user.entity';
+import { TrackingRequestResponseDto } from 'src/tracking-requests/dto/tracking-request-response.dto';
+import { DocumentResponseDto } from '../../documents/dto/document-response.dto';
+import { InvoiceResponseDto } from 'src/invoice/dto/invoice-response.dto';
+
+export interface SafeUser {
+  id: string;
+  email: string;
+  name?: string;
+  image?: string;
+  suite_no?: string | null;
+  verified?: boolean;
+}
 
 export class ShoppingRequestResponseDto {
   id: string;
   user_id: string;
-  user?: User; // Optional user object when fetched with relations
+  user?: SafeUser;
   request_code: string;
   country: string;
   items: number;
-  shopping_request_products?: any[]; // Products related to this shopping request
+  shopping_request_products?: any[];
   remarks?: string;
   status: string;
-  payment_slips?: string[];
-  created_at: Date;
-  updated_at: Date;
+  payment_slips?: DocumentResponseDto[];
+  tracking_requests?: TrackingRequestResponseDto[];
+  invoice?: InvoiceResponseDto;
+  created_at: number;
+  updated_at: number;
 }
