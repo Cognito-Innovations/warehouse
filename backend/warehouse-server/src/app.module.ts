@@ -27,6 +27,8 @@ import { ProductsController } from './products/products.controller';
 import { CourierCompaniesModule } from './courier_companies/courier_companies.module';
 import { CountriesModule } from './Countries/countries.module';
 import { SupportedCountriesModule } from './supported-countries/supported-countries.module';
+import { DocumentsModule } from './documents/documents.module';
+import { InvoicesModule } from './invoice/invoices.module';
 
 @Module({
   imports: [
@@ -47,6 +49,8 @@ import { SupportedCountriesModule } from './supported-countries/supported-countr
     PickupRequestsModule,
     TrackingRequestsModule,
     ShipmentExportModule,
+    DocumentsModule,
+    InvoicesModule,
   ],
   controllers: [
     PackageItemsController,

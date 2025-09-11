@@ -81,7 +81,7 @@ export class PackageDocumentsController {
   )
   async uploadDocuments(
     @Param('package_id') package_id: string,
-    @UploadedFiles() files: any[],
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
     return this.packageDocumentsService.uploadDocuments(package_id, files);
   }

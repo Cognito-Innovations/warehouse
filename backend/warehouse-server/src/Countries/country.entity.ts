@@ -1,6 +1,6 @@
 import { IsEnum } from 'class-validator';
-import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 export enum CountryCode {
   USA = 'USA',

@@ -1,3 +1,7 @@
+import { TrackingRequestResponseDto } from 'src/tracking-requests/dto/tracking-request-response.dto';
+import { DocumentResponseDto } from '../../documents/dto/document-response.dto';
+import { InvoiceResponseDto } from 'src/invoice/dto/invoice-response.dto';
+
 export interface SafeUser {
   id: string;
   email: string;
@@ -10,14 +14,16 @@ export interface SafeUser {
 export class ShoppingRequestResponseDto {
   id: string;
   user_id: string;
-  user?: SafeUser; 
+  user?: SafeUser;
   request_code: string;
   country: string;
   items: number;
   shopping_request_products?: any[];
   remarks?: string;
   status: string;
-  payment_slips?: string[];
+  payment_slips?: DocumentResponseDto[];
+  tracking_requests?: TrackingRequestResponseDto[];
+  invoice?: InvoiceResponseDto;
   created_at: number;
   updated_at: number;
 }

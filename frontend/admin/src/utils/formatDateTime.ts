@@ -1,6 +1,8 @@
 export const formatDateTime = (timestamp?: string | number) => {
   if (!timestamp) return '';
-  const date = new Date(Number(timestamp) * 1000);
+  const ts = typeof timestamp === "string" ? parseInt(timestamp, 10) : timestamp;
+  const date = new Date(ts * 1000);
+  if (isNaN(date.getTime())) return '';
   return date.toLocaleString(undefined, {
     year: 'numeric',
     month: 'short',

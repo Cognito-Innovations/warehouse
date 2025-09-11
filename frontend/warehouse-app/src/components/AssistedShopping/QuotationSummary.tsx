@@ -61,11 +61,19 @@ export default function QuotationSummary({
 
       {showConfirmButton && (
         <button
-          className="mt-4 w-full bg-purple-600 text-white py-2 rounded-md font-semibold hover:bg-purple-700"
+          className={`mt-4 w-full py-2 rounded-md font-semibold 
+            ${items.length === 0 || loading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-purple-600 hover:bg-purple-700 text-white'}
+          `}
           onClick={handleConfirm}
-          disabled={loading}
+          disabled={items.length === 0 || loading}
         >
-          {loading ? 'Confirming...' : `Confirm Quotation For ${items.length} Items`}
+          {loading
+            ? 'Confirming...'
+            : items.length === 0
+            ? 'Select at least one item'
+            : `Confirm Quotation For ${items.length} Item${items.length > 1 ? 's' : ''}`}
         </button>
       )}
     </div>

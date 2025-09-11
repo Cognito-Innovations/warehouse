@@ -1,28 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
-import { InvoiceModal } from "./InvoiceModal";
 import { uploadToCloudinary } from "@/lib/cloudinary.api";
 import { addPaymentSlip, updateShoppingRequestStatus } from "@/lib/api.service";
 import { Loader } from "./Loader";
 import { formatDateTime } from "@/lib/utils";
+import { generateInvoicePDF } from "./InvoicePDF";
 
-export default function Invoices({ invoice, onUpdate }: { invoice: any, onUpdate?: () => void; }) {
+export default function Invoices({ request, onUpdate }: { request: any, onUpdate?: () => void; }) {
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
-  const [showModal, setShowModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const number = invoice?.number || "No Invoice Number";
-  const amount = invoice?.amount ? `USD ${invoice.amount}` : "No Amount";
-  const date = invoice?.date ? formatDateTime(invoice.date) : "No Date";
+  const number = request.invoice?.invoice_no || "No Invoice Number";
+  const amount = request.invoice?.total || "No Amount";
+  const date = request.invoice?.created_at || "No Date";
 
-  const isPaid = ["PAYMENT_APPROVED", "ORDER_PLACED"].includes(invoice.status);
+  const isPaid = ["PAYMENT_APPROVED", "ORDER_PLACED"].includes(request.status);
 
   useEffect(() => {
-    if (invoice?.payment_slips?.length) {
-      setUploadedUrls(invoice.payment_slips);
+    if (request?.payment_slips?.length) {
+      setUploadedUrls(request.payment_slips.map((slip: any) => slip.document_url));
     }
-  }, [invoice]);
+  }, [request]);
 
   const handleFileClick = () => {
     if (!uploading) fileInputRef.current?.click();
@@ -38,8 +37,13 @@ export default function Invoices({ invoice, onUpdate }: { invoice: any, onUpdate
       for (const file of filesArray) {
         const url = await uploadToCloudinary(file);
         if (url) {
+          await addPaymentSlip(request.id, {
+            url,
+            original_filename: file.name,
+            mime_type: file.type,
+            file_size: file.size,
+          });
           setUploadedUrls((prev) => [...prev, url]);
-          await addPaymentSlip(invoice.id, url);
           onUpdate?.();
         }
       }
@@ -55,7 +59,7 @@ export default function Invoices({ invoice, onUpdate }: { invoice: any, onUpdate
 
     setConfirming(true);
     try {
-      await updateShoppingRequestStatus(invoice.id, "PAYMENT_PENDING");
+      await updateShoppingRequestStatus(request.id, "PAYMENT_PENDING");
       onUpdate?.();
     } catch (error) {
       console.error("Failed to confirm:", error);
@@ -82,7 +86,7 @@ export default function Invoices({ invoice, onUpdate }: { invoice: any, onUpdate
           </span>
           <button 
             className="px-3 py-1 border rounded-md text-sm text-gray-700 hover:bg-gray-100"
-             onClick={() => setShowModal(true)}
+             onClick={() => generateInvoicePDF(request)}
           >
             View
           </button>
@@ -94,7 +98,7 @@ export default function Invoices({ invoice, onUpdate }: { invoice: any, onUpdate
 
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 flex gap-3 flex-wrap">
             {uploadedUrls.map((url, index) => {
-              const isImage = url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
+              const isImage = typeof url === "string" && url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
 
               return (
               <div
@@ -136,7 +140,7 @@ export default function Invoices({ invoice, onUpdate }: { invoice: any, onUpdate
             />
           </div>
 
-          {invoice.status === "INVOICED" && (
+          {request.status === "INVOICED" && (
             <div className="flex justify-end mt-3">
               <button
                 onClick={handleConfirm}
@@ -154,7 +158,6 @@ export default function Invoices({ invoice, onUpdate }: { invoice: any, onUpdate
         </div>
       </div>
 
-      {showModal && <InvoiceModal onClose={() => setShowModal(false)} />}
     </>
   );
 }

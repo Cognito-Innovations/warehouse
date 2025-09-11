@@ -14,6 +14,7 @@ import TabNavigation from "./TabNavigation";
 import SearchAndFilter from "./SearchAndFilter";
 import EmptyState from "./EmptyState";
 import ShipmentsTable from "./ShipmentsTable";
+import { formatDateTime } from "@/lib/utils";
 
 const TabsSection = () => {
   const { data: session } = useSession();
@@ -179,9 +180,9 @@ const TabsSection = () => {
                       </div>
                       <div className="flex flex-col items-end space-y-2">
                         <div className="text-right">
-                          <p className="text-sm text-gray-500">Created: {new Date(pkg.created_at).toLocaleDateString()}</p>
+                          <p className="text-sm text-gray-500">Created: {formatDateTime(pkg.created_at)}</p>
                           {pkg.country && (
-                            <p className="text-sm text-gray-500">Country: {pkg.country}</p>
+                            <p className="text-sm text-gray-500">Country: {pkg.country?.name}</p>
                           )}
                         </div>
                         <button
@@ -228,7 +229,7 @@ const TabsSection = () => {
                         <div className="text-right">
                           <p className="text-sm text-gray-500">Created: {new Date(shipment.created_at).toLocaleDateString()}</p>
                           {shipment.country && (
-                            <p className="text-sm text-gray-500">Country: {shipment.country}</p>
+                            <p className="text-sm text-gray-500">Country: {shipment.country?.name}</p>
                           )}
                         </div>
                         {/* <div className="flex gap-2">

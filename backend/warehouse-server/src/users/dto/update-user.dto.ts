@@ -4,7 +4,6 @@ import {
   IsOptional,
   IsBoolean,
   IsDateString,
-  IsUUID,
 } from 'class-validator';
 
 export class UpdateUserDto {

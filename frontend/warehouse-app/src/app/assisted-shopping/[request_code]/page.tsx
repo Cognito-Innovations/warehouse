@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CircularProgress } from '@mui/material';
 
-import { getShoppingRequestById } from '@/lib/api.service';
+import { deleteShoppingRequest, getShoppingRequestById } from '@/lib/api.service';
 
 import TrackingStatus from '@/components/AssistedShopping/TrackingStatus';
 import RequestHeader from '@/components/AssistedShopping/RequestHeader';
@@ -16,6 +16,8 @@ import QuotationItems from '@/components/AssistedShopping/QuotationItems';
 import QuotationSummary from '@/components/AssistedShopping/QuotationSummary';
 import { shoppingRequestMessages } from '@/lib/shoppingRequestMessages';
 import Invoices from '@/components/AssistedShopping/Invoices';
+import { toast } from 'sonner';
+import ConfirmDialog from '@/components/Modals/ConfirmDialog';
 
 export default function ViewShoppingRequestPage() {
   const params = useParams();
@@ -24,6 +26,8 @@ export default function ViewShoppingRequestPage() {
 
   const [request, setRequest] = useState<any>(null);
   const [selectedForQuote, setSelectedForQuote] = useState<any[]>([]); 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const handleSelectionChange = useCallback((selected: any[]) => {
@@ -44,6 +48,7 @@ export default function ViewShoppingRequestPage() {
       setRequest(data);
     } catch (error) {
       console.error("Failed to fetch shopping request:", error);
+      toast.error("Failed to fetch shopping request")
       setLoading(false);
     } finally {
       setLoading(false);
@@ -61,6 +66,20 @@ export default function ViewShoppingRequestPage() {
       setSelectedForQuote(request.shopping_request_products);
     }
   }, [isQuotation, request]);
+
+   const handleDelete = async (id: string) => {
+    try {
+      await deleteShoppingRequest(id);
+      toast.success("Request deleted successfully!");
+      router.push("/assisted-shopping");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete request");
+    } finally {
+      setConfirmOpen(false);
+      setDeleteId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -93,13 +112,19 @@ export default function ViewShoppingRequestPage() {
         </p>
 
         <div className="mb-6">
-          <RequestHeader request={request} />
+          <RequestHeader
+            request={request}
+            onDelete={(id) => {
+              setDeleteId(id);
+              setConfirmOpen(true);
+            }}
+          />
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-[320px] lg:flex-shrink-0">
             <TrackingStatus
-              currentStatus={request.status}
+              trackingRequests={request.tracking_requests || []}
               createdAt={request.created_at}
             />
           </div>
@@ -109,7 +134,7 @@ export default function ViewShoppingRequestPage() {
             {isQuotation || isQuotationConfirmed || isInvoiced || isPaymentPending || isPaymentApproved || isOrderPlaced ? (
               <>
                 {(isInvoiced || isPaymentPending || isPaymentApproved || isOrderPlaced) && (
-                  <Invoices invoice={request} onUpdate={fetchRequest}/>
+                  <Invoices request={request} onUpdate={fetchRequest}/>
                 )}
 
                 <QuotationItems
@@ -132,6 +157,16 @@ export default function ViewShoppingRequestPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Request"
+        message="Are you sure you want to delete this request? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={() => deleteId && handleDelete(deleteId)}
+        onClose={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

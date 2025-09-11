@@ -9,12 +9,15 @@ import { User } from '../user.entity';
 import { UserDto } from '../dto/user.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { Country } from 'src/Countries/country.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Country)
+    private readonly countryRepository: Repository<Country>,
   ) {}
 
   async getAllUsers(): Promise<UserDto[]> {
@@ -61,11 +64,21 @@ export class UsersService {
       throw new ConflictException('User with this email already exists');
     }
 
+    let country: Country | null = null;
+    if (createUserDto.country) {
+      country = await this.countryRepository.findOne({
+        where: { name: createUserDto.country },
+      });
+
+      if (!country) {
+        throw new NotFoundException(
+          `Country ${createUserDto.country} not found`,
+        );
+      }
+    }
     const user = this.userRepository.create({
       ...createUserDto,
-      country: createUserDto.country
-        ? ({ id: createUserDto.country } as any)
-        : undefined,
+      country: country ?? undefined,
     });
     return this.userRepository.save(user);
   }
@@ -91,7 +104,7 @@ export class UsersService {
     Object.assign(user, {
       ...updateUserDto,
       country: updateUserDto.country
-        ? ({ id: updateUserDto.country } as any)
+        ? ({ id: updateUserDto.country } as Pick<Country, 'id'>)
         : user.country,
     });
     return this.userRepository.save(user);
@@ -118,5 +131,9 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     return user;
+  }
+
+  async findCountryByName(name: string): Promise<Country | null> {
+    return this.countryRepository.findOne({ where: { name } });
   }
 }

@@ -6,6 +6,7 @@ import { RegisterDto } from '../dto/register.dto';
 import { UsersService } from '../../users/service/users.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthResponseDto } from '../dto/AuthResponseDto';
+import { Country } from 'src/Countries/country.entity';
 
 @Injectable()
 export class AuthService {
@@ -21,11 +22,26 @@ export class AuthService {
     });
 
     const existingUser = await this.usersService.findByEmail(registerDto.email);
+    let countryEntity: Country | null = null;
+    if (registerDto.country) {
+      countryEntity = await this.usersService.findCountryByName(
+        registerDto.country,
+      );
+      if (!countryEntity) {
+        throw new Error(`Country ${registerDto.country} not found`);
+      }
+    } else {
+      // Fallback default to "India"
+      countryEntity = await this.usersService.findCountryByName('India');
+      if (!countryEntity) {
+        throw new Error(`Default country India not found in DB`);
+      }
+    }
     if (existingUser) {
       const updatedUser = await this.usersService.update(existingUser.id, {
         name: registerDto.name,
         image: registerDto.image,
-        country: existingUser.country?.name || 'India', // Set default country if not set
+        country: countryEntity.id,
         is_logged_in: true,
         last_login: new Date(),
       });
@@ -55,16 +71,15 @@ export class AuthService {
 
     console.log('Creating new user');
     // Check if password is already hashed (from frontend) or needs to be hashed
-    const passwordToUse = registerDto.password?.startsWith('$2') ? 
-      registerDto.password : // Already bcrypt hashed (admin registration)
-      await bcrypt.hash(registerDto.password || '', 10); // Hash if not already hashed (admin registration)
+    const passwordToUse = registerDto.password?.startsWith('$2')
+      ? registerDto.password // Already bcrypt hashed (admin registration)
+      : await bcrypt.hash(registerDto.password || '', 10); // Hash if not already hashed (admin registration)
 
     const user = await this.usersService.create({
       ...registerDto,
-      password: hashedPassword,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      country: registerDto.country || 'India', // Set default country to India
-      verified: registerDto.verified !== undefined ? registerDto.verified : false, // Use provided verified status or default to false
+      password: passwordToUse,
+      country: countryEntity.id,
+      verified: registerDto.verified ?? false, // Use provided verified status or default to false
     });
 
     // Generate JWT token
@@ -98,16 +113,19 @@ export class AuthService {
 
     // Check if the stored password is bcrypt hashed or SHA-256 hashed
     let isPasswordValid = false;
-    
+
     if (user.password.startsWith('$2')) {
       // Password is bcrypt hashed (admin registration or old format)
       isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
     } else {
       // Password is SHA-256 hashed (warehouse app registration)
-      const hashedInput = crypto.createHash('sha256').update(loginDto.password).digest('hex');
+      const hashedInput = crypto
+        .createHash('sha256')
+        .update(loginDto.password)
+        .digest('hex');
       isPasswordValid = hashedInput === user.password;
     }
-    
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }

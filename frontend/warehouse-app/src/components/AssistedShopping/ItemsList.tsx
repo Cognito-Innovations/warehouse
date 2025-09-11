@@ -6,8 +6,8 @@ interface Item {
   url: string;
   color: string;
   size: string;
-  ifNotAvailableColor?: string;
-  ifNotAvailableQuantity?: string;
+  if_not_available_color?: string;
+  if_not_available_quantity?: string;
 }
 
 interface ItemsListProps {
@@ -34,7 +34,7 @@ const ItemsList: React.FC<ItemsListProps> = ({ items }) => {
                         View Item
                     </a>
                     <p className="text-xs text-gray-500 mt-2">
-                        <span className="font-medium">Action:</span> {item.ifNotAvailableColor || item.ifNotAvailableQuantity}
+                        <span className="font-medium">Action:</span> {item.if_not_available_color || item.if_not_available_quantity}
                     </p>
                 </div>
                 <div className="text-right flex-shrink-0 ml-4">

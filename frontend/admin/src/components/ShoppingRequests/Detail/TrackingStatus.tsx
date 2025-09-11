@@ -1,6 +1,5 @@
 import { Card, Typography } from '@mui/material';
 import TrackingItem from './TrackingItem';
-import { STATUS_HANDLERS } from '../../../utils/trackingHandlers';
 
 const TRACKING_STEPS = [
   { label: 'Requested', defaultDescription: 'Requested by User' },
@@ -13,23 +12,18 @@ const TRACKING_STEPS = [
   { label: 'Order placed', defaultDescription: 'Waiting for complete' },
 ];
 
-const STATUS_MAPPING = {
-  PAYMENT_PENDING: 'Pending Payment Approval',
+const STATUS_MAPPING: Record<string, string> = {
+  REQUESTED: 'Requested',
   QUOTED: 'Quotation Ready',
+  QUOTATION_CONFIRMED: 'Quotation Confirmed',
+  INVOICED: 'Invoiced',
+  PAYMENT_PENDING: 'Pending Payment Approval',
+  PAYMENT_APPROVED: 'Payment Approved',
+  ORDER_PLACED: 'Order Placed',
 };
 
 const TrackingStatus = ({ details }) => {
-  const mappedStatus = STATUS_MAPPING[details.status] || details.status.replace(/_/g, ' ').toLowerCase();
-
-  const statusToMatch =
-    STATUS_MAPPING[details.status] ||
-    (details.status === 'QUOTED'
-      ? 'Quotation Ready'.toLowerCase()
-      : mappedStatus);
-
-  const currentStatusIndex = TRACKING_STEPS.findIndex(
-    step => step.label.toLowerCase() === statusToMatch.toLowerCase()
-  );
+  const trackingHistory = details.tracking_requests || [];
 
   return (
   <Card sx={{ p: 3 }}>
@@ -38,19 +32,32 @@ const TrackingStatus = ({ details }) => {
     </Typography>
 
     {TRACKING_STEPS.map((step, index) => {
-      const isCompleted = currentStatusIndex >= 0 && index <= currentStatusIndex;
-                  
-      const { description, date } =
-        STATUS_HANDLERS[step.label]?.(details, step) ?? {
-          description: step.defaultDescription,
-        };
+      const historyItem = trackingHistory.find(
+        (track) =>
+          STATUS_MAPPING[track.status.toUpperCase()]?.toLowerCase() ===
+          step.label.toLowerCase()
+      );
+
+      const fallbackItem =
+        step.label === 'Quotation Confirmed'
+          ? trackingHistory.find((track) => track.status.toUpperCase() === 'INVOICED')
+        : step.label === 'Confirmed'
+          ? trackingHistory.find((track) => track.status.toUpperCase() === 'PAYMENT_PENDING')
+        : undefined;
+      
+      const effectiveItem = historyItem || fallbackItem;    
+      const isCompleted = Boolean(effectiveItem);
 
       return (
         <TrackingItem
           key={step.label}
           status={step.label}
-          description={description}
-          createdAt={date}
+          description={
+              effectiveItem
+                ? `Status updated to ${step.label}`
+                : step.defaultDescription
+            }
+          createdAt={effectiveItem?.created_at}
           completed={isCompleted}
           isLast={index === TRACKING_STEPS.length - 1}
         />

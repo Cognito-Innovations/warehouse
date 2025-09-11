@@ -1,5 +1,5 @@
-import { Box, Card, Typography, Button } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import { Box, Card, Typography } from '@mui/material';
+// import AddIcon from '@mui/icons-material/Add';
 
 const ActionLogs = () => (
   <Card sx={{ p: 2, mt: 3 }}>
@@ -7,9 +7,10 @@ const ActionLogs = () => (
       <Typography variant="h6" fontWeight={600}>
         Action Logs
       </Typography>
-      <Button variant="contained" size="small" startIcon={<AddIcon />} sx={{textTransform: 'none'}}>
+      {/* TODO: Uncomment when functionality implemented */}
+      {/* <Button variant="contained" size="small" startIcon={<AddIcon />} sx={{textTransform: 'none'}}>
         Add
-      </Button>
+      </Button> */}
     </Box>
     <Box sx={{ textAlign: 'center', py: 2 }}>
       <Typography variant="body2" color="text.secondary">

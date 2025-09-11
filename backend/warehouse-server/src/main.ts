@@ -11,7 +11,11 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:5173'], // Frontend URLs (warehouse-app, admin)
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'http://localhost:5173',
+    ], // Frontend URLs (warehouse-app, admin)
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
@@ -40,4 +44,7 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3001);
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Error during bootstrap', err);
+  process.exit(1);
+});

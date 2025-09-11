@@ -104,28 +104,24 @@ export class PackagesService {
   async createPackage(
     createPackageDto: CreatePackageDto,
   ): Promise<PackageResponseDto> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const customer = await this.packageRepository.manager
       .createQueryBuilder()
       .select('users.country_id', 'country_id')
       .from('users', 'users')
       .where('users.id = :customerId', { customerId: createPackageDto.user })
-      .getRawOne();
+      .getRawOne<{ country_id: string | null }>();
 
     if (!customer) {
       throw new BadRequestException('Customer not found');
     }
 
     const DEFAULT_COUNTRY_ID = '4bffc336-6ebf-420d-8865-df7fb72f5dac';
-    const countryId = customer.country_id || DEFAULT_COUNTRY_ID;
+    const countryId: string = customer.country_id || DEFAULT_COUNTRY_ID;
 
     //Remove the hardcoded country id
     const package_id =
       createPackageDto.package_id ||
-      (await this.generateCountryBasedpackage_id(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        customer.country_id,
-      ));
+      (await this.generateCountryBasedpackage_id(countryId));
     const existingPackage = await this.packageRepository.findOne({
       where: { package_id: package_id },
     });
@@ -152,7 +148,6 @@ export class PackagesService {
     packageEntity.vendor_id = createPackageDto.vendor;
     packageEntity.status = createPackageDto.status || 'Action Required';
     // Remove the hardcoded country id
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     packageEntity.country = { id: countryId } as Country;
     packageEntity.total_weight = createPackageDto.weight
       ? parseFloat(createPackageDto.weight)
@@ -175,7 +170,6 @@ export class PackagesService {
     }
 
     // Set the relationship (TypeORM will handle the foreign key)
-
     packageEntity.created_by = createPackageDto.created_by as unknown as User;
 
     try {
@@ -251,17 +245,20 @@ export class PackagesService {
       }
 
       return this.mapPackageToResponseDto(packageWithRelations);
-    } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (error.code === '23505') {
-        // PostgreSQL unique constraint violation
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if (error.constraint?.includes('package_id')) {
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code: string }).code === '23505'
+      ) {
+        const dbError = error as { code: string; constraint?: string };
+
+        if (dbError.constraint?.includes('package_id')) {
           throw new BadRequestException(
             `Package ID ${package_id} already exists`,
           );
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        } else if (error.constraint?.includes('tracking_no')) {
+        } else if (dbError.constraint?.includes('tracking_no')) {
           throw new BadRequestException(
             `Tracking number ${createPackageDto.tracking_no} already exists`,
           );
@@ -383,20 +380,17 @@ export class PackagesService {
   ): Promise<string> {
     try {
       // Get country code from country ID
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const country = await this.packageRepository.manager
         .createQueryBuilder()
         .select('countries.code', 'code')
         .from('countries', 'countries')
         .where('countries.id = :countryId', { countryId })
-        .getRawOne();
+        .getRawOne<{ code: string }>();
 
       if (!country) {
         throw new BadRequestException('Invalid country ID');
       }
 
-      // Extract country code (first 3 characters, uppercase)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const countryCode = country.code.substring(0, 3).toUpperCase();
 
       // Get the next sequence number for this country

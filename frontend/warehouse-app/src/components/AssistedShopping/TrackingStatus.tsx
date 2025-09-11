@@ -5,34 +5,39 @@ import { CheckCircle } from '@mui/icons-material';
 import { formatDateTime } from '@/lib/utils';
 
 interface TrackingStatusProps {
-  currentStatus: string;
-  createdAt: string;
+  trackingRequests: any[];
+  createdAt: string;  
 }
 
-const TrackingStatus: React.FC<TrackingStatusProps> = ({ currentStatus, createdAt }) => {
-  const steps = [
-    {
-      key: 'REQUESTED',
-      label: 'REQUESTED',
-      description: formatDateTime(createdAt),
-    },
-    { 
-        key: 'QUOTATION_READY', 
-        label: 'QUOTATION READY', 
-        description: 'Waiting for quotation' 
-    },
-    {
-      key: 'QUOTATION_CONFIRMED',
-      label: 'QUOTATION_CONFIRMED',
-      description:'Waiting for confirmation',
-    },
-    { key: 'INVOICED', label: 'INVOICED', description: 'Waiting for invoice' },
-    { key: 'PAYMENT_PENDING', label: 'PAYMENT PENDING', description: 'Waiting for payment' },
-    { key: 'PAYMENT_APPROVED', label: 'PAYMENT APPROVED', description: 'Waiting for payment approval' },
-    { key: 'ORDER_PLACED', label: 'ORDER PLACED', description: 'Placing order' },
+const TrackingStatus: React.FC<TrackingStatusProps> = ({ trackingRequests, createdAt }) => {
+    const TRACKING_STEPS = [
+    { label: 'Requested', defaultDescription: 'Requested by User' },
+    { label: 'Quotation Ready', defaultDescription: 'Quotation is not ready yet!' },
+    { label: 'Quotation Confirmed', defaultDescription: 'Quotation is not confirmed yet!' },
+    { label: 'Invoiced', defaultDescription: 'Waiting for confirmation!' },
+    { label: 'Pending Payment Approval', defaultDescription: 'Waiting for confirmation!' },
+    { label: 'Payment Approved', defaultDescription: 'Waiting for payment approval' },
+    { label: 'Order Placed', defaultDescription: 'Waiting for complete' },
   ];
-      
-  const activeIndex = steps.findIndex((s) => s.key === currentStatus);
+
+  const STATUS_MAPPING: Record<string, string> = {
+    REQUESTED: 'Requested',
+    QUOTED: 'Quotation Ready',
+    QUOTATION_READY: 'Quotation Ready',
+    QUOTATION_CONFIRMED: 'Quotation Confirmed',
+    INVOICED: 'Invoiced',
+    PAYMENT_PENDING: 'Pending Payment Approval',
+    PAYMENT_APPROVED: 'Payment Approved',
+    ORDER_PLACED: 'Order Placed',
+  };
+
+  const completedSteps = trackingRequests.map(
+    (track) => STATUS_MAPPING[track.status.toUpperCase()]
+  );
+
+  const lastCompletedIndex = TRACKING_STEPS.findIndex(
+    (step) => step.label === completedSteps[completedSteps.length - 1]
+  );
 
   return (
     <Box sx={{ p: 1 }}>
@@ -41,12 +46,29 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ currentStatus, createdA
       </Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {steps.map((step, index) => {
-          const isActive = activeIndex === index;
-          const isCompleted = activeIndex > index;
+        {TRACKING_STEPS.map((step, index) => {
+          const historyItem = trackingRequests.find(
+            (track) =>
+              STATUS_MAPPING[track.status.toUpperCase()]?.toLowerCase() ===
+              step.label.toLowerCase()
+          );
+
+          const fallbackItem =
+            step.label === 'Quotation Confirmed'
+              ? trackingRequests.find((track) => track.status.toUpperCase() === 'INVOICED')
+              : undefined;
+
+          const effectiveItem = historyItem || fallbackItem;
+
+          const isCompleted = Boolean(effectiveItem);
+          const isActive = !isCompleted && index === lastCompletedIndex + 1;
+
+          const description = effectiveItem
+            ? formatDateTime(effectiveItem.created_at)
+            : step.defaultDescription;
 
           return (
-            <Box key={step.key} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <Box key={step.label} sx={{ display: 'flex', alignItems: 'flex-start' }}>
               <Box
                 sx={{
                   display: 'flex',
@@ -55,7 +77,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ currentStatus, createdA
                   mr: 2,
                 }}
               >
-                {isCompleted || isActive ? (
+                {isCompleted ? (
                   <CheckCircle sx={{ color: '#3B82F6', zIndex: 1 }} />
                 ) : (
                   <Box
@@ -81,7 +103,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ currentStatus, createdA
                   </Box>
                 )}
 
-                {index < steps.length - 1 && (
+                {index < TRACKING_STEPS.length - 1 && (
                   <Box
                     sx={{
                       flexGrow: 1,
@@ -109,7 +131,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ currentStatus, createdA
                     color: isActive ? '#3B82F6' : 'text.secondary',
                   }}
                 >
-                  {step.description}
+                  {description}
                 </Typography>
               </Box>
             </Box>

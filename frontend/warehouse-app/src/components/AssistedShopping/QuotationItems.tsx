@@ -73,7 +73,7 @@ export default function QuotationItems({
                     Color: <span className="font-medium text-gray-800">{item.color || '-'}</span>
                   </p>
                   <p className="text-sm text-gray-500">
-                    Size: <span className="font-medium text-gray-800">{item.size || '-'}</span>
+                    Size: <span className="font-medium text-gray-800">{item.size || 'NIL'}</span>
                   </p>
 
                   <p className="text-sm text-gray-900 font-semibold mt-2">Item Total</p>

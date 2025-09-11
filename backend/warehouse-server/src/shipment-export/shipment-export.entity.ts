@@ -8,7 +8,6 @@ import {
 } from 'typeorm';
 import { ShipmentExportBox } from './shipment-export-box.entity';
 import { User } from 'src/users/user.entity';
-import { Country } from 'src/Countries/country.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 @Entity('shipment_exports')

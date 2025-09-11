@@ -6,6 +6,8 @@ import {
   Post,
   Patch,
   UseGuards,
+  Req,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,9 +19,20 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Request } from 'express';
 import { ShoppingRequestsService } from './shopping-requests.service';
 import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
 import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
+import { DocumentResponseDto } from 'src/documents/dto/document-response.dto';
+import { ShoppingRequestStatus } from './shopping-request.entity';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    email?: string;
+    role?: string;
+  };
+}
 
 @ApiTags('Shopping Requests')
 @ApiBearerAuth()
@@ -113,7 +126,7 @@ export class ShoppingRequestsController {
   })
   async updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: string },
+    @Body() body: { status: ShoppingRequestStatus },
   ): Promise<ShoppingRequestResponseDto> {
     return this.shoppingRequestsService.updateStatus(id, body.status);
   }
@@ -122,7 +135,7 @@ export class ShoppingRequestsController {
   @ApiOperation({ summary: 'Add a payment slip to a shopping request' })
   @ApiOkResponse({
     description: 'Payment slip added successfully',
-    type: ShoppingRequestResponseDto,
+    type: DocumentResponseDto,
   })
   @ApiBody({
     schema: {
@@ -132,13 +145,38 @@ export class ShoppingRequestsController {
           type: 'string',
           example: 'https://cdn.example.com/slips/payment-001.png',
         },
+        original_filename: { type: 'string', example: 'payment-001.png' },
+        mime_type: { type: 'string', example: 'image/png' },
+        file_size: { type: 'number', example: 204800 },
       },
     },
   })
   async addPaymentSlip(
     @Param('id') id: string,
-    @Body() body: { url: string },
+    @Body()
+    body: {
+      data: {
+        url: string;
+        original_filename: string;
+        mime_type?: string;
+        file_size?: number;
+      };
+    },
+    @Req() req: AuthenticatedRequest,
   ): Promise<ShoppingRequestResponseDto> {
-    return this.shoppingRequestsService.addPaymentSlip(id, body.url);
+    return this.shoppingRequestsService.addPaymentSlip(
+      id,
+      body.data,
+      req.user.id,
+    );
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a shopping request' })
+  @ApiOkResponse({
+    description: 'Shopping request deleted successfully',
+  })
+  async delete(@Param('id') id: string): Promise<{ message: string }> {
+    return this.shoppingRequestsService.deleteShoppingRequest(id);
   }
 }

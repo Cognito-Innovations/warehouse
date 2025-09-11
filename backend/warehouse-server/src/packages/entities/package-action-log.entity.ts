@@ -6,6 +6,7 @@ import {
   JoinColumn,
   BeforeInsert,
 } from 'typeorm';
+import { Package } from './package.entity';
 
 @Entity('package_action_logs')
 export class PackageActionLog {
@@ -15,9 +16,9 @@ export class PackageActionLog {
   @Column()
   package_id: string;
 
-  @ManyToOne('Package', (packageEntity: any) => packageEntity.action_logs)
+  @ManyToOne(() => Package, (pkg) => pkg.action_logs)
   @JoinColumn({ name: 'package_id' })
-  package: any;
+  package: Package;
 
   @Column()
   file_name: string;

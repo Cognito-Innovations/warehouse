@@ -27,6 +27,8 @@ export enum TrackingStatus {
   Discarded = 'discarded',
   InReview = 'in_review',
   Invoiced = 'invoiced',
+  PaymentPending = 'payment_pending',
+  PaymentApproved = 'payment_approved',
   OrderPlaced = 'order_placed',
   Paid = 'paid',
   QuotationConfirmed = 'quotation_confirmed',
@@ -49,6 +51,10 @@ export class TrackingRequest extends BaseTimestampEntity {
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => User, { eager: true, nullable: true })
+  @JoinColumn({ name: 'admin_id' })
+  admin?: User;
 
   @Column({
     type: 'enum',
