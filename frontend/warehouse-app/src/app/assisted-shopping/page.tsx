@@ -196,7 +196,7 @@ export default function AssistedShopping() {
 
               {/* Shopping Requests List */}
               {isLoading ? (
-                  <div className="flex justify-center items-center min-h-screen bg-gray-50">
+                  <div className="flex justify-center items-center">
                     <CircularProgress />
                   </div>
                 ) : shoppingRequests.length > 0 ? (

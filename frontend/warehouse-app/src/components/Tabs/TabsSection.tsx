@@ -17,6 +17,7 @@ import EmptyState from "./EmptyState";
 import ShipmentsTable from "./ShipmentsTable";
 import { formatDateTime } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
+import { CircularProgress } from "@mui/material";
 
 const TabsSection = () => {
   const { data: session } = useSession();
@@ -180,7 +181,7 @@ const TabsSection = () => {
         <TabPanel value={value} index={0}>
           {packagesLoading ? (
             <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <CircularProgress />
             </div>
           ) : packages.length === 0 ? (
             <EmptyState icon={<PackageIcon />} message="No Packages Available" />

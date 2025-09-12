@@ -108,7 +108,7 @@ export class ShoppingRequestsController {
   }
 
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update status of a shopping request' })
+  @ApiOperation({ summary: 'Patch status of a shopping request' })
   @ApiOkResponse({
     description: 'Shopping request status updated successfully',
     type: ShoppingRequestResponseDto,
