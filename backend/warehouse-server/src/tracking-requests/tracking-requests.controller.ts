@@ -45,7 +45,7 @@ export class TrackingRequestsController {
         value: {
           user: '123e4567-e89b-12d3-a456-426614174001',
           feature_type: 'pickup-request',
-          country_id: '123e4567-e89b-12d3-a456-426614174002',
+          courier_id: '123e4567-e89b-12d3-a456-426614174002',
           status: 'requested',
           feature_fid: '123e4567-e89b-12d3-a456-426614174003',
         },

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { FeatureType, TrackingStatus } from '../tracking-request.entity';
 import { User } from '../../users/user.entity';
-import { Country } from 'src/Countries/country.entity';
+import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 
 export class TrackingRequestResponseDto {
   @ApiProperty({
@@ -19,11 +19,11 @@ export class TrackingRequestResponseDto {
   admin?: User;
 
   @ApiPropertyOptional({
-    description: 'Country that is being tracked',
+    description: 'Courier that is being tracked',
     type: 'object',
     additionalProperties: true,
   })
-  country?: Country;
+  courier?: CourierCompany;
 
   @ApiPropertyOptional({
     description: 'User who owns the tracked item',

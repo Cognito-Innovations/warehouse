@@ -12,7 +12,7 @@ import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
 import { DocumentsService } from 'src/documents/documents.service';
 import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
 import { mapToTrackingStatus } from './status-mapper';
-import { Country } from 'src/Countries/country.entity';
+import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { InvoicesService } from 'src/invoice/invoices.service';
 import { Invoice, InvoiceStatus } from 'src/invoice/invoice.entity';
 
@@ -23,8 +23,8 @@ export class ShoppingRequestsService {
     private readonly shoppingRequestRepository: Repository<ShoppingRequest>,
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
-    @InjectRepository(Country)
-    private readonly countryRepository: Repository<Country>,
+    @InjectRepository(CourierCompany)
+    private readonly courierRepository: Repository<CourierCompany>,
     private readonly documentsService: DocumentsService,
     private readonly trackingRequestsService: TrackingRequestsService,
     private readonly invoicesService: InvoicesService,
@@ -33,22 +33,22 @@ export class ShoppingRequestsService {
   async createShoppingRequest(
     createShoppingRequestDto: CreateShoppingRequestDto,
   ): Promise<ShoppingRequestResponseDto> {
-    const country = await this.countryRepository.findOne({
-      where: { name: createShoppingRequestDto.country },
+    const courier = await this.courierRepository.findOne({
+      where: { id: createShoppingRequestDto.courier_id },
     });
 
-    if (!country) {
+    if (!courier) {
       throw new NotFoundException(
-        `Country ${createShoppingRequestDto.country} not found`,
+        `Courier ${createShoppingRequestDto.courier_id} not found`,
       );
     }
 
     const shoppingRequest = this.shoppingRequestRepository.create({
       ...createShoppingRequestDto,
-      country,
+      courier,
       status:
         createShoppingRequestDto.status || ShoppingRequestStatus.REQUESTED,
-      items: createShoppingRequestDto.items || 0,
+      items_count: createShoppingRequestDto.items_count || 0,
     });
 
     const savedShoppingRequest =
@@ -59,15 +59,15 @@ export class ShoppingRequestsService {
       feature_fid: savedShoppingRequest.id,
       status: mapToTrackingStatus(savedShoppingRequest.status),
       user: savedShoppingRequest.user_id,
-      country_id: savedShoppingRequest.country.id,
+      courier_id: savedShoppingRequest.courier.id,
     });
 
     return {
       id: savedShoppingRequest.id,
       user_id: savedShoppingRequest.user_id,
       request_code: savedShoppingRequest.request_code,
-      country: savedShoppingRequest.country.name,
-      items: savedShoppingRequest.items,
+      courier: savedShoppingRequest.courier.name,
+      items_count: savedShoppingRequest.items_count,
       remarks: savedShoppingRequest.remarks,
       status: savedShoppingRequest.status,
       payment_slips: [],
@@ -108,8 +108,8 @@ export class ShoppingRequestsService {
               }
             : undefined,
           request_code: request.request_code,
-          country: request.country.name,
-          items: request.items,
+          courier: request.courier.name,
+          items_count: request.items_count,
           remarks: request.remarks,
           status: request.status,
           payment_slips: slips,
@@ -146,8 +146,8 @@ export class ShoppingRequestsService {
           id: request.id,
           user_id: request.user_id,
           request_code: request.request_code,
-          country: request.country.name,
-          items: request.items,
+          courier: request.courier.name,
+          items_count: request.items_count,
           remarks: request.remarks,
           status: request.status,
           payment_slips: slips,
@@ -205,8 +205,8 @@ export class ShoppingRequestsService {
           }
         : undefined,
       request_code: shoppingRequest.request_code,
-      country: shoppingRequest.country.name,
-      items: shoppingRequest.items,
+      courier: shoppingRequest.courier.name,
+      items_count: shoppingRequest.items_count,
       shopping_request_products: shoppingRequestProducts,
       remarks: shoppingRequest.remarks,
       status: shoppingRequest.status,
@@ -290,7 +290,7 @@ export class ShoppingRequestsService {
       feature_fid: id,
       status: mapToTrackingStatus(updatedShoppingRequest.status),
       user: updatedShoppingRequest.user_id,
-      country_id: updatedShoppingRequest.country.id,
+      courier_id: updatedShoppingRequest.courier.id,
     });
 
     const slips = await this.documentsService.findByFeature(
@@ -314,8 +314,8 @@ export class ShoppingRequestsService {
       id: updatedShoppingRequest.id,
       user_id: updatedShoppingRequest.user_id,
       request_code: updatedShoppingRequest.request_code,
-      country: updatedShoppingRequest.country.name,
-      items: updatedShoppingRequest.items,
+      courier: updatedShoppingRequest.courier.name,
+      items_count: updatedShoppingRequest.items_count,
       remarks: updatedShoppingRequest.remarks,
       status: updatedShoppingRequest.status,
       payment_slips: slips,

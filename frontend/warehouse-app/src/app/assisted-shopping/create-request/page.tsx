@@ -1,12 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import AddressSection from "../../../components/Navbar/AddressSection";
 import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
-import { useSession } from "next-auth/react";
+import AddressLayout from "@/providers/AddressLayout";
+import { useAddressAPI } from "@/hooks/useAddressAPI";
 
 interface ShoppingItem {
   id: string;
@@ -20,20 +22,11 @@ interface ShoppingItem {
   ifNotAvailableColor: string;
 }
 
-export default function CreateShoppingRequest() {
+function CreateShoppingRequestContent() {
   const router = useRouter();
   const { data: session } = useSession();  
+  const {selectedAddress} = useAddressAPI();
   
-  // Load country from localStorage or use default
-  const getInitialCountry = () => {
-    if (typeof window !== 'undefined') {
-      const savedCountry = localStorage.getItem('selectedCountry');
-      return savedCountry || 'India';
-    }
-    return 'India';
-  };
-  
-  const [selectedCountry, setSelectedCountry] = useState(getInitialCountry);
   const [items, setItems] = useState<ShoppingItem[]>([
     {
       id: "1",
@@ -80,24 +73,15 @@ export default function CreateShoppingRequest() {
     );
   };
 
-  const handleCountryChange = (country: string) => {
-    setSelectedCountry(country);
-    // Save to localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('selectedCountry', country);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const userId = (session?.user as any)?.user_id;
 
     const shoppingRequest = {
     user_id: userId, 
-    request_code: `SR/${selectedCountry.substring(0, 2).toUpperCase()}/${Date.now()}`,
-    country: selectedCountry,
-    items: items.length,
+    request_code: `SR/${selectedAddress.country_code.toUpperCase()}/${Date.now()}`,
+    courier_id: selectedAddress.id,
+    items_count: items.length,
     remarks,
     status: "REQUESTED",
   };
@@ -138,10 +122,7 @@ export default function CreateShoppingRequest() {
         MozOsxFontSmoothing: "grayscale",
       }}
     >
-      <AddressSection
-        currentCountry={selectedCountry}
-        onCountryChange={handleCountryChange}
-      />
+      <AddressSection/>
 
       {/* Breadcrumb navigation (added) */}
       <div className="w-full border border-gray-200 pb-3">
@@ -376,5 +357,13 @@ export default function CreateShoppingRequest() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CreateShoppingRequest() {
+  return (
+    <AddressLayout>
+      <CreateShoppingRequestContent />
+    </AddressLayout>
   );
 }

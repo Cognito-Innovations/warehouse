@@ -1,12 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { getStoredUser, isAuthenticated, logout as authLogout } from '../services/auth.service';
 import type { User } from '../types';
-import {  getStoredUser, isAuthenticated, logout as authLogout } from '../services/auth.service';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (user: User, token: string) => void;
   logout: () => Promise<void>;
 }
 
@@ -40,9 +39,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error('Error checking authentication:', error);
-        // Clear invalid data
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -51,13 +48,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  const login = (userData: User, token: string) => {
-    setUser(userData);
-    localStorage.setItem('access_token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-  };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await authLogout();
     } catch (error) {
@@ -65,15 +57,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setUser(null);
     }
-  };
+  }, []);
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     isAuthenticated: !!user,
     isLoading,
-    login,
     logout,
-  };
+  }), [user, isLoading, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

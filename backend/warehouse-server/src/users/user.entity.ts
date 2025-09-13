@@ -27,7 +27,8 @@ export class User extends BaseTimestampEntity {
   @IsEmail()
   email: string;
 
-  @Column({ select: false, nullable: true })
+  //TODO: Add select: false to password column and try admin login and make it correct
+  @Column({ nullable: true })
   password: string;
 
   @Column({ nullable: true })

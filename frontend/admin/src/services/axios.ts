@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { removeCookie } from '../utils/cookieUtils';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001',
@@ -16,8 +17,7 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401) {
       // Token/cookie invalid, redirect to login
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
+      removeCookie('user_data');
       window.location.href = '/login';
     }
 

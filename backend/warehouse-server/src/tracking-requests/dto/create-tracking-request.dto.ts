@@ -23,11 +23,11 @@ export class CreateTrackingRequestDto {
   role?: Role;
 
   @ApiProperty({
-    description: 'Country ID that is being tracked',
+    description: 'Courier ID that is being tracked',
     example: '123e4567-e89b-12d3-a456-426614174002',
   })
   @IsUUID()
-  country_id: string;
+  courier_id: string;
 
   @ApiProperty({
     description: 'Current status of the tracking request',

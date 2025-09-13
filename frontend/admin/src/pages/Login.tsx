@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -13,12 +13,11 @@ import {
 import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
 import { login } from '../services/auth.service';
 import { useAuth } from '../contexts/AuthContext';
-import { toast } from 'sonner';
+import { toast } from 'sonner'
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { login: authLogin } = useAuth();
+  const { isLoading } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,14 +26,16 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+  // TODO: Uncomment this when we have a way to check if the user is authenticated
   // Redirect if already authenticated
-  React.useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      const from = location.state?.from?.pathname || '/';
-      navigate(from, { replace: true });
-    }
-  }, [navigate, location]);
+  // React.useEffect(() => {
+  //   if (!isLoading) {
+  //     if(getCookie('user_data')){
+  //       const from =  '/packages/all';
+  //       navigate(from, { replace: true });
+  //     }
+  //   }
+  // }, [isLoading]);
 
   const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [field]: event.target.value }));
@@ -73,15 +74,9 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await login(formData.email, formData.password);
-      
-      // Use auth context to store user data
-      authLogin(response.user, response.access_token);
-      
+      await login(formData.email, formData.password);
       toast.success('Login successful!');
-      
-      // Redirect to intended page or dashboard
-      const from = location.state?.from?.pathname || '/';
+      const from =  '/packages/all';
       navigate(from, { replace: true });
     } catch (error: any) {
       console.error('Login error:', error);
@@ -94,6 +89,23 @@ const Login: React.FC = () => {
   const handleTogglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        }}
+      >
+        <CircularProgress size={60} sx={{ color: 'white' }} />
+      </Box>
+    );
+  }
 
   return (
     <Box
