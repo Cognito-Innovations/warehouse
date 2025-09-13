@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { useSession } from "next-auth/react"; 
 import { useRouter } from 'next/navigation';
 import { useAddressAPI } from '@/hooks/useAddressAPI';
+import AddressLayout from '@/providers/AddressLayout';
 
 const FormLabel = ({ children, htmlFor }: { children: React.ReactNode; htmlFor: string }) => (
   <Typography
@@ -26,7 +27,7 @@ const FormLabel = ({ children, htmlFor }: { children: React.ReactNode; htmlFor: 
   </Typography>
 );
 
-export default function CreatePickupRequestPage() {
+function CreatePickupRequestPageContent() {
   const {selectedAddress} =  useAddressAPI();
   const { data: session } = useSession();  
   const router = useRouter();
@@ -261,5 +262,13 @@ export default function CreatePickupRequestPage() {
         </Box>
       </Paper>
     </Box>
+  );
+}
+
+export default function CreatePickupRequestPage() {
+  return (
+    <AddressLayout>
+      <CreatePickupRequestPageContent />
+    </AddressLayout>
   );
 }

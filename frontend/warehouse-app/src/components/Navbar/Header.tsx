@@ -151,7 +151,6 @@ const Header = () => {
 
   useEffect(() => {
     if (isClient && typeof window !== 'undefined' && selectedAddress) {
-      localStorage.setItem('selectedAddress', JSON.stringify(selectedAddress));
       selectCountry(selectedAddress.country_name);
     }
   }, [selectedAddress, isClient]);
@@ -195,7 +194,7 @@ const Header = () => {
                   <p
                     className="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
                   >
-                    Welcome, {currentUser?.name || "User"}
+                    Welcome, <span style={{textTransform: 'capitalize'}}>{currentUser?.name || "User"}</span>
                   </p>
                 </Box>
 

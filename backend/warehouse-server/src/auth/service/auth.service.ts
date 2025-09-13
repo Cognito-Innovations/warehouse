@@ -22,7 +22,7 @@ export class AuthService {
       const payload = { email: existingUser.email, sub: existingUser.id };
       //TODO: GEt the user courierpreferences and update the user
       const access_token = this.jwtService.sign(payload);
-      return { access_token };
+      return { access_token, ...existingUser };
     }
     // Check if password is already hashed (from frontend) or needs to be hashed
     const passwordToUse = registerDto.password?.startsWith('$2')
@@ -40,7 +40,7 @@ export class AuthService {
     // Generate JWT token
     const payload = { email: user.email, sub: user.id };
     const access_token = this.jwtService.sign(payload);
-    return { access_token };
+    return { access_token, ...user };
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {

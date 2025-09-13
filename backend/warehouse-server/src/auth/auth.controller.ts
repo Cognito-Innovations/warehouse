@@ -22,6 +22,7 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  //TODO: Add profile and logout endpoints and fetches when UI ready
   // @UseGuards(JwtAuthGuard)
   // @Get('profile')
   // getProfile(@Request() req) {

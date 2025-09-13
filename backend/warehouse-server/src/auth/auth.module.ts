@@ -18,8 +18,6 @@ import { AuthController } from './auth.controller';
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: {
         expiresIn: '24h',
-        issuer: 'warehouse-app',
-        audience: 'warehouse-users',
       },
     }),
     UsersModule,

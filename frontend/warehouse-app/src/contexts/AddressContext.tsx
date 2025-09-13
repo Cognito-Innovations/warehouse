@@ -162,13 +162,6 @@ export const AddressProvider: React.FC<AddressProviderProps> = ({ children }) =>
     fetchCountries();
   }, []);
 
-  // Save country to localStorage when it changes
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("selectedCountry", state.selectedCountry);
-    }
-  }, [state.selectedCountry]);
-
   return (
     <AddressContext.Provider value={{ state, dispatch }}>
       {children}

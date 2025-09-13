@@ -9,8 +9,8 @@ export interface PickupRequestPayload {
   supplier_name: string;
   supplier_phone_number: string;
   alt_supplier_phone_number?: string;
-  pcs_box: number;
-  est_weight?: number;
+  pcs_box: string;
+  est_weight?: string;
   pkg_details: string;
   remarks?: string;
   status?: string;
@@ -34,10 +34,7 @@ const createAuthenticatedApi = (): AxiosInstance => {
     async (config: InternalAxiosRequestConfig) => {
       try {
         const session = await getSession();
-        console.log("DEBUG Session:", session);
-        // The token is safely extracted from the session object.
         const token = (session as any)?.access_token;
-        
         if (token) {
           config.headers.set("Authorization", `Bearer ${token}`);
         }
