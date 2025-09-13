@@ -7,8 +7,6 @@ import {Box,Typography,Button,Card,CardContent,Grid,Switch } from '@mui/material
 
 export default function ProfilePage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [smsNotifications, setSmsNotifications] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
 
   const profileData = {
     identifier: '',
@@ -118,107 +116,6 @@ export default function ProfilePage() {
           </Grid>
         </CardContent>
       </Card>
-
-      <Card sx={{ mb: 2, borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <CardContent sx={{ p: 2.5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, color: 'grey.900' }}>
-            User Photos / Documents
-          </Typography>
-          <Box
-            sx={{
-              border: '2px dashed',
-              borderColor: 'grey.300',
-              borderRadius: '8px',
-              p: 3,
-              textAlign: 'center',
-              bgcolor: 'grey.50',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                borderColor: 'primary.main',
-                bgcolor: 'rgba(139, 92, 246, 0.05)',
-                transform: 'translateY(-1px)',
-              },
-            }}
-          >
-            <Add sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
-            <Typography variant="body2" sx={{ color: 'grey.500', fontWeight: 500 }}>
-              Click to upload documents
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
-
-      <Card sx={{ borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <CardContent sx={{ p: 2.5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'grey.900' }}>
-            Notification Settings
-          </Typography>
-          
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              p: 1.5,
-              borderRadius: '8px',
-              bgcolor: 'grey.50',
-              transition: 'background-color 0.2s ease',
-              '&:hover': {
-                bgcolor: 'grey.100',
-              }
-            }}>
-              <Typography variant="body2" sx={{ color: 'grey.900', fontWeight: 500 }}>
-                SMS Notifications
-              </Typography>
-              <Switch
-                checked={smsNotifications}
-                onChange={(e) => setSmsNotifications(e.target.checked)}
-                size="small"
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: 'primary.main',
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: 'primary.main',
-                  },
-                }}
-              />
-            </Box>
-            
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              p: 1.5,
-              borderRadius: '8px',
-              bgcolor: 'grey.50',
-              transition: 'background-color 0.2s ease',
-              '&:hover': {
-                bgcolor: 'grey.100',
-              }
-            }}>
-              <Typography variant="body2" sx={{ color: 'grey.900', fontWeight: 500 }}>
-                Email Notifications
-              </Typography>
-              <Switch
-                checked={emailNotifications}
-                onChange={(e) => setEmailNotifications(e.target.checked)}
-                size="small"
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: 'primary.main',
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: 'primary.main',
-                  },
-                }}
-              />
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-
       <EditProfileModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}

@@ -1,12 +1,3 @@
 export class AuthResponseDto {
   access_token: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-    suite_no: string;
-    country: string;
-    verified: boolean;
-  };
 }

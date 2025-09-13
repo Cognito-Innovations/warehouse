@@ -42,7 +42,6 @@ export class PackagesService {
             email: pkg.user.email,
             name: pkg.user.name,
             suite_no: pkg.user.suite_no,
-            country: pkg.user.country?.name,
           }
         : undefined,
       vendor: pkg.vendor
@@ -491,11 +490,11 @@ export class PackagesService {
     if (!pkg) throw new NotFoundException('Package not found');
     if (dto.tracking_no) pkg.tracking_no = dto.tracking_no;
     if (dto.weight) pkg.total_weight = parseFloat(dto.weight);
-    if (dto.volumetric_weight) 
+    if (dto.volumetric_weight)
       pkg.total_volumetric_weight = parseFloat(dto.volumetric_weight);
     if (typeof dto.dangerous_good !== 'undefined') {
       pkg.dangerous_good = dto.dangerous_good;
-    };
+    }
     if (dto.rack_slot) {
       const rack = await this.rackRepository.findOne({
         where: { id: dto.rack_slot },
@@ -516,7 +515,7 @@ export class PackagesService {
     const timestamp = Date.now().toString().slice(-6);
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     const shipmentId = `${prefix}${timestamp}${random}`;
-    
+
     const existing = await this.packageRepository.findOne({
       where: { shipment_id: shipmentId },
     });
@@ -539,9 +538,13 @@ export class PackagesService {
     },
     userId: string,
   ) {
-    const pkg = await this.packageRepository.findOne({ where: { shipment_uuid } });
+    const pkg = await this.packageRepository.findOne({
+      where: { shipment_uuid },
+    });
     if (!pkg) {
-      throw new NotFoundException(`----Package not found with shipment_uuid: ${shipment_uuid}`);
+      throw new NotFoundException(
+        `----Package not found with shipment_uuid: ${shipment_uuid}`,
+      );
     }
 
     await this.documentsService.create({
@@ -558,32 +561,55 @@ export class PackagesService {
       is_required: false,
     });
 
-    return this.documentsService.findByFeature(FeatureType.Package, shipment_uuid);
+    return this.documentsService.findByFeature(
+      FeatureType.Package,
+      shipment_uuid,
+    );
   }
 
-  async getPackagesByShipmentId(shipmentId: string): Promise<PackageResponseDto[]> {
+  async getPackagesByShipmentId(
+    shipmentId: string,
+  ): Promise<PackageResponseDto[]> {
     const packages = await this.packageRepository.find({
       where: { shipment_id: shipmentId },
-      relations: ['measurements', 'items', 'documents', 'charges', 'action_logs'],
+      relations: [
+        'measurements',
+        'items',
+        'documents',
+        'charges',
+        'action_logs',
+      ],
       order: { created_at: 'DESC' },
     });
 
     if (!packages || packages.length === 0) {
-      throw new NotFoundException(`No packages found for shipment_id: ${shipmentId}`);
+      throw new NotFoundException(
+        `No packages found for shipment_id: ${shipmentId}`,
+      );
     }
 
     return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
   }
 
-  async getPackagesByShipmentUuid(shipmentUuid: string): Promise<PackageResponseDto[]> {
+  async getPackagesByShipmentUuid(
+    shipmentUuid: string,
+  ): Promise<PackageResponseDto[]> {
     const packages = await this.packageRepository.find({
       where: { shipment_uuid: shipmentUuid },
-      relations: ['measurements', 'items', 'documents', 'charges', 'action_logs'],
+      relations: [
+        'measurements',
+        'items',
+        'documents',
+        'charges',
+        'action_logs',
+      ],
       order: { created_at: 'DESC' },
     });
 
     if (!packages || packages.length === 0) {
-      throw new NotFoundException(`No packages found for shipment_uuid: ${shipmentUuid}`);
+      throw new NotFoundException(
+        `No packages found for shipment_uuid: ${shipmentUuid}`,
+      );
     }
 
     return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
@@ -605,7 +631,9 @@ export class PackagesService {
     });
 
     if (!pkg) {
-      throw new NotFoundException(`Package not found with shipment_uuid: ${shipment_uuid}`);
+      throw new NotFoundException(
+        `Package not found with shipment_uuid: ${shipment_uuid}`,
+      );
     }
 
     await this.documentsService.create({
@@ -621,10 +649,16 @@ export class PackagesService {
       category: 'SHIPMENT PAYMENT',
       is_required: false,
     });
-  
+
     const packageWithRelations = await this.packageRepository.findOne({
       where: { shipment_uuid },
-      relations: ['measurements', 'items', 'documents', 'charges', 'action_logs'],
+      relations: [
+        'measurements',
+        'items',
+        'documents',
+        'charges',
+        'action_logs',
+      ],
     });
 
     if (!packageWithRelations) {
@@ -652,5 +686,4 @@ export class PackagesService {
     }
     return this.mapPackageToResponseDto(pkg);
   }
-
 }

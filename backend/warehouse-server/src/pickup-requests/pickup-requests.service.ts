@@ -128,7 +128,6 @@ export class PickupRequestsService {
               email: request.user.email,
               name: request.user.name,
               phone_number: request.user.phone_number,
-              country: request.user.country?.name,
               created_at: request.user.created_at,
             }
           : undefined,
@@ -170,7 +169,6 @@ export class PickupRequestsService {
               email: request.user.email,
               name: request.user.name,
               phone_number: request.user.phone_number,
-              country: request.user.country?.name,
               created_at: request.user.created_at,
             }
           : undefined,
@@ -213,7 +211,6 @@ export class PickupRequestsService {
               email: pickupRequest.user.email,
               name: pickupRequest.user.name,
               phone_number: pickupRequest.user.phone_number,
-              country: pickupRequest.user.country?.name,
               created_at: pickupRequest.user.created_at,
             }
           : undefined,
@@ -338,7 +335,6 @@ export class PickupRequestsService {
               email: pickupRequestWithRelations.user.email,
               name: pickupRequestWithRelations.user.name,
               phone_number: pickupRequestWithRelations.user.phone_number,
-              country: pickupRequestWithRelations.user.country?.name,
               created_at: pickupRequestWithRelations.user.created_at,
             }
           : undefined,

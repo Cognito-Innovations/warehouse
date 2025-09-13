@@ -14,7 +14,7 @@ const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, on
   const [remarkOpen, setRemarkOpen] = useState(false);
   const [currency, setCurrency] = useState(item.currency || "");
   const [countries, setCountries] = useState<{ id: string; code: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (item.unit_price) {

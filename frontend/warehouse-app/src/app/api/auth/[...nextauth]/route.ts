@@ -84,7 +84,6 @@ const handler = NextAuth({
       if (account?.provider === 'google') {
       try {
         console.log('NextAuth signIn called for user:', user.email);
-        const hashedPasswordValue = hashPassword("123456");
         const suiteNumber = generateSequentialSuiteNumber();
         
         const res = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -92,10 +91,10 @@ const handler = NextAuth({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: user.email,
-            password: hashedPasswordValue,
             name: user.name,
             image: user.image,
-            suite_no: suiteNumber
+            suite_no: suiteNumber,
+            identifier: 'google',
           }),
         });
         const data = await res.json();

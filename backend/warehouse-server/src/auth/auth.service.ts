@@ -8,9 +8,8 @@ import {
   LoginResponseDto,
   RegisterResponseDto,
   RefreshTokenResponseDto,
-  UserDto,
 } from './dto/auth-response.dto';
-import { Country } from 'src/Countries/country.entity';
+import { UserDto } from 'src/users/dto/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -32,22 +31,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Update login status
-    const now = Math.floor(Date.now() / 1000);
-    user.is_logged_in = true;
-    user.last_login = now;
-    await this.userRepository.save(user);
-
     const payload = {
       sub: user.id,
       email: user.email,
-      country: user.country,
       role: user.role,
-      image: user.image,
       suite_no: user.suite_no,
       identifier: user.identifier,
       phone_number: user.phone_number,
-      phone_number_2: user.phone_number_2,
+      alternate_phone_number: user.alternate_phone_number,
       gender: user.gender,
       dob: user.dob,
       verified: user.verified,
@@ -59,17 +50,12 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        is_logged_in: true,
-        last_login: user.last_login,
-        country: user.country,
         created_at: user.created_at,
-        last_logout: user.last_logout,
         role: user.role,
-        image: user.image,
         suite_no: user.suite_no,
         identifier: user.identifier,
         phone_number: user.phone_number,
-        phone_number_2: user.phone_number_2,
+        alternate_phone_number: user.alternate_phone_number,
         gender: user.gender,
         dob: user.dob,
         updated_at: user.updated_at,
@@ -82,12 +68,10 @@ export class AuthService {
   }
 
   async register(
-    image: string,
     name: string,
     email: string,
     password: string,
   ): Promise<RegisterResponseDto> {
-    // Check if user already exists
     const existingUser = await this.userRepository.findOne({
       where: { email },
     });
@@ -95,17 +79,13 @@ export class AuthService {
     if (existingUser) {
       return {
         user: {
-          is_logged_in: existingUser.is_logged_in,
-          last_login: existingUser.last_login,
-          last_logout: existingUser.last_logout,
           created_at: existingUser.created_at,
           updated_at: existingUser.updated_at,
-          image: existingUser.image,
           name: existingUser.name,
           role: existingUser.role,
           identifier: existingUser.identifier,
           phone_number: existingUser.phone_number,
-          phone_number_2: existingUser.phone_number_2,
+          alternate_phone_number: existingUser.alternate_phone_number,
           suite_no: existingUser.suite_no,
           gender: existingUser.gender,
           dob: existingUser.dob,
@@ -121,19 +101,11 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const now = Math.floor(Date.now() / 1000);
 
-    //TODO: Remove this country id hardcoded here
     const user = this.userRepository.create({
-      country: {
-        id: '4bffc336-6ebf-420d-8865-df7fb72f5dac',
-      } as Pick<Country, 'id'>,
       name,
-      image,
       email,
       password: hashedPassword,
-      is_logged_in: true,
-      last_login: now,
     });
 
     const savedUser = await this.userRepository.save(user);
@@ -142,10 +114,16 @@ export class AuthService {
       name,
       sub: savedUser.id,
       email: savedUser.email,
-      country: savedUser.country,
-      image,
-      is_logged_in: true,
-      last_login: new Date(),
+      created_at: savedUser.created_at,
+      updated_at: savedUser.updated_at,
+      role: savedUser.role,
+      suite_no: savedUser.suite_no,
+      identifier: savedUser.identifier,
+      phone_number: savedUser.phone_number,
+      alternate_phone_number: savedUser.alternate_phone_number,
+      gender: savedUser.gender,
+      dob: savedUser.dob,
+      verified: savedUser.verified,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -153,20 +131,15 @@ export class AuthService {
     return {
       user: {
         name,
-        updated_at: savedUser.updated_at,
         id: savedUser.id,
         email: savedUser.email,
-        is_logged_in: true,
-        last_login: savedUser.last_login,
-        country: savedUser.country,
         created_at: savedUser.created_at,
-        last_logout: savedUser.last_logout,
+        updated_at: savedUser.updated_at,
         role: savedUser.role,
-        image: savedUser.image,
         suite_no: savedUser.suite_no,
         identifier: savedUser.identifier,
         phone_number: savedUser.phone_number,
-        phone_number_2: savedUser.phone_number_2,
+        alternate_phone_number: savedUser.alternate_phone_number,
         gender: savedUser.gender,
         dob: savedUser.dob,
         verified: savedUser.verified,
@@ -184,8 +157,6 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-
-    user.is_logged_in = false;
     user.last_logout = Math.floor(Date.now() / 1000);
     await this.userRepository.save(user);
 
@@ -202,7 +173,6 @@ export class AuthService {
     const payload = {
       sub: user.id,
       email: user.email,
-      country: user.country,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -224,22 +194,17 @@ export class AuthService {
     return {
       name: user.name,
       role: user.role,
-      image: user.image,
       suite_no: user.suite_no,
       identifier: user.identifier,
       phone_number: user.phone_number,
-      phone_number_2: user.phone_number_2,
+      alternate_phone_number: user.alternate_phone_number,
       gender: user.gender,
       dob: user.dob,
       verified: user.verified,
       updated_at: user.updated_at,
       id: user.id,
       email: user.email,
-      is_logged_in: user.is_logged_in,
-      last_login: user.last_login,
-      last_logout: user.last_logout,
       created_at: user.created_at,
-      country: user.country,
     };
   }
 }

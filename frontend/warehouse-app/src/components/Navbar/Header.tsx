@@ -40,16 +40,12 @@ const Header = () => {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  // const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-  // const notificationOpen = Boolean(notificationAnchorEl);
 
   const navItems = [
     { name: "My Suite", path: "/dashboard" },
     { name: "Assisted Shopping", path: "/assisted-shopping" },
     { name: "Pickup Request", path: "/pickup-request" },
-    // { name: "Stores", path: "/stores" },
-    // { name: "Rate Calculator", path: "/rate-calculator" },
   ];
 
   const currentCountryData = availableCountries.find(country => country.name === selectedCountry);
@@ -79,6 +75,7 @@ const Header = () => {
 
   const handleSelectSavedAddress = (address: AddressData) => {
     updateAddress(address);
+    
     selectAddress(address);
   };
 
@@ -103,15 +100,6 @@ const Header = () => {
     setAnchorEl(null);
   };
 
-  // TODO: Uncomment notification when it's implemented 
-  // const handleNotificationMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-  //   setNotificationAnchorEl(event.currentTarget);
-  // };
-
-  // const handleNotificationMenuClose = () => {
-  //   setNotificationAnchorEl(null);
-  // };
-
   const handleProfileClick = () => {
     router.push('/profile');
     handleProfileMenuClose();
@@ -122,39 +110,9 @@ const Header = () => {
     handleProfileMenuClose();
   };
 
-  // const handleNotificationsClick = () => {
-  //   router.push('/notifications');
-  //   handleProfileMenuClose();
-  // };
-
-  // const handleNotificationItemClick = (notificationId: string) => {
-  //   // Handle individual notification click
-  //   console.log('Notification clicked:', notificationId);
-  //   handleNotificationMenuClose();
-  // };
-
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  // Close dropdowns on scroll
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     if (open) {
-  //       setAnchorEl(null);
-  //     }
-  //     if (notificationOpen) {
-  //       setNotificationAnchorEl(null);
-  //     }
-  //   };
-
-  //   if (typeof window !== 'undefined') {
-  //     window.addEventListener('scroll', handleScroll, { passive: true });
-  //     return () => {
-  //       window.removeEventListener('scroll', handleScroll);
-  //     };
-  //   }
-  // }, [open, notificationOpen]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -165,10 +123,6 @@ const Header = () => {
       if (open && !target.closest('#profile-menu') && !target.closest('[aria-controls="profile-menu"]')) {
         setAnchorEl(null);
       }
-      
-      // if (notificationOpen && !target.closest('#notification-menu') && !target.closest('[aria-controls="notification-menu"]')) {
-      //   setNotificationAnchorEl(null);
-      // }
     };
 
     if (typeof window !== 'undefined') {
@@ -185,9 +139,6 @@ const Header = () => {
       if (open) {
         setAnchorEl(null);
       }
-      // if (notificationOpen) {
-      //   setNotificationAnchorEl(null);
-      // }
     };
 
     if (typeof window !== 'undefined') {
@@ -242,40 +193,12 @@ const Header = () => {
               <>
                 <Box>
                   <p
-                    // component="span"
                     className="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
-                    // sx={{
-                    //   fontSize: "0.875rem",
-                    //   fontWeight: 500,
-                    //   lineHeight: "1.25rem",
-                    // }}
                   >
                     Welcome, {currentUser?.name || "User"}
                   </p>
-                  {/* <Typography
-                    component="span"
-                    sx={{
-                      fontSize: "0.875rem",
-                      fontWeight: 500,
-                      lineHeight: "1.25rem",
-                    }}
-                  >
-                    {currentUser?.name || "User"}
-                  </Typography> */}
                 </Box>
 
-                {/* TODO: Uncomment notification when it's implemented */}
-                {/* <IconButton 
-                  onClick={handleNotificationMenuOpen}
-                  className="p-2 text-white hover:bg-white hover:bg-opacity-10 rounded-full transition-colors"
-                  aria-controls={notificationOpen ? 'notification-menu' : undefined}
-                  aria-haspopup="true"
-                  aria-expanded={notificationOpen ? 'true' : undefined}
-                >
-                  <Badge badgeContent={3} color="error">
-                    <NotificationsIcon className="w-6 h-6" />
-                  </Badge>
-                </IconButton> */}
                 <IconButton onClick={handleProfileMenuOpen} className="p-0" aria-controls={open ? 'profile-menu' : undefined} aria-haspopup="true" aria-expanded={open ? 'true' : undefined}>
                   <Avatar
                     src={currentUser.image}
