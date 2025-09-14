@@ -10,8 +10,8 @@ export default function ProfilePage() {
 
   const profileData = {
     identifier: '',
-    name: 'Neurs HQ',
-    email: 'hqneurs@gmail.com',
+    name: '',
+    email: '',
     contact: '',
     alternativeContact: '',
     gender: '',

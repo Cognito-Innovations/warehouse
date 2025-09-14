@@ -192,9 +192,19 @@ export const getCourierCompanies = async () => {
   return res.data;
 };
 
+export const getCurrencies = async () => {
+  const res = await authenticatedApi.get("/currencies");
+  return res.data;
+};
+
 // --- Countries Functions ---
 
 export const getCountries = async () => {
   const res = await authenticatedApi.get("/countries");
+  return res.data;
+};
+
+export const updatePreferences = async (data: any) => {
+  const res = await authenticatedApi.patch(`/user-preferences/${data.user_id}`, data);
   return res.data;
 };
