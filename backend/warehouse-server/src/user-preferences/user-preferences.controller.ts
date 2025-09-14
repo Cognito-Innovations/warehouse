@@ -32,6 +32,11 @@ export class UserPreferencesController {
     return this.userPreferencesService.findOne(id);
   }
 
+  @Get('user_currency_rate/:userId')
+  findByUser(@Param('userId') userId: string) {
+    return this.userPreferencesService.findByUserCurrencyRate(userId);
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,

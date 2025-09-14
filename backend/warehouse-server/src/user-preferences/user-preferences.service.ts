@@ -29,6 +29,33 @@ export class UserPreferencesService {
     return await this.userPreferenceRepository.findOne({ where: { id } });
   }
 
+  async findByUserCurrencyRate(userId: string) {
+    const userPreference = await this.userPreferenceRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['currency'],
+    });
+    return {
+      rate: userPreference?.currency.rate,
+      currency_symbol: userPreference?.currency.currency_symbol,
+    };
+  }
+
+  async getFormattedConvertedPrice(userId: string, price: number) {
+    const userPreference = await this.userPreferenceRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['currency'],
+    });
+    const rate = userPreference?.currency.rate;
+    const currency_symbol = userPreference?.currency.currency_symbol;
+    if (rate && currency_symbol && price) {
+      const currency_symbol = userPreference?.currency.currency_symbol;
+      const convertedPrice = price * (rate || 0);
+      const formattedPrice = convertedPrice.toFixed(2);
+      return `${formattedPrice} ${currency_symbol}`;
+    }
+    return String(price);
+  }
+
   async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {
     const existing = await this.userPreferenceRepository.findOne({
       where: { id },

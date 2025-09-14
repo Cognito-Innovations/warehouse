@@ -63,7 +63,7 @@ function CreatePickupRequestPageContent() {
       await createPickupRequest({
         user_id,
         status: "requested",
-        country_id: selectedAddress?.country_id || '4bffc336-6ebf-420d-8865-df7fb72f5dac', //todo: add selectedCountryId later to get country code dynamically
+        country_id: selectedAddress?.country_id,
         pickup_address: form.pickup_address,
         supplier_name: form.supplier_name,
         supplier_phone_number: form.supplier_phone_number,

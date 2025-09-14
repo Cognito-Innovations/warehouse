@@ -96,9 +96,9 @@ export class PickupRequestResponseDto {
 
   @ApiPropertyOptional({
     description: 'Price for the pickup service',
-    example: 25.5,
+    example: '25.5 $',
   })
-  price?: number;
+  price?: string;
 
   @ApiPropertyOptional({
     description: 'Status of the pickup request',
