@@ -7,7 +7,7 @@ const AddressSection = () => {
   const {
     selectedCountry, 
     availableCountries, 
-    selectCountry 
+    selectCountry
   } = useAddressAPI();
   
   const [isClient, setIsClient] = useState(false);

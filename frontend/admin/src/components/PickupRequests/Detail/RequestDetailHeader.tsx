@@ -100,6 +100,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
             </>
           )}
 
+          {/* TODO:P1: functionality NEEDS to be implemented */}
           {normalizedStatus === "QUOTED" && (
             <ActionButton label="Reject" color="danger" />
           )}

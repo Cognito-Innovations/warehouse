@@ -93,10 +93,10 @@ export default function InvoiceProducts({ products }: { products?: InvoiceDetail
                 />
               </TableCell>
               <TableCell align="right">
-                {product.unit_price && product.currency && formatCurrency(product.unit_price, product.currency)}
+                {product.unit_price && product.currency && <p>{product.unit_price}</p>}
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 600 }}>
-                {product.unit_price && product.quantity && formatCurrency(product.unit_price * product.quantity, product.currency)}
+                {product.unit_price && product.quantity && <p>{product.unit_price * product.quantity}</p>}
               </TableCell>
             </TableRow>
           ))}

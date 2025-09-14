@@ -35,10 +35,13 @@ export default function ViewRequestPage() {
 
   const handleConfirm = async () => {
     try {
+      setLoading(true);
       await updatePickupRequestStatus(details.id, "CONFIRMED");
       await fetchData();
     } catch (err) {
       console.error("Failed to confirm:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -87,6 +90,7 @@ export default function ViewRequestPage() {
             )}
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
+              {/* TODO:P1: functionality NEEDS to be implemented */}
               {details.status.toUpperCase() !== "PICKED" && (        
                 <Button
                   variant="contained"

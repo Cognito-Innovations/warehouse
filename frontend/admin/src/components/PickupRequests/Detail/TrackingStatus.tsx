@@ -28,7 +28,16 @@ const TrackingStatus: React.FC = ({ details }) => {
 
   return (
     <>
-      <Typography variant="subtitle1" fontWeight={500} sx={{ mb: 3 }}>
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          fontWeight: 700,
+          mb: 3,
+          fontSize: '1.25rem',
+          color: 'text.primary',
+          letterSpacing: '0.025em',
+        }}
+      >
         Tracking
       </Typography>
 
@@ -37,9 +46,10 @@ const TrackingStatus: React.FC = ({ details }) => {
         sx={{
           width: '100%',
           p: 3,
-          borderRadius: 2,
-          border: '1px solid #E0E0E0',
+          borderRadius: 2.5,
+          border: '1px solid rgba(0,0,0,0.06)',
           backgroundColor: '#fff',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>

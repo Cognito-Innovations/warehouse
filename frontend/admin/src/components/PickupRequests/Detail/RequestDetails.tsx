@@ -7,16 +7,32 @@ interface DetailItemProps {
 }
 
 const DetailItem: React.FC<DetailItemProps> = ({ label, value }) => (
-  <Box>
+  <Box sx={{ mb: 2 }}>
     <Typography
       variant="caption"
       color="text.secondary"
-      sx={{ display: 'block', mb: 0.5 }}
+      sx={{ 
+        display: 'block', 
+        mb: 0.75,
+        fontSize: '0.75rem',
+        fontWeight: 600,
+        letterSpacing: '0.025em',
+        textTransform: 'uppercase',
+      }}
     >
       {label}
     </Typography>
-    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-      {value}
+    <Typography 
+      variant="body2" 
+      sx={{ 
+        whiteSpace: 'pre-wrap',
+        fontSize: '0.875rem',
+        fontWeight: 500,
+        color: 'text.primary',
+        lineHeight: 1.5,
+      }}
+    >
+      {value || "-"}
     </Typography>
   </Box>
 );
@@ -36,7 +52,16 @@ interface RequestDetailsProps {
 
 const RequestDetails: React.FC<RequestDetailsProps> = ({ details }) => (
   <>
-    <Typography variant="subtitle1" fontWeight={500} mb={3}>
+    <Typography 
+      variant="h6" 
+      sx={{ 
+        fontWeight: 700,
+        mb: 3,
+        fontSize: '1.25rem',
+        color: 'text.primary',
+        letterSpacing: '0.025em',
+      }}
+    >
       Pickup Request Details
     </Typography>
 
@@ -44,17 +69,18 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({ details }) => (
       elevation={0}
       sx={{
         width: '100%',
-        p: 3,
-        borderRadius: 2,
-        border: '1px solid #E0E0E0',
+        p: 4,
+        borderRadius: 2.5,
+        border: '1px solid rgba(0,0,0,0.06)',
         backgroundColor: '#fff',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       }}
     >
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-          gap: 2,
+          gap: 3,
         }}
       >
         <Box sx={{ gridColumn: '1 / -1' }}>

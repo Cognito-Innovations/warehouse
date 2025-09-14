@@ -1,26 +1,33 @@
 import React from 'react';
-import { Grid, Box } from '@mui/material';
+import { Box } from '@mui/material';
 import RequestDetails from './RequestDetails';
 import TrackingStatus from './TrackingStatus';
-import { type TrackingHistoryItem } from './TrackingItem';
 
 interface RequestData {
   details: any; 
   status: string;
-  trackingHistory: TrackingHistoryItem[];
+  trackingHistory: any[];
 }
 
 const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) => (
   <Box sx={{ p: 3, width: '100%' }}>
-    <Grid container spacing={3} sx={{ alignItems: 'flex-start', width: '100%' }}>
-      <Grid item xs={12} md={6}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: '3fr 1fr' },
+        gap: 3,
+        alignItems: 'flex-start',
+        width: '100%',
+      }}
+    >
+      <Box>
         <RequestDetails details={request} />
-      </Grid>
+      </Box>
       
-      <Grid item xs={12} md={6}>
+      <Box>
         <TrackingStatus details={request} />
-      </Grid>
-    </Grid>
+      </Box>
+    </Box>
   </Box>
 );
 

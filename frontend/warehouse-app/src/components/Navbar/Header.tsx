@@ -75,7 +75,6 @@ const Header = () => {
 
   const handleSelectSavedAddress = (address: AddressData) => {
     updateAddress(address);
-    
     selectAddress(address);
   };
 

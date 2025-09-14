@@ -28,8 +28,9 @@ const FormLabel = ({ children, htmlFor }: { children: React.ReactNode; htmlFor: 
 );
 
 function CreatePickupRequestPageContent() {
+  const [loading, setLoading] = useState(false);
   const {selectedAddress} =  useAddressAPI();
-  const { data: session } = useSession();  
+  const { data: session } = useSession();
   const router = useRouter();
 
 
@@ -51,6 +52,7 @@ function CreatePickupRequestPageContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setLoading(true);
       const user_id = (session?.user as any)?.user_id;
 
       if (!user_id) {
@@ -85,6 +87,8 @@ function CreatePickupRequestPageContent() {
       router.push('/pickup-request');
     } catch (err: any) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -244,7 +248,7 @@ function CreatePickupRequestPageContent() {
               variant="contained"
               type="submit"
               onClick={handleSubmit}
-              disabled={!isFormValid} 
+              disabled={!isFormValid || loading} 
               sx={{
                 bgcolor: '#7C3AED',
                 textTransform: 'none',
@@ -256,7 +260,7 @@ function CreatePickupRequestPageContent() {
                 '&:hover': { bgcolor: '#6D28D9' },
               }}
             >
-              Submit Pickup Request
+              {loading ? 'Submitting...' : 'Submit Pickup Request'}
             </Button>
           </Box>
         </Box>

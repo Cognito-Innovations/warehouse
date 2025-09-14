@@ -65,11 +65,9 @@ export const InvoiceRow: React.FC<Props> = ({
     }
   };
 
+  // TODO: correct this function with currency
   const formatCurrency = (amount: number, currency = "USD") => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
+    return amount
   };
 
   const handlePrint = () => {

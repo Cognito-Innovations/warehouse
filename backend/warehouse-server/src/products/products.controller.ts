@@ -79,7 +79,8 @@ export class ProductsController {
   })
   async updateProduct(
     @Param('id') id: string,
-    @Body() body: {
+    @Body()
+    body: {
       unit_price?: number;
       available?: boolean;
       currency?: string;
