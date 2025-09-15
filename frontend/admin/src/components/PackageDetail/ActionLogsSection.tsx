@@ -67,7 +67,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   };
 
   // Checkbox should remain visually checked once moved to Ready to Send or beyond
-  const visualChecked = isAdminChecked || actionLogStatus === 'Ready to Send' || actionLogStatus === 'Request Ship';
+  const visualChecked = isAdminChecked || actionLogStatus === 'Ready To Send' || actionLogStatus === 'Request Ship';
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
@@ -130,7 +130,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
 
                 // Update status based on admin check
                 if (newCheckedState) {
-                  onStatusChange('Ready to Send');
+                  onStatusChange('Ready To Send');
                 } else {
                   onStatusChange('In Review');
                 }
@@ -161,13 +161,13 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b', mb: 1 }}>
                 {actionLogStatus === 'Action Required' ? 'Missing Documents' : 
                  actionLogStatus === 'In Review' ? 'Documents Uploaded' : 
-                 actionLogStatus === 'Ready to Send' ? 'Ready to Send' : 'Documents'}
+                 actionLogStatus === 'Ready To Send' ? 'Ready To Send' : 'Documents'}
               </Typography>
 
               <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontSize: '0.875rem' }}>
                 {actionLogStatus === 'Action Required' ? 'Please upload item invoice' :
                  actionLogStatus === 'In Review' ? 'Documents are being reviewed' :
-                 actionLogStatus === 'Ready to Send' ? 'Package is ready to be sent' : 'Upload item invoice'}
+                 actionLogStatus === 'Ready To Send' ? 'Package is ready to be sent' : 'Upload item invoice'}
               </Typography>
 
               {/* Hidden file input */}

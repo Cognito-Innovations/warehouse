@@ -22,11 +22,14 @@ interface PackageFilterProps {
 const statusOptions = [
   { value: 'Action Required', label: 'Action Required', color: '#ef4444' },
   { value: 'In Review', label: 'In Review', color: '#3b82f6' },
-  { value: 'Ready to Send', label: 'Ready to Send', color: '#22c55e' },
+  { value: 'Ready To Send', label: 'Ready To Send', color: '#22c55e' },
   { value: 'Request Ship', label: 'Request Ship', color: '#f59e0b' },
   { value: 'Shipped', label: 'Shipped', color: '#10b981' },
   { value: 'Discarded', label: 'Discarded', color: '#6b7280' },
   { value: 'Draft', label: 'Draft', color: '#ec4899' },
+  { value: 'Pending', label: 'Pending', color: '#a855f7' },
+  { value: 'Ready to Ship', label: 'Ready to Ship', color: '#16a34a' },
+  { value: 'Departed', label: 'Departed', color: '#16a34a' },
 ];
 
 const PackageFilter: React.FC<PackageFilterProps> = ({

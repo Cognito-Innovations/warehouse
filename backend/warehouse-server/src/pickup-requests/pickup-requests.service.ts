@@ -13,6 +13,7 @@ import {
   TrackingRequest,
   TrackingStatus,
 } from 'src/tracking-requests/tracking-request.entity';
+import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
 @Injectable()
 export class PickupRequestsService {
@@ -21,6 +22,7 @@ export class PickupRequestsService {
     private readonly pickupRequestRepository: Repository<PickupRequest>,
     @InjectRepository(TrackingRequest)
     private readonly trackingRequestRepository: Repository<TrackingRequest>,
+    private readonly userPreferencesService: UserPreferencesService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -83,7 +85,6 @@ export class PickupRequestsService {
         est_weight: pickupRequestWithRelations.est_weight,
         pkg_details: pickupRequestWithRelations.pkg_details,
         remarks: pickupRequestWithRelations.remarks,
-        price: pickupRequestWithRelations.price,
         created_at: pickupRequestWithRelations.created_at,
         updated_at: pickupRequestWithRelations.updated_at,
       };
@@ -120,7 +121,6 @@ export class PickupRequestsService {
         est_weight: request.est_weight,
         pkg_details: request.pkg_details,
         remarks: request.remarks,
-        price: request.price,
         created_at: request.created_at,
         updated_at: request.updated_at,
         user: request.user
@@ -128,7 +128,6 @@ export class PickupRequestsService {
               email: request.user.email,
               name: request.user.name,
               phone_number: request.user.phone_number,
-              country: request.user.country?.name,
               created_at: request.user.created_at,
             }
           : undefined,
@@ -161,7 +160,6 @@ export class PickupRequestsService {
         est_weight: request.est_weight,
         pkg_details: request.pkg_details,
         remarks: request.remarks,
-        price: request.price,
         status: request.status,
         created_at: request.created_at,
         updated_at: request.updated_at,
@@ -170,7 +168,6 @@ export class PickupRequestsService {
               email: request.user.email,
               name: request.user.name,
               phone_number: request.user.phone_number,
-              country: request.user.country?.name,
               created_at: request.user.created_at,
             }
           : undefined,
@@ -204,8 +201,11 @@ export class PickupRequestsService {
         pcs_box: pickupRequest.pcs_box,
         est_weight: pickupRequest.est_weight,
         pkg_details: pickupRequest.pkg_details,
+        price: await this.userPreferencesService.getFormattedConvertedPrice(
+          pickupRequest.user.id,
+          Number(pickupRequest.price),
+        ),
         remarks: pickupRequest.remarks,
-        price: pickupRequest.price,
         created_at: pickupRequest.created_at,
         updated_at: pickupRequest.updated_at,
         user: pickupRequest.user
@@ -213,7 +213,6 @@ export class PickupRequestsService {
               email: pickupRequest.user.email,
               name: pickupRequest.user.name,
               phone_number: pickupRequest.user.phone_number,
-              country: pickupRequest.user.country?.name,
               created_at: pickupRequest.user.created_at,
             }
           : undefined,
@@ -271,36 +270,6 @@ export class PickupRequestsService {
         pickupRequest,
       );
 
-      //TODO: create new tracking request logic
-      // const trackingRequest = queryRunner.manager.create(TrackingRequest, {
-      //   user: { id: updatedPickupRequest.user.id },
-      //   feature_type: FeatureType.PickupRequest,
-      //   status: status,
-      //   feature_fid: updatedPickupRequest.id,
-      //   country: { id: updatedPickupRequest.country.id },
-      // });
-
-      // if (trackingRequest) {
-      //   // Map pickup request status to tracking request status
-      //   let trackingStatus: TrackingStatus;
-      //   switch (status.toUpperCase()) {
-      //     case 'QUOTED':
-      //       trackingStatus = TrackingStatus.Quoted;
-      //       break;
-      //     case 'CONFIRMED':
-      //       trackingStatus = TrackingStatus.QuotationConfirmed;
-      //       break;
-      //     case 'PICKED':
-      //       trackingStatus = TrackingStatus.Shipped;
-      //       break;
-      //     default:
-      //       trackingStatus = TrackingStatus.InReview;
-      //   }
-
-      //   trackingRequest.status = trackingStatus;
-      //   await queryRunner.manager.save(TrackingRequest, trackingRequest);
-      // }
-
       // Commit the transaction
       await queryRunner.commitTransaction();
 
@@ -330,7 +299,6 @@ export class PickupRequestsService {
         est_weight: pickupRequestWithRelations.est_weight,
         pkg_details: pickupRequestWithRelations.pkg_details,
         remarks: pickupRequestWithRelations.remarks,
-        price: pickupRequestWithRelations.price,
         created_at: pickupRequestWithRelations.created_at,
         updated_at: pickupRequestWithRelations.updated_at,
         user: pickupRequestWithRelations.user
@@ -338,7 +306,6 @@ export class PickupRequestsService {
               email: pickupRequestWithRelations.user.email,
               name: pickupRequestWithRelations.user.name,
               phone_number: pickupRequestWithRelations.user.phone_number,
-              country: pickupRequestWithRelations.user.country?.name,
               created_at: pickupRequestWithRelations.user.created_at,
             }
           : undefined,

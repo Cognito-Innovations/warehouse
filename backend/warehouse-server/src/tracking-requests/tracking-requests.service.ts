@@ -18,7 +18,7 @@ export class TrackingRequestsService {
     createTrackingRequestDto: CreateTrackingRequestDto,
   ): Promise<TrackingRequestResponseDto> {
     const trackingRequest = this.trackingRequestRepository.create({
-      country: { id: createTrackingRequestDto.country_id } as any,
+      courier: { id: createTrackingRequestDto.courier_id } as any,
       feature_type: createTrackingRequestDto.feature_type,
       status: createTrackingRequestDto.status,
       feature_fid: createTrackingRequestDto.feature_fid,
@@ -30,7 +30,7 @@ export class TrackingRequestsService {
 
     return {
       id: savedTrackingRequest.id,
-      country: savedTrackingRequest.country,
+      courier: savedTrackingRequest.courier,
       user: savedTrackingRequest.user,
       feature_type: savedTrackingRequest.feature_type,
       status: savedTrackingRequest.status,
@@ -48,7 +48,7 @@ export class TrackingRequestsService {
 
     return trackingRequests.map((request) => ({
       id: request.id,
-      country: request.country,
+      courier: request.courier,
       user: request.user,
       feature_type: request.feature_type,
       status: request.status,
@@ -72,7 +72,7 @@ export class TrackingRequestsService {
 
     return {
       id: trackingRequest.id,
-      country: trackingRequest.country,
+      courier: trackingRequest.courier,
       user: trackingRequest.user,
       feature_type: trackingRequest.feature_type,
       status: trackingRequest.status,
@@ -93,7 +93,7 @@ export class TrackingRequestsService {
 
     return trackingRequests.map((request) => ({
       id: request.id,
-      country: request.country,
+      courier: request.courier,
       user: request.user,
       feature_type: request.feature_type,
       status: request.status,
@@ -118,7 +118,7 @@ export class TrackingRequestsService {
 
     return trackingRequests.map((request) => ({
       id: request.id,
-      country: request.country,
+      courier: request.courier,
       user: request.user,
       feature_type: request.feature_type,
       status: request.status,
@@ -146,7 +146,7 @@ export class TrackingRequestsService {
 
     return {
       id: updatedTrackingRequest.id,
-      country: updatedTrackingRequest.country,
+      courier: updatedTrackingRequest.courier,
       user: updatedTrackingRequest.user,
       feature_type: updatedTrackingRequest.feature_type,
       status: updatedTrackingRequest.status,

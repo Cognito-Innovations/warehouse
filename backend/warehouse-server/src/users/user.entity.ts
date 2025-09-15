@@ -1,17 +1,21 @@
-import { IsNumber, IsOptional } from 'class-validator';
-import { Country } from 'src/Countries/country.entity';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { IsEmail, MinLength } from 'class-validator';
+
+export enum Gender {
+  Male = 'male',
+  Female = 'female',
+  Other = 'other',
+}
 
 export enum Role {
   Admin = 'admin',
   User = 'user',
+}
+
+export enum Identifier {
+  Google = 'google',
+  Email = 'email',
 }
 
 @Entity('users')
@@ -20,54 +24,41 @@ export class User extends BaseTimestampEntity {
   id: string;
 
   @Column({ unique: true })
+  @IsEmail()
   email: string;
 
-  @Column()
+  //TODO: Add select: false to password column and try admin login and make it correct
+  @Column({ nullable: true })
   password: string;
 
   @Column({ nullable: true })
   name: string;
 
-  @Column({ default: 'user' })
+  @Column()
   role: Role;
 
-  @Column({ nullable: true })
-  image: string;
-
-  //TODO: Remove nullable
-  @Column({ nullable: true })
+  @Column()
+  @MinLength(6)
   suite_no: string;
 
-  @Column({ nullable: true, default: 'google' })
-  identifier: string;
+  @Column()
+  identifier: Identifier;
 
   @Column({ nullable: true })
   phone_number: string;
 
   @Column({ nullable: true })
-  phone_number_2: string;
+  alternate_phone_number: string;
 
   @Column({ nullable: true })
-  gender: string;
+  gender: Gender;
 
   @Column({ nullable: true })
   dob: Date;
 
-  @Column({ nullable: true, default: false })
+  @Column({ default: false })
   verified: boolean;
 
-  @ManyToOne(() => Country, { eager: true })
-  @JoinColumn({ name: 'country_id' })
-  country: Country;
-
-  @Column({ default: false })
-  is_logged_in: boolean;
-
-  @IsOptional()
-  @IsNumber()
-  last_login?: number;
-
-  @IsOptional()
-  @IsNumber()
-  last_logout?: number;
+  @Column({ nullable: true })
+  last_logout: number;
 }

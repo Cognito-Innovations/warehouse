@@ -16,6 +16,10 @@ export class CreateProductDto {
   unit_price?: number;
 
   @IsOptional()
+  @IsString()
+  currency?: string; 
+
+  @IsOptional()
   @IsNumber()
   quantity?: number;
 

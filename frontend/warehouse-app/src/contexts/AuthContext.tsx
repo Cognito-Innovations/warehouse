@@ -44,17 +44,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     id: (session.user as any).user_id || session.user.email || '',
     email: session.user.email || '',
     name: session.user.name || '',
-    role: 'user',
-    country: 'India',
-    image: session.user.image || '',
-    is_logged_in: true,
     verified: (session.user as any).verified ?? false, // Use actual verified status from backend, default to false
   } : null;
-
-  // Debug logging
-  console.log('AuthProvider - Session status:', status);
-  console.log('AuthProvider - Session data:', session);
-  console.log('AuthProvider - User data:', user);
 
   const token = (session as any)?.access_token || null;
   const loading = status === 'loading';
@@ -64,7 +55,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const value: AuthContextType = {
-    user,
+    user: user
+      ? {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: (session?.user as any)?.role || '',
+          suite_no: (session?.user as any)?.suite_no,
+          country: (session?.user as any)?.country || '',
+          image: (session?.user as any)?.image,
+          is_logged_in: (session?.user as any)?.is_logged_in ?? true,
+          last_login: (session?.user as any)?.last_login,
+          verified: user.verified,
+        }
+      : null,
     token,
     loading,
     logout,

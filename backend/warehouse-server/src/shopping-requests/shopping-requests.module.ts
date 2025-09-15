@@ -6,12 +6,12 @@ import { ShoppingRequest } from './shopping-request.entity';
 import { Product } from 'src/products/product.entity';
 import { DocumentsModule } from 'src/documents/documents.module';
 import { TrackingRequestsModule } from 'src/tracking-requests/tracking-requests.module';
-import { Country } from 'src/Countries/country.entity';
+import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { InvoicesModule } from 'src/invoice/invoices.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ShoppingRequest, Product, Country]),
+    TypeOrmModule.forFeature([ShoppingRequest, Product, CourierCompany]),
     DocumentsModule,
     TrackingRequestsModule,
     InvoicesModule,

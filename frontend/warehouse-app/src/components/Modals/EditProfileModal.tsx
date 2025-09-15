@@ -1,6 +1,5 @@
 'use client';
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -19,6 +18,8 @@ import {
 import {
   Close,
 } from '@mui/icons-material';
+import { getCourierCompanies, getCurrencies, updatePreferences } from '@/lib/api.service';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProfileData {
   identifier: string;
@@ -29,6 +30,11 @@ interface ProfileData {
   gender: string;
 }
 
+interface PreferencesData {
+  currency_id: string;
+  courier_id: string;
+}
+
 interface EditProfileModalProps {
   open: boolean;
   onClose: () => void;
@@ -36,7 +42,22 @@ interface EditProfileModalProps {
 }
 
 export default function EditProfileModal({ open, onClose, profileData }: EditProfileModalProps) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState(profileData);
+  const [preferencesFormData, setPreferencesFormData] = useState<PreferencesData>({courier_id: "", currency_id: ""});
+  const [courierCompanies, setCourierCompanies] = useState<any[]>([]);
+  const [currencies, setCurrencies] = useState<any[]>([]);
+
+
+  const fetchCourierCompanies = async () => {
+    const [courierCompaniesData, currenciesData] = await Promise.all([getCourierCompanies(), getCurrencies()]);
+    setCourierCompanies(courierCompaniesData);
+    setCurrencies(currenciesData);
+  };  
+
+  useEffect(() => {
+    fetchCourierCompanies();
+  }, []);
 
   const handleChange = (field: keyof ProfileData) => (event: any) => {
     setFormData(prev => ({
@@ -45,9 +66,19 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
     }));
   };
 
+  const handleChangePreferences = (field: keyof PreferencesData) => (event: any) => {
+    setPreferencesFormData(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }));
+  };
+
   const handleSave = () => {
     // Handle save logic here
+    //TOD0:P1: Remaning details save in user table like name, passport, contactNo, alternateContactNo, gender, dob
+    //TOD0:P2: Save preferences in user_preferences table like courier, currency
     console.log('Saving profile data:', formData);
+    updatePreferences({...preferencesFormData, user_id: user?.id});
     onClose();
   };
 
@@ -64,9 +95,9 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
         },
       }}
     >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <DialogTitle sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         pb: 2
       }}>
@@ -77,9 +108,9 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
           <Close />
         </IconButton>
       </DialogTitle>
-      
+
       <DialogContent sx={{ pb: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pb: 2 }}>
           <TextField
             label="ID Card / Passport No *"
             value={formData.identifier}
@@ -92,7 +123,7 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
               },
             }}
           />
-          
+
           <TextField
             label="Name *"
             value={formData.name}
@@ -105,12 +136,12 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
               },
             }}
           />
-          
+
           <TextField
             label="DOB"
             type="date"
             value=""
-            onChange={() => {}}
+            onChange={() => { }}
             fullWidth
             size="medium"
             InputLabelProps={{
@@ -123,7 +154,7 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
               },
             }}
           />
-          
+
           <TextField
             label="Contact No"
             value={formData.contact}
@@ -136,7 +167,7 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
               },
             }}
           />
-          
+
           <TextField
             label="Alternative Contact No"
             value={formData.alternativeContact}
@@ -149,7 +180,7 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
               },
             }}
           />
-          
+
           <FormControl fullWidth size="medium">
             <InputLabel>Gender</InputLabel>
             <Select
@@ -167,8 +198,44 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
             </Select>
           </FormControl>
         </Box>
+
+        <Typography variant="h6" pb={2} sx={{ fontWeight: 600 }}>
+          Preferences
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+           <FormControl fullWidth size="medium">
+            <InputLabel>Courier</InputLabel>
+            <Select
+              onChange={handleChangePreferences('courier_id')}
+              label="Courier"
+              sx={{
+                borderRadius: '8px',
+              }}
+            >
+              {courierCompanies?.map((courier: any) => (
+                <MenuItem key={courier.id} value={courier.id}>{courier.name}, {courier.address}, {courier.country}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth size="medium">
+            <InputLabel>Currency</InputLabel>
+            <Select
+              onChange={handleChangePreferences('currency_id')}
+              label="Currency"
+              sx={{
+                borderRadius: '8px',
+              }}
+            >
+              {currencies?.map((currency: any) => (
+                <MenuItem key={currency.id} value={currency.id}>{currency.currency_symbol}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+        </Box>
+
       </DialogContent>
-      
       <DialogActions sx={{ p: 3, pt: 1 }}>
         <Button
           variant="contained"

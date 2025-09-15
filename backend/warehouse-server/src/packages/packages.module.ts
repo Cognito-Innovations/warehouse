@@ -14,6 +14,9 @@ import { PackageDocumentsService } from './service/package-documents.service';
 import { PackageActionLogsService } from './service/package-action-logs.service';
 
 import { PackagesController } from './controller/packages.controller';
+import { User } from 'src/users/user.entity';
+import { Rack } from 'src/racks/rack.entity';
+import { DocumentsModule } from 'src/documents/documents.module';
 
 @Module({
   imports: [
@@ -23,8 +26,11 @@ import { PackagesController } from './controller/packages.controller';
       PackageItem,
       PackageDocument,
       PackageMeasurement,
+      Rack,
+      User
     ]),
     SharedModule,
+    DocumentsModule,
   ],
   controllers: [PackagesController],
   providers: [

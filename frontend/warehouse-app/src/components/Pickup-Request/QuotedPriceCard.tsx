@@ -22,7 +22,7 @@ export default function QuotedPriceCard({ price }: QuotedPriceCardProps) {
         Quoted Price
       </Typography>
       <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-        ₹{price || '—'}
+        {price || '—'}
       </Typography>
     </Paper>
   );

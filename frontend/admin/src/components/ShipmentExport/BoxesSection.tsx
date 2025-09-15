@@ -6,16 +6,27 @@ import BoxCard from "./BoxCard";
 import BoxShipmentsList from "./BoxShipmentsList";
 import Modal from "../common/Modal";
 import BoxDetailsForm from "./BoxDetailsForm";
-import { createShipmentExportBox, deleteShipmentExportBox, updateShipmentExportBox } from "../../services/api.services";
+import { createShipmentExportBox, deleteShipmentExportBox, removePackageFromBox, updateShipmentExportBox } from "../../services/api.services";
 
 interface BoxesSectionProps {
   boxes: any[];
   selectedBoxId: number | null;
   setSelectedBoxId: React.Dispatch<React.SetStateAction<number | null>>;
   shipmentId: string;
+  packagesInSelectedBox: any[];
+  loadingPackages: boolean;
+  refreshPackages: () => void;
 }
 
-const BoxesSection: React.FC<BoxesSectionProps> = ({ boxes, selectedBoxId, setSelectedBoxId, shipmentId }) => {
+const BoxesSection: React.FC<BoxesSectionProps> = ({
+  boxes,
+  selectedBoxId,
+  setSelectedBoxId,
+  shipmentId,
+  packagesInSelectedBox,
+  loadingPackages,
+  refreshPackages,
+}) => {
   const [open, setOpen] = useState(false);
   const [localBoxes, setLocalBoxes] = useState<any[]>([]);
 
@@ -83,6 +94,16 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({ boxes, selectedBoxId, setSe
     }
   };
 
+  const handleDeletePackage = async (packageId: string) => {
+    if (!selectedBoxId) return;
+    try {
+        await removePackageFromBox(selectedBoxId, packageId);
+        refreshPackages();
+    } catch (error) {
+        console.error("Failed to delete package from box:", error);
+    }
+  };
+
   return (
     <>
       <Grid container spacing={3}>
@@ -119,10 +140,9 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({ boxes, selectedBoxId, setSe
           {selectedBoxId ? (
             <BoxShipmentsList
               boxId={selectedBoxId}
-              shipments={[]}
-              onDelete={(shipmentId) =>
-                console.log("Delete shipment:", shipmentId)
-              }
+              shipments={packagesInSelectedBox}
+              isLoading={loadingPackages}
+              onDelete={handleDeletePackage}
             />
           ) : (
             <Box

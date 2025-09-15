@@ -2,6 +2,7 @@
 import { toast } from "sonner";
 import React, { useState, useMemo, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { Delete as DeleteIcon, HourglassEmpty as HourglassIcon } from "@mui/icons-material";
 import { getPackagesByUserAndStatus, updatePackageStatus, getShipmentsByUser } from "../../lib/api.service";
 
 import usePreArrival from "../../hooks/usePreArrival";
@@ -15,6 +16,8 @@ import SearchAndFilter from "./SearchAndFilter";
 import EmptyState from "./EmptyState";
 import ShipmentsTable from "./ShipmentsTable";
 import { formatDateTime } from "@/lib/utils";
+import { useRouter, useSearchParams } from "next/navigation";
+import { CircularProgress } from "@mui/material";
 
 const TabsSection = () => {
   const { data: session } = useSession();
@@ -27,18 +30,28 @@ const TabsSection = () => {
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [shipments, setShipments] = useState<any[]>([]);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   // TODO: Remove this HARDCODED VALUES 
   const { submitPreArrival, loading: submitting, error: submitError } = usePreArrival({ customer: "Rohit Sharma", suite: "102-529" });
 
+  const SHIPMENT_STATUSES = [
+    "Request Ship",
+    "Payment Pending",
+    "Payment Approved",
+    "Ready To Ship",
+    "Departed",
+  ];
+
   const fetchPackages = async () => {
     const userId = (session?.user as any)?.user_id;
-    if (!userId) {
-      return;
-    }
-    
+    if (!userId) return;
+
     setPackagesLoading(true);
     try {
-      const data = await getPackagesByUserAndStatus(userId, "Ready to Send");
+      const data = await getPackagesByUserAndStatus(userId, "Ready To Send");
       setPackages(data);
     } catch (error) {
       toast.error("Failed to fetch packages");
@@ -49,15 +62,14 @@ const TabsSection = () => {
 
   const fetchShipments = async () => {
     const userId = (session?.user as any)?.user_id;
-    
-    if (!userId) {
-      return;
-    }
-    
+    if (!userId) return;
+
     setShipmentsLoading(true);
     try {
-      const data = await getShipmentsByUser(userId);
-      setShipments(data);
+      const results = await Promise.all(
+        SHIPMENT_STATUSES.map((status) => getPackagesByUserAndStatus(userId, status))
+      );
+      setShipments(results.flat());
     } catch (error) {
       toast.error("Failed to fetch shipments");
     } finally {
@@ -80,9 +92,22 @@ const TabsSection = () => {
     });
   }, [selectedFilter, searchTerm]);
 
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "shipments") {
+      setValue(1);
+    } else if (tab === "history") {
+      setValue(2);
+    } else {
+      setValue(0);
+    }
+  }, [searchParams]);
+
   const handleChange = (newValue: number) => {
     setValue(newValue);
-    setSearchTerm("");
+    // setSearchTerm("");
+    const tabName = newValue === 1 ? "shipments" : newValue === 2 ? "history" : "packages";
+    router.push(`?tab=${tabName}`);
   };
 
   const handleShareOTPClick = () => {
@@ -156,7 +181,7 @@ const TabsSection = () => {
         <TabPanel value={value} index={0}>
           {packagesLoading ? (
             <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <CircularProgress />
             </div>
           ) : packages.length === 0 ? (
             <EmptyState icon={<PackageIcon />} message="No Packages Available" />
@@ -212,39 +237,32 @@ const TabsSection = () => {
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Request Ship Packages</h3>
               <div className="space-y-4">
                 {shipments.map((shipment) => (
-                  <div key={shipment.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{shipment.tracking_no}</h4>
-                        <p className="text-sm text-gray-600">Package ID: {shipment.package_id}</p>
-                        <p className="text-sm text-gray-600">Status: <span className="text-blue-600 font-medium">{shipment.status}</span></p>
-                        {shipment.customer && (
-                          <p className="text-sm text-gray-600">Customer: <span className="font-medium">{shipment.customer.name}</span></p>
-                        )}
-                        {shipment.total_weight && (
-                          <p className="text-sm text-gray-600">Weight: {shipment.total_weight} kg</p>
-                        )}
+                  <div
+                    key={shipment.id}
+                    onClick={() => router.push(`/shipment/${shipment.shipment_id}`)}
+                    className="flex justify-between items-center border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  >
+                    <div>
+                      <h4 className="font-semibold text-gray-900">
+                        {shipment.shipment_id}
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        {formatDateTime(shipment.created_at)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <HourglassIcon fontSize="small" className="text-gray-500" />
+                        <span className="uppercase font-medium">{shipment.status}</span>
                       </div>
-                      <div className="flex flex-col items-end space-y-2">
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">Created: {new Date(shipment.created_at).toLocaleDateString()}</p>
-                          {shipment.country && (
-                            <p className="text-sm text-gray-500">Country: {shipment.country?.name}</p>
-                          )}
-                        </div>
-                        {/* <div className="flex gap-2">
-                          <button
-                            className="inline-flex bg-green-600 hover:bg-green-700 text-white items-center px-3 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                          >
-                            Track Shipment
-                          </button>
-                          <button
-                            className="inline-flex bg-gray-600 hover:bg-gray-700 text-white items-center px-3 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                          >
-                            View Details
-                          </button>
-                        </div> */}
-                      </div>
+
+                      <button
+                        className="text-red-500 hover:text-red-700 transition"
+                        onClick={() => console.log("delete", shipment.id)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </button>
                     </div>
                   </div>
                 ))}

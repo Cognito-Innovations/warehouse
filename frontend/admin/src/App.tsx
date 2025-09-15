@@ -16,7 +16,6 @@ import MySuiteContent from './components/mySuite/MySuiteContent';
 import Shipments from './pages/Shipments';
 import ShipmentExport from './pages/ShipmentExport';
 import Login from './pages/Login';
-import Register from './pages/Register';
 
 import Sidebar from './components/Sidebar/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -44,7 +43,6 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
               
               {/* Protected routes */}
               <Route path="/*" element={

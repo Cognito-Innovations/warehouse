@@ -4,8 +4,9 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 
 // Types
 export interface AddressData {
-  id?: string;
-  country_id?: string;
+  id: string;
+  country_id: string;
+  email?: string;
   name: string;
   address: string;
   country_name: string;
@@ -25,7 +26,7 @@ export interface AddressState {
   selectedCountry: string;
   availableCountries: Country[];
   savedAddresses: AddressData[];
-  selectedAddress: AddressData | null;
+  selectedAddress: AddressData;
   isLoading: boolean;
   error: string | null;
 }
@@ -37,10 +38,21 @@ export type AddressAction =
   | { type: 'SET_COUNTRIES'; payload: Country[] }
   | { type: 'SET_ADDRESSES'; payload: AddressData[] }
   | { type: 'SELECT_COUNTRY'; payload: string }
-  | { type: 'SELECT_ADDRESS'; payload: AddressData | null }
+  | { type: 'SELECT_ADDRESS'; payload: AddressData }
   | { type: 'UPDATE_ADDRESS'; payload: AddressData }
   | { type: 'ADD_ADDRESS'; payload: AddressData }
   | { type: 'REMOVE_ADDRESS'; payload: string };
+
+const initialAddress: AddressData = {
+  country_id: "",
+  country_code: "",
+  id: "",
+  name: "",
+  address: "",
+  country_name: "",
+  country_phone_code: "",
+  phone_number: "",
+};
 
 // Initial State
 const initialState: AddressState = {
@@ -50,13 +62,14 @@ const initialState: AddressState = {
     { name: "India", code: "IN", phone_code: "+91" },
   ],
   savedAddresses: [],
-  selectedAddress: null,
+  selectedAddress: initialAddress,
   isLoading: false,
   error: null,
 };
 
 // Reducer
 function addressReducer(state: AddressState, action: AddressAction): AddressState {
+
   switch (action.type) {
 
     case "SET_LOADING":
@@ -72,7 +85,7 @@ function addressReducer(state: AddressState, action: AddressAction): AddressStat
       return { 
         ...state, 
         savedAddresses: action.payload,
-        selectedAddress: action.payload.length > 0 ? action.payload[0] : null,
+        selectedAddress: action.payload.length > 0 ? action.payload[0] : initialAddress,
         isLoading: false 
       };
     
@@ -108,7 +121,7 @@ function addressReducer(state: AddressState, action: AddressAction): AddressStat
         ...state,
         savedAddresses: state.savedAddresses.filter(addr => addr.id !== action.payload),
         selectedAddress: state.selectedAddress?.id === action.payload 
-          ? null 
+          ? initialAddress 
           : state.selectedAddress
       };
     
@@ -161,13 +174,6 @@ export const AddressProvider: React.FC<AddressProviderProps> = ({ children }) =>
   useEffect(() => {
     fetchCountries();
   }, []);
-
-  // Save country to localStorage when it changes
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("selectedCountry", state.selectedCountry);
-    }
-  }, [state.selectedCountry]);
 
   return (
     <AddressContext.Provider value={{ state, dispatch }}>
@@ -226,7 +232,7 @@ export const useAddressActions = () => {
     selectCountry: (country: string) => 
       dispatch({ type: "SELECT_COUNTRY", payload: country }),
     
-    selectAddress: (address: AddressData | null) => 
+    selectAddress: (address: AddressData) => 
       dispatch({ type: "SELECT_ADDRESS", payload: address }),
     
     updateAddress: (address: AddressData) => 

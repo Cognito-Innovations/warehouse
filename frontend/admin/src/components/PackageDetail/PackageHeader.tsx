@@ -1,7 +1,9 @@
-import React from 'react';
-import { Box, Typography, Chip, Stack, Button, Card, CardContent } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Chip, Stack, Button, Card, CardContent, CircularProgress } from '@mui/material';
 import { Print as PrintIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { Person as PersonIcon, Email as EmailIcon, Phone as PhoneIcon } from '@mui/icons-material';
+import jsPDF from "jspdf";
+import { updatePackageStatus } from '../../services/api.services';
 
 interface PackageHeaderProps {
   packageData: {
@@ -14,11 +16,75 @@ interface PackageHeaderProps {
     phone2: string;
   };
   actionLogStatus: string;
+  showRaiseInvoiceButton: boolean;
+  showPrintCarrierLabelButton: boolean;
+  showApprovePaymentButton: boolean;
+  isApprovingPayment: boolean;
   onDiscard?: () => void;
   onPrintLabel?: () => void;
+  onRaiseInvoice?: () => void;
+  onApprovePayment?: () => void;
+  onRefresh?: () => void;
 }
 
-const PackageHeader: React.FC<PackageHeaderProps> = ({ packageData, actionLogStatus, onDiscard, onPrintLabel }) => {
+const PackageHeader: React.FC<PackageHeaderProps> = ({ 
+  packageData,
+  actionLogStatus,
+  showRaiseInvoiceButton,
+  showApprovePaymentButton,
+  showPrintCarrierLabelButton,
+  isApprovingPayment,
+  onDiscard,
+  onPrintLabel,
+  onRaiseInvoice,
+  onApprovePayment,
+  onRefresh,
+}) => {
+  const [isPrintingHold, setIsPrintingHold] = useState(false);
+  const [isPrintingCarrier, setIsPrintingCarrier] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const handlePrintHoldLabel = () => {
+    try{
+      setIsPrintingHold(true);
+      const doc = new jsPDF();
+      doc.text("Hold Label", 20, 20);
+      doc.save("hold-label.pdf");
+    } finally {
+      setIsPrintingHold(false);
+    }
+  };
+
+  const handleUpdateStatus = async (newStatus: string) => {
+    try {
+      setIsUpdatingStatus(true);
+      await updatePackageStatus(packageData.id, newStatus);
+      onRefresh?.();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+   const handlePrintCarrierLabel = async () => {
+    try {
+      setIsPrintingCarrier(true);
+
+      const doc = new jsPDF();
+      doc.text("Carrier Label", 20, 20);
+      doc.save("carrier-label.pdf");
+
+      await handleUpdateStatus("Ready To Ship");
+    } finally {
+      setIsPrintingCarrier(false);
+    }
+  };
+
+  const handleUpdateToDepart = async () => {
+    await handleUpdateStatus("Departed");
+  };
+  
   return (
     <Card sx={{ mb: 2, borderRadius: 2 }}>
       <CardContent sx={{ px: 3 }}>
@@ -34,10 +100,10 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({ packageData, actionLogSta
                 sx={{
                   bgcolor: actionLogStatus === 'Action Required' ? '#f18d8d91' :
                     actionLogStatus === 'In Review' ? '#dbeafe' :
-                      actionLogStatus === 'Ready to Send' ? '#dcfce7' : '#f18d8d91',
+                      actionLogStatus === 'Ready To Send' ? '#dcfce7' : '#f18d8d91',
                   color: actionLogStatus === 'Action Required' ? '#ff4b41' :
                     actionLogStatus === 'In Review' ? '#1e40af' :
-                      actionLogStatus === 'Ready to Send' ? '#166534' : '#ff4b41',
+                      actionLogStatus === 'Ready To Send' ? '#166534' : '#ff4b41',
                   fontWeight: 600,
                   fontSize: '0.75rem',
                   height: 28,
@@ -77,6 +143,65 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({ packageData, actionLogSta
 
           {/* Action Buttons - Stacked Vertically */}
           <Stack direction="row" spacing={1}>
+            {showApprovePaymentButton && (
+              <Button
+                variant="contained"
+                startIcon={isApprovingPayment ? <CircularProgress size={20} color="inherit" /> : null }
+                onClick={onApprovePayment}
+                disabled={isApprovingPayment}
+                sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' }, textTransform: 'none' }}
+              >
+                {isApprovingPayment ? 'Approving...' : 'Approve Payment'}
+              </Button>
+            )}
+
+            {packageData.status === 'Payment Pending' || packageData.status === 'Payment Approved' && (
+              <Button
+                variant="contained"
+                startIcon={isPrintingHold ? <CircularProgress size={20} color="inherit" /> : null }
+                onClick={handlePrintHoldLabel}
+                disabled={isPrintingHold}
+                sx={{ textTransform: 'none' }}
+              >
+                {isPrintingHold ? 'Printing...' : 'Print Hold Label'}
+              </Button>
+            )}
+
+            {packageData.status === "Ready To Ship" && (
+              <Button
+                variant="contained"
+                onClick={handleUpdateToDepart}
+                disabled={isUpdatingStatus}
+              >
+                {isUpdatingStatus ? 'Updating...' : 'Update To Departed'}
+              </Button>
+            )}
+
+            {showPrintCarrierLabelButton && (
+              <Button
+                variant="contained"
+                startIcon={isPrintingCarrier ? <CircularProgress size={20} color="inherit" /> : null }
+                onClick={handlePrintCarrierLabel}
+                sx={{ textTransform: 'none' }}
+              >
+                Print Carrier Label
+              </Button>
+            )}
+
+             {showRaiseInvoiceButton && (
+              <Button
+                variant="contained"
+                onClick={onRaiseInvoice}
+                sx={{
+                  bgcolor: '#3b82f6',
+                  '&:hover': { bgcolor: '#2563eb' },
+                  textTransform: 'none',
+                  borderRadius: 1,
+                }}
+              >
+                Raise Invoice
+              </Button>
+            )}
             <Button
               variant="contained"
               startIcon={<PrintIcon />}

@@ -29,8 +29,8 @@ export const createSupplier = async (supplier: {
   return response.data;
 };
 
-export const getCountries = async (): Promise<Array<{ id: string; country: string }>> => {
-  const response = await api.get<Array<{ id: string; country: string }>>('/countries');
+export const getCountries = async (): Promise<Array<{ id: string; code: string; name: string }>> => {
+  const response = await api.get<Array<{ id: string; code: string; name: string }>>('/countries');
   return response.data;
 };
 
@@ -137,6 +137,41 @@ export const deletePackageDocument = async (packageId: string, documentId: strin
   return response.data;
 };
 
+export const updatePackage = async (id: string, payload: Partial<{
+  tracking_no: string;
+  weight: string;
+  volumetric_weight: string;
+  dangerous_good: boolean;
+  rack_slot: string;
+}>) => {
+  const { data } = await api.patch(`/packages/${id}`, payload);
+  return data;
+};
+
+export const getShipmentDocuments = async (shipment_uuid: string): Promise<any> => {
+  const response = await api.get(`/packages/shipments/${shipment_uuid}/documents`);
+  return response.data;
+};
+
+export const addShipmentDocument = async (
+  shipment_uuid: string,
+  payload: {
+    url: string;
+    original_filename: string;
+    document_type?: string;
+    file_size?: number;
+    mime_type?: string;
+  }
+): Promise<any> => {
+  const response = await api.post(`/packages/shipments/${shipment_uuid}/documents`, payload);
+  return response.data;
+};
+
+export const getPaymentSlips = async (shipmentUuid: string): Promise<any[]> => {
+  const response = await api.get(`/packages/shipments/${shipmentUuid}/slips`);
+  return response.data;
+};
+
 export const createRack = async (rack: Omit<Rack, 'id'>): Promise<Rack> => {
   const response = await api.post<Rack>('/racks', rack);
   return response.data;
@@ -198,10 +233,16 @@ export const updateShoppingRequestStatus = async (id: string, status: string) =>
   return response.data;
 };
 
-export const updateProduct = async (productId: string, unitPrice?: number, available?: boolean) => {
+export const updateProduct = async (
+  productId: string,
+  unitPrice?: number,
+  available?: boolean,
+  currency?: string,
+) => {
   const res = await api.patch(`/products/${productId}`, {
     ...(unitPrice !== undefined && { unit_price: unitPrice }),
     ...(available !== undefined && { available }),
+    ...(currency !== undefined && { currency }),
   });
   return res.data;
 };
@@ -247,4 +288,29 @@ export const updateShipmentExport = async (id: string, payload: { mawb?: string 
 
 export const deleteShipmentExport = async (id: string) => {
   await api.delete(`/shipment-exports/${id}`);
+};
+
+export const searchReadyToShipPackage = async (trackingNumber: string) => {
+  const response = await api.get('/packages/shipments/search', {
+    params: {
+      trackingNumber,
+      status: 'Ready To Ship',
+    },
+  });
+  return response.data;
+};
+
+export const addPackageToBox = async (boxId: number, packageId: string) => {
+  const response = await api.post(`/shipment-export-boxes/${boxId}/packages`, { packageId });
+  return response.data;
+};
+
+export const getPackagesByBoxId = async (boxId: number) => {
+  const response = await api.get(`/shipment-export-boxes/${boxId}/packages`);
+  return response.data;
+};
+
+export const removePackageFromBox = async (boxId: number, packageId: string) => {
+  const response = await api.delete(`/shipment-export-boxes/${boxId}/packages/${packageId}`);
+  return response.data;
 };

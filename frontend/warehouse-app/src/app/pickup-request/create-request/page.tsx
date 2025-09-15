@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { useSession } from "next-auth/react"; 
 import { useRouter } from 'next/navigation';
 import { useAddressAPI } from '@/hooks/useAddressAPI';
+import AddressLayout from '@/providers/AddressLayout';
 
 const FormLabel = ({ children, htmlFor }: { children: React.ReactNode; htmlFor: string }) => (
   <Typography
@@ -26,9 +27,10 @@ const FormLabel = ({ children, htmlFor }: { children: React.ReactNode; htmlFor: 
   </Typography>
 );
 
-export default function CreatePickupRequestPage() {
+function CreatePickupRequestPageContent() {
+  const [loading, setLoading] = useState(false);
   const {selectedAddress} =  useAddressAPI();
-  const { data: session } = useSession();  
+  const { data: session } = useSession();
   const router = useRouter();
 
 
@@ -50,6 +52,7 @@ export default function CreatePickupRequestPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setLoading(true);
       const user_id = (session?.user as any)?.user_id;
 
       if (!user_id) {
@@ -60,7 +63,7 @@ export default function CreatePickupRequestPage() {
       await createPickupRequest({
         user_id,
         status: "requested",
-        country_id: selectedAddress?.country_id || '4bffc336-6ebf-420d-8865-df7fb72f5dac', //todo: add selectedCountryId later to get country code dynamically
+        country_id: selectedAddress?.country_id,
         pickup_address: form.pickup_address,
         supplier_name: form.supplier_name,
         supplier_phone_number: form.supplier_phone_number,
@@ -84,6 +87,8 @@ export default function CreatePickupRequestPage() {
       router.push('/pickup-request');
     } catch (err: any) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -243,7 +248,7 @@ export default function CreatePickupRequestPage() {
               variant="contained"
               type="submit"
               onClick={handleSubmit}
-              disabled={!isFormValid} 
+              disabled={!isFormValid || loading} 
               sx={{
                 bgcolor: '#7C3AED',
                 textTransform: 'none',
@@ -255,11 +260,19 @@ export default function CreatePickupRequestPage() {
                 '&:hover': { bgcolor: '#6D28D9' },
               }}
             >
-              Submit Pickup Request
+              {loading ? 'Submitting...' : 'Submit Pickup Request'}
             </Button>
           </Box>
         </Box>
       </Paper>
     </Box>
+  );
+}
+
+export default function CreatePickupRequestPage() {
+  return (
+    <AddressLayout>
+      <CreatePickupRequestPageContent />
+    </AddressLayout>
   );
 }

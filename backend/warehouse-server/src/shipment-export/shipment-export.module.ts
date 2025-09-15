@@ -6,9 +6,12 @@ import { ShipmentExportsService } from './shipment-export.service';
 import { ShipmentExportBoxesService } from './shipment-export-box.service';
 import { ShipmentExport } from './shipment-export.entity';
 import { ShipmentExportBox } from './shipment-export-box.entity';
+import { Package } from 'src/packages/entities';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ShipmentExport, ShipmentExportBox])],
+  imports: [
+    TypeOrmModule.forFeature([ShipmentExport, ShipmentExportBox, Package]),
+  ],
   controllers: [ShipmentExportsController, ShipmentExportBoxesController],
   providers: [ShipmentExportsService, ShipmentExportBoxesService],
   exports: [ShipmentExportsService, ShipmentExportBoxesService],

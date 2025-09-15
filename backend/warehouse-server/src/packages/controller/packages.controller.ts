@@ -24,6 +24,8 @@ import { Request as ExpressRequest } from 'express';
 import { PackagesService } from '../service/packages.service';
 import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
+import { UpdatePackageDto } from '../dto/update-package.dto';
+import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
 
 interface AuthenticatedRequest extends ExpressRequest {
   user: {
@@ -148,4 +150,127 @@ export class PackagesController {
       body.updated_by,
     );
   }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary:
+      'Update package details (tracking, weight, volumetric, dangerous good, rack_slot)',
+  })
+  @ApiOkResponse({ type: PackageResponseDto })
+  async updatePackage(
+    @Param('id') id: string,
+    @Body() dto: UpdatePackageDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.packagesService.updatePackageInfo(id, dto, req.user.id);
+  }
+
+  @Post('shipments/:shipment_uuid/documents')
+  @ApiOperation({ summary: 'Upload shipment document/photo' })
+  async uploadShipmentDocument(
+    @Param('shipment_uuid') shipment_uuid: string,
+    @Body()
+    body: {
+      url: string;
+      original_filename: string;
+      document_type?: string;
+      file_size?: number;
+      mime_type?: string;
+    },
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.packagesService.addShipmentDocument(
+      shipment_uuid,
+      body,
+      req.user.id,
+    );
+  }
+
+  @Get('shipments/:shipment_uuid/documents')
+  @ApiOperation({ summary: 'Get all documents/photos for a shipment' })
+  async getShipmentDocuments(@Param('shipment_uuid') shipment_uuid: string) {
+    return this.packagesService['documentsService'].findByFeature(
+      FeatureType.Package,
+      shipment_uuid,
+      'SHIPMENT',
+    );
+  }
+
+  @Get('shipments/id/:shipment_id')
+  @ApiOperation({ summary: 'Get all packages by shipment_id' })
+  async findByShipmentId(@Param('shipment_id') shipmentId: string) {
+    return this.packagesService.getPackagesByShipmentId(shipmentId);
+  }
+
+  @Get('shipments/uuid/:shipment_uuid')
+  @ApiOperation({ summary: 'Get all packages by shipment_uuid' })
+  async findByShipmentUuid(@Param('shipment_uuid') shipmentUuid: string) {
+    return this.packagesService.getPackagesByShipmentUuid(shipmentUuid);
+  }
+
+  @Patch('shipments/:shipment_uuid/slips')
+  @ApiOperation({ summary: 'Add a payment slip to a shipment' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          example: 'https://cdn.example.com/slips/payment-001.png',
+        },
+        original_filename: { type: 'string', example: 'payment-001.png' },
+        mime_type: { type: 'string', example: 'image/png' },
+        file_size: { type: 'number', example: 204800 },
+      },
+    },
+  })
+  async addPaymentSlip(
+    @Param('shipment_uuid') shipment_uuid: string,
+    @Body()
+    body: {
+      data: {
+        url: string;
+        original_filename: string;
+        mime_type?: string;
+        file_size?: number;
+      };
+    },
+    @Request() req: AuthenticatedRequest,
+  ): Promise<any> {
+    return this.packagesService.addPaymentSlip(
+      shipment_uuid,
+      body.data,
+      req.user.id,
+    );
+  }
+
+  @Get('shipments/:shipment_uuid/slips')
+  @ApiOperation({ summary: 'Get all payment slips for a shipment' })
+  async getPaymentSlips(@Param('shipment_uuid') shipment_uuid: string) {
+    return this.packagesService['documentsService'].findByFeature(
+      FeatureType.Package,
+      shipment_uuid,
+      'SHIPMENT PAYMENT',
+    );
+  }
+
+  @Get('shipments/search')
+  @ApiOperation({
+    summary: 'Search for a package by tracking number and status'
+  })
+  @ApiQuery({ name: 'trackingNumber', type: String, required: true })
+  @ApiQuery({
+    name: 'status',
+    type: String,
+    required: true,
+    example: 'Ready To Ship'
+  })
+  @ApiOkResponse({ description: 'Package found', type: PackageResponseDto })
+  async searchPackage(
+    @Query('trackingNumber') trackingNumber: string,
+    @Query('status') status: string,
+  ): Promise<PackageResponseDto> {
+    return this.packagesService.findByTrackingNumberAndStatus(trackingNumber, status);
+  }
+
 }

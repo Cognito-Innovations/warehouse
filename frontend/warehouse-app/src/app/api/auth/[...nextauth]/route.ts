@@ -83,8 +83,6 @@ const handler = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider === 'google') {
       try {
-        console.log('NextAuth signIn called for user:', user.email);
-        const hashedPasswordValue = hashPassword("123456");
         const suiteNumber = generateSequentialSuiteNumber();
         
         const res = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -92,20 +90,19 @@ const handler = NextAuth({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: user.email,
-            password: hashedPasswordValue,
             name: user.name,
-            image: user.image,
-            suite_no: suiteNumber
+            role: 'user',
+            suite_no: suiteNumber,
+            identifier: 'google',
           }),
         });
         const data = await res.json();
-        console.log('Backend response:', data);
-        (user as any).user_id = data.user.id;
+        (user as any).user_id = data.id;
         (user as any).access_token = data.access_token;
-        (user as any).verified = data.user.verified ?? false;
-        console.log('Stored user_id:', data.user.id);
-        console.log('Stored access_token:', data.access_token ? data.access_token.substring(0, 20) + '...' : 'No token');
-        console.log('Stored verified status:', data.user.verified);
+        (user as any).verified = data.verified ?? false;
+        (user as any).role = data.role;
+        (user as any).suite_no = data.suite_no;
+        (user as any).identifier = data.identifier;
       } catch (err) {
         console.error("Error calling Nest backend:", err);
         return false;
@@ -116,21 +113,34 @@ const handler = NextAuth({
 
     async jwt({ token, user }) {
       if (user) {
-        console.log('JWT callback - user data:', { user_id: (user as any).user_id, has_token: !!(user as any).access_token, verified: (user as any).verified });
         token.user_id = (user as any).user_id;
         token.access_token = (user as any).access_token;
         token.verified = (user as any).verified;
+        token.role = (user as any).role;
+        token.suite_no = (user as any).suite_no;
+        token.identifier = (user as any).identifier;
+        token.name = user.name;
+        token.email = user.email;
+        token.picture = user.image;
       }
-      console.log('JWT callback - token data:', { user_id: token.user_id, has_token: !!token.access_token, verified: token.verified });
       return token;
     },
 
     async session({ session, token }) {
       if (token?.user_id) {
-        (session.user as any).user_id = token.user_id;
+        (session.user as any) = {
+          ...session.user,
+          id: token.user_id as string,
+          user_id: token.user_id as string,
+          name: token.name as string,
+          email: token.email as string,
+          image: token.picture as string,
+          verified: token.verified as boolean,
+          role: token.role as string,
+          suite_no: token.suite_no as string,
+          identifier: token.identifier as string,
+        };
         (session as any).access_token = token.access_token;
-        (session.user as any).verified = token.verified;
-        console.log('Session callback - session data:', { user_id: token.user_id, has_token: !!token.access_token, verified: token.verified });
       } 
       return session;
     },

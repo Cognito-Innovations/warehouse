@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Box, Typography, Paper, Button, CircularProgress } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { getPickupRequestById, updatePickupRequestStatus } from '@/lib/api.service';
 import TrackingStatus from '@/components/Pickup-Request/TrackingStatus';
 import RequestDetails from '@/components/Pickup-Request/RequestDetails';
-import Link from 'next/link';
 import QuotedPriceCard from '@/components/Pickup-Request/QuotedPriceCard';
 
 export default function ViewRequestPage() {
@@ -35,10 +35,13 @@ export default function ViewRequestPage() {
 
   const handleConfirm = async () => {
     try {
+      setLoading(true);
       await updatePickupRequestStatus(details.id, "CONFIRMED");
       await fetchData();
     } catch (err) {
       console.error("Failed to confirm:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -87,6 +90,7 @@ export default function ViewRequestPage() {
             )}
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
+              {/* TODO:P1: functionality NEEDS to be implemented */}
               {details.status.toUpperCase() !== "PICKED" && (        
                 <Button
                   variant="contained"

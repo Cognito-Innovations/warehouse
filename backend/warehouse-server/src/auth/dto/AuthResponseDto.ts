@@ -1,12 +1,6 @@
+import { UserDto } from 'src/users/dto/user.dto';
+
 export class AuthResponseDto {
   access_token: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-    suite_no: string;
-    country: string;
-    verified: boolean;
-  };
+  user?: UserDto;
 }

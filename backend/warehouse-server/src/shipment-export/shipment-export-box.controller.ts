@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, Delete, Get } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -77,5 +77,33 @@ export class ShipmentExportBoxesController {
   @ApiResponse({ status: 404, description: 'Box not found' })
   async deleteBox(@Param('id') id: string) {
     return this.boxesService.deleteBox(id);
+  }
+
+  @Get(':boxId/packages')
+  @ApiOperation({ summary: 'Get all packages in a specific box' })
+  @ApiOkResponse({ description: 'List of packages in the box.' })
+  async getPackagesInBox(@Param('boxId') boxId: string) {
+    return this.boxesService.getPackagesByBoxId(boxId);
+  }
+
+  @Post(':boxId/packages')
+  @ApiOperation({ summary: 'Add a package to a box' })
+  @ApiBody({ schema: { properties: { packageId: { type: 'string' } } } })
+  @ApiOkResponse({ description: 'Package added to the box successfully.' })
+  async addPackageToBox(
+    @Param('boxId') boxId: string,
+    @Body('packageId') packageId: string,
+  ) {
+    return this.boxesService.addPackageToBox(boxId, packageId);
+  }
+
+  @Delete(':boxId/packages/:packageId')
+  @ApiOperation({ summary: 'Remove a package from a box' })
+  @ApiOkResponse({ description: 'Package removed from the box successfully.' })
+  async removePackageFromBox(
+    @Param('boxId') boxId: string,
+    @Param('packageId') packageId: string,
+  ) {
+    return this.boxesService.removePackageFromBox(packageId);
   }
 }

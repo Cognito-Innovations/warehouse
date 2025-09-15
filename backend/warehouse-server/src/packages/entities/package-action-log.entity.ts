@@ -16,7 +16,7 @@ export class PackageActionLog {
   @Column()
   package_id: string;
 
-  @ManyToOne(() => Package, (pkg) => pkg.action_logs)
+  @ManyToOne(() => Package, (pkg) => pkg.action_logs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'package_id' })
   package: Package;
 

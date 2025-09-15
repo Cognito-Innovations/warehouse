@@ -14,7 +14,6 @@ export class CourierCompaniesService {
   ) {}
 
   async create(createCourierCompanyDto: CreateCourierCompanyDto) {
-    console.log('createCourierCompanyDto', createCourierCompanyDto);
     const courierCompany = this.courierCompanyRepository.create({
       ...createCourierCompanyDto,
       country: { id: createCourierCompanyDto.country_id },

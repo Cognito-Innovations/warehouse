@@ -1,4 +1,4 @@
-import { Product } from 'src/products/product.entity';
+import { ProductResponseDto } from 'src/products/dto/product-response.dto';
 
 export class InvoiceResponseDto {
   id: string;
@@ -7,7 +7,7 @@ export class InvoiceResponseDto {
   gst: number;
   total: number;
   status: string;
-  products: Product[];
+  products: ProductResponseDto[];
   created_at: number;
   updated_at: number;
 }

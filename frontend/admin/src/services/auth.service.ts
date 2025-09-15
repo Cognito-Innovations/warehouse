@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { setCookie, getCookie, removeCookie, hasCookie } from '../utils/cookieUtils';
 
 const API_BASE_URL = import.meta.env?.VITE_BACKEND_URL || 'http://localhost:3001';
 
@@ -13,14 +14,12 @@ const authApi = axios.create({
 
 export interface LoginResponse {
   access_token: string;
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-    role: string;
-    suite_no?: string;
-    country?: string;
-  };
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+  suite_no?: string;
+  country?: string;
 }
 
 export interface RegisterResponse {
@@ -42,13 +41,17 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       password,
     });
 
-    // Persist token in cookie so backend can read it
-    const token = response.data?.access_token;
-    if (token) {
-      // Session cookie, accessible by server only conceptually; here we set a client cookie
-      document.cookie = `jwt-token=${token}; path=/; SameSite=Lax`;
+    const user = response.data;
+    if (user.id && user.access_token) {
+      // Store user data in cookie (7 days expiration)
+      setCookie('user_data', JSON.stringify(user), {
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+        secure: window.location.protocol === 'https:',
+        sameSite: 'lax'
+      });
     }
-    return response.data;
+    
+    return user;
   } catch (error: any) {
     throw error;
   }
@@ -62,10 +65,6 @@ export const register = async (name: string, email: string, password: string): P
       password,
     });
 
-    const token = response.data?.access_token;
-    if (token) {
-      document.cookie = `jwt-token=${token}; path=/; SameSite=Lax`;
-    }
     return response.data;
   } catch (error: any) {
     throw error;
@@ -78,24 +77,20 @@ export const logout = async (): Promise<void> => {
   } catch (error: any) {
     console.error('Logout error:', error);
   } finally {
-    // Clear local storage and cookie
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    document.cookie = 'jwt-token=; Max-Age=0; path=/; SameSite=Lax';
+    removeCookie('user_data');
   }
 };
 
-export const getStoredToken = (): string | null => {
-  return localStorage.getItem('access_token');
-};
-
 export const getStoredUser = (): any | null => {
-  const userStr = localStorage.getItem('user');
-  return userStr ? JSON.parse(userStr) : null;
+  const userStr = getCookie('user_data');
+  try {
+    return userStr ? JSON.parse(userStr) : null;
+  } catch (error) {
+    console.error('Error parsing user data from cookie:', error);
+    return null;
+  }
 };
 
 export const isAuthenticated = (): boolean => {
-  // Consider cookie presence as auth indicator
-  const hasCookie = document.cookie.split('; ').some((c) => c.startsWith('jwt-token='));
-  return hasCookie || !!getStoredToken();
+  return hasCookie('user_data');
 };

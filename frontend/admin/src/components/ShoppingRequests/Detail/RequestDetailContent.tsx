@@ -102,7 +102,7 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({ request, on
             <InvoiceTable 
               id={request.id}
               invoice={request.invoice}
-              payment_slips={request.payment_slips}
+              payment_slips={request.payment_slips || []}
               status={request.status}
               onStatusUpdated={onStatusUpdated || (() => {})} 
             />

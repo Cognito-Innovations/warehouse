@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { UsersModule } from '../users/users.module';
-import { AuthService } from './service/auth.service';
+import { AuthService } from './auth.service';
 import { User } from 'src/users/user.entity';
 
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -18,8 +18,6 @@ import { AuthController } from './auth.controller';
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: {
         expiresIn: '24h',
-        issuer: 'warehouse-app',
-        audience: 'warehouse-users',
       },
     }),
     UsersModule,
