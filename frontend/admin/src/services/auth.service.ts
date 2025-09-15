@@ -14,14 +14,12 @@ const authApi = axios.create({
 
 export interface LoginResponse {
   access_token: string;
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-    role: string;
-    suite_no?: string;
-    country?: string;
-  };
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+  suite_no?: string;
+  country?: string;
 }
 
 export interface RegisterResponse {

@@ -11,13 +11,12 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
-import { login } from '../services/auth.service';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner'
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { isLoading } = useAuth();
+  const { isLoading, login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -70,6 +69,7 @@ const Login: React.FC = () => {
     if (!validateForm()) {
       return;
     }
+
 
     setLoading(true);
 

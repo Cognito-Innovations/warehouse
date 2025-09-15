@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
-import { getStoredUser, isAuthenticated, logout as authLogout } from '../services/auth.service';
+import { getStoredUser, isAuthenticated, logout as authLogout, login as authLogin } from '../services/auth.service';
 import type { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -33,9 +34,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         if (isAuthenticated()) {
           const storedUser = getStoredUser();
-          if (storedUser) {
-            setUser(storedUser);
+          if (storedUser && storedUser.access_token) {
+            // Convert stored user data to User type
+            const userData: User = {
+              id: storedUser.user.id,
+              email: storedUser.user.email,
+              name: storedUser.user.name,
+              image: undefined,
+            };
+            setUser(userData);
+          } else {
+            // User data exists but no token, clear it
+            setUser(null);
           }
+        } else {
+          setUser(null);
         }
       } catch (error) {
         console.error('Error checking authentication:', error);
@@ -48,6 +61,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
+
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      const loginResponse = await authLogin(email, password);
+      // Convert LoginResponse to User type
+      const userData: User = {
+        id: loginResponse.id,
+        email: loginResponse.email,
+        name: loginResponse.name,
+        image: undefined, // Not provided in login response
+      };
+      setUser(userData);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  }, []);
 
   const logout = useCallback(async () => {
     try {
@@ -63,8 +93,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     isAuthenticated: !!user,
     isLoading,
+    login,
     logout,
-  }), [user, isLoading, logout]);
+  }), [user, isLoading, login, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
