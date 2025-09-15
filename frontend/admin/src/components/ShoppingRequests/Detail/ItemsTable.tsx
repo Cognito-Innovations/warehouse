@@ -39,7 +39,7 @@ const currencySymbols: Record<string, string> = {
 const ItemsTable: React.FC<ItemsTableProps> = ({ details }) => {
   const [products, setProducts] = useState<ShoppingRequestProduct[]>(details.shopping_request_products ?? []);
 
-  // TODO:P1: Not correct way to handle update, improve efficiency
+  // TODO: Not correct way to handle update, improve efficiency
   const handleUpdate = async (index: number, updates: Partial<ShoppingRequestProduct>) => {
     setProducts(prev => {
       const newProducts = [...prev];
