@@ -3,13 +3,10 @@
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import ReactCountryFlag from "react-country-flag";
 import AddressDetailsModal from "../Modals/AddressDetailsModal/AddressDetailsModal";
 import SavedAddressesModalTailwind from "../Modals/SavedAddressesModal/SavedAddressesModal";
 import HeaderAddressSection from "./HeaderAddressSection";
-import AddressSection from "./AddressSection";
-import { Notifications as NotificationsIcon, AccountCircle, Logout } from "@mui/icons-material";
-import { getCourierCompanies } from "@/lib/api.service";
+import { AccountCircle, Logout } from "@mui/icons-material";
 import { useAddressAPI } from "../../hooks/useAddressAPI";
 import { useAddressForm } from "@/hooks/useAddressForm";
 import { useAuth } from "../../contexts/AuthContext";
@@ -31,11 +28,10 @@ const Header = () => {
   const pathname = usePathname();
   const { 
     selectedAddress, 
-    savedAddresses, 
-    selectedCountry,
-    availableCountries,
+    savedAddresses,
     selectAddress,
-    selectCountry 
+    selectCountry,
+    isLoading
   } = useAddressAPI();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -48,18 +44,7 @@ const Header = () => {
     { name: "Pickup Request", path: "/pickup-request" },
   ];
 
-  const currentCountryData = availableCountries.find(country => country.name === selectedCountry);
-
-  const defaultAddress: AddressData = {
-    name: "No Address Selected",
-    address: "Please change or add a shipping address.",
-    country_name: selectedCountry,
-    country_code: currentCountryData?.code || "",
-    country_phone_code: currentCountryData?.phone_code || "",
-    phone_number: "",
-  };
-
-  const displayAddress = selectedAddress || defaultAddress;
+  const displayAddress = selectedAddress;
 
   // Modal state
   const [isSavedAddressesModalOpen, setIsSavedAddressesModalOpen] = useState(false);
@@ -230,15 +215,12 @@ const Header = () => {
       </header>
 
       {/* Address Section */}
-      {pathname === "/assisted-shopping" ||
-        pathname === "/pickup-request" ||
-        pathname === "/pickup-request/create-request" ? (
-        <AddressSection />
-      ) : pathname === "/assisted-shopping/create-request" ||
+      {pathname === "/assisted-shopping/create-request" ||
         pathname.startsWith("/pickup-request/") ||
         pathname.startsWith("/assisted-shopping/") ? null : (
         <HeaderAddressSection
           addressData={displayAddress}
+          isLoading={isLoading}
           onOpenSavedAddressesModal={handleOpenSavedAddressesModal}
           onOpenAddressDetailsModal={handleOpenAddressDetailsModal}
         />

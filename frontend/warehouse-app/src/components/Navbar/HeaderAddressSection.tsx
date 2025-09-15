@@ -1,5 +1,6 @@
 'use client';
 
+import { Skeleton, Box } from '@mui/material';
 import React from 'react';
 import ReactCountryFlag from 'react-country-flag';
 
@@ -14,16 +15,34 @@ interface AddressData {
 }
 
 interface HeaderAddressSectionProps {
-  addressData: AddressData;
+  addressData: AddressData | null;
+  isLoading: boolean;
   onOpenSavedAddressesModal: () => void;
   onOpenAddressDetailsModal: () => void;
 }
 
 const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
   addressData,
+  isLoading,
   onOpenSavedAddressesModal,
   onOpenAddressDetailsModal
 }) => {
+  if (isLoading || !addressData || !addressData.id) {
+    return (
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Skeleton variant="circular" width={80} height={80} />
+            <Box sx={{ flex: 1 }}>
+              <Skeleton variant="text" width="40%" />
+              <Skeleton variant="text" width="60%" />
+              <Skeleton variant="text" width="50%" />
+            </Box>
+          </Box>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white border-b border-gray-200">
@@ -44,12 +63,6 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
                 title={addressData.country_name}
               />
             </div>
-            <button 
-              onClick={onOpenSavedAddressesModal}
-              className="bg-transparent border border-purple-700 text-purple-700 px-4 py-2 rounded text-sm font-medium hover:bg-purple-50 transition-colors"
-            >
-              Change
-            </button>
           </div>
         
           {/* Address Information */}

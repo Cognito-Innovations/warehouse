@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { BrowserRouter as Router, Routes, Route, Link as RouterLink } from 'react-router-dom';
+import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -21,7 +21,7 @@ import Sidebar from './components/Sidebar/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
-import { menuItems } from "./data/menuItems";
+import { menuItems, type MenuItem, type UserRole } from "./data/menuItems";
 
 import themeConfig from './utils/themeConfig';
 import PreArrivals from './pages/PreArrivals';
@@ -30,9 +30,57 @@ import { Toaster } from 'sonner';
 import PickupRequests from './pages/PickupRequests';
 import PickupRequestDetail from './pages/PickupRequestDetail';
 import ViewShipmentExportPage from './pages/ViewShipmentExportPage';
+import CountriesPage from './pages/CountriesPage';
+import CurrenciesPage from './pages/CurrenciesPage';
 
 function App() {
+  // const { user } = useAuth()
   const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
+
+  const user: { role: UserRole } = { role: 'super_admin' };
+
+  if (!user) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Card sx={{ p: 4, textAlign: 'center', maxWidth: 400 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              You are not logged in
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              Please login to access the dashboard and manage your data securely.
+            </Typography>
+            <Button
+              component={RouterLink}
+              to="/login"
+              variant="contained"
+              color="primary"
+              size="medium"
+            >
+              Go to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
+  const visibleMenuItems = menuItems
+    .map(item => {
+      const newItem: MenuItem = { ...item };
+
+      if (item.subMenu) {
+        newItem.subMenu = item.subMenu.filter(subItem =>
+          !subItem.roles || subItem.roles.includes(user?.role as UserRole)
+        );
+      }
+      return newItem;
+    })
+    .filter(item => {
+      const isParentVisible = !item.roles || item.roles.includes(user?.role as UserRole);
+      const hasVisibleChildren = item.subMenu && item.subMenu.length > 0;
+      return isParentVisible || hasVisibleChildren;
+    });
 
   return (
     <ThemeProvider theme={themeConfig}>
@@ -49,7 +97,8 @@ function App() {
                 <ProtectedRoute>
                   <Sidebar 
                     logo={'S'} 
-                    menuItems={menuItems} 
+                    // menuItems={menuItems} 
+                    menuItems={visibleMenuItems}
                     onSubMenuToggle={setIsSubMenuOpen}
                   />
                   <Box component="main" sx={{ 
@@ -82,6 +131,8 @@ function App() {
                       <Route path="/customers/:id" element={<CustomerDetailPage />} />
                       <Route path="/reports" element={<Dashboard />} />
                       <Route path="/master" element={<Dashboard />} />
+                      <Route path="/settings/countries" element={<CountriesPage />} />
+                      <Route path="/settings/currencies" element={<CurrenciesPage />} />
                     </Routes>
                   </Box>
                 </ProtectedRoute>

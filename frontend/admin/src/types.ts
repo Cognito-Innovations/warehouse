@@ -1,8 +1,11 @@
+import type { UserRole } from "./data/menuItems";
+
 export interface User {
   id: string;
   name?: string;
   email: string;
   image?: string;
+  role?: UserRole;
 }
 
 export interface Rack {

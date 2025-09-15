@@ -327,4 +327,16 @@ export class PickupRequestsService {
       await queryRunner.release();
     }
   }
+
+  async deletePickupRequest(id: string): Promise<void> {
+    const pickupRequest = await this.pickupRequestRepository.findOne({
+      where: { id }
+    });
+    if (!pickupRequest) {
+      throw new NotFoundException(`Pickup request with id ${id} not found`);
+    }
+
+    await this.pickupRequestRepository.remove(pickupRequest);
+  }
+
 }

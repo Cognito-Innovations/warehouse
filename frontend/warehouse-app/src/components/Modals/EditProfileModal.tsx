@@ -14,20 +14,24 @@ import {
   FormControl,
   InputLabel,
   Typography,
+  FormHelperText,
+  CircularProgress,
 } from '@mui/material';
 import {
   Close,
 } from '@mui/icons-material';
-import { getCourierCompanies, getCurrencies, updatePreferences } from '@/lib/api.service';
+import { getCourierCompanies, getCurrencies, getUserPreferences, updatePreferences, updateUser } from '@/lib/api.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { AddressData, AddressProvider, useAddressActions } from '@/contexts/AddressContext';
 
-interface ProfileData {
-  identifier: string;
+export interface ProfileData {
+  id_card_passport_no: string;
   name: string;
   email: string;
-  contact: string;
-  alternativeContact: string;
+  phone_number: string;
+  alternate_phone_number: string;
   gender: string;
+  dob: string;
 }
 
 interface PreferencesData {
@@ -39,15 +43,19 @@ interface EditProfileModalProps {
   open: boolean;
   onClose: () => void;
   profileData: ProfileData;
+   onProfileUpdate: (updatedData: Partial<ProfileData>) => void; 
 }
 
-export default function EditProfileModal({ open, onClose, profileData }: EditProfileModalProps) {
+export default function EditProfileModal({ open, onClose, profileData, onProfileUpdate }: EditProfileModalProps) {
   const { user } = useAuth();
+  const { selectAddress, refreshUserPreferences } = useAddressActions();
   const [formData, setFormData] = useState(profileData);
   const [preferencesFormData, setPreferencesFormData] = useState<PreferencesData>({courier_id: "", currency_id: ""});
   const [courierCompanies, setCourierCompanies] = useState<any[]>([]);
   const [currencies, setCurrencies] = useState<any[]>([]);
-
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loadingPreferences, setLoadingPreferences] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const fetchCourierCompanies = async () => {
     const [courierCompaniesData, currenciesData] = await Promise.all([getCourierCompanies(), getCurrencies()]);
@@ -56,30 +64,118 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
   };  
 
   useEffect(() => {
-    fetchCourierCompanies();
-  }, []);
+    if (open) {
+      fetchData();
+    }
+  }, [open, profileData]);
+
+  const fetchData = async () => {
+    setLoadingPreferences(true);
+    await fetchCourierCompanies();
+    setFormData({
+      ...profileData,
+      dob: profileData.dob ? profileData.dob.split('T')[0] : '',
+    });
+    await fetchUserPreferences();
+    setErrors({});
+  };
+
+  const fetchUserPreferences = async () => {
+    try {
+      if (!user?.id) return;
+
+      const prefs = await getUserPreferences(user.id);
+      if (prefs) {
+        setPreferencesFormData({
+          courier_id: prefs.courier?.id || '',
+          currency_id: prefs.currency?.id || ''
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load preferences', error);
+    } finally {
+      setLoadingPreferences(false);
+    }
+  };
 
   const handleChange = (field: keyof ProfileData) => (event: any) => {
+    const { value } = event.target;
     setFormData(prev => ({
       ...prev,
-      [field]: event.target.value
+      [field]: value
     }));
+
+    if (errors[field]) {
+    setErrors(prevErrors => {
+      const newErrors = { ...prevErrors };
+      delete (newErrors as any)[field];
+      return newErrors;
+    });
+  }
   };
 
   const handleChangePreferences = (field: keyof PreferencesData) => (event: any) => {
+    const { value } = event.target;
     setPreferencesFormData(prev => ({
       ...prev,
-      [field]: event.target.value
+      [field]: value
     }));
+
+    if (errors[field]) {
+    setErrors(prevErrors => {
+        const newErrors = { ...prevErrors };
+        delete (newErrors as any)[field];
+        return newErrors;
+    });
+  }
   };
 
-  const handleSave = () => {
-    // Handle save logic here
-    //TOD0:P1: Remaning details save in user table like name, passport, contactNo, alternateContactNo, gender, dob
-    //TOD0:P2: Save preferences in user_preferences table like courier, currency
-    console.log('Saving profile data:', formData);
-    updatePreferences({...preferencesFormData, user_id: user?.id});
-    onClose();
+  const handleSave = async () => {
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await updatePreferences({ ...preferencesFormData, user_id: user?.id });
+
+      const payload = {
+        id_card_passport_no: formData.id_card_passport_no,
+        name: formData.name,
+        phone_number: formData.phone_number,
+        alternate_phone_number: formData.alternate_phone_number,
+        gender: formData.gender,
+        dob: formData.dob,
+      };
+
+      await updateUser(user?.id!, payload);
+
+      await refreshUserPreferences();
+
+      onProfileUpdate(payload);
+      onClose();
+    } catch (error) {
+      console.error('Failed to update profile', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.id_card_passport_no || !formData.id_card_passport_no.trim()) newErrors.id_card_passport_no = 'ID Card/Passport No. is required';
+    if (!formData.name || !formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.dob || !formData.dob.trim()) newErrors.dob = 'Date of birth is required';
+    if (!formData.phone_number || !formData.phone_number.trim()) newErrors.phone_number = 'Contact number is required';
+    if (!formData.gender) newErrors.gender = 'Gender is required';
+    if (!preferencesFormData.courier_id) newErrors.courier_id = 'Courier is required';
+    if (!preferencesFormData.currency_id) newErrors.currency_id = 'Currency is required';
+
+    return newErrors;
   };
 
   return (
@@ -113,8 +209,10 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pb: 2 }}>
           <TextField
             label="ID Card / Passport No *"
-            value={formData.identifier}
-            onChange={handleChange('identifier')}
+            value={formData.id_card_passport_no}
+            onChange={handleChange('id_card_passport_no')}
+            error={!!errors.id_card_passport_no}
+            helperText={errors.id_card_passport_no}
             fullWidth
             size="medium"
             sx={{
@@ -128,6 +226,8 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
             label="Name *"
             value={formData.name}
             onChange={handleChange('name')}
+            error={!!errors.name}
+            helperText={errors.name}
             fullWidth
             size="medium"
             sx={{
@@ -140,8 +240,10 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
           <TextField
             label="DOB"
             type="date"
-            value=""
-            onChange={() => { }}
+            value={formData.dob}
+            onChange={handleChange('dob')}
+            error={!!errors.dob}
+            helperText={errors.dob}
             fullWidth
             size="medium"
             InputLabelProps={{
@@ -157,8 +259,10 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
 
           <TextField
             label="Contact No"
-            value={formData.contact}
-            onChange={handleChange('contact')}
+            value={formData.phone_number}
+            onChange={handleChange('phone_number')}
+            error={!!errors.phone_number}
+            helperText={errors.phone_number}
             fullWidth
             size="medium"
             sx={{
@@ -170,8 +274,8 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
 
           <TextField
             label="Alternative Contact No"
-            value={formData.alternativeContact}
-            onChange={handleChange('alternativeContact')}
+            value={formData.alternate_phone_number}
+            onChange={handleChange('alternate_phone_number')}
             fullWidth
             size="medium"
             sx={{
@@ -181,7 +285,7 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
             }}
           />
 
-          <FormControl fullWidth size="medium">
+          <FormControl fullWidth size="medium" error={!!errors.gender}>
             <InputLabel>Gender</InputLabel>
             <Select
               value={formData.gender}
@@ -196,6 +300,7 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
               <MenuItem value="other">Other</MenuItem>
               <MenuItem value="prefer-not-to-say">Prefer not to say</MenuItem>
             </Select>
+            {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
           </FormControl>
         </Box>
 
@@ -203,26 +308,33 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
           Preferences
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-           <FormControl fullWidth size="medium">
+           <FormControl fullWidth size="medium" error={!!errors.courier_id}>
             <InputLabel>Courier</InputLabel>
             <Select
+              value={preferencesFormData.courier_id}
               onChange={handleChangePreferences('courier_id')}
               label="Courier"
+              disabled={loadingPreferences}
               sx={{
                 borderRadius: '8px',
               }}
             >
               {courierCompanies?.map((courier: any) => (
-                <MenuItem key={courier.id} value={courier.id}>{courier.name}, {courier.address}, {courier.country}</MenuItem>
+                <MenuItem key={courier.id} value={courier.id}>
+                  {courier.name}, {courier.address}, {courier.country || courier.country?.name}
+                </MenuItem>
               ))}
             </Select>
+            {errors.courier_id && <FormHelperText>{errors.courier_id}</FormHelperText>}
           </FormControl>
 
-          <FormControl fullWidth size="medium">
+          <FormControl fullWidth size="medium" error={!!errors.currency_id}>
             <InputLabel>Currency</InputLabel>
             <Select
+              value={preferencesFormData.currency_id}
               onChange={handleChangePreferences('currency_id')}
               label="Currency"
+              disabled={loadingPreferences}
               sx={{
                 borderRadius: '8px',
               }}
@@ -231,6 +343,7 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
                 <MenuItem key={currency.id} value={currency.id}>{currency.currency_symbol}</MenuItem>
               ))}
             </Select>
+            {errors.currency_id && <FormHelperText>{errors.currency_id}</FormHelperText>}
           </FormControl>
 
         </Box>
@@ -240,6 +353,7 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
         <Button
           variant="contained"
           onClick={handleSave}
+          disabled={isSaving}
           sx={{
             bgcolor: 'primary.main',
             color: 'white',
@@ -252,7 +366,7 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
             },
           }}
         >
-          Save
+          {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

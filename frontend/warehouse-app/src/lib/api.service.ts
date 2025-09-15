@@ -1,3 +1,4 @@
+import { ProfileData } from "@/components/Modals/EditProfileModal";
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { getSession } from "next-auth/react";
 
@@ -89,6 +90,11 @@ export const getPickupRequestById = async (id: string) => {
 
 export const updatePickupRequestStatus = async (id: string, status: string, price?: number) => {
   const res = await authenticatedApi.patch(`/pickup-requests/${id}/status`, { status, price });
+  return res.data;
+};
+
+export const deletePickupRequest = async (id: string) => {
+  const res = await authenticatedApi.delete(`/pickup-requests/${id}`);
   return res.data;
 };
 
@@ -197,6 +203,11 @@ export const getCurrencies = async () => {
   return res.data;
 };
 
+export const updatePassword = async (id: string, currentPassword: string, newPassword: string) => {
+  const res = await authenticatedApi.patch(`/users/${id}/password`, { currentPassword, newPassword });
+  return res.data;
+};
+
 // --- Countries Functions ---
 
 export const getCountries = async () => {
@@ -206,5 +217,21 @@ export const getCountries = async () => {
 
 export const updatePreferences = async (data: any) => {
   const res = await authenticatedApi.patch(`/user-preferences/${data.user_id}`, data);
+  return res.data;
+};
+
+export const updateUser = async (userId: string, data: Partial<ProfileData>) => {
+  const res = await authenticatedApi.patch(`/users/${userId}`, data);
+  return res.data;
+};
+
+
+export const getUserPreferences = async (userId: string) => {
+  const res = await authenticatedApi.get(`/user-preferences/by-user/${userId}`);
+  return res.data;
+};
+
+export const getUser = async (userId: string) => {
+  const res = await authenticatedApi.get(`/users/${userId}`);
   return res.data;
 };

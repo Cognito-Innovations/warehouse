@@ -8,7 +8,12 @@ import {
     Assessment as ReportsIcon,
     AdminPanelSettings as MasterIcon,
     FileDownload as ExportIcon,
+    Settings as SettingsIcon,
+    Flag as CountriesIcon,
+    AttachMoney as CurrenciesIcon,
 } from '@mui/icons-material';
+
+export type UserRole = 'super_admin' | 'admin' | 'user';
 
 export interface MenuItem {
   text: string;
@@ -16,6 +21,7 @@ export interface MenuItem {
   defaultPath?: string;
   path?: string;
   subMenu?: MenuItem[];
+  roles?: UserRole[];
 }
 
 export const menuItems: MenuItem[] = [
@@ -51,4 +57,14 @@ export const menuItems: MenuItem[] = [
   { text: 'Customers', icon: CustomersIcon, path: '/customers' },
   { text: 'Reports', icon: ReportsIcon, path: '/reports' },
   { text: 'Master', icon: MasterIcon, path: '/master' },
+  {
+    text: 'Settings',
+    icon: SettingsIcon,
+    defaultPath: '/settings/countries',
+    roles: ['super_admin'],
+    subMenu: [
+        { text: 'Countries', icon: CountriesIcon, path: '/settings/countries' },
+        { text: 'Currencies', icon: CurrenciesIcon, path: '/settings/currencies' },
+    ],
+  },
 ];

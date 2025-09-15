@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { UserDto } from './dto/user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdatePasswordDto, UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -66,6 +67,7 @@ export class UsersController {
       name: user.name,
       role: user.role,
       suite_no: user.suite_no,
+      id_card_passport_no: user.id_card_passport_no,
       identifier: user.identifier,
       phone_number: user.phone_number,
       alternate_phone_number: user.alternate_phone_number,
@@ -128,7 +130,7 @@ export class UsersController {
   })
   async update(
     @Param('id') id: string,
-    @Body() updateUserDto: UserDto,
+    @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserDto> {
     const user = await this.usersService.update(id, updateUserDto);
     return {
@@ -137,6 +139,7 @@ export class UsersController {
       name: user.name,
       role: user.role,
       suite_no: user.suite_no,
+      id_card_passport_no: user.id_card_passport_no,
       identifier: user.identifier,
       phone_number: user.phone_number,
       alternate_phone_number: user.alternate_phone_number,
@@ -177,7 +180,7 @@ export class UsersController {
   })
   async partialUpdate(
     @Param('id') id: string,
-    @Body() updateUserDto: UserDto,
+    @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserDto> {
     const user = await this.usersService.update(id, updateUserDto);
     return {
@@ -186,6 +189,7 @@ export class UsersController {
       role: user.role,
       name: user.name,
       suite_no: user.suite_no,
+      id_card_passport_no: user.id_card_passport_no,
       identifier: user.identifier,
       phone_number: user.phone_number,
       alternate_phone_number: user.alternate_phone_number,
@@ -195,5 +199,18 @@ export class UsersController {
       created_at: user.created_at,
       updated_at: user.updated_at,
     };
+  }
+
+  @Patch(':id/password')
+  @ApiOperation({ summary: 'Update user password' })
+  @ApiResponse({ status: 200, description: 'Password updated successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid current password' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async updatePassword(
+    @Param('id') id: string,
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ) {
+    const { currentPassword, newPassword } = updatePasswordDto;
+    return this.usersService.updatePassword(id, currentPassword, newPassword);
   }
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "../contexts/AuthContext";
-import { AddressProvider } from "../contexts/AddressContext";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useEffect, ReactNode } from "react";
@@ -34,9 +33,5 @@ export default function AddressLayout({ children }: { children: ReactNode }) {
         );
     }
 
-    return (
-        <AddressProvider>
-            {children}
-        </AddressProvider>
-    );
+    return <>{children}</>
 }

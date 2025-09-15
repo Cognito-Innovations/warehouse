@@ -1,20 +1,49 @@
 'use client';
 
-import React, { useState } from 'react';
-import {Edit,Add,} from '@mui/icons-material';
-import EditProfileModal from '../Modals/EditProfileModal';
+import React, { useEffect, useState } from 'react';
+import {Edit,} from '@mui/icons-material';
+import EditProfileModal, { ProfileData } from '../Modals/EditProfileModal';
 import {Box,Typography,Button,Card,CardContent,Grid,Switch } from '@mui/material';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUser } from '@/lib/api.service';
 
 export default function ProfilePage() {
+  const { user } = useAuth();
   const [editModalOpen, setEditModalOpen] = useState(false);
-
-  const profileData = {
-    identifier: '',
+  const [profileData, setProfileData] = useState<ProfileData>({
+    id_card_passport_no: '',
     name: '',
     email: '',
-    contact: '',
-    alternativeContact: '',
+    phone_number: '',
+    alternate_phone_number: '',
     gender: '',
+    dob: '',
+  });
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, [user?.id]);
+
+  const fetchUserProfile = async () => {
+    if (user?.id) {
+      const userInfo = await getUser(user.id);
+      setProfileData({
+        id_card_passport_no: userInfo.id_card_passport_no || '',
+        name: userInfo.name || '',
+        email: userInfo.email || '',
+        phone_number: userInfo.phone_number || '',
+        alternate_phone_number: userInfo.alternate_phone_number || '',
+        gender: userInfo.gender || '',
+        dob: userInfo.dob?.split('T')[0] || '',
+      });
+    }
+  };
+
+  const handleProfileUpdate = (updatedData: Partial<ProfileData>) => {
+    setProfileData((prev) => ({
+      ...prev,
+      ...updatedData,
+    }));
   };
 
   return (
@@ -54,7 +83,7 @@ export default function ProfilePage() {
                   Identifier
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'black.900', fontWeight: 500, mt: 0.5 }}>
-                  {profileData.identifier || '-'}
+                  {profileData.id_card_passport_no || '-'}
                 </Typography>
               </Box>
             </Grid>
@@ -87,7 +116,7 @@ export default function ProfilePage() {
                   Contact
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'black.900', fontWeight: 500, mt: 0.5 }}>
-                  {profileData.contact || '-'}
+                  {profileData.phone_number || '-'}
                 </Typography>
               </Box>
             </Grid>
@@ -98,7 +127,7 @@ export default function ProfilePage() {
                   Alternative Contact
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'black.900', fontWeight: 500, mt: 0.5 }}>
-                  {profileData.alternativeContact || '-'}
+                  {profileData.alternate_phone_number || '-'}
                 </Typography>
               </Box>
             </Grid>
@@ -120,6 +149,7 @@ export default function ProfilePage() {
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         profileData={profileData}
+        onProfileUpdate={handleProfileUpdate}
       />
     </Box>
   );

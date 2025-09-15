@@ -4,6 +4,7 @@ export class UserDto {
   name?: string;
   suite_no: string;
   role: string;
+  id_card_passport_no?: string;
   identifier: string;
   phone_number?: string;
   alternate_phone_number?: string;

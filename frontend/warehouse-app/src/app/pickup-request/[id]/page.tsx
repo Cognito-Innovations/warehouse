@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Box, Typography, Paper, Button, CircularProgress } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { getPickupRequestById, updatePickupRequestStatus } from '@/lib/api.service';
+import { deletePickupRequest, getPickupRequestById, updatePickupRequestStatus } from '@/lib/api.service';
 import TrackingStatus from '@/components/Pickup-Request/TrackingStatus';
 import RequestDetails from '@/components/Pickup-Request/RequestDetails';
 import QuotedPriceCard from '@/components/Pickup-Request/QuotedPriceCard';
+import ConfirmDialog from '@/components/Modals/ConfirmDialog';
 
 export default function ViewRequestPage() {
   const params = useParams();
@@ -16,6 +17,7 @@ export default function ViewRequestPage() {
   const { id } = params;
 
   const [details, setDetails] = useState<any>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -40,6 +42,19 @@ export default function ViewRequestPage() {
       await fetchData();
     } catch (err) {
       console.error("Failed to confirm:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setConfirmOpen(false);
+      setLoading(true);
+      await deletePickupRequest(details.id);
+      router.push('/pickup-request');
+    } catch (err) {
+      console.error('Failed to delete request:', err);
     } finally {
       setLoading(false);
     }
@@ -90,12 +105,12 @@ export default function ViewRequestPage() {
             )}
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
-              {/* TODO:P1: functionality NEEDS to be implemented */}
               {details.status.toUpperCase() !== "PICKED" && (        
                 <Button
                   variant="contained"
                   color="error"
                   startIcon={<DeleteIcon />}
+                  onClick={() => setConfirmOpen(true)}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Delete Request
@@ -118,6 +133,15 @@ export default function ViewRequestPage() {
           <Box sx={{ width: 300 }}>
             <TrackingStatus details={details} />
           </Box>
+
+          <ConfirmDialog
+            open={confirmOpen}
+            title="Delete Pickup Request"
+            message="Are you sure you want to delete this request? This action cannot be undone."
+            confirmText="Delete"
+            onConfirm={handleDelete}
+            onClose={() => setConfirmOpen(false)}
+          />
         </Box>
       </Box>
     </Box>

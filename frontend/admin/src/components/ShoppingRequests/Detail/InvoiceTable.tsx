@@ -10,15 +10,17 @@ import {
   TableRow,
   Typography,
   Chip,
+  CircularProgress,
 } from "@mui/material";
 import { InvoiceRow, type InvoiceDetails } from "./InvoiceRow";
+import { updateShoppingRequestStatus } from "../../../services/api.services";
+import { useState } from "react";
 
 export default function InvoiceTable({
+  id,
   invoice,
   payment_slips,
   status,
-  isApprovingPayment,
-  onApprovePayment,
   onStatusUpdated,
 }: {
   id: string;
@@ -29,6 +31,8 @@ export default function InvoiceTable({
   onApprovePayment: () => void;
   onStatusUpdated: () => void;
 }) {
+  const [isApprovingPayment, setIsApprovingPayment] = useState(false);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PAYMENT_PENDING":
@@ -41,6 +45,18 @@ export default function InvoiceTable({
         return "success";
       default:
         return "default";
+    }
+  };
+
+  const handleApprovePayment = async () => {
+    try {
+      setIsApprovingPayment(true);
+      await updateShoppingRequestStatus(id, "PAYMENT_APPROVED");
+      onStatusUpdated?.();
+    } catch (error) {
+      console.error("Failed to approve payment", error);
+    } finally {
+      setIsApprovingPayment(false);
     }
   };
 
@@ -72,12 +88,11 @@ export default function InvoiceTable({
           />
         </Box>
 
-        {/* TODO:P1: Uncomment when functionality is implemented */}
         {status === "PAYMENT_PENDING" && (
           <Button
             variant="contained"
             size="medium"
-            onClick={onApprovePayment}
+            onClick={handleApprovePayment}
             disabled={isApprovingPayment}
             sx={{
               textTransform: "none",
@@ -85,7 +100,14 @@ export default function InvoiceTable({
               px: 3,
             }}
           >
-            {isApprovingPayment ? "Approving..." : "Approve Payment"}
+            {isApprovingPayment ? (
+              <>
+                <CircularProgress size={20} color="inherit" />
+                Approving
+              </>
+            ) : (
+              "Approve Payment"
+            )}
           </Button>
         )}
       </Box>

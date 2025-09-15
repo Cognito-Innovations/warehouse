@@ -8,7 +8,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  phone_number?: string[];
+  phone_number?: string;
 }
 
 interface CustomerInfoProps {
@@ -26,7 +26,7 @@ const InfoItem: React.FC<{ icon: React.ReactElement; text: string }> = ({ icon, 
 );
 
 const CustomerInfo: React.FC<CustomerInfoProps> = ({ user, userId }) => {
-  const phoneString = user.phone_number?.join(', ');
+  const phoneString = user.phone_number;
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mt: 2 }}>

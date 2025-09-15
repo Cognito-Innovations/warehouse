@@ -2,12 +2,15 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { User } from './user.entity';
 import { UserDto } from './dto/user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +31,7 @@ export class UsersService {
       created_at: user.created_at,
       role: user.role,
       suite_no: user.suite_no,
+      id_card_passport_no: user.id_card_passport_no,
       identifier: user.identifier,
       phone_number: user.phone_number,
       alternate_phone_number: user.alternate_phone_number,
@@ -62,6 +66,7 @@ export class UsersService {
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
+
     const user = this.userRepository.create({
       ...createUserDto,
     });
@@ -69,8 +74,8 @@ export class UsersService {
   }
 
   async update(
-    id: string,
-    updateUserDto: { last_logout?: number },
+    id: string, 
+    updateUserDto: Partial<UpdateUserDto>,
   ): Promise<User> {
     const user = await this.findById(id);
     if (!user) {
@@ -81,5 +86,29 @@ export class UsersService {
       ...updateUserDto,
     });
     return this.userRepository.save(user);
+  }
+
+  async updatePassword(
+    id: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    const user = await this.findById(id);
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+  
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await this.userRepository.save(user);
+
+    return { message: 'Password updated successfully' };
   }
 }

@@ -33,6 +33,7 @@ export default function PickupRequestPage() {
   const { data: session, status } = useSession();  
   const [activeTab, setActiveTab] = useState(0);
   const [pickupRequests, setPickupRequests] = useState<any[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const user_id = (session?.user as any)?.user_id;
@@ -65,7 +66,6 @@ export default function PickupRequestPage() {
       <Typography variant="h6">{message}</Typography>
     </Box>
   );
-
 
   return (
     <div className="min-h-screen bg-gray-100">

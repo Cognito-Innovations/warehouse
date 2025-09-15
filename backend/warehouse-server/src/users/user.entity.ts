@@ -11,6 +11,7 @@ export enum Gender {
 export enum Role {
   Admin = 'admin',
   User = 'user',
+  SuperAdmin = 'super_admin',
 }
 
 export enum Identifier {
@@ -30,6 +31,9 @@ export class User extends BaseTimestampEntity {
   //TODO: Add select: false to password column and try admin login and make it correct
   @Column({ nullable: true })
   password: string;
+
+  @Column({ nullable: true })
+  id_card_passport_no: string;
 
   @Column({ nullable: true })
   name: string;

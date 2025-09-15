@@ -77,4 +77,12 @@ export class UserPreferencesService {
   async delete(id: string) {
     return await this.userPreferenceRepository.delete(id);
   }
+
+  async findByUser(userId: string): Promise<UserPreference | null> {
+    return this.userPreferenceRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['currency', 'courier', 'user'],
+      order: { updated_at: 'DESC' }, 
+    });
+  }
 }
