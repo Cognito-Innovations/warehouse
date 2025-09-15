@@ -12,7 +12,7 @@ export class PackageResponseDto {
     email: string;
     name?: string;
     suite_no: string;
-    country: string;
+    country?: string;
   };
   vendor?: {
     id: string;

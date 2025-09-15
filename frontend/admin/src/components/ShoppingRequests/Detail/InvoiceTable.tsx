@@ -72,6 +72,7 @@ export default function InvoiceTable({
           />
         </Box>
 
+        {/* TODO:P1: Uncomment when functionality is implemented */}
         {status === "PAYMENT_PENDING" && (
           <Button
             variant="contained"

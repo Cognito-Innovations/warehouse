@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Header from "./Navbar/Header";
+import AddressLayout from "./AddressLayout";
+import Header from "@/components/Navbar/Header";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -13,7 +14,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <>
-      {!hideHeader && <Header />}
+      {!hideHeader && <AddressLayout> <Header /> </AddressLayout>}
       {children}
     </>
   );

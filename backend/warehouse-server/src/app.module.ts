@@ -29,6 +29,8 @@ import { CountriesModule } from './Countries/countries.module';
 import { SupportedCountriesModule } from './supported-countries/supported-countries.module';
 import { DocumentsModule } from './documents/documents.module';
 import { InvoicesModule } from './invoice/invoices.module';
+import { UserPreferencesModule } from './user-preferences/user-preferences.module';
+import { CurrenciesModule } from './currencies/currencies.module';
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { InvoicesModule } from './invoice/invoices.module';
     ShipmentExportModule,
     DocumentsModule,
     InvoicesModule,
+    UserPreferencesModule,
+    CurrenciesModule,
   ],
   controllers: [
     PackageItemsController,

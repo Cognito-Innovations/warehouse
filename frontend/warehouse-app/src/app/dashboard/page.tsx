@@ -2,9 +2,8 @@
 
 import TabsSection from '../../components/Tabs/TabsSection';
 import WarningBanner from '../../components/WarningBanner/WarningBanner';
-import ProtectedRoute from '../../components/ProtectedRoute';
+import ProtectedRoute from '../../providers/ProtectedRoute';
 import { useAuth } from '../../contexts/AuthContext';
-import { Box, Typography, Button, Avatar } from '@mui/material';
 
 export default function DashboardPage() {
   const { user } = useAuth();

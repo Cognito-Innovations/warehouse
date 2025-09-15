@@ -41,7 +41,7 @@ export class InvoicesService {
 
     const counter = await this.invoiceRepository.count();
     const invoiceNo = this.generateInvoiceNo(
-      shoppingRequest.country.code || 'XX',
+      shoppingRequest.courier.country.code || 'XX',
       new Date().getFullYear(),
       counter + 1,
     );
@@ -67,7 +67,7 @@ export class InvoicesService {
   }
 
   async getInvoiceByShoppingRequestId(
-    requestId: string
+    requestId: string,
   ): Promise<Invoice | null> {
     return this.invoiceRepository.findOne({
       where: { shopping_request: { id: requestId } },

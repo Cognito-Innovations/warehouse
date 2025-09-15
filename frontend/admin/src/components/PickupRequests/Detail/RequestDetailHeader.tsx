@@ -5,6 +5,7 @@ import { updatePickupRequestStatus } from '../../../services/api.services';
 import { getChipStyles } from '../../../utils/pickupStatus';
 import Modal from '../../common/Modal';
 import ActionButton from '../../common/ActionButton';
+import { TRACKING_STATUS } from '../../../utils/trackingConfig';
 
 interface Users {
   id: string;
@@ -37,7 +38,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
   const handleConfirmQuotation = async () => {
     try {
       setLoading(true);
-      await updatePickupRequestStatus(request.id, 'QUOTED', Number(price));
+      await updatePickupRequestStatus(request.id, TRACKING_STATUS.QUOTED, Number(price));
       onStatusUpdate();
       handleCloseModal();
     } catch (err) {
@@ -50,7 +51,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
   const handleComplete = async () => {
     try {
       setLoading(true);
-      await updatePickupRequestStatus(request.id, 'PICKED');
+      await updatePickupRequestStatus(request.id, TRACKING_STATUS.PICKED);
       onStatusUpdate();
     } catch (err) {
       console.error(err);
@@ -100,6 +101,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
             </>
           )}
 
+          {/* TODO:P1: functionality NEEDS to be implemented */}
           {normalizedStatus === "QUOTED" && (
             <ActionButton label="Reject" color="danger" />
           )}
@@ -117,15 +119,20 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
 
       <CustomerInfo user={request.user} userId={request} />
 
-      <Modal open={openModal} onClose={handleCloseModal} title="Send Quotation">
+      <Modal open={openModal} onClose={handleCloseModal} title="Send Quotation ($)">
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
-            label="Quotation Price"
+            label="Quotation Price ($)"
             type="number"
             fullWidth
             value={price}
             onChange={(e) => setPrice(e.target.value)}
           />
+          {price && (
+            <Typography variant="body2" color="text.secondary">
+              Total: ${price}
+            </Typography>
+          )}
           <Button
             variant="contained"
             onClick={handleConfirmQuotation}

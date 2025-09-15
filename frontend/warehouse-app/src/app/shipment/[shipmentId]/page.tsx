@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CircularProgress } from '@mui/material';
-import { deleteShoppingRequest, getPackagesByShipmentId, getPaymentSlips } from '@/lib/api.service';
+import { getPackagesByShipmentId, getPaymentSlips } from '@/lib/api.service';
 import { toast } from 'sonner';
 
 import TrackingStatus from '@/components/Shipment/TrackingStatus';

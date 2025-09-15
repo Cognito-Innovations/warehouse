@@ -5,11 +5,12 @@ import {
 import ItemsTableRow from './ItemsTableRow';
 import ItemsTableSummary from './ItemsTableSummary';
 import { useMemo, useState } from 'react';
+import { updateProduct } from '../../../services/api.services';
 
-const headers = ["Item Name", "Color/Size", "Available", "Status", "Quantity", "Unit Price", "Total"];
+const headers = ["Item Name", "Color/Size", "Available", "Status", "Quantity", "Price", "Total"];
 
 interface ShoppingRequestProduct {
-  id?: number;
+  id?: string;
   name?: string;
   quantity: number;
   unit_price?: number | null;
@@ -38,10 +39,17 @@ const currencySymbols: Record<string, string> = {
 const ItemsTable: React.FC<ItemsTableProps> = ({ details }) => {
   const [products, setProducts] = useState<ShoppingRequestProduct[]>(details.shopping_request_products ?? []);
 
-  const handleUpdate = (index: number, updates: Partial<ShoppingRequestProduct>) => {
+  // TODO:P1: Not correct way to handle update, improve efficiency
+  const handleUpdate = async (index: number, updates: Partial<ShoppingRequestProduct>) => {
     setProducts(prev => {
       const newProducts = [...prev];
       newProducts[index] = { ...newProducts[index], ...updates };
+      const product = newProducts[index];
+      if (product.id) {
+        const unitPrice = updates.unit_price === null ? 0 : updates.unit_price;
+        updateProduct(product.id, unitPrice, updates.available, updates.currency);
+      }
+      console.log(newProducts);
       return newProducts;
     });
   };
@@ -61,11 +69,6 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details }) => {
 
   return (
     <Card sx={{ mt: 3 }}>
-      {/* TODO: Uncomment when functionality implemented */}
-      {/* <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" fontWeight={600}>Links / Items</Typography>
-        <Button variant="contained" size="small" sx={{textTransform: 'none'}}>Map Items</Button>
-      </Box> */}
       <TableContainer>
         <Table>
           <TableHead sx={{ bgcolor: '#f8fafc' }}>

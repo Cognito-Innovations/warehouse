@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { User } from 'src/users/user.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
-import { Country } from 'src/Countries/country.entity';
+import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 
 export enum ShoppingRequestStatus {
   REQUESTED = 'REQUESTED',
@@ -35,15 +35,15 @@ export class ShoppingRequest extends BaseTimestampEntity {
   @JoinColumn({ name: 'admin_id' })
   admin: User;
 
-  @ManyToOne(() => Country, { eager: true, nullable: false })
-  @JoinColumn({ name: 'country_id' })
-  country: Country;
+  @ManyToOne(() => CourierCompany, { eager: true, nullable: false })
+  @JoinColumn({ name: 'courier_id' })
+  courier: CourierCompany;
 
   @Column({ unique: true })
   request_code: string;
 
   @Column({ default: 0 })
-  items: number;
+  items_count: number;
 
   @Column({ type: 'text', nullable: true })
   remarks: string;

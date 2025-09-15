@@ -1,5 +1,4 @@
 import { Role, User } from 'src/users/user.entity';
-import { Country } from 'src/Countries/country.entity';
 
 import {
   Entity,
@@ -9,6 +8,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
+import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 
 export enum FeatureType {
   ShoppingRequest = 'shopping-request',
@@ -44,9 +44,9 @@ export class TrackingRequest extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Country, { eager: true })
-  @JoinColumn({ name: 'country_id' })
-  country: Country;
+  @ManyToOne(() => CourierCompany, { eager: true })
+  @JoinColumn({ name: 'courier_id' })
+  courier: CourierCompany;
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'user_id' })

@@ -1,5 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { AuthService } from './service/auth.service';
+import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
 
 import { LoginDto } from './dto/login.dto';
@@ -22,6 +22,7 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  //TODO: Add profile and logout endpoints and fetches when UI ready
   // @UseGuards(JwtAuthGuard)
   // @Get('profile')
   // getProfile(@Request() req) {

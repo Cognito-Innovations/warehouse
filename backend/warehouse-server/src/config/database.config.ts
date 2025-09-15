@@ -28,6 +28,9 @@ import { Country } from 'src/Countries/country.entity';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { Document } from 'src/documents/documents.entity';
 import { Invoice } from 'src/invoice/invoice.entity';
+import { Currency } from 'src/currencies/currency.entity';
+import { UserPreference } from 'src/user-preferences/user-preference.entity';
+import { SupportedCountry } from 'src/supported-countries/supported-country.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -39,6 +42,9 @@ export const databaseConfig: TypeOrmModuleOptions = {
   database: process.env.DB_NAME || 'warehouse',
   entities: [
     Country,
+    Currency,
+    SupportedCountry,
+    UserPreference,
     CourierCompany,
     Rack,
     Supplier,
@@ -63,7 +69,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ShipmentExport,
     ShipmentExportBox,
     Document,
-    Invoice
+    Invoice,
   ],
   synchronize: true, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],

@@ -4,30 +4,41 @@ import {
   IsOptional,
   IsBoolean,
   IsDateString,
+  MinLength,
+  IsNumber,
 } from 'class-validator';
+
+export enum Identifier {
+  Google = 'google',
+  Email = 'email',
+}
+
+export enum Gender {
+  Male = 'male',
+  Female = 'female',
+  Other = 'other',
+}
 
 export class CreateUserDto {
   @IsEmail()
   email: string;
 
   @IsString()
+  @IsOptional()
+  @MinLength(6)
   password: string;
 
   @IsOptional()
   @IsString()
   name?: string;
 
-  @IsOptional()
   @IsString()
-  image?: string;
-
-  @IsOptional()
-  @IsString()
+  @MinLength(6)
   suite_no?: string;
 
   @IsOptional()
   @IsString()
-  identifier?: string;
+  identifier?: Identifier;
 
   @IsOptional()
   @IsString()
@@ -35,21 +46,20 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsString()
-  phone_number_2?: string;
+  alternate_phone_number?: string;
 
   @IsOptional()
   @IsString()
-  gender?: string;
+  gender?: Gender;
 
   @IsOptional()
   @IsDateString()
   dob?: Date;
 
-  @IsOptional()
   @IsBoolean()
-  verified?: boolean;
+  verified: boolean;
 
   @IsOptional()
-  @IsString()
-  country?: string;
+  @IsNumber()
+  last_logout?: number;
 }

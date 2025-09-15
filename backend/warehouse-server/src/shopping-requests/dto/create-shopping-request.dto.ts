@@ -9,11 +9,11 @@ export class CreateShoppingRequestDto {
   request_code: string;
 
   @IsString()
-  country: string;
+  courier_id: string;
 
   @IsOptional()
   @IsNumber()
-  items?: number;
+  items_count?: number;
 
   @IsOptional()
   @IsString()

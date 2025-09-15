@@ -16,8 +16,8 @@ export class ShoppingRequestResponseDto {
   user_id: string;
   user?: SafeUser;
   request_code: string;
-  country: string;
-  items: number;
+  courier: string;
+  items_count: number;
   shopping_request_products?: any[];
   remarks?: string;
   status: string;

@@ -14,7 +14,7 @@ const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, on
   const [remarkOpen, setRemarkOpen] = useState(false);
   const [currency, setCurrency] = useState(item.currency || "");
   const [countries, setCountries] = useState<{ id: string; code: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (item.unit_price) {
@@ -24,10 +24,13 @@ const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, on
 
   const fetchCountries = async () => {
     try {
+      setLoading(true);
       const data = await getCountries();
       setCountries(data);
     } catch (err) {
       console.error("Failed to load countries", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,7 +41,16 @@ const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, on
   const handleEditClick = () => setOpen(true);
 
   const handleSave = async () => {
-    onUpdate({ unit_price: unitPrice, currency, available });
+    try {
+      setLoading(true);
+      await onUpdate({ unit_price: unitPrice, currency, available });
+    } catch (err) {
+      console.error("Failed to save item", err);
+      setLoading(false);
+    } finally {
+      setLoading(false);
+      setOpen(false);
+    }
   };
 
   const total = item.quantity * unitPrice;
@@ -95,7 +107,7 @@ const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, on
           "-"
         )}
       </TableCell>
-      <TableCell>{item.status}</TableCell>
+      <TableCell>{item?.status || "-"}</TableCell>
       <TableCell>{item.quantity}</TableCell>
       <TableCell>${unitPrice}</TableCell>
       <TableCell sx={{ verticalAlign: 'top' }}>

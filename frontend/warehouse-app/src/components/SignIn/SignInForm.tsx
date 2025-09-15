@@ -18,6 +18,7 @@ export default function SignInForm() {
   const [loading, setLoading] = useState(false);
   const { user, loading: authLoading } = useAuth();
   const buttonStyles = { py: 1.5, textTransform: "none", borderRadius: "6px" };
+  
   useEffect(() => {
     if (user) {
       router.replace('/dashboard');

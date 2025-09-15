@@ -6,7 +6,7 @@ import { AuthProvider } from "../contexts/AuthContext";
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider 
-      refetchInterval={5 * 60} // Refetch session every 5 minutes
+      refetchInterval={60 * 60} // Refetch session every 60 minutes
       refetchOnWindowFocus={true}
     >
       <AuthProvider>

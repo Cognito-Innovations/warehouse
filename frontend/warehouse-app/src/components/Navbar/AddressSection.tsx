@@ -3,19 +3,11 @@ import React, { useState, useEffect } from 'react';
 import ReactCountryFlag from 'react-country-flag';
 import { useAddressAPI } from '../../hooks/useAddressAPI';
 
-interface AddressSectionProps {
-  currentCountry?: string;
-  onCountryChange?: (country: string) => void;
-}
-
-const AddressSection: React.FC<AddressSectionProps> = ({
-  currentCountry,
-  onCountryChange
-}) => {
-  const { 
+const AddressSection = () => {
+  const {
     selectedCountry, 
     availableCountries, 
-    selectCountry 
+    selectCountry
   } = useAddressAPI();
   
   const [isClient, setIsClient] = useState(false);
@@ -25,23 +17,14 @@ const AddressSection: React.FC<AddressSectionProps> = ({
     setIsClient(true);
   }, []);
 
-  // Handle currentCountry prop changes
-  useEffect(() => {
-    if (currentCountry && currentCountry !== selectedCountry) {
-      selectCountry(currentCountry);
-    }
-  }, [currentCountry, selectedCountry, selectCountry]);
-
   const handleCountrySelect = (country: string) => {
     selectCountry(country);
-    onCountryChange?.(country);
   };
 
   const getCountryCode = (country: string) => {
     const countryInfo = availableCountries.find(c => c.name === country);
     return countryInfo?.code || '';
   };
-
   return (
     <div className="bg-white border-b border-gray-200">
       <div className="max-w-6xl mx-auto px-4 py-4">

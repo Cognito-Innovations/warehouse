@@ -43,7 +43,7 @@ const RequestTable: React.FC = () => {
             suite_no: req.user.suite_no || '',
           },
           status: req.status,
-          noOfItems: req.items,
+          noOfItems: req.items_count,
         };
       });
 

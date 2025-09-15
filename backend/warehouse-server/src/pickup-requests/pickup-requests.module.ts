@@ -4,11 +4,17 @@ import { PickupRequestsController } from './pickup-requests.controller';
 import { PickupRequestsService } from './pickup-requests.service';
 import { PickupRequest } from './pickup-request.entity';
 import { TrackingRequest } from '../tracking-requests/tracking-request.entity';
+import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+import { UserPreference } from 'src/user-preferences/user-preference.entity';
+import { SharedModule } from 'src/shared/shared.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PickupRequest, TrackingRequest])],
+  imports: [
+    TypeOrmModule.forFeature([PickupRequest, TrackingRequest, UserPreference]),
+    SharedModule,
+  ],
   controllers: [PickupRequestsController],
-  providers: [PickupRequestsService],
+  providers: [PickupRequestsService, UserPreferencesService],
   exports: [PickupRequestsService],
 })
 export class PickupRequestsModule {}
