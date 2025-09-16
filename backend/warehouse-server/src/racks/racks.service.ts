@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Rack } from './rack.entity';
@@ -13,6 +13,15 @@ export class RacksService {
   ) {}
 
   async createRack(createRackDto: CreateRackDto): Promise<RackResponseDto> {
+    const existingRack = await this.rackRepository.findOne({ 
+      where: { label: createRackDto.label } 
+    });
+    if (existingRack) {
+      throw new ConflictException(
+        `Rack with label "${createRackDto.label}" already exists`
+      );
+    }
+
     const rack = this.rackRepository.create({
       label: createRackDto.label,
       color: createRackDto.color,

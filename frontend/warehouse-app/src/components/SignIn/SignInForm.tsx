@@ -1,12 +1,14 @@
 "use client";
 
-import { Box, Button, TextField, Typography, Link, Divider, Alert, Snackbar } from "@mui/material";
+import { Box, Button, TextField, Typography, Link, Divider, Alert, Snackbar, InputAdornment, IconButton } from "@mui/material";
 import { signIn } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
 import { hashPassword, generateSequentialSuiteNumber } from "../../utils/auth.utils";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import PasswordStrength from "./PasswordStrength";
 
 export default function SignInForm() {
   const router = useRouter();
@@ -16,6 +18,9 @@ export default function SignInForm() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  
   const { user, loading: authLoading } = useAuth();
   const buttonStyles = { py: 1.5, textTransform: "none", borderRadius: "6px" };
   
@@ -25,9 +30,29 @@ export default function SignInForm() {
     }
   }, [user, router]);
 
+  const passwordValidation = useMemo(() => {
+    const pass = password;
+    return {
+      length: pass.length >= 6,
+      uppercase: /[A-Z]/.test(pass),
+      lowercase: (pass.match(/[a-z]/g) || []).length >= 2,
+      number: /[0-9]/.test(pass),
+      special: /[!@#$%^&*]/.test(pass),
+    };
+  }, [password]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!isLogin) {
+      const isPasswordValid = Object.values(passwordValidation).every(v => v);
+      if (!isPasswordValid) {
+        setError("Please meet all password requirements.");
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -96,7 +121,7 @@ export default function SignInForm() {
   }
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 380 }}>
+    <Box sx={{ width: "100%", maxWidth: 380, overflow: 'visible' }}>
       <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
         <img
           src="/logo.png"
@@ -135,18 +160,37 @@ export default function SignInForm() {
           disabled={loading}
         />
         
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          name="password"
-          label="Password"
-          type="password"
-          variant="outlined"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={loading}
-        />
+        <Box sx={{ position: 'relative' }}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
+            type={showPassword ? 'text' : 'password'}
+            variant="outlined"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onFocus={() => setIsPasswordFocused(true)}
+            onBlur={() => setIsPasswordFocused(false)}
+            disabled={loading}
+            InputProps={{
+              endAdornment: (
+              <InputAdornment position="end">
+                  <IconButton
+                  onClick={() => setShowPassword(!showPassword)}
+                  edge="end"
+                  >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+              </InputAdornment>
+              ),
+            }}
+          />
+          {isPasswordFocused && password && (
+            <PasswordStrength password_str={password} />
+          )}
+        </Box>
 
         {isLogin && (
           <Link

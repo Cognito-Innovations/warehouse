@@ -17,7 +17,7 @@ export class Supplier {
   @JoinColumn({ name: 'country_id' })
   country: Country;
 
-  @Column()
+  @Column({ unique: true })
   supplier_name: string;
 
   @Column({ nullable: true })

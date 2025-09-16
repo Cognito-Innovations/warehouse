@@ -8,6 +8,7 @@ interface RequestDetailsProps {
 }
 
 export default function RequestDetails({ details }: RequestDetailsProps) {
+  const status = details.status.toUpperCase();
   return (
     <Paper
       elevation={0}
@@ -96,17 +97,19 @@ export default function RequestDetails({ details }: RequestDetailsProps) {
         Status
       </Typography>
       <Chip
-        label={details.status}
+        label={status}
         sx={{
           mt: 0.5,
           fontWeight: 'bold',
           textTransform: 'uppercase',
           backgroundColor:
-            details.status === 'REQUESTED'
+            status === 'REQUESTED'
               ? '#FF9800'
-              : details.status === 'QUOTED' || 'PICKED'
+              : status === 'QUOTED'
               ? '#4CAF50'
-              : details.status === 'CANCELLED'
+              : status === 'PICKED'
+              ? '#4CAF50'
+              : status === 'CANCELLED'
               ? '#EF4444'
               : '#9E9E9E',
           color: '#fff',

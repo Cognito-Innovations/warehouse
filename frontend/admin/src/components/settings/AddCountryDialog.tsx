@@ -1,22 +1,23 @@
-import React from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from '@mui/material';
+import React, { useState } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, CircularProgress } from '@mui/material';
 
 interface AddCountryDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (country: { name: string; code: string }) => void;
+  onSave: (country: { name: string; code: string; phone_code: string; image?: string }) => void;
+  saving?: boolean;
 }
 
-const AddCountryDialog: React.FC<AddCountryDialogProps> = ({ open, onClose, onSave }) => {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const country = {
-      name: formData.get('countryName') as string,
-      code: formData.get('countryCode') as string,
-    };
-    onSave(country);
-    onClose();
+const AddCountryDialog: React.FC<AddCountryDialogProps> = ({ open, onClose, onSave, saving }) => {
+  const [form, setForm] = useState({ name: '', code: '', phone_code: '', image: '' });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(form);
   };
 
   return (
@@ -28,27 +29,45 @@ const AddCountryDialog: React.FC<AddCountryDialogProps> = ({ open, onClose, onSa
             autoFocus
             required
             margin="dense"
-            id="countryName"
-            name="countryName"
+            name="name"
             label="Country Name"
-            type="text"
             fullWidth
-            variant="outlined"
+            value={form.name}
+            onChange={handleChange}
           />
           <TextField
             required
             margin="dense"
-            id="countryCode"
-            name="countryCode"
+            name="code"
             label="ISO Code (e.g., US)"
-            type="text"
             fullWidth
-            variant="outlined"
+            value={form.code}
+            onChange={handleChange}
+          />
+          <TextField
+            required
+            margin="dense"
+            name="phone_code"
+            label="Phone Code (e.g., +1)"
+            fullWidth
+            value={form.phone_code}
+            onChange={handleChange}
+          />
+          <TextField
+            margin="dense"
+            name="image"
+            label="Image URL"
+            type="url"
+            fullWidth
+            value={form.image}
+            onChange={handleChange}
           />
         </DialogContent>
         <DialogActions sx={{ p: '0 24px 16px' }}>
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="contained">Save</Button>
+          <Button type="submit" variant="contained" disabled={saving}>
+            {saving ? <CircularProgress size={24} /> : 'Save'}
+          </Button>
         </DialogActions>
       </form>
     </Dialog>

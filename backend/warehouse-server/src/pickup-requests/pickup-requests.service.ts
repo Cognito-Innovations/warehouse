@@ -261,6 +261,9 @@ export class PickupRequestsService {
         case 'PICKED':
           pickupRequest.status = PickupRequestStatus.Picked;
           break;
+        case 'CANCELLED':
+          pickupRequest.status = PickupRequestStatus.Cancelled;
+          break;
         default:
           throw new BadRequestException(`Invalid status: ${status}`);
       }

@@ -20,6 +20,36 @@ interface WeightSectionProps {
   errors: { [key: string]: string };
 }
 
+const handleNumericChange = (
+  value: string,
+  maxDigitsBeforeDecimal: number,
+  maxDigitsAfterDecimal: number,
+  callback: (validatedValue: string) => void
+) => {
+  let validatedValue = value.replace(/[^0-9.]/g, '');
+  const parts = validatedValue.split('.');
+
+  if (parts.length > 2) {
+    validatedValue = parts[0] + '.' + parts.slice(1).join('');
+  }
+  
+  const [integerPart, decimalPart] = validatedValue.split('.');
+
+  const truncatedIntegerPart = integerPart.slice(0, maxDigitsBeforeDecimal);
+  let truncatedDecimalPart = decimalPart;
+  if (decimalPart) {
+    truncatedDecimalPart = decimalPart.slice(0, maxDigitsAfterDecimal);
+  }
+
+  if (truncatedDecimalPart !== undefined) {
+    validatedValue = truncatedIntegerPart + '.' + truncatedDecimalPart;
+  } else {
+    validatedValue = truncatedIntegerPart;
+  }
+  
+  callback(validatedValue);
+};
+
 const WeightSection: React.FC<WeightSectionProps> = ({
   pieces,
   onPieceChange,
@@ -28,6 +58,8 @@ const WeightSection: React.FC<WeightSectionProps> = ({
   calculateTotals,
   errors,
 }) => {
+  const { totalWeight, totalVolWeight } = calculateTotals();
+
   return (
     <Grid size={{ xs: 12 }}>
       <Box sx={{ border: "1px solid #c4c4c4", borderRadius: "4px", p: 2 }}>
@@ -77,7 +109,11 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                 <TextField
                   placeholder="Weight (KG)"
                   value={piece.weight || ""}
-                  onChange={(e) => onPieceChange(idx, "weight", e.target.value)}
+                  onChange={(e) => 
+                    handleNumericChange(e.target.value, 7, 3, (val) => 
+                      onPieceChange(idx, "weight", val)
+                    )
+                  }
                   size="small"
                   sx={{
                     width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } },
@@ -101,7 +137,11 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                 <TextField
                   placeholder="Length (CM)"
                   value={piece.length || ""}
-                  onChange={(e) => onPieceChange(idx, "length", e.target.value)}
+                  onChange={(e) => 
+                    handleNumericChange(e.target.value, 6, 2, (val) => 
+                      onPieceChange(idx, "length", val)
+                    )
+                  }
                   size="small"
                   sx={{
                     width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } },
@@ -110,7 +150,11 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                 <TextField
                   placeholder="Width (CM)"
                   value={piece.width || ""}
-                  onChange={(e) => onPieceChange(idx, "width", e.target.value)}
+                  onChange={(e) => 
+                    handleNumericChange(e.target.value, 6, 2, (val) => 
+                      onPieceChange(idx, "width", val)
+                    )
+                  }
                   size="small"
                   sx={{
                     width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } },
@@ -119,12 +163,16 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                 <TextField
                   placeholder="Height (CM)"
                   value={piece.height || ""}
-                  onChange={(e) => onPieceChange(idx, "height", e.target.value)}
+                  onChange={(e) => 
+                    handleNumericChange(e.target.value, 6, 2, (val) => 
+                      onPieceChange(idx, "height", val)
+                    )
+                  }
                   size="small"
                   sx={{ width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } } }}
                 />
                 <Typography variant="body2" sx={{ fontWeight: 600, color: "#64758b", minWidth: "60px" }}>
-                  Vol. Weight: {piece.volumetricWeight || "-"}
+                  Vol. Weight: {parseFloat(piece.volumetricWeight) > 0 ? `${parseFloat(piece.volumetricWeight).toFixed(3)} KG` : "-"}
                 </Typography>
               </Box>
             </Box>
@@ -132,7 +180,7 @@ const WeightSection: React.FC<WeightSectionProps> = ({
         </Box>
 
         {/* Totals Section - Only show if multiple pieces or has data */}
-        {(pieces.length > 1 || parseFloat(calculateTotals().totalWeight) > 0 || parseFloat(calculateTotals().totalVolWeight) > 0) && (
+        {(pieces.length > 0 && (parseFloat(totalWeight) > 0 || parseFloat(totalVolWeight) > 0)) && (
           <Box sx={{
             display: "flex",
             width: "100%",
@@ -146,10 +194,10 @@ const WeightSection: React.FC<WeightSectionProps> = ({
           }}>
             <Box sx={{ display: "flex", gap: 4 }}>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                Total Weight: {calculateTotals().totalWeight} KG
+                Total Weight: {parseFloat(totalWeight).toFixed(3)} KG
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                Total Vol. Weight: {calculateTotals().totalVolWeight} KG
+                Total Vol. Weight: {parseFloat(totalVolWeight).toFixed(3)} KG
               </Typography>
             </Box>
           </Box>

@@ -90,9 +90,23 @@ export default function ViewRequestPage() {
           / <strong>View Request</strong>
         </Typography>
 
-        <Paper sx={{ p: 2, mb: 2, borderRadius: 2, backgroundColor: '#E8F0FE' }} elevation={0}>
-          <Typography variant="body2" color="text.primary">
-            Your request has been received. We will get back to you shortly.
+        <Paper
+          sx={{
+            p: 2,
+            mb: 2,
+            borderRadius: 2,
+            backgroundColor:
+              details.status.toUpperCase() === "CANCELLED" ? "#FEE2E2" : "#E8F0FE",
+          }}
+          elevation={0}
+        >
+          <Typography
+            variant="body2"
+            color={details.status.toUpperCase() === "CANCELLED" ? "error.main" : "text.primary"}
+          >
+            {details.status.toUpperCase() === "CANCELLED"
+              ? "Your request has been cancelled or rejected."
+              : "Your request has been received. We will get back to you shortly."}
           </Typography>
         </Paper>
 
@@ -105,7 +119,7 @@ export default function ViewRequestPage() {
             )}
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
-              {details.status.toUpperCase() !== "PICKED" && (        
+              {details.status.toUpperCase() !== "PICKED" && details.status.toUpperCase() !== "CANCELLED" && (        
                 <Button
                   variant="contained"
                   color="error"

@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link as RouterLink } from 'react-router-dom';
-import { Box, Button, Card, CardContent, Typography } from '@mui/material';
+import { Routes, Route } from 'react-router-dom';
+import { Box} from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { Toaster } from 'sonner';
 
 import Packages from './pages/Packages';
 import Dashboard from './pages/Dashboard';
@@ -19,14 +20,13 @@ import Login from './pages/Login';
 
 import Sidebar from './components/Sidebar/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './contexts/AuthContext';
 
 import { menuItems, type MenuItem, type UserRole } from "./data/menuItems";
 
 import themeConfig from './utils/themeConfig';
 import PreArrivals from './pages/PreArrivals';
 import PackageDetail from './pages/PackageDetail';
-import { Toaster } from 'sonner';
 import PickupRequests from './pages/PickupRequests';
 import PickupRequestDetail from './pages/PickupRequestDetail';
 import ViewShipmentExportPage from './pages/ViewShipmentExportPage';
@@ -34,36 +34,8 @@ import CountriesPage from './pages/CountriesPage';
 import CurrenciesPage from './pages/CurrenciesPage';
 
 function App() {
-  // const { user } = useAuth()
+  const { user } = useAuth()
   const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
-
-  const user: { role: UserRole } = { role: 'super_admin' };
-
-  if (!user) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Card sx={{ p: 4, textAlign: 'center', maxWidth: 400 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              You are not logged in
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              Please login to access the dashboard and manage your data securely.
-            </Typography>
-            <Button
-              component={RouterLink}
-              to="/login"
-              variant="contained"
-              color="primary"
-              size="medium"
-            >
-              Go to Login
-            </Button>
-          </CardContent>
-        </Card>
-      </Box>
-    );
-  }
 
   const visibleMenuItems = menuItems
     .map(item => {
@@ -86,59 +58,54 @@ function App() {
     <ThemeProvider theme={themeConfig}>
       <CssBaseline />
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <AuthProvider>
-          <Router>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected routes */}
-              <Route path="/*" element={
-                <ProtectedRoute>
-                  <Sidebar 
-                    logo={'S'} 
-                    menuItems={visibleMenuItems}
-                    onSubMenuToggle={setIsSubMenuOpen}
-                  />
-                  <Box component="main" sx={{ 
-                    flexGrow: 1, 
-                    p: 3, 
-                    marginLeft: isSubMenuOpen ? '352px' : '72px', // 72px (main sidebar) + 280px (submenu) when open
-                    minHeight: '100vh',
-                    overflow: 'auto',
-                    boxSizing: 'border-box',
-                    width: isSubMenuOpen ? 'calc(100vw - 352px)' : 'calc(100vw - 72px)',
-                    transition: 'margin-left 0.3s ease, width 0.3s ease'
-                  }}>
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/packages" element={<Packages />} />
-                      <Route path="/packages/all" element={<Packages />} />
-                      <Route path="/packages/:id" element={<PackageDetail />} />
-                      {/* TODO: Move this prearrivals to a separate page */}
-                      <Route path="/packages/pre-arrivals" element={<PreArrivals />} />
-                      <Route path="/shipments" element={<Shipments />} />
-                      {/* <Route path="/shipments/:id" element={<ShipmentDetail />} /> */}
-            <Route path="/shipments/export" element={<ShipmentExport />} />
-                      <Route path="/shipment/export/:id" element={<ViewShipmentExportPage />} />
-            <Route path="/requests" element={<ShoppingRequests />} />
-                      <Route path="/requests/:id" element={<ShoppingRequestDetail />} />
-                      <Route path="/pickups" element={<PickupRequests />} />
-                      <Route path="/pickups/:id" element={<PickupRequestDetail />} />
-                      <Route path="/suite" element={<MySuiteContent />} />
-                      <Route path="/customers" element={<Customers />} />
-                      <Route path="/customers/:id" element={<CustomerDetailPage />} />
-                      <Route path="/reports" element={<Dashboard />} />
-                      <Route path="/master" element={<Dashboard />} />
-                      <Route path="/settings/countries" element={<CountriesPage />} />
-                      <Route path="/settings/currencies" element={<CurrenciesPage />} />
-                    </Routes>
-                  </Box>
-                </ProtectedRoute>
-              } />
-            </Routes>
-          </Router>
-        </AuthProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<Login />} />
+          {/* Protected routes */}
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <Sidebar 
+                logo={'S'} 
+                menuItems={visibleMenuItems}
+                onSubMenuToggle={setIsSubMenuOpen}
+              />
+              <Box component="main" sx={{ 
+                flexGrow: 1, 
+                p: 3, 
+                marginLeft: isSubMenuOpen ? '352px' : '72px', // 72px (main sidebar) + 280px (submenu) when open
+                minHeight: '100vh',
+                overflow: 'auto',
+                boxSizing: 'border-box',
+                width: isSubMenuOpen ? 'calc(100vw - 352px)' : 'calc(100vw - 72px)',
+                transition: 'margin-left 0.3s ease, width 0.3s ease'
+              }}>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/packages" element={<Packages />} />
+                  <Route path="/packages/all" element={<Packages />} />
+                  <Route path="/packages/:id" element={<PackageDetail />} />
+                  {/* TODO: Move this prearrivals to a separate page */}
+                  <Route path="/packages/pre-arrivals" element={<PreArrivals />} />
+                  <Route path="/shipments" element={<Shipments />} />
+                  {/* <Route path="/shipments/:id" element={<ShipmentDetail />} /> */}
+                  <Route path="/shipments/export" element={<ShipmentExport />} />
+                  <Route path="/shipment/export/:id" element={<ViewShipmentExportPage />} />
+                  <Route path="/requests" element={<ShoppingRequests />} />
+                  <Route path="/requests/:id" element={<ShoppingRequestDetail />} />
+                  <Route path="/pickups" element={<PickupRequests />} />
+                  <Route path="/pickups/:id" element={<PickupRequestDetail />} />
+                  <Route path="/suite" element={<MySuiteContent />} />
+                  <Route path="/customers" element={<Customers />} />
+                  <Route path="/customers/:id" element={<CustomerDetailPage />} />
+                  <Route path="/reports" element={<Dashboard />} />
+                  <Route path="/master" element={<Dashboard />} />
+                  <Route path="/settings/countries" element={<CountriesPage />} />
+                  <Route path="/settings/currencies" element={<CurrenciesPage />} />
+                </Routes>
+              </Box>
+            </ProtectedRoute>
+          } />
+        </Routes>
       </LocalizationProvider>
       <Toaster position="top-right" richColors />
     </ThemeProvider>

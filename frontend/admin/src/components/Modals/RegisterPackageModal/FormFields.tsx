@@ -42,9 +42,11 @@ const FormFields: React.FC<FormFieldsProps> = ({
             label="Select Customer"
             onChange={(e) => onInputChange("customer", e.target.value)}
           >
-            {users.map((user) => (
+            {users
+              .filter((user) => user.role === 'user')
+              .map((user) => (
               <MenuItem key={user.id} value={user.id}>
-                {user.name}
+                {user.name} ({user.suite_no})
               </MenuItem>
             ))}
           </Select>

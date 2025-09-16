@@ -199,23 +199,21 @@ export class PackagesService {
 
         for (let i = 0; i < createPackageDto.pieces.length; i++) {
           const piece = createPackageDto.pieces[i];
-          const pieceWeight = parseFloat(piece.weight) || 0;
+          const pieceWeight = parseFloat(piece.weight || '0');
           totalWeight += pieceWeight;
 
           let pieceVolumetricWeight = 0;
           let hasMeasurements = false;
 
-          // Calculate volumetric weight if dimensions are provided
-          if (piece.length && piece.width && piece.height) {
-            const length = parseFloat(piece.length) || 0;
-            const width = parseFloat(piece.width) || 0;
-            const height = parseFloat(piece.height) || 0;
+          const length = parseFloat(piece.length || '0');
+          const width = parseFloat(piece.width || '0');
+          const height = parseFloat(piece.height || '0');
 
-            if (length > 0 && width > 0 && height > 0) {
-              // Standard volumetric weight calculation: (L × W × H) / 5000 (for cm to kg)
-              pieceVolumetricWeight = (length * width * height) / 5000;
-              hasMeasurements = true;
-            }
+          // Calculate volumetric weight if dimensions are provided
+          if (length > 0 && width > 0 && height > 0) {
+            // Standard volumetric weight calculation: (L × W × H) / 5000 (for cm to kg)
+            pieceVolumetricWeight = (length * width * height) / 5000;
+            hasMeasurements = true;
           }
 
           // Use provided volumetric weight if available, otherwise use calculated
@@ -229,11 +227,11 @@ export class PackagesService {
           const measurement = this.packageMeasurementRepository.create({
             packageId: savedPackage.id,
             piece_number: i + 1,
-            weight: pieceWeight,
-            volumetric_weight: pieceVolumetricWeight,
-            length: piece.length ? parseFloat(piece.length) : undefined,
-            width: piece.width ? parseFloat(piece.width) : undefined,
-            height: piece.height ? parseFloat(piece.height) : undefined,
+            weight: parseFloat(pieceWeight.toFixed(3)),
+            volumetric_weight: parseFloat(pieceVolumetricWeight.toFixed(3)),
+            length: length > 0 ? parseFloat(length.toFixed(2)) : undefined,
+            width: width > 0 ? parseFloat(width.toFixed(2)) : undefined,
+            height: height > 0 ? parseFloat(height.toFixed(2)) : undefined,
             has_measurements: hasMeasurements,
             measurement_verified: false,
           });
@@ -245,8 +243,10 @@ export class PackagesService {
         await this.packageMeasurementRepository.save(measurements);
 
         // Update package with calculated totals
-        savedPackage.total_weight = totalWeight;
-        savedPackage.total_volumetric_weight = totalVolumetricWeight;
+        savedPackage.total_weight = parseFloat(totalWeight.toFixed(3));
+        savedPackage.total_volumetric_weight = parseFloat(
+          totalVolumetricWeight.toFixed(3)
+        );
         await this.packageRepository.save(savedPackage);
       }
 

@@ -43,9 +43,7 @@ export type AddressAction =
   | { type: 'UPDATE_ADDRESS'; payload: AddressData }
   | { type: 'ADD_ADDRESS'; payload: AddressData }
   | { type: 'REMOVE_ADDRESS'; payload: string }
-  | { type: 'LOAD_USER_PREFERENCES_START' }
   | { type: 'LOAD_USER_PREFERENCES_SUCCESS'; payload: AddressData }
-  | { type: 'LOAD_USER_PREFERENCES_FAILURE' };
 
 const initialAddress: AddressData = {
   country_id: "",
@@ -112,7 +110,6 @@ function addressReducer(state: AddressState, action: AddressAction): AddressStat
       return { 
         ...state, 
         selectedCountry: action.payload,
-        error: null 
       };
     
     case "SELECT_ADDRESS":
@@ -143,23 +140,13 @@ function addressReducer(state: AddressState, action: AddressAction): AddressStat
           ? initialAddress 
           : state.selectedAddress
       };
-    
-    case "LOAD_USER_PREFERENCES_START":
-      return { ...state, isLoading: true, error: null };
 
     case "LOAD_USER_PREFERENCES_SUCCESS":
       return { 
         ...state, 
         selectedAddress: action.payload, 
-        isLoading: false, 
+        isLoading: false,
         error: null 
-      };
-
-    case "LOAD_USER_PREFERENCES_FAILURE":
-      return { 
-        ...state, 
-        isLoading: false, 
-        error: "Failed to load user preferences" 
       };
     
     default:
@@ -176,6 +163,23 @@ const AddressContext = createContext<{
 // Provider Component
 interface AddressProviderProps {
   children: ReactNode;
+}
+
+const loadUserPreferences = async (userId: string, dispatch: React.Dispatch<AddressAction>) => {
+  dispatch({ type: "SET_LOADING", payload: true });
+  try {
+    const prefs = await getUserPreferences(userId);
+    
+    if (prefs?.courier) {
+      const mappedAddress = mapCourierToAddress(prefs.courier);
+      dispatch({ type: "LOAD_USER_PREFERENCES_SUCCESS", payload: mappedAddress });
+    } else {
+      dispatch({ type: "SET_LOADING", payload: false });
+    }
+  } catch (error) {
+    console.error('[ADDRESS_CONTEXT] Failed to load user preferences:', error);
+    dispatch({ type: "SET_ERROR", payload: "Failed to load address details. Please try again." });
+  }
 }
 
 export const AddressProvider: React.FC<AddressProviderProps> = ({ children }) => {
@@ -209,30 +213,13 @@ export const AddressProvider: React.FC<AddressProviderProps> = ({ children }) =>
     }
   };
 
-  const loadUserPreferences = async (userId: string) => {
-    dispatch({ type: "LOAD_USER_PREFERENCES_START" });
-    try {
-      const prefs = await getUserPreferences(userId);
-      
-      if (prefs && prefs.courier) {
-        const mappedAddress = mapCourierToAddress(prefs.courier);
-        dispatch({ type: "LOAD_USER_PREFERENCES_SUCCESS", payload: mappedAddress });
-      } else {
-        dispatch({ type: "LOAD_USER_PREFERENCES_FAILURE" });
-      }
-    } catch (error) {
-      console.error('[ADDRESS_CONTEXT] Failed to load user preferences:', error);
-      dispatch({ type: "LOAD_USER_PREFERENCES_FAILURE" });
-    }
-  }
-
   useEffect(() => {
     fetchCountries();
   }, []);
 
   useEffect(() => {
     if (user?.id) {
-      loadUserPreferences(user.id);
+      loadUserPreferences(user.id, dispatch);
     } else {
       dispatch({ type: "SELECT_ADDRESS", payload: initialAddress });
     }
@@ -315,19 +302,7 @@ export const useAddressActions = () => {
 
      refreshUserPreferences: async () => {
       if (user?.id) {
-        dispatch({ type: "LOAD_USER_PREFERENCES_START" });
-        try {
-          const prefs = await getUserPreferences(user.id);
-          if (prefs && prefs.courier) {
-            const mappedAddress = mapCourierToAddress(prefs.courier);
-            dispatch({ type: "LOAD_USER_PREFERENCES_SUCCESS", payload: mappedAddress });
-          } else {
-            dispatch({ type: "LOAD_USER_PREFERENCES_FAILURE" });
-          }
-        } catch (error) {
-          console.error('Failed to refresh user preferences:', error);
-          dispatch({ type: "LOAD_USER_PREFERENCES_FAILURE" });
-        }
+        await loadUserPreferences(user.id, dispatch);
       }
     }
   };

@@ -35,24 +35,14 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => setOpenModal(false);
 
-  const handleConfirmQuotation = async () => {
+  const handleStatusUpdate = async (status: TRACKING_STATUS, price?: number) => {
     try {
       setLoading(true);
-      await updatePickupRequestStatus(request.id, TRACKING_STATUS.QUOTED, Number(price));
+      await updatePickupRequestStatus(request.id, status, price);
       onStatusUpdate();
-      handleCloseModal();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleComplete = async () => {
-    try {
-      setLoading(true);
-      await updatePickupRequestStatus(request.id, TRACKING_STATUS.PICKED);
-      onStatusUpdate();
+      if (status === TRACKING_STATUS.QUOTED) {
+        handleCloseModal();
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -97,19 +87,23 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
                 color="primary"
                 loading={loading}
               />
-              <ActionButton label="Reject" color="danger" />
+              {/* <ActionButton label="Reject" color="danger" /> */}
             </>
           )}
 
-          {/* TODO:P1: functionality NEEDS to be implemented */}
           {normalizedStatus === "QUOTED" && (
-            <ActionButton label="Reject" color="danger" />
+            <ActionButton
+              label="Reject"
+              onClick={() => handleStatusUpdate(TRACKING_STATUS.CANCELLED)}
+              color="danger"
+              loading={loading}
+            />
           )}
 
           {normalizedStatus === "CONFIRMED" && (
             <ActionButton
               label="Complete"
-              onClick={handleComplete}
+              onClick={() => handleStatusUpdate(TRACKING_STATUS.PICKED)}
               color="primary"
               loading={loading}
             />
@@ -135,7 +129,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
           )}
           <Button
             variant="contained"
-            onClick={handleConfirmQuotation}
+            onClick={() => handleStatusUpdate(TRACKING_STATUS.QUOTED, Number(price))}
             disabled={loading || !price}
           >
             {loading ? 'Sending...' : 'Confirm'}

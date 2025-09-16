@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Supplier } from './supplier.entity';
@@ -15,6 +15,15 @@ export class SuppliersService {
   async createSupplier(
     createSupplierDto: CreateSupplierDto,
   ): Promise<SupplierResponseDto> {
+    const existingSupplier = await this.supplierRepository.findOne({
+      where: { supplier_name: createSupplierDto.supplier_name }
+    });
+    if (existingSupplier) {
+      throw new ConflictException(
+        `Supplier "${createSupplierDto.supplier_name}" already exists`
+      );
+    }
+
     const supplier = this.supplierRepository.create({
       ...createSupplierDto,
       country: { id: createSupplierDto.country },

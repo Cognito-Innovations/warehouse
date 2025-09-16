@@ -3,13 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import {Edit,} from '@mui/icons-material';
 import EditProfileModal, { ProfileData } from '../Modals/EditProfileModal';
-import {Box,Typography,Button,Card,CardContent,Grid,Switch } from '@mui/material';
+import {Box,Typography,Button,Card,CardContent,Grid,Switch, CircularProgress } from '@mui/material';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUser } from '@/lib/api.service';
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData>({
     id_card_passport_no: '',
     name: '',
@@ -26,16 +28,24 @@ export default function ProfilePage() {
 
   const fetchUserProfile = async () => {
     if (user?.id) {
-      const userInfo = await getUser(user.id);
-      setProfileData({
-        id_card_passport_no: userInfo.id_card_passport_no || '',
-        name: userInfo.name || '',
-        email: userInfo.email || '',
-        phone_number: userInfo.phone_number || '',
-        alternate_phone_number: userInfo.alternate_phone_number || '',
-        gender: userInfo.gender || '',
-        dob: userInfo.dob?.split('T')[0] || '',
-      });
+      try {
+        const userInfo = await getUser(user.id);
+        setProfileData({
+          id_card_passport_no: userInfo.id_card_passport_no || '',
+          name: userInfo.name || '',
+          email: userInfo.email || '',
+          phone_number: userInfo.phone_number || '',
+          alternate_phone_number: userInfo.alternate_phone_number || '',
+          gender: userInfo.gender || '',
+          dob: userInfo.dob?.split('T')[0] || '',
+        });
+      } catch (error) {
+        console.error('Failed to fetch user profile', error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
     }
   };
 
@@ -45,6 +55,21 @@ export default function ProfilePage() {
       ...updatedData,
     }));
   };
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          minHeight: '70vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CircularProgress size={48} />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto' }}>
@@ -138,7 +163,9 @@ export default function ProfilePage() {
                   Gender
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'black.900', fontWeight: 500, mt: 0.5 }}>
-                  {profileData.gender || '-'}
+                  {profileData.gender
+                    ? profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1).toLowerCase()
+                    : '-'}
                 </Typography>
               </Box>
             </Grid>

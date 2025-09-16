@@ -31,7 +31,8 @@ const Header = () => {
     savedAddresses,
     selectAddress,
     selectCountry,
-    isLoading
+    isLoading,
+    error
   } = useAddressAPI();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -221,6 +222,7 @@ const Header = () => {
         <HeaderAddressSection
           addressData={displayAddress}
           isLoading={isLoading}
+          error={error}
           onOpenSavedAddressesModal={handleOpenSavedAddressesModal}
           onOpenAddressDetailsModal={handleOpenAddressDetailsModal}
         />

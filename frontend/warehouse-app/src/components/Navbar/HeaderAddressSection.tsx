@@ -1,7 +1,9 @@
 'use client';
 
-import { Skeleton, Box } from '@mui/material';
 import React from 'react';
+import { useRouter } from 'next/navigation';
+import { ErrorOutline } from '@mui/icons-material';
+import { Skeleton, Box, Typography, Button } from '@mui/material';
 import ReactCountryFlag from 'react-country-flag';
 
 interface AddressData {
@@ -17,6 +19,7 @@ interface AddressData {
 interface HeaderAddressSectionProps {
   addressData: AddressData | null;
   isLoading: boolean;
+  error: string | null;
   onOpenSavedAddressesModal: () => void;
   onOpenAddressDetailsModal: () => void;
 }
@@ -24,10 +27,13 @@ interface HeaderAddressSectionProps {
 const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
   addressData,
   isLoading,
+  error,
   onOpenSavedAddressesModal,
   onOpenAddressDetailsModal
 }) => {
-  if (isLoading || !addressData || !addressData.id) {
+  const router = useRouter();
+
+  if (isLoading) {
     return (
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-4">
@@ -38,6 +44,38 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
               <Skeleton variant="text" width="60%" />
               <Skeleton variant="text" width="50%" />
             </Box>
+          </Box>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'error.main' }}>
+            <ErrorOutline />
+            <Typography color="error">
+              {error}
+            </Typography>
+          </Box>
+        </div>
+      </div>
+    );
+  }
+
+  if (!addressData || !addressData.id) {
+    return (
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+                Select the preferred Address by editing the Profile.
+            </Typography>
+            <Button variant="outlined" size="small" onClick={() => router.push('/profile')}>
+                Edit Profile
+            </Button>
           </Box>
         </div>
       </div>

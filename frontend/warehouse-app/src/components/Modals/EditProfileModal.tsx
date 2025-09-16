@@ -22,7 +22,7 @@ import {
 } from '@mui/icons-material';
 import { getCourierCompanies, getCurrencies, getUserPreferences, updatePreferences, updateUser } from '@/lib/api.service';
 import { useAuth } from '@/contexts/AuthContext';
-import { AddressData, AddressProvider, useAddressActions } from '@/contexts/AddressContext';
+import { useAddressActions } from '@/contexts/AddressContext';
 
 export interface ProfileData {
   id_card_passport_no: string;
@@ -48,7 +48,7 @@ interface EditProfileModalProps {
 
 export default function EditProfileModal({ open, onClose, profileData, onProfileUpdate }: EditProfileModalProps) {
   const { user } = useAuth();
-  const { selectAddress, refreshUserPreferences } = useAddressActions();
+  const { refreshUserPreferences } = useAddressActions();
   const [formData, setFormData] = useState(profileData);
   const [preferencesFormData, setPreferencesFormData] = useState<PreferencesData>({courier_id: "", currency_id: ""});
   const [courierCompanies, setCourierCompanies] = useState<any[]>([]);
@@ -65,8 +65,8 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
 
   useEffect(() => {
     if (open) {
- fetchData();
- }
+      fetchData();
+    }
   }, [open, profileData]);
 
   const fetchData = async () => {
@@ -206,168 +206,184 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       </DialogTitle>
 
       <DialogContent sx={{ pb: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pb: 2 }}>
-          <TextField
-            label="ID Card / Passport No *"
-            value={formData.id_card_passport_no}
-            onChange={handleChange('id_card_passport_no')}
-            error={!!errors.id_card_passport_no}
-            helperText={errors.id_card_passport_no}
-            fullWidth
-            size="medium"
+        {loadingPreferences ? (
+          <Box
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '200px',
             }}
-          />
-
-          <TextField
-            label="Name *"
-            value={formData.name}
-            onChange={handleChange('name')}
-            error={!!errors.name}
-            helperText={errors.name}
-            fullWidth
-            size="medium"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
-            }}
-          />
-
-          <TextField
-            label="DOB"
-            type="date"
-            value={formData.dob}
-            onChange={handleChange('dob')}
-            error={!!errors.dob}
-            helperText={errors.dob}
-            fullWidth
-            size="medium"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            placeholder="dd/mm/yyyy"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
-            }}
-          />
-
-          <TextField
-            label="Contact No"
-            value={formData.phone_number}
-            onChange={handleChange('phone_number')}
-            error={!!errors.phone_number}
-            helperText={errors.phone_number}
-            fullWidth
-            size="medium"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
-            }}
-          />
-
-          <TextField
-            label="Alternative Contact No"
-            value={formData.alternate_phone_number}
-            onChange={handleChange('alternate_phone_number')}
-            fullWidth
-            size="medium"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
-            }}
-          />
-
-          <FormControl fullWidth size="medium" error={!!errors.gender}>
-            <InputLabel>Gender</InputLabel>
-            <Select
-              value={formData.gender}
-              onChange={handleChange('gender')}
-              label="Gender"
+          >
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pb: 2 }}>
+            <TextField
+              label="ID Card / Passport No *"
+              value={formData.id_card_passport_no}
+              onChange={handleChange('id_card_passport_no')}
+              error={!!errors.id_card_passport_no}
+              helperText={errors.id_card_passport_no}
+              fullWidth
+              size="medium"
               sx={{
-                borderRadius: '8px',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                },
               }}
-            >
-              <MenuItem value="male">Male</MenuItem>
-              <MenuItem value="female">Female</MenuItem>
-              <MenuItem value="other">Other</MenuItem>
-              <MenuItem value="prefer-not-to-say">Prefer not to say</MenuItem>
-            </Select>
-            {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
-          </FormControl>
-        </Box>
+            />
 
-        <Typography variant="h6" pb={2} sx={{ fontWeight: 600 }}>
-          Preferences
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-           <FormControl fullWidth size="medium" error={!!errors.courier_id}>
-            <InputLabel>Courier</InputLabel>
-            <Select
-              value={preferencesFormData.courier_id}
-              onChange={handleChangePreferences('courier_id')}
-              label="Courier"
-              disabled={loadingPreferences}
+            <TextField
+              label="Name *"
+              value={formData.name}
+              onChange={handleChange('name')}
+              error={!!errors.name}
+              helperText={errors.name}
+              fullWidth
+              size="medium"
               sx={{
-                borderRadius: '8px',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                },
               }}
-            >
-              {courierCompanies?.map((courier: any) => (
-                <MenuItem key={courier.id} value={courier.id}>
-                  {courier.name}, {courier.address}, {courier.country || courier.country?.name}
-                </MenuItem>
-              ))}
-            </Select>
-            {errors.courier_id && <FormHelperText>{errors.courier_id}</FormHelperText>}
-          </FormControl>
+            />
 
-          <FormControl fullWidth size="medium" error={!!errors.currency_id}>
-            <InputLabel>Currency</InputLabel>
-            <Select
-              value={preferencesFormData.currency_id}
-              onChange={handleChangePreferences('currency_id')}
-              label="Currency"
-              disabled={loadingPreferences}
+            <TextField
+              label="DOB"
+              type="date"
+              value={formData.dob}
+              onChange={handleChange('dob')}
+              error={!!errors.dob}
+              helperText={errors.dob}
+              fullWidth
+              size="medium"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              placeholder="dd/mm/yyyy"
               sx={{
-                borderRadius: '8px',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                },
               }}
-            >
-              {currencies?.map((currency: any) => (
-                <MenuItem key={currency.id} value={currency.id}>{currency.currency_symbol}</MenuItem>
-              ))}
-            </Select>
-            {errors.currency_id && <FormHelperText>{errors.currency_id}</FormHelperText>}
-          </FormControl>
+            />
 
-        </Box>
+            <TextField
+              label="Contact No"
+              value={formData.phone_number}
+              onChange={handleChange('phone_number')}
+              error={!!errors.phone_number}
+              helperText={errors.phone_number}
+              fullWidth
+              size="medium"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                },
+              }}
+            />
 
-      </DialogContent>
+            <TextField
+              label="Alternative Contact No"
+              value={formData.alternate_phone_number}
+              onChange={handleChange('alternate_phone_number')}
+              fullWidth
+              size="medium"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                },
+              }}
+            />
+
+            <FormControl fullWidth size="medium" error={!!errors.gender}>
+              <InputLabel>Gender</InputLabel>
+              <Select
+                value={formData.gender}
+                onChange={handleChange('gender')}
+                label="Gender"
+                sx={{
+                  borderRadius: '8px',
+                }}
+              >
+                <MenuItem value="male">Male</MenuItem>
+                <MenuItem value="female">Female</MenuItem>
+                <MenuItem value="other">Other</MenuItem>
+                <MenuItem value="prefer-not-to-say">Prefer not to say</MenuItem>
+              </Select>
+              {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
+            </FormControl>
+          </Box>
+
+          <Typography variant="h6" pb={2} sx={{ fontWeight: 600 }}>
+            Preferences
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+             <FormControl fullWidth size="medium" error={!!errors.courier_id}>
+              <InputLabel>Courier</InputLabel>
+              <Select
+                value={preferencesFormData.courier_id}
+                onChange={handleChangePreferences('courier_id')}
+                label="Courier"
+                disabled={loadingPreferences}
+                sx={{
+                  borderRadius: '8px',
+                }}
+              >
+                {courierCompanies?.map((courier: any) => (
+                  <MenuItem key={courier.id} value={courier.id}>
+                    {courier.name}, {courier.address}, {courier.country || courier.country?.name}
+                  </MenuItem>
+                ))}
+              </Select>
+              {errors.courier_id && <FormHelperText>{errors.courier_id}</FormHelperText>}
+            </FormControl>
+
+            <FormControl fullWidth size="medium" error={!!errors.currency_id}>
+              <InputLabel>Currency</InputLabel>
+              <Select
+                value={preferencesFormData.currency_id}
+                onChange={handleChangePreferences('currency_id')}
+                label="Currency"
+                disabled={loadingPreferences}
+                sx={{
+                  borderRadius: '8px',
+                }}
+              >
+                {currencies?.map((currency: any) => (
+                  <MenuItem key={currency.id} value={currency.id}>{currency.currency_symbol}</MenuItem>
+                ))}
+              </Select>
+              {errors.currency_id && <FormHelperText>{errors.currency_id}</FormHelperText>}
+            </FormControl>
+          </Box>
+        </>
+      )}          
+    </DialogContent>
+    
       <DialogActions sx={{ p: 3, pt: 1 }}>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={isSaving}
-          sx={{
-            bgcolor: 'primary.main',
-            color: 'white',
-            textTransform: 'none',
-            borderRadius: '8px',
-            px: 4,
-            py: 1,
-            '&:hover': {
-              bgcolor: 'primary.dark',
-            },
-          }}
-        >
-          {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save'}
-        </Button>
+        {!loadingPreferences && (
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={isSaving}
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              textTransform: 'none',
+              borderRadius: '8px',
+              px: 4,
+              py: 1,
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+            }}
+          >
+            {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save'}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

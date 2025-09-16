@@ -5,6 +5,7 @@ export interface User {
   name?: string;
   email: string;
   image?: string;
+  suite_no?: string;
   role?: UserRole;
 }
 

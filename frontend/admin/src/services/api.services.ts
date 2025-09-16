@@ -314,3 +314,27 @@ export const removePackageFromBox = async (boxId: number, packageId: string) => 
   const response = await api.delete(`/shipment-export-boxes/${boxId}/packages/${packageId}`);
   return response.data;
 };
+
+export const createCountry = async (country: {
+  code: string;
+  name: string;
+  image?: string;
+  phone_code: string;
+}) => {
+  const response = await api.post('/countries', country);
+  return response.data;
+};
+
+export const getCurrencies = async () => {
+  const response = await api.get('/currencies');
+  return response.data;
+};
+
+export const createCurrency = async (currency: {
+  country: string;
+  currency_symbol: string;
+  rate: number;
+}) => {
+  const response = await api.post('/currencies', currency);
+  return response.data;
+};

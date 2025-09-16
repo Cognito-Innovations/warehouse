@@ -14,6 +14,7 @@ export enum PickupRequestStatus {
   Quoted = 'quoted',
   Confirmed = 'confirmed',
   Picked = 'picked',
+  Cancelled = 'cancelled',
 }
 
 @Entity('pickup_requests')

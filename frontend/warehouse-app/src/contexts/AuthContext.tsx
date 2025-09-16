@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 
 interface User {
@@ -38,6 +38,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { data: session, status } = useSession();
+  const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get user data from NextAuth session
   const user = session?.user ? {
@@ -73,6 +74,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     logout,
   };
+
+  // Auto-logout when JWT expires
+  useEffect(() => {
+    // Clear any existing timer
+    if (logoutTimerRef.current) {
+      clearTimeout(logoutTimerRef.current);
+      logoutTimerRef.current = null;
+    }
+
+    if (!token) {
+      return;
+    }
+
+    try {
+      // Decode JWT payload safely without extra deps
+      const parts = token.split('.');
+      if (parts.length !== 3) return;
+      const payloadJson = JSON.parse(typeof window !== 'undefined'
+        ? atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
+        : Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+
+      const expSeconds = payloadJson?.exp;
+      if (!expSeconds || typeof expSeconds !== 'number') return;
+
+      const expiryMs = expSeconds * 1000;
+      const nowMs = Date.now();
+      const deltaMs = expiryMs - nowMs;
+
+      if (deltaMs <= 0) {
+        // Already expired
+        signOut({ callbackUrl: '/' });
+        return;
+      }
+
+      // Schedule sign out slightly after expiry to avoid clock skews
+      logoutTimerRef.current = setTimeout(() => {
+        signOut({ callbackUrl: '/' });
+      }, Math.max(1000, deltaMs + 500));
+    } catch (_e) {
+      // If token cannot be decoded, do nothing
+    }
+
+    // Cleanup on unmount or token change
+    return () => {
+      if (logoutTimerRef.current) {
+        clearTimeout(logoutTimerRef.current);
+        logoutTimerRef.current = null;
+      }
+    };
+  }, [token]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

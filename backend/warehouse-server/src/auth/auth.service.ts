@@ -3,7 +3,11 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthResponseDto } from './dto/AuthResponseDto';
 import { UsersService } from 'src/users/users.service';
 import { Identifier, Gender } from 'src/users/dto/create-user.dto';
@@ -16,6 +20,14 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
+    if (registerDto.password) {
+      if ((registerDto.password.match(/[a-z]/g) || []).length < 2) {
+        throw new BadRequestException(
+          'Password must contain at least two lowercase letters'
+        );
+      }
+    }
+
     const existingUser = await this.usersService.findByEmail(registerDto.email);
     if (existingUser) {
       const payload = { email: existingUser.email, sub: existingUser.id };

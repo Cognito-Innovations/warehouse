@@ -1,35 +1,32 @@
 import React from 'react';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 
-const mockCurrencies = [
-  { id: 1, name: 'United States Dollar', code: 'USD', symbol: '$' },
-  { id: 2, name: 'Euro', code: 'EUR', symbol: '€' },
-  { id: 3, name: 'British Pound', code: 'GBP', symbol: '£' },
-  { id: 4, name: 'Indian Rupee', code: 'INR', symbol: '₹' },
-];
+interface CurrenciesListProps {
+  currencies: any[];
+}
 
-const CurrenciesList: React.FC = () => {
+const CurrenciesList: React.FC<CurrenciesListProps> = ({ currencies }) => {
   return (
     <TableContainer component={Paper} sx={{ borderRadius: 2, border: '1px solid #e2e8f0' }}>
       <Table sx={{ minWidth: 650 }} aria-label="currencies table">
         <TableHead sx={{ bgcolor: '#f8fafc' }}>
           <TableRow>
-            <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Currency Name</TableCell>
-            <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Code</TableCell>
-            <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Symbol</TableCell>
+            <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Currency Symbol</TableCell>
+            <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Rate</TableCell>
+            <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Country</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {mockCurrencies.map((row) => (
+          {currencies.map((row) => (
             <TableRow key={row.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
               <TableCell component="th" scope="row">
-                <Typography variant="body2">{row.name}</Typography>
+                <Typography variant="body2">{row.currency_symbol}</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="body2" color="text.secondary">{row.code}</Typography>
+                <Typography variant="body2" color="text.secondary">{row.rate}</Typography>
               </TableCell>
-               <TableCell>
-                <Typography variant="body2" color="text.secondary">{row.symbol}</Typography>
+              <TableCell>
+                <Typography variant="body2" color="text.secondary">{row.country?.name}</Typography>
               </TableCell>
             </TableRow>
           ))}

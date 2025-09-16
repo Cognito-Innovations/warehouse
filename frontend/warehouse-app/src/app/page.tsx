@@ -40,7 +40,8 @@ export default function Page() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          p: { xs: 2, sm: 4 }
+          p: { xs: 2, sm: 4 },
+          overflow: "visible",
         }}
       >
         <SignInForm />
