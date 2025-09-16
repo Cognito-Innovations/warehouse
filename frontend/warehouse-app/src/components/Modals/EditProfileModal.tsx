@@ -65,17 +65,17 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
 
   useEffect(() => {
     if (open) {
-      fetchData();
-    }
+ fetchData();
+ }
   }, [open, profileData]);
 
   const fetchData = async () => {
     setLoadingPreferences(true);
     await fetchCourierCompanies();
     setFormData({
-      ...profileData,
-      dob: profileData.dob ? profileData.dob.split('T')[0] : '',
-    });
+    ...profileData,
+    dob: profileData.dob ? profileData.dob.split('T')[0] : '',
+      });
     await fetchUserPreferences();
     setErrors({});
   };
