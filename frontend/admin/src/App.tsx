@@ -97,7 +97,6 @@ function App() {
                 <ProtectedRoute>
                   <Sidebar 
                     logo={'S'} 
-                    // menuItems={menuItems} 
                     menuItems={visibleMenuItems}
                     onSubMenuToggle={setIsSubMenuOpen}
                   />

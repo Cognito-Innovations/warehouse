@@ -4,6 +4,7 @@
   "description": "warehouse monorepo project",
   "main": "index.js",
   "scripts": {
+    "dev": "pnpm --filter warehouse-server dev && pnpm --filter warehouse-app dev && pnpm --filter admin dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

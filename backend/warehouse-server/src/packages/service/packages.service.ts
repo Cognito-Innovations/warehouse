@@ -10,6 +10,7 @@ import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
 import { User } from 'src/users/user.entity';
 import { Country } from 'src/Countries/country.entity';
+import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { UpdatePackageDto } from '../dto/update-package.dto';
 import { Rack } from 'src/racks/rack.entity';
 import { DocumentsService } from 'src/documents/documents.service';
@@ -26,6 +27,8 @@ export class PackagesService {
     private readonly rackRepository: Repository<Rack>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(UserPreference)
+    private readonly userPreferenceRepository: Repository<UserPreference>,
     private readonly documentsService: DocumentsService,
   ) {}
 
@@ -121,19 +124,16 @@ export class PackagesService {
   async createPackage(
     createPackageDto: CreatePackageDto,
   ): Promise<PackageResponseDto> {
-    const customer = await this.packageRepository.manager
-      .createQueryBuilder()
-      .select('users.country_id', 'country_id')
-      .from('users', 'users')
-      .where('users.id = :customerId', { customerId: createPackageDto.user })
-      .getRawOne<{ country_id: string | null }>();
+    const userPreference = await this.userPreferenceRepository.findOne({
+      where: { user: { id: createPackageDto.user } },
+      relations: ['courier', 'courier.country'],
+    });
 
-    if (!customer) {
-      throw new BadRequestException('Customer not found');
+    if (!userPreference) {
+      throw new BadRequestException('User preferences not found');
     }
 
-    const DEFAULT_COUNTRY_ID = '4bffc336-6ebf-420d-8865-df7fb72f5dac';
-    const countryId: string = customer.country_id || DEFAULT_COUNTRY_ID;
+    const countryId: string = userPreference.courier?.country?.id;
 
     //Remove the hardcoded country id
     const package_id =
@@ -156,7 +156,6 @@ export class PackagesService {
         `Tracking number ${createPackageDto.tracking_no} already exists`,
       );
     }
-
     const packageEntity = new Package();
     packageEntity.package_id = package_id;
     packageEntity.user = createPackageDto.user as unknown as User;
