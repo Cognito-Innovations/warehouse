@@ -7,9 +7,10 @@ import { addPackageToBox, searchReadyToShipPackage } from "../../services/api.se
 interface ShipmentActionsBarProps {
   selectedBoxId: number | null;
   onPackageAdded: () => void;
+  hasShipments: boolean;
 }
 
-const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({ selectedBoxId, onPackageAdded }) => {
+const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({ selectedBoxId, onPackageAdded, hasShipments }) => {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -37,55 +38,48 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({ selectedBoxId, 
   };
 
   return (
-    <Box sx={{ mb: 3 }}>
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        mb: 1.5,
-      }}
-    >
-      <TextField
-        variant="outlined"
-        size="small"
-        placeholder="Search package by tracking number and press Enter to add"
-        disabled={!selectedBoxId}
-        value={trackingNumber}
-        onChange={(e) => setTrackingNumber(e.target.value)}
-        onKeyDown={handleKeyDown}
-        error={!!error}
-        helperText={error}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon fontSize="small" />
-            </InputAdornment>
-          ),
-        }}
-        sx={{ width: 475 }}
-      />
+    <Box sx={{ display: "flex", alignItems: "flex-start", mb: 3 }}>
+      <Box sx={{ display: "flex", flexDirection: "column" }}>
+        <TextField
+          variant="outlined"
+          size="small"
+          placeholder="Search shipment"
+          disabled={!selectedBoxId}
+          value={trackingNumber}
+          onChange={(e) => setTrackingNumber(e.target.value)}
+          onKeyDown={handleKeyDown}
+          error={!!error}
+          helperText={error}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ width: 410 }}
+        />
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+          Only the shipments under tracking status (Ready to ship) can be added here
+        </Typography>
+      </Box>
 
-      {selectedBoxId && (
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button variant="contained" sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" } }}>
+      {selectedBoxId && hasShipments && (
+        <Box sx={{ display: "flex", gap: 2, flexShrink: 0, marginLeft: "auto" }}>
+          <Button variant="contained" sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none" }}>
             Update to Departed
           </Button>
-          <Button variant="contained" startIcon={<FileDownloadIcon />} sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" } }}>
+          <Button variant="contained" startIcon={<FileDownloadIcon />} sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, textTransform: "none" }}>
             Export
           </Button>
-          <Button variant="contained" startIcon={<FileDownloadIcon />} sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" } }}>
+          <Button variant="contained" startIcon={<FileDownloadIcon />} sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none" }}>
             RB Export
           </Button>
-          <Button variant="contained" startIcon={<FileDownloadIcon />} sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" } }}>
+          <Button variant="contained" startIcon={<FileDownloadIcon />} sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, textTransform: "none" }}>
             Packing List
           </Button>
         </Box>
       )}
-    </Box>
-      <Typography variant="body2" color="text.secondary">
-        Only the shipments under tracking status (Ready to ship) can be added here
-      </Typography>
     </Box>
   );
 };

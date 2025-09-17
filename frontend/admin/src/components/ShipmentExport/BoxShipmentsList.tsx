@@ -24,26 +24,38 @@ interface Package {
 }
 
 interface BoxShipmentsListProps {
-  boxId: number;
+  boxLabel?: string; 
+  boxIndex: number;
+  totalBoxes: number;
   shipments: Package[];
   isLoading: boolean;
   onDelete: (shipmentId: string) => void;
 }
 
 const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
-  boxId,
+  boxIndex,
+  totalBoxes,
+  boxLabel,
   shipments,
   isLoading,
   onDelete,
 }) => {
+  const displayLabel = boxLabel 
+  ? boxLabel 
+  : totalBoxes === 1 
+    ? "Box 1" 
+    : `Box ${boxIndex + 1}`;
+
   return (
-    <Box sx={{ width: "130vh" }}>
+    <Box 
+    sx={{ width: "100%" }}
+    >
       <Typography
         variant="subtitle1"
         fontWeight={600}
         sx={{ mb: 1.5, color: "text.primary" }}
       >
-        Box {boxId} Shipments
+        {displayLabel} Shipments
       </Typography>
 
       <Box
@@ -52,9 +64,12 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
           borderRadius: 2,
           overflow: "hidden",
           bgcolor: "white",
+          width: "100%"
         }}
       >
-        <Table size="small" sx={{ width: "130vh" }}>
+        <Table size="small" 
+        sx={{ width: "100%" }}
+        >
           <TableHead>
             <TableRow
               sx={{

@@ -4,7 +4,6 @@ export class InvoiceResponseDto {
   id: string;
   invoice_no: string;
   amount: number;
-  gst: number;
   total: number;
   status: string;
   products: ProductResponseDto[];

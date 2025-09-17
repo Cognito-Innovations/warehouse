@@ -15,6 +15,7 @@ import { UpdatePackageDto } from '../dto/update-package.dto';
 import { Rack } from 'src/racks/rack.entity';
 import { DocumentsService } from 'src/documents/documents.service';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
+import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
 @Injectable()
 export class PackagesService {
@@ -30,9 +31,12 @@ export class PackagesService {
     @InjectRepository(UserPreference)
     private readonly userPreferenceRepository: Repository<UserPreference>,
     private readonly documentsService: DocumentsService,
+    private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
-  private mapPackageToResponseDto(pkg: Package): PackageResponseDto {
+  private async mapPackageToResponseDto(
+    pkg: Package
+  ): Promise<PackageResponseDto> {
     return {
       id: pkg.id,
       tracking_no: pkg.tracking_no,
@@ -107,20 +111,37 @@ export class PackagesService {
           has_measurements: measurement.has_measurements,
           measurement_verified: measurement.measurement_verified,
         })) || [],
-      items:
-        pkg.items?.map((item) => ({
-          id: item.id,
-          package_id: item.package_id,
-          name: item.name,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total_price: item.total_price,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-        })) || [],
+      items: pkg.items?.length
+        ? await Promise.all(
+            pkg.items.map(async (item) => ({
+              id: item.id,
+              package_id: item.package_id,
+              name: item.name,
+              quantity: item.quantity,
+              unit_price: item.unit_price
+                ? Number(
+                    await this.userPreferencesService.getFormattedConvertedPrice(
+                      pkg.user.id,
+                      Number(item.unit_price),
+                    ),
+                  )
+                : 0,
+              total_price: item.total_price
+                ? Number(
+                    await this.userPreferencesService.getFormattedConvertedPrice(
+                      pkg.user.id,
+                      Number(item.total_price),
+                    ),
+                  )
+                : 0,
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+            })),
+          )
+        : [],
     };
   }
-
+  
   async createPackage(
     createPackageDto: CreatePackageDto,
   ): Promise<PackageResponseDto> {
@@ -290,7 +311,9 @@ export class PackagesService {
       order: { created_at: 'DESC' },
     });
 
-    return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
+    return Promise.all(
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg))
+    );
   }
 
   async getPackagesByUserAndStatus(
@@ -306,7 +329,9 @@ export class PackagesService {
       order: { created_at: 'DESC' },
     });
 
-    return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
+    return Promise.all(
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg))
+    );
   }
 
   async getPackageById(id: string): Promise<PackageResponseDto> {
@@ -354,7 +379,9 @@ export class PackagesService {
       .orderBy('package.created_at', 'DESC')
       .getMany();
 
-    return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
+    return Promise.all(
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg))
+    );
   }
 
   async updatePackageStatus(
@@ -587,7 +614,9 @@ export class PackagesService {
       );
     }
 
-    return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
+    return Promise.all(
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg))
+    );
   }
 
   async getPackagesByShipmentUuid(
@@ -611,7 +640,9 @@ export class PackagesService {
       );
     }
 
-    return packages.map((pkg) => this.mapPackageToResponseDto(pkg));
+    return Promise.all(
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg))
+    );
   }
 
   async addPaymentSlip(
@@ -684,5 +715,17 @@ export class PackagesService {
       );
     }
     return this.mapPackageToResponseDto(pkg);
+  }
+
+  async deletePackage(id: string): Promise<void> {
+    const packageEntity = await this.packageRepository.findOne({
+      where: { id },
+    });
+
+    if (!packageEntity) {
+      throw new NotFoundException(`Package with ID "${id}" not found`);
+    }
+
+    await this.packageRepository.remove(packageEntity);
   }
 }

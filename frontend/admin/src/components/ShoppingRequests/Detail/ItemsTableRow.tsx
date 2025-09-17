@@ -1,49 +1,42 @@
-import { Box, TableCell, TableRow, Checkbox, Link, Typography, TextField, Button, Chip, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box, TableCell, TableRow, Checkbox, Link, Typography, TextField, Button, Chip, CircularProgress } from '@mui/material';
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import { useEffect, useState } from 'react';
 import DropdownMenu from '../../common/DropdownMenu';
 import Modal from '../../common/Modal';
-import { getCountries } from '../../../services/api.services'
 
-const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, onUpdate: (updates: any) => void }) => {
+interface ItemsTableRowProps {
+  item: any;
+  index: number;
+  onUpdate: (updates: any) => void;
+  onSelectionChange: (itemId: string, isSelected: boolean) => void;
+}
+
+const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange }: ItemsTableRowProps) => {
   const [open, setOpen] = useState(false);
   const [unitPrice, setUnitPrice] = useState(item.unit_price || 0);
   const [available, setAvailable] = useState(item.available || false);
   const [checked, setChecked] = useState(false);
   const [error, setError] = useState("");
   const [remarkOpen, setRemarkOpen] = useState(false);
-  const [currency, setCurrency] = useState(item.currency || "");
-  const [countries, setCountries] = useState<{ id: string; code: string; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (item.unit_price) {
-      setUnitPrice(item.unit_price);
-    }
-  }, [item.unit_price]);
+    setUnitPrice(item.unit_price || 0);
+    setAvailable(item.available || false);
+  }, [item.unit_price, item.available]);
 
-  const fetchCountries = async () => {
-    try {
-      setLoading(true);
-      const data = await getCountries();
-      setCountries(data);
-    } catch (err) {
-      console.error("Failed to load countries", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCountries();
-  }, []);
+  const handleSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isSelected = e.target.checked;
+    setChecked(isSelected);
+    onSelectionChange(item.id, isSelected); 
+  }
 
   const handleEditClick = () => setOpen(true);
 
   const handleSave = async () => {
     try {
       setLoading(true);
-      await onUpdate({ unit_price: unitPrice, currency, available });
+      await onUpdate({ unit_price: unitPrice, available });
     } catch (err) {
       console.error("Failed to save item", err);
       setLoading(false);
@@ -70,33 +63,35 @@ const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, on
     }
   };
 
+  const remarkText = item.if_not_available_color || item.if_not_available_quantity;
+
   return (
     <>
-    <TableRow sx={{ '& td': { whiteSpace: 'pre-line', verticalAlign: 'top' } }}>
-      <TableCell sx={{width: '30%'}}>
+    <TableRow sx={{ '& > *': { border: 'none' } }}>
+      <TableCell sx={{width: '30%', verticalAlign: 'top'}}>
         <Box sx={{ display: 'flex' }}>
           <Checkbox 
             checked={checked}
-            onChange={(e) => setChecked(e.target.checked)}
+            onChange={handleSelection}
             sx={{p:0, pt: '2px', pr: 1, alignSelf: 'flex-start'}}
           />
           <Typography variant="body2" sx={{ pr: 1 }}>{index + 1}.</Typography>
           <Box>
             <Typography variant="body2" fontWeight={500}>{item.name}</Typography>
             <Link href={item.url} target="_blank" rel="noopener noreferrer" variant="caption" underline="hover">View link</Link>
-            <br/>
-            <Typography variant="body2" fontWeight={500} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <ChatBubbleOutlineOutlinedIcon sx={{ fontSize: 14, color: "text.secondary" }}/>
-              {item.if_not_available_color || item.if_not_available_quantity}
-            </Typography>
           </Box>
         </Box>
       </TableCell>
-      <TableCell sx={{width: '25%'}}>
-        <Typography variant="body2">{item.color || item.size}</Typography>
+      <TableCell sx={{width: '25%', verticalAlign: 'top'}}>
+        <Typography variant="body2">
+          {item.color && item.size
+            ? `${item.color}/${item.size}`
+            : item.color || item.size || ''}
+        </Typography>
+
         <Typography variant="caption" color="text.secondary">{item.details}</Typography>
       </TableCell>
-      <TableCell>
+      <TableCell sx={{verticalAlign: 'top'}}>
         {available ? (
           <Chip
             label="YES"
@@ -107,13 +102,12 @@ const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, on
           "-"
         )}
       </TableCell>
-      <TableCell>{item?.status || "-"}</TableCell>
-      <TableCell>{item.quantity}</TableCell>
-      <TableCell>${unitPrice}</TableCell>
+      <TableCell sx={{ verticalAlign: 'top' }}>{item?.status || "-"}</TableCell>
+      <TableCell sx={{ verticalAlign: 'top' }}>{item.quantity}</TableCell>
+      <TableCell sx={{ verticalAlign: 'top' }}>${unitPrice}</TableCell>
       <TableCell sx={{ verticalAlign: 'top' }}>
         <Box sx={{display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between'}}>
           <Typography variant="body2">${total.toFixed(2)}</Typography>
-
           <DropdownMenu
             disabled={!checked} 
             options={[
@@ -124,6 +118,24 @@ const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, on
         </Box>
       </TableCell>
     </TableRow>
+
+    {remarkText && (
+      <TableRow>
+        <TableCell sx={{ pt: 0, pb: 2, pl: '48px' }} colSpan={7}>
+          <Typography 
+            variant="body2"
+            fontWeight={500}
+            sx={{ 
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+            }}>
+              <ChatBubbleOutlineOutlinedIcon sx={{ fontSize: 14, color: "text.secondary" }}/>
+              {remarkText}
+          </Typography>
+        </TableCell>
+      </TableRow>
+    )}
 
      <Modal open={open} onClose={() => setOpen(false)} title="Update Item/Link">
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -144,47 +156,7 @@ const ItemsTableRow = ({ item, index, onUpdate }: { item: any, index: number, on
             maxLength: 9
           }}
         />
-        <FormControl fullWidth size="small">
-          <InputLabel id="currency-label">Select Currency</InputLabel>
-          <Select
-            labelId="currency-label"
-            value={currency || ""}
-            onChange={(e) => setCurrency(e.target.value)}
-            label="Select Currency"
-            MenuProps={{
-              disablePortal: true,
-              PaperProps: {
-                sx: {
-                  maxHeight: 100,
-                  '&::-webkit-scrollbar': {
-                    width: 6,
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: '#888',
-                    borderRadius: 8,
-                  },
-                  '&::-webkit-scrollbar-thumb:hover': {
-                    backgroundColor: '#555',
-                  },
-                  '&::-webkit-scrollbar-track': {
-                    backgroundColor: '#f1f1f1',
-                    borderRadius: 8,
-                  },
-                },
-              },
-            }}
-          >
-            <MenuItem value="">
-              <em>Select Currency</em>
-            </MenuItem>
-            {countries.map((c) => (
-              <MenuItem key={c.id} value={c.code}>
-                {c.code} - {c.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
+      
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Checkbox
             checked={available}

@@ -151,7 +151,12 @@ export default function Invoices({ request, onUpdate }: { request: any, onUpdate
                     : "bg-blue-600 hover:bg-blue-700"
                 }`}
               >
-                {confirming ? <Loader size={18} color="text-white" /> : "Confirm"}
+                {confirming ?
+                  <>
+                    <Loader size={18} color="text-white" />
+                    Confirming...
+                  </>
+                : "Confirm"}
               </button>
             </div>
           )}

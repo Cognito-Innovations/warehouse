@@ -40,6 +40,7 @@ const PackageDetail: React.FC = () => {
   const [addItemModalOpen, setAddItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [packageItems, setPackageItems] = useState<any[]>([]);
+  const [isSavingItem, setIsSavingItem] = useState(false);
   const [newItem, setNewItem] = useState({
     name: '',
     quantity: 1,
@@ -220,11 +221,6 @@ const PackageDetail: React.FC = () => {
     setDiscardDialogOpen(false);
   };
 
-  const handlePrintLabel = () => {
-    // TODO: Implement print label functionality
-    console.log('Print label functionality coming soon');
-  };
-
   const handleRemoveDocument = async (documentId: string) => {
     if (!id) return;
     
@@ -270,8 +266,16 @@ const PackageDetail: React.FC = () => {
 
   const handleSaveItem = async () => {
     if (!id) return;
+
+    const amountRegex = /^\d{1,6}$/; 
+    if (!amountRegex.test(newItem.amount.toString())) {
+      toast.error("Amount should be a number up to 6 digits");
+      return;
+    }
     
     try {
+      setIsSavingItem(true);
+
       const itemData = {
         name: newItem.name,
         quantity: newItem.quantity,
@@ -298,6 +302,8 @@ const PackageDetail: React.FC = () => {
     } catch (err) {
       console.error('Failed to save item:', err);
       setError('Failed to save item');
+    } finally {
+      setIsSavingItem(false);
     }
   };
 
@@ -485,7 +491,7 @@ const PackageDetail: React.FC = () => {
       .includes(packageData.status);
 
   const hasPhotoDocuments = uploadedDocuments.length > 0;
-  const excludedStatuses = ['Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed'];
+  const excludedStatuses = ['In Review', 'Ready To Send', 'Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed'];
   const showRaiseInvoiceButton = !excludedStatuses.includes(packageData.status) && hasPhotoDocuments;
   const showApprovePaymentButton = packageData.status === 'Payment Pending';
   const showPrintCarrierLabelButton = ['Payment Approved', 'Ready To Ship', 'Departed'].includes(packageData.status);
@@ -501,7 +507,6 @@ const PackageDetail: React.FC = () => {
           packageData={displayPackageData} 
           actionLogStatus={actionLogStatus}
           onDiscard={handleDiscard}
-          onPrintLabel={handlePrintLabel}
           onRaiseInvoice={handleOpenInvoiceModal}
           onApprovePayment={handleApprovePayment}
           showRaiseInvoiceButton={showRaiseInvoiceButton}
@@ -539,7 +544,7 @@ const PackageDetail: React.FC = () => {
           {showInvoiceTable && (
             <InvoiceTable 
               id={displayPackageData.actual_id}
-              invoice={packageData.invoice || {id: "temp", invoice_no: "-", amount: 0, gst: 0, total: 0, status: "UNPAID"}}
+              invoice={packageData.invoice || {id: "temp", invoice_no: "-", amount: 0, total: 0, status: "UNPAID"}}
               payment_slips={paymentSlips}
               status={packageData.status}
               isApprovingPayment={isApprovingPayment}
@@ -598,6 +603,7 @@ const PackageDetail: React.FC = () => {
         onClose={handleCloseAddItemModal}
         onSave={handleSaveItem}
         onInputChange={handleItemInputChange}
+        loading={isSavingItem}
       />
 
       <Modal

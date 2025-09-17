@@ -34,7 +34,6 @@ interface Invoice {
   id: string;
   invoice_no: string;
   amount: string;
-  gst: string;
   total: string;
   status: string;
   products: Product[];
@@ -74,9 +73,16 @@ export interface RequestData {
 interface RequestDetailContentProps {
   request: RequestData;
   onStatusUpdated?: () => void;
+  onItemUpdate: (index: number, updates: any) => void;
+  onSelectionChange: (itemId: string, isSelected: boolean) => void;
 }
 
-const RequestDetailContent: React.FC<RequestDetailContentProps> = ({ request, onStatusUpdated }) => {
+const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
+  request,
+  onStatusUpdated,
+  onItemUpdate,
+  onSelectionChange,
+}) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -95,7 +101,11 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({ request, on
       }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
-          <ItemsTable details={request} />
+          <ItemsTable 
+            details={request}
+            onItemUpdate={onItemUpdate}
+            onSelectionChange={onSelectionChange}
+          />
 
           {(request.status === "PAYMENT_PENDING" || request.status === "PAYMENT_APPROVED") && request.invoice && (
             <InvoiceTable 

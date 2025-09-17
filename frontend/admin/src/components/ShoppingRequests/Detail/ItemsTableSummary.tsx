@@ -17,12 +17,6 @@ const ItemsTableSummary = ({ summary = {}, currencySymbol = "$" }: { summary?: a
         <Link href="#" sx={{ color: 'inherit' }}>Edit</Link>
       </SummaryRow>
 
-      {summary.currency === "IN" && (
-        <SummaryRow label="GST (8%)" value={summary.gst?.toFixed(2)}>
-          <InfoOutlinedIcon sx={{ fontSize: 14, verticalAlign: 'middle', color: 'grey.500' }} />
-        </SummaryRow>
-      )}
-
       <Divider sx={{ my: 1 }} />
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

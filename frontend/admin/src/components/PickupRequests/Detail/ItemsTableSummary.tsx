@@ -15,9 +15,6 @@ const ItemsTableSummary = ({ summary }: { summary: any }) => (
       <SummaryRow label="Commission (0%)" value={summary.commission.toFixed(2)}>
         <Link href="#" sx={{ color: 'inherit' }}>Edit</Link>
       </SummaryRow>
-      <SummaryRow label="GST (0%)" value={summary.gst.toFixed(2)}>
-        <InfoOutlinedIcon sx={{ fontSize: 14, verticalAlign: 'middle', color: 'grey.500' }} />
-      </SummaryRow>
       <Divider sx={{ my: 1 }}/>
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography variant="body1" fontWeight={600}>Total</Typography>

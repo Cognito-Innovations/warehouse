@@ -19,6 +19,9 @@ export default function ViewRequestPage() {
   const [details, setDetails] = useState<any>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const NON_DELETABLE_STATUSES = ['CONFIRMED', 'PICKED'];
 
   const fetchData = async () => {
     try {
@@ -48,6 +51,7 @@ export default function ViewRequestPage() {
   };
 
   const handleDelete = async () => {
+    setIsDeleting(true);
     try {
       setConfirmOpen(false);
       setLoading(true);
@@ -57,6 +61,7 @@ export default function ViewRequestPage() {
       console.error('Failed to delete request:', err);
     } finally {
       setLoading(false);
+      setIsDeleting(false);
     }
   };
 
@@ -119,7 +124,7 @@ export default function ViewRequestPage() {
             )}
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
-              {details.status.toUpperCase() !== "PICKED" && details.status.toUpperCase() !== "CANCELLED" && (        
+              {!NON_DELETABLE_STATUSES.includes(details.status.toUpperCase()) && (        
                 <Button
                   variant="contained"
                   color="error"
@@ -155,6 +160,7 @@ export default function ViewRequestPage() {
             confirmText="Delete"
             onConfirm={handleDelete}
             onClose={() => setConfirmOpen(false)}
+            isLoading={isDeleting}
           />
         </Box>
       </Box>

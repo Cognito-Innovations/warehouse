@@ -4,8 +4,7 @@ import {
 } from '@mui/material';
 import ItemsTableRow from './ItemsTableRow';
 import ItemsTableSummary from './ItemsTableSummary';
-import { useMemo, useState } from 'react';
-import { updateProduct } from '../../../services/api.services';
+import { useMemo } from 'react';
 
 const headers = ["Item Name", "Color/Size", "Available", "Status", "Quantity", "Price", "Total"];
 
@@ -24,10 +23,11 @@ interface ItemsTableProps {
     shopping_request_products?: ShoppingRequestProduct[];
     [key: string]: any;
   };
+  onItemUpdate: (index: number, updates: Partial<ShoppingRequestProduct>) => void;
+  onSelectionChange: (itemId: string, isSelected: boolean) => void;
 }
 
 const COMMISSION_RATE = 0.08;
-const GST_RATE = 0.08;
 
 const currencySymbols: Record<string, string> = {
   IN: "₹",
@@ -36,35 +36,19 @@ const currencySymbols: Record<string, string> = {
   UK: "£",
 };
 
-const ItemsTable: React.FC<ItemsTableProps> = ({ details }) => {
-  const [products, setProducts] = useState<ShoppingRequestProduct[]>(details.shopping_request_products ?? []);
-
-  // TODO: Not correct way to handle update, improve efficiency
-  const handleUpdate = async (index: number, updates: Partial<ShoppingRequestProduct>) => {
-    setProducts(prev => {
-      const newProducts = [...prev];
-      newProducts[index] = { ...newProducts[index], ...updates };
-      const product = newProducts[index];
-      if (product.id) {
-        const unitPrice = updates.unit_price === null ? 0 : updates.unit_price;
-        updateProduct(product.id, unitPrice, updates.available, updates.currency);
-      }
-      console.log(newProducts);
-      return newProducts;
-    });
-  };
+const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelectionChange }) => {
+  const products = details.shopping_request_products ?? [];
 
   const summary = useMemo(() => {
-    if (products.length === 0) return { subTotal: 0, commission: 0, gst: 0, total: 0, currency: "US" };
+    if (products.length === 0) return { subTotal: 0, commission: 0, total: 0, currency: "US" };
 
     const subTotal = products.reduce((acc, p) => acc + (p.unit_price || 0) * (p.quantity || 0), 0);
     const commission = subTotal * COMMISSION_RATE;
 
     const currency = products[0]?.currency || "US";
-    const gst = currency === "IN" ? subTotal * GST_RATE : 0;
-    const total = subTotal + commission + gst;
+    const total = subTotal + commission;
 
-    return { subTotal, commission, gst, total, currency };
+    return { subTotal, commission, total, currency };
   }, [products]);
 
   return (
@@ -80,10 +64,11 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details }) => {
             {products.length > 0 ? (
               products.map((item, i) => ( 
                 <ItemsTableRow 
-                  key={i} 
+                  key={item.id} 
                   item={{...item, remarks: details.remarks }} 
                   index={i}
-                  onUpdate={(updates) => handleUpdate(i, updates)}
+                  onUpdate={(updates) => onItemUpdate(i, updates)}
+                  onSelectionChange={onSelectionChange}
                 />
               ))
             ) : (

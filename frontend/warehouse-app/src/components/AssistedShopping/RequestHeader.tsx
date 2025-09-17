@@ -2,16 +2,46 @@ import React from 'react';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { formatDateTime } from '@/lib/utils';
 
+interface Country {
+  id: string;
+  code: string;
+  name: string;
+  image: string;
+  phone_code: string;
+}
+
+interface Courier {
+  id: string;
+  name: string;
+  address: string;
+  phone_number: string;
+  email: string;
+  country: Country;
+  is_active: boolean;
+}
+
+interface TrackingRequest {
+  id: string;
+  courier: Courier;
+  status: string;
+  feature_type: string;
+  feature_fid: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Request {
+  id: string;
+  request_code: string;
+  created_at: string;
+  items_count: number;
+  status: string;
+  tracking_requests: TrackingRequest[];
+}
+
 interface RequestHeaderProps {
-  request: {
-    id: string;
-    request_code: string;
-    created_at: string;
-    items: number;
-    status: string;
-    country: string;
-  };
-  onDelete?: (id: string) => void; 
+  request: Request;
+  onDelete?: (id: string) => void;
 }
 
 const statusStyles: { [key: string]: string } = {
@@ -28,6 +58,11 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onDelete }) => {
   const statusClassName =
     statusStyles[request.status.toUpperCase()] || 'bg-gray-100 text-gray-700';
 
+  const countryName =
+    request.tracking_requests?.[0]?.courier?.country?.name;
+
+  const NON_DELETABLE_STATUSES = ['PAYMENT_APPROVED', 'ORDER_PLACED'];
+
   return (
     <div className="bg-white p-4 rounded-lg border border-gray-200 flex justify-between items-center">
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-12 gap-y-2">
@@ -39,11 +74,11 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onDelete }) => {
         </div>
         <div>
           <p className="text-sm text-gray-500">Request From</p>
-          <p className="font-semibold text-gray-900">{request.country}</p>
+          <p className="font-semibold text-gray-900">{countryName}</p>
         </div>
         <div>
           <p className="text-sm text-gray-500">No. of Item</p>
-          <p className="font-semibold text-gray-900">{request.items}</p>
+          <p className="font-semibold text-gray-900">{request.items_count}</p>
         </div>
         <div>
           <p className="text-sm text-gray-500">Status</p>
@@ -55,7 +90,7 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onDelete }) => {
         </div>
       </div>
 
-      {request.status.toUpperCase() === 'REQUESTED' && (
+      {!NON_DELETABLE_STATUSES.includes(request.status.toUpperCase()) && (
         <button
           onClick={() => onDelete?.(request.id)} 
           className="flex items-center gap-1.5 text-red-600 bg-red-50 rounded-md px-3 py-1.5 hover:bg-red-100 transition-colors duration-200">

@@ -2,7 +2,6 @@ import { updateShoppingRequestStatus } from '@/lib/api.service';
 import React, { useState } from 'react';
 
 const COMMISSION_RATE = 0.08;
-const GST_RATE = 0.08;
 
 type Item = { id: string; quantity: number; unit_price?: number | null };
 
@@ -24,8 +23,7 @@ export default function QuotationSummary({
     0
   );
   const commission = subTotal * COMMISSION_RATE;
-  const gst = subTotal * GST_RATE;
-  const total = subTotal + commission + gst;
+  const total = subTotal + commission;
 
   const handleConfirm = async () => {
     try {
@@ -48,10 +46,6 @@ export default function QuotationSummary({
       <div className="flex justify-between text-sm mb-2">
         <span className="text-gray-500">Commission (8%):</span>
         <span className="font-semibold">${commission.toFixed(2)}</span>
-      </div>
-      <div className="flex justify-between text-sm mb-2">
-        <span className="text-gray-500">GST (8%):</span>
-        <span className="font-semibold">${gst.toFixed(2)}</span>
       </div>
       <div className="border-t border-gray-200 my-2" />
       <div className="flex justify-between font-bold text-gray-900 text-base">

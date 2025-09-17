@@ -1,78 +1,47 @@
-import React from 'react';
-import { Box, Card, Typography, Avatar } from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, Card, Skeleton } from '@mui/material';
+import { SummaryCard } from './SummaryCard';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import RedeemOutlinedIcon from '@mui/icons-material/RedeemOutlined';
 import FlightTakeoffOutlinedIcon from '@mui/icons-material/FlightTakeoffOutlined';
 
-const SummaryCard = ({
-  title,
-  value,
-  icon,
-  bgColor,
-}: {
-  title: string;
-  value: string;
-  icon: React.ReactElement;
-  bgColor: string;
-}) => (
-  <Card
-    sx={{
-      p: 3,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      borderRadius: 2.5,
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      transition: 'all 0.2s ease-in-out',
-      '&:hover': {
-        boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-        transform: 'translateY(-2px)',
-      },
-    }}
-  >
-    <Box sx={{ flex: 1 }}>
-      <Typography 
-        variant="body2" 
-        color="text.secondary" 
-        sx={{ 
-          mb: 0.5,
-          fontSize: '0.875rem',
-          fontWeight: 500,
-          letterSpacing: '0.025em'
-        }}
-      >
-        {title}
-      </Typography>
-      <Typography 
-        variant="h4" 
-        sx={{ 
-          fontWeight: 700,
-          fontSize: '2rem',
-          lineHeight: 1.2,
-          color: 'text.primary'
-        }}
-      >
-        {value}
-      </Typography>
-    </Box>
-    <Avatar
-      sx={{
-        width: 48,
-        height: 48,
-        bgcolor: bgColor,
-        color: '#fff',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        '& .MuiSvgIcon-root': {
-          fontSize: '1.5rem',
-        },
-      }}
-    >
-      {icon}
-    </Avatar>
-  </Card>
-);
+interface RequestSummaryProps {
+  requests: any[];
+  loading: boolean;
+}
 
-const RequestSummary: React.FC = () => {
+const RequestSummary: React.FC<RequestSummaryProps> = ({ requests, loading }) => {
+  const summaryCounts = useMemo(() => {
+    return requests.reduce((acc, req) => {
+      if (req.status === 'REQUESTED' || req.status === 'ACCEPTED') {
+        acc.pendingAccepted += 1;
+      } else if (req.status === 'QUOTATION CONFIRMED') {
+        acc.confirmed += 1;
+      } else if (req.status === 'PICKED') {
+        acc.picked += 1;
+      }
+      return acc;
+    }, { pendingAccepted: 0, confirmed: 0, picked: 0 })
+  }, [requests]);
+
+  if (loading) {
+    return (
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 2.5 }}>
+          {[...Array(3)].map((_, index) => (
+            <Card key={index} sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 2.5 }}>
+              <Box sx={{ flex: 1 }}>
+                <Skeleton variant="text" width="60%" sx={{ mb: 0.5 }} />
+                <Skeleton variant="text" width="30%" height={40} />
+              </Box>
+              <Skeleton variant="circular" width={48} height={48} />
+            </Card>
+          ))}
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ mb: 4 }}>
       <Box
@@ -88,19 +57,19 @@ const RequestSummary: React.FC = () => {
       >
         <SummaryCard
           title="Pending Accepted"
-          value="10"
+          value={String(summaryCounts.pendingAccepted)}
           icon={<ShoppingBagOutlinedIcon />}
           bgColor="#F87171"
         />
         <SummaryCard
           title="Quotation Confirmed"
-          value="5"
+          value={String(summaryCounts.pendingAccepted)}
           icon={<RedeemOutlinedIcon />}
           bgColor="#EC4899"
         />
         <SummaryCard
           title="Payment Pending"
-          value="0"
+          value={String(summaryCounts.pendingAccepted)}
           icon={<FlightTakeoffOutlinedIcon />}
           bgColor="#6366F1"
         />

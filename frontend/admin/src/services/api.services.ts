@@ -76,6 +76,10 @@ export const updatePackageStatus = async (id: string, status: string): Promise<P
   return response.data;
 };
 
+export const deletePackage = async (id: string): Promise<void> => {
+  await api.delete(`/packages/${id}`);
+};
+
 // Package Items API functions
 export const addPackageItem = async (packageId: string, item: {
   name: string;

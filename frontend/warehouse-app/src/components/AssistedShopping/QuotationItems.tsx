@@ -17,21 +17,29 @@ export default function QuotationItems({
   items: QuotationItem[];
   onSelectionChange: (selected: QuotationItem[]) => void;
 }) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setSelectedIds(items.map(i => i.id));
-    // Don't call onSelectionChange here as it causes infinite loop
-    // The parent will handle the initial selection
+    if (items && items.length > 0) {
+      const allItemIds = new Set(items.map(i => i.id));
+      setSelectedIds(allItemIds);
+      onSelectionChange(items);
+    } else {
+      setSelectedIds(new Set());
+      onSelectionChange([]);
+    }
   }, [items]);
 
   const toggle = (id: string) => {
-    const next = selectedIds.includes(id)
-      ? selectedIds.filter(x => x !== id)
-      : [...selectedIds, id];
-    setSelectedIds(next);
-    onSelectionChange(items.filter(i => next.includes(i.id)));
-  };
+    const nextIds = new Set(selectedIds);
+    if (nextIds.has(id)) {
+      nextIds.delete(id);
+    } else {
+      nextIds.add(id);
+    }
+    setSelectedIds(nextIds);
+    onSelectionChange(items.filter(item => nextIds.has(item.id)));
+  };
 
   return (
     <div>
@@ -52,7 +60,7 @@ export default function QuotationItems({
                   <input
                     type="checkbox"
                     className="mt-1"
-                    checked={selectedIds.includes(item.id)}
+                    checked={selectedIds.has(item.id)}
                     onChange={() => toggle(item.id)}
                   />
                   <div>

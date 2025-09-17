@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, IconButton, Box } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, IconButton, Box, CircularProgress } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 
 interface PackageItem {
@@ -19,6 +19,7 @@ interface AddItemModalProps {
     amount: string;
     total: string;
   };
+  loading: boolean;
   onClose: () => void;
   onSave: () => void;
   onInputChange: (field: string, value: string | number) => void;
@@ -30,7 +31,8 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   newItem,
   onClose,
   onSave,
-  onInputChange
+  onInputChange,
+  loading
 }) => {
   return (
     <Dialog
@@ -156,7 +158,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
         <Button
           variant="contained"
           onClick={onSave}
-          disabled={!newItem.name || !newItem.amount}
+          disabled={!newItem.name || !newItem.amount || loading}
           sx={{
             bgcolor: '#3b82f6',
             '&:hover': { bgcolor: '#2563eb' },
@@ -165,7 +167,11 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             px: 3
           }}
         >
-          {editingItem ? 'Update' : 'Add'} Item
+          {loading ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            `${editingItem ? 'Update' : 'Add'} Item`
+          )}
         </Button>
       </DialogActions>
     </Dialog>

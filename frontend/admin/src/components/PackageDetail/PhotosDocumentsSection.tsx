@@ -1,9 +1,16 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Box, Typography, Card, CardContent, Button } from "@mui/material";
-import { Upload as UploadIcon } from "@mui/icons-material";
-import { toast } from "sonner";
-import { uploadToCloudinary } from "../../utils/cloudinary.api";
-import { addShipmentDocument, getShipmentDocuments } from "../../services/api.services";
+import React, { useState, useRef, useEffect } from 'react';
+import { Box, Typography, Card, CardContent, Button, CircularProgress } from '@mui/material';
+import { Add as AddIcon, CloudUpload as UploadIcon } from '@mui/icons-material';
+import { toast } from 'sonner';
+import { uploadToCloudinary } from '../../utils/cloudinary.api';
+import { addShipmentDocument, getShipmentDocuments } from '../../services/api.services';
+
+interface Document {
+  id: string;
+  document_url: string;
+  original_filename: string;
+  mime_type: string;
+}
 
 interface PhotosDocumentsSectionProps {
   packageData: any;
@@ -11,136 +18,202 @@ interface PhotosDocumentsSectionProps {
 }
 
 const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ packageData, onUploadSuccess }) => {
-  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  async function fetchDocs() {
+  const fetchDocs = async () => {
+    if (!packageData.shipment_uuid) return;
     try {
       const docs = await getShipmentDocuments(packageData.shipment_uuid);
-      setUploadedUrls(docs.map((doc: any) => doc.document_url));
+      setDocuments(docs);
     } catch {
-      console.error("Failed to fetch shipment documents");
+      console.error('Failed to fetch shipment documents');
+      toast.error('Failed to load documents.');
     }
-  }
-
-  useEffect(() => {
-    if (packageData.shipment_uuid) {
-      fetchDocs();
-    }
-  }, [packageData.shipment_uuid]);
-
-  const handleFileClick = () => {
-    if (!uploading) fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
+  useEffect(() => {
+    fetchDocs();
+  }, [packageData.shipment_uuid]);
+
+  const handleFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
     setUploading(true);
-    const filesArray = Array.from(e.target.files);
+    const filesArray = Array.from(files);
 
     try {
       for (const file of filesArray) {
         const url = await uploadToCloudinary(file);
         if (url) {
-          await addShipmentDocument(packageData.shipment_uuid, {
+          const newDoc = await addShipmentDocument(packageData.shipment_uuid, {
             url,
             original_filename: file.name,
             mime_type: file.type,
             file_size: file.size,
           });
-          setUploadedUrls((prev) => [...prev, url]);
+          setDocuments((prev) => [...prev, newDoc]);
         }
       }
-      toast.success("Files uploaded successfully");
+      toast.success('Files uploaded successfully');
       onUploadSuccess?.();
     } catch (error) {
-      console.error("Upload failed:", error);
-      toast.error("Failed to upload");
+      console.error('Upload failed:', error);
+      toast.error('Failed to upload files.');
     } finally {
       setUploading(false);
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!uploading) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (uploading) return;
+    setIsDragOver(false);
+    handleFileSelect(e.dataTransfer.files);
+  };
+  
+  const handleFileClick = () => {
+    if (!uploading) fileInputRef.current?.click();
+  };
+
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Photos / Documents
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap' }}>
+            Photos / Docs
           </Typography>
           <Button
             variant="contained"
-            startIcon={<UploadIcon />}
+            startIcon={<AddIcon />}
             size="small"
             onClick={handleFileClick}
             sx={{
-              bgcolor: "#3b82f6",
-              "&:hover": { bgcolor: "#2563eb" },
-              textTransform: "none",
+              bgcolor: '#3b82f6',
+              '&:hover': { bgcolor: '#2563eb' },
+              textTransform: 'none',
+              borderRadius: 1,
             }}
             disabled={uploading}
           >
-            {uploading ? "Uploading..." : "Upload"}
+            ADD
           </Button>
         </Box>
 
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mt: 2 }}>
-          {uploadedUrls.length === 0 && (
-            <Typography variant="body2" color="text.secondary">
-              No photo / document found
+        <Box sx={{
+          bgcolor: '#ffffff',
+          p: 2,
+          borderRadius: 2,
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+        }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b', mb: 1 }}>
+              Uploaded Files
             </Typography>
-          )}
-          {uploadedUrls.map((url, index) => {
-            const isImage = url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
-            const fileName = url.split("/").pop();
+            <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontSize: '0.875rem' }}>
+              View or upload shipment photos and documents.
+            </Typography>
 
-            return (
-              <Box
-                key={index}
-                onClick={() => window.open(url, "_blank")}
-                title={fileName}
-                sx={{
-                  width: 40,
-                  height: 40,
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: "#f3f4f6",
-                  cursor: "pointer",
-                  overflow: "hidden",
-                }}
-              >
-                {isImage ? (
-                  <img
-                    src={url}
-                    alt={fileName || `doc-${index}`}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                ) : (
-                  <Typography component="span" sx={{ fontSize: "1.5rem" }}>
-                    📄
-                  </Typography>
-                )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,.pdf"
+              style={{ display: 'none' }}
+              onChange={(e) => handleFileSelect(e.target.files)}
+            />
+
+            {documents.length === 0 ? (
+              <Box sx={{ mb: 2 }}>
+                <Box
+                  onClick={handleFileClick}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  sx={{
+                    border: `2px dashed ${isDragOver ? '#3b82f6' : '#d1d5db'}`,
+                    borderRadius: 2, p: 3, textAlign: 'center',
+                    cursor: uploading ? 'not-allowed' : 'pointer',
+                    bgcolor: isDragOver ? '#f0f9ff' : '#fafafa',
+                    transition: 'all 0.2s ease-in-out',
+                    opacity: uploading ? 0.6 : 1,
+                    '&:hover': {
+                      borderColor: uploading ? '#d1d5db' : '#3b82f6',
+                      bgcolor: uploading ? '#fafafa' : '#f0f9ff'
+                    }
+                  }}
+                >
+                  {uploading ? (
+                    <>
+                      <CircularProgress size={48} sx={{ color: '#3b82f6', mb: 1 }} />
+                      <Typography variant="body2" sx={{ color: '#6b7280', mb: 0.5 }}>
+                        Uploading files...
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                        Please wait while your files are being uploaded
+                      </Typography>
+                    </>
+                  ) : (
+                    <>
+                      <UploadIcon sx={{ fontSize: 48, color: isDragOver ? '#3b82f6' : '#9ca3af', mb: 1 }} />
+                      <Typography variant="body2" sx={{ color: '#6b7280', mb: 0.5 }}>
+                        {isDragOver ? 'Drop files here' : 'Click to upload or drag and drop'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                        PNG, JPG, PDF up to 10MB
+                      </Typography>
+                    </>
+                  )}
+                </Box>
               </Box>
-            );
-          })}
+            ) : (
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {documents.map((doc) => (
+                    <Box key={doc.id} sx={{ position: 'relative' }}>
+                       <Box
+                        component="img"
+                        sx={{
+                          width: 80, height: 60, objectFit: 'cover', borderRadius: 1,
+                          border: '1px solid #e9ecef', cursor: 'pointer'
+                        }}
+                        alt={doc.original_filename}
+                        src={doc.document_url.match(/\.pdf$/i) ? '/pdf-placeholder.png' : doc.document_url}
+                        onClick={() => window.open(doc.document_url, '_blank')}
+                      />
+                    </Box>
+                  ))}
+                </Box>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={uploading ? <CircularProgress size={16} /> : <AddIcon />}
+                  onClick={handleFileClick}
+                  disabled={uploading}
+                  sx={{ mt: 1, fontSize: '0.75rem' }}
+                >
+                  {uploading ? 'Uploading...' : 'Add More Documents'}
+                </Button>
+              </Box>
+            )}
+            
+            <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.75rem' }}>
+              {packageData.createdBy} {packageData.createdAt}
+            </Typography>
+          </Box>
         </Box>
-
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileChange}
-          multiple
-          accept="image/*,.pdf,.doc,.docx"
-        />
       </CardContent>
     </Card>
   );

@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
+import { CircularProgress } from "@mui/material";
 import AddressSection from "../../../components/Navbar/AddressSection";
 import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
 import AddressLayout from "@/providers/AddressLayout";
@@ -41,6 +42,7 @@ function CreateShoppingRequestContent() {
     },
   ]);
   const [remarks, setRemarks] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleAddNewItem = () => {
     const newItem: ShoppingItem = {
@@ -75,6 +77,8 @@ function CreateShoppingRequestContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+
     const userId = (session?.user as any)?.user_id;
 
     const shoppingRequest = {
@@ -109,6 +113,8 @@ function CreateShoppingRequestContent() {
       router.push("/assisted-shopping");
     } catch (error) {
       console.error("Error creating shopping request:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -307,10 +313,10 @@ function CreateShoppingRequestContent() {
                         className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
                       >
                         <option value="">If Not Available</option>
-                        <option value="skip">
+                        <option value="Cancel this item, purchase all other item">
                           Cancel this item, purchase all other item
                         </option>
-                        <option value="cancel">Cancel all items</option>
+                        <option value="Cancel all items">Cancel all items</option>
                       </select>
                     </div>
                   </div>
@@ -348,9 +354,18 @@ function CreateShoppingRequestContent() {
             <div className="flex justify-end mt-4">
               <button
                 type="submit"
-                className="bg-purple-700 text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors duration-200"
+                disabled={loading}
+                className={`bg-purple-700 text-white px-8 py-3 rounded-lg text-sm font-medium transition-colors duration-200 
+                  ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-purple-600"}`}
               >
-                Submit Shopping Request
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <CircularProgress size={18} color="inherit" />
+                    Submitting...
+                  </div>
+                ) : (
+                  "Submit Shopping Request"
+                )}
               </button>
             </div>
           </form>

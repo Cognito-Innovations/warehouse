@@ -36,7 +36,6 @@ export const generateInvoicePDF = (request: any) => {
 
   const finalY = (doc as any).lastAutoTable.finalY + 10;
   doc.text(`Amount: $${request.invoice?.amount}`, 14, finalY);
-  doc.text(`GST: $${request.invoice?.gst}`, 14, finalY + 6);
   doc.text(`Total: $${request.invoice?.total} USD`, 14, finalY + 12);
 
   doc.setFontSize(11);

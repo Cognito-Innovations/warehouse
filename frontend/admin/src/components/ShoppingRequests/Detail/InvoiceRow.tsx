@@ -21,7 +21,6 @@ export interface InvoiceDetails {
   id: string;
   invoice_no: string;
   amount: number;
-  gst: number;
   total: number;
   status: string;
   products?: { 
@@ -94,7 +93,6 @@ export const InvoiceRow: React.FC<Props> = ({
             </div>
             <div class="invoice-details">
               <p><strong>Amount:</strong> ${formatCurrency(invoice.amount)}</p>
-              <p><strong>GST:</strong> ${formatCurrency(invoice.gst)}</p>
               <p><strong>Total:</strong> ${formatCurrency(invoice.total)}</p>
               <p><strong>Status:</strong> ${invoice.status}</p>
             </div>
@@ -162,9 +160,6 @@ export const InvoiceRow: React.FC<Props> = ({
         </TableCell>
         <TableCell align="right" sx={{ fontWeight: 500 }}>
           {formatCurrency(invoice.amount)}
-        </TableCell>
-        <TableCell align="right">
-          {formatCurrency(invoice.gst)}
         </TableCell>
         <TableCell align="right">
           <Box component="span" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>

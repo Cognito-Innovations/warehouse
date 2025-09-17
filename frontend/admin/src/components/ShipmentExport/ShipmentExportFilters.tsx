@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, IconButton, TextField, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, IconButton, TextField, Typography } from '@mui/material';
 import {
   Add as AddIcon,
   CalendarTodayOutlined as CalendarIcon,
@@ -10,6 +10,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { Dayjs } from 'dayjs';
 import Modal from '../common/Modal';
 import { createShipmentExport } from '../../services/api.services';
+import { useNavigate } from 'react-router-dom';
 
 interface ShipmentExportFiltersProps {
   selectedDate: Dayjs | null;
@@ -18,12 +19,20 @@ interface ShipmentExportFiltersProps {
 }
 
 const ShipmentExportFilters: React.FC<ShipmentExportFiltersProps> = ({ selectedDate, onDateChange, onUpdate }) => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [noOfBoxes, setNoOfBoxes] = useState("1");
   const [loading, setLoading] = useState(false);
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const handleOpen = () => {
+    setNoOfBoxes("1")
+    setOpen(true);
+  }
+
+  const handleClose = () => {
+    setOpen(false);
+    setNoOfBoxes("1");
+  }
 
   const handleSave = async () => {
     setLoading(true);
@@ -34,8 +43,11 @@ const ShipmentExportFilters: React.FC<ShipmentExportFiltersProps> = ({ selectedD
         created_by: 'admin-123',
       };
 
-      await createShipmentExport(payload);
+      const request = await createShipmentExport(payload);
       onUpdate();
+      if (request?.id) {
+        navigate(`/shipment/export/${request.id}`)
+      }
     } catch (err) {
       console.error('Failed to create export:', err);
     } finally {
@@ -121,7 +133,11 @@ const ShipmentExportFilters: React.FC<ShipmentExportFiltersProps> = ({ selectedD
                 fontWeight: 500,
               }}
             >
-              Save
+              {loading ? (
+                <CircularProgress size={20} sx={{ color: '#fff' }} />
+              ) : (
+                'Save'
+              )}
             </Button>
           </Box>
         </Box>

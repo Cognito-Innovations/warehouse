@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, Grid, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { Add as AddIcon } from "@mui/icons-material";
 
 import BoxCard from "./BoxCard";
@@ -104,10 +104,10 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
     }
   };
 
-  return (
+   return (
     <>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={7}>
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
+        <Box sx={{ width: 250, flexShrink: 0 }}>
           {localBoxes.map((box, index) => (
             <BoxCard
               key={box.id}
@@ -129,17 +129,20 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
               borderRadius: 2,
               boxShadow: "none",
               alignSelf: "flex-start",
+              mt: localBoxes.length > 0 ? 2 : 0, 
             }}
             onClick={handleAddBox}
           >
             Add New Box
           </Button>
-        </Grid>
+        </Box>
 
-        <Grid item xs={12} md={5}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
           {selectedBoxId ? (
             <BoxShipmentsList
-              boxId={selectedBoxId}
+              boxIndex={localBoxes.findIndex(b => b.id === selectedBoxId)}
+              boxLabel={localBoxes.find(b => b.id === selectedBoxId)?.label}
+              totalBoxes={localBoxes.length}
               shipments={packagesInSelectedBox}
               isLoading={loadingPackages}
               onDelete={handleDeletePackage}
@@ -150,16 +153,17 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                height: "100%",
+                height: "200px",
+                border: "1px dashed #e5e7eb",
+                borderRadius: 2,
                 color: "text.secondary",
-                p: 3,
               }}
             >
               <Typography>Please select a box</Typography>
             </Box>
           )}
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       <Modal open={open} onClose={handleClose} title="Update Box Details" size="sm">
         <BoxDetailsForm onSave={handleSave} />

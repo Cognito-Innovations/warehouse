@@ -18,6 +18,7 @@ import { User } from 'src/users/user.entity';
 import { Rack } from 'src/racks/rack.entity';
 import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { DocumentsModule } from 'src/documents/documents.module';
+import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { DocumentsModule } from 'src/documents/documents.module';
     ]),
     SharedModule,
     DocumentsModule,
+    UserPreferencesModule,
   ],
   controllers: [PackagesController],
   providers: [

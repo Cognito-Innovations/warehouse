@@ -18,7 +18,7 @@ export class ProductsService {
     const product = this.productRepository.create({
       ...createProductDto,
       quantity: createProductDto.quantity || 1,
-      currency: createProductDto.currency || null,
+      currency: createProductDto.currency || 'US',
     });
 
     const savedProduct = await this.productRepository.save(product);

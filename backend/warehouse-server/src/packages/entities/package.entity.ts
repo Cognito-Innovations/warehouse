@@ -103,21 +103,34 @@ export class Package extends BaseTimestampEntity {
   @DeleteDateColumn({ type: 'bigint', nullable: true })
   deleted_at: number | null;
 
-  @OneToMany(() => PackageItem, (item: PackageItem) => item.package)
+  @OneToMany(() => PackageItem, (item: PackageItem) => item.package, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   items: PackageItem[];
 
   @OneToMany(
     () => PackageMeasurement,
     (measurement: PackageMeasurement) => measurement.package,
+    { cascade: true, onDelete: 'CASCADE' },
   )
   measurements: PackageMeasurement[];
 
-  @OneToMany(() => PackageCharge, (charge: PackageCharge) => charge.package)
+  @OneToMany(() => PackageCharge, (charge: PackageCharge) => charge.package, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   charges: PackageCharge[];
 
-  @OneToMany(() => PackageDocument, (document) => document.package)
+  @OneToMany(() => PackageDocument, (document) => document.package, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   documents: PackageDocument[];
 
-  @OneToMany(() => PackageActionLog, (actionLog) => actionLog.package)
+  @OneToMany(() => PackageActionLog, (actionLog) => actionLog.package, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   action_logs: PackageActionLog[];
 }

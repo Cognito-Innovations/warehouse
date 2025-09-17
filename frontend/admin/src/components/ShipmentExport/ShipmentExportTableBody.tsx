@@ -19,6 +19,7 @@ import { getStatusColor } from '../../data/shipmentExports';
 import Modal from '../common/Modal';
 import { useNavigate } from 'react-router-dom';
 import { deleteShipmentExport, updateShipmentExport } from '../../services/api.services';
+import ConfirmDialog from '../common/ConfirmDialog';
 
 interface ShipmentExportTableBodyProps {
   rows: any[];
@@ -30,6 +31,10 @@ const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows,
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
   const [mawb, setMawb] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -46,23 +51,36 @@ const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows,
   };
 
   const handleSave = async () => {
-    if (selectedRow) {
-      try {
-        await updateShipmentExport(selectedRow.id, { mawb });
-        await onUpdate();
-      } catch (error) {
-        console.error("Failed to update MAWB:", error);
-      }
+    if (!selectedRow || !mawb) return;
+    try {
+      setSaving(true);
+      await updateShipmentExport(selectedRow.id, { mawb });
+      await onUpdate();
+      handleClose();
+    } catch (error) {
+      console.error("Failed to update MAWB:", error);
+    } finally {
+      setSaving(false);
     }
-    handleClose();
   };
 
-  const handleDelete = async (id: string) => {
+  const handleConfirmDelete = (id: string) => {
+    setDeletingId(id);
+    setConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingId) return;
     try {
-      await deleteShipmentExport(id);
+      setDeleting(true);
+      await deleteShipmentExport(deletingId);
       await onUpdate();
+      setConfirmOpen(false);
+      setDeletingId(null);
     } catch (error) {
       console.error("Failed to delete export:", error);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -138,7 +156,7 @@ const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows,
                     <IconButton 
                       size="small" 
                       sx={{ bgcolor: '#e27055', color: '#f8f8f8', '&:hover': { backgroundColor: '#cc6046' }}}
-                      onClick={() => handleDelete(row.id)}
+                       onClick={() => handleConfirmDelete(row.id)}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -151,25 +169,50 @@ const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows,
       )}
     </TableBody>
 
-     <Modal open={open} onClose={handleClose} title="Update MAWB">
+     <Modal 
+        open={open} 
+        onClose={() => { 
+          if (!saving) handleClose(); 
+        }} 
+        title="Update MAWB"
+      >
        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
-            label="MAWB *"
+            label="MAWB"
             value={mawb}
             onChange={(e) => setMawb(e.target.value)}
             fullWidth
+            required
           />
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button
               variant="contained"
               onClick={handleSave}
-              disabled={!mawb}
+              disabled={!mawb || saving}
+              sx={{ textTransform: 'none' }}
             >
-              Save
+              {saving ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={24} color="inherit" />
+                  Adding...
+                </Box>
+              ) : (
+                'Save'
+              )}
             </Button>
           </Box>
        </Box>
      </Modal>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Shipment Export"
+        message="Are you sure you want to delete this shipment export?"
+        confirmText="Delete"
+        onConfirm={handleDelete}
+        onClose={() => setConfirmOpen(false)}
+        isLoading={deleting}
+      />
   </>
   )
 };

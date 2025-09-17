@@ -77,6 +77,7 @@ const ViewShipmentExportPage: React.FC = () => {
       <ShipmentActionsBar 
         selectedBoxId={selectedBoxId}
         onPackageAdded={handlePackageAdded}
+        hasShipments={selectedBoxPackages.length > 0}
       />
       <BoxesSection 
         boxes={shipment.boxes || []} 

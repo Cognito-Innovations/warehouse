@@ -14,7 +14,7 @@ import ItemsList from '@/components/AssistedShopping/ItemsList';
 import ActionsCard from '@/components/AssistedShopping/ActionsCard';
 import QuotationItems from '@/components/AssistedShopping/QuotationItems';
 import QuotationSummary from '@/components/AssistedShopping/QuotationSummary';
-import { shoppingRequestMessages } from '@/lib/shoppingRequestMessages';
+import { shoppingRequestMessages } from '@/lib/shoppingRequestStatus';
 import Invoices from '@/components/AssistedShopping/Invoices';
 import { toast } from 'sonner';
 import ConfirmDialog from '@/components/Modals/ConfirmDialog';
@@ -29,6 +29,7 @@ export default function ViewShoppingRequestPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSelectionChange = useCallback((selected: any[]) => {
     setSelectedForQuote(selected);
@@ -68,6 +69,7 @@ export default function ViewShoppingRequestPage() {
   }, [isQuotation, request]);
 
    const handleDelete = async (id: string) => {
+    setIsDeleting(true);
     try {
       await deleteShoppingRequest(id);
       toast.success("Request deleted successfully!");
@@ -78,6 +80,7 @@ export default function ViewShoppingRequestPage() {
     } finally {
       setConfirmOpen(false);
       setDeleteId(null);
+      setIsDeleting(false);
     }
   };
 
@@ -166,6 +169,7 @@ export default function ViewShoppingRequestPage() {
         cancelText="Cancel"
         onConfirm={() => deleteId && handleDelete(deleteId)}
         onClose={() => setConfirmOpen(false)}
+        isLoading={isDeleting}
       />
     </div>
   );

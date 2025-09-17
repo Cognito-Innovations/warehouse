@@ -18,7 +18,6 @@ import { toast } from 'sonner';
 interface InvoiceDetails {
   invoice_no: string;
   amount: number;
-  gst: number;
   total: number;
   status: 'UNPAID' | 'PAID';
   items?: any[];
@@ -37,7 +36,6 @@ const InvoiceRow: React.FC<{ invoice: InvoiceDetails }> = ({ invoice }) => {
         </TableCell>
         <TableCell component="th" scope="row">{invoice.invoice_no}</TableCell>
         <TableCell align="right">${Number(invoice.amount).toFixed(2)}</TableCell>
-        <TableCell align="right">${Number(invoice.gst).toFixed(2)}</TableCell>
         <TableCell align="right" sx={{ fontWeight: 'bold' }}>${Number(invoice.total).toFixed(2)}</TableCell>
         <TableCell align="center">
           <Chip 

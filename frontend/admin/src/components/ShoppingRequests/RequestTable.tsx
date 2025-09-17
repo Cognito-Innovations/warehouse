@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Card,
   Table,
@@ -18,50 +18,38 @@ import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import RequestTableBody from './RequestTableBody';
 import { getAllShoppingRequests } from '../../services/api.services';
 
-const RequestTable: React.FC = () => {
-  const [rows, setRows] = useState<any[]>([]);
+interface RequestTableProps {
+  requests: any[];
+  loading: boolean;
+}
+
+const RequestTable: React.FC<RequestTableProps> = ({ requests, loading }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [statusFilter, setStatusFilter] = useState('All');
-  const [loading, setLoading] = useState(true);
 
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllShoppingRequests();
-
-      const mapped = data.map((req: any) => {
-        const createdAt = new Date(Number(req.created_at) * 1000);
-        return {
-          orderNo: req.request_code,
-          requestedAt: {
-            date: createdAt.toLocaleDateString('en-GB'),
-            time: createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          },
-          customer: {
-            name: req.user?.name || 'Unknown',
-            suite_no: req.user.suite_no || '',
-          },
-          status: req.status,
-          noOfItems: req.items_count,
-        };
-      });
-
-      setRows(mapped);
-    } catch (err) {
-      console.error("Error fetching shopping requests:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRequests();
-  }, []);
+  const mappedRows = useMemo(() => {
+    return requests.map((req: any) => {
+      const createdAt = new Date(Number(req.created_at) * 1000);
+      return {
+        orderNo: req.request_code,
+        requestedAt: {
+          date: createdAt.toLocaleDateString('en-GB'),
+          time: createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+        customer: {
+          name: req.user?.name || 'Unknown',
+          suite_no: req.user.suite_no || '',
+        },
+        status: req.status,
+        noOfItems: req.items_count,
+      };
+    });
+  }, [requests]);
 
   const filteredRows = statusFilter === 'All'
-    ? rows
-    : rows.filter((row) => row.status === statusFilter);
+    ? mappedRows
+    : mappedRows.filter((row) => row.status === statusFilter);
 
   const visibleRows = filteredRows.slice(
     page * rowsPerPage,

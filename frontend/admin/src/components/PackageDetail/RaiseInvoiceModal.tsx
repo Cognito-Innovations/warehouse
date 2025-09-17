@@ -25,7 +25,6 @@ interface Charge {
   category: string;
   description: string;
   amount: number;
-  gst: number;
   total: number;
 }
 
@@ -44,9 +43,9 @@ const RaiseInvoiceModal: React.FC<{
     onUpdated?: () => void;
 }> = ({ packageData, onClose, onUpdated }) => {
   const initialCharges: Charge[] = [
-    { category: 'Packing Options', description: 'Remove unnecessary packaging and bulky boxes & repack it as single package', amount: 1.00, gst: 0.00, total: 1.00 },
-    { category: 'Other', description: 'Repacking charges from country of origin', amount: 2.00, gst: 0.00, total: 2.00 },
-    { category: 'Freight Charge', description: `REDBOX from IN to MV Chargeable Weight ${packageData.weight || '5 KG'}`, amount: 35.00, gst: 0.00, total: 35.00 },
+    { category: 'Packing Options', description: 'Remove unnecessary packaging and bulky boxes & repack it as single package', amount: 1.00, total: 1.00 },
+    { category: 'Other', description: 'Repacking charges from country of origin', amount: 2.00, total: 2.00 },
+    { category: 'Freight Charge', description: `REDBOX from IN to MV Chargeable Weight ${packageData.weight || '5 KG'}`, amount: 35.00, total: 35.00 },
   ];
 
   const [charges, setCharges] = useState<Charge[]>(initialCharges);
@@ -63,7 +62,6 @@ const RaiseInvoiceModal: React.FC<{
           category: 'Additional Services',
           description: chargeToAdd.name,
           amount: chargeToAdd.amount,
-          gst: 0.00,
           total: chargeToAdd.amount,
         },
       ]);
@@ -97,7 +95,6 @@ const RaiseInvoiceModal: React.FC<{
               <TableCell>Category</TableCell>
               <TableCell>Description</TableCell>
               <TableCell align="right">Amount</TableCell>
-              <TableCell align="right">GST</TableCell>
               <TableCell align="right">Total</TableCell>
             </TableRow>
           </TableHead>
@@ -107,7 +104,6 @@ const RaiseInvoiceModal: React.FC<{
                 <TableCell component="th" scope="row">{row.category}</TableCell>
                 <TableCell>{row.description}</TableCell>
                 <TableCell align="right">${row.amount.toFixed(2)}</TableCell>
-                <TableCell align="right">${row.gst.toFixed(2)}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 600 }}>${row.total.toFixed(2)}</TableCell>
               </TableRow>
             ))}

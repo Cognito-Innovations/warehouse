@@ -32,7 +32,8 @@ export default function ShipmentDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
- 
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const fetchRequest = useCallback(async () => {
     if (!shipmentId) return;
 
@@ -76,6 +77,7 @@ export default function ShipmentDetailPage() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteId) return;
+    setIsDeleting(true);
 
     try {
       toast.success("Request deleted successfully!");
@@ -86,6 +88,7 @@ export default function ShipmentDetailPage() {
     } finally {
       setConfirmOpen(false);
       setDeleteId(null);
+      setIsDeleting(false);
     }
   }, [deleteId, router]);
 
@@ -158,6 +161,7 @@ export default function ShipmentDetailPage() {
         cancelText="Cancel"
         onConfirm={handleDelete}
         onClose={() => setConfirmOpen(false)}
+        isLoading={isDeleting}
       />
     </div>
   );

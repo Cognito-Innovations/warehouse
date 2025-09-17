@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { CircularProgress } from '@mui/material';
 import { toast } from 'sonner';
 import ConfirmDialog from '@/components/Modals/ConfirmDialog';
+import { STATUS_ICONS } from '@/lib/shoppingRequestStatus'; 
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -35,6 +36,7 @@ export default function AssistedShopping() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const user_id = (session?.user as any)?.user_id;
 
@@ -66,6 +68,7 @@ export default function AssistedShopping() {
 
   const handleDeleteRequest = async (requestId: string) => {
     if (!deleteId) return;
+    setIsDeleting(true);
 
     try {
       await deleteShoppingRequest(requestId);
@@ -80,6 +83,7 @@ export default function AssistedShopping() {
     } finally {
       setConfirmOpen(false);
       setDeleteId(null);
+      setIsDeleting(false);
     }
   };
 
@@ -87,6 +91,8 @@ export default function AssistedShopping() {
     { label: 'Shopping Requests', count: 1, icon: <ShoppingBagIcon /> },
     { label: 'History', count: 0, icon: <HistoryIcon /> },
   ];
+
+  const NON_DELETABLE_STATUSES = ['PAYMENT_APPROVED', 'ORDER_PLACED'];
 
   const renderSearchBar = () => (
     <div className="relative mb-4">
@@ -103,46 +109,6 @@ export default function AssistedShopping() {
     </div>
   );
 
-  const renderShoppingRequests = () => (
-    <div className="space-y-4">
-      {shoppingRequests.map((request) => (
-        <Link 
-          href={`/assisted-shopping/${encodeURIComponent(request.request_code)}`} 
-          key={request.request_code}
-          className="block transition-all duration-200 hover:shadow-md hover:border-purple-200 rounded-lg"
-        >
-          <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div>
-                <p className="font-semibold text-gray-900">{request.request_code}</p>
-                <p className="text-sm text-gray-600">{formatDateTime(request.created_at)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">{request.items} Items</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <HourglassIcon className={`w-5 h-5 ${request.statusColor}`} />
-                <span className={`text-sm font-medium ${request.statusColor}`}>{request.status}</span>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.preventDefault(); 
-                  setDeleteId(request.id);
-                  setConfirmOpen(true);
-                }}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <DeleteIcon className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </Link>
-      ))}
-    </div>
-  );
-
   const renderEmptyState = (icon: React.ReactNode, message: string) => (
     <div className="flex flex-col items-center justify-center min-h-[300px] text-gray-500">
       <div className="text-6xl text-gray-300 mb-4">
@@ -151,6 +117,72 @@ export default function AssistedShopping() {
       <h3 className="text-lg font-medium text-gray-600">{message}</h3>
     </div>
   );
+
+  const renderShoppingRequests = () => {
+    const filteredRequests = shoppingRequests.filter((request) => {
+    if (!request.shopping_request_products || request.shopping_request_products.length === 0) {
+      return false;
+    }
+
+    return request.shopping_request_products.some((product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+    if (filteredRequests.length === 0) {
+      return renderEmptyState(<ShoppingBagIcon />, "No matching requests found");
+    }
+
+    return (
+      <div className="space-y-4">
+        {filteredRequests.map((request) => {
+          const statusMeta = STATUS_ICONS[request.status] || STATUS_ICONS.REQUESTED;
+
+          return (
+            <Link 
+              href={`/assisted-shopping/${encodeURIComponent(request.request_code)}`} 
+              key={request.request_code}
+              className="block transition-all duration-200 hover:shadow-md hover:border-purple-200 rounded-lg"
+            >
+              <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                <div className="flex items-center space-x-6">
+                  <div>
+                    <p className="font-semibold text-gray-900">{request.request_code}</p>
+                    <p className="text-sm text-gray-600">{formatDateTime(request.created_at)}</p>
+                  </div>
+                  <div className="flex-1 flex justify-center">
+                    <p className="text-sm text-gray-600">
+                      {request.items_count} {request.items_count === 1 ? "Item" : "Items"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    {statusMeta.icon}
+                    <span className={`text-sm font-medium ${request.statusColor}`}>{request.status}</span>
+                  </div>
+
+                  {!NON_DELETABLE_STATUSES.includes(request.status.toUpperCase()) && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault(); 
+                        setDeleteId(request.id);
+                        setConfirmOpen(true);
+                      }}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <DeleteIcon className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -244,6 +276,7 @@ export default function AssistedShopping() {
           cancelText="Cancel"
           onConfirm={() => deleteId && handleDeleteRequest(deleteId)}
           onClose={() => setConfirmOpen(false)}
+          isLoading={isDeleting}
         />
       </div>
     </div>

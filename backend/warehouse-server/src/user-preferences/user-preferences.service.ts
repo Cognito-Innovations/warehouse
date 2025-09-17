@@ -57,23 +57,16 @@ export class UserPreferencesService {
   }
 
   async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {
-    const existing = await this.userPreferenceRepository.findOne({
-      where: { id },
+    const userPreference = this.userPreferenceRepository.create({
+      id,
+      user: { id: updateUserPreferenceDto.user_id },
+      courier: { id: updateUserPreferenceDto.courier_id },
+      currency: { id: updateUserPreferenceDto.currency_id },
     });
-    if (existing) {
-      return this.userPreferenceRepository.update(id, {
-        currency: { id: updateUserPreferenceDto.currency_id },
-        courier: { id: updateUserPreferenceDto.courier_id },
-        user: { id: updateUserPreferenceDto.user_id },
-      });
-    } else {
-      return this.create({
-        currency_id: updateUserPreferenceDto.currency_id || '',
-        courier_id: updateUserPreferenceDto.courier_id || '',
-        user_id: updateUserPreferenceDto.user_id || '',
-      });
-    }
+
+    return this.userPreferenceRepository.save(userPreference);
   }
+
   async delete(id: string) {
     return await this.userPreferenceRepository.delete(id);
   }

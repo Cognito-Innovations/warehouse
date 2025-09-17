@@ -103,7 +103,7 @@ export default function InvoiceTable({
             {isApprovingPayment ? (
               <>
                 <CircularProgress size={20} color="inherit" />
-                Approving
+                Approving...
               </>
             ) : (
               "Approve Payment"
@@ -127,7 +127,6 @@ export default function InvoiceTable({
               <TableCell sx={{ fontWeight: 600, width: 50 }}>Details</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Invoice No.</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">Amount</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">GST</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">Total</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">Status</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">Actions</TableCell>

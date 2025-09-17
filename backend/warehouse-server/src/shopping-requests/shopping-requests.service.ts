@@ -15,6 +15,7 @@ import { mapToTrackingStatus } from './status-mapper';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { InvoicesService } from 'src/invoice/invoices.service';
 import { Invoice, InvoiceStatus } from 'src/invoice/invoice.entity';
+import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
 @Injectable()
 export class ShoppingRequestsService {
@@ -28,6 +29,7 @@ export class ShoppingRequestsService {
     private readonly documentsService: DocumentsService,
     private readonly trackingRequestsService: TrackingRequestsService,
     private readonly invoicesService: InvoicesService,
+    private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
   async createShoppingRequest(
@@ -127,6 +129,7 @@ export class ShoppingRequestsService {
     const shoppingRequests = await this.shoppingRequestRepository.find({
       where: { user_id: userId },
       order: { created_at: 'DESC' },
+      relations: ['courier'],
     });
 
     return Promise.all(
@@ -134,6 +137,38 @@ export class ShoppingRequestsService {
         const slips = await this.documentsService.findByFeature(
           FeatureType.ShoppingRequest,
           request.id,
+        );
+
+        const rawProducts = await this.productRepository.find({
+          where: { shopping_request_id: request.id },
+        });
+
+        const shoppingRequestProducts = await Promise.all(
+          rawProducts.map(async (product) => ({
+            id: product.id,
+            shopping_request_id: product.shopping_request_id,
+            name: product.name,
+            description: product.description,
+            unit_price: product.unit_price
+              ? Number(
+                  await this.userPreferencesService.getFormattedConvertedPrice(
+                    request.user_id,
+                    Number(product.unit_price),
+                  ),
+                )
+              : 0,
+            currency: product.currency,
+            quantity: product.quantity,
+            url: product.url,
+            size: product.size,
+            color: product.color,
+            variants: product.variants,
+            if_not_available_quantity: product.if_not_available_quantity,
+            if_not_available_color: product.if_not_available_color,
+            available: product.available,
+            created_at: product.created_at,
+            updated_at: product.updated_at,
+          })),
         );
 
         const trackingRequests =
@@ -146,12 +181,13 @@ export class ShoppingRequestsService {
           id: request.id,
           user_id: request.user_id,
           request_code: request.request_code,
-          courier: request.courier.name,
+          courier: request.courier?.name,
           items_count: request.items_count,
           remarks: request.remarks,
           status: request.status,
           payment_slips: slips,
           tracking_requests: trackingRequests,
+          shopping_request_products: shoppingRequestProducts,
           created_at: request.created_at,
           updated_at: request.updated_at,
         };
@@ -164,7 +200,7 @@ export class ShoppingRequestsService {
   ): Promise<ShoppingRequestResponseDto> {
     const shoppingRequest = await this.shoppingRequestRepository.findOne({
       where: { request_code: requestCode },
-      relations: ['user'],
+      relations: ['user', 'courier'],
     });
 
     if (!shoppingRequest) {
@@ -205,7 +241,7 @@ export class ShoppingRequestsService {
           }
         : undefined,
       request_code: shoppingRequest.request_code,
-      courier: shoppingRequest.courier.name,
+      courier: shoppingRequest.courier?.name,
       items_count: shoppingRequest.items_count,
       shopping_request_products: shoppingRequestProducts,
       remarks: shoppingRequest.remarks,
@@ -216,17 +252,31 @@ export class ShoppingRequestsService {
         ? {
             id: invoice.id,
             invoice_no: invoice.invoice_no,
-            amount: invoice.amount,
-            gst: invoice.gst,
-            total: invoice.total,
+            amount: Number(
+              await this.userPreferencesService.getFormattedConvertedPrice(
+                shoppingRequest.user_id,
+                Number(invoice.amount),
+              ),
+            ),
+            total: Number(
+              await this.userPreferencesService.getFormattedConvertedPrice(
+                shoppingRequest.user_id,
+                Number(invoice.total),
+              ),
+            ),
             status: invoice.status,
-            products:
-              invoice.products?.map((product) => ({
+            products: await Promise.all(
+              (invoice.products ?? []).map(async (product) => ({
                 id: product.id,
                 shopping_request_id: product.shopping_request_id,
                 name: product.name,
                 description: product.description,
-                unit_price: product.unit_price,
+                unit_price: Number(
+                  await this.userPreferencesService.getFormattedConvertedPrice(
+                    shoppingRequest.user_id,
+                    Number(product.unit_price),
+                  ),
+                ),
                 currency: product.currency,
                 quantity: product.quantity,
                 url: product.url,
@@ -238,7 +288,8 @@ export class ShoppingRequestsService {
                 available: product.available,
                 created_at: product.created_at,
                 updated_at: product.updated_at,
-              })) || [],
+              })),
+            ),
             created_at: invoice.created_at,
             updated_at: invoice.updated_at,
           }
@@ -324,17 +375,31 @@ export class ShoppingRequestsService {
         ? {
             id: invoice.id,
             invoice_no: invoice.invoice_no,
-            amount: invoice.amount,
-            gst: invoice.gst,
-            total: invoice.total,
+            amount: Number(
+              await this.userPreferencesService.getFormattedConvertedPrice(
+                updatedShoppingRequest.user_id,
+                Number(invoice.amount),
+              ),
+            ),
+            total: Number(
+              await this.userPreferencesService.getFormattedConvertedPrice(
+                updatedShoppingRequest.user_id,
+                Number(invoice.total),
+              ),
+            ),
             status: invoice.status,
-            products:
-              invoice.products?.map((product) => ({
+            products: await Promise.all(
+              (invoice.products ?? []).map(async (product) => ({
                 id: product.id,
                 shopping_request_id: product.shopping_request_id,
                 name: product.name,
                 description: product.description,
-                unit_price: product.unit_price,
+                unit_price: Number(
+                  await this.userPreferencesService.getFormattedConvertedPrice(
+                    updatedShoppingRequest.user_id,
+                    Number(product.unit_price),
+                  ),
+                ),
                 currency: product.currency,
                 quantity: product.quantity,
                 url: product.url,
@@ -346,7 +411,8 @@ export class ShoppingRequestsService {
                 available: product.available,
                 created_at: product.created_at,
                 updated_at: product.updated_at,
-              })) || [],
+              })),
+            ),
             created_at: invoice.created_at,
             updated_at: invoice.updated_at,
           }

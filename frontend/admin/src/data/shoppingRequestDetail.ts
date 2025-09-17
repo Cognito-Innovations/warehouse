@@ -24,7 +24,6 @@ export const requestDetailData = {
   summary: {
     subTotal: 0.00,
     commission: 0.00,
-    gst: 0.00,
     total: 0.00,
   },
   tracking: [

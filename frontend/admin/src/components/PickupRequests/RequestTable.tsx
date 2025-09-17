@@ -18,29 +18,15 @@ import RequestTableBody from './RequestTableBody';
 import type { PickupRequest } from '../../types';
 import { getPickupRequests } from '../../services/api.services';
 
-const RequestTable: React.FC = () => {
-  const [requests, setRequests] = useState<PickupRequest[]>([]);
+interface RequestTableProps {
+  requests: any[];
+  loading: boolean;
+}
+
+const RequestTable: React.FC<RequestTableProps> = ({ requests, loading }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [statusFilter, setStatusFilter] = useState('All');
-  const [loading, setLoading] = useState(true);
-
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      const data = await getPickupRequests();
-
-      setRequests(data);
-    } catch (err) {
-      console.error('Failed to fetch pickup requests', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRequests();
-  }, []);
 
   const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
 
@@ -63,29 +49,36 @@ const RequestTable: React.FC = () => {
     page * rowsPerPage + rowsPerPage
   );
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 4 }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
   return (
     <>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <IconButton>
-              <FilterAltOutlinedIcon color="action" />
-            </IconButton>
-
-            <TextField
-                select
-                value={statusFilter}
-                onChange={handleStatusChange}
-                size="small"
-                sx={{minWidth: 150}}
-                >
-                <MenuItem value="All">Status: All</MenuItem>
-                <MenuItem value="CANCELLED">Cancelled</MenuItem>
-                <MenuItem value="REQUESTED">Requested</MenuItem>
-                <MenuItem value="QUOTATION CONFIRMED">Quotation Confirmed</MenuItem>
-                <MenuItem value="ACCEPTED">Accepted</MenuItem>
-                <MenuItem value="PICKED">Picked</MenuItem>
-            </TextField>
-        </Box>
-        {loading && <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <IconButton>
+          <FilterAltOutlinedIcon color="action" />
+        </IconButton>
+        <TextField
+          select
+          value={statusFilter}
+          onChange={handleStatusChange}
+          size="small"
+          sx={{minWidth: 150}}
+          >
+          <MenuItem value="All">Status: All</MenuItem>
+          <MenuItem value="CANCELLED">Cancelled</MenuItem>
+          <MenuItem value="REQUESTED">Requested</MenuItem>
+          <MenuItem value="QUOTATION CONFIRMED">Quotation Confirmed</MenuItem>
+          <MenuItem value="ACCEPTED">Accepted</MenuItem>
+          <MenuItem value="PICKED">Picked</MenuItem>
+        </TextField>
+      </Box>
+      {loading && <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <CircularProgress />
     </Box>}
 

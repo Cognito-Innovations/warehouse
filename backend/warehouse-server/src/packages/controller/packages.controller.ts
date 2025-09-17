@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -271,6 +272,14 @@ export class PackagesController {
     @Query('status') status: string,
   ): Promise<PackageResponseDto> {
     return this.packagesService.findByTrackingNumberAndStatus(trackingNumber, status);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a package by ID' })
+  @ApiParam({ name: 'id', description: 'The UUID of the package' })
+  @ApiOkResponse({ description: 'Package deleted successfully' })
+  async delete(@Param('id') id: string): Promise<void> {
+    return this.packagesService.deletePackage(id);
   }
 
 }

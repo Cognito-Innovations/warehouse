@@ -8,6 +8,7 @@ import { DocumentsModule } from 'src/documents/documents.module';
 import { TrackingRequestsModule } from 'src/tracking-requests/tracking-requests.module';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { InvoicesModule } from 'src/invoice/invoices.module';
+import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { InvoicesModule } from 'src/invoice/invoices.module';
     DocumentsModule,
     TrackingRequestsModule,
     InvoicesModule,
+    UserPreferencesModule,
   ],
   controllers: [ShoppingRequestsController],
   providers: [ShoppingRequestsService],

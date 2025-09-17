@@ -61,7 +61,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ trackingRequests, creat
           const effectiveItem = historyItem || fallbackItem;
 
           const isCompleted = Boolean(effectiveItem);
-          const isActive = !isCompleted && index === lastCompletedIndex + 1;
+          const isLastCompleted = index === lastCompletedIndex;
 
           const description = effectiveItem
             ? formatDateTime(effectiveItem.created_at)
@@ -120,7 +120,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ trackingRequests, creat
                   variant="body2"
                   sx={{
                     fontWeight: 600,
-                    color: isActive ? '#3B82F6' : '#424242',
+                    color: isCompleted ? '#3B82F6' : '#424242',
                   }}
                 >
                   {step.label}
@@ -128,7 +128,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ trackingRequests, creat
                 <Typography
                   variant="caption"
                   sx={{
-                    color: isActive ? '#3B82F6' : 'text.secondary',
+                    color: isCompleted ? '#3B82F6' : 'text.secondary',
                   }}
                 >
                   {description}
