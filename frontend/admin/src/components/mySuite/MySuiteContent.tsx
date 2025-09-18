@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, Tabs, Tab, Stack, IconButton, Divider, Paper } from '@mui/material';
+import { Box, Typography, Button, Tabs, Tab, Stack, IconButton, Divider, Paper, CircularProgress } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
 
 import { createRack, deleteRack, getRacks, updateRack } from '../../services/api.services';
@@ -13,21 +13,27 @@ const MySuiteContent = () => {
   const [tabValue, setTabValue] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRack, setEditingRack] = useState<Rack | null>(null);
+  const [loadingRacks, setLoadingRacks] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   
   useEffect(() => {
     fetchRacks();
   }, []);
 
   const fetchRacks = async () => {
+    setLoadingRacks(true);
     try {
       const data = await getRacks();
       setRacks(data);
     } catch (err) {
       console.error('Failed to fetch racks', err);
+    } finally {
+      setLoadingRacks(false);
     }
   };
 
   const handleAddRack = async (label: string, color: string) => {
+    setSubmitting(true);
     try {
       const response = await createRack({ label, color, count: 0 });
       const newRack = Array.isArray(response) ? response[0] : response;
@@ -35,10 +41,13 @@ const MySuiteContent = () => {
       setIsModalOpen(false);
     } catch (err) {
       console.error('Failed to create rack', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleUpdateRack = async (id: string, label: string, color: string) => {
+    setSubmitting(true);
     try {
       const updated = await updateRack(id, { label, color });
       setRacks(prev => prev.map(result => (result.id === id ? updated : result)));
@@ -46,6 +55,8 @@ const MySuiteContent = () => {
       setIsModalOpen(false);
     } catch (err) {
       console.error('Failed to update rack', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -79,39 +90,50 @@ const MySuiteContent = () => {
               Add New Rack
             </Button>
           </Stack>
-          <Box>
-            {racks.map((rack, i) => (
-              <React.Fragment key={rack.id}>
-                <Stack direction="row" alignItems="center" sx={{ py: 2 }}>
-                  <Stack direction="row" alignItems="center" spacing={2} sx={{ flexGrow: 1 }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: rack.color }} />
-                    <Typography fontWeight={500} flexGrow={1}>{rack.label}</Typography>
-                    <Typography color="text.secondary" fontWeight={500}>{rack.count}</Typography>
-                  </Stack>
-                  <Stack direction="row" spacing={1} ml={3}>
-                    <CopyButton text={rack.label} />
 
-                    <IconButton 
-                      size="small" 
-                      sx={{ bgcolor: '#e0e7ff', color: '#4f46e5', '&:hover': { bgcolor: '#c7d2fe' } }}
-                      onClick={() => { setEditingRack(rack); setIsModalOpen(true); }}
-                    >
-                      <Edit fontSize="inherit" />
-                    </IconButton>
+          {loadingRacks ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+              <CircularProgress />
+            </Box>
+          ) : racks.length === 0 ? (
+            <Typography align="center" color="text.secondary" sx={{ py: 5 }}>
+              No racks available. Add your first rack.
+            </Typography>
+          ) : (
+            <Box>
+              {racks.map((rack, i) => (
+                <React.Fragment key={rack.id}>
+                  <Stack direction="row" alignItems="center" sx={{ py: 2 }}>
+                    <Stack direction="row" alignItems="center" spacing={2} sx={{ flexGrow: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: rack.color }} />
+                      <Typography fontWeight={500} flexGrow={1}>{rack.label}</Typography>
+                      <Typography color="text.secondary" fontWeight={500}>{rack.count}</Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} ml={3}>
+                      <CopyButton text={rack.label} />
 
-                    <IconButton 
-                      size="small" 
-                      sx={{ bgcolor: '#ffe4e6', color: '#e11d48', '&:hover': { bgcolor: '#fecdd3' } }}
-                      onClick={() => handleDeleteRack(rack.id!)}
-                    >
-                      <Delete fontSize="inherit" />
-                    </IconButton>
+                      <IconButton 
+                        size="small" 
+                        sx={{ bgcolor: '#e0e7ff', color: '#4f46e5', '&:hover': { bgcolor: '#c7d2fe' } }}
+                        onClick={() => { setEditingRack(rack); setIsModalOpen(true); }}
+                      >
+                        <Edit fontSize="inherit" />
+                      </IconButton>
+
+                      <IconButton 
+                        size="small" 
+                        sx={{ bgcolor: '#ffe4e6', color: '#e11d48', '&:hover': { bgcolor: '#fecdd3' } }}
+                        onClick={() => handleDeleteRack(rack.id!)}
+                      >
+                        <Delete fontSize="inherit" />
+                      </IconButton>
+                    </Stack>
                   </Stack>
-                </Stack>
-                {i < racks.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </Box>
+                  {i < racks.length - 1 && <Divider />}
+                </React.Fragment>
+              ))}
+            </Box>
+          )}
         </Box>
       )}
 
@@ -132,6 +154,7 @@ const MySuiteContent = () => {
               handleAddRack(label, color);
             }
           }}
+          submitting={submitting}
         />
       </Modal>
     </Paper>

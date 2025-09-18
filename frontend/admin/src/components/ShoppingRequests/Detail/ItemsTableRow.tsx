@@ -3,6 +3,7 @@ import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutline
 import { useEffect, useState } from 'react';
 import DropdownMenu from '../../common/DropdownMenu';
 import Modal from '../../common/Modal';
+import { numberInputStyle } from '../../../styles/numberInputStyle';
 
 interface ItemsTableRowProps {
   item: any;
@@ -155,6 +156,7 @@ const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange }: ItemsTableR
             step: "0.01",
             maxLength: 9
           }}
+          sx={numberInputStyle}
         />
       
         <Box sx={{ display: 'flex', alignItems: 'center' }}>

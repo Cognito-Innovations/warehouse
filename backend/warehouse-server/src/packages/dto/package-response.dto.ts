@@ -69,8 +69,8 @@ export class PackageItemResponseDto {
   package_id: string;
   name: string;
   quantity: number;
-  unit_price: number;
-  total_price: number;
+  unit_price: string;
+  total_price: string;
   created_at: number;
   updated_at: number;
 }

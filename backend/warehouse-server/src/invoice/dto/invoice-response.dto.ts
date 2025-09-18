@@ -3,8 +3,8 @@ import { ProductResponseDto } from 'src/products/dto/product-response.dto';
 export class InvoiceResponseDto {
   id: string;
   invoice_no: string;
-  amount: number;
-  total: number;
+  amount: string;
+  total: string;
   status: string;
   products: ProductResponseDto[];
   created_at: number;

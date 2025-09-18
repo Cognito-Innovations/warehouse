@@ -1,17 +1,28 @@
 import React, { useState } from "react";
-import { Box, Button, InputAdornment, TextField, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, InputAdornment, TextField, Typography } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import { addPackageToBox, searchReadyToShipPackage } from "../../services/api.services";
+import { addPackageToBox, markShipmentExportDeparted, searchReadyToShipPackage, updatePackageStatus } from "../../services/api.services";
 
 interface ShipmentActionsBarProps {
   selectedBoxId: number | null;
   onPackageAdded: () => void;
   hasShipments: boolean;
+  exportId: string;
+  status: string;
+  onStatusUpdated: (newStatus: string) => void;
 }
 
-const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({ selectedBoxId, onPackageAdded, hasShipments }) => {
+const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
+  selectedBoxId,
+  onPackageAdded,
+  hasShipments,
+  exportId,
+  status,
+  onStatusUpdated,
+}) => {
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearchAndAdd = async () => {
@@ -28,6 +39,29 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({ selectedBoxId, 
     } catch (err: any) {
       console.error("Failed to add package:", err);
       setError(err.response?.data?.message || "Package not found or could not be added.");
+    }
+  };
+
+  const handleUpdateDeparted = async () => {
+    try {
+      setLoading(true);
+      const updated = await markShipmentExportDeparted(exportId);
+      onStatusUpdated(updated.status);
+
+      if (updated.boxes) {
+        const allPackages = updated.boxes.flatMap((box: any) => box.packages || []);
+        if (allPackages.length > 0) {
+          await Promise.all(
+            allPackages.map((pkg: any) =>
+              updatePackageStatus(pkg.id, "Departed")
+            )
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update to departed", err);
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -66,9 +100,23 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({ selectedBoxId, 
 
       {selectedBoxId && hasShipments && (
         <Box sx={{ display: "flex", gap: 2, flexShrink: 0, marginLeft: "auto" }}>
-          <Button variant="contained" sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none" }}>
-            Update to Departed
-          </Button>
+          {status !== "SHIPMENTS DEPARTED" && (
+            <Button
+              variant="contained"
+              disabled={loading}
+              onClick={handleUpdateDeparted}
+              sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none" }}
+            >
+              {loading ? (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <CircularProgress size={16} color="inherit" />
+                  Updating...
+                </Box>
+              ) : (
+                "Update to Departed"
+              )}
+            </Button>
+          )}
           <Button variant="contained" startIcon={<FileDownloadIcon />} sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, textTransform: "none" }}>
             Export
           </Button>

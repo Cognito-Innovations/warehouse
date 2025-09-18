@@ -120,12 +120,25 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     if (!formData.vendor) {
       newErrors.vendor = "Select Vendor is required";
     }
+    if (!formData.trackingNo) {
+      newErrors.trackingNo = "Reference Tracking is required";
+    }
 
     // Check if at least one piece has weight
-    const hasWeight = pieces.some(piece => piece.weight && parseFloat(piece.weight) > 0);
-    if (!hasWeight) {
-      newErrors.weight = "Weight can't be empty";
-    }
+    pieces.forEach((piece, idx) => {
+      if (!piece.weight || parseFloat(piece.weight) <= 0) {
+        newErrors[`piece_${idx}_weight`] = "Weight is required";
+      }
+      if (!piece.length || parseFloat(piece.length) <= 0) {
+        newErrors[`piece_${idx}_length`] = "Length is required";
+      }
+      if (!piece.width || parseFloat(piece.width) <= 0) {
+        newErrors[`piece_${idx}_width`] = "Width is required";
+      }
+      if (!piece.height || parseFloat(piece.height) <= 0) {
+        newErrors[`piece_${idx}_height`] = "Height is required";
+      }
+    });
 
     setErrors(newErrors);
 
@@ -220,6 +233,10 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
 
       return next;
     });
+    const errorKey = `piece_${index}_${field}`;
+    if (errors[errorKey]) {
+      setErrors((prev) => ({ ...prev, [errorKey]: "" }));
+    }
   };
 
   const handleAddPiece = () => {

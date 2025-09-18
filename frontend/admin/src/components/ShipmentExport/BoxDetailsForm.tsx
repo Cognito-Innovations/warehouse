@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, CircularProgress, TextField } from "@mui/material";
+import { numberInputStyle } from "../../styles/numberInputStyle";
 
 interface BoxDetailsFormProps {
   initialValues?: {
@@ -25,11 +26,18 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
     initialValues?.volumetricWeight || ""
   );
   const [massWeight, setMassWeight] = useState(initialValues?.massWeight || "");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!label || !length || !breadth || !height || !volumetricWeight || !massWeight) return;
-    onSave({ label, length, breadth, height, volumetricWeight, massWeight });
+
+    try {
+      setLoading(true);
+      onSave({ label, length, breadth, height, volumetricWeight, massWeight });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,6 +66,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           type="number"
           fullWidth
           variant="outlined"
+          sx={numberInputStyle}
         />
         <TextField
           label="Breadth (CM)"
@@ -68,6 +77,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           type="number"
           fullWidth
           variant="outlined"
+          sx={numberInputStyle}
         />
         <TextField
           label="Height (CM)"
@@ -78,6 +88,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           type="number"
           fullWidth
           variant="outlined"
+          sx={numberInputStyle}
         />
       </Box>
 
@@ -92,6 +103,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           type="number"
           fullWidth
           variant="outlined"
+          sx={numberInputStyle}
         />
         <TextField
           label="Mass Weight (KG)"
@@ -102,6 +114,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           type="number"
           fullWidth
           variant="outlined"
+          sx={numberInputStyle}
         />
       </Box>
 
@@ -111,7 +124,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           variant="contained"
           type="submit"
           disabled={
-            !label || !length || !breadth || !height || !volumetricWeight || !massWeight
+            loading || !label || !length || !breadth || !height || !volumetricWeight || !massWeight
           }
           sx={{
             textTransform: "none",
@@ -123,7 +136,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
             fontWeight: 500,
           }}
         >
-          Save
+          {loading ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : "Save"}
         </Button>
       </Box>
     </Box>

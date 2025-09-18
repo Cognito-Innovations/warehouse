@@ -97,6 +97,8 @@ const FormFields: React.FC<FormFieldsProps> = ({
           value={formData.trackingNo || ""}
           onChange={(e) => onInputChange("trackingNo", e.target.value)}
           size="medium"
+          error={!!errors.trackingNo}
+          helperText={errors.trackingNo}
         />
       </Grid>
 

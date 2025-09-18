@@ -11,6 +11,7 @@ import { Dayjs } from 'dayjs';
 import Modal from '../common/Modal';
 import { createShipmentExport } from '../../services/api.services';
 import { useNavigate } from 'react-router-dom';
+import { numberInputStyle } from '../../styles/numberInputStyle';
 
 interface ShipmentExportFiltersProps {
   selectedDate: Dayjs | null;
@@ -111,7 +112,10 @@ const ShipmentExportFilters: React.FC<ShipmentExportFiltersProps> = ({ selectedD
             required
             size="small"
             type="number"
-            sx={{ mb: 1 }}
+            sx={{
+              ...numberInputStyle,
+              mb: 1,
+            }}
           />
 
           <Typography variant="caption" color="text.secondary">

@@ -28,7 +28,11 @@ export class ProductsService {
       shopping_request_id: savedProduct.shopping_request_id,
       name: savedProduct.name,
       description: savedProduct.description,
-      unit_price: savedProduct.unit_price,
+      unit_price: 
+        savedProduct.unit_price !== undefined && 
+        savedProduct.unit_price !== null
+          ? savedProduct.unit_price.toString()
+          : undefined,
       currency: savedProduct.currency,
       quantity: savedProduct.quantity,
       url: savedProduct.url,
@@ -69,7 +73,11 @@ export class ProductsService {
       shopping_request_id: updatedProduct.shopping_request_id,
       name: updatedProduct.name,
       description: updatedProduct.description,
-      unit_price: updatedProduct.unit_price,
+      unit_price: 
+        updatedProduct.unit_price !== undefined && 
+        updatedProduct.unit_price !== null
+          ? updatedProduct.unit_price.toString()
+          : undefined,
       currency: updatedProduct.currency,
       quantity: updatedProduct.quantity,
       url: updatedProduct.url,

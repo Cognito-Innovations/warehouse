@@ -325,19 +325,22 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({
             >
               {isPrintingLabel ? 'Printing...' : 'Print Label'}
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<DeleteIcon />}
-              onClick={onDiscard}
-              sx={{
-                bgcolor: '#ef4444',
-                '&:hover': { bgcolor: '#dc2626' },
-                textTransform: 'none',
-                borderRadius: 1,
-              }}
-            >
-              Discard
-            </Button>
+
+            {packageData.status !== "Departed" && (
+              <Button
+                variant="contained"
+                startIcon={<DeleteIcon />}
+                onClick={onDiscard}
+                sx={{
+                  bgcolor: '#ef4444',
+                  '&:hover': { bgcolor: '#dc2626' },
+                  textTransform: 'none',
+                  borderRadius: 1,
+                }}
+              >
+                Discard
+              </Button>
+            )}
           </Stack>
         </Box>
       </CardContent>

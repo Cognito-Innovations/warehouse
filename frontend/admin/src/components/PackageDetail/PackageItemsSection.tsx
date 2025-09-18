@@ -8,6 +8,8 @@ interface PackageItem {
   quantity: number;
   amount: string;
   total: string;
+  unit_price: number;
+  total_price: number;
 }
 
 interface PackageItemsSectionProps {
@@ -95,8 +97,8 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems,
                 <TableRow key={item.id}>
                   <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.name}</TableCell>
                   <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.quantity}</TableCell>
-                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.amount}</TableCell>
-                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.total}</TableCell>
+                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.amount || item.unit_price}</TableCell>
+                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.total || item.total_price}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
                       <IconButton

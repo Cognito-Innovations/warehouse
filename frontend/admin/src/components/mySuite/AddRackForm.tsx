@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, TextField, Button, Stack, Typography } from '@mui/material';
+import { Box, TextField, Button, Stack, Typography, CircularProgress } from '@mui/material';
 
 interface AddRackFormProps {
   onSubmit: (label: string, colorCode: string) => void;
@@ -7,6 +7,7 @@ interface AddRackFormProps {
   initialLabel?: string;
   initialColor?: string;
   mode?: 'add' | 'edit';
+  submitting: boolean;
 }
 
 const AddRackForm: React.FC<AddRackFormProps> = ({
@@ -14,7 +15,8 @@ const AddRackForm: React.FC<AddRackFormProps> = ({
   onCancel, 
   initialLabel = '', 
   initialColor = '#000000', 
-  mode = 'add'
+  mode = 'add',
+  submitting,
 }) => {
   const [label, setLabel] = useState('');
   const [colorCode, setColorCode] = useState('#000000');
@@ -65,8 +67,14 @@ const AddRackForm: React.FC<AddRackFormProps> = ({
           <Button variant="outlined" color="secondary" onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant="contained" color="primary" onClick={handleSubmit}>
-            {mode === 'edit' ? 'Update' : 'Add'}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSubmit}
+            disabled={submitting}
+            startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : null}
+          >
+            {submitting ? (mode === 'edit' ? 'Updating...' : 'Adding...') : mode === 'edit' ? 'Update' : 'Add'}
           </Button>
         </Stack>
       </Stack>

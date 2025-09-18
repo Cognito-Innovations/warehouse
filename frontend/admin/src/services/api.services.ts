@@ -271,6 +271,11 @@ export const getShipmentExportById = async (id: string) => {
   return response.data;
 };
 
+export const markShipmentExportDeparted = async (id: string) => {
+  const response = await api.patch(`/shipment-exports/${id}/departed`);
+  return response.data;
+};
+
 export const updateShipmentExportBox = async (id: number, payload: any) => {
   const response = await api.patch(`/shipment-export-boxes/${id}`, payload);
   return response.data;

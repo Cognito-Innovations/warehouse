@@ -115,6 +115,8 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                     )
                   }
                   size="small"
+                  error={!!errors[`piece_${idx}_weight`]}
+                  helperText={errors[`piece_${idx}_weight`] || ""}
                   sx={{
                     width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } },
                   }}
@@ -143,6 +145,8 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                     )
                   }
                   size="small"
+                  error={!!errors[`piece_${idx}_length`]}
+                  helperText={errors[`piece_${idx}_length`] || ""}
                   sx={{
                     width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } },
                   }}
@@ -156,6 +160,8 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                     )
                   }
                   size="small"
+                  error={!!errors[`piece_${idx}_width`]}
+                  helperText={errors[`piece_${idx}_width`] || ""}
                   sx={{
                     width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } },
                   }}
@@ -169,6 +175,8 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                     )
                   }
                   size="small"
+                  error={!!errors[`piece_${idx}_height`]}
+                  helperText={errors[`piece_${idx}_height`] || ""}
                   sx={{ width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } } }}
                 />
                 <Typography variant="body2" sx={{ fontWeight: 600, color: "#64758b", minWidth: "60px" }}>

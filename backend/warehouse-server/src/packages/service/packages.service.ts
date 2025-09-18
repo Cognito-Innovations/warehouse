@@ -113,30 +113,29 @@ export class PackagesService {
         })) || [],
       items: pkg.items?.length
         ? await Promise.all(
-            pkg.items.map(async (item) => ({
-              id: item.id,
-              package_id: item.package_id,
-              name: item.name,
-              quantity: item.quantity,
-              unit_price: item.unit_price
-                ? Number(
-                    await this.userPreferencesService.getFormattedConvertedPrice(
-                      pkg.user.id,
-                      Number(item.unit_price),
-                    ),
-                  )
-                : 0,
-              total_price: item.total_price
-                ? Number(
-                    await this.userPreferencesService.getFormattedConvertedPrice(
-                      pkg.user.id,
-                      Number(item.total_price),
-                    ),
-                  )
-                : 0,
-              created_at: item.created_at,
-              updated_at: item.updated_at,
-            })),
+            pkg.items.map(async (item) => {
+              const unit_price =
+                await this.userPreferencesService.getFormattedConvertedPrice(
+                  pkg.user.id, 
+                  item.unit_price,
+                );
+              const total_price = 
+                await this.userPreferencesService.getFormattedConvertedPrice(
+                  pkg.user.id,
+                  item.total_price
+                );
+
+              return {
+                id: item.id,
+                package_id: item.package_id,
+                name: item.name,
+                quantity: item.quantity,
+                unit_price,
+                total_price,
+                created_at: item.created_at,
+                updated_at: item.updated_at,
+              }
+            }),
           )
         : [],
     };
@@ -307,7 +306,7 @@ export class PackagesService {
 
   async getAllPackages(): Promise<PackageResponseDto[]> {
     const packages = await this.packageRepository.find({
-      relations: ['measurements', 'items'],
+      relations: ['measurements', 'items', 'user'],
       order: { created_at: 'DESC' },
     });
 
@@ -347,13 +346,13 @@ export class PackagesService {
       // Search by original ID
       packageEntity = await this.packageRepository.findOne({
         where: { id },
-        relations: ['measurements', 'items'],
+        relations: ['measurements', 'items', 'user'],
       });
     } else {
       // Search by package_id or tracking_no
       packageEntity = await this.packageRepository.findOne({
         where: [{ package_id: id }, { tracking_no: id }],
-        relations: ['measurements', 'items'],
+        relations: ['measurements', 'items', 'user'],
       });
     }
 
@@ -369,6 +368,7 @@ export class PackagesService {
       .createQueryBuilder('package')
       .leftJoinAndSelect('package.measurements', 'measurements')
       .leftJoinAndSelect('package.items', 'items')
+      .leftJoinAndSelect('package.user', 'user')
       .where(
         'package.id = :exactQuery OR package.package_id = :exactQuery OR package.tracking_no ILIKE :likeQuery',
         {

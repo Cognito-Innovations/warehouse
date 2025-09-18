@@ -82,9 +82,9 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
               }}
             >
               <TableCell>Shipment No.</TableCell>
-              <TableCell>Tracking No.</TableCell>
+              {/* <TableCell>Tracking No.</TableCell>
               <TableCell>Customer</TableCell>
-              <TableCell>Date</TableCell>
+              <TableCell>Date</TableCell> */}
               <TableCell align="center" />
             </TableRow>
           </TableHead>

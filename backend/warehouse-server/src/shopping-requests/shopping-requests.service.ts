@@ -149,14 +149,11 @@ export class ShoppingRequestsService {
             shopping_request_id: product.shopping_request_id,
             name: product.name,
             description: product.description,
-            unit_price: product.unit_price
-              ? Number(
-                  await this.userPreferencesService.getFormattedConvertedPrice(
-                    request.user_id,
-                    Number(product.unit_price),
-                  ),
-                )
-              : 0,
+            unit_price: 
+              await this.userPreferencesService.getFormattedConvertedPrice(
+                request.user_id,
+                product.unit_price,
+              ),
             currency: product.currency,
             quantity: product.quantity,
             url: product.url,
@@ -252,17 +249,14 @@ export class ShoppingRequestsService {
         ? {
             id: invoice.id,
             invoice_no: invoice.invoice_no,
-            amount: Number(
+            amount:
               await this.userPreferencesService.getFormattedConvertedPrice(
                 shoppingRequest.user_id,
-                Number(invoice.amount),
-              ),
+                invoice.amount,
             ),
-            total: Number(
-              await this.userPreferencesService.getFormattedConvertedPrice(
-                shoppingRequest.user_id,
-                Number(invoice.total),
-              ),
+            total: await this.userPreferencesService.getFormattedConvertedPrice(
+              shoppingRequest.user_id,
+              invoice.total
             ),
             status: invoice.status,
             products: await Promise.all(
@@ -271,12 +265,11 @@ export class ShoppingRequestsService {
                 shopping_request_id: product.shopping_request_id,
                 name: product.name,
                 description: product.description,
-                unit_price: Number(
+                unit_price:
                   await this.userPreferencesService.getFormattedConvertedPrice(
                     shoppingRequest.user_id,
-                    Number(product.unit_price),
+                    product.unit_price,
                   ),
-                ),
                 currency: product.currency,
                 quantity: product.quantity,
                 url: product.url,
@@ -375,17 +368,14 @@ export class ShoppingRequestsService {
         ? {
             id: invoice.id,
             invoice_no: invoice.invoice_no,
-            amount: Number(
+            amount:
               await this.userPreferencesService.getFormattedConvertedPrice(
                 updatedShoppingRequest.user_id,
-                Number(invoice.amount),
+                invoice.amount,
               ),
-            ),
-            total: Number(
-              await this.userPreferencesService.getFormattedConvertedPrice(
-                updatedShoppingRequest.user_id,
-                Number(invoice.total),
-              ),
+            total: await this.userPreferencesService.getFormattedConvertedPrice(
+              updatedShoppingRequest.user_id,
+              invoice.total,
             ),
             status: invoice.status,
             products: await Promise.all(
@@ -394,12 +384,11 @@ export class ShoppingRequestsService {
                 shopping_request_id: product.shopping_request_id,
                 name: product.name,
                 description: product.description,
-                unit_price: Number(
+                unit_price:
                   await this.userPreferencesService.getFormattedConvertedPrice(
                     updatedShoppingRequest.user_id,
-                    Number(product.unit_price),
+                    product.unit_price,
                   ),
-                ),
                 currency: product.currency,
                 quantity: product.quantity,
                 url: product.url,

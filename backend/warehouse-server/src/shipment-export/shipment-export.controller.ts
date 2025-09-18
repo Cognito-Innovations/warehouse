@@ -97,4 +97,15 @@ export class ShipmentExportsController {
   async deleteExport(@Param('id') id: string) {
     return this.exportsService.deleteExport(id);
   }
+
+  @Patch(':id/departed')
+  @ApiOperation({ summary: 'Mark shipment export as departed' })
+  @ApiOkResponse({
+    description: 'Shipment export marked as departed successfully',
+    type: ShipmentExport,
+  })
+  async markAsDeparted(@Param('id') id: string) {
+    return this.exportsService.markAsDeparted(id);
+  }
+
 }
