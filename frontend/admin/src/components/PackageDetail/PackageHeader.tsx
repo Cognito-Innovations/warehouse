@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Chip, Stack, Button, Card, CardContent, CircularProgress } from '@mui/material';
-import { Print as PrintIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Box, Typography, Chip, Stack, Card, CardContent } from '@mui/material';
 import { Person as PersonIcon, Email as EmailIcon, Phone as PhoneIcon } from '@mui/icons-material';
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
@@ -8,6 +7,8 @@ import QRCode from 'qrcode';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { updatePackageStatus } from '../../services/api.services';
+import DynamicButtons from '../DynamicButtons/DynamicButtons';
+import { FEATURE_CONFIG } from '../../utils/trackingConfig';
 
 interface PackageData {
   id: string;
@@ -249,99 +250,16 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({
               </Stack>}
             </Stack>
           </Box>
+                
+            {/* TODO: Try to keep in their RENAME it properly components, also ping me once it renamed it */}
+           <DynamicButtons
+            feature={FEATURE_CONFIG.PACKAGE}
+            status={packageData.status}
+            data={packageData}
+            onDiscard={onDiscard} //TODO: Try to keep in their dedicated components
+            onRefresh={onRefresh} //TODO: Try to keep in their dedicated components
+          />
 
-          {/* Action Buttons - Stacked Vertically */}
-          <Stack direction="row" spacing={1}>
-            {showApprovePaymentButton && (
-              <Button
-                variant="contained"
-                startIcon={isApprovingPayment ? <CircularProgress size={20} color="inherit" /> : null }
-                onClick={onApprovePayment}
-                disabled={isApprovingPayment}
-                sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' }, textTransform: 'none' }}
-              >
-                {isApprovingPayment ? 'Approving...' : 'Approve Payment'}
-              </Button>
-            )}
-
-            {packageData.status === 'Payment Pending' || packageData.status === 'Payment Approved' && (
-              <Button
-                variant="contained"
-                startIcon={isPrintingHold ? <CircularProgress size={20} color="inherit" /> : null }
-                onClick={handlePrintHoldLabel}
-                disabled={isPrintingHold}
-                sx={{ textTransform: 'none' }}
-              >
-                {isPrintingHold ? 'Printing...' : 'Print Hold Label'}
-              </Button>
-            )}
-
-            {packageData.status === "Ready To Ship" && (
-              <Button
-                variant="contained"
-                onClick={handleUpdateToDepart}
-                disabled={isUpdatingStatus}
-              >
-                {isUpdatingStatus ? 'Updating...' : 'Update To Departed'}
-              </Button>
-            )}
-
-            {showPrintCarrierLabelButton && (
-              <Button
-                variant="contained"
-                startIcon={isPrintingCarrier ? <CircularProgress size={20} color="inherit" /> : null }
-                onClick={handlePrintCarrierLabel}
-                sx={{ textTransform: 'none' }}
-              >
-                Print Carrier Label
-              </Button>
-            )}
-
-             {showRaiseInvoiceButton && (
-              <Button
-                variant="contained"
-                onClick={onRaiseInvoice}
-                sx={{
-                  bgcolor: '#3b82f6',
-                  '&:hover': { bgcolor: '#2563eb' },
-                  textTransform: 'none',
-                  borderRadius: 1,
-                }}
-              >
-                Raise Invoice
-              </Button>
-            )}
-            <Button
-              variant="contained"
-              startIcon={isPrintingLabel ? <CircularProgress size={20} color="inherit" /> : <PrintIcon />}
-              onClick={handlePrintLabel}
-              disabled={isPrintingLabel}
-              sx={{
-                bgcolor: '#8b5cf6',
-                '&:hover': { bgcolor: '#7c3aed' },
-                textTransform: 'none',
-                borderRadius: 1,
-              }}
-            >
-              {isPrintingLabel ? 'Printing...' : 'Print Label'}
-            </Button>
-
-            {packageData.status !== "Departed" && (
-              <Button
-                variant="contained"
-                startIcon={<DeleteIcon />}
-                onClick={onDiscard}
-                sx={{
-                  bgcolor: '#ef4444',
-                  '&:hover': { bgcolor: '#dc2626' },
-                  textTransform: 'none',
-                  borderRadius: 1,
-                }}
-              >
-                Discard
-              </Button>
-            )}
-          </Stack>
         </Box>
       </CardContent>
     </Card>
