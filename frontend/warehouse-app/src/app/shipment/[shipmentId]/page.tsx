@@ -17,7 +17,10 @@ interface IShipmentRequest {
   id: string;
   shipment_id: string;
   shipment_uuid: string;
-  status: string;
+  status: {
+    label: string;
+    value: string;
+  };
   created_at: string;
 }
 
@@ -97,7 +100,7 @@ export default function ShipmentDetailPage() {
     setConfirmOpen(true);
   };
 
-  const displayInvoiceSection = request && ['Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed'].includes(request.status);
+  const displayInvoiceSection = request && ['Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed'].includes(request.status.value);
 
   if (loading) {
     return (
@@ -139,7 +142,7 @@ export default function ShipmentDetailPage() {
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-[320px] lg:flex-shrink-0">
             <TrackingStatus
-              status={request.status}
+              status={request.status.value}
               createdAt={request.created_at}
             />
           </div>

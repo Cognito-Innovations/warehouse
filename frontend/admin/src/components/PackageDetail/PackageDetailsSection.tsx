@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Edit as EditIcon } from '@mui/icons-material';
-import { Box, Typography, Grid, Card, CardContent, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, CircularProgress } from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Edit as EditIcon, CloseOutlined } from '@mui/icons-material';
+import { Box, Typography, Grid, Card, CardContent, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, CircularProgress, Stack, IconButton } from '@mui/material';
 import { getRacks, updatePackage } from '../../services/api.services';
-import type { Rack } from '../../types';
+import type { Rack, Status } from '../../types';
 
 interface PackageDetailsSectionProps {
   packageData: {
@@ -13,8 +13,9 @@ interface PackageDetailsSectionProps {
     dangerousGood: string;
     createdBy: string;
     createdAt: string;
-    status?: string;
+    status?: Status;
     rack?: string,
+    rackColor?: string,
     count?: number;
     measurements?: {
       pieceNumber: number;
@@ -31,7 +32,9 @@ interface PackageDetailsSectionProps {
 
 const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageData, onRefresh }) => {
   const [openModal, setOpenModal] = useState(false);
-  const [racks, setRacks] = useState<Rack[]>([]);
+  const [rackModalOpen, setRackModalOpen] = useState(false);
+  const [rackSlots, setRackSlots] = useState<Rack[]>([]);
+  const [selectedRackSlot, setSelectedRackSlot] = useState('');
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     trackingNo: packageData.trackingNo || "",
@@ -44,23 +47,27 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
   const fetchRacks = async () => {
     try {
       const data = await getRacks();
-      setRacks(data);
+      setRackSlots(data);
     
-      const matchedRack = data.find((r) => r.label === packageData.rack);
-      setFormData((prev) => ({
-        ...prev,
-        rackSlot: matchedRack?.id || '',
-      }));
+      const currentRack = data.find((r) => r.label === packageData.rack);
+      if (currentRack) {
+        setSelectedRackSlot(currentRack.id);
+      }
     } catch (err) {
       console.error("Failed to fetch racks", err);
     }
   };
 
   useEffect(() => {
-    if (openModal) {
+    if (rackModalOpen) {
       fetchRacks();
     }
-  }, [openModal, packageData.rack]);
+  }, [rackModalOpen, packageData.rack]);
+
+  const currentRack = useMemo(() => 
+    rackSlots.find(r => r.id === selectedRackSlot || r.label === packageData.rack), 
+    [rackSlots, selectedRackSlot, packageData.rack]
+  );
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -85,7 +92,6 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
         weight: formData.weight,
         volumetric_weight: formData.volumetricWeight,
         dangerous_good: formData.dangerousGood === "true",
-        rack_slot: formData.rackSlot,
       };
 
       await updatePackage(packageData.actual_id, payload);
@@ -93,6 +99,29 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
       handleCloseModal();
     } catch (err) {
       console.error("Failed to update package", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOpenRackModal = () => {
+    setRackModalOpen(true);
+    fetchRacks();
+  };
+
+  const handleCloseRackModal = () => {
+    setRackModalOpen(false);
+  };
+
+  const handleSaveRackSlot = async () => {
+    if (!selectedRackSlot) return;
+    setSaving(true);
+    try {
+      await updatePackage(packageData.actual_id, { rack_slot: selectedRackSlot });
+      onRefresh();
+      setRackModalOpen(false);
+    } catch (err) {
+      console.error("Failed to update rack slot", err);
     } finally {
       setSaving(false);
     }
@@ -166,7 +195,10 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
 
           {/* Status Indicator */}
            {packageData.rack && (
-             <Box sx={{ bgcolor: '#f0fdf4', p: 2, borderRadius: 2, border: '1px solid #84cc16', width: "220px" }}>
+             <Box
+              sx={{ bgcolor: '#f0fdf4', p: 2, borderRadius: 2, border: '1px solid #84cc16', width: "220px", cursor: 'pointer' }}
+              onClick={handleOpenRackModal}
+             >
                <Typography variant="body2" sx={{ fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
                  {packageData.rack} →
                </Typography>
@@ -298,21 +330,6 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
                   <option value="true">Yes</option>
                 </TextField>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Rack Slot"
-                  value={formData.rackSlot}
-                  onChange={handleInputChange('rackSlot')}
-                >
-                  {racks.map((rack) => (
-                    <MenuItem key={rack.id} value={rack.id}>
-                      {rack.label} ({rack.count} pkgs)
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
             </Grid>
           </Box>
         </DialogContent>
@@ -336,6 +353,98 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
             {saving ? <CircularProgress size={20} sx={{ color: 'white' }} /> : "Save Changes"}
           </Button>
         </DialogActions>
+      </Dialog>
+
+       <Dialog 
+        open={rackModalOpen} 
+        onClose={handleCloseRackModal} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: '#1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Rack Movements
+          <IconButton onClick={handleCloseRackModal} sx={{ color: '#64748b' }}>
+            <CloseOutlined />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} alignItems="center" sx={{ pt: 1 }}>
+            <Grid item xs={8}>
+              <TextField
+                select
+                fullWidth
+                required
+                label="Rack Slot"
+                value={selectedRackSlot}
+                onChange={(e) => setSelectedRackSlot(e.target.value)}
+              >
+                {rackSlots.map(r => (
+                  <MenuItem key={r.id} value={r.id}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                      <Box 
+                        component="span"
+                        sx={{
+                          width: 14,
+                          height: 14,
+                          borderRadius: '50%',
+                          backgroundColor: r.color || '#cccccc', // Fallback color
+                          flexShrink: 0
+                        }}
+                      />
+                      <Typography variant="body2" component="span">
+                        {r.label}
+                      </Typography>
+                      <Typography variant="body2" component="span" sx={{ color: '#64748b' }}>
+                        (Slot has {r.count} packages)
+                      </Typography>
+                    </Stack>
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={4}>
+              <Button 
+                onClick={handleSaveRackSlot} 
+                variant="contained" 
+                fullWidth
+                disabled={saving || !selectedRackSlot || selectedRackSlot === rackSlots.find(r => r.label === packageData.rack)?.id}
+                sx={{ 
+                    textTransform: 'none', 
+                    bgcolor: '#4f46e5', 
+                    '&:hover': { bgcolor: '#4338ca' },
+                }}
+              >
+                {saving ? <CircularProgress size={24} color="inherit" /> : 'Update'}
+              </Button>
+            </Grid>
+          </Grid>
+          
+          {currentRack && (
+            <Box sx={{ mt: 3, borderTop: '1px solid #e2e8f0', pt: 3 }}>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box 
+                  component="span"
+                  sx={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    backgroundColor: currentRack.color || '#cccccc',
+                    flexShrink: 0
+                  }}
+                />
+                <Box>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b', textTransform: 'uppercase' }}>
+                    {currentRack.label}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#64748b' }}>
+                    {packageData.createdBy} on {new Date(parseInt(packageData.createdAt) * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          )}
+        </DialogContent>
       </Dialog>
     </>
   )

@@ -40,7 +40,10 @@ export class PackagesService {
     return {
       id: pkg.id,
       tracking_no: pkg.tracking_no,
-      status: pkg.status,
+      status: {
+        label: pkg.status,
+        value: pkg.status
+      },
       shipment_id: pkg.shipment_id,
       shipment_uuid: pkg.shipment_uuid,
       customer: pkg.user
@@ -219,6 +222,17 @@ export class PackagesService {
 
         for (let i = 0; i < createPackageDto.pieces.length; i++) {
           const piece = createPackageDto.pieces[i];
+
+          const hasPartialDimensions =
+            (piece.length || piece.width || piece.height) && 
+            !(piece.length && piece.width && piece.height);
+
+          if (hasPartialDimensions) {
+            throw new BadRequestException(
+              `For piece ${i + 1}, if any dimension (length, width, height) is provided, all three are required.`
+            );
+          }
+
           const pieceWeight = parseFloat(piece.weight || '0');
           totalWeight += pieceWeight;
 
@@ -500,39 +514,57 @@ export class PackagesService {
     return package_id;
   }
 
-  // private async generateTrackingNumber(): Promise<string> {
-  //   const prefix = 'TRK';
-  //   const timestamp = Date.now().toString().slice(-8);
-  //   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  //   return `${prefix}${timestamp}${random}`;
-  // }
-
   async updatePackageInfo(
     id: string,
     dto: UpdatePackageDto,
     updated_by: string,
   ) {
-    const pkg = await this.packageRepository.findOne({ where: { id } });
+    const pkg = await this.packageRepository.findOne({ 
+      where: { id },
+      relations: ['rack_slot'],
+    });
     if (!pkg) throw new NotFoundException('Package not found');
-    if (dto.tracking_no) pkg.tracking_no = dto.tracking_no;
-    if (dto.weight) pkg.total_weight = parseFloat(dto.weight);
-    if (dto.volumetric_weight)
+
+    const oldRack = pkg.rack_slot;
+
+    if (typeof dto.tracking_no !== 'undefined') {
+      pkg.tracking_no = dto.tracking_no;
+    }
+    if (typeof dto.weight !== 'undefined') {
+      pkg.total_weight = parseFloat(dto.weight);
+    }
+    if (typeof dto.volumetric_weight !== 'undefined') {
       pkg.total_volumetric_weight = parseFloat(dto.volumetric_weight);
+    }
     if (typeof dto.dangerous_good !== 'undefined') {
       pkg.dangerous_good = dto.dangerous_good;
     }
-    if (dto.rack_slot) {
-      const rack = await this.rackRepository.findOne({
-        where: { id: dto.rack_slot },
-      });
-      if (!rack) throw new NotFoundException('Rack not found');
-      pkg.rack_slot = rack;
+    if (typeof dto.rack_slot !== 'undefined' && dto.rack_slot !== (oldRack?.id || null)) {
+      if (oldRack) {
+        oldRack.count = Math.max(0, oldRack.count - 1);
+        await this.rackRepository.save(oldRack);
+      }
+
+      if (dto.rack_slot === null || dto.rack_slot === '') {
+          pkg.rack_slot = null;
+      } else {
+          const newRack = await this.rackRepository.findOne({
+              where: { id: dto.rack_slot },
+          });
+          if (!newRack) throw new NotFoundException('New Rack not found');
+          newRack.count += 1;
+          await this.rackRepository.save(newRack);
+
+          pkg.rack_slot = newRack;
+      }
     }
+
     const user = await this.userRepository.findOne({
       where: { id: updated_by },
     });
     if (!user) throw new NotFoundException('User not found');
     pkg.updated_by = user;
+    
     return await this.packageRepository.save(pkg);
   }
 
@@ -569,7 +601,7 @@ export class PackagesService {
     });
     if (!pkg) {
       throw new NotFoundException(
-        `----Package not found with shipment_uuid: ${shipment_uuid}`,
+        `Package not found with shipment_uuid: ${shipment_uuid}`,
       );
     }
 

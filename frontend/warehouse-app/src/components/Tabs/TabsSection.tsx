@@ -195,7 +195,7 @@ const TabsSection = () => {
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-900">{pkg.tracking_no}</h4>
                         <p className="text-sm text-gray-600">Package ID: {pkg.package_id}</p>
-                        <p className="text-sm text-gray-600">Status: <span className="text-green-600 font-medium">{pkg.status}</span></p>
+                        <p className="text-sm text-gray-600">Status: <span className="text-green-600 font-medium">{pkg.status.value}</span></p>
                         {pkg.customer && (
                           <p className="text-sm text-gray-600">Customer: <span className="font-medium">{pkg.customer.name}</span></p>
                         )}
@@ -254,7 +254,7 @@ const TabsSection = () => {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2 text-gray-700">
                         <HourglassIcon fontSize="small" className="text-gray-500" />
-                        <span className="uppercase font-medium">{shipment.status}</span>
+                        <span className="uppercase font-medium">{shipment.status.value}</span>
                       </div>
 
                       <button

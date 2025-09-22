@@ -5,7 +5,8 @@ import {
   IsOptional,
   IsArray,
   ValidateNested,
-  Matches
+  Matches,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -20,6 +21,7 @@ export class PackagePieceDto {
 
   @IsString()
   @IsOptional()
+  @ValidateIf((object, value) => value !== '')
   @Matches(/^(\d{1,6}(\.\d{1,2})?)$/, {
     message:
       'Length must be a number with up to 6 digits before and 2 digits after the decimal.'
@@ -28,6 +30,7 @@ export class PackagePieceDto {
 
   @IsString()
   @IsOptional()
+  @ValidateIf((object, value) => value !== '')
   @Matches(/^(\d{1,6}(\.\d{1,2})?)$/, {
     message:
       'Width must be a number with up to 6 digits before and 2 digits after the decimal.'
@@ -36,6 +39,7 @@ export class PackagePieceDto {
 
   @IsString()
   @IsOptional()
+  @ValidateIf((object, value) => value !== '')
   @Matches(/^(\d{1,6}(\.\d{1,2})?)$/, {
     message:
       'Height must be a number with up to 6 digits before and 2 digits after the decimal.'
@@ -44,6 +48,7 @@ export class PackagePieceDto {
 
   @IsString()
   @IsOptional()
+  @ValidateIf((object, value) => value !== '')
   @Matches(/^(\d{1,7}(\.\d{1,3})?)$/, {
     message:
       'Volumetric weight must be a number with up to 7 digits before and 3 digits after the decimal.'

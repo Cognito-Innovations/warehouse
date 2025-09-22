@@ -74,7 +74,6 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     }
   };
 
-
   useEffect(() => {
     if (open) {
       fetchUsers();
@@ -129,14 +128,20 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       if (!piece.weight || parseFloat(piece.weight) <= 0) {
         newErrors[`piece_${idx}_weight`] = "Weight is required";
       }
-      if (!piece.length || parseFloat(piece.length) <= 0) {
-        newErrors[`piece_${idx}_length`] = "Length is required";
-      }
-      if (!piece.width || parseFloat(piece.width) <= 0) {
-        newErrors[`piece_${idx}_width`] = "Width is required";
-      }
-      if (!piece.height || parseFloat(piece.height) <= 0) {
-        newErrors[`piece_${idx}_height`] = "Height is required";
+
+      const hasSomeDimension = piece.length || piece.width || piece.height;
+      const hasAllDimensions = piece.length && piece.width && piece.height;
+
+      if (hasSomeDimension && !hasAllDimensions) {
+        if (!piece.length) {
+          newErrors[`piece_${idx}_length`] = "Length is required.";
+        }
+        if (!piece.width) {
+          newErrors[`piece_${idx}_width`] = "Width is required.";
+        }
+        if (!piece.height) {
+          newErrors[`piece_${idx}_height`] = "Height is required.";
+        }
       }
     });
 
@@ -222,20 +227,33 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
   const handlePieceChange = (index: number, field: string, value: string) => {
     setPieces((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
+      const updatedPiece = { ...next[index], [field]: value };
+      next[index] = updatedPiece;
 
       // Auto-calculate volumetric weight when dimensions change
-      if (field === 'length' || field === 'width' || field === 'height') {
-        const piece = next[index];
-        const volWeight = calculateVolumetricWeight(piece.length, piece.width, piece.height);
-        next[index].volumetricWeight = volWeight;
+      if (['length', 'width', 'height'].includes(field)) {
+        const volWeight = calculateVolumetricWeight(updatedPiece.length, updatedPiece.width, updatedPiece.height);
+        updatedPiece.volumetricWeight = volWeight;
       }
-
       return next;
     });
-    const errorKey = `piece_${index}_${field}`;
-    if (errors[errorKey]) {
-      setErrors((prev) => ({ ...prev, [errorKey]: "" }));
+    const isVolumetricField = ['length', 'width', 'height'].includes(field);
+  
+    const changedPiece = { ...pieces[index], [field]: value };
+    const areAllVolumetricFieldsEmpty = !changedPiece.length && !changedPiece.width && !changedPiece.height;
+
+    if (isVolumetricField && areAllVolumetricFieldsEmpty) {
+      setErrors((prev) => ({
+        ...prev,
+        [`piece_${index}_length`]: "",
+        [`piece_${index}_width`]: "",
+        [`piece_${index}_height`]: "",
+      }));
+    } else {
+      const errorKey = `piece_${index}_${field}`;
+      if (errors[errorKey]) {
+        setErrors((prev) => ({ ...prev, [errorKey]: "" }));
+      }
     }
   };
 

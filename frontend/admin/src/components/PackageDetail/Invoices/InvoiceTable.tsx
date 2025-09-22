@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import InvoiceRow from "./InvoiceRow";
 
-const InvoiceTable: React.FC<{ packageData: any }> = ({ packageData }) => {
+const InvoiceTable = ({ packageData }) => {
   const invoice = {
     invoice_no: `INV/CN/${new Date().getFullYear()}/${packageData.id}`,
     amount: 36.50,

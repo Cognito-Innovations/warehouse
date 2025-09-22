@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton } from '@mui/material';
 import { Download as DownloadIcon, Upload as UploadIcon, Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { addPackageItem, bulkUploadPackageItems, deletePackageItem, updatePackageItem } from '../../services/api.services';
+import AddItemModal from './AddItemModal';
 
 interface PackageItem {
   id: string;
@@ -14,143 +18,291 @@ interface PackageItem {
 
 interface PackageItemsSectionProps {
   packageItems: PackageItem[];
-  onDownloadFormat: () => void;
-  onBulkUpload: () => void;
-  onOpenAddItemModal: () => void;
-  onEditItem: (item: PackageItem) => void;
-  onDeleteItem: (itemId: string) => void;
+  setPackageItems: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems, onDownloadFormat, onBulkUpload, onOpenAddItemModal, onEditItem, onDeleteItem}) => {
+const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems, setPackageItems }) => {
+  const { id } = useParams<{ id: string }>();
+
+  const [addItemModalOpen, setAddItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [isSavingItem, setIsSavingItem] = useState(false);
+  const [newItem, setNewItem] = useState({
+    name: '',
+    quantity: 1,
+    amount: '',
+    total: ''
+  });
+
+  // Handlers moved from PackageDetail
+  const handleOpenAddItemModal = () => {
+    setNewItem({ name: '', quantity: 1, amount: '', total: '' });
+    setEditingItem(null);
+    setAddItemModalOpen(true);
+  };
+
+  const handleCloseAddItemModal = () => {
+    setAddItemModalOpen(false);
+    setEditingItem(null);
+    setNewItem({ name: '', quantity: 1, amount: '', total: '' });
+  };
+
+  const handleEditItem = (item: any) => {
+    setEditingItem(item);
+    setNewItem({ ...item });
+    setAddItemModalOpen(true);
+  };
+
+  const handleDeleteItem = async (itemId: string) => {
+    if (!id) return;
+    try {
+      await deletePackageItem(id, itemId);
+      setPackageItems(prev => prev.filter(item => item.id !== itemId));
+      toast.success('Item deleted successfully!');
+    } catch (err) {
+      console.error('Failed to delete item:', err);
+      toast.error('Failed to delete item.');
+    }
+  };
+
+  const handleSaveItem = async () => {
+    if (!id) return;
+
+    const amountRegex = /^\d{1,6}$/;
+    if (!amountRegex.test(newItem.amount.toString())) {
+      toast.error("Amount should be a number up to 6 digits");
+      return;
+    }
+
+    setIsSavingItem(true);
+    try {
+      const itemData = {
+        name: newItem.name,
+        quantity: newItem.quantity,
+        unit_price: parseFloat(newItem.amount.replace('$', '')) || 0,
+        total_price: parseFloat(newItem.total.replace('$', '')) || 0
+      };
+
+      if (editingItem) {
+        await updatePackageItem(id, editingItem.id, itemData);
+        setPackageItems(prev => prev.map(item =>
+          item.id === editingItem.id ? { ...newItem, id: editingItem.id } : item
+        ));
+        toast.success('Item updated successfully!');
+      } else {
+        const response = await addPackageItem(id, itemData);
+        const newItemWithId = { ...newItem, id: response.id || Date.now().toString() };
+        setPackageItems(prev => [...prev, newItemWithId]);
+        toast.success('Item added successfully!');
+      }
+      handleCloseAddItemModal();
+    } catch (err) {
+      console.error('Failed to save item:', err);
+      toast.error('Failed to save item.');
+    } finally {
+      setIsSavingItem(false);
+    }
+  };
+
+  const handleItemInputChange = (field: string, value: string | number) => {
+    setNewItem(prev => {
+      const updated = { ...prev, [field]: value };
+      if (field === 'quantity' || field === 'amount') {
+        const quantity = field === 'quantity' ? Number(value) : prev.quantity;
+        const amount = field === 'amount' ? value : prev.amount;
+        const amountValue = parseFloat(amount.toString().replace('$', '')) || 0;
+        updated.total = `$${(quantity * amountValue).toFixed(2)}`;
+      }
+      return updated;
+    });
+  };
+
+  const handleDownloadFormat = () => {
+    const csvContent = "Name,Quantity,Amount,Total";
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'package_items_template.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleBulkUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,.xlsx,.xls';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file && id) {
+        try {
+          const mockBulkData = [
+            { name: 'Coffee Mug', quantity: 2, unit_price: 15.00, total_price: 30.00 },
+            { name: 'Water Bottle', quantity: 1, unit_price: 25.00, total_price: 25.00 }
+          ];
+          
+          const response = await bulkUploadPackageItems(id, mockBulkData);
+          
+          const newItems = response.items?.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            amount: `$${item.unit_price.toFixed(2)}`,
+            total: `$${item.total_price.toFixed(2)}`
+          })) || [];
+          
+          setPackageItems(prev => [...prev, ...newItems]);
+          toast.success('Items uploaded successfully!');
+        } catch (err) {
+          console.error('Failed to bulk upload items:', err);
+          toast.error('Failed to upload items.');
+        }
+      }
+    };
+    input.click();
+  };
+  
   return (
-    <Box sx={{ mb: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-          Package Items
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            size="small"
-            onClick={onDownloadFormat}
-            sx={{
-              bgcolor: '#8b5cf6',
-              '&:hover': { bgcolor: '#7c3aed' },
-              textTransform: 'none',
-              borderRadius: 1,
-              color: 'white',
-              borderColor: '#8b5cf6'
-            }}
-          >
-            Download format
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<UploadIcon />}
-            size="small"
-            onClick={onBulkUpload}
-            sx={{
-              bgcolor: '#8b5cf6',
-              '&:hover': { bgcolor: '#7c3aed' },
-              textTransform: 'none',
-              borderRadius: 1,
-              color: 'white',
-              borderColor: '#8b5cf6'
-            }}
-          >
-            Bulk Upload
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            size="small"
-            onClick={onOpenAddItemModal}
-            sx={{
-              bgcolor: '#3b82f6',
-              '&:hover': { bgcolor: '#2563eb' },
-              textTransform: 'none',
-              borderRadius: 1,
-              px: 2,
-              py: 1
-            }}
-          >
-            Add Item
-          </Button>
+    <>
+      <Box sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
+            Package Items
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              size="small"
+              onClick={handleDownloadFormat}
+              sx={{
+                bgcolor: '#8b5cf6',
+                '&:hover': { bgcolor: '#7c3aed' },
+                textTransform: 'none',
+                borderRadius: 1,
+                color: 'white',
+                borderColor: '#8b5cf6'
+              }}
+            >
+              Download format
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<UploadIcon />}
+              size="small"
+              onClick={handleBulkUpload}
+              sx={{
+                bgcolor: '#8b5cf6',
+                '&:hover': { bgcolor: '#7c3aed' },
+                textTransform: 'none',
+                borderRadius: 1,
+                color: 'white',
+                borderColor: '#8b5cf6'
+              }}
+            >
+              Bulk Upload
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              size="small"
+              onClick={handleOpenAddItemModal}
+              sx={{
+                bgcolor: '#3b82f6',
+                '&:hover': { bgcolor: '#2563eb' },
+                textTransform: 'none',
+                borderRadius: 1,
+                px: 2,
+                py: 1
+              }}
+            >
+              Add Item
+            </Button>
+          </Box>
         </Box>
+
+        {packageItems && packageItems.length > 0 ? (
+          <TableContainer sx={{bgcolor: "#ffffff", borderRadius: 2}}>
+            <Table size="medium">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Name</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Quantity</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Amount</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Total</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {packageItems.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.name}</TableCell>
+                    <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.quantity}</TableCell>
+                    <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.amount || item.unit_price}</TableCell>
+                    <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.total || item.total_price}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditItem(item)}
+                          sx={{
+                            bgcolor: '#3b82f6',
+                            color: 'white',
+                            width: 32,
+                            height: 32,
+                            '&:hover': { bgcolor: '#2563eb' }
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteItem(item.id)}
+                          sx={{
+                            bgcolor: '#f97316',
+                            color: 'white',
+                            width: 32,
+                            height: 32,
+                            '&:hover': { bgcolor: '#ea580c' }
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Box sx={{ 
+            p: 4, 
+            textAlign: 'center', 
+            bgcolor: '#f8fafc', 
+            borderRadius: 2, 
+            border: '1px solid #e2e8f0' 
+          }}>
+            <Typography variant="body1" sx={{ color: '#64748b', mb: 2 }}>
+              No package items added yet
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+              Click "Add Item" to start adding products to this package
+            </Typography>
+          </Box>
+        )}
       </Box>
 
-      {packageItems && packageItems.length > 0 ? (
-        <TableContainer sx={{bgcolor: "#ffffff", borderRadius: 2}}>
-          <Table size="medium">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Quantity</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Amount</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Total</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {packageItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.name}</TableCell>
-                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.quantity}</TableCell>
-                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.amount || item.unit_price}</TableCell>
-                  <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.total || item.total_price}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      <IconButton
-                        size="small"
-                        onClick={() => onEditItem(item)}
-                        sx={{
-                          bgcolor: '#3b82f6',
-                          color: 'white',
-                          width: 32,
-                          height: 32,
-                          '&:hover': { bgcolor: '#2563eb' }
-                        }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => onDeleteItem(item.id)}
-                        sx={{
-                          bgcolor: '#f97316',
-                          color: 'white',
-                          width: 32,
-                          height: 32,
-                          '&:hover': { bgcolor: '#ea580c' }
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      ) : (
-        <Box sx={{ 
-          p: 4, 
-          textAlign: 'center', 
-          bgcolor: '#f8fafc', 
-          borderRadius: 2, 
-          border: '1px solid #e2e8f0' 
-        }}>
-          <Typography variant="body1" sx={{ color: '#64748b', mb: 2 }}>
-            No package items added yet
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-            Click "Add Item" to start adding products to this package
-          </Typography>
-        </Box>
-      )}
-    </Box>
+      <AddItemModal
+        open={addItemModalOpen}
+        editingItem={editingItem}
+        newItem={newItem}
+        onClose={handleCloseAddItemModal}
+        onSave={handleSaveItem}
+        onInputChange={handleItemInputChange}
+        loading={isSavingItem}
+      />
+    </>
   );
 };
 

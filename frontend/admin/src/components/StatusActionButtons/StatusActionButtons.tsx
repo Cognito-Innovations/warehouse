@@ -1,16 +1,16 @@
 import React from 'react';
 import { Stack } from '@mui/material';
-import { STATUS_CONFIG } from '../../utils/trackingConfig';
+import { StatusActionMap } from '../../utils/trackingConfig';
 
-interface DynamicButtonsProps {
+interface StatusActionButtonsProps {
   feature: string;
   status: string;
   data: any;
   [key: string]: any;
 }
 
-const DynamicButtons: React.FC<DynamicButtonsProps> = ({ feature, status, data, ...restProps }) => {
-  const buttonConfigs = STATUS_CONFIG[feature]?.[status] || [];
+const StatusActionButtons: React.FC<StatusActionButtonsProps> = ({ feature, status, data, ...restProps }) => {
+  const buttonConfigs = StatusActionMap[feature]?.[status] || [];
   if (!buttonConfigs.length) {
     return null;
   }
@@ -25,4 +25,4 @@ const DynamicButtons: React.FC<DynamicButtonsProps> = ({ feature, status, data, 
   );
 };
 
-export default DynamicButtons;
+export default StatusActionButtons;

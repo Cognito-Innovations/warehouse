@@ -73,3 +73,13 @@ a {
 .animate-slideIn {
   animation: slideIn 0.3s ease-out;
 }
+
+.hide-number-arrows::-webkit-outer-spin-button,
+.hide-number-arrows::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.hide-number-arrows {
+  -moz-appearance: textfield;
+}
