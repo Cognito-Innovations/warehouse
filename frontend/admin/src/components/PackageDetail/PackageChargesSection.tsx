@@ -3,7 +3,11 @@ import { Box, Typography, Card, CardContent, Button, Table, TableBody, TableCell
 import { Add as AddIcon } from '@mui/icons-material';
 import { toast } from 'sonner';
 
-const PackageChargesSection: React.FC = () => {
+interface PackageChargesSectionProps {
+  isDiscarded: boolean;
+}
+
+const PackageChargesSection: React.FC<PackageChargesSectionProps> = ({ isDiscarded }) => {
   // Mock data - replace with actual data from props or API
   const charges: any[] = [
     // { summary: 'Storage Fee', price: 25.00 },
@@ -27,7 +31,8 @@ const PackageChargesSection: React.FC = () => {
             variant="contained"
             size="small"
             startIcon={<AddIcon />}
-            onClick={handleAddClick}
+            onClick={isDiscarded ? undefined : handleAddClick}
+            disabled={isDiscarded}
             sx={{ 
               bgcolor: '#3b82f6',
               '&:hover': { bgcolor: '#2563eb' }, 

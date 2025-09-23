@@ -15,16 +15,22 @@ interface Document {
 interface PhotosDocumentsSectionProps {
   packageData: any;
   onUploadSuccess?: () => void;
+  isDiscarded: boolean;
 }
 
-const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ packageData, onUploadSuccess }) => {
+const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ packageData, onUploadSuccess, isDiscarded }) => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const isUploadDisabled = !packageData.shipment_uuid;
+
   const fetchDocs = async () => {
-    if (!packageData.shipment_uuid) return;
+    if (isUploadDisabled) {
+      setDocuments([]);
+      return;
+    };
     try {
       const docs = await getShipmentDocuments(packageData.shipment_uuid);
       setDocuments(docs);
@@ -39,6 +45,11 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ package
   }, [packageData.shipment_uuid]);
 
   const handleFileSelect = async (files: FileList | null) => {
+    if (isUploadDisabled) {
+      toast.error("You can't upload files until the package is added to a shipment.");
+      return;
+    }
+
     if (!files || files.length === 0) return;
     setUploading(true);
     const filesArray = Array.from(files);
@@ -84,6 +95,10 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ package
   };
   
   const handleFileClick = () => {
+    if (isUploadDisabled) {
+      toast.error("You can't upload files until the package is added to a shipment.");
+      return;
+    }
     if (!uploading) fileInputRef.current?.click();
   };
 
@@ -105,7 +120,7 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ package
               textTransform: 'none',
               borderRadius: 1,
             }}
-            disabled={uploading}
+            disabled={isDiscarded || uploading || isUploadDisabled}
           >
             ADD
           </Button>
@@ -138,17 +153,17 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ package
             {documents.length === 0 ? (
               <Box sx={{ mb: 2 }}>
                 <Box
-                  onClick={handleFileClick}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
+                  onClick={isDiscarded ? undefined : handleFileClick}
+                  onDragOver={isDiscarded || uploading ? undefined : handleDragOver}
+                  onDragLeave={isDiscarded || uploading ? undefined : handleDragLeave}
+                  onDrop={isDiscarded || uploading ? undefined : handleDrop}
                   sx={{
                     border: `2px dashed ${isDragOver ? '#3b82f6' : '#d1d5db'}`,
                     borderRadius: 2, p: 3, textAlign: 'center',
-                    cursor: uploading ? 'not-allowed' : 'pointer',
+                    cursor: isDiscarded || uploading || isUploadDisabled ? 'not-allowed' : 'pointer',
                     bgcolor: isDragOver ? '#f0f9ff' : '#fafafa',
                     transition: 'all 0.2s ease-in-out',
-                    opacity: uploading ? 0.6 : 1,
+                    opacity: isDiscarded || uploading ? 0.6 : 1,
                     '&:hover': {
                       borderColor: uploading ? '#d1d5db' : '#3b82f6',
                       bgcolor: uploading ? '#fafafa' : '#f0f9ff'
@@ -169,7 +184,7 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ package
                     <>
                       <UploadIcon sx={{ fontSize: 48, color: isDragOver ? '#3b82f6' : '#9ca3af', mb: 1 }} />
                       <Typography variant="body2" sx={{ color: '#6b7280', mb: 0.5 }}>
-                        {isDragOver ? 'Drop files here' : 'Click to upload or drag and drop'}
+                        {isUploadDisabled ? 'Awaiting shipment creation' : (isDragOver ? 'Drop files here' : 'Click to upload or drag and drop')}
                       </Typography>
                       <Typography variant="caption" sx={{ color: '#9ca3af' }}>
                         PNG, JPG, PDF up to 10MB
@@ -181,27 +196,33 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ package
             ) : (
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {documents.map((doc) => (
-                    <Box key={doc.id} sx={{ position: 'relative' }}>
-                       <Box
-                        component="img"
-                        sx={{
-                          width: 80, height: 60, objectFit: 'cover', borderRadius: 1,
-                          border: '1px solid #e9ecef', cursor: 'pointer'
-                        }}
-                        alt={doc.original_filename}
-                        src={doc.document_url.match(/\.pdf$/i) ? '/pdf-placeholder.png' : doc.document_url}
-                        onClick={() => window.open(doc.document_url, '_blank')}
-                      />
-                    </Box>
-                  ))}
+                  {documents.map((doc) => {
+                    if (!doc || !doc.document_url) {
+                      return null;
+                    }
+
+                    return (
+                      <Box key={doc.id} sx={{ position: 'relative' }}>
+                         <Box
+                          component="img"
+                          sx={{
+                            width: 80, height: 60, objectFit: 'cover', borderRadius: 1,
+                            border: '1px solid #e9ecef', cursor: 'pointer'
+                          }}
+                          alt={doc.original_filename}
+                          src={doc.document_url.match(/\.pdf$/i) ? '/pdf-placeholder.png' : doc.document_url}
+                          onClick={() => window.open(doc.document_url, '_blank')}
+                        />
+                      </Box>
+                    );
+                  })}
                 </Box>
                 <Button
                   variant="outlined"
                   size="small"
                   startIcon={uploading ? <CircularProgress size={16} /> : <AddIcon />}
-                  onClick={handleFileClick}
-                  disabled={uploading}
+                  onClick={isDiscarded ? undefined : handleFileClick}
+                  disabled={isDiscarded || uploading || isUploadDisabled}
                   sx={{ mt: 1, fontSize: '0.75rem' }}
                 >
                   {uploading ? 'Uploading...' : 'Add More Documents'}

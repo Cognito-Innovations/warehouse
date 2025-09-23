@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Grid, CircularProgress, Alert, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -16,21 +16,15 @@ import { formatDateTime } from '../utils/formatDateTime';
 const PackageDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
-  // State for package data
   const [packageData, setPackageData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // State for upload modal and documents
   const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ id: string, name: string, url: string, type: string }>>([]);
-
-  // State for Package Items
   const [packageItems, setPackageItems] = useState<any[]>([]);
-
   const [isApprovingPayment, setIsApprovingPayment] = useState(false);
   const [paymentSlips, setPaymentSlips] = useState<any[]>([]);
 
-  // Fetch documents
   const fetchDocuments = async () => {
     if (!id) return;
     
@@ -58,31 +52,63 @@ const PackageDetail: React.FC = () => {
     }
   };
 
-  const fetchPackageData = async () => {
+  const fetchPackageData = async (initialLoad = false) => {
     if (!id) return;
-    
-    try {
+
+    if (initialLoad) {
       setLoading(true);
-      setError(null);
+    } else {
+      setIsRefreshing(true);
+    }
+    
+    setError(null);
+
+    try {
       const data = await getPackageById(id);
       setPackageData(data);
       setPackageItems(data.items || []);
       
-      // Load documents separately
-      await fetchPaymentSlips(data.shipment_uuid);
-      await fetchDocuments();
+      await Promise.all([
+        fetchPaymentSlips(data.shipment_uuid),
+        fetchDocuments()
+      ]);
     } catch (err) {
       console.error('Failed to fetch package data:', err);
       setError('Failed to load package details');
     } finally {
-      setLoading(false);
+      if (initialLoad) {
+        setLoading(false);
+      } else {
+        setIsRefreshing(false);
+      }
     }
   };
 
-  // Fetch package data
-  useEffect(() => {
-    fetchPackageData();
+  const handleRefresh = useCallback(() => {
+    fetchPackageData(false);
   }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchPackageData(true);
+    }
+  }, [id]);
+
+  const handleActionLogUpdate = async () => {
+    if (!id) return;
+
+    try {
+      const data = await getPackageById(id);
+      setPackageData(data);
+      setPackageItems(data.items || []);
+      
+      await fetchPaymentSlips(data.shipment_uuid);
+      await fetchDocuments();
+    } catch (err) {
+      console.error('Failed to refetch package data:', err);
+      toast.error('Failed to refresh package details');
+    }
+  };
 
   const handleApprovePayment = async () => {
     if (!id) return;
@@ -100,7 +126,6 @@ const PackageDetail: React.FC = () => {
     }
   };
 
-  // Loading state
   if (loading) {
     return (
       <Box sx={{ p: 1 }}>
@@ -112,7 +137,6 @@ const PackageDetail: React.FC = () => {
     );
   }
 
-  // Error state
   if (error || !packageData) {
     return (
       <Box sx={{ p: 1 }}>
@@ -124,7 +148,13 @@ const PackageDetail: React.FC = () => {
     );
   }
 
-  // Transform package data for display
+  const isDiscarded = packageData.status.value === 'Discarded';
+  const showDiscardedMessage = isDiscarded && (
+    <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
+      This package has been discarded. No further actions can be taken.
+    </Alert>
+  );
+
   const displayPackageData = {
     id: packageData.package_id || packageData.id,
     actual_id: packageData.id,
@@ -150,9 +180,7 @@ const PackageDetail: React.FC = () => {
     allowCustomerItems: packageData.allow_customer_items || false,
     shopInvoiceReceived: packageData.shop_invoice_received || false,
     items: packageItems,
-    // Transform measurements data for display
     measurements: packageData.measurements?.map((measurement: any) => {
-      // Calculate volumetric weight if not provided
       let volumetricWeight = '-';
       if (measurement.volumetric_weight) {
         volumetricWeight = `${measurement.volumetric_weight}Kg`;
@@ -184,6 +212,7 @@ const PackageDetail: React.FC = () => {
         pageTitle="Packages"
         pageSubtitle={packageData.id}
       />
+      {showDiscardedMessage}
       {packageItems.length === 0 && (
         <Box
           sx={{
@@ -199,32 +228,28 @@ const PackageDetail: React.FC = () => {
         </Box>
       )}
 
-      {/* Package Header - Full Width */}
         <PackageHeader 
-          packageData={displayPackageData} 
-          actionLogStatus={packageData.status.value}
+          packageData={displayPackageData}
           onRefresh={async () => {
             const updated = await getPackageById(displayPackageData.id);
             setPackageData(updated);
           }}
+          isDiscarded={isDiscarded}
         />
 
       <Grid container spacing={2}>
-        {/* Left Column - Main Content */}
         <Grid size={{ xs: 12, md: 8 }}>
-          {/* Package Details */}
           <PackageDetailsSection 
             packageData={displayPackageData}
-            onRefresh={async () => {
-              const updated = await getPackageById(displayPackageData.id);
-              setPackageData(updated);
-            }}
+            isRefreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            isDiscarded={isDiscarded}
           />
 
-          {/* Package Items */}
           <PackageItemsSection
             packageItems={packageItems}
             setPackageItems={setPackageItems}
+            isDiscarded={isDiscarded}
           />
 
           {showInvoiceTable && (
@@ -239,13 +264,13 @@ const PackageDetail: React.FC = () => {
                 const updated = await getPackageById(displayPackageData.id);
                 setPackageData(updated);
                 await fetchPaymentSlips(updated.shipment_uuid);
-              }} />
-            )}
+              }}
+              isDiscarded={isDiscarded}
+            />
+          )}
         </Grid>
 
-        {/* Right Column - Sidebar */}
         <Grid size={{ xs: 12, md: 4 }}>
-          {/* Action Logs */}
           <ActionLogsSection
             packageId={displayPackageData.actual_id}
             initialStatus={displayPackageData.status}
@@ -255,17 +280,17 @@ const PackageDetail: React.FC = () => {
               createdBy: displayPackageData.createdBy,
               createdAt: displayPackageData.createdAt,
             }}
-            onActionLogUpdate={fetchPackageData}
+            onActionLogUpdate={handleActionLogUpdate}
+            isDiscarded={isDiscarded}
           />
 
-          {/* Photos / Documents */}
           <PhotosDocumentsSection 
             packageData={displayPackageData}
-            onUploadSuccess={fetchPackageData}
+            onUploadSuccess={handleActionLogUpdate}
+            isDiscarded={isDiscarded}
           />
 
-          {/* Package Charges */}
-          <PackageChargesSection />
+          <PackageChargesSection isDiscarded={isDiscarded} />
         </Grid>
       </Grid>
     </Box>

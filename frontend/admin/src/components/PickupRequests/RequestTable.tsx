@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   Table,
@@ -15,8 +15,6 @@ import {
 } from '@mui/material';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import RequestTableBody from './RequestTableBody';
-import type { PickupRequest } from '../../types';
-import { getPickupRequests } from '../../services/api.services';
 
 interface RequestTableProps {
   requests: any[];

@@ -15,7 +15,6 @@ import { UpdatePackageDto } from '../dto/update-package.dto';
 import { Rack } from 'src/racks/rack.entity';
 import { DocumentsService } from 'src/documents/documents.service';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
-import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
 @Injectable()
 export class PackagesService {
@@ -31,12 +30,9 @@ export class PackagesService {
     @InjectRepository(UserPreference)
     private readonly userPreferenceRepository: Repository<UserPreference>,
     private readonly documentsService: DocumentsService,
-    private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
-  private async mapPackageToResponseDto(
-    pkg: Package
-  ): Promise<PackageResponseDto> {
+  private mapPackageToResponseDto(pkg: Package): PackageResponseDto {
     return {
       id: pkg.id,
       tracking_no: pkg.tracking_no,
@@ -115,31 +111,16 @@ export class PackagesService {
           measurement_verified: measurement.measurement_verified,
         })) || [],
       items: pkg.items?.length
-        ? await Promise.all(
-            pkg.items.map(async (item) => {
-              const unit_price =
-                await this.userPreferencesService.getFormattedConvertedPrice(
-                  pkg.user.id, 
-                  item.unit_price,
-                );
-              const total_price = 
-                await this.userPreferencesService.getFormattedConvertedPrice(
-                  pkg.user.id,
-                  item.total_price
-                );
-
-              return {
-                id: item.id,
-                package_id: item.package_id,
-                name: item.name,
-                quantity: item.quantity,
-                unit_price,
-                total_price,
-                created_at: item.created_at,
-                updated_at: item.updated_at,
-              }
-            }),
-          )
+        ? pkg.items.map((item) => ({
+            id: item.id,
+            package_id: item.package_id,
+            name: item.name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total_price: item.total_price,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+          }))
         : [],
     };
   }
