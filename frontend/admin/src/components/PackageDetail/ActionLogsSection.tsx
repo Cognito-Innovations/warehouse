@@ -23,6 +23,7 @@ interface ActionLogsSectionProps {
     createdAt: string;
   };
   onActionLogUpdate: () => void;
+  isDiscarded: boolean;
 }
 
 const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
@@ -32,11 +33,13 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   packageItems,
   packageCreationData,
   onActionLogUpdate,
+  isDiscarded,
 }) => {
   const [actionLogStatus, setActionLogStatus] = useState(initialStatus.value);
   const [isAdminChecked, setIsAdminChecked] = useState(initialStatus.value === 'Ready To Send');
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>(initialDocuments);
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -114,6 +117,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   };
 
   const handleRemoveDocument = async (documentId: string) => {
+    setDeletingDocId(documentId);
     try {
       await deletePackageDocument(packageId, documentId);
       onActionLogUpdate();
@@ -121,6 +125,8 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
     } catch (err) {
       console.error('Failed to delete document:', err);
       toast.error('Failed to delete document');
+    } finally {
+      setDeletingDocId(null);
     }
   };
 
@@ -156,6 +162,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
               startIcon={<AddIcon />}
               size="small"
               onClick={handleOpenUploadModal}
+              disabled={isDiscarded}
               sx={{
                 bgcolor: '#3b82f6',
                 '&:hover': { bgcolor: '#2563eb' },
@@ -188,8 +195,8 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   mt: 0.5,
-                  cursor: uploadedDocuments.length > 0 ? 'pointer' : 'not-allowed',
-                  opacity: uploadedDocuments.length > 0 ? 1 : 0.5,
+                  cursor: isDiscarded ? 'not-allowed' : uploadedDocuments.length > 0 ? 'pointer' : 'not-allowed',
+                  opacity: isDiscarded ? 0.4 : uploadedDocuments.length > 0 ? 1 : 0.5,
                   '&:hover': {
                     bgcolor: uploadedDocuments.length > 0
                       ? (visualChecked ? '#16a34a' : '#fef2f2')
@@ -197,6 +204,8 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                   }
                 }}
                 onClick={() => {
+                  if (isDiscarded) return;
+
                   if (actionLogStatus === 'In Review' && packageItems.length === 0) {
                     toast.error('Please add package items before verifying.');
                     return;
@@ -265,57 +274,61 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                 {uploadedDocuments.length === 0 && (
                   <Box sx={{ mb: 2 }}>
                     <Box
-                      onClick={isUploading ? undefined : handleClick}
-                      onDragOver={isUploading ? undefined : handleDragOver}
-                      onDragLeave={isUploading ? undefined : handleDragLeave}
-                      onDrop={isUploading ? undefined : handleDrop}
+                      onClick={isUploading || isDiscarded ? undefined : handleClick}
+                      onDragOver={isUploading || isDiscarded ? undefined : handleDragOver}
+                      onDragLeave={isUploading || isDiscarded ? undefined : handleDragLeave}
+                      onDrop={isUploading || isDiscarded ? undefined : handleDrop}
                       sx={{
+                        position: 'relative',
                         border: `2px dashed ${isDragOver ? '#3b82f6' : '#d1d5db'}`,
                         borderRadius: 2,
                         p: 3,
                         textAlign: 'center',
-                        cursor: isUploading ? 'not-allowed' : 'pointer',
+                        cursor: isUploading || isDiscarded ? 'not-allowed' : 'pointer',
                         bgcolor: isDragOver ? '#f0f9ff' : '#fafafa',
                         transition: 'all 0.2s ease-in-out',
-                        opacity: isUploading ? 0.6 : 1,
+                        opacity: isUploading || isDiscarded ? 0.5 : 1,
                         '&:hover': {
                           borderColor: isUploading ? '#d1d5db' : '#3b82f6',
                           bgcolor: isUploading ? '#fafafa' : '#f0f9ff'
                         }
                       }}
-                    >
-                      {isUploading ? (
-                        <>
-                          <CircularProgress 
-                            size={48} 
-                            sx={{ 
-                              color: '#3b82f6',
-                              mb: 1
-                            }} 
-                          />
+                    > 
+                      <UploadIcon 
+                        sx={{ 
+                          fontSize: 48, 
+                          color: isDragOver ? '#3b82f6' : '#9ca3af',
+                          mb: 1
+                        }} 
+                      />
+                      <Typography variant="body2" sx={{ color: '#6b7280', mb: 0.5 }}>
+                        {isDragOver ? 'Drop files here' : 'Click to upload or drag and drop'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                        PNG, JPG, PDF up to 10MB
+                      </Typography>
+
+                      {isUploading && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: 'rgba(255,255,255,0.7)',
+                            borderRadius: 2,
+                          }}
+                        >
+                          <CircularProgress size={48} sx={{ color: '#3b82f6', mb: 1 }} />
                           <Typography variant="body2" sx={{ color: '#6b7280', mb: 0.5 }}>
                             Uploading files...
                           </Typography>
                           <Typography variant="caption" sx={{ color: '#9ca3af' }}>
                             Please wait while your files are being uploaded
                           </Typography>
-                        </>
-                      ) : (
-                        <>
-                          <UploadIcon 
-                            sx={{ 
-                              fontSize: 48, 
-                              color: isDragOver ? '#3b82f6' : '#9ca3af',
-                              mb: 1
-                            }} 
-                          />
-                          <Typography variant="body2" sx={{ color: '#6b7280', mb: 0.5 }}>
-                            {isDragOver ? 'Drop files here' : 'Click to upload or drag and drop'}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#9ca3af' }}>
-                            PNG, JPG, PDF up to 10MB
-                          </Typography>
-                        </>
+                        </Box>
                       )}
                     </Box>
                   </Box>
@@ -363,6 +376,20 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                                 onClick={() => window.open(doc.url, '_blank')}
                               />
                             )}
+                            {deletingDocId === doc.id && (
+                              <Box sx={{
+                                position: 'absolute',
+                                inset: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                bgcolor: 'rgba(255, 255, 255, 0.8)',
+                                borderRadius: 1,
+                                height: 60,
+                              }}>
+                                <CircularProgress size={24} />
+                              </Box>
+                            )}
                             <Typography
                               variant="caption"
                               sx={{
@@ -381,6 +408,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                             <IconButton
                               size="small"
                               onClick={() => handleRemoveDocument(doc.id)}
+                              disabled={!!deletingDocId}
                               sx={{
                                 position: 'absolute',
                                 top: -8,
@@ -405,8 +433,8 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                       variant="outlined"
                       size="small"
                       startIcon={isUploading ? <CircularProgress size={16} /> : <AddIcon />}
-                      onClick={isUploading ? undefined : handleClick}
-                      disabled={isUploading}
+                      onClick={isUploading || isDiscarded ? undefined : handleClick}
+                      disabled={isUploading || isDiscarded}
                       sx={{ mt: 1, fontSize: '0.75rem' }}
                     >
                       {isUploading ? 'Uploading...' : 'Add More Documents'}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Card,
   Table,
@@ -16,7 +16,6 @@ import {
 } from '@mui/material';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import RequestTableBody from './RequestTableBody';
-import { getAllShoppingRequests } from '../../services/api.services';
 
 interface RequestTableProps {
   requests: any[];

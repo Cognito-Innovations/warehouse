@@ -1,15 +1,17 @@
-import { Box, Card, Typography, Button, Chip, Grid, Link, CircularProgress } from '@mui/material';
-import { LocalPhoneOutlined, MailOutline, PersonOutline } from '@mui/icons-material';
-import { getDisplayStatus, getRequestStatusColor } from '../../../data/shoppingRequests';
-import { updateShoppingRequestStatus } from '../../../services/api.services';
+import { Button, CircularProgress } from '@mui/material';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { getDisplayStatus, getRequestStatusColor } from '../../../data/shoppingRequests';
+import { updateShoppingRequestStatus } from '../../../services/api.services';
+import RequestHeader from '../../common/RequestHeader';
+import CustomerRemarks from '../../common/CustomerRemarks';
+
 interface RequestDetailCardProps {
-  request: any;
-  onStatusUpdated: () => void;
-  products: any[];
-  selectedItemIds: Set<string>;
+  request: any;
+  onStatusUpdated: () => void;
+  products: any[];
+  selectedItemIds: Set<string>;
 }
 
 const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds }: RequestDetailCardProps) => {
@@ -25,7 +27,7 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
   };
 
   const latestStatus = normalizeStatus(request.status);
-  const status = getRequestStatusColor(latestStatus);
+  const statusStyles = getRequestStatusColor(latestStatus);
 
   const handleStatusChange = async (newStatus: string) => {
     setLoading(true);
@@ -51,7 +53,7 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
     const unpricedItems = itemToQuote.filter(product => !product.unit_price || product.unit_price <= 0);
 
     if (unpricedItems.length > 0) {
-      toast.error("Please update the unit price for all seleted items before sending the quotation.");
+      toast.error("Please update the unit price for all selected items before sending the quotation.");
       return;
     }
 
@@ -68,12 +70,12 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
           onClick={handleSendQuotation}
           disabled={loading}
         >
-          {loading ? 
+          {loading ?
             <>
-              <CircularProgress size={20} color="inherit" /> 
-              Sending... 
+              <CircularProgress size={20} color="inherit" />
+              Sending...
             </>
-          : "Send Quotation"}
+            : "Send Quotation"}
         </Button>
       );
     }
@@ -113,8 +115,8 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
             <>
               <CircularProgress size={20} color="inherit" />
               Completing...
-            </> 
-          : "Complete"}
+            </>
+            : "Complete"}
         </Button>
       );
     }
@@ -124,90 +126,18 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
 
   return (
     <>
-      <Card sx={{ p: 2, mb: 1 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="h6" fontWeight={600}>
-              Shopping Request #: {request.request_code}
-            </Typography>
-            <Chip
-              label={getDisplayStatus(latestStatus)}
-              size="small"
-              sx={{ ml: 2, color: status.color, bgcolor: status.bgColor, fontWeight: 600 }}
-            />
-          </Box>
-
-          <Box>
-            {renderActionButton()}
-          </Box>
-        </Box>
-
-        <Box sx={{ mb: 1 }}>
-          <Grid container alignItems="flex-start" rowSpacing={1} columnSpacing={2}>
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <PersonOutline fontSize="small" color="action" />
-                <Typography variant="body2" sx={{ ml: 1 }}>
-                  {request.user.name}({request.user.suite_no})
-                </Typography>
-              </Box>
-
-              {request.user.phone && (
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <LocalPhoneOutlined fontSize="small" color="action" />
-                <Box sx={{ ml: 1 }}>
-                  <Link href={`tel:${request.user.phone}`} variant="body2">
-                    {request.user.phone}
-                  </Link>
-                  {request.user.alt_phone && (
-                    <>
-                      <Typography variant="body2" component="span">, </Typography>
-                      <Link href={`tel:${request.user.alt_phone}`} variant="body2">
-                        {request.user.alt_phone}
-                      </Link>
-                    </>
-                  )}
-                </Box>
-              </Box>
-              )}
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <MailOutline fontSize="small" color="action" />
-                <Link
-                  href={`mailto:${request.user.email}`}
-                  variant="body2"
-                  sx={{
-                    ml: 1,
-                    wordBreak: "break-word",
-                    textDecoration: "none",
-                    color: "text.primary",
-                    fontWeight: 500,
-                    "&:hover": {
-                      color: "primary.main",
-                      textDecoration: "none",
-                    }
-                  }}
-                >
-                  {request.user.email}
-                </Link>
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-      </Card>
-
-      {request.remarks && (
-        <Card sx={{ p: 2 }}>
-          <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-            Customer Remarks
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {request.remarks}
-          </Typography>
-        </Card>
-      )}
+      <RequestHeader
+        title="Shopping Request"
+        requestCode={request.request_code}
+        statusDisplay={getDisplayStatus(latestStatus)}
+        statusChipStyles={{
+          color: statusStyles.color,
+          bgColor: statusStyles.bgColor,
+        }}
+        customer={request.user}
+        actionButtons={renderActionButton()}
+      />
+      <CustomerRemarks remarks={request.remarks} />
     </>
   );
 };

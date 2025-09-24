@@ -40,12 +40,14 @@ interface Props {
   status: string;
   payment_slips: any[];
   onStatusUpdated: () => void;
+  isDiscarded: boolean;
 }
 
 export const InvoiceRow: React.FC<Props> = ({
   invoice,
   payment_slips,
   onStatusUpdated,
+  isDiscarded,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -185,6 +187,7 @@ export const InvoiceRow: React.FC<Props> = ({
                   e.stopPropagation();
                   setOpen(!open);
                 }}
+                disabled={isDiscarded} 
               >
                 <VisibilityIcon fontSize="small" />
               </IconButton>
@@ -197,6 +200,7 @@ export const InvoiceRow: React.FC<Props> = ({
                   e.stopPropagation();
                   handlePrint();
                 }}
+                disabled={isDiscarded} 
               >
                 <PrintIcon fontSize="small" />
               </IconButton>
@@ -209,6 +213,7 @@ export const InvoiceRow: React.FC<Props> = ({
                   e.stopPropagation();
                   // Handle cancel logic
                 }}
+                disabled={isDiscarded} 
               >
                 <CancelIcon fontSize="small" />
               </IconButton>

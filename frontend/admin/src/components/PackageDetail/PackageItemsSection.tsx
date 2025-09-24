@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton } from '@mui/material';
+import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, CircularProgress } from '@mui/material';
 import { Download as DownloadIcon, Upload as UploadIcon, Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { addPackageItem, bulkUploadPackageItems, deletePackageItem, updatePackageItem } from '../../services/api.services';
 import AddItemModal from './AddItemModal';
@@ -19,14 +19,20 @@ interface PackageItem {
 interface PackageItemsSectionProps {
   packageItems: PackageItem[];
   setPackageItems: React.Dispatch<React.SetStateAction<any[]>>;
+  isDiscarded: boolean;
 }
 
-const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems, setPackageItems }) => {
+const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
+  packageItems,
+  setPackageItems,
+  isDiscarded,
+}) => {
   const { id } = useParams<{ id: string }>();
 
   const [addItemModalOpen, setAddItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isSavingItem, setIsSavingItem] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [newItem, setNewItem] = useState({
     name: '',
     quantity: 1,
@@ -34,7 +40,6 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems,
     total: ''
   });
 
-  // Handlers moved from PackageDetail
   const handleOpenAddItemModal = () => {
     setNewItem({ name: '', quantity: 1, amount: '', total: '' });
     setEditingItem(null);
@@ -53,24 +58,30 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems,
     setAddItemModalOpen(true);
   };
 
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
   const handleDeleteItem = async (itemId: string) => {
     if (!id) return;
+    setDeletingItemId(itemId);
     try {
+      await sleep(2000);
       await deletePackageItem(id, itemId);
       setPackageItems(prev => prev.filter(item => item.id !== itemId));
       toast.success('Item deleted successfully!');
     } catch (err) {
       console.error('Failed to delete item:', err);
       toast.error('Failed to delete item.');
+    } finally {
+      setDeletingItemId(null);
     }
   };
 
   const handleSaveItem = async () => {
     if (!id) return;
 
-    const amountRegex = /^\d{1,6}$/;
-    if (!amountRegex.test(newItem.amount.toString())) {
-      toast.error("Amount should be a number up to 6 digits");
+    const amountRegex = /^\d{1,10}(\.\d{1,2})?$/;
+    if (!newItem.amount || !amountRegex.test(newItem.amount.toString())) {
+      toast.error("Amount must be a valid number (e.g., 123.45) with up to 10 digits before the decimal.");
       return;
     }
 
@@ -84,15 +95,32 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems,
       };
 
       if (editingItem) {
-        await updatePackageItem(id, editingItem.id, itemData);
+        const updatedItem = await updatePackageItem(id, editingItem.id, itemData);
         setPackageItems(prev => prev.map(item =>
-          item.id === editingItem.id ? { ...newItem, id: editingItem.id } : item
+          item.id === editingItem.id 
+          ? { 
+            ...newItem, 
+            name: updatedItem.name,
+            quantity: updatedItem.quantity,
+            amount: updatedItem.unit_price.toFixed(2),
+            total: updatedItem.total_price.toFixed(2),
+            unit_price: updatedItem.unit_price,
+            total_price: updatedItem.total_price
+          } : item
         ));
         toast.success('Item updated successfully!');
       } else {
-        const response = await addPackageItem(id, itemData);
-        const newItemWithId = { ...newItem, id: response.id || Date.now().toString() };
-        setPackageItems(prev => [...prev, newItemWithId]);
+        const addedItem = await addPackageItem(id, itemData);
+        const newItemForState = { 
+          id: addedItem.id,
+          name: addedItem.name,
+          quantity: addedItem.quantity,
+          amount: addedItem.unit_price.toFixed(2),
+          total: addedItem.total_price.toFixed(2),
+          unit_price: addedItem.unit_price,
+          total_price: addedItem.total_price
+        };
+        setPackageItems(prev => [...prev, newItemForState]);
         toast.success('Item added successfully!');
       }
       handleCloseAddItemModal();
@@ -106,13 +134,28 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems,
 
   const handleItemInputChange = (field: string, value: string | number) => {
     setNewItem(prev => {
-      const updated = { ...prev, [field]: value };
-      if (field === 'quantity' || field === 'amount') {
-        const quantity = field === 'quantity' ? Number(value) : prev.quantity;
-        const amount = field === 'amount' ? value : prev.amount;
-        const amountValue = parseFloat(amount.toString().replace('$', '')) || 0;
-        updated.total = `$${(quantity * amountValue).toFixed(2)}`;
+      let updated = { ...prev, [field]: value };
+
+      if (field === 'amount') {
+        const sanitizedValue = value.toString().replace(/[^0-9.]/g, ''); // Allow only numbers and one dot
+        const parts = sanitizedValue.split('.');
+
+        // Limit to 10 digits before the decimal and 2 after
+        const integerPart = parts[0].slice(0, 10); 
+        const decimalPart = parts[1] ? parts[1].slice(0, 2) : '';
+
+        let finalValue = integerPart;
+        if (parts.length > 1) {
+          finalValue += '.' + decimalPart;
+        }
+
+        updated = { ...prev, amount: finalValue };
       }
+
+      const quantity = (field === 'quantity' ? Number(value) : prev.quantity) || 1;
+      const amount = (field === 'amount' ? updated.amount : prev.amount) || '0';
+      const amountValue = parseFloat(amount.toString().replace('$', '')) || 0;
+      updated.total = `$${(quantity * amountValue).toFixed(2)}`;
       return updated;
     });
   };
@@ -175,6 +218,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems,
               startIcon={<DownloadIcon />}
               size="small"
               onClick={handleDownloadFormat}
+              disabled={isDiscarded}
               sx={{
                 bgcolor: '#8b5cf6',
                 '&:hover': { bgcolor: '#7c3aed' },
@@ -191,6 +235,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems,
               startIcon={<UploadIcon />}
               size="small"
               onClick={handleBulkUpload}
+              disabled={isDiscarded}
               sx={{
                 bgcolor: '#8b5cf6',
                 '&:hover': { bgcolor: '#7c3aed' },
@@ -207,6 +252,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems,
               startIcon={<AddIcon />}
               size="small"
               onClick={handleOpenAddItemModal}
+              disabled={isDiscarded}
               sx={{
                 bgcolor: '#3b82f6',
                 '&:hover': { bgcolor: '#2563eb' },
@@ -234,44 +280,54 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({ packageItems,
                 </TableRow>
               </TableHead>
               <TableBody>
-                {packageItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.name}</TableCell>
-                    <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.quantity}</TableCell>
-                    <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.amount || item.unit_price}</TableCell>
-                    <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.total || item.total_price}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEditItem(item)}
-                          sx={{
-                            bgcolor: '#3b82f6',
-                            color: 'white',
-                            width: 32,
-                            height: 32,
-                            '&:hover': { bgcolor: '#2563eb' }
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDeleteItem(item.id)}
-                          sx={{
-                            bgcolor: '#f97316',
-                            color: 'white',
-                            width: 32,
-                            height: 32,
-                            '&:hover': { bgcolor: '#ea580c' }
-                          }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {packageItems.map((item) => {
+                  const isDeleting = deletingItemId === item.id;
+
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.name}</TableCell>
+                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.quantity}</TableCell>
+                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>${item.amount || item.unit_price}</TableCell>
+                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>${item.total || item.total_price}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEditItem(item)}
+                            disabled={isDiscarded || isDeleting}
+                            sx={{
+                              bgcolor: '#3b82f6',
+                              color: 'white',
+                              width: 32,
+                              height: 32,
+                              '&:hover': { bgcolor: '#2563eb' }
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDeleteItem(item.id)}
+                            disabled={isDiscarded || isDeleting} 
+                            sx={{
+                              bgcolor: '#f97316',
+                              color: 'white',
+                              width: 32,
+                              height: 32,
+                              '&:hover': { bgcolor: '#ea580c' }
+                            }}
+                          >
+                            {isDeleting ? (
+                              <CircularProgress size={20} sx={{ color: 'inherit' }} />
+                            ) : (
+                              <DeleteIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>
