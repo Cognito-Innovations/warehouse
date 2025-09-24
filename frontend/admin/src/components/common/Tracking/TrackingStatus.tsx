@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography } from '@mui/material';
+import { Card, Typography, Box } from '@mui/material';
 import TrackingItem from './TrackingItem';
 
 export interface Status {
@@ -23,26 +23,30 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({
   const currentStageIndex = statuses.findIndex(status => status.id === currentStageId);
 
   return (
-    <Card sx={{ p: 3 }}>
-      <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-        {title}
-      </Typography>
+    <Box sx={{ p: 0 }}>
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" fontWeight={600}>
+          {title}
+        </Typography>
+      </Box>
 
-      {statuses.map((status, index) => {
-        const isCompleted = currentStageIndex >= 0 && index <= currentStageIndex;
+      <Card sx={{ p: 3 }}>
+        {statuses.map((status, index) => {
+          const isCompleted = currentStageIndex >= 0 && index <= currentStageIndex;
 
-        return (
-          <TrackingItem
-            key={status.id}
-            status={status.title}
-            description={status.description}
-            createdAt={isCompleted ? status.date : undefined}
-            completed={isCompleted}
-            isLast={index === statuses.length - 1}
-          />
-        );
-      })}
-    </Card>
+          return (
+            <TrackingItem
+              key={status.id}
+              status={status.title}
+              description={status.description}
+              createdAt={isCompleted ? status.date : undefined}
+              completed={isCompleted}
+              isLast={index === statuses.length - 1}
+            />
+          );
+        })}
+      </Card>
+    </Box>
   );
 };
 

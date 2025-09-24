@@ -32,11 +32,13 @@ export enum TrackingStatus {
   OrderPlaced = 'order_placed',
   Paid = 'paid',
   QuotationConfirmed = 'quotation_confirmed',
+  Confirmed = 'confirmed',
   Quoted = 'quoted',
   ReadyToShip = 'ready_to_ship',
   RequestShip = 'request_ship',
   Requested = 'requested',
   Shipped = 'shipped',
+  Picked = 'picked',
 }
 
 @Entity('tracking_request')
@@ -44,9 +46,9 @@ export class TrackingRequest extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => CourierCompany, { eager: true })
+  @ManyToOne(() => CourierCompany, { eager: true, nullable: true })
   @JoinColumn({ name: 'courier_id' })
-  courier: CourierCompany;
+  courier?: CourierCompany;
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'user_id' })

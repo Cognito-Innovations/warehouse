@@ -1,14 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { Box } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography } from '@mui/material';
 
+import { getPickupRequests } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
 import RequestSummary from '../components/PickupRequests/RequestSummary';
-import RequestTable from '../components/PickupRequests/RequestTable';
-import { getPickupRequests } from '../services/api.services';
+import StatusChip from '../components/common/StatusChip';
+import CommonTable from '../components/common/CommonTable';
+import { formatDateTime } from '../utils/formatDateTime';
+import type { ColumnDefinition } from '../types/table';
+import type { PickupRequest } from '../types';
+
+const statusOptions = [
+    { value: 'REQUESTED', label: 'Requested' },
+    { value: 'QUOTATION CONFIRMED', label: 'Quotation Confirmed' },
+    { value: 'ACCEPTED', label: 'Accepted' },
+    { value: 'PICKED', label: 'Picked' },
+    { value: 'CANCELLED', label: 'Cancelled' },
+];
 
 const PickupRequests: React.FC = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -26,11 +40,57 @@ const PickupRequests: React.FC = () => {
     fetchRequests()
   }, []);
 
+  const columns: ColumnDefinition<PickupRequest>[] = [
+    {
+      header: 'Request No.',
+      cell: (row) => <Typography variant="body2" fontWeight={500}>{row.id}</Typography>,
+      width: '25%',
+    },
+    {
+      header: 'Date',
+      cell: (row) => <Typography variant="body2">{formatDateTime(row.created_at)}</Typography>,
+      width: '20%',
+    },
+    {
+      header: 'Customer',
+      cell: (row) => <Typography variant="body2">{row.user.name}</Typography>,
+      width: '25%',
+    },
+    {
+      header: 'Pickup Location',
+      cell: (row) => <Typography variant="body2">{row.pickup_address}</Typography>,
+      width: '30%',
+    },
+    {
+      header: 'Supplier',
+      cell: (row) => <Typography variant="body2">{row.supplier_name}</Typography>,
+      width: '20%',
+    },
+    {
+      header: 'Status',
+      cell: (row) => <StatusChip status={row.status || 'REQUESTED'} />,
+      width: '20%',
+    },
+  ];
+  
+  const handleViewDetails = (id: string | number) => {
+    navigate(`/pickups/${encodeURIComponent(id as string)}`);
+  };
+
   return (
     <Box>
       <TopNavbar pageTitle="Pickup Request" pageSubtitle="All" />
       <RequestSummary requests={requests} loading={loading} />
-      <RequestTable requests={requests} loading={loading} />
+      <CommonTable
+        rows={requests}
+        columns={columns}
+        loading={loading}
+        statusOptions={statusOptions}
+        noDataMessage="No pickup requests available"
+        onViewDetails={handleViewDetails}
+        getIdentifier={(row) => row.id!}
+        getRowStatus={(row) => row.status || 'REQUESTED'}
+      />
     </Box>
   );
 };
