@@ -6,7 +6,10 @@ interface RequestHeaderProps {
   request: {
     id: string;
     shipment_id: string;
-    status: string;
+    status: {
+      label: string;
+      value: string;
+    };
     created_at: string;
     customer?: {
       name: string;
@@ -29,7 +32,7 @@ const statusStyles: { [key: string]: string } = {
 
 const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onDelete }) => {
   const statusClassName =
-    statusStyles[request.status] || 'bg-gray-100 text-gray-700 border border-gray-200';
+    statusStyles[request.status.value] || 'bg-gray-100 text-gray-700 border border-gray-200';
 
   return (
     <div className="bg-white p-4 rounded-lg border border-gray-200 flex justify-between items-center">
@@ -51,12 +54,12 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onDelete }) => {
           <span
             className={`px-3 py-1 text-sm font-semibold rounded-md ${statusClassName}`}
           >
-            {request.status}
+            {request.status.value}
           </span>
         </div>
       </div>
 
-      {request.status === 'REQUESTED' && (
+      {request.status.value === 'REQUESTED' && (
         <button
           onClick={() => onDelete?.(request.id)}
           className="flex items-center gap-1.5 text-red-600 bg-red-50 rounded-md px-3 py-1.5 hover:bg-red-100 transition-colors duration-200"

@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Edit as EditIcon } from '@mui/icons-material';
-import { Box, Typography, Grid, Card, CardContent, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, CircularProgress } from '@mui/material';
-import { getRacks, updatePackage } from '../../services/api.services';
-import type { Rack } from '../../types';
+import { Box, Typography, Grid, Card, CardContent, Button, CircularProgress } from '@mui/material';
+import MeasurementsTable from './MeasurementsTable';
+import UpdateInfoModal from './UpdateInfoModal';
+import UpdateRackSlotModal from './UpdateRackSlotModal';
+import type { Status } from '../../types';
 
 interface PackageDetailsSectionProps {
   packageData: {
@@ -13,8 +15,9 @@ interface PackageDetailsSectionProps {
     dangerousGood: string;
     createdBy: string;
     createdAt: string;
-    status?: string;
+    status?: Status;
     rack?: string,
+    rackColor?: string,
     count?: number;
     measurements?: {
       pieceNumber: number;
@@ -26,81 +29,48 @@ interface PackageDetailsSectionProps {
       height?: number;
     }[];
   };
+  isRefreshing?: boolean;
   onRefresh: () => void;
+  isDiscarded: boolean;
 }
 
-const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageData, onRefresh }) => {
-  const [openModal, setOpenModal] = useState(false);
-  const [racks, setRacks] = useState<Rack[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    trackingNo: packageData.trackingNo || "",
-    weight: packageData.weight || "",
-    volumetricWeight: packageData.volumetricWeight || "",
-    dangerousGood: packageData.dangerousGood === "Yes" ? "true" : "false",
-    rackSlot: "",
-  });
+const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
+  packageData,
+  isRefreshing ,
+  onRefresh,
+  isDiscarded
+}) => {
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [rackModalOpen, setRackModalOpen] = useState(false);
 
-  const fetchRacks = async () => {
-    try {
-      const data = await getRacks();
-      setRacks(data);
-    
-      const matchedRack = data.find((r) => r.label === packageData.rack);
-      setFormData((prev) => ({
-        ...prev,
-        rackSlot: matchedRack?.id || '',
-      }));
-    } catch (err) {
-      console.error("Failed to fetch racks", err);
-    }
-  };
+  const handleOpenInfoModal = () => setInfoModalOpen(true);
+  const handleCloseInfoModal = () => setInfoModalOpen(false);
 
-  useEffect(() => {
-    if (openModal) {
-      fetchRacks();
-    }
-  }, [openModal, packageData.rack]);
-
-  const handleOpenModal = () => {
-    setOpenModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setOpenModal(false);
-  };
-
-  const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: event.target.value
-    }));
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const payload = {
-        tracking_no: formData.trackingNo,
-        weight: formData.weight,
-        volumetric_weight: formData.volumetricWeight,
-        dangerous_good: formData.dangerousGood === "true",
-        rack_slot: formData.rackSlot,
-      };
-
-      await updatePackage(packageData.actual_id, payload);
-      onRefresh();
-      handleCloseModal();
-    } catch (err) {
-      console.error("Failed to update package", err);
-    } finally {
-      setSaving(false);
-    }
-  };
+  const handleOpenRackModal = () => setRackModalOpen(true);
+  const handleCloseRackModal = () => setRackModalOpen(false);
 
   return (
     <>
-      <Card sx={{ mb: 3, px: 1 }}>
+      <Card sx={{ mb: 3, px: 1, position: 'relative' }}>
+        {isRefreshing && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(255, 255, 255, 0.7)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 10,
+              borderRadius: 'inherit',
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        )}
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
@@ -109,7 +79,8 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
             <Button
               variant="contained"
               startIcon={<EditIcon />}
-              onClick={handleOpenModal}
+              onClick={handleOpenInfoModal}
+              disabled={isDiscarded}
               sx={{
                 bgcolor: '#3b82f6',
                 '&:hover': { bgcolor: '#2563eb' },
@@ -121,9 +92,7 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
             </Button>
           </Box>
 
-          {/* Two Column Layout */}
           <Grid container spacing={4} sx={{ mb: 3 }}>
-            {/* Left Column */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
@@ -143,7 +112,6 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
               </Box>
             </Grid>
 
-            {/* Right Column */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
@@ -153,190 +121,67 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({ packageDa
                   {packageData.weight}
                 </Typography>
               </Box>
-                             <Box sx={{ mb: 2 }}>
-                 <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
-                   Dangerous Good
-                 </Typography>
-                 <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                    ⛔️  {packageData.dangerousGood}
-                 </Typography>
-               </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
+                  Dangerous Good
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                  ⛔️ {packageData.dangerousGood}
+                </Typography>
+              </Box>
             </Grid>
           </Grid>
 
-          {/* Status Indicator */}
-           {packageData.rack && (
-             <Box sx={{ bgcolor: '#f0fdf4', p: 2, borderRadius: 2, border: '1px solid #84cc16', width: "220px" }}>
-               <Typography variant="body2" sx={{ fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
-                 {packageData.rack} →
-               </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {`Slot has ${packageData.count} pkgs`}
-                </Typography>
-                 
-             </Box>
-           )}
+          {packageData.rack && (
+            <Box
+             sx={{
+              bgcolor: isDiscarded ? '#f1f5f9' : '#f0fdf4', 
+              p: 2, borderRadius: 2,
+              border: isDiscarded ? '1px solid #cbd5e1' : '1px solid #84cc16', 
+              width: "220px",
+              cursor: isDiscarded ? 'not-allowed' :'pointer',
+              opacity: isDiscarded ? 0.6 : 1,
+             }}
+             onClick={() => {
+               if (!isDiscarded) {
+                 handleOpenRackModal();
+               }
+             }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
+                {packageData.rack} →
+              </Typography>
+               <Typography variant="body2" sx={{ fontWeight: 500, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
+                {`Slot has ${packageData.count} pkgs`}
+               </Typography>        
+            </Box>
+          )}
 
-          {/* Measurements Table */}
-           <Box sx={{ mt: 3 }}>
-             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#1e293b' }}>
-               {packageData.measurements?.length || 0} Piece Measurements
-             </Typography>
-             
-             {packageData.measurements && packageData.measurements.length > 0 ? (
-               <TableContainer>
-                 <Table size="small">
-                   <TableHead>
-                     <TableRow>
-                       <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>#</TableCell>
-                       <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Weight</TableCell>
-                       <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Dimensions (L×W×H)</TableCell>
-                       <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Volumetric Weight</TableCell>
-                     </TableRow>
-                   </TableHead>
-                   <TableBody>
-                     {packageData.measurements.map((measurement, index) => (
-                       <TableRow key={index}>
-                         <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{measurement.pieceNumber}</TableCell>
-                         <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{measurement.weight}</TableCell>
-                         <TableCell>
-                           {measurement.hasMeasurements && measurement.length && measurement.width && measurement.height ? (
-                             <Typography component="span" sx={{ color: '#1e293b' }}>
-                               {measurement.length}×{measurement.width}×{measurement.height} cm
-                             </Typography>
-                           ) : (
-                             <Typography component="span" sx={{ color: '#ef4444', fontSize: '0.875rem' }}>
-                               No dimensions
-                             </Typography>
-                           )}
-                         </TableCell>
-                         <TableCell>
-                           {measurement.hasMeasurements ? (
-                             <Typography component="span" sx={{ color: '#1e293b' }}>
-                               {measurement.volumetricWeight}
-                             </Typography>
-                           ) : (
-                             <Typography component="span" sx={{ color: '#ef4444', fontSize: '0.875rem' }}>
-                               Not calculated
-                             </Typography>
-                           )}
-                         </TableCell>
-                       </TableRow>
-                     ))}
-                   </TableBody>
-                 </Table>
-               </TableContainer>
-             ) : (
-               <Box sx={{ 
-                 p: 3, 
-                 textAlign: 'center', 
-                 bgcolor: '#f8fafc', 
-                 borderRadius: 2, 
-                 border: '1px solid #e2e8f0' 
-               }}>
-                 <Typography variant="body2" sx={{ color: '#64748b' }}>
-                   No piece measurements available
-                 </Typography>
-               </Box>
-             )}
-             
-             <Typography variant="caption" sx={{ mt: 2, display: 'block', color: '#64748b', maxWidth: "250px" }}>
-               Created By {packageData.createdBy} on {packageData.createdAt}
-             </Typography>
-           </Box>
+          <MeasurementsTable 
+            measurements={packageData.measurements}
+            createdBy={packageData.createdBy}
+            createdAt={packageData.createdAt}
+          />
         </CardContent>
       </Card>
 
-      {/* Update Information Modal */}
-      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ fontWeight: 600, color: '#1e293b' }}>
-          Update Package Information
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Tracking Number"
-                  value={formData.trackingNo}
-                  onChange={handleInputChange('trackingNo')}
-                  variant="outlined"
-                  sx={{ mb: 2 }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Weight"
-                  value={formData.weight}
-                  onChange={handleInputChange('weight')}
-                  variant="outlined"
-                  sx={{ mb: 2 }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Volumetric Weight"
-                  value={formData.volumetricWeight}
-                  onChange={handleInputChange('volumetricWeight')}
-                  variant="outlined"
-                  sx={{ mb: 2 }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Dangerous Good"
-                  value={formData.dangerousGood}
-                  onChange={handleInputChange("dangerousGood")}
-                  SelectProps={{ native: true }}
-                >
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
-                </TextField>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Rack Slot"
-                  value={formData.rackSlot}
-                  onChange={handleInputChange('rackSlot')}
-                >
-                  {racks.map((rack) => (
-                    <MenuItem key={rack.id} value={rack.id}>
-                      {rack.label} ({rack.count} pkgs)
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleCloseModal} sx={{ textTransform: 'none' }}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            variant="contained"
-            disabled={saving}
-            sx={{
-              bgcolor: '#3b82f6',
-              '&:hover': { bgcolor: '#2563eb' },
-              textTransform: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
-            {saving ? <CircularProgress size={20} sx={{ color: 'white' }} /> : "Save Changes"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {infoModalOpen && (
+        <UpdateInfoModal
+          open={infoModalOpen}
+          onClose={handleCloseInfoModal}
+          onRefresh={onRefresh}
+          packageData={packageData}
+        />
+      )}
+
+      {rackModalOpen && (
+        <UpdateRackSlotModal
+          open={rackModalOpen}
+          onClose={handleCloseRackModal}
+          onRefresh={onRefresh}
+          packageData={packageData}
+        />
+      )}
     </>
   )
 };

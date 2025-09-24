@@ -47,12 +47,12 @@ export class Package extends BaseTimestampEntity {
   @JoinColumn({ name: 'vendor_id' })
   vendor: Supplier;
 
-  @Column()
-  rack_slot_id: string;
+  @Column({ nullable: true })
+  rack_slot_id: string | null;
 
-  @ManyToOne(() => Rack, { eager: true })
+  @ManyToOne(() => Rack, { eager: true, nullable: true })
   @JoinColumn({ name: 'rack_slot_id' })
-  rack_slot: Rack;
+  rack_slot: Rack | null;
 
   @ManyToOne(() => ShipmentExportBox, (box) => box.packages, {
     nullable: true,

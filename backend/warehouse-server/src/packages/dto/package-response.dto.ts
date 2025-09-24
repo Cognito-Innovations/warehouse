@@ -1,10 +1,15 @@
 import { Country } from 'src/Countries/country.entity';
 import { DocumentSummaryDto } from 'src/documents/dto/document-response.dto';
 
+export class StatusDto {
+  label: string;
+  value: string;
+}
+
 export class PackageResponseDto {
   id: string;
   tracking_no: string;
-  status: string;
+  status: StatusDto;
   shipment_id?: string | null;
   shipment_uuid?: string | null;
   customer?: {
@@ -69,8 +74,8 @@ export class PackageItemResponseDto {
   package_id: string;
   name: string;
   quantity: number;
-  unit_price: string;
-  total_price: string;
+  unit_price: number;
+  total_price: number;
   created_at: number;
   updated_at: number;
 }

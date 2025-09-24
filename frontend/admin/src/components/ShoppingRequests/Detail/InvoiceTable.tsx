@@ -22,6 +22,7 @@ export default function InvoiceTable({
   payment_slips,
   status,
   onStatusUpdated,
+  isDiscarded,
 }: {
   id: string;
   invoice: InvoiceDetails;
@@ -30,6 +31,7 @@ export default function InvoiceTable({
   isApprovingPayment: boolean;
   onApprovePayment: () => void;
   onStatusUpdated: () => void;
+  isDiscarded: boolean;
 }) {
   const [isApprovingPayment, setIsApprovingPayment] = useState(false);
 
@@ -92,8 +94,8 @@ export default function InvoiceTable({
           <Button
             variant="contained"
             size="medium"
-            onClick={handleApprovePayment}
-            disabled={isApprovingPayment}
+            onClick={isDiscarded ? undefined : handleApprovePayment}
+            disabled={isDiscarded ||isApprovingPayment}
             sx={{
               textTransform: "none",
               fontWeight: 600,
@@ -139,6 +141,7 @@ export default function InvoiceTable({
               payment_slips={payment_slips}
               status={status}
               onStatusUpdated={onStatusUpdated}
+              isDiscarded={isDiscarded}
             />
           </TableBody>
         </Table>

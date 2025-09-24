@@ -98,3 +98,8 @@ export interface PickupRequest {
   remarks?: string;
   status?: string;
 }
+
+export interface Status {
+  label: string;
+  value: string;
+}

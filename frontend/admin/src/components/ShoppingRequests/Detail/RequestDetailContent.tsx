@@ -1,6 +1,6 @@
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import ItemsTable from './ItemsTable';
-import TrackingStatus from './TrackingStatus';
+import TrackingStatus, { type Status } from '../../../components/common/Tracking/TrackingStatus';
 import InvoiceTable from './InvoiceTable';
 
 interface User {
@@ -77,6 +77,26 @@ interface RequestDetailContentProps {
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
 }
 
+const SHOPPING_TRACKING_STEPS = [
+  { id: 'REQUESTED', title: 'Requested', defaultDescription: 'Requested by User' },
+  { id: 'QUOTED', title: 'Quotation Ready', defaultDescription: 'Quotation is not ready yet!' },
+  { id: 'QUOTATION_CONFIRMED', title: 'Quotation Confirmed', defaultDescription: 'Quotation is not confirmed yet!' },
+  { id: 'INVOICED', title: 'Invoiced', defaultDescription: 'Waiting for confirmation!' },
+  { id: 'PAYMENT_PENDING', title: 'Pending Payment Approval', defaultDescription: 'Waiting for upload payment slip' },
+  { id: 'PAYMENT_APPROVED', title: 'Payment Approved', defaultDescription: 'Waiting for payment approval' },
+  { id: 'ORDER_PLACED', title: 'Order placed', defaultDescription: 'Waiting for complete' },
+];
+
+const STATUS_TO_STEP_ID_MAPPING: Record<string, string> = {
+  REQUESTED: 'REQUESTED',
+  QUOTED: 'QUOTED',
+  QUOTATION_CONFIRMED: 'QUOTATION_CONFIRMED',
+  INVOICED: 'INVOICED',
+  PAYMENT_PENDING: 'PAYMENT_PENDING',
+  PAYMENT_APPROVED: 'PAYMENT_APPROVED',
+  ORDER_PLACED: 'ORDER_PLACED',
+};
+
 const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
   request,
   onStatusUpdated,
@@ -86,6 +106,38 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  const prepareTrackingData = () => {
+    const trackingHistory = request.tracking_requests || [];
+    
+    const statuses: Status[] = SHOPPING_TRACKING_STEPS.map(step => {
+      const historyItem = trackingHistory.find(
+        track => STATUS_TO_STEP_ID_MAPPING[track.status.toUpperCase()] === step.id
+      );
+      
+      const fallbackItem =
+        step.id === 'QUOTATION_CONFIRMED'
+          ? trackingHistory.find(track => track.status.toUpperCase() === 'INVOICED')
+        : step.id === 'PAYMENT_PENDING'
+          ? trackingHistory.find(track => track.status.toUpperCase() === 'PAYMENT_PENDING')
+        : undefined;
+          
+      const effectiveItem = historyItem || fallbackItem;
+
+      return {
+        id: step.id,
+        title: step.title,
+        description: effectiveItem ? `Status updated to ${step.title}` : step.defaultDescription,
+        date: effectiveItem?.created_at,
+      };
+    });
+    
+    const currentStageId = STATUS_TO_STEP_ID_MAPPING[request.status.toUpperCase()] || 'REQUESTED';
+
+    return { statuses, currentStageId };
+  };
+
+  const { statuses, currentStageId } = prepareTrackingData();
+
   return (
     <Box sx={{ 
       display: 'flex', 
@@ -94,10 +146,9 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
       width: '100%',
       padding: "16px"
     }}>
-      {/* Left Content - 70% on desktop, full width on mobile */}
       <Box sx={{ 
         flex: isMobile ? '1' : '0 0 70%',
-        minWidth: 0, // Prevents flex item from overflowing
+        minWidth: 0,
       }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
@@ -119,15 +170,15 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
         </Box>
       </Box>
 
-      {/* Right Content - 30% on desktop, full width on mobile */}
       <Box sx={{ 
         flex: isMobile ? '1' : '0 0 28%',
-        minWidth: 0, // Prevents flex item from overflowing
+        minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
         gap: 3
       }}>
-        <TrackingStatus details={request} />
+        <TrackingStatus statuses={statuses} currentStageId={currentStageId} />
+        
         {/* TODO: Uncomment when functionality is implemented */}
         {/* <ActionLogs />  */}
       </Box>

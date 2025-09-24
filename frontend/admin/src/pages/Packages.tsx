@@ -47,8 +47,8 @@ const Packages: React.FC = () => {
       
       // Count packages by status
       const statusCounts = packages.reduce((acc: any, pkg: any) => {
-        const status = pkg.status || 'Unknown';
-        acc[status] = (acc[status] || 0) + 1;
+        const statusValue = pkg.status?.value || 'Unknown';
+        acc[statusValue] = (acc[statusValue] || 0) + 1;
         return acc;
       }, {});
 

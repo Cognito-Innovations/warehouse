@@ -107,7 +107,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
       
       // Calculate status counts
       const counts = data.reduce((acc: any, pkg: any) => {
-        const status = pkg.status || 'Unknown';
+        const status = pkg.status.value || 'Unknown';
         acc[status] = (acc[status] || 0) + 1;
         return acc;
       }, {});
@@ -125,7 +125,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 
     // Filter by status
     if (selectedStatus) {
-      filtered = filtered.filter(pkg => pkg.status === selectedStatus);
+      filtered = filtered.filter(pkg => pkg.status.value === selectedStatus);
     }
 
     // Filter by search value
@@ -246,10 +246,10 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
                       </TableCell>
                       <TableCell>
                         {(() => {
-                          const status = getStatusColor(row.status);
+                          const status = getStatusColor(row.status.value);
                           return (
                             <Chip
-                              label={row.status}
+                              label={row.status.value}
                               size="small"
                               sx={{
                                 color: status.color,

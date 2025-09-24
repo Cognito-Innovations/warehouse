@@ -25,11 +25,11 @@ const statusOptions = [
   { value: 'Ready To Send', label: 'Ready To Send', color: '#22c55e' },
   { value: 'Request Ship', label: 'Request Ship', color: '#f59e0b' },
   { value: 'Shipped', label: 'Shipped', color: '#10b981' },
-  { value: 'Discarded', label: 'Discarded', color: '#6b7280' },
+  { value: 'Discarded', label: 'Discarded', color: '#d32f2f' },
   { value: 'Draft', label: 'Draft', color: '#ec4899' },
   { value: 'Pending', label: 'Pending', color: '#a855f7' },
-  { value: 'Ready to Ship', label: 'Ready to Ship', color: '#16a34a' },
-  { value: 'Departed', label: 'Departed', color: '#16a34a' },
+  { value: 'Ready To Ship', label: 'Ready To Ship', color: '#16a34a' },
+  { value: 'Departed', label: 'Departed', color: '#9c27b0' },
 ];
 
 const PackageFilter: React.FC<PackageFilterProps> = ({
