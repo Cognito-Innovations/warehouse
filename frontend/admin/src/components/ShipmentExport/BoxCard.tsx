@@ -1,16 +1,16 @@
 import React from "react";
-import { Box, Card, IconButton, Typography } from "@mui/material";
+import { Box, Card, CircularProgress, IconButton, Typography } from "@mui/material";
 import { Edit as EditIcon, DeleteOutline as DeleteIcon } from "@mui/icons-material";
 
 interface BoxCardProps {
   box: {
     id: number;
     label?: string;
-    length: number;
-    breadth: number;
-    height: number;
-    grossWeight?: number;
-    massWeight?: number;
+    length_cm: number;
+    breadth_cm: number;
+    height_cm: number;
+    volumetric_weight?: number;
+    mass_weight?: number;
   };
   index: number;
   total: number;
@@ -18,14 +18,21 @@ interface BoxCardProps {
   onDelete: (boxId: number) => void;
   onSelect: (boxId: number) => void;
   selected: boolean;
+  isDeleting?: boolean;
 }
 
-const BoxCard: React.FC<BoxCardProps> = ({ box, index, total, onEdit, onDelete, onSelect, selected }) => {
-  const displayLabel = box.label 
-    ? box.label 
-    : total === 1 
-      ? "Box 1" 
-      : `Box ${index + 1}`;
+const BoxCard: React.FC<BoxCardProps> = ({
+  box,
+  index,
+  total,
+  onEdit,
+  onDelete,
+  onSelect,
+  selected,
+  isDeleting,
+}) => {
+  const displayLabel =
+    box.label || (total === 1 ? "Box 1" : `Box ${index + 1}`);
 
   return (
     <Card
@@ -47,13 +54,13 @@ const BoxCard: React.FC<BoxCardProps> = ({ box, index, total, onEdit, onDelete, 
             Dimension (LxBxH):
           </Typography>
           <Typography variant="body2" color="text.secondary" fontWeight={500}>
-            {box.length} x {box.breadth} x {box.height}
+            {parseFloat(box.length_cm as any) || 0} x {parseFloat(box.breadth_cm as any) || 0} x {parseFloat(box.height_cm as any) || 0}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Gross Weight: {box.grossWeight ?? "-"}
+            Gross Weight: {parseFloat(box.volumetric_weight as any) ?? "-"}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Mass Weight: {box.massWeight ?? "-"}
+            Mass Weight: {parseFloat(box.mass_weight as any) ?? "-"}
           </Typography>
         </Box>
         <Box
@@ -71,8 +78,13 @@ const BoxCard: React.FC<BoxCardProps> = ({ box, index, total, onEdit, onDelete, 
             size="small"
             sx={{ bgcolor: "#fee2e2", color: "#ef4444" }}
             onClick={() => onDelete(box.id)}
+            disabled={isDeleting}
           >
-            <DeleteIcon fontSize="small" />
+            {isDeleting ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <DeleteIcon fontSize="small" />
+            )}
           </IconButton>
         </Box>
       </Box>

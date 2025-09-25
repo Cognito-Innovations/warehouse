@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Card, Chip, Typography } from "@mui/material";
 import { getStatusColor } from "../../data/shipmentExports";
+import { formatDateTime } from "../../utils/formatDateTime";
 
 interface ShipmentHeaderProps {
   shipment: any;
@@ -23,7 +24,7 @@ const ShipmentHeader: React.FC<ShipmentHeaderProps> = ({ shipment }) => {
             {shipment.boxes?.length || 0} Box / 0 Shipment
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Created at {new Date(shipment.created_at).toLocaleString()}
+            Created at {formatDateTime(shipment.created_at)}
           </Typography>
         </Box>
         <Chip

@@ -2,7 +2,12 @@ import React, { useState } from "react";
 import { Box, Button, CircularProgress, InputAdornment, TextField, Typography } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import { addPackageToBox, markShipmentExportDeparted, searchReadyToShipPackage, updatePackageStatus } from "../../services/api.services";
+import { 
+  addPackageToBox,
+  markShipmentExportDeparted,
+  searchReadyToShipPackage,
+  updatePackageStatus,
+} from "../../services/api.services";
 
 interface ShipmentActionsBarProps {
   selectedBoxId: number | null;
@@ -23,22 +28,29 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
 }) => {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearchAndAdd = async () => {
     if (!selectedBoxId || !trackingNumber.trim()) return;
+    
+    setIsSearching(true);
+    setError(null);
 
     try {
-      setError(null);
       const foundPackage = await searchReadyToShipPackage(trackingNumber.trim());
       if (foundPackage) {
         await addPackageToBox(selectedBoxId, foundPackage.id);
         onPackageAdded();
         setTrackingNumber("");
+      } else {
+        setError("Package not found.");
       }
     } catch (err: any) {
       console.error("Failed to add package:", err);
       setError(err.response?.data?.message || "Package not found or could not be added.");
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -64,12 +76,17 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
       setLoading(false);
     }
   };
+
+  const handleTrackingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTrackingNumber(event.target.value);
+    if (error) setError(null);
+  };
   
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
       handleSearchAndAdd();
     }
-  };
+  };  
 
   return (
     <Box sx={{ display: "flex", alignItems: "flex-start", mb: 3 }}>
@@ -80,7 +97,7 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
           placeholder="Search shipment"
           disabled={!selectedBoxId}
           value={trackingNumber}
-          onChange={(e) => setTrackingNumber(e.target.value)}
+          onChange={handleTrackingChange}
           onKeyDown={handleKeyDown}
           error={!!error}
           helperText={error}
@@ -90,6 +107,13 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
                 <SearchIcon fontSize="small" />
               </InputAdornment>
             ),
+            endAdornment: (
+              isSearching && (
+                <InputAdornment position="end">
+                  <CircularProgress color="inherit" size={20} />
+                </InputAdornment>
+              )
+            )
           }}
           sx={{ width: 410 }}
         />

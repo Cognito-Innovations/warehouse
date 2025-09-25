@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import { formatDateTime } from "../../utils/formatDateTime";
+import { removePackageFromBox } from "../../services/api.services";
 
 interface Package {
   id: string;
@@ -24,32 +25,42 @@ interface Package {
 }
 
 interface BoxShipmentsListProps {
+  boxId: number | null;
+  refreshPackages: () => void;
   boxLabel?: string; 
   boxIndex: number;
   totalBoxes: number;
   shipments: Package[];
   isLoading: boolean;
-  onDelete: (shipmentId: string) => void;
 }
 
 const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
+  boxId,
+  refreshPackages,
   boxIndex,
   totalBoxes,
   boxLabel,
   shipments,
   isLoading,
-  onDelete,
 }) => {
+  const handleDeletePackage = async (packageId: string) => {
+    if (!boxId) return;
+    try {
+      await removePackageFromBox(boxId, packageId);
+      refreshPackages();
+    } catch (error) {
+      console.error("Failed to delete package from box:", error);
+    }
+  };
+
   const displayLabel = boxLabel 
-  ? boxLabel 
-  : totalBoxes === 1 
-    ? "Box 1" 
-    : `Box ${boxIndex + 1}`;
+    ? boxLabel 
+    : totalBoxes === 1 
+      ? "Box 1" 
+      : `Box ${boxIndex + 1}`;
 
   return (
-    <Box 
-    sx={{ width: "100%" }}
-    >
+    <Box sx={{ width: "100%" }}>
       <Typography
         variant="subtitle1"
         fontWeight={600}
@@ -67,9 +78,7 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
           width: "100%"
         }}
       >
-        <Table size="small" 
-        sx={{ width: "100%" }}
-        >
+        <Table size="small" sx={{ width: "100%" }}>
           <TableHead>
             <TableRow
               sx={{
@@ -135,7 +144,7 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
                         "&:hover": { bgcolor: "#ef4444" },
                       }}
                       size="small"
-                      onClick={() => onDelete(pkg.id)}
+                      onClick={() => handleDeletePackage(pkg.id)}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>

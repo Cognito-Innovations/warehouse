@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 
 import { getPickupRequests } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
-import RequestSummary from '../components/PickupRequests/RequestSummary';
 import StatusChip from '../components/common/StatusChip';
 import CommonTable from '../components/common/CommonTable';
 import { formatDateTime } from '../utils/formatDateTime';
 import type { ColumnDefinition } from '../types/table';
 import type { PickupRequest } from '../types';
+import { pickupSummaryConfig } from '../utils/summaryConfig';
+import RequestSummary from '../components/common/RequestSummary';
 
 const statusOptions = [
     { value: 'REQUESTED', label: 'Requested' },
@@ -21,6 +22,7 @@ const statusOptions = [
 
 const PickupRequests: React.FC = () => {
   const [requests, setRequests] = useState([]);
+  const [selectedStatus, setSelectedStatus] = useState<string | string[] | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -39,6 +41,14 @@ const PickupRequests: React.FC = () => {
   useEffect(() => {
     fetchRequests()
   }, []);
+
+  const filteredRequests = useMemo(() => {
+    if (!selectedStatus) {
+      return requests;
+    }
+    const statusesToFilter = Array.isArray(selectedStatus) ? selectedStatus : [selectedStatus];
+    return requests.filter(req => statusesToFilter.includes(req.status || 'REQUESTED'));
+  }, [requests, selectedStatus]);
 
   const columns: ColumnDefinition<PickupRequest>[] = [
     {
@@ -80,9 +90,17 @@ const PickupRequests: React.FC = () => {
   return (
     <Box>
       <TopNavbar pageTitle="Pickup Request" pageSubtitle="All" />
-      <RequestSummary requests={requests} loading={loading} />
+
+      <RequestSummary
+        requests={requests}
+        loading={loading}
+        summaryConfig={pickupSummaryConfig}
+        onCardClick={setSelectedStatus}
+        selectedStatus={selectedStatus}
+      />
+
       <CommonTable
-        rows={requests}
+        rows={filteredRequests}
         columns={columns}
         loading={loading}
         statusOptions={statusOptions}

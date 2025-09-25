@@ -5,6 +5,7 @@ import {
   OneToMany,
   ManyToOne,
   JoinColumn,
+  AfterLoad,
 } from 'typeorm';
 import { ShipmentExportBox } from './shipment-export-box.entity';
 import { User } from 'src/users/user.entity';
@@ -25,7 +26,6 @@ export class ShipmentExport extends BaseTimestampEntity {
   @Column({ nullable: true })
   mawb: string;
 
-  @Column({ default: 0 })
   boxes_count: number;
 
   @Column()
@@ -38,4 +38,9 @@ export class ShipmentExport extends BaseTimestampEntity {
     cascade: true,
   })
   boxes: ShipmentExportBox[];
+
+  @AfterLoad()
+  updateBoxesCount() {
+    this.boxes_count = this.boxes ? this.boxes.length : 0;
+  }
 }
