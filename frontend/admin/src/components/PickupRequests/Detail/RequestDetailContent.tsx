@@ -38,6 +38,7 @@ const STATUS_TO_STEP_ID_MAPPING: Record<string, string> = {
 };
 
 const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) => {
+  //TODO: Needs to improve this code
   const prepareTrackingData = () => {
     const trackingHistory = request.tracking_requests || [];
 
@@ -57,6 +58,7 @@ const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) =
       }
       
       if (isComplete) {
+        //TODO: Its not correct way to replace the userName
         description = step.description.replace('{userName}', userName);
       }
 

@@ -37,8 +37,9 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
   const chipStyles = getChipStyles(normalizedStatus);
 
   const handleOpenModal = () => setOpenModal(true);
+
   const handleCloseModal = () => {
-    setPrice('');
+    setPrice(''); //  TODO: Price should be reset 0 or ''
     setOpenModal(false);
   }
 

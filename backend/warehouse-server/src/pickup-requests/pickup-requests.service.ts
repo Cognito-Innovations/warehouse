@@ -108,6 +108,7 @@ export class PickupRequestsService {
 
       return Promise.all(
         pickupRequests.map(async (request) => {
+          //TODO: Why are we using external function ? instead of expanding relations ?
           const trackingRequests =
             await this.trackingRequestsService.getTrackingRequestsByFeature(
               FeatureType.PickupRequest,
@@ -195,6 +196,7 @@ export class PickupRequestsService {
         throw new NotFoundException(`Pickup request with id ${id} not found`);
       }
 
+      //TODO: Why are we using external function ? instead of expanding relations ?
       const trackingRequests = 
         await this.trackingRequestsService.getTrackingRequestsByFeature(
           FeatureType.PickupRequest,
@@ -291,6 +293,7 @@ export class PickupRequestsService {
         );
       }
 
+      //TODO: This piece of code should be inside commit transaction
       await this.trackingRequestsService.createTrackingRequest({
         feature_type: FeatureType.PickupRequest,
         feature_fid: pickupRequestWithRelations.id,
@@ -298,6 +301,7 @@ export class PickupRequestsService {
         user: pickupRequestWithRelations.user?.id,
       });
 
+      //TODO: Why are we using external function ? instead of expanding relations ?
       const trackingRequests =
         await this.trackingRequestsService.getTrackingRequestsByFeature(
           FeatureType.PickupRequest,

@@ -1,6 +1,7 @@
 import { PickupRequestStatus } from './pickup-request.entity';
 import { TrackingStatus } from '../tracking-requests/tracking-request.entity';
 
+//TODO: We should not prefer switch case statement
 export const mapPickupToTrackingStatus = (
   status: PickupRequestStatus
 ): TrackingStatus => {

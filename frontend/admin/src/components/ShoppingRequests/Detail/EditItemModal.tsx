@@ -40,6 +40,7 @@ const EditItemModal = ({ open, onClose, unitPriceInitial, availableInitial, onSa
       setLoading(true);
       await onSave({ unit_price: unitPrice, available });
       onClose();
+      //TODO: Are we resetting it ?
     } catch (err) {
       console.error("Failed to save item", err);
     } finally {

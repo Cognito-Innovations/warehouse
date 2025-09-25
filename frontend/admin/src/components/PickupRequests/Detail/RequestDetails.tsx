@@ -3,7 +3,7 @@ import { Box, Typography, Paper } from '@mui/material';
 
 interface DetailItemProps {
   label: string;
-  value: string | number | undefined | null;
+  value: string | number | undefined | null; //TODO: Why is it undefined | null both ?
 }
 
 const DetailItem: React.FC<DetailItemProps> = ({ label, value }) => (
