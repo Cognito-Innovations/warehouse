@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Box, Typography, Card, CardContent, Button, CircularProgress } from '@mui/material';
-import { Add as AddIcon, CloudUpload as UploadIcon } from '@mui/icons-material';
+import { Add as AddIcon, CloudUpload as UploadIcon, PictureAsPdf as PictureAsPdfIcon } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { uploadToCloudinary } from '../../utils/cloudinary.api';
 import { addShipmentDocument, getShipmentDocuments } from '../../services/api.services';
+import { formatFileName } from '../../utils/formatFileName';
 
 interface Document {
   id: string;
@@ -200,19 +201,58 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ package
                     if (!doc || !doc.document_url) {
                       return null;
                     }
-
+                    const isPdf = doc.original_filename.toLowerCase().endsWith('.pdf');
                     return (
-                      <Box key={doc.id} sx={{ position: 'relative' }}>
-                         <Box
-                          component="img"
+                      <Box key={doc.id} sx={{ position: 'relative', textAlign: 'center', width: 80 }}>
+                        {isPdf ? (
+                          <Box
+                            onClick={() => window.open(doc.document_url, '_blank')}
+                            sx={{
+                              width: 80,
+                              height: 60,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              bgcolor: '#f8f9fa',
+                              borderRadius: 1,
+                              border: '1px solid #e9ecef',
+                              cursor: 'pointer',
+                              '&:hover': { bgcolor: '#e9ecef' }
+                            }}
+                          >
+                            <PictureAsPdfIcon sx={{ fontSize: 36, color: '#64748b' }} />
+                          </Box>
+                        ) : (
+                          <Box
+                            component="img"
+                            sx={{
+                              width: 80,
+                              height: 60,
+                              objectFit: 'cover',
+                              borderRadius: 1,
+                              border: '1px solid #e9ecef',
+                              cursor: 'pointer'
+                            }}
+                            alt={doc.original_filename}
+                            src={doc.document_url}
+                            onClick={() => window.open(doc.document_url, '_blank')}
+                          />
+                        )}
+                        <Typography
+                          variant="caption"
                           sx={{
-                            width: 80, height: 60, objectFit: 'cover', borderRadius: 1,
-                            border: '1px solid #e9ecef', cursor: 'pointer'
+                            display: 'block',
+                            width: '100%',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            fontSize: '0.7rem',
+                            color: '#64748b',
+                            mt: 0.5,
                           }}
-                          alt={doc.original_filename}
-                          src={doc.document_url.match(/\.pdf$/i) ? '/pdf-placeholder.png' : doc.document_url}
-                          onClick={() => window.open(doc.document_url, '_blank')}
-                        />
+                        >
+                          {formatFileName(doc.original_filename)}
+                        </Typography>
                       </Box>
                     );
                   })}

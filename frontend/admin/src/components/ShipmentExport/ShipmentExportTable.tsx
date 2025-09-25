@@ -8,17 +8,17 @@ import {
   TableCell,
   TablePagination,
 } from '@mui/material';
-import ShipmentExportFilters from './ShipmentExportFilters';
-import ShipmentExportTableBody from './ShipmentExportTableBody';
 import dayjs, { Dayjs } from 'dayjs';
 import { getShipmentExports } from '../../services/api.services';
+import ShipmentExportFilters from './ShipmentExportFilters';
+import ShipmentExportTableBody from './ShipmentExportTableBody';
 
 const ShipmentExportTable: React.FC = () => {
   const [rows, setRows] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchExports = async () => {
     setLoading(true);
@@ -54,26 +54,43 @@ const ShipmentExportTable: React.FC = () => {
     page * rowsPerPage + rowsPerPage
   );
 
+  const tableHeaders = [
+    "Serial #",
+    "Date",
+    "MAWB",
+    "Count",
+    "Created By",
+    "Status",
+    "Actions",
+  ];
+
   return (
     <>
-      <ShipmentExportFilters selectedDate={selectedDate} onDateChange={setSelectedDate} onUpdate={fetchExports} />
+      <ShipmentExportFilters 
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        onUpdate={fetchExports}
+      />
+
       <Card>
         <TableContainer>
           <Table>
             <TableHead sx={{ bgcolor: '#f8fafc' }}>
               <TableRow>
-                <TableCell>Serial #</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>MAWB</TableCell>
-                <TableCell>Count</TableCell>
-                <TableCell>Created By</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Actions</TableCell>
+                {tableHeaders.map((header, index) => (
+                  <TableCell key={index}>{header}</TableCell>
+                ))}
               </TableRow>
             </TableHead>
-            <ShipmentExportTableBody rows={visibleRows} loading={loading} onUpdate={fetchExports} />
+
+            <ShipmentExportTableBody
+              rows={visibleRows}
+              loading={loading}
+              onUpdate={fetchExports}
+            />
           </Table>
         </TableContainer>
+
         <TablePagination
           rowsPerPageOptions={[15, 25, 50]}
           component="div"

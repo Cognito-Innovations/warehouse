@@ -4,13 +4,15 @@ import { Box, Typography } from '@mui/material';
 
 import { getAllShoppingRequests } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
-import RequestSummary from '../components/ShoppingRequests/RequestSummary';
+import RequestSummary from '../components/common/RequestSummary';
 import StatusChip from '../components/common/StatusChip';
 import CommonTable from '../components/common/CommonTable';
 import type { ColumnDefinition } from '../types/table';
+import { shoppingSummaryConfig } from '../utils/summaryConfig';
 
 const ShoppingRequests: React.FC = () => {
   const [requests, setRequests] = useState<any[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<string | string[] | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -38,7 +40,14 @@ const ShoppingRequests: React.FC = () => {
   ];
 
   const mappedRows = useMemo(() => {
-    return requests.map((req: any) => {
+    const filteredRequests = selectedStatus
+      ? requests.filter(req => {
+          const statusesToFilter = Array.isArray(selectedStatus) ? selectedStatus : [selectedStatus];
+          return statusesToFilter.includes(req.status);
+        })
+      : requests;
+
+    return filteredRequests.map((req: any) => {
       const createdAt = new Date(Number(req.created_at) * 1000);
       return {
         orderNo: req.request_code,
@@ -54,7 +63,7 @@ const ShoppingRequests: React.FC = () => {
         noOfItems: req.items_count,
       };
     });
-  }, [requests]);
+  }, [requests, selectedStatus]);
 
    const columns: ColumnDefinition<typeof mappedRows[0]>[] = [
     {
@@ -101,7 +110,15 @@ const ShoppingRequests: React.FC = () => {
   return (
     <Box>
       <TopNavbar pageTitle="Shopping Request" pageSubtitle="All" />
-      <RequestSummary requests={requests} loading={loading} />
+
+      <RequestSummary
+        requests={requests}
+        loading={loading}
+        summaryConfig={shoppingSummaryConfig}
+        onCardClick={setSelectedStatus}
+        selectedStatus={selectedStatus}
+      />
+
       <CommonTable
         rows={mappedRows}
         columns={columns}
