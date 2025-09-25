@@ -7,6 +7,7 @@ import Modal from '../../common/Modal';
 import ActionButton from '../../common/ActionButton';
 import { TRACKING_STATUS } from '../../../utils/trackingConfig';
 import { getChipStyles } from '../../../utils/pickupStatus';
+import { numberInputStyle } from '../../../styles/numberInputStyle';
 
 interface Users {
   id: string;
@@ -36,7 +37,11 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
   const chipStyles = getChipStyles(normalizedStatus);
 
   const handleOpenModal = () => setOpenModal(true);
-  const handleCloseModal = () => setOpenModal(false);
+
+  const handleCloseModal = () => {
+    setPrice(''); //  TODO: Price should be reset 0 or ''
+    setOpenModal(false);
+  }
 
   const handleStatusUpdate = async (status: TRACKING_STATUS, price?: number) => {
     try {
@@ -57,7 +62,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
     name: request.user.name,
     email: request.user.email,
     phone: request.user.phone_number,
-    suite_no: request.user.suite_no || request.id,
+    suite_no: request.user.suite_no,
   };
 
   const renderActionButtons = () => (
@@ -112,7 +117,12 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
             type="number"
             fullWidth
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            onChange={(e) => {
+              if (e.target.value.length <= 7) {
+                setPrice(e.target.value);
+              }
+            }}
+            sx={numberInputStyle}
           />
           {price && (
             <Typography variant="body2" color="text.secondary">

@@ -5,7 +5,7 @@ import { createPackage, getRacks, getSuppliers, getUsers } from "../../services/
 import { toast } from "sonner";
 
 import { Close as CloseIcon } from "@mui/icons-material";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box, CircularProgress } from "@mui/material";
 import FormFields from "./RegisterPackageModal/FormFields";
 
 import WeightSection from "./RegisterPackageModal/WeightSection";
@@ -46,6 +46,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
   const [packageInfoOpen, setPackageInfoOpen] = useState(false);
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -74,11 +75,22 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     }
   };
 
+  const loadInitialData = async () => {
+    setIsLoadingData(true);
+    try {
+      await Promise.all([fetchUsers(), fetchRacks(), fetchSuppliers()]);
+    } catch (error) {
+      console.error("Failed to load initial data for modal", error);
+      toast.error("Could not load required data. Please try again.");
+      onClose();
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
   useEffect(() => {
     if (open) {
-      fetchUsers();
-      fetchRacks();
-      fetchSuppliers();
+      loadInitialData();
     }
   }, [open]);
 
@@ -330,32 +342,38 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
 
       <Divider />
 
-      <DialogContent sx={{ pt: 3 }}>
-        <Grid container spacing={2}>
-          <FormFields
-            formData={formData}
-            errors={errors}
-            users={users}
-            racks={racks}
-            suppliers={suppliers}
-            onInputChange={handleInputChange}
-            onAddSupplier={handleAddSupplier}
-          />
+      <DialogContent sx={{ pt: 3, minHeight: "400px" }}>
+        {isLoadingData ? (
+            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Grid container spacing={2}>
+              <FormFields
+                formData={formData}
+                errors={errors}
+                users={users}
+                racks={racks}
+                suppliers={suppliers}
+                onInputChange={handleInputChange}
+                onAddSupplier={handleAddSupplier}
+              />
 
-          <WeightSection
-            pieces={pieces}
-            onPieceChange={handlePieceChange}
-            onAddPiece={handleAddPiece}
-            onRemovePiece={handleRemovePiece}
-            calculateTotals={calculateTotals}
-            errors={errors}
-          />
+              <WeightSection
+                pieces={pieces}
+                onPieceChange={handlePieceChange}
+                onAddPiece={handleAddPiece}
+                onRemovePiece={handleRemovePiece}
+                calculateTotals={calculateTotals}
+                errors={errors}
+              />
 
-          <OptionsSection
-            formData={formData}
-            onInputChange={handleInputChange}
-          />
-        </Grid>
+              <OptionsSection
+                formData={formData}
+                onInputChange={handleInputChange}
+              />
+            </Grid>
+          )}
       </DialogContent>
 
       <Divider />

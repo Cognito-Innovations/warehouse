@@ -17,8 +17,11 @@ export class TrackingRequestsService {
   async createTrackingRequest(
     createTrackingRequestDto: CreateTrackingRequestDto,
   ): Promise<TrackingRequestResponseDto> {
+    //TODO: Couldn't able to understand this logic
     const trackingRequest = this.trackingRequestRepository.create({
-      courier: { id: createTrackingRequestDto.courier_id } as any,
+      ...(createTrackingRequestDto.courier_id
+        ? { courier: { id: createTrackingRequestDto.courier_id } as any }
+        : {}),
       feature_type: createTrackingRequestDto.feature_type,
       status: createTrackingRequestDto.status,
       feature_fid: createTrackingRequestDto.feature_fid,

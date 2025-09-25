@@ -22,12 +22,13 @@ export class CreateTrackingRequestDto {
   @IsEnum(Role)
   role?: Role;
 
+  //TODO: Why is it optional ?
   @ApiProperty({
     description: 'Courier ID that is being tracked',
     example: '123e4567-e89b-12d3-a456-426614174002',
   })
   @IsUUID()
-  courier_id: string;
+  courier_id?: string;
 
   @ApiProperty({
     description: 'Current status of the tracking request',

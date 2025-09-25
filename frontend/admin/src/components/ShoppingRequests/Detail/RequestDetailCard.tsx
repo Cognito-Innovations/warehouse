@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { getDisplayStatus, getRequestStatusColor } from '../../../data/shoppingRequests';
 import { updateShoppingRequestStatus } from '../../../services/api.services';
 import RequestHeader from '../../common/RequestHeader';
-import CustomerRemarks from '../../common/CustomerRemarks';
 
 interface RequestDetailCardProps {
   request: any;
@@ -137,7 +136,6 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
         customer={request.user}
         actionButtons={renderActionButton()}
       />
-      <CustomerRemarks remarks={request.remarks} />
     </>
   );
 };

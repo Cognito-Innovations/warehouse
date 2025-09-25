@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Edit as EditIcon } from '@mui/icons-material';
 import { Box, Typography, Grid, Card, CardContent, Button, CircularProgress } from '@mui/material';
 import MeasurementsTable from './MeasurementsTable';
+import RackSlotInfo from './RackSlotInfo';
 import UpdateInfoModal from './UpdateInfoModal';
-import UpdateRackSlotModal from './UpdateRackSlotModal';
 import type { Status } from '../../types';
 
 interface PackageDetailsSectionProps {
@@ -41,13 +41,9 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
   isDiscarded
 }) => {
   const [infoModalOpen, setInfoModalOpen] = useState(false);
-  const [rackModalOpen, setRackModalOpen] = useState(false);
 
   const handleOpenInfoModal = () => setInfoModalOpen(true);
   const handleCloseInfoModal = () => setInfoModalOpen(false);
-
-  const handleOpenRackModal = () => setRackModalOpen(true);
-  const handleCloseRackModal = () => setRackModalOpen(false);
 
   return (
     <>
@@ -133,28 +129,11 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
           </Grid>
 
           {packageData.rack && (
-            <Box
-             sx={{
-              bgcolor: isDiscarded ? '#f1f5f9' : '#f0fdf4', 
-              p: 2, borderRadius: 2,
-              border: isDiscarded ? '1px solid #cbd5e1' : '1px solid #84cc16', 
-              width: "220px",
-              cursor: isDiscarded ? 'not-allowed' :'pointer',
-              opacity: isDiscarded ? 0.6 : 1,
-             }}
-             onClick={() => {
-               if (!isDiscarded) {
-                 handleOpenRackModal();
-               }
-             }}
-            >
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
-                {packageData.rack} →
-              </Typography>
-               <Typography variant="body2" sx={{ fontWeight: 500, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
-                {`Slot has ${packageData.count} pkgs`}
-               </Typography>        
-            </Box>
+            <RackSlotInfo
+              packageData={packageData}
+              isDiscarded={isDiscarded}
+              onRefresh={onRefresh}
+            />
           )}
 
           <MeasurementsTable 
@@ -169,15 +148,6 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
         <UpdateInfoModal
           open={infoModalOpen}
           onClose={handleCloseInfoModal}
-          onRefresh={onRefresh}
-          packageData={packageData}
-        />
-      )}
-
-      {rackModalOpen && (
-        <UpdateRackSlotModal
-          open={rackModalOpen}
-          onClose={handleCloseRackModal}
           onRefresh={onRefresh}
           packageData={packageData}
         />

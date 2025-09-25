@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
+import { getShoppingRequestByCode, updateProduct } from '../services/api.services.ts';
 import TopNavbar from '../components/Layout/TopNavbar';
 import RequestDetailContent from '../components/ShoppingRequests/Detail/RequestDetailContent.tsx';
-import { getShoppingRequestByCode, updateProduct } from '../services/api.services.ts';
 import RequestDetailCard from '../components/ShoppingRequests/Detail/RequestDetailCard.tsx';
-import { toast } from 'sonner';
 
 interface ShoppingRequestProduct {
   id?: string;
@@ -41,11 +41,18 @@ const ShoppingRequestDetail: React.FC = () => {
     fetchRequest();
   }, [id]);
 
-  const handleItemUpdate = async (index: number, updates: Partial<ShoppingRequestProduct>) => {
+  const handleItemUpdate = async (itemId: string, updates: Partial<ShoppingRequestProduct>) => {
     const originalProducts = [...products];
+
+    const productIndex = products.findIndex(p => p.id === itemId);
+    if (productIndex === -1) {
+      console.error("Product not found for update!");
+      return;
+    }
+
     const updatedProducts = [...products];
-    const productToUpdate = { ...updatedProducts[index], ...updates };
-    updatedProducts[index] = productToUpdate;
+    const productToUpdate = { ...updatedProducts[productIndex], ...updates };
+    updatedProducts[productIndex] = productToUpdate;
     setProducts(updatedProducts);
 
     if (productToUpdate.id) {

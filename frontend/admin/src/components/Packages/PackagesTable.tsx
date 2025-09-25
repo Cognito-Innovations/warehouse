@@ -2,33 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  IconButton,
-  Pagination,
   CircularProgress,
   Menu,
   MenuItem,
   ListItemIcon,
 } from '@mui/material';
-import {
-  VisibilityOutlined as ViewIcon,
-  MoreVert as MoreIcon,
-} from '@mui/icons-material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { toast } from 'sonner';
 import { deletePackage, getPackage } from '../../services/api.services';
-import { getStatusColor } from '../../data/packages';
 import PackageFilter from './PackageFilter';
-import { formatDateTime } from '../../utils/formatDateTime';
 import ConfirmDialog from '../common/ConfirmDialog';
+import PackagesTableView from './PackagesTableView';
 
 interface PackagesTableProps {
   selectedStatus?: string | null;
@@ -177,158 +161,32 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
           filteredCount={filteredPackages.length}
           statusCounts={statusCounts}
         />
-        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Package No.</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Tracking No.</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Customer</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Received At</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedData.map((row, index) => {
-                  const formattedDate = formatDateTime(row.created_at);
-                  if (!formatDateTime) return null;
-
-                  const [date, time] = formattedDate.split(", ");
-                  return (
-                    <TableRow key={row.id} sx={{ '&:hover': { bgcolor: '#f9fafb' } }}>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                          {index + 1 + (page - 1) * rowsPerPage}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                            {row.package_id || row.id}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Rack: {row.rack_slot?.label || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                            {row.tracking_no}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {row.vendor?.supplier_name || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                            {row.customer?.name || 'Unknown'}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {row.customer?.suite_no || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                            {date}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {time}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        {(() => {
-                          const status = getStatusColor(row.status.value);
-                          return (
-                            <Chip
-                              label={row.status.value}
-                              size="small"
-                              sx={{
-                                color: status.color,
-                                bgcolor: status.bgColor,
-                                fontWeight: 500,
-                                fontSize: '0.75rem',
-                              }}
-                            />
-                          );
-                        })()}
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <IconButton 
-                            size="small" 
-                            sx={{ bgcolor: '#6366f1', color: 'white' }}
-                            onClick={() => handleInfoClick(row)}
-                          >
-                            <ViewIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            sx={{ bgcolor: '#3b82f6', color: 'white' }}
-                            onClick={(e) => handleMenuOpen(e, row.id)}
-                          >
-                            <MoreIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {paginatedData.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
-                      No packages found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        >
-          <MenuItem onClick={() => handleConfirmDelete(selectedPackageId!)}>
-            <ListItemIcon>
-              <DeleteIcon fontSize="small" />
-            </ListItemIcon>
-            Delete
-          </MenuItem>
-        </Menu>
-
-        {/* Pagination */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Items per page: {rowsPerPage}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              {((page - 1) * rowsPerPage) + 1} - {Math.min(page * rowsPerPage, filteredPackages.length)} of {filteredPackages.length}
-            </Typography>
-            <Pagination
-              count={totalPages}
-              page={page}
-              onChange={handlePageChange}
-              size="small"
-              showFirstButton
-              showLastButton
-            />
-          </Box>
-        </Box>
+        <PackagesTableView
+          packages={paginatedData}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          totalPages={totalPages}
+          totalFilteredItems={filteredPackages.length}
+          onPageChange={handlePageChange}
+          onViewDetails={handleInfoClick}
+          onOpenMenu={handleMenuOpen}
+        />
       </Box>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem onClick={() => handleConfirmDelete(selectedPackageId!)}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" />
+          </ListItemIcon>
+          Delete
+        </MenuItem>
+      </Menu>
 
       <ConfirmDialog
         open={confirmOpen}

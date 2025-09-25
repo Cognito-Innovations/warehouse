@@ -2,6 +2,8 @@ import { Box, useMediaQuery, useTheme } from '@mui/material';
 import ItemsTable from './ItemsTable';
 import TrackingStatus, { type Status } from '../../../components/common/Tracking/TrackingStatus';
 import InvoiceTable from './InvoiceTable';
+import CustomerRemarks from '../../common/CustomerRemarks';
+import { formatDateTime } from '../../../utils/formatDateTime';
 
 interface User {
   id: string;
@@ -73,18 +75,18 @@ export interface RequestData {
 interface RequestDetailContentProps {
   request: RequestData;
   onStatusUpdated?: () => void;
-  onItemUpdate: (index: number, updates: any) => void;
+  onItemUpdate: (itemId: string, updates: any) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
 }
 
 const SHOPPING_TRACKING_STEPS = [
-  { id: 'REQUESTED', title: 'Requested', defaultDescription: 'Requested by User' },
-  { id: 'QUOTED', title: 'Quotation Ready', defaultDescription: 'Quotation is not ready yet!' },
-  { id: 'QUOTATION_CONFIRMED', title: 'Quotation Confirmed', defaultDescription: 'Quotation is not confirmed yet!' },
-  { id: 'INVOICED', title: 'Invoiced', defaultDescription: 'Waiting for confirmation!' },
-  { id: 'PAYMENT_PENDING', title: 'Pending Payment Approval', defaultDescription: 'Waiting for upload payment slip' },
-  { id: 'PAYMENT_APPROVED', title: 'Payment Approved', defaultDescription: 'Waiting for payment approval' },
-  { id: 'ORDER_PLACED', title: 'Order placed', defaultDescription: 'Waiting for complete' },
+  { id: 'REQUESTED', title: 'Requested', description: 'Requested by {userName}' },
+  { id: 'QUOTED', title: 'Quotation Ready', description: 'Quoted by {userName}', defaultDescription: 'Quotation is not ready yet!' },
+  { id: 'QUOTATION_CONFIRMED', title: 'Quotation Confirmed', description: 'Quotation Confirmed by {userName}', defaultDescription: 'Quotation is not confirmed yet!' },
+  { id: 'INVOICED', title: 'Invoiced', description: 'Invoice raised by {userName}', defaultDescription: 'Waiting for raise invoice' },
+  { id: 'PAYMENT_PENDING', title: 'Pending Payment Approval', description: 'Payment slip uploaded by {userName}', defaultDescription: 'Waiting for upload payment slip' },
+  { id: 'PAYMENT_APPROVED', title: 'Payment Approved', description: 'Payment Approved by {userName}', defaultDescription: 'Waiting for payment approval' },
+  { id: 'ORDER_PLACED', title: 'Order placed', description: 'Order Placed by {userName}', defaultDescription: 'Waiting for complete' },
 ];
 
 const STATUS_TO_STEP_ID_MAPPING: Record<string, string> = {
@@ -110,24 +112,48 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
     const trackingHistory = request.tracking_requests || [];
     
     const statuses: Status[] = SHOPPING_TRACKING_STEPS.map(step => {
+      let description = step.defaultDescription || '';
+      let date: string | undefined = undefined;
+      let isComplete = false;
+      let userName = request.user.name;
+
       const historyItem = trackingHistory.find(
         track => STATUS_TO_STEP_ID_MAPPING[track.status.toUpperCase()] === step.id
       );
+
+      if (historyItem) {
+        isComplete = true;
+        date = historyItem.created_at;
+      }
+
+       switch (step.id) {
+        case 'QUOTATION_CONFIRMED':
+          if (request.invoice && !isComplete) {
+            isComplete = true;
+            date = request.invoice.created_at;
+            userName = request.user.name;
+          }
+          break;
+        case 'PAYMENT_PENDING':
+          if (request.payment_slips && request.payment_slips.length > 0 && !isComplete) {
+            isComplete = true;
+            date = request.payment_slips[0].created_at;
+            userName = request.user.name;
+          }
+          break;
+        default:
+          break;
+      }
       
-      const fallbackItem =
-        step.id === 'QUOTATION_CONFIRMED'
-          ? trackingHistory.find(track => track.status.toUpperCase() === 'INVOICED')
-        : step.id === 'PAYMENT_PENDING'
-          ? trackingHistory.find(track => track.status.toUpperCase() === 'PAYMENT_PENDING')
-        : undefined;
-          
-      const effectiveItem = historyItem || fallbackItem;
+      if (isComplete) {
+        description = step.description.replace('{userName}', userName);
+      }
 
       return {
         id: step.id,
         title: step.title,
-        description: effectiveItem ? `Status updated to ${step.title}` : step.defaultDescription,
-        date: effectiveItem?.created_at,
+        description,
+        date: formatDateTime(date),
       };
     });
     
@@ -144,13 +170,14 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
       flexDirection: isMobile ? 'column' : 'row',
       gap: 3,
       width: '100%',
-      padding: "16px"
     }}>
       <Box sx={{ 
         flex: isMobile ? '1' : '0 0 70%',
         minWidth: 0,
       }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+
+          <CustomerRemarks remarks={request.remarks} />
 
           <ItemsTable 
             details={request}

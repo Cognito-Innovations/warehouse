@@ -1,8 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import { formatDateTime } from '../../../utils/formatDateTime';
 
 interface TrackingItemProps {
   status: string;
@@ -22,36 +20,68 @@ const TrackingItem: React.FC<TrackingItemProps> = ({
   <Box sx={{ display: 'flex' }}>
     <Box sx={{ mr: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {completed ? (
-        <CheckCircleIcon sx={{ color: '#22C55E', fontSize: '1.75rem' }} />
+        <CheckCircleIcon sx={{ color: '#22C55E', fontSize: '1.75rem', zIndex: 1, bgcolor: 'background.paper' }} />
       ) : (
-        <RadioButtonUncheckedIcon sx={{ color: 'grey.400', fontSize: '1.75rem' }} />
+        <Box
+          sx={{
+            width: '1.75rem',
+            height: '1.75rem',
+            borderRadius: '50%',
+            border: '2px solid',
+            borderColor: 'grey.300',
+            zIndex: 1,
+            bgcolor: 'background.paper',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Box
+            sx={{
+              width: 16,
+              height: 16,
+              borderRadius: '50%',
+              backgroundColor: 'grey.400',
+            }}
+          />
+        </Box>
       )}
       {!isLast && (
-        <Box sx={{ width: '2px', flexGrow: 1, bgcolor: 'grey.300', my: 0.5 }} />
+        <Box
+          sx={{
+            width: '2px',
+            flexGrow: 1,
+            bgcolor: completed ? '#22C55E' : 'grey.300',
+            mt: '-2px',
+            mb: '-2px',
+          }}
+        />
       )}
     </Box>
 
-    <Box sx={{ pb: isLast ? 0 : 2.5, mt: '-4px' }}>
+    <Box sx={{ pb: isLast ? 0 : 3.5, mt: '-6px' }}>
       <Typography
-        variant="body2"
-        fontWeight={600}
+        variant="body1"
+        fontWeight={500}
         color={completed ? 'text.primary' : 'text.secondary'}
-        sx={{ mb: 0.5 }}
+        sx={{ mb: 0.25 }}
       >
         {status}
       </Typography>
 
-      {description && (
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-          {description}
-        </Typography>
-      )}
+      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+        {description && (
+          <Typography variant="body2" color="text.secondary">
+            {description}
+          </Typography>
+        )}
 
-      {createdAt && (
-        <Typography variant="caption" color="text.secondary">
-          {formatDateTime(createdAt)}
-        </Typography>
-      )}
+        {createdAt && (
+          <Typography variant="caption" color="text.secondary">
+            {createdAt}
+          </Typography>
+        )}
+      </Box>
     </Box>
   </Box>
 );

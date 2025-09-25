@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PickupRequestStatus } from '../pickup-request.entity';
+import { TrackingRequestResponseDto } from 'src/tracking-requests/dto/tracking-request-response.dto';
 
 class UserInfoDto {
   @ApiProperty({
@@ -98,7 +99,7 @@ export class PickupRequestResponseDto {
     description: 'Price for the pickup service',
     example: '25.5 $',
   })
-  price?: string;
+  price?: number;
 
   @ApiPropertyOptional({
     description: 'Status of the pickup request',
@@ -129,4 +130,11 @@ export class PickupRequestResponseDto {
     type: UserInfoDto,
   })
   user?: UserInfoDto;
+
+  //TODO: Why does it optional ?
+  @ApiPropertyOptional({
+    description: 'History of tracking updates for the pickup request',
+    type: [TrackingRequestResponseDto],
+  })
+  tracking_requests?: TrackingRequestResponseDto[];
 }
