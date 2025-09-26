@@ -107,5 +107,4 @@ export class ShipmentExportsController {
   async markAsDeparted(@Param('id') id: string) {
     return this.exportsService.markAsDeparted(id);
   }
-
 }

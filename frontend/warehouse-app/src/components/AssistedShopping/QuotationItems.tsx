@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
 type QuotationItem = {
   id: string;
@@ -78,10 +78,10 @@ export default function QuotationItems({
 
                 <div className="text-right flex-shrink-0 ml-4">
                   <p className="text-sm text-gray-500">
-                    Color: <span className="font-medium text-gray-800">{item.color || '-'}</span>
+                    Color: <span className="font-medium text-gray-800">{item.color || "-"}</span>
                   </p>
                   <p className="text-sm text-gray-500">
-                    Size: <span className="font-medium text-gray-800">{item.size || 'NIL'}</span>
+                    Size: <span className="font-medium text-gray-800">{item.size || "NIL"}</span>
                   </p>
 
                   <p className="text-sm text-gray-900 font-semibold mt-2">Item Total</p>

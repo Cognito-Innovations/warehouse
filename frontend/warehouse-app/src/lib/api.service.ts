@@ -194,7 +194,7 @@ export const getPaymentSlips = async (shipmentUuid: string): Promise<any[]> => {
 // --- Other Functions ---
 
 export const getCourierCompanies = async () => {
-  const res = await authenticatedApi.get(`/courier-companies`);
+  const res = await authenticatedApi.get("/courier-companies");
   return res.data;
 };
 

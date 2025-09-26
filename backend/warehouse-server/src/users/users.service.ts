@@ -74,7 +74,7 @@ export class UsersService {
   }
 
   async update(
-    id: string, 
+    id: string,
     updateUserDto: Partial<UpdateUserDto>,
   ): Promise<User> {
     const user = await this.findById(id);
@@ -95,7 +95,7 @@ export class UsersService {
   ): Promise<{ message: string }> {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException(`User with ID ${id} not found`);
-  
+
     const isPasswordValid = await bcrypt.compare(
       currentPassword,
       user.password,

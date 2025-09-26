@@ -13,7 +13,7 @@ import { TrackingRequestsModule } from 'src/tracking-requests/tracking-requests.
   imports: [
     TypeOrmModule.forFeature([PickupRequest, TrackingRequest, UserPreference]),
     SharedModule,
-    TrackingRequestsModule
+    TrackingRequestsModule,
   ],
   controllers: [PickupRequestsController],
   providers: [PickupRequestsService, UserPreferencesService],

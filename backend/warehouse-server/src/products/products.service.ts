@@ -28,8 +28,8 @@ export class ProductsService {
       shopping_request_id: savedProduct.shopping_request_id,
       name: savedProduct.name,
       description: savedProduct.description,
-      unit_price: 
-        savedProduct.unit_price !== undefined && 
+      unit_price:
+        savedProduct.unit_price !== undefined &&
         savedProduct.unit_price !== null
           ? savedProduct.unit_price.toString()
           : undefined,
@@ -73,8 +73,8 @@ export class ProductsService {
       shopping_request_id: updatedProduct.shopping_request_id,
       name: updatedProduct.name,
       description: updatedProduct.description,
-      unit_price: 
-        updatedProduct.unit_price !== undefined && 
+      unit_price:
+        updatedProduct.unit_price !== undefined &&
         updatedProduct.unit_price !== null
           ? updatedProduct.unit_price.toString()
           : undefined,
@@ -83,7 +83,7 @@ export class ProductsService {
       url: updatedProduct.url,
       size: updatedProduct.size,
       color: updatedProduct.color,
-      variants: updatedProduct.variants,  
+      variants: updatedProduct.variants,
       if_not_available_quantity: updatedProduct.if_not_available_quantity,
       if_not_available_color: updatedProduct.if_not_available_color,
       available: updatedProduct.available,

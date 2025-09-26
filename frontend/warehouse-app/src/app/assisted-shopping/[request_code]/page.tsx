@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { CircularProgress } from '@mui/material';
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { CircularProgress } from "@mui/material";
 
-import { deleteShoppingRequest, getShoppingRequestById } from '@/lib/api.service';
+import { deleteShoppingRequest, getShoppingRequestById } from "@/lib/api.service";
 
-import TrackingStatus from '@/components/AssistedShopping/TrackingStatus';
-import RequestHeader from '@/components/AssistedShopping/RequestHeader';
-import InfoBanner from '@/components/AssistedShopping/InfoBanner';
-import ItemsList from '@/components/AssistedShopping/ItemsList';
-import ActionsCard from '@/components/AssistedShopping/ActionsCard';
-import QuotationItems from '@/components/AssistedShopping/QuotationItems';
-import QuotationSummary from '@/components/AssistedShopping/QuotationSummary';
-import { shoppingRequestMessages } from '@/lib/shoppingRequestStatus';
-import Invoices from '@/components/AssistedShopping/Invoices';
-import { toast } from 'sonner';
-import ConfirmDialog from '@/components/Modals/ConfirmDialog';
+import TrackingStatus from "@/components/AssistedShopping/TrackingStatus";
+import RequestHeader from "@/components/AssistedShopping/RequestHeader";
+import InfoBanner from "@/components/AssistedShopping/InfoBanner";
+import ItemsList from "@/components/AssistedShopping/ItemsList";
+import ActionsCard from "@/components/AssistedShopping/ActionsCard";
+import QuotationItems from "@/components/AssistedShopping/QuotationItems";
+import QuotationSummary from "@/components/AssistedShopping/QuotationSummary";
+import { shoppingRequestMessages } from "@/lib/shoppingRequestStatus";
+import Invoices from "@/components/AssistedShopping/Invoices";
+import { toast } from "sonner";
+import ConfirmDialog from "@/components/Modals/ConfirmDialog";
 
 export default function ViewShoppingRequestPage() {
   const params = useParams();
@@ -35,11 +35,11 @@ export default function ViewShoppingRequestPage() {
     setSelectedForQuote(selected);
   }, []);
 
-  const isQuotation = request?.status === 'QUOTATION_READY';
-  const isQuotationConfirmed = request?.status === 'QUOTATION_CONFIRMED';
-  const isInvoiced = request?.status === 'INVOICED';
-  const isPaymentPending = request?.status === 'PAYMENT_PENDING';
-  const isPaymentApproved = request?.status === 'PAYMENT_APPROVED';
+  const isQuotation = request?.status === "QUOTATION_READY";
+  const isQuotationConfirmed = request?.status === "QUOTATION_CONFIRMED";
+  const isInvoiced = request?.status === "INVOICED";
+  const isPaymentPending = request?.status === "PAYMENT_PENDING";
+  const isPaymentApproved = request?.status === "PAYMENT_APPROVED";
   const isOrderPlaced = request?.status === "ORDER_PLACED";
 
   const fetchRequest = async () => {
@@ -49,7 +49,7 @@ export default function ViewShoppingRequestPage() {
       setRequest(data);
     } catch (error) {
       console.error("Failed to fetch shopping request:", error);
-      toast.error("Failed to fetch shopping request")
+      toast.error("Failed to fetch shopping request");
       setLoading(false);
     } finally {
       setLoading(false);
@@ -96,7 +96,7 @@ export default function ViewShoppingRequestPage() {
     return (
       <div className="text-center py-10 bg-gray-50 min-h-screen">
         <p className="text-lg text-gray-700">Request not found.</p>
-        <button onClick={() => router.push('/assisted-shopping')} className="mt-4 text-purple-600 hover:underline">
+        <button onClick={() => router.push("/assisted-shopping")} className="mt-4 text-purple-600 hover:underline">
           Back to Shopping Requests
         </button>
       </div>

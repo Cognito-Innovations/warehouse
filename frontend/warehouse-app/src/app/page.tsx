@@ -13,7 +13,7 @@ export default function Page() {
   // Redirect authenticated users to dashboard
   useEffect(() => {
     if (user) {
-      router.replace('/dashboard');
+      router.replace("/dashboard");
     }
   }, [user, router]);
 

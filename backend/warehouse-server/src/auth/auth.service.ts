@@ -23,7 +23,7 @@ export class AuthService {
     if (registerDto.password) {
       if ((registerDto.password.match(/[a-z]/g) || []).length < 2) {
         throw new BadRequestException(
-          'Password must contain at least two lowercase letters'
+          'Password must contain at least two lowercase letters',
         );
       }
     }

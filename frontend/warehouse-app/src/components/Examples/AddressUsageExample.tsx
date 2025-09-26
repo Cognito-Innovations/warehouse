@@ -1,6 +1,6 @@
-'use client';
-import React, { useState } from 'react';
-import { useAddressForm } from '../../hooks/useAddressForm';
+"use client";
+import React, { useState } from "react";
+import { useAddressForm } from "../../hooks/useAddressForm";
 
 /**
  * Example component showing how to use the address context
@@ -23,35 +23,35 @@ const AddressUsageExample: React.FC = () => {
   // Form state for editing address
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    name: '',
-    address: '',
-    phone_number: '',
+    name: "",
+    address: "",
+    phone_number: "",
   });
 
   const handleCreatePickupRequest = async () => {
     // Example: Create pickup request with current address data
     const pickupData = getPickupRequestData({
-      user_id: 'user-123',
-      pickup_address: selectedAddress?.address || '',
-      supplier_name: 'Example Supplier',
-      supplier_phone_number: selectedAddress?.phone_number || '',
-      pcs_box: '2',
-      pkg_details: 'Electronics',
+      user_id: "user-123",
+      pickup_address: selectedAddress?.address || "",
+      supplier_name: "Example Supplier",
+      supplier_phone_number: selectedAddress?.phone_number || "",
+      pcs_box: "2",
+      pkg_details: "Electronics",
     });
 
-    console.log('Pickup Request Data:', pickupData);
+    console.log("Pickup Request Data:", pickupData);
     // Now you can call your API with this data
   };
 
   const handleCreateShoppingRequest = async () => {
     // Example: Create shopping request with current address data
     const shoppingData = getShoppingRequestData({
-      user_id: 'user-123',
-      items: ['Item 1', 'Item 2'],
+      user_id: "user-123",
+      items: ["Item 1", "Item 2"],
       total_amount: 100,
     });
 
-    console.log('Shopping Request Data:', shoppingData);
+    console.log("Shopping Request Data:", shoppingData);
     // Now you can call your API with this data
   };
 
@@ -61,29 +61,29 @@ const AddressUsageExample: React.FC = () => {
     // Example: Update the current selected address
     const updatedAddress = {
       ...selectedAddress,
-      name: 'Updated Company Name',
-      address: 'Updated Address, New City',
-      phone_number: '+65-9876-5432',
+      name: "Updated Company Name",
+      address: "Updated Address, New City",
+      phone_number: "+65-9876-5432",
     };
     
     updateAddress(updatedAddress);
-    console.log('Address updated:', updatedAddress);
+    console.log("Address updated:", updatedAddress);
   };
 
   const handleAddNewAddress = () => {
     // Example: Add a new address
     const newAddress = {
       id: `address-${Date.now()}`, // Generate unique ID
-      name: 'New Company',
-      address: '123 New Street, Singapore',
-      country_name: 'Singapore',
-      country_code: 'SG',
-      country_phone_code: '+65',
-      phone_number: '+65-1234-5678',
+      name: "New Company",
+      address: "123 New Street, Singapore",
+      country_name: "Singapore",
+      country_code: "SG",
+      country_phone_code: "+65",
+      phone_number: "+65-1234-5678",
     };
     
     addAddress(newAddress);
-    console.log('New address added:', newAddress);
+    console.log("New address added:", newAddress);
   };
 
   const handleSelectDifferentAddress = () => {
@@ -91,7 +91,7 @@ const AddressUsageExample: React.FC = () => {
       // Example: Select a different address from saved addresses
       const nextAddress = savedAddresses.find((addr: any) => addr.id !== selectedAddress?.id) || savedAddresses[0];
       selectAddress(nextAddress);
-      console.log('Selected different address:', nextAddress);
+      console.log("Selected different address:", nextAddress);
     }
   };
 
@@ -114,16 +114,16 @@ const AddressUsageExample: React.FC = () => {
       };
       updateAddress(updatedAddress);
       setIsEditing(false);
-      console.log('Address updated via form:', updatedAddress);
+      console.log("Address updated via form:", updatedAddress);
     }
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditForm({
-      name: '',
-      address: '',
-      phone_number: '',
+      name: "",
+      address: "",
+      phone_number: "",
     });
   };
 
@@ -185,10 +185,10 @@ const AddressUsageExample: React.FC = () => {
             </div>
           ) : (
             <div>
-              <p>{selectedAddress?.name || 'No address selected'}</p>
-              <p>{selectedAddress?.address || ''}</p>
+              <p>{selectedAddress?.name || "No address selected"}</p>
+              <p>{selectedAddress?.address || ""}</p>
               <p className="text-sm text-gray-500">
-                Phone: {selectedAddress?.phone_number || 'N/A'}
+                Phone: {selectedAddress?.phone_number || "N/A"}
               </p>
               {selectedAddress && (
                 <button
@@ -217,13 +217,13 @@ const AddressUsageExample: React.FC = () => {
         
         <div className="flex gap-2">
           <button
-            onClick={() => selectCountry('Singapore')}
+            onClick={() => selectCountry("Singapore")}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Select Singapore
           </button>
           <button
-            onClick={() => selectCountry('India')}
+            onClick={() => selectCountry("India")}
             className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
           >
             Select India

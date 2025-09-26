@@ -1,5 +1,5 @@
-'use client';
-import React, { useEffect, useState } from 'react';
+"use client";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -16,13 +16,13 @@ import {
   Typography,
   FormHelperText,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Close,
-} from '@mui/icons-material';
-import { getCourierCompanies, getCurrencies, getUserPreferences, updatePreferences, updateUser } from '@/lib/api.service';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAddressActions } from '@/contexts/AddressContext';
+} from "@mui/icons-material";
+import { getCourierCompanies, getCurrencies, getUserPreferences, updatePreferences, updateUser } from "@/lib/api.service";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAddressActions } from "@/contexts/AddressContext";
 
 export interface ProfileData {
   id_card_passport_no: string;
@@ -74,7 +74,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     await fetchCourierCompanies();
     setFormData({
     ...profileData,
-    dob: profileData.dob ? profileData.dob.split('T')[0] : '',
+    dob: profileData.dob ? profileData.dob.split("T")[0] : "",
       });
     await fetchUserPreferences();
     setErrors({});
@@ -87,12 +87,12 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       const prefs = await getUserPreferences(user.id);
       if (prefs) {
         setPreferencesFormData({
-          courier_id: prefs.courier?.id || '',
-          currency_id: prefs.currency?.id || ''
+          courier_id: prefs.courier?.id || "",
+          currency_id: prefs.currency?.id || ""
         });
       }
     } catch (error) {
-      console.error('Failed to load preferences', error);
+      console.error("Failed to load preferences", error);
     } finally {
       setLoadingPreferences(false);
     }
@@ -158,7 +158,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       onProfileUpdate(payload);
       onClose();
     } catch (error) {
-      console.error('Failed to update profile', error);
+      console.error("Failed to update profile", error);
     } finally {
       setIsSaving(false);
     }
@@ -167,13 +167,13 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.id_card_passport_no || !formData.id_card_passport_no.trim()) newErrors.id_card_passport_no = 'ID Card/Passport No. is required';
-    if (!formData.name || !formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.dob || !formData.dob.trim()) newErrors.dob = 'Date of birth is required';
-    if (!formData.phone_number || !formData.phone_number.trim()) newErrors.phone_number = 'Contact number is required';
-    if (!formData.gender) newErrors.gender = 'Gender is required';
-    if (!preferencesFormData.courier_id) newErrors.courier_id = 'Courier is required';
-    if (!preferencesFormData.currency_id) newErrors.currency_id = 'Currency is required';
+    if (!formData.id_card_passport_no || !formData.id_card_passport_no.trim()) newErrors.id_card_passport_no = "ID Card/Passport No. is required";
+    if (!formData.name || !formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.dob || !formData.dob.trim()) newErrors.dob = "Date of birth is required";
+    if (!formData.phone_number || !formData.phone_number.trim()) newErrors.phone_number = "Contact number is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!preferencesFormData.courier_id) newErrors.courier_id = "Courier is required";
+    if (!preferencesFormData.currency_id) newErrors.currency_id = "Currency is required";
 
     return newErrors;
   };
@@ -186,15 +186,15 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: '12px',
+          borderRadius: "12px",
           p: 1,
         },
       }}
     >
       <DialogTitle sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
         pb: 2
       }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -209,28 +209,28 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
         {loadingPreferences ? (
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '200px',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: "200px",
             }}
           >
             <CircularProgress />
           </Box>
         ) : (
           <>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pb: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pb: 2 }}>
             <TextField
               label="ID Card / Passport No *"
               value={formData.id_card_passport_no}
-              onChange={handleChange('id_card_passport_no')}
+              onChange={handleChange("id_card_passport_no")}
               error={!!errors.id_card_passport_no}
               helperText={errors.id_card_passport_no}
               fullWidth
               size="medium"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
                 },
               }}
             />
@@ -238,14 +238,14 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             <TextField
               label="Name *"
               value={formData.name}
-              onChange={handleChange('name')}
+              onChange={handleChange("name")}
               error={!!errors.name}
               helperText={errors.name}
               fullWidth
               size="medium"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
                 },
               }}
             />
@@ -254,7 +254,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               label="DOB"
               type="date"
               value={formData.dob}
-              onChange={handleChange('dob')}
+              onChange={handleChange("dob")}
               error={!!errors.dob}
               helperText={errors.dob}
               fullWidth
@@ -264,8 +264,8 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               }}
               placeholder="dd/mm/yyyy"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
                 },
               }}
             />
@@ -273,14 +273,14 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             <TextField
               label="Contact No"
               value={formData.phone_number}
-              onChange={handleChange('phone_number')}
+              onChange={handleChange("phone_number")}
               error={!!errors.phone_number}
               helperText={errors.phone_number}
               fullWidth
               size="medium"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
                 },
               }}
             />
@@ -288,12 +288,12 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             <TextField
               label="Alternative Contact No"
               value={formData.alternate_phone_number}
-              onChange={handleChange('alternate_phone_number')}
+              onChange={handleChange("alternate_phone_number")}
               fullWidth
               size="medium"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
                 },
               }}
             />
@@ -302,10 +302,10 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               <InputLabel>Gender</InputLabel>
               <Select
                 value={formData.gender}
-                onChange={handleChange('gender')}
+                onChange={handleChange("gender")}
                 label="Gender"
                 sx={{
-                  borderRadius: '8px',
+                  borderRadius: "8px",
                 }}
               >
                 <MenuItem value="male">Male</MenuItem>
@@ -320,16 +320,16 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
           <Typography variant="h6" pb={2} sx={{ fontWeight: 600 }}>
             Preferences
           </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
              <FormControl fullWidth size="medium" error={!!errors.courier_id}>
               <InputLabel>Courier</InputLabel>
               <Select
                 value={preferencesFormData.courier_id}
-                onChange={handleChangePreferences('courier_id')}
+                onChange={handleChangePreferences("courier_id")}
                 label="Courier"
                 disabled={loadingPreferences}
                 sx={{
-                  borderRadius: '8px',
+                  borderRadius: "8px",
                 }}
               >
                 {courierCompanies?.map((courier: any) => (
@@ -345,11 +345,11 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               <InputLabel>Currency</InputLabel>
               <Select
                 value={preferencesFormData.currency_id}
-                onChange={handleChangePreferences('currency_id')}
+                onChange={handleChangePreferences("currency_id")}
                 label="Currency"
                 disabled={loadingPreferences}
                 sx={{
-                  borderRadius: '8px',
+                  borderRadius: "8px",
                 }}
               >
                 {currencies?.map((currency: any) => (
@@ -370,18 +370,18 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             onClick={handleSave}
             disabled={isSaving}
             sx={{
-              bgcolor: 'primary.main',
-              color: 'white',
-              textTransform: 'none',
-              borderRadius: '8px',
+              bgcolor: "primary.main",
+              color: "white",
+              textTransform: "none",
+              borderRadius: "8px",
               px: 4,
               py: 1,
-              '&:hover': {
-                bgcolor: 'primary.dark',
+              "&:hover": {
+                bgcolor: "primary.dark",
               },
             }}
           >
-            {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save'}
+            {isSaving ? <CircularProgress size={24} color="inherit" /> : "Save"}
           </Button>
         )}
       </DialogActions>

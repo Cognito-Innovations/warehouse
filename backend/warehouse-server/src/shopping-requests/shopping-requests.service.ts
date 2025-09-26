@@ -149,7 +149,7 @@ export class ShoppingRequestsService {
             shopping_request_id: product.shopping_request_id,
             name: product.name,
             description: product.description,
-            unit_price: 
+            unit_price:
               await this.userPreferencesService.getFormattedConvertedPrice(
                 request.user_id,
                 product.unit_price,
@@ -253,10 +253,10 @@ export class ShoppingRequestsService {
               await this.userPreferencesService.getFormattedConvertedPrice(
                 shoppingRequest.user_id,
                 invoice.amount,
-            ),
+              ),
             total: await this.userPreferencesService.getFormattedConvertedPrice(
               shoppingRequest.user_id,
-              invoice.total
+              invoice.total,
             ),
             status: invoice.status,
             products: await Promise.all(

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -15,10 +15,10 @@ import {
   FormControl,
   InputLabel,
   Typography,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Close,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 interface AddressData {
   contactPerson: string;
@@ -37,26 +37,26 @@ interface AddAddressModalProps {
 }
 
 const countries = [
-  'Indonesia',
-  'South Korea',
-  'United States',
-  'United Kingdom',
-  'Japan',
-  'Singapore',
-  'Malaysia',
-  'Thailand',
+  "Indonesia",
+  "South Korea",
+  "United States",
+  "United Kingdom",
+  "Japan",
+  "Singapore",
+  "Malaysia",
+  "Thailand",
 ];
 
 export default function AddAddressModal({ open, onClose }: AddAddressModalProps) {
   const [formData, setFormData] = useState<AddressData>({
-    contactPerson: '',
-    contactNo: '',
-    addressLine1: '',
-    addressLine2: '',
-    zipCode: '',
-    city: '',
-    state: '',
-    country: 'Indonesia',
+    contactPerson: "",
+    contactNo: "",
+    addressLine1: "",
+    addressLine2: "",
+    zipCode: "",
+    city: "",
+    state: "",
+    country: "Indonesia",
   });
 
   const handleChange = (field: keyof AddressData) => (event: any) => {
@@ -68,7 +68,7 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
 
   const handleSave = () => {
     // Handle save logic here
-    console.log('Saving address data:', formData);
+    console.log("Saving address data:", formData);
     onClose();
   };
 
@@ -80,15 +80,15 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: '12px',
+          borderRadius: "12px",
           p: 1,
         },
       }}
     >
       <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
         pb: 2
       }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -100,16 +100,16 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
       </DialogTitle>
       
       <DialogContent sx={{ pb: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
           <TextField
             label="Contact Person / Receiver Name / Business Name *"
             value={formData.contactPerson}
-            onChange={handleChange('contactPerson')}
+            onChange={handleChange("contactPerson")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -117,12 +117,12 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           <TextField
             label="Contact No *"
             value={formData.contactNo}
-            onChange={handleChange('contactNo')}
+            onChange={handleChange("contactNo")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -130,12 +130,12 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           <TextField
             label="Address Line 1 *"
             value={formData.addressLine1}
-            onChange={handleChange('addressLine1')}
+            onChange={handleChange("addressLine1")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -143,12 +143,12 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           <TextField
             label="Address Line 2"
             value={formData.addressLine2}
-            onChange={handleChange('addressLine2')}
+            onChange={handleChange("addressLine2")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -156,12 +156,12 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           <TextField
             label="Zip Code"
             value={formData.zipCode}
-            onChange={handleChange('zipCode')}
+            onChange={handleChange("zipCode")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -169,12 +169,12 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           <TextField
             label="City"
             value={formData.city}
-            onChange={handleChange('city')}
+            onChange={handleChange("city")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -182,12 +182,12 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           <TextField
             label="State"
             value={formData.state}
-            onChange={handleChange('state')}
+            onChange={handleChange("state")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -196,10 +196,10 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
             <InputLabel>Country *</InputLabel>
             <Select
               value={formData.country}
-              onChange={handleChange('country')}
+              onChange={handleChange("country")}
               label="Country *"
               sx={{
-                borderRadius: '8px',
+                borderRadius: "8px",
               }}
             >
               {countries.map((country) => (
@@ -217,14 +217,14 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           variant="contained"
           onClick={handleSave}
           sx={{
-            bgcolor: 'primary.main',
-            color: 'white',
-            textTransform: 'none',
-            borderRadius: '8px',
+            bgcolor: "primary.main",
+            color: "white",
+            textTransform: "none",
+            borderRadius: "8px",
             px: 4,
             py: 1,
-            '&:hover': {
-              bgcolor: 'primary.dark',
+            "&:hover": {
+              bgcolor: "primary.dark",
             },
           }}
         >

@@ -4,34 +4,34 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
 import { hashPassword, generateSequentialSuiteNumber } from "../../../../utils/auth.utils";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 
 const handler = NextAuth({
   cookies: {
     sessionToken: {
-      name: 'next-auth.session-token',
+      name: "next-auth.session-token",
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
       },
     },
     callbackUrl: {
-      name: 'next-auth.callback-url',
+      name: "next-auth.callback-url",
       options: {
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
       },
     },
     csrfToken: {
-      name: 'next-auth.csrf-token',
+      name: "next-auth.csrf-token",
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },
@@ -71,7 +71,7 @@ const handler = NextAuth({
             };
           }
         } catch (error) {
-          console.error('Login error:', error);
+          console.error("Login error:", error);
         }
         
         return null;
@@ -81,19 +81,19 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === 'google') {
+      if (account?.provider === "google") {
       try {
         const suiteNumber = generateSequentialSuiteNumber();
         
         const res = await fetch(`${API_BASE_URL}/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: user.email,
             name: user.name,
-            role: 'user',
+            role: "user",
             suite_no: suiteNumber,
-            identifier: 'google',
+            identifier: "google",
           }),
         });
         const data = await res.json();
@@ -146,7 +146,7 @@ const handler = NextAuth({
     },
   },
   pages: {
-    signIn: '/',
+    signIn: "/",
   },
 });
 

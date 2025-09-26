@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 import React, { useEffect, useState } from "react";
-import { Close as CloseIcon, Inventory as PackageIcon } from '@mui/icons-material';
+import { Close as CloseIcon, Inventory as PackageIcon } from "@mui/icons-material";
 import { Loader2 } from "lucide-react";
 
 interface PrePackageArrivalOTPModalProps {
@@ -27,20 +27,20 @@ interface OTPFormData {
 
 const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
   const [formData, setFormData] = useState<OTPFormData>({
-    otp: '',
-    trackingNumber: '',
-    estimatedArrivalTime: '',
-    otherDetails: ''
+    otp: "",
+    trackingNumber: "",
+    estimatedArrivalTime: "",
+    otherDetails: ""
   });
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
       setFormData({
-        otp: '',
-        trackingNumber: '',
-        estimatedArrivalTime: '',
-        otherDetails: ''
+        otp: "",
+        trackingNumber: "",
+        estimatedArrivalTime: "",
+        otherDetails: ""
       });
       setError(null);
     }

@@ -257,21 +257,24 @@ export class PackagesController {
 
   @Get('shipments/search')
   @ApiOperation({
-    summary: 'Search for a package by tracking number and status'
+    summary: 'Search for a package by tracking number and status',
   })
   @ApiQuery({ name: 'trackingNumber', type: String, required: true })
   @ApiQuery({
     name: 'status',
     type: String,
     required: true,
-    example: 'Ready To Ship'
+    example: 'Ready To Ship',
   })
   @ApiOkResponse({ description: 'Package found', type: PackageResponseDto })
   async searchPackage(
     @Query('trackingNumber') trackingNumber: string,
     @Query('status') status: string,
   ): Promise<PackageResponseDto> {
-    return this.packagesService.findByTrackingNumberAndStatus(trackingNumber, status);
+    return this.packagesService.findByTrackingNumberAndStatus(
+      trackingNumber,
+      status,
+    );
   }
 
   @Delete(':id')
@@ -281,5 +284,4 @@ export class PackagesController {
   async delete(@Param('id') id: string): Promise<void> {
     return this.packagesService.deletePackage(id);
   }
-
 }

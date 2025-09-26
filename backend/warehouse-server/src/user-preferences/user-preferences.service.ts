@@ -75,7 +75,7 @@ export class UserPreferencesService {
     return this.userPreferenceRepository.findOne({
       where: { user: { id: userId } },
       relations: ['currency', 'courier', 'user'],
-      order: { updated_at: 'DESC' }, 
+      order: { updated_at: 'DESC' },
     });
   }
 }

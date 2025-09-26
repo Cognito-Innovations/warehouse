@@ -26,7 +26,7 @@ export default function SignInForm() {
   
   useEffect(() => {
     if (user) {
-      router.replace('/dashboard');
+      router.replace("/dashboard");
     }
   }, [user, router]);
 
@@ -59,7 +59,7 @@ export default function SignInForm() {
       if (isLogin) {
         // Use NextAuth credentials provider for login
         const hashedPasswordValue = hashPassword(password);
-        const result = await signIn('credentials', {
+        const result = await signIn("credentials", {
           email,
           password: hashedPasswordValue,
           redirect: false,
@@ -75,7 +75,7 @@ export default function SignInForm() {
         const hashedPasswordValue = hashPassword(password);
         const suiteNumber = generateSequentialSuiteNumber();
         
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'}/auth/register`, {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"}/auth/register`, {
           email,
           password: hashedPasswordValue,
           name,
@@ -84,7 +84,7 @@ export default function SignInForm() {
 
         if (response.data.access_token) {
           // After successful registration, sign in with credentials
-          const result = await signIn('credentials', {
+          const result = await signIn("credentials", {
             email,
             password: hashedPasswordValue,
             redirect: false,
@@ -100,7 +100,7 @@ export default function SignInForm() {
         }
       }
     } catch (err: any) {
-      console.error('Auth error:', err);
+      console.error("Auth error:", err);
       setError(err.response?.data?.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -121,7 +121,7 @@ export default function SignInForm() {
   }
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 380, overflow: 'visible' }}>
+    <Box sx={{ width: "100%", maxWidth: 380, overflow: "visible" }}>
       <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
         <img
           src="/logo.png"
@@ -160,14 +160,14 @@ export default function SignInForm() {
           disabled={loading}
         />
         
-        <Box sx={{ position: 'relative' }}>
+        <Box sx={{ position: "relative" }}>
           <TextField
             margin="normal"
             required
             fullWidth
             name="password"
             label="Password"
-            type={showPassword ? 'text' : 'password'}
+            type={showPassword ? "text" : "password"}
             variant="outlined"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -251,9 +251,9 @@ export default function SignInForm() {
         open={!!error}
         autoHideDuration={6000}
         onClose={() => setError("")}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={() => setError("")} severity="error" sx={{ width: '100%' }}>
+        <Alert onClose={() => setError("")} severity="error" sx={{ width: "100%" }}>
           {error}
         </Alert>
       </Snackbar>

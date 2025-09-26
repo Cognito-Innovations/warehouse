@@ -13,12 +13,12 @@ export class RacksService {
   ) {}
 
   async createRack(createRackDto: CreateRackDto): Promise<RackResponseDto> {
-    const existingRack = await this.rackRepository.findOne({ 
-      where: { label: createRackDto.label } 
+    const existingRack = await this.rackRepository.findOne({
+      where: { label: createRackDto.label },
     });
     if (existingRack) {
       throw new ConflictException(
-        `Rack with label "${createRackDto.label}" already exists`
+        `Rack with label "${createRackDto.label}" already exists`,
       );
     }
 

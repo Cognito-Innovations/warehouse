@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { ShoppingBag as ShoppingBagIcon, History as HistoryIcon, Search as SearchIcon, Add as AddIcon, Delete as DeleteIcon, HourglassEmpty as HourglassIcon } from '@mui/icons-material';
-import HowItWorksModal from '../../components/Modals/HowItWorksModal/HowItWorksModal';
-import { deleteShoppingRequest, getShoppingRequestsByUser } from '@/lib/api.service';
-import { useSession } from 'next-auth/react';
-import { formatDateTime } from '@/lib/utils';
-import Link from 'next/link';
-import { CircularProgress } from '@mui/material';
-import { toast } from 'sonner';
-import ConfirmDialog from '@/components/Modals/ConfirmDialog';
-import { STATUS_ICONS } from '@/lib/shoppingRequestStatus'; 
+import React, { useEffect, useState } from "react";
+import { ShoppingBag as ShoppingBagIcon, History as HistoryIcon, Search as SearchIcon, Add as AddIcon, Delete as DeleteIcon, HourglassEmpty as HourglassIcon } from "@mui/icons-material";
+import HowItWorksModal from "../../components/Modals/HowItWorksModal/HowItWorksModal";
+import { deleteShoppingRequest, getShoppingRequestsByUser } from "@/lib/api.service";
+import { useSession } from "next-auth/react";
+import { formatDateTime } from "@/lib/utils";
+import Link from "next/link";
+import { CircularProgress } from "@mui/material";
+import { toast } from "sonner";
+import ConfirmDialog from "@/components/Modals/ConfirmDialog";
+import { STATUS_ICONS } from "@/lib/shoppingRequestStatus"; 
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -30,7 +30,7 @@ function TabPanel(props: TabPanelProps) {
 export default function AssistedShopping() {
   const { data: session, status } = useSession();
   const [value, setValue] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isHowItWorksModalOpen, setIsHowItWorksModalOpen] = useState(false);
   const [shoppingRequests, setShoppingRequests] = useState<any[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -59,7 +59,7 @@ export default function AssistedShopping() {
 
   const handleChange = (newValue: number) => {
     setValue(newValue);
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
   const handleNewShoppingRequest = () => {
@@ -75,7 +75,7 @@ export default function AssistedShopping() {
       setShoppingRequests((prev) => prev.filter((r) => r.id !== requestId));
       toast.success("Shopping request deleted successfully!");
     } catch (error) {
-      console.error('Error deleting shopping request:', error);
+      console.error("Error deleting shopping request:", error);
       toast.error("Failed to delete request", {
         description:
           error instanceof Error ? error.message : "Please try again later.",
@@ -88,11 +88,11 @@ export default function AssistedShopping() {
   };
 
   const tabs = [
-    { label: 'Shopping Requests', count: 1, icon: <ShoppingBagIcon /> },
-    { label: 'History', count: 0, icon: <HistoryIcon /> },
+    { label: "Shopping Requests", count: 1, icon: <ShoppingBagIcon /> },
+    { label: "History", count: 0, icon: <HistoryIcon /> },
   ];
 
-  const NON_DELETABLE_STATUSES = ['PAYMENT_APPROVED', 'ORDER_PLACED'];
+  const NON_DELETABLE_STATUSES = ["PAYMENT_APPROVED", "ORDER_PLACED"];
 
   const renderSearchBar = () => (
     <div className="relative mb-4">
@@ -194,12 +194,12 @@ export default function AssistedShopping() {
               <button key={tab.label}
                 className={`flex items-center justify-center gap-2 py-1 text-sm font-bold transition-all duration-300 rounded-md flex-1 ${
                   value === index
-                    ? 'bg-white text-purple-700 shadow-sm'
-                    : 'bg-transparent text-white hover:bg-purple-600'
+                    ? "bg-white text-purple-700 shadow-sm"
+                    : "bg-transparent text-white hover:bg-purple-600"
                 }`}
                 onClick={() => handleChange(index)}
               >
-                <span className={`text-lg ${value === index ? 'text-purple-700' : 'text-white'}`}>
+                <span className={`text-lg ${value === index ? "text-purple-700" : "text-white"}`}>
                   {tab.icon}
                 </span>
                 <span>{tab.label} ({tab.count})</span>
@@ -251,14 +251,14 @@ export default function AssistedShopping() {
                     </div>
                   </>
               ) : (
-                renderEmptyState(<ShoppingBagIcon />, 'No Shopping Requests Available')
+                renderEmptyState(<ShoppingBagIcon />, "No Shopping Requests Available")
               )}
             </div>
           </TabPanel>
 
           <TabPanel value={value} index={1}>
             {renderSearchBar()}
-            {renderEmptyState(<HistoryIcon />, 'No History Available')}
+            {renderEmptyState(<HistoryIcon />, "No History Available")}
           </TabPanel>
         </div>
 

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { ErrorOutline } from '@mui/icons-material';
-import { Skeleton, Box, Typography, Button } from '@mui/material';
-import ReactCountryFlag from 'react-country-flag';
+import React from "react";
+import { useRouter } from "next/navigation";
+import { ErrorOutline } from "@mui/icons-material";
+import { Skeleton, Box, Typography, Button } from "@mui/material";
+import ReactCountryFlag from "react-country-flag";
 
 interface AddressData {
   id?: string;
@@ -37,7 +37,7 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
     return (
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
             <Skeleton variant="circular" width={80} height={80} />
             <Box sx={{ flex: 1 }}>
               <Skeleton variant="text" width="40%" />
@@ -54,7 +54,7 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
     return (
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'error.main' }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, color: "error.main" }}>
             <ErrorOutline />
             <Typography color="error">
               {error}
@@ -69,11 +69,11 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
     return (
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center' }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 2, textAlign: "center" }}>
             <Typography variant="body1" color="text.secondary">
                 Select the preferred Address by editing the Profile.
             </Typography>
-            <Button variant="outlined" size="small" onClick={() => router.push('/profile')}>
+            <Button variant="outlined" size="small" onClick={() => router.push("/profile")}>
                 Edit Profile
             </Button>
           </Box>
@@ -93,10 +93,10 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
                 countryCode={addressData.country_code}
                 svg
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: '50%',
-                  objectFit: 'cover'
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "50%",
+                  objectFit: "cover"
                 }}
                 title={addressData.country_name}
               />

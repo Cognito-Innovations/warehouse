@@ -86,7 +86,7 @@ const Header = () => {
   };
 
   const handleProfileClick = () => {
-    router.push('/profile');
+    router.push("/profile");
     handleProfileMenuClose();
   };
 
@@ -105,15 +105,15 @@ const Header = () => {
       const target = event.target as HTMLElement;
       
       // Check if click is outside both dropdowns
-      if (open && !target.closest('#profile-menu') && !target.closest('[aria-controls="profile-menu"]')) {
+      if (open && !target.closest("#profile-menu") && !target.closest("[aria-controls=\"profile-menu\"]")) {
         setAnchorEl(null);
       }
     };
 
-    if (typeof window !== 'undefined') {
-      document.addEventListener('mousedown', handleClickOutside);
+    if (typeof window !== "undefined") {
+      document.addEventListener("mousedown", handleClickOutside);
       return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener("mousedown", handleClickOutside);
       };
     }
   }, [open]);
@@ -126,16 +126,16 @@ const Header = () => {
       }
     };
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('blur', handleWindowBlur);
+    if (typeof window !== "undefined") {
+      window.addEventListener("blur", handleWindowBlur);
       return () => {
-        window.removeEventListener('blur', handleWindowBlur);
+        window.removeEventListener("blur", handleWindowBlur);
       };
     }
   }, [open]);
 
   useEffect(() => {
-    if (isClient && typeof window !== 'undefined' && selectedAddress) {
+    if (isClient && typeof window !== "undefined" && selectedAddress) {
       selectCountry(selectedAddress.country_name);
     }
   }, [selectedAddress, isClient]);
@@ -179,29 +179,29 @@ const Header = () => {
                   <p
                     className="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
                   >
-                    Welcome, <span style={{textTransform: 'capitalize'}}>{currentUser?.name || "User"}</span>
+                    Welcome, <span style={{textTransform: "capitalize"}}>{currentUser?.name || "User"}</span>
                   </p>
                 </Box>
 
-                <IconButton onClick={handleProfileMenuOpen} className="p-0" aria-controls={open ? 'profile-menu' : undefined} aria-haspopup="true" aria-expanded={open ? 'true' : undefined}>
+                <IconButton onClick={handleProfileMenuOpen} className="p-0" aria-controls={open ? "profile-menu" : undefined} aria-haspopup="true" aria-expanded={open ? "true" : undefined}>
                   <Avatar
                     src={currentUser.image}
                     alt={currentUser.name}
                     sx={{
                       width: 32,
                       height: 32,
-                      bgcolor: 'rgba(255, 255, 255, 0.2)',
-                      color: 'white',
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      border: '2px solid rgba(255, 255, 255, 0.3)',
-                      '&:hover': {
-                        bgcolor: 'rgba(255, 255, 255, 0.3)',
-                        border: '2px solid rgba(255, 255, 255, 0.5)',
+                      bgcolor: "rgba(255, 255, 255, 0.2)",
+                      color: "white",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      border: "2px solid rgba(255, 255, 255, 0.3)",
+                      "&:hover": {
+                        bgcolor: "rgba(255, 255, 255, 0.3)",
+                        border: "2px solid rgba(255, 255, 255, 0.5)",
                       }
                     }}
                   >
-                    {currentUser.name?.charAt(0) || currentUser.email?.charAt(0) || 'U'}
+                    {currentUser.name?.charAt(0) || currentUser.email?.charAt(0) || "U"}
                   </Avatar>
                 </IconButton>
               </>
@@ -247,40 +247,40 @@ const Header = () => {
         PaperProps={{
           elevation: 0,
           sx: {
-            overflow: 'visible',
-            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+            overflow: "visible",
+            filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
             mt: 1.5,
             minWidth: 250,
-            '& .MuiAvatar-root': {
+            "& .MuiAvatar-root": {
               width: 32,
               height: 32,
               ml: -0.5,
               mr: 1,
             },
-            '&:before': {
-              content: '""',
-              display: 'block',
-              position: 'absolute',
+            "&:before": {
+              content: "\"\"",
+              display: "block",
+              position: "absolute",
               top: 0,
               right: 14,
               width: 10,
               height: 10,
-              bgcolor: 'background.paper',
-              transform: 'translateY(-50%) rotate(45deg)',
+              bgcolor: "background.paper",
+              transform: "translateY(-50%) rotate(45deg)",
               zIndex: 0,
             },
           },
         }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
         {/* User Info Section */}
-        <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #e0e0e0' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-            {currentUser?.name || 'User Name'}
+        <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid #e0e0e0" }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: "bold", color: "text.primary" }}>
+            {currentUser?.name || "User Name"}
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-            {currentUser?.email || 'user@example.com'}
+          <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+            {currentUser?.email || "user@example.com"}
           </Typography>
         </Box>
 
@@ -296,9 +296,9 @@ const Header = () => {
 
         <MenuItem onClick={handleLogoutClick} sx={{ py: 1.5 }}>
           <ListItemIcon>
-            <Logout fontSize="small" sx={{ color: 'error.main' }} />
+            <Logout fontSize="small" sx={{ color: "error.main" }} />
           </ListItemIcon>
-          <ListItemText sx={{ color: 'error.main' }}>Sign Out</ListItemText>
+          <ListItemText sx={{ color: "error.main" }}>Sign Out</ListItemText>
         </MenuItem>
       </Menu>
 

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import TabsSection from '../../components/Tabs/TabsSection';
-import WarningBanner from '../../components/WarningBanner/WarningBanner';
-import ProtectedRoute from '../../providers/ProtectedRoute';
-import { useAuth } from '../../contexts/AuthContext';
+import TabsSection from "../../components/Tabs/TabsSection";
+import WarningBanner from "../../components/WarningBanner/WarningBanner";
+import ProtectedRoute from "../../providers/ProtectedRoute";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function DashboardPage() {
   const { user } = useAuth();

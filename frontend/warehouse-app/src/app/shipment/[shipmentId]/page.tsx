@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { CircularProgress } from '@mui/material';
-import { getPackagesByShipmentId, getPaymentSlips } from '@/lib/api.service';
-import { toast } from 'sonner';
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { CircularProgress } from "@mui/material";
+import { getPackagesByShipmentId, getPaymentSlips } from "@/lib/api.service";
+import { toast } from "sonner";
 
-import TrackingStatus from '@/components/Shipment/TrackingStatus';
-import RequestHeader from '@/components/Shipment/RequestHeader';
-import ActionsCard from '@/components/Shipment/ActionsCard';
-import Invoices from '@/components/Shipment/Invoices';
-import ConfirmDialog from '@/components/Modals/ConfirmDialog';
+import TrackingStatus from "@/components/Shipment/TrackingStatus";
+import RequestHeader from "@/components/Shipment/RequestHeader";
+import ActionsCard from "@/components/Shipment/ActionsCard";
+import Invoices from "@/components/Shipment/Invoices";
+import ConfirmDialog from "@/components/Modals/ConfirmDialog";
 
 interface IShipmentRequest {
   id: string;
@@ -63,8 +63,8 @@ export default function ShipmentDetailPage() {
       const slips = await getPaymentSlips(shipment_uuid);
       setPaymentSlips(slips);
     } catch (err) {
-      console.error('Failed to fetch payment slips:', err);
-      toast.error('Failed to load payment slips.');
+      console.error("Failed to fetch payment slips:", err);
+      toast.error("Failed to load payment slips.");
     }
   }, []);
 
@@ -100,7 +100,7 @@ export default function ShipmentDetailPage() {
     setConfirmOpen(true);
   };
 
-  const displayInvoiceSection = request && ['Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed'].includes(request.status.value);
+  const displayInvoiceSection = request && ["Payment Pending", "Payment Approved", "Ready To Ship", "Departed"].includes(request.status.value);
 
   if (loading) {
     return (

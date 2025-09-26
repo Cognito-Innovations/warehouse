@@ -132,7 +132,7 @@ export class PickupRequestsService {
             user: request.user,
             tracking_requests: trackingRequests,
           };
-        })
+        }),
       );
     } catch (error) {
       throw new BadRequestException(
@@ -176,7 +176,7 @@ export class PickupRequestsService {
             user: request.user,
             tracking_requests: trackingRequests,
           };
-        })
+        }),
       );
     } catch (error) {
       throw new BadRequestException(
@@ -197,7 +197,7 @@ export class PickupRequestsService {
       }
 
       //TODO: Why are we using external function ? instead of expanding relations ?
-      const trackingRequests = 
+      const trackingRequests =
         await this.trackingRequestsService.getTrackingRequestsByFeature(
           FeatureType.PickupRequest,
           pickupRequest.id,
@@ -347,7 +347,7 @@ export class PickupRequestsService {
 
   async deletePickupRequest(id: string): Promise<void> {
     const pickupRequest = await this.pickupRequestRepository.findOne({
-      where: { id }
+      where: { id },
     });
     if (!pickupRequest) {
       throw new NotFoundException(`Pickup request with id ${id} not found`);
@@ -355,5 +355,4 @@ export class PickupRequestsService {
 
     await this.pickupRequestRepository.remove(pickupRequest);
   }
-
 }

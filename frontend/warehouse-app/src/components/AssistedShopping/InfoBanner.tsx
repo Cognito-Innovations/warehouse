@@ -1,5 +1,5 @@
-import React from 'react';
-import { InfoOutlined as InfoIcon } from '@mui/icons-material';
+import React from "react";
+import { InfoOutlined as InfoIcon } from "@mui/icons-material";
 
 interface InfoBannerProps {
   message: string;

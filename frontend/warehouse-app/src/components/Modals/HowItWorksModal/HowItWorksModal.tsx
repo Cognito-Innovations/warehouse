@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { X } from 'lucide-react';
-import Link from 'next/link';
+import React from "react";
+import { X } from "lucide-react";
+import Link from "next/link";
 
 interface HowItWorksModalProps {
   isOpen: boolean;
@@ -75,7 +75,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClose }) =>
           {/* Contact Information */}
           <div className="text-center mb-6">
             <p className="text-sm text-gray-600">
-              For help, call <span className="font-semibold">+9603344555</span> or Email to{' '}
+              For help, call <span className="font-semibold">+9603344555</span> or Email to{" "}
               <span className="font-semibold text-purple-700">support@shopme.mv</span>
             </p>
           </div>

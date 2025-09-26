@@ -38,7 +38,7 @@ export class PackagesService {
       tracking_no: pkg.tracking_no,
       status: {
         label: pkg.status,
-        value: pkg.status
+        value: pkg.status,
       },
       shipment_id: pkg.shipment_id,
       shipment_uuid: pkg.shipment_uuid,
@@ -124,7 +124,8 @@ export class PackagesService {
         : [],
     };
   }
-  
+
+  //TODO: Need to improve this function
   async createPackage(
     createPackageDto: CreatePackageDto,
   ): Promise<PackageResponseDto> {
@@ -139,7 +140,6 @@ export class PackagesService {
 
     const countryId: string = userPreference.courier?.country?.id;
 
-    //Remove the hardcoded country id
     const package_id =
       createPackageDto.package_id ||
       (await this.generateCountryBasedpackage_id(countryId));
@@ -205,12 +205,12 @@ export class PackagesService {
           const piece = createPackageDto.pieces[i];
 
           const hasPartialDimensions =
-            (piece.length || piece.width || piece.height) && 
+            (piece.length || piece.width || piece.height) &&
             !(piece.length && piece.width && piece.height);
 
           if (hasPartialDimensions) {
             throw new BadRequestException(
-              `For piece ${i + 1}, if any dimension (length, width, height) is provided, all three are required.`
+              `For piece ${i + 1}, if any dimension (length, width, height) is provided, all three are required.`,
             );
           }
 
@@ -260,7 +260,7 @@ export class PackagesService {
         // Update package with calculated totals
         savedPackage.total_weight = parseFloat(totalWeight.toFixed(3));
         savedPackage.total_volumetric_weight = parseFloat(
-          totalVolumetricWeight.toFixed(3)
+          totalVolumetricWeight.toFixed(3),
         );
         await this.packageRepository.save(savedPackage);
       }
@@ -306,7 +306,7 @@ export class PackagesService {
     });
 
     return Promise.all(
-      packages.map((pkg) => this.mapPackageToResponseDto(pkg))
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
     );
   }
 
@@ -324,7 +324,7 @@ export class PackagesService {
     });
 
     return Promise.all(
-      packages.map((pkg) => this.mapPackageToResponseDto(pkg))
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
     );
   }
 
@@ -375,7 +375,7 @@ export class PackagesService {
       .getMany();
 
     return Promise.all(
-      packages.map((pkg) => this.mapPackageToResponseDto(pkg))
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
     );
   }
 
@@ -495,12 +495,13 @@ export class PackagesService {
     return package_id;
   }
 
+  //TODO: Need to improve this function
   async updatePackageInfo(
     id: string,
     dto: UpdatePackageDto,
     updated_by: string,
   ) {
-    const pkg = await this.packageRepository.findOne({ 
+    const pkg = await this.packageRepository.findOne({
       where: { id },
       relations: ['rack_slot'],
     });
@@ -520,23 +521,26 @@ export class PackagesService {
     if (typeof dto.dangerous_good !== 'undefined') {
       pkg.dangerous_good = dto.dangerous_good;
     }
-    if (typeof dto.rack_slot !== 'undefined' && dto.rack_slot !== (oldRack?.id || null)) {
+    if (
+      typeof dto.rack_slot !== 'undefined' &&
+      dto.rack_slot !== (oldRack?.id || null)
+    ) {
       if (oldRack) {
         oldRack.count = Math.max(0, oldRack.count - 1);
         await this.rackRepository.save(oldRack);
       }
 
       if (dto.rack_slot === null || dto.rack_slot === '') {
-          pkg.rack_slot = null;
+        pkg.rack_slot = null;
       } else {
-          const newRack = await this.rackRepository.findOne({
-              where: { id: dto.rack_slot },
-          });
-          if (!newRack) throw new NotFoundException('New Rack not found');
-          newRack.count += 1;
-          await this.rackRepository.save(newRack);
+        const newRack = await this.rackRepository.findOne({
+          where: { id: dto.rack_slot },
+        });
+        if (!newRack) throw new NotFoundException('New Rack not found');
+        newRack.count += 1;
+        await this.rackRepository.save(newRack);
 
-          pkg.rack_slot = newRack;
+        pkg.rack_slot = newRack;
       }
     }
 
@@ -545,7 +549,7 @@ export class PackagesService {
     });
     if (!user) throw new NotFoundException('User not found');
     pkg.updated_by = user;
-    
+
     return await this.packageRepository.save(pkg);
   }
 
@@ -628,7 +632,7 @@ export class PackagesService {
     }
 
     return Promise.all(
-      packages.map((pkg) => this.mapPackageToResponseDto(pkg))
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
     );
   }
 
@@ -654,7 +658,7 @@ export class PackagesService {
     }
 
     return Promise.all(
-      packages.map((pkg) => this.mapPackageToResponseDto(pkg))
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
     );
   }
 

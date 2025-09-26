@@ -3,7 +3,7 @@ import { TrackingStatus } from '../tracking-requests/tracking-request.entity';
 
 //TODO: We should not prefer switch case statement
 export const mapPickupToTrackingStatus = (
-  status: PickupRequestStatus
+  status: PickupRequestStatus,
 ): TrackingStatus => {
   switch (status) {
     case PickupRequestStatus.Requested:
@@ -13,7 +13,7 @@ export const mapPickupToTrackingStatus = (
       return TrackingStatus.Quoted;
 
     case PickupRequestStatus.Confirmed:
-      return TrackingStatus.Confirmed; 
+      return TrackingStatus.Confirmed;
 
     case PickupRequestStatus.Picked:
       return TrackingStatus.Picked;
