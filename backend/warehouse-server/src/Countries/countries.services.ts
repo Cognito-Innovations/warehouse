@@ -81,20 +81,14 @@ export class CountriesService {
   async updateCountry(
     id: string,
     updateCountryDto: UpdateCountryDto
-  ): Promise<CountryResponseDto> {
-    const { code, ...updateData } = updateCountryDto;
+  ) {
+    const data = updateCountryDto;
 
-    const country = await this.countryRepository.preload({
-      id,
-      ...updateData,
-      ...(code && { code: code as CountryCode }),
-    });
+    const country = await this.countryRepository.update({id}, data);
 
     if (!country) {
       throw new NotFoundException(`Country with ID "${id}" not found`);
     }
-
-    const updatedCountry = await this.countryRepository.save(country);
-    return updatedCountry as CountryResponseDto;
+    return {status: "success"}
   }
 }

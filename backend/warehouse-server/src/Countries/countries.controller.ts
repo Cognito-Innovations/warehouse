@@ -105,7 +105,7 @@ export class CountriesController {
   async update(
     @Param('id') id: string,
     @Body() updateCountryDto: UpdateCountryDto,
-  ): Promise<CountryResponseDto> {
+  ) {
     return this.countriesService.updateCountry(id, updateCountryDto);
   }
 }
