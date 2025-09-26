@@ -35,7 +35,7 @@ const CommonTableBody = <T,>({ rows, columns, onViewDetails, getIdentifier }: Co
               px: 2,
               width: '100px'
             }}
-          >
+          >    
             <IconButton
               size="small"
               sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' } }}

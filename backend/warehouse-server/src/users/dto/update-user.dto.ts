@@ -48,6 +48,10 @@ export class UpdateUserDto {
   verified?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  email_verified?: boolean;
+
+  @IsOptional()
   @IsString()
   id_card_passport_no?: string;
 

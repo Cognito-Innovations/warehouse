@@ -20,38 +20,30 @@ export const shoppingRequestMessages: Record<string, string> = {
 
 export const STATUS_ICONS: Record<
   string,
-  { icon: React.ReactNode; color: string }
+  { Icon: React.ElementType; }
 > = {
   REQUESTED: {
-    icon: <HourglassIcon className="w-5 h-5 text-gray-500" />,
-    color: "text-gray-600",
+    Icon: HourglassIcon,
   },
   QUOTED: {
-    icon: <ReceiptIcon className="w-5 h-5 text-blue-500" />,
-    color: "text-blue-600",
+    Icon: ReceiptIcon,
   },
   QUOTATION_CONFIRMED: {
-    icon: <CheckIcon className="w-5 h-5 text-green-500" />,
-    color: "text-green-600",
+    Icon: CheckIcon,
   },
   INVOICED: {
-    icon: <ReceiptIcon className="w-5 h-5 text-purple-500" />,
-    color: "text-purple-600",
+    Icon: ReceiptIcon,
   },
   PAYMENT_PENDING: {
-    icon: <PaymentIcon className="w-5 h-5 text-orange-500" />,
-    color: "text-orange-600",
+    Icon: PaymentIcon,
   },
   PAYMENT_APPROVED: {
-    icon: <CheckIcon className="w-5 h-5 text-green-600" />,
-    color: "text-green-700",
+    Icon: CheckIcon,
   },
   ORDER_PLACED: {
-    icon: <ShoppingCartIcon className="w-5 h-5 text-indigo-500" />,
-    color: "text-indigo-600",
+    Icon: ShoppingCartIcon,
   },
   CANCELLED: {
-    icon: <CancelIcon className="w-5 h-5 text-red-500" />,
-    color: "text-red-600",
+    Icon: CancelIcon,
   },
 };

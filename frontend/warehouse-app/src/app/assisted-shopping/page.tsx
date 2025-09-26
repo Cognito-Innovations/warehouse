@@ -137,6 +137,7 @@ export default function AssistedShopping() {
       <div className="space-y-4">
         {filteredRequests.map((request) => {
           const statusMeta = STATUS_ICONS[request.status] || STATUS_ICONS.REQUESTED;
+          const { Icon } = statusMeta;
 
           return (
             <Link 
@@ -159,8 +160,8 @@ export default function AssistedShopping() {
 
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
-                    {statusMeta.icon}
-                    <span className={`text-sm font-medium ${request.statusColor}`}>{request.status}</span>
+                    <Icon className="w-5 h-5" />
+                    <span className="text-sm font-medium">{request.status}</span>
                   </div>
 
                   {!NON_DELETABLE_STATUSES.includes(request.status.toUpperCase()) && (

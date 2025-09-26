@@ -1,4 +1,4 @@
-import type { Package, Rack, Supplier, User } from '../types';
+import type { Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, Rack, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
 import type { PreArrival } from '../types/PreArrival';
 import api from './axios';
 
@@ -6,6 +6,11 @@ export const getUsers = async (): Promise<User[]> => {
   const response = await api.get<User[]>('/users');
   return response.data;
 };
+
+export const getUserBySuiteNo = async (suiteNo: string): Promise<User> => {
+  const response = await api.get<User>(`/users/suite/${suiteNo}`);
+  return response.data;
+}
 
 export const getRacks = async (): Promise<Rack[]> => {
   const response = await api.get<Rack[]>('/racks');
@@ -26,11 +31,6 @@ export const createSupplier = async (supplier: {
   website?: string;
 }): Promise<Supplier> => {
   const response = await api.post<Supplier>('/suppliers', supplier);
-  return response.data;
-};
-
-export const getCountries = async (): Promise<Array<{ id: string; code: string; name: string }>> => {
-  const response = await api.get<Array<{ id: string; code: string; name: string }>>('/countries');
   return response.data;
 };
 
@@ -324,26 +324,55 @@ export const removePackageFromBox = async (boxId: number, packageId: string) => 
   return response.data;
 };
 
-export const createCountry = async (country: {
-  code: string;
-  name: string;
-  image?: string;
-  phone_code: string;
-}) => {
-  const response = await api.post('/countries', country);
+export const getCountries = async (): Promise<Country[]> => {
+  const response = await api.get<Country[]>('/countries');
   return response.data;
 };
 
-export const getCurrencies = async () => {
-  const response = await api.get('/currencies');
+export const createCountry = async (data: CreateCountryPayload): Promise<Country> => {
+  const response = await api.post<Country>('/countries', data);
   return response.data;
 };
 
-export const createCurrency = async (currency: {
-  country: string;
-  currency_symbol: string;
-  rate: number;
-}) => {
-  const response = await api.post('/currencies', currency);
+export const updateCountry = async (
+  id: string,
+  data: UpdateCountryPayload
+): Promise<Country> => {
+    const response = await api.patch<Country>(`/countries/${id}`, data);
+    return response.data;
+};
+
+export const getCurrencies = async (): Promise<Currency[]> => {
+  const response = await api.get<Currency[]>('/currencies');
+  return response.data;
+};
+
+export const createCurrency = async (
+  data: CreateCurrencyPayload
+): Promise<Currency> => {
+  const response = await api.post<Currency>('/currencies', data);
+  return response.data;
+};
+
+export const updateCurrency = async (
+  id: string,
+  data: UpdateCurrencyPayload
+): Promise<Currency> => {
+    const response = await api.patch<Currency>(`/currencies/${id}`, data);
+    return response.data;
+};
+
+export const getCouriers = async (): Promise<Courier[]> => {
+  const response = await api.get<Courier[]>('/courier-companies');
+  return response.data;
+};
+
+export const createCourier = async (data: CreateCourierPayload): Promise<Courier> => {
+  const response = await api.post<Courier>('/courier-companies', data);
+  return response.data;
+};
+
+export const updateCourier = async (id: string, data: UpdateCourierPayload): Promise<Courier> => {
+  const response = await api.patch<Courier>(`/courier-companies/${id}`, data);
   return response.data;
 };

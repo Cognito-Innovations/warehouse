@@ -16,13 +16,16 @@ import {
   Typography,
   FormHelperText,
   CircularProgress,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import {
   Close,
 } from "@mui/icons-material";
-import { getCourierCompanies, getCurrencies, getUserPreferences, updatePreferences, updateUser } from "@/lib/api.service";
+import { getCourierCompanies, getCurrencies, getUserPreferences, sendEmailOtp, updatePreferences, updateUser, verifyEmailOtp } from "@/lib/api.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAddressActions } from "@/contexts/AddressContext";
+import OtpVerification from "../PageComponents/OtpVerification";
 
 export interface ProfileData {
   id_card_passport_no: string;
@@ -32,6 +35,7 @@ export interface ProfileData {
   alternate_phone_number: string;
   gender: string;
   dob: string;
+  email_verified: boolean;
 }
 
 interface PreferencesData {
@@ -53,6 +57,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
   const [preferencesFormData, setPreferencesFormData] = useState<PreferencesData>({courier_id: "", currency_id: ""});
   const [courierCompanies, setCourierCompanies] = useState<any[]>([]);
   const [currencies, setCurrencies] = useState<any[]>([]);
+  const [isEmailVerified, setIsEmailVerified] = useState(profileData.email_verified);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingPreferences, setLoadingPreferences] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -66,6 +71,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
   useEffect(() => {
     if (open) {
       fetchData();
+      setIsEmailVerified(profileData.email_verified);
     }
   }, [open, profileData]);
 
@@ -73,9 +79,9 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     setLoadingPreferences(true);
     await fetchCourierCompanies();
     setFormData({
-    ...profileData,
-    dob: profileData.dob ? profileData.dob.split("T")[0] : "",
-      });
+      ...profileData,
+      dob: profileData.dob ? profileData.dob.split("T")[0] : "",
+    });
     await fetchUserPreferences();
     setErrors({});
   };
@@ -126,11 +132,21 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
         const newErrors = { ...prevErrors };
         delete (newErrors as any)[field];
         return newErrors;
-    });
-  }
+      });
+    }
+  };
+
+  const handleVerificationSuccess = () => {
+    setIsEmailVerified(true);
+    onProfileUpdate({ email_verified: true });
   };
 
   const handleSave = async () => {
+    if (!isEmailVerified) {
+      setErrors(prev => ({ ...prev, email: "Please verify your email to save changes." }));
+      return;
+    }
+
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -187,7 +203,6 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       PaperProps={{
         sx: {
           borderRadius: "12px",
-          p: 1,
         },
       }}
     >
@@ -205,7 +220,28 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ pb: 2 }}>
+      <DialogContent
+        dividers
+        sx={{
+          // Custom scrollbar styling
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: (theme) => theme.palette.grey[300],
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            backgroundColor: (theme) => theme.palette.grey[400],
+          },
+          // Firefox scrollbar support
+          scrollbarWidth: 'thin',
+          scrollbarColor: (theme) => `${theme.palette.grey[300]} transparent`,
+        }}
+      >
         {loadingPreferences ? (
           <Box
             sx={{
@@ -317,6 +353,15 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             </FormControl>
           </Box>
 
+          <OtpVerification 
+            userId={user?.id}
+            email={formData.email}
+            isVerified={isEmailVerified}
+            onVerificationSuccess={handleVerificationSuccess}
+          />
+          {errors.email && <FormHelperText error sx={{mt: -2, ml: 2}}>{errors.email}</FormHelperText>}
+
+
           <Typography variant="h6" pb={2} sx={{ fontWeight: 600 }}>
             Preferences
           </Typography>
@@ -368,7 +413,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
           <Button
             variant="contained"
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || !isEmailVerified}
             sx={{
               bgcolor: "primary.main",
               color: "white",

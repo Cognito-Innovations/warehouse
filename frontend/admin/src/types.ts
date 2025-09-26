@@ -2,11 +2,33 @@ import type { UserRole } from "./data/menuItems";
 
 export interface User {
   id: string;
-  name?: string;
   email: string;
-  image?: string;
-  suite_no?: string;
-  role?: UserRole;
+  name: string;
+  suite_no: string;
+  phone_number: string | null;
+  gender: 'male' | 'female' | 'other' | null;
+  dob: string | null;
+  role: UserRole,
+  identifier: 'google' | 'email' | undefined;
+  verified: boolean;
+  email_verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Customer {
+  suiteNo: string;
+  name: string;
+  id: string;
+  email: string;
+  isEmailVerified: boolean;
+  emailVerifiedOn: string;
+  phone: string;
+  identifier: 'google' | 'email' | undefined;
+  isVerified: boolean;
+  isActive: boolean;
+  gender?: 'male' | 'female' | 'other' | null;
+  dob?: string;
 }
 
 export interface Rack {
@@ -14,14 +36,6 @@ export interface Rack {
   label: string;
   color: string;
   count: number;
-}
-
-export interface Country {
-  id: string,
-  name: string,
-  code: string,
-  image?: string,
-  phone_code: string
 }
 
 export interface Supplier {
@@ -103,3 +117,37 @@ export interface Status {
   label: string;
   value: string;
 }
+
+export interface Courier {
+  id: string;
+  name: string;
+  address: string;
+  email: string;
+  phone_number: string;
+  country_id: string;
+  country_name: string;
+}
+
+export interface Country {
+  id: string;
+  name: string;
+  code: string;
+  phone_code: string;
+  image?: string;
+}
+
+export interface Currency {
+    id: string;
+    currency_symbol: string;
+    rate: number;
+    country: Pick<Country, 'id' | 'name'>
+}
+
+export type CreateCountryPayload = Omit<Country, 'id'>;
+export type UpdateCountryPayload = Partial<CreateCountryPayload>;
+
+export type CreateCurrencyPayload = { country: string; currency_symbol: string; rate: number };
+export type UpdateCurrencyPayload = Partial<CreateCurrencyPayload>;
+
+export type CreateCourierPayload = Omit<Courier, 'id' | 'country_name'>;
+export type UpdateCourierPayload = Partial<CreateCourierPayload>;

@@ -8,11 +8,12 @@ import RemarkModal from './RemarkModal';
 interface ItemsTableRowProps {
   item: any;
   index: number;
+  requestStatus: string;
   onUpdate: (updates: any) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
 }
 
-const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange }: ItemsTableRowProps) => {
+const ItemsTableRow = ({ item, index, requestStatus, onUpdate, onSelectionChange, }: ItemsTableRowProps) => {
   const [checked, setChecked] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [remarkOpen, setRemarkOpen] = useState(false);
@@ -36,6 +37,7 @@ const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange }: ItemsTableR
 
   const total = item.quantity * (item.unit_price || 0);
   const remarkText = item.if_not_available_color || item.if_not_available_quantity;
+  const showApprovedChip = requestStatus === "ORDER_PLACED" && item.available;
 
   return (
     <>
@@ -117,7 +119,13 @@ const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange }: ItemsTableR
       </TableCell>
 
       <TableCell sx={{ verticalAlign: 'middle' }}>
-        {item?.status && <Typography variant="body2">{item.status}</Typography>}
+        {showApprovedChip && (
+          <Chip
+            label="APPROVED"
+            size="small"
+            sx={{ backgroundColor: "#e6d4f0", color: "#6a0dad", fontWeight: 500 }}
+          />
+        )}
       </TableCell>
 
       <TableCell sx={{ verticalAlign: 'middle' }}>

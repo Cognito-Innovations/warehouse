@@ -134,6 +134,9 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     if (!formData.trackingNo) {
       newErrors.trackingNo = "Reference Tracking is required";
     }
+    if (!/^\d{1,13}$/.test(formData.trackingNo)) {
+      newErrors.trackingNo = "Tracking number must be digits only and less than 14 digits";
+    }
 
     // Check if at least one piece has weight
     pieces.forEach((piece, idx) => {

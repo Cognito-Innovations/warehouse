@@ -13,43 +13,9 @@ import {
 import BadgeIcon from '@mui/icons-material/Badge';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { toast } from 'sonner';
+import type { User } from '../../types';
 
-import type { Customer } from '../../data/customers';
-
-const CustomerHeader = ({ customer }: { customer: Customer }) => {
-  const [isBlocked, setIsBlocked] = useState(!customer.isActive);
-  const [isApproved, setIsApproved] = useState(customer.isVerified);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleBlockSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsBlocked(!isBlocked);
-      toast.success(`Customer ${isBlocked ? 'unblocked' : 'blocked'} successfully`);
-    } catch (error) {
-      toast.error('Failed to update customer status');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleApproveSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsApproved(!isApproved);
-      toast.success(`Customer ${isApproved ? 'disapproved' : 'approved'} successfully`);
-    } catch (error) {
-      toast.error('Failed to update customer approval status');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+const CustomerHeader = ({ customer }: { customer: User }) => {
   const getStatusChip = (status: boolean, label: string) => (
     <Chip
       label={label}
@@ -100,7 +66,7 @@ const CustomerHeader = ({ customer }: { customer: Customer }) => {
                 mb: 2 
               }}
             >
-              Suite: {customer.suiteNo}
+              Suite: {customer.suite_no}
             </Typography>
 
             {/* Customer Details */}
@@ -129,10 +95,10 @@ const CustomerHeader = ({ customer }: { customer: Customer }) => {
               </Stack>
               
               <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
-                {customer.phone && (
+                {customer.phone_number && (
                   <Stack direction="row" alignItems="center" spacing={0.8}>
                     <PhoneOutlined sx={{ fontSize: '18px', color: '#475569' }} />
-                    <Typography sx={{ fontSize: '14px' }}>{customer.phone}</Typography>
+                    <Typography sx={{ fontSize: '14px' }}>{customer.phone_number}</Typography>
                   </Stack>
                 )}
                 
@@ -148,11 +114,11 @@ const CustomerHeader = ({ customer }: { customer: Customer }) => {
 
           {/* Status Chips */}
           <Stack direction="row" spacing={1} alignItems="center">
-            {getStatusChip(customer.isVerified, 'Verified')}
+            {getStatusChip(customer.verified, 'Verified')}
             {getStatusChip(customer.isActive, 'Active')}
             {customer.provider && (
               <Chip
-                label={customer.provider}
+                label={customer.identifier}
                 size="small"
                 sx={{
                   bgcolor: '#e0e7ff',

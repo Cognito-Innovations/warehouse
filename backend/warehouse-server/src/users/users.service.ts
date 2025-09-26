@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -7,39 +8,49 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
+import { MailerService } from '@nestjs-modules/mailer';
 import { User } from './user.entity';
 import { UserDto } from './dto/user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly mailerService: MailerService,
   ) {}
 
-  async getAllUsers(): Promise<UserDto[]> {
-    const users = await this.userRepository.find({
-      order: { email: 'ASC' },
-    });
-
-    return users.map((user) => ({
+  mapToUserResponseDto(user: User): UserResponseDto {
+    return {
       id: user.id,
       email: user.email,
+      id_card_passport_no: user.id_card_passport_no,
       name: user.name,
-      created_at: user.created_at,
       role: user.role,
       suite_no: user.suite_no,
-      id_card_passport_no: user.id_card_passport_no,
-      identifier: user.identifier,
       phone_number: user.phone_number,
       alternate_phone_number: user.alternate_phone_number,
       gender: user.gender,
       dob: user.dob,
+      identifier: user.identifier,
       verified: user.verified,
-      updated_at: user.updated_at,
-    }));
+      email_verified: user.email_verified,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    };
+  }
+
+  async getAllUsers(): Promise<UserResponseDto[]> {
+    const users = await this.userRepository.find({
+      order: { email: 'ASC' },
+    });
+
+    return users.map(
+      user => this.mapToUserResponseDto(user)
+    );
   }
 
   async findById(id: string): Promise<User | null> {
@@ -47,6 +58,12 @@ export class UsersService {
       where: { id },
     });
   }
+
+  async findBySuiteNo(suiteNo: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { suite_no: suiteNo },
+    });
+  }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({
@@ -60,7 +77,7 @@ export class UsersService {
     return this.userRepository.findOne({ where: { name } });
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     // Check if email already exists
     const existingUser = await this.findByEmail(createUserDto.email);
     if (existingUser) {
@@ -70,13 +87,15 @@ export class UsersService {
     const user = this.userRepository.create({
       ...createUserDto,
     });
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+
+    return this.mapToUserResponseDto(savedUser);
   }
 
   async update(
     id: string,
     updateUserDto: Partial<UpdateUserDto>,
-  ): Promise<User> {
+  ): Promise<UserResponseDto> {
     const user = await this.findById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -85,7 +104,8 @@ export class UsersService {
     Object.assign(user, {
       ...updateUserDto,
     });
-    return this.userRepository.save(user);
+    const updatedUser = await this.userRepository.save(user);
+    return this.mapToUserResponseDto(updatedUser);
   }
 
   async updatePassword(
@@ -110,5 +130,54 @@ export class UsersService {
     await this.userRepository.save(user);
 
     return { message: 'Password updated successfully' };
+  }
+
+  async sendVerificationOtp(userId: string): Promise<{ message: string }> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const otp_expires_at = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.otp = otp;
+    user.otp_expires_at = otp_expires_at;
+    await this.userRepository.save(user);
+
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Your Email Verification Code',
+      template: 'email-verification',
+      context: {
+        name: user.name || 'User',
+        otp: otp,
+      },
+    });
+
+    return { message: 'OTP has been sent to your email.' };
+  }
+
+  async verifyEmailOtp(userId: string, otp: string): Promise<UserResponseDto> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    if (
+      user.otp !== otp ||
+      !user.otp_expires_at ||
+      new Date() > user.otp_expires_at
+    ) {
+      throw new BadRequestException('Invalid or expired OTP.');
+    }
+
+    user.email_verified = true;
+    user.otp = null;
+    user.otp_expires_at = null;
+
+    const updatedUser = await this.userRepository.save(user);
+    
+    return this.mapToUserResponseDto(updatedUser);
   }
 }

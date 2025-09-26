@@ -225,7 +225,6 @@ export const updateUser = async (userId: string, data: Partial<ProfileData>) => 
   return res.data;
 };
 
-
 export const getUserPreferences = async (userId: string) => {
   const res = await authenticatedApi.get(`/user-preferences/by-user/${userId}`);
   return res.data;
@@ -233,5 +232,15 @@ export const getUserPreferences = async (userId: string) => {
 
 export const getUser = async (userId: string) => {
   const res = await authenticatedApi.get(`/users/${userId}`);
+  return res.data;
+};
+
+export const sendEmailOtp = async (userId: string) => {
+  const res = await authenticatedApi.post(`/users/${userId}/send-otp`);
+  return res.data;
+};
+
+export const verifyEmailOtp = async (userId: string, otp: string) => {
+  const res = await authenticatedApi.post(`/users/${userId}/verify-otp`, { otp });
   return res.data;
 };

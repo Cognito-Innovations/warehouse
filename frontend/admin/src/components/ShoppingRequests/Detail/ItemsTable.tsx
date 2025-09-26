@@ -30,6 +30,7 @@ interface ShoppingRequestProduct {
 
 interface ItemsTableProps {
   details: {
+    status: string;
     shopping_request_products?: ShoppingRequestProduct[];
     [key: string]: any;
   };
@@ -95,6 +96,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelect
                     key={item.id} 
                     item={{...item, remarks: details.remarks }} 
                     index={i}
+                    requestStatus={details.status}
                     onUpdate={(updates) => {
                       if (item.id) {
                         onItemUpdate(item.id, updates)

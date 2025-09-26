@@ -73,7 +73,7 @@ const FormFields: React.FC<FormFieldsProps> = ({
           >
             {racks.map((rack) => (
               <MenuItem key={rack.id} value={rack.id}>
-                {rack.label}
+                {rack.label.toLowerCase()}
               </MenuItem>
             ))}
           </Select>
@@ -95,7 +95,13 @@ const FormFields: React.FC<FormFieldsProps> = ({
           fullWidth
           placeholder="Reference Tracking"
           value={formData.trackingNo || ""}
-          onChange={(e) => onInputChange("trackingNo", e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            // Allow only digits and max 13 characters
+            if (/^\d*$/.test(value) && value.length <= 13) {
+              onInputChange("trackingNo", value);
+            }
+          }}
           size="medium"
           error={!!errors.trackingNo}
           helperText={errors.trackingNo}

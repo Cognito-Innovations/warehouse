@@ -15,35 +15,22 @@ interface Document {
 
 interface PhotosDocumentsSectionProps {
   packageData: any;
+  documents: Document[];
   onUploadSuccess?: () => void;
   isDiscarded: boolean;
 }
 
-const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ packageData, onUploadSuccess, isDiscarded }) => {
-  const [documents, setDocuments] = useState<Document[]>([]);
+const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({
+  packageData,
+  documents,
+  onUploadSuccess,
+  isDiscarded,
+}) => {
   const [uploading, setUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isUploadDisabled = !packageData.shipment_uuid;
-
-  const fetchDocs = async () => {
-    if (isUploadDisabled) {
-      setDocuments([]);
-      return;
-    };
-    try {
-      const docs = await getShipmentDocuments(packageData.shipment_uuid);
-      setDocuments(docs);
-    } catch {
-      console.error('Failed to fetch shipment documents');
-      toast.error('Failed to load documents.');
-    }
-  };
-
-  useEffect(() => {
-    fetchDocs();
-  }, [packageData.shipment_uuid]);
 
   const handleFileSelect = async (files: FileList | null) => {
     if (isUploadDisabled) {
@@ -59,13 +46,12 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({ package
       for (const file of filesArray) {
         const url = await uploadToCloudinary(file);
         if (url) {
-          const newDoc = await addShipmentDocument(packageData.shipment_uuid, {
+          await addShipmentDocument(packageData.shipment_uuid, {
             url,
             original_filename: file.name,
             mime_type: file.type,
             file_size: file.size,
           });
-          setDocuments((prev) => [...prev, newDoc]);
         }
       }
       toast.success('Files uploaded successfully');

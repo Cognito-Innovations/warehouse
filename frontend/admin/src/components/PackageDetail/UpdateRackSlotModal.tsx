@@ -15,6 +15,8 @@ interface UpdateRackSlotModalProps {
     rack?: string;
     createdBy: string;
     createdAt: string;
+    updatedBy: string;
+    updatedAt: string;
   };
 }
 
@@ -159,7 +161,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
                       {currentRack.label}
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#64748b' }}>
-                      {packageData.createdBy} on {new Date(parseInt(packageData.createdAt) * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+                      {packageData.updatedBy} on {packageData.updatedAt}
                     </Typography>
                   </Box>
                 </Stack>

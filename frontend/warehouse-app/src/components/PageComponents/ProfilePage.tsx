@@ -20,6 +20,7 @@ export default function ProfilePage() {
     alternate_phone_number: "",
     gender: "",
     dob: "",
+    email_verified: false,
   });
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function ProfilePage() {
           alternate_phone_number: userInfo.alternate_phone_number || "",
           gender: userInfo.gender || "",
           dob: userInfo.dob?.split("T")[0] || "",
+          email_verified: userInfo.email_verified || false,
         });
       } catch (error) {
         console.error("Failed to fetch user profile", error);

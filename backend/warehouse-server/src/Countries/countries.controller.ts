@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -12,6 +12,7 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { CreateCountryDto } from './dto/create-country.dto';
 import { CountryResponseDto } from './dto/countries-response.dto';
 import { CountriesService } from './countries.services';
+import { UpdateCountryDto } from './dto/update-country.dto';
 
 @ApiTags('Countries')
 @ApiExtraModels(CreateCountryDto, CountryResponseDto)
@@ -91,5 +92,20 @@ export class CountriesController {
   })
   async findAll(): Promise<CountryResponseDto[]> {
     return this.countriesService.getAllCountries();
+  }
+
+  @Patch(':id')
+  @Public()
+  @ApiOperation({ summary: 'Update a country' })
+  @ApiOkResponse({
+    description: 'Country updated successfully',
+    type: CountryResponseDto,
+  })
+  @ApiBody({ type: UpdateCountryDto })
+  async update(
+    @Param('id') id: string,
+    @Body() updateCountryDto: UpdateCountryDto,
+  ): Promise<CountryResponseDto> {
+    return this.countriesService.updateCountry(id, updateCountryDto);
   }
 }
