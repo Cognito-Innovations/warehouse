@@ -1,105 +1,174 @@
-import { Box, Stack, Typography, Button } from '@mui/material';
-import { EmailOutlined, PhoneOutlined } from '@mui/icons-material';
+import { useState } from 'react';
+import { 
+  Box, 
+  Stack, 
+  Typography,
+  Chip,
+  Divider,
+} from '@mui/material';
+import { 
+  EmailOutlined, 
+  PhoneOutlined, 
+} from '@mui/icons-material';
 import BadgeIcon from '@mui/icons-material/Badge';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import { toast } from 'sonner';
 
 import type { Customer } from '../../data/customers';
 
-const CustomerHeader = ({ customer }: { customer: Customer }) => (
-  <Box
-    sx={{
-      bgcolor: '#f1f5f9',
-      p: 3,
-      borderRadius: 2,
-      mb: 3
-    }}
-  >
-    <Stack 
-      direction={{ xs: 'column', sm: 'row' }} 
-      justifyContent="space-between" 
-      alignItems="flex-start"
-      gap={2}
-    >
-      <Box>
-        <Typography 
-          sx={{ 
-            fontSize: '28px', 
-            fontWeight: 500, 
-            color: '#1e293b', 
-            mb: 1 
-          }}
-        >
-          {`${customer.name}, ${customer.suiteNo}`}
-        </Typography>
+const CustomerHeader = ({ customer }: { customer: Customer }) => {
+  const [isBlocked, setIsBlocked] = useState(!customer.isActive);
+  const [isApproved, setIsApproved] = useState(customer.isVerified);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-        <Stack spacing={0.5} color="#475569">
-          <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
-            <Stack direction="row" alignItems="center" spacing={0.8}>
-              <EmailOutlined sx={{ fontSize: '18px', color: '#475569' }} />
-              <Typography sx={{ fontSize: '14px' }}>{customer.email}</Typography>
+  const handleBlockSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsBlocked(!isBlocked);
+      toast.success(`Customer ${isBlocked ? 'unblocked' : 'blocked'} successfully`);
+    } catch (error) {
+      toast.error('Failed to update customer status');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleApproveSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsApproved(!isApproved);
+      toast.success(`Customer ${isApproved ? 'disapproved' : 'approved'} successfully`);
+    } catch (error) {
+      toast.error('Failed to update customer approval status');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getStatusChip = (status: boolean, label: string) => (
+    <Chip
+      label={label}
+      size="small"
+      sx={{
+        bgcolor: status ? '#dcfce7' : '#fef3c7',
+        color: status ? '#16a34a' : '#f59e0b',
+        fontWeight: 600,
+        fontSize: '0.75rem'
+      }}
+    />
+  );
+
+  return (
+    <Box
+      sx={{
+        bgcolor: '#ffffff',
+        borderRadius: 3,
+        border: '1px solid #e2e8f0',
+        overflow: 'hidden',
+        mb: 3
+      }}
+    >
+      {/* Header Section */}
+      <Box sx={{ p: 3, bgcolor: '#f8fafc' }}>
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }} 
+          justifyContent="space-between" 
+          alignItems="flex-start"
+          gap={2}
+        >
+          <Box>
+            <Typography 
+              sx={{ 
+                fontSize: '28px', 
+                fontWeight: 600, 
+                color: '#1e293b', 
+                mb: 1 
+              }}
+            >
+              {customer.name}
+            </Typography>
+            <Typography 
+              sx={{ 
+                fontSize: '16px', 
+                fontWeight: 500, 
+                color: '#64748b', 
+                mb: 2 
+              }}
+            >
+              Suite: {customer.suiteNo}
+            </Typography>
+
+            {/* Customer Details */}
+            <Stack spacing={1} color="#475569">
+              <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
+                <Stack direction="row" alignItems="center" spacing={0.8}>
+                  <EmailOutlined sx={{ fontSize: '18px', color: '#475569' }} />
+                  <Typography sx={{ fontSize: '14px' }}>{customer.email}</Typography>
+                </Stack>
+                
+                {customer.id && (
+                  <Stack direction="row" alignItems="center" spacing={0.8}>
+                    <BadgeIcon sx={{ fontSize: '18px', color: '#475569' }} />
+                    <Typography sx={{ fontSize: '14px' }}>{customer.id}</Typography>
+                  </Stack>
+                )}
+                
+                {customer.gender && (
+                  <Stack direction="row" alignItems="center" spacing={0.8}>
+                    <PersonIcon sx={{ fontSize: '18px', color: '#475569' }} />
+                    <Typography sx={{ fontSize: '14px', textTransform: 'capitalize' }}>
+                      {customer.gender}
+                    </Typography>
+                  </Stack>
+                )}
+              </Stack>
+              
+              <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
+                {customer.phone && (
+                  <Stack direction="row" alignItems="center" spacing={0.8}>
+                    <PhoneOutlined sx={{ fontSize: '18px', color: '#475569' }} />
+                    <Typography sx={{ fontSize: '14px' }}>{customer.phone}</Typography>
+                  </Stack>
+                )}
+                
+                {customer.dob && (
+                  <Stack direction="row" alignItems="center" spacing={0.8}>
+                    <CalendarTodayIcon sx={{ fontSize: '18px', color: '#475569' }} />
+                    <Typography sx={{ fontSize: '14px' }}>{customer.dob}</Typography>
+                  </Stack>
+                )}
+              </Stack>
             </Stack>
-            <Stack direction="row" alignItems="center" spacing={0.8}>
-              <BadgeIcon sx={{ fontSize: '18px', color: '#475569' }} />
-              <Typography sx={{ fontSize: '14px' }}>{customer.id}</Typography>
-            </Stack>
-            <Stack direction="row" alignItems="center" spacing={0.8}>
-              <PersonIcon sx={{ fontSize: '18px', color: '#475569' }} />
-              <Typography sx={{ fontSize: '14px' }}>{customer.gender}</Typography>
-            </Stack>
-          </Stack>
-          <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
-            <Stack direction="row" alignItems="center" spacing={0.8}>
-              <PhoneOutlined sx={{ fontSize: '18px', color: '#475569' }} />
-              <Typography sx={{ fontSize: '14px' }}>7722724</Typography>
-            </Stack>
-            <Stack direction="row" alignItems="center" spacing={0.8}>
-              <CalendarTodayIcon sx={{ fontSize: '18px', color: '#475569' }} />
-              <Typography sx={{ fontSize: '14px' }}>{customer.dob}</Typography>
-            </Stack>
+          </Box>
+
+          {/* Status Chips */}
+          <Stack direction="row" spacing={1} alignItems="center">
+            {getStatusChip(customer.isVerified, 'Verified')}
+            {getStatusChip(customer.isActive, 'Active')}
+            {customer.provider && (
+              <Chip
+                label={customer.provider}
+                size="small"
+                sx={{
+                  bgcolor: '#e0e7ff',
+                  color: '#3730a3',
+                  fontWeight: 600,
+                  fontSize: '0.75rem'
+                }}
+              />
+            )}
           </Stack>
         </Stack>
       </Box>
-
-      <Stack spacing={1.5} alignItems="flex-end">
-        <Button 
-          variant="outlined"
-          sx={{ 
-            borderColor: '#10b981',
-            color: '#10b981',
-            textTransform: 'none',
-            fontSize: '14px',
-            fontWeight: 500,
-            px: 3,
-            py: 0.5,
-            borderRadius: '20px',
-            '&:hover': {
-              borderColor: '#059669',
-              color: '#059669'
-            }
-          }}
-        >
-          Add offer
-        </Button>
-        <Button
-          variant="contained"
-          sx={{ 
-            bgcolor: '#7c3aed', 
-            '&:hover': { bgcolor: '#6d28d9' }, 
-            boxShadow: 'none',
-            textTransform: 'none',
-            fontSize: '14px',
-            fontWeight: 500,
-            px: 3,
-            py: 0.5,
-            borderRadius: '6px'
-          }}
-        >
-          Update Information
-        </Button>
-      </Stack>
-    </Stack>
-  </Box>
-);
+      <Divider />
+   
+    </Box>
+  );
+};
 
 export default CustomerHeader;

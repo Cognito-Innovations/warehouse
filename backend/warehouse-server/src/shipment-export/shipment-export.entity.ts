@@ -3,22 +3,15 @@ import {
   PrimaryGeneratedColumn,
   Column,
   OneToMany,
-  ManyToOne,
-  JoinColumn,
   AfterLoad,
 } from 'typeorm';
 import { ShipmentExportBox } from './shipment-export-box.entity';
-import { User } from 'src/users/user.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 @Entity('shipment_exports')
 export class ShipmentExport extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  @ManyToOne(() => User, { eager: true, nullable: true })
-  @JoinColumn({ name: 'admin_id' })
-  admin: User;
 
   @Column({ unique: true })
   export_code: string;

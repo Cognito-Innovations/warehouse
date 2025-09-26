@@ -26,17 +26,7 @@ const CustomerDetailPage = () => {
       <TopNavbar pageTitle="Customers" pageSubtitle={`${customer.name}`} />
       <Box>
         <CustomerHeader customer={customer} />
-        <Grid container spacing={3} mt={1}>
-          <Grid item xs={12} md={7}>
-            <CustomerStats />
-          </Grid>
-          <Grid item xs={12} md={5} sx={{ pl: 75 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 3 }}>
-              <CustomerAddressList />
-              <CustomerDocuments />
-            </Box>
-          </Grid>
-        </Grid>
+        <CustomerAddressList />
       </Box>
     </Box>
   );

@@ -3,11 +3,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  JoinColumn,
   OneToMany,
 } from 'typeorm';
 import { ShipmentExport } from './shipment-export.entity';
-import { User } from 'src/users/user.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import { Package } from 'src/packages/entities';
 
@@ -20,10 +18,6 @@ export class ShipmentExportBox extends BaseTimestampEntity {
     onDelete: 'CASCADE',
   })
   shipmentExport: ShipmentExport;
-
-  @ManyToOne(() => User, { eager: true, nullable: true })
-  @JoinColumn({ name: 'admin_id' })
-  admin: User;
 
   @OneToMany(() => Package, (pkg) => pkg.shipmentExportBox, {
     cascade: false,

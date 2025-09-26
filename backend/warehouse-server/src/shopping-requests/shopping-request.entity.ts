@@ -31,10 +31,6 @@ export class ShoppingRequest extends BaseTimestampEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => User, { eager: true, nullable: true })
-  @JoinColumn({ name: 'admin_id' })
-  admin: User;
-
   @ManyToOne(() => CourierCompany, { eager: true, nullable: false })
   @JoinColumn({ name: 'courier_id' })
   courier: CourierCompany;

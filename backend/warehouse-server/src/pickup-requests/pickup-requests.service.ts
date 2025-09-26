@@ -141,6 +141,7 @@ export class PickupRequestsService {
     }
   }
 
+  //TODO: Check is this or above function is same ?
   async getPickupRequestsByUser(
     userId: string,
   ): Promise<PickupRequestResponseDto[]> {
@@ -148,36 +149,29 @@ export class PickupRequestsService {
       const pickupRequests = await this.pickupRequestRepository.find({
         where: { user: { id: userId } },
         order: { created_at: 'DESC' },
-        relations: ['user', 'country'],
+        relations: ['user', 'country', 'trackingRequests'],
       });
 
-      return Promise.all(
-        pickupRequests.map(async (request) => {
-          const trackingRequests =
-            await this.trackingRequestsService.getTrackingRequestsByFeature(
-              FeatureType.PickupRequest,
-              request.id,
-            );
-
-          return {
-            id: request.id,
-            country: request.country?.name,
-            pickup_address: request.pickup_address,
-            supplier_name: request.supplier_name,
-            supplier_phone_number: request.supplier_phone_number,
-            alt_supplier_phone_number: request.alt_supplier_phone_number,
-            pcs_box: request.pcs_box,
-            est_weight: request.est_weight,
-            pkg_details: request.pkg_details,
-            remarks: request.remarks,
-            status: request.status,
-            created_at: request.created_at,
-            updated_at: request.updated_at,
-            user: request.user,
-            tracking_requests: trackingRequests,
-          };
-        }),
-      );
+      return pickupRequests.map((request) => {
+        return {
+          id: request.id,
+          country: request.country?.name,
+          pickup_address: request.pickup_address,
+          supplier_name: request.supplier_name,
+          supplier_phone_number: request.supplier_phone_number,
+          alt_supplier_phone_number: request.alt_supplier_phone_number,
+          pcs_box: request.pcs_box,
+          est_weight: request.est_weight,
+          pkg_details: request.pkg_details,
+          remarks: request.remarks,
+          status: request.status,
+          price: request.price,
+          created_at: request.created_at,
+          updated_at: request.updated_at,
+          user: request.user,
+          tracking_requests: request.trackingRequests,
+        };
+      });
     } catch (error) {
       throw new BadRequestException(
         `Failed to fetch pickup requests for user: ${(error as Error).message}`,
@@ -185,23 +179,17 @@ export class PickupRequestsService {
     }
   }
 
+  //TODO: Check is this or above function is same ?
   async getPickupRequestById(id: string): Promise<PickupRequestResponseDto> {
     try {
       const pickupRequest = await this.pickupRequestRepository.findOne({
         where: { id },
-        relations: ['user', 'country'],
+        relations: ['user', 'country', 'trackingRequests'],
       });
 
       if (!pickupRequest) {
         throw new NotFoundException(`Pickup request with id ${id} not found`);
       }
-
-      //TODO: Why are we using external function ? instead of expanding relations ?
-      const trackingRequests =
-        await this.trackingRequestsService.getTrackingRequestsByFeature(
-          FeatureType.PickupRequest,
-          pickupRequest.id,
-        );
 
       return {
         id: pickupRequest.id,
@@ -219,7 +207,7 @@ export class PickupRequestsService {
         created_at: pickupRequest.created_at,
         updated_at: pickupRequest.updated_at,
         user: pickupRequest.user,
-        tracking_requests: trackingRequests,
+        tracking_requests: pickupRequest.trackingRequests,
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
