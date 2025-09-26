@@ -45,9 +45,6 @@ const CustomerTable = ({ rows }: { rows: Customer[] }) => (
                     <ViewIcon fontSize="small" />
                   </IconButton>
                 </Link>
-                <IconButton size="small" sx={{ color: '#000' }}>
-                  <MoreIcon fontSize="small" />
-                </IconButton>
               </TableCell>
             </TableRow>
           ))}

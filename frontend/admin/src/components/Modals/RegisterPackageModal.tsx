@@ -367,11 +367,6 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
                 calculateTotals={calculateTotals}
                 errors={errors}
               />
-
-              <OptionsSection
-                formData={formData}
-                onInputChange={handleInputChange}
-              />
             </Grid>
           )}
       </DialogContent>

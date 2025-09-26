@@ -8,7 +8,6 @@ import PackageHeader from '../components/PackageDetail/PackageHeader';
 import ActionLogsSection from '../components/PackageDetail/ActionLogsSection';
 import PackageItemsSection from '../components/PackageDetail/PackageItemsSection';
 import PackageDetailsSection from '../components/PackageDetail/PackageDetailsSection';
-import PackageChargesSection from '../components/PackageDetail/PackageChargesSection';
 import PhotosDocumentsSection from '../components/PackageDetail/PhotosDocumentsSection';
 import InvoiceTable from '../components/ShoppingRequests/Detail/InvoiceTable';
 import { formatDateTime } from '../utils/formatDateTime';
@@ -290,7 +289,6 @@ const PackageDetail: React.FC = () => {
             isDiscarded={isDiscarded}
           />
 
-          <PackageChargesSection isDiscarded={isDiscarded} />
         </Grid>
       </Grid>
     </Box>

@@ -97,8 +97,7 @@ function App() {
                   <Route path="/suite" element={<MySuiteContent />} />
                   <Route path="/customers" element={<Customers />} />
                   <Route path="/customers/:id" element={<CustomerDetailPage />} />
-                  <Route path="/reports" element={<Dashboard />} />
-                  <Route path="/master" element={<Dashboard />} />
+                  {/* these routes should be in super user able to access these pages */}
                   <Route path="/settings/countries" element={<CountriesPage />} />
                   <Route path="/settings/currencies" element={<CurrenciesPage />} />
                 </Routes>

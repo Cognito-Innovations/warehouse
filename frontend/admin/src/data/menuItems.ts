@@ -40,8 +40,6 @@ export const menuItems: MenuItem[] = [
     icon: ShipmentsIcon,
     defaultPath: '/shipments/export',
     subMenu: [
-      // TODO: Uncomment when functionality is implemented
-      // { text: 'Shipments', icon: ExportIcon, path: '/shipments' },
       { text: 'Shipment Export', icon: ExportIcon, path: '/shipments/export' },
     ],
   },
@@ -56,8 +54,6 @@ export const menuItems: MenuItem[] = [
   },
   { text: 'My Suite', icon: SuiteIcon, path: '/suite' },
   { text: 'Customers', icon: CustomersIcon, path: '/customers' },
-  { text: 'Reports', icon: ReportsIcon, path: '/reports' },
-  { text: 'Master', icon: MasterIcon, path: '/master' },
   {
     text: 'Settings',
     icon: SettingsIcon,

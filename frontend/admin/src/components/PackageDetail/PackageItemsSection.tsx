@@ -159,51 +159,6 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
       return updated;
     });
   };
-
-  const handleDownloadFormat = () => {
-    const csvContent = "Name,Quantity,Amount,Total";
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'package_items_template.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
-  const handleBulkUpload = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.csv,.xlsx,.xls';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file && id) {
-        try {
-          const mockBulkData = [
-            { name: 'Coffee Mug', quantity: 2, unit_price: 15.00, total_price: 30.00 },
-            { name: 'Water Bottle', quantity: 1, unit_price: 25.00, total_price: 25.00 }
-          ];
-          
-          const response = await bulkUploadPackageItems(id, mockBulkData);
-          
-          const newItems = response.items?.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            quantity: item.quantity,
-            amount: `$${item.unit_price.toFixed(2)}`,
-            total: `$${item.total_price.toFixed(2)}`
-          })) || [];
-          
-          setPackageItems(prev => [...prev, ...newItems]);
-          toast.success('Items uploaded successfully!');
-        } catch (err) {
-          console.error('Failed to bulk upload items:', err);
-          toast.error('Failed to upload items.');
-        }
-      }
-    };
-    input.click();
-  };
   
   return (
     <>
@@ -213,40 +168,6 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
             Package Items
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              startIcon={<DownloadIcon />}
-              size="small"
-              onClick={handleDownloadFormat}
-              disabled={isDiscarded}
-              sx={{
-                bgcolor: '#8b5cf6',
-                '&:hover': { bgcolor: '#7c3aed' },
-                textTransform: 'none',
-                borderRadius: 1,
-                color: 'white',
-                borderColor: '#8b5cf6'
-              }}
-            >
-              Download format
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<UploadIcon />}
-              size="small"
-              onClick={handleBulkUpload}
-              disabled={isDiscarded}
-              sx={{
-                bgcolor: '#8b5cf6',
-                '&:hover': { bgcolor: '#7c3aed' },
-                textTransform: 'none',
-                borderRadius: 1,
-                color: 'white',
-                borderColor: '#8b5cf6'
-              }}
-            >
-              Bulk Upload
-            </Button>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -268,6 +189,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
         </Box>
 
         {packageItems && packageItems.length > 0 ? (
+          //TODO: Below code should be moved to a separate component
           <TableContainer sx={{bgcolor: "#ffffff", borderRadius: 2}}>
             <Table size="medium">
               <TableHead>
@@ -332,6 +254,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
             </Table>
           </TableContainer>
         ) : (
+          //TODO: Below code should be moved to a separate component
           <Box sx={{ 
             p: 4, 
             textAlign: 'center', 
