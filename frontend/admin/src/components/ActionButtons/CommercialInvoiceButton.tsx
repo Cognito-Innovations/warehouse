@@ -37,17 +37,17 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(10);
             yPos += 6;
-            doc.text("ugflash@shopme.mv", margin, yPos);
+            doc.text("ugflash@palakart.com", margin, yPos);
             yPos += 5;
             doc.text("6/454, Ugflash Nagar, Amman Kovil Road, Perumagoundampatti, Elampillai", margin, yPos);
             yPos += 5;
             doc.text("India", margin, yPos);
 
-            // Right-side: "shopme" Logo and "INVOICE" box
+            // Right-side: "palakart" Logo and "INVOICE" box
             doc.setFont("helvetica", "bold");
             doc.setFontSize(28);
             doc.setTextColor(purpleColor[0], purpleColor[1], purpleColor[2]);
-            doc.text("shopme", pageW - margin, 28, { align: "right" });
+            doc.text("palakart", pageW - margin, 28, { align: "right" });
 
             const invoiceBoxY = 35;
             const invoiceBoxW = 40;

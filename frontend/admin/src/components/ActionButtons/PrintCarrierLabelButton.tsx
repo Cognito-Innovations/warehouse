@@ -129,10 +129,10 @@ const PrintCarrierLabelButton: React.FC<PrintCarrierLabelButtonProps> = ({ data,
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
             doc.text("FROM", margin + 3, yPos + 6);
-            // Shopme Logo Placeholder
+            // Palakart Logo Placeholder
             doc.setFont("helvetica", "italic");
             doc.setFontSize(14);
-            doc.text("shopme", margin + 25, yPos + 6);
+            doc.text("palakart", margin + 25, yPos + 6);
             // From Address
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);

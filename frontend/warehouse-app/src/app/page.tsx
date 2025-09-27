@@ -50,7 +50,7 @@ export default function Page() {
       <Box
         sx={{
           flex: { xs: "0 0 0%", sm: "1 1 50%", md: "1 1 70%" },
-          backgroundImage: "url(/shopme-background.png)",
+          backgroundImage: "url(/palakart-background.png)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

@@ -22,7 +22,7 @@ const MySuiteHeader = () => (
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <EmailOutlined fontSize="small" />
-              <Typography variant="body2">ugflash@shopme.mv</Typography>
+              <Typography variant="body2">ugflash@palakart.com</Typography>
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <AccessTimeOutlined fontSize="small" />

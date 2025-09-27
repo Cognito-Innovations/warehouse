@@ -125,7 +125,7 @@ export default function SignInForm() {
       <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
         <img
           src="/logo.png"
-          alt="Shopme Logo"
+          alt="Palakart Logo"
           style={{ maxWidth: "200px", height: "auto" }}
         />
       </Box>

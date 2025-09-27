@@ -7,7 +7,6 @@ import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
 
 async function bootstrap() {
-  console.log("Environment Variables:", process.env.DB_HOST);
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS

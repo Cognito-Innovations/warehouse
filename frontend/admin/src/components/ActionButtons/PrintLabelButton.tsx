@@ -22,11 +22,11 @@ const PrintLabelButton: React.FC<PrintLabelButtonProps> = ({ data }) => {
               format: [100, 75]
             });
         
-           // Shopme Logo
+           // Palakart Logo
             doc.setFont("helvetica", "bold");
             doc.setFontSize(14);
             doc.setTextColor('#6d28d9');
-            doc.text("shopme", 5, 12);
+            doc.text("palakart", 5, 12);
         
            // IN Box
             doc.setFillColor(255, 255, 255);

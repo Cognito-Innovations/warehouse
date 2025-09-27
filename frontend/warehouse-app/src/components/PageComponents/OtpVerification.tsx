@@ -7,7 +7,6 @@ import {
   FormControlLabel,
   Checkbox,
   Typography,
-  CircularProgress,
   FormHelperText,
 } from "@mui/material";
 import { sendEmailOtp, verifyEmailOtp } from "../../lib/api.service";
@@ -116,7 +115,7 @@ export default function OtpVerification({ userId, email, isVerified, onVerificat
             inputProps={{ maxLength: 4 }}
           />
           <Button onClick={handleVerifyOtp} variant="outlined" disabled={isVerifying}>
-            {isVerifying ? <CircularProgress size={24} /> : "Verify"}
+            {isVerifying ? "Verifying..." : "Verify"}
           </Button>
         </Box>
       )}

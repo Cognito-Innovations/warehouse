@@ -6,10 +6,7 @@ import { TrackingRequestsService } from './tracking-requests.service';
 import { UsersModule } from 'src/users/users.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([TrackingRequest]),
-    UsersModule,
-  ],
+  imports: [TypeOrmModule.forFeature([TrackingRequest]), UsersModule],
   controllers: [TrackingRequestsController],
   providers: [TrackingRequestsService],
   exports: [TrackingRequestsService],

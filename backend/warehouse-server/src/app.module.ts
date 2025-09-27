@@ -34,6 +34,7 @@ import { DocumentsModule } from './documents/documents.module';
 import { InvoicesModule } from './invoice/invoices.module';
 import { UserPreferencesModule } from './user-preferences/user-preferences.module';
 import { CurrenciesModule } from './currencies/currencies.module';
+import { UserAddressModule } from './user_address/user_address.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { CurrenciesModule } from './currencies/currencies.module';
     TypeOrmModule.forRoot(databaseConfig),
     SharedModule,
     UsersModule,
+    UserAddressModule,
     AuthModule,
     CountriesModule,
     CourierCompaniesModule,

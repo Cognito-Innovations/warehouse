@@ -42,17 +42,23 @@ export class UsersController {
   }
 
   @Get('suite/:suiteNo')
-  @ApiOperation({ summary: 'Get user by Suite Number' })
-  @ApiParam({ name: 'suiteNo', description: 'User Suite Number', example: 'A101' })
-  @ApiResponse({ status: 200, description: 'User details', type: UserDto })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  async findBySuiteNo(@Param('suiteNo') suiteNo: string): Promise<UserDto> {
-    const user = await this.usersService.findBySuiteNo(suiteNo);
-    if (!user) {
-      throw new NotFoundException(`User with suite number ${suiteNo} not found`);
-    }
-    return this.usersService.mapToUserResponseDto(user);
-  }
+  @ApiOperation({ summary: 'Get user by Suite Number' })
+  @ApiParam({
+    name: 'suiteNo',
+    description: 'User Suite Number',
+    example: 'A101',
+  })
+  @ApiResponse({ status: 200, description: 'User details', type: UserDto })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async findBySuiteNo(@Param('suiteNo') suiteNo: string): Promise<UserDto> {
+    const user = await this.usersService.findBySuiteNo(suiteNo);
+    if (!user) {
+      throw new NotFoundException(
+        `User with suite number ${suiteNo} not found`,
+      );
+    }
+    return this.usersService.mapToUserResponseDto(user);
+  }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
@@ -225,11 +231,9 @@ export class UsersController {
   @ApiOperation({ summary: 'Verify user email with OTP' })
   async verifyOtp(@Param('id') id: string, @Body('otp') otp: string) {
     const user = await this.usersService.verifyEmailOtp(id, otp);
-    return { 
+    return {
       message: 'Email verified successfully.',
-      email_verified: user.email_verified
+      email_verified: user.email_verified,
     };
   }
-
-
 }

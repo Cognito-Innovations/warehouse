@@ -244,3 +244,13 @@ export const verifyEmailOtp = async (userId: string, otp: string) => {
   const res = await authenticatedApi.post(`/users/${userId}/verify-otp`, { otp });
   return res.data;
 };
+
+export const createUserAddress = async (data: any) => {
+  const res = await authenticatedApi.post(`/user-address`, data);
+  return res.data;
+};
+
+export const fetchUserAddresses = async (userId: string) => {
+  const res = await authenticatedApi.get(`/user-address/user/${userId}`);
+  return res.data;
+};

@@ -10,7 +10,6 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { MailerService } from '@nestjs-modules/mailer';
 import { User } from './user.entity';
-import { UserDto } from './dto/user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
@@ -39,7 +38,7 @@ export class UsersService {
       verified: user.verified,
       email_verified: user.email_verified,
       created_at: user.created_at,
-      updated_at: user.updated_at
+      updated_at: user.updated_at,
     };
   }
 
@@ -48,9 +47,7 @@ export class UsersService {
       order: { email: 'ASC' },
     });
 
-    return users.map(
-      user => this.mapToUserResponseDto(user)
-    );
+    return users.map((user) => this.mapToUserResponseDto(user));
   }
 
   async findById(id: string): Promise<User | null> {
@@ -60,10 +57,10 @@ export class UsersService {
   }
 
   async findBySuiteNo(suiteNo: string): Promise<User | null> {
-    return this.userRepository.findOne({
-      where: { suite_no: suiteNo },
-    });
-  }
+    return this.userRepository.findOne({
+      where: { suite_no: suiteNo },
+    });
+  }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({
@@ -113,23 +110,25 @@ export class UsersService {
     currentPassword: string,
     newPassword: string,
   ): Promise<{ message: string }> {
-    const user = await this.findById(id);
-    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+    try {
+      const user = await this.findById(id);
+      if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+      const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password,
+      );
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Current password is incorrect');
+      }
 
-    const isPasswordValid = await bcrypt.compare(
-      currentPassword,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect');
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedPassword;
+
+      await this.userRepository.save(user);
+      return { message: 'Password updated successfully' };
+    } catch (error) {
+      throw new BadRequestException('Failed to update password', error);
     }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-
-    await this.userRepository.save(user);
-
-    return { message: 'Password updated successfully' };
   }
 
   async sendVerificationOtp(userId: string): Promise<{ message: string }> {
@@ -177,7 +176,7 @@ export class UsersService {
     user.otp_expires_at = null;
 
     const updatedUser = await this.userRepository.save(user);
-    
+
     return this.mapToUserResponseDto(updatedUser);
   }
 }

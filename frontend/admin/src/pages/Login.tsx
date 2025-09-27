@@ -159,7 +159,7 @@ const Login: React.FC = () => {
               letterSpacing: '-0.5px',
             }}
           >
-            shopme.mv
+            Palakart Admin
           </Typography>
         </Box>
 

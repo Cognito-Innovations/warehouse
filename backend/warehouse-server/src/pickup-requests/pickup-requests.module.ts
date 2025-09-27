@@ -15,7 +15,7 @@ import { UsersModule } from 'src/users/users.module';
     TypeOrmModule.forFeature([PickupRequest, TrackingRequest, UserPreference]),
     SharedModule,
     TrackingRequestsModule,
-    UsersModule
+    UsersModule,
   ],
   controllers: [PickupRequestsController],
   providers: [PickupRequestsService, UserPreferencesService],

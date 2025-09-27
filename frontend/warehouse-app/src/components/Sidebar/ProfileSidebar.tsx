@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import {
   Person,
-  Lock,
   LocationOn,
 } from "@mui/icons-material";
 
@@ -24,11 +23,12 @@ const menuItems = [
     icon: <Person />,
     href: "/profile",
   },
-  {
-    label: "Password",
-    icon: <Lock />,
-    href: "/profile/password",
-  },
+  //TODO: Password is misleading because google auth won't have password
+  // {
+  //   label: "Password",
+  //   icon: <Lock />,
+  //   href: "/profile/password",
+  // },
   {
     label: "Addresses",
     icon: <LocationOn />,

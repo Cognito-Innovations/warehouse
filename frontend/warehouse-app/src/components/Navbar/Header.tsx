@@ -149,7 +149,7 @@ const Header = () => {
             href="/"
             className="text-2xl font-bold text-white hover:opacity-80 transition-opacity"
           >
-            shopme
+            Palakart
           </Link>
 
           {/* Navigation Items */}
@@ -301,76 +301,6 @@ const Header = () => {
           <ListItemText sx={{ color: "error.main" }}>Sign Out</ListItemText>
         </MenuItem>
       </Menu>
-
-      {/* TODO: Uncomment notification when it's implemented */}
-      {/* Notifications Dropdown Menu */}
-      {/* <Menu id="notification-menu" anchorEl={notificationAnchorEl} open={notificationOpen} onClose={handleNotificationMenuClose}
-        PaperProps={{
-          elevation: 0,
-          sx: {
-            overflow: 'visible',
-            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-            mt: 1.5,
-            minWidth: 300,
-            maxHeight: 400,
-            '&:before': {
-              content: '""',
-              display: 'block',
-              position: 'absolute',
-              top: 0,
-              right: 14,
-              width: 10,
-              height: 10,
-              bgcolor: 'background.paper',
-              transform: 'translateY(-50%) rotate(45deg)',
-              zIndex: 0,
-            },
-          },
-        }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-      >
-        {/* Notifications Header */}
-        {/* <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #e0e0e0' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-            Notifications
-          </Typography>
-        </Box> */}
-
-        {/* Sample Notifications */}
-        {/* <MenuItem onClick={() => handleNotificationItemClick('1')} sx={{ py: 1.5 }}>
-          <ListItemText 
-            primary="New package arrived"
-            secondary="Your package from Amazon has been delivered to your suite."
-            primaryTypographyProps={{ fontSize: '0.875rem' }}
-            secondaryTypographyProps={{ fontSize: '0.75rem' }}
-          />
-        </MenuItem>
-
-        <MenuItem onClick={() => handleNotificationItemClick('2')} sx={{ py: 1.5 }}>
-          <ListItemText 
-            primary="Pickup request confirmed"
-            secondary="Your pickup request #12345 has been confirmed for tomorrow."
-            primaryTypographyProps={{ fontSize: '0.875rem' }}
-            secondaryTypographyProps={{ fontSize: '0.75rem' }}
-          />
-        </MenuItem>
-
-        <MenuItem onClick={() => handleNotificationItemClick('3')} sx={{ py: 1.5 }}>
-          <ListItemText 
-            primary="Rate calculation ready"
-            secondary="Your shipping rate calculation is now available."
-            primaryTypographyProps={{ fontSize: '0.875rem' }}
-            secondaryTypographyProps={{ fontSize: '0.75rem' }}
-          />
-        </MenuItem>
-
-        <Divider />
-
-        <MenuItem onClick={handleNotificationsClick} sx={{ py: 1.5, textAlign: 'center' }}>
-          <ListItemText primary="View All Notifications" sx={{ textAlign: 'center' }} />
-        </MenuItem>
-      </Menu> */}
     </>
   );
 };

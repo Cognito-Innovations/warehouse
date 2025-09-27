@@ -147,8 +147,7 @@ const TabsSection = () => {
 
   const tabs = [
     { label: "Packages", count: packages.length, icon: <PackageIcon /> },
-    { label: "Shipments", count: shipments.length, icon: <ShipmentIcon /> },
-    { label: "History", count: 0, icon: <HistoryIcon /> },
+    { label: "Shipments", count: shipments.length, icon: <ShipmentIcon /> }
   ];
 
   return (

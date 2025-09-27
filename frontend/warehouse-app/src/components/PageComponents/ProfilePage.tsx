@@ -10,7 +10,6 @@ import { getUser } from "@/lib/api.service";
 export default function ProfilePage() {
   const { user } = useAuth();
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editLoading, setEditLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData>({
     id_card_passport_no: "",
@@ -57,22 +56,7 @@ export default function ProfilePage() {
       ...updatedData,
     }));
   };
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "70vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <CircularProgress size={48} />
-      </Box>
-    );
-  }
-
+  
   return (
     <Box sx={{ maxWidth: 800, mx: "auto" }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
@@ -179,6 +163,7 @@ export default function ProfilePage() {
         onClose={() => setEditModalOpen(false)}
         profileData={profileData}
         onProfileUpdate={handleProfileUpdate}
+        loading={loading}
       />
     </Box>
   );
