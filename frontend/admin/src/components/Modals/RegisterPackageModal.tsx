@@ -9,7 +9,6 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, 
 import FormFields from "./RegisterPackageModal/FormFields";
 
 import WeightSection from "./RegisterPackageModal/WeightSection";
-import OptionsSection from "./RegisterPackageModal/OptionsSection";
 import AddSupplierModal from "./RegisterPackageModal/AddSupplierModal";
 
 interface RegisterPackageModalProps {
@@ -336,7 +335,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       >
       <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 2 }}>
         <Typography component="span" sx={{ fontWeight: 600, fontSize: "1.25rem" }}>
-          Register Package
+          Register Package  
         </Typography>
         <IconButton onClick={onClose} size="small" disabled={isSubmitting}>
           <CloseIcon />

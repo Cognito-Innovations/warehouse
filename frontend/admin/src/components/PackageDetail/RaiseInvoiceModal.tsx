@@ -92,6 +92,7 @@ const RaiseInvoiceModal: React.FC<{
         <Table sx={{ minWidth: 650 }} aria-label="charges table">
           <TableHead>
             <TableRow sx={{ '& .MuiTableCell-root': { fontWeight: 600, bgcolor: '#f8fafc', color: '#475569' } }}>
+              <TableCell>#</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Description</TableCell>
               <TableCell align="right">Amount</TableCell>
@@ -101,6 +102,7 @@ const RaiseInvoiceModal: React.FC<{
           <TableBody>
             {charges.map((row, index) => (
               <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                <TableCell component="th" scope="row">{index + 1}</TableCell>
                 <TableCell component="th" scope="row">{row.category}</TableCell>
                 <TableCell>{row.description}</TableCell>
                 <TableCell align="right">${row.amount.toFixed(2)}</TableCell>

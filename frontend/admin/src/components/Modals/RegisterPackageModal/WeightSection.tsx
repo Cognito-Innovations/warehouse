@@ -134,6 +134,7 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                   alignItems: "center",
                   gap: 1,
                   flex: 1,
+                  pr: pieces.length > 1 ? 4 : 2, // Add right padding when cancel button is present
                 }}
               >
                 <TextField
@@ -148,7 +149,7 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                   error={!!errors[`piece_${idx}_length`]}
                   helperText={errors[`piece_${idx}_length`] || ""}
                   sx={{
-                    width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } },
+                    width: "120px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } },
                   }}
                 />
                 <TextField
@@ -163,7 +164,7 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                   error={!!errors[`piece_${idx}_width`]}
                   helperText={errors[`piece_${idx}_width`] || ""}
                   sx={{
-                    width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } },
+                    width: "120px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } },
                   }}
                 />
                 <TextField
@@ -177,10 +178,10 @@ const WeightSection: React.FC<WeightSectionProps> = ({
                   size="small"
                   error={!!errors[`piece_${idx}_height`]}
                   helperText={errors[`piece_${idx}_height`] || ""}
-                  sx={{ width: "160px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } } }}
+                  sx={{ width: "120px", "& .MuiInputBase-root": { height: "52px", "& input": { padding: "6px 8px" } } }}
                 />
-                <Typography variant="body2" sx={{ fontWeight: 600, color: "#64758b", minWidth: "60px" }}>
-                  Vol. Weight: {parseFloat(piece.volumetricWeight) > 0 ? `${parseFloat(piece.volumetricWeight).toFixed(3)} KG` : "-"}
+                <Typography variant="body2" sx={{ fontWeight: 600, color: "#64758b", minWidth: "140px", flexShrink: 0 }}>
+                  Vol. Weight: {parseFloat(piece.volumetricWeight) > -1 ? `${parseFloat(piece.volumetricWeight).toFixed(3)} KG` : "0.000 KG"}
                 </Typography>
               </Box>
             </Box>

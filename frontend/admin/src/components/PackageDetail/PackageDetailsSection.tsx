@@ -36,7 +36,7 @@ interface PackageDetailsSectionProps {
 
 const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
   packageData,
-  isRefreshing ,
+  isRefreshing,
   onRefresh,
   isDiscarded
 }) => {

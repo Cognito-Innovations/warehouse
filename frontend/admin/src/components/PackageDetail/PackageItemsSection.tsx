@@ -207,7 +207,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
 
                   return (
                     <TableRow key={item.id}>
-                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.name}</TableCell>
+                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }} style={{ textTransform: 'capitalize' }}>{item.name}</TableCell>
                       <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.quantity}</TableCell>
                       <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>${item.amount || item.unit_price}</TableCell>
                       <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>${item.total || item.total_price}</TableCell>

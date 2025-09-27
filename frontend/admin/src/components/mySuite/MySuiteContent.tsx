@@ -73,8 +73,6 @@ const MySuiteContent = () => {
     <Paper sx={{ p: 3, borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
       <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tab label="Racks" sx={{ textTransform: 'none' }} />
-        <Tab label="Tariffs & Charges" sx={{ textTransform: 'none' }} />
-        <Tab label="Users" sx={{ textTransform: 'none' }} />
       </Tabs>
 
       {tabValue === 0 && (
