@@ -177,7 +177,7 @@ const Header = () => {
               <>
                 <Box>
                   <p
-                    className="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
+                    className="px-1 py-2 text-sm font-medium rounded-md transition-all duration-200"
                   >
                     Welcome, <span style={{textTransform: "capitalize"}}>{currentUser?.name || "User"}</span>
                   </p>

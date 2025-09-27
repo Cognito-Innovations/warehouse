@@ -74,7 +74,7 @@ export default function Invoices({ request, onUpdate }: { request: any, onUpdate
         <div className="flex items-center justify-between">
           <div>
             <p className="font-semibold text-gray-900">{number}</p>
-            <p className="text-sm text-gray-500">USD {amount}</p>
+            {/* todo: Uncomment - amount is getting incorrect is implemented  <p className="text-sm text-gray-500"> {amount}</p> */}
           </div>
           <p className="text-sm text-gray-500">{formatDateTime(date)}</p>
           <span

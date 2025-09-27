@@ -33,13 +33,13 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
             // Left-side: Sender Information
             doc.setFont("helvetica", "bold");
             doc.setFontSize(12);
-            doc.text("UGFLASH INTERNATIONAL COURIER", margin, yPos);
+            doc.text("PALAKART INTERNATIONAL COURIER", margin, yPos);
             doc.setFont("helvetica", "normal");
             doc.setFontSize(10);
             yPos += 6;
-            doc.text("ugflash@palakart.com", margin, yPos);
+            doc.text("support@palakart.com", margin, yPos);
             yPos += 5;
-            doc.text("6/454, Ugflash Nagar, Amman Kovil Road, Perumagoundampatti, Elampillai", margin, yPos);
+            doc.text("6/454, Palakart Nagar, Amman Kovil Road, Perumagoundampatti, Elampillai", margin, yPos);
             yPos += 5;
             doc.text("India", margin, yPos);
 

@@ -14,6 +14,7 @@ interface ItemsTableRowProps {
 }
 
 const ItemsTableRow = ({ item, index, requestStatus, onUpdate, onSelectionChange, }: ItemsTableRowProps) => {
+
   const [checked, setChecked] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [remarkOpen, setRemarkOpen] = useState(false);
@@ -37,8 +38,6 @@ const ItemsTableRow = ({ item, index, requestStatus, onUpdate, onSelectionChange
 
   const total = item.quantity * (item.unit_price || 0);
   const remarkText = item.if_not_available_color || item.if_not_available_quantity;
-  const showApprovedChip = requestStatus === "ORDER_PLACED" && item.available;
-
   return (
     <>
     <TableRow sx={{ '& > *': { border: 'none' } }}>
@@ -54,8 +53,8 @@ const ItemsTableRow = ({ item, index, requestStatus, onUpdate, onSelectionChange
       </TableCell>
 
       <TableCell sx={{width: '60%', verticalAlign: 'top'}}>
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="body1" fontWeight={500}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Typography variant="body1" fontWeight={500} textTransform="capitalize">
             {item.name}
           </Typography>
           <Link
@@ -78,6 +77,7 @@ const ItemsTableRow = ({ item, index, requestStatus, onUpdate, onSelectionChange
                 gap: 0.5,
                 whiteSpace: 'normal',
                 wordBreak: 'break-word',
+                mt: 0.5
               }}
             >
               <ChatBubbleOutlineOutlinedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
@@ -88,7 +88,7 @@ const ItemsTableRow = ({ item, index, requestStatus, onUpdate, onSelectionChange
       </TableCell>
 
       <TableCell sx={{width: '30%', verticalAlign: 'top'}}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           {item.color && (
             <Typography variant="body2">
               Color: {item.color}
@@ -108,7 +108,7 @@ const ItemsTableRow = ({ item, index, requestStatus, onUpdate, onSelectionChange
         </Box>
       </TableCell>
 
-      <TableCell sx={{verticalAlign: 'middle'}}>
+      <TableCell sx={{verticalAlign: 'middle', textAlign: 'center'}}>
         {item.available && (
           <Chip
             label="YES"
@@ -118,32 +118,22 @@ const ItemsTableRow = ({ item, index, requestStatus, onUpdate, onSelectionChange
         )}
       </TableCell>
 
-      <TableCell sx={{ verticalAlign: 'middle' }}>
-        {showApprovedChip && (
-          <Chip
-            label="APPROVED"
-            size="small"
-            sx={{ backgroundColor: "#e6d4f0", color: "#6a0dad", fontWeight: 500 }}
-          />
-        )}
-      </TableCell>
-
-      <TableCell sx={{ verticalAlign: 'middle' }}>
+      <TableCell sx={{ verticalAlign: 'middle', textAlign: 'center' }}>
         {item.quantity ? item.quantity : null}
       </TableCell>
 
-      <TableCell sx={{ verticalAlign: 'middle' }}>
-        {item.unit_price ? `$${item.unit_price}` : null}
+      <TableCell sx={{ verticalAlign: 'middle', textAlign: 'center' }}>
+        {item.unit_price ? `${item.unit_price && item.unit_price.toFixed(2)}` : null}
       </TableCell>
 
-      <TableCell sx={{ verticalAlign: 'middle' }}>
-        {total ? `$${total.toFixed(2)}` : null}
+      <TableCell sx={{ verticalAlign: 'middle', textAlign: 'center' }}>
+        {total ? `${item.currency}${total.toFixed(2)}` : null}
       </TableCell>
       
-      <TableCell sx={{ verticalAlign: 'middle' }}>
+      <TableCell sx={{ verticalAlign: 'middle', textAlign: 'center' }}>
         <Box 
           onClick={handleMenuTrigger}
-          sx={{cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between'}}>
+          sx={{cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
           <DropdownMenu
             options={[
               { label: "Edit", onClick: () => setEditOpen(true) },

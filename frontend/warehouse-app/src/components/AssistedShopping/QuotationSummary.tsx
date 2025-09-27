@@ -41,15 +41,15 @@ export default function QuotationSummary({
     <div className="bg-white p-4 rounded-lg border border-gray-200 mt-4 w-full lg:w-[300px] ml-auto">
       <div className="flex justify-between text-sm mb-2">
         <span className="text-gray-500">SubTotal:</span>
-        <span className="font-semibold">${subTotal.toFixed(2)}</span>
+        <span className="font-semibold">{subTotal.toFixed(2)}</span>
       </div>
       <div className="flex justify-between text-sm mb-2">
         <span className="text-gray-500">Commission (8%):</span>
-        <span className="font-semibold">${commission.toFixed(2)}</span>
+        <span className="font-semibold">{commission.toFixed(2)}</span>
       </div>
       <div className="border-t border-gray-200 my-2" />
       <div className="flex justify-between font-bold text-gray-900 text-base">
-        <span>Total (MVR):</span>
+        <span>Total :</span>
         <span>{total.toFixed(2)}</span>
       </div>
 

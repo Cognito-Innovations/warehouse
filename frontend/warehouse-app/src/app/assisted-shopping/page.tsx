@@ -35,7 +35,7 @@ export default function AssistedShopping() {
   const [shoppingRequests, setShoppingRequests] = useState<any[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const user_id = (session?.user as any)?.user_id;
@@ -87,11 +87,6 @@ export default function AssistedShopping() {
     }
   };
 
-  const tabs = [
-    { label: "Shopping Requests", count: 1, icon: <ShoppingBagIcon /> },
-    { label: "History", count: 0, icon: <HistoryIcon /> },
-  ];
-
   const NON_DELETABLE_STATUSES = ["PAYMENT_APPROVED", "ORDER_PLACED"];
 
   const renderSearchBar = () => (
@@ -101,7 +96,7 @@ export default function AssistedShopping() {
       </div>
       <input
         type="text"
-        placeholder="Search by item name"
+        placeholder="Search by package id"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
@@ -188,26 +183,6 @@ export default function AssistedShopping() {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Navigation Tabs */}
-        <div className="bg-purple-700 rounded-lg p-1 mb-3">
-          <div className="flex">
-            {tabs.map((tab, index) => (
-              <button key={tab.label}
-                className={`flex items-center justify-center gap-2 py-1 text-sm font-bold transition-all duration-300 rounded-md flex-1 ${
-                  value === index
-                    ? "bg-white text-purple-700 shadow-sm"
-                    : "bg-transparent text-white hover:bg-purple-600"
-                }`}
-                onClick={() => handleChange(index)}
-              >
-                <span className={`text-lg ${value === index ? "text-purple-700" : "text-white"}`}>
-                  {tab.icon}
-                </span>
-                <span>{tab.label} ({tab.count})</span>
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Content Area */}
         <div className="bg-white border border-gray-200 rounded-lg min-h-[400px]">

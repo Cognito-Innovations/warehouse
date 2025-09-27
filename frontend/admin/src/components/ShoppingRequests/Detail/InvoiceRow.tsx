@@ -7,7 +7,6 @@ import {
   TableRow,
   Chip,
   Tooltip,
-  Divider,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -66,10 +65,6 @@ export const InvoiceRow: React.FC<Props> = ({
     }
   };
 
-  // TODO: correct this function with currency
-  const formatCurrency = (amount: number, currency = "USD") => {
-    return amount
-  };
 
   const handlePrint = () => {
     // Create a new window for printing
@@ -94,8 +89,8 @@ export const InvoiceRow: React.FC<Props> = ({
               <h1>Invoice ${invoice.invoice_no}</h1>
             </div>
             <div class="invoice-details">
-              <p><strong>Amount:</strong> ${formatCurrency(invoice.amount)}</p>
-              <p><strong>Total:</strong> ${formatCurrency(invoice.total)}</p>
+              <p><strong>Amount:</strong> ${(invoice.amount)}</p>
+              <p><strong>Total:</strong> ${(invoice.total)}</p>
               <p><strong>Status:</strong> ${invoice.status}</p>
             </div>
             ${invoice.products && invoice.products.length > 0 ? `
@@ -105,7 +100,6 @@ export const InvoiceRow: React.FC<Props> = ({
                     <th>Product Name</th>
                     <th>Quantity</th>
                     <th>Unit Price</th>
-                    <th>Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -113,8 +107,7 @@ export const InvoiceRow: React.FC<Props> = ({
                     <tr>
                       <td>${product.name}</td>
                       <td>${product.quantity}</td>
-                      <td>${formatCurrency(product.unit_price)}</td>
-                      <td>${formatCurrency(product.unit_price * product.quantity)}</td>
+                      <td>${(product.unit_price)}</td>
                     </tr>
                   `).join("")}
                 </tbody>
@@ -161,11 +154,11 @@ export const InvoiceRow: React.FC<Props> = ({
           {invoice.invoice_no}
         </TableCell>
         <TableCell align="right" sx={{ fontWeight: 500 }}>
-          {formatCurrency(invoice.amount)}
+          {(invoice.amount)}
         </TableCell>
         <TableCell align="right">
           <Box component="span" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>
-            {formatCurrency(invoice.total)}
+            {(invoice.total)}
           </Box>
         </TableCell>
         <TableCell align="center">

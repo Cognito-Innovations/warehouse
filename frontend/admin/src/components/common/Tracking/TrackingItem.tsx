@@ -17,7 +17,7 @@ const TrackingItem: React.FC<TrackingItemProps> = ({
   completed,
   isLast,
 }) => (
-  <Box sx={{ display: 'flex' }}>
+  <Box sx={{ display: 'flex', margin: '0px 0px 10px 0px' }}>
     <Box sx={{ mr: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {completed ? (
         <CheckCircleIcon sx={{ color: '#22C55E', fontSize: '1.75rem', zIndex: 1, bgcolor: 'background.paper' }} />

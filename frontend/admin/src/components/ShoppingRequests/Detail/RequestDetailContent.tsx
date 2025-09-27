@@ -81,7 +81,7 @@ interface RequestDetailContentProps {
 
 const SHOPPING_TRACKING_STEPS = [
   { id: 'REQUESTED', title: 'Requested', description: 'Requested by {userName}' },
-  { id: 'QUOTED', title: 'Quotation Ready', description: 'Quoted by {userName}', defaultDescription: 'Quotation is not ready yet!' },
+  { id: 'QUOTED', title: 'Quotation Ready', description: 'Quoted for {userName}', defaultDescription: 'Quotation is not ready yet!' },
   { id: 'QUOTATION_CONFIRMED', title: 'Quotation Confirmed', description: 'Quotation Confirmed by {userName}', defaultDescription: 'Quotation is not confirmed yet!' },
   { id: 'INVOICED', title: 'Invoiced', description: 'Invoice raised by {userName}', defaultDescription: 'Waiting for raise invoice' },
   { id: 'PAYMENT_PENDING', title: 'Pending Payment Approval', description: 'Payment slip uploaded by {userName}', defaultDescription: 'Waiting for upload payment slip' },
@@ -170,6 +170,7 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
       flexDirection: isMobile ? 'column' : 'row',
       gap: 3,
       width: '100%',
+      alignItems: 'flex-start'
     }}>
       <Box sx={{ 
         flex: isMobile ? '1' : '0 0 70%',
@@ -177,7 +178,7 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
       }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
-          <CustomerRemarks remarks={request.remarks} />
+          {request?.remarks && <CustomerRemarks remarks={request.remarks} />}
 
           <ItemsTable 
             details={request}

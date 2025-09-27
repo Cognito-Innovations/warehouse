@@ -8,6 +8,7 @@ type QuotationItem = {
   size?: string | null;
   quantity: number;
   unit_price?: number | null;
+  currency?: string | null;
 };
 
 export default function QuotationItems({
@@ -18,7 +19,7 @@ export default function QuotationItems({
   onSelectionChange: (selected: QuotationItem[]) => void;
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
+  
   useEffect(() => {
     if (items && items.length > 0) {
       const allItemIds = new Set(items.map(i => i.id));
@@ -30,16 +31,17 @@ export default function QuotationItems({
     }
   }, [items]);
 
-  const toggle = (id: string) => {
-    const nextIds = new Set(selectedIds);
-    if (nextIds.has(id)) {
-      nextIds.delete(id);
-    } else {
-      nextIds.add(id);
-    }
-    setSelectedIds(nextIds);
-    onSelectionChange(items.filter(item => nextIds.has(item.id)));
-  };
+  //TODO: Uncomment this toggle when functionality is implemented
+//   const toggle = (id: string) => {
+//     const nextIds = new Set(selectedIds);
+//     if (nextIds.has(id)) {
+//       nextIds.delete(id);
+//     } else {
+//       nextIds.add(id);
+//     }
+//     setSelectedIds(nextIds);
+//     onSelectionChange(items.filter(item => nextIds.has(item.id)));
+//   };
 
   return (
     <div>
@@ -61,10 +63,10 @@ export default function QuotationItems({
                     type="checkbox"
                     className="mt-1"
                     checked={selectedIds.has(item.id)}
-                    onChange={() => toggle(item.id)}
+                    // onChange={() => toggle(item.id)} //TODO: Uncomment this toggle when functionality is implemented
                   />
                   <div>
-                    <p className="font-semibold text-gray-900">{item.name}</p>
+                    <p className="font-semibold text-gray-900" style={{ textTransform: 'capitalize' }}>{item.name}</p>
                     <a
                       href={item.url}
                       target="_blank"
@@ -78,17 +80,17 @@ export default function QuotationItems({
 
                 <div className="text-right flex-shrink-0 ml-4">
                   <p className="text-sm text-gray-500">
-                    Color: <span className="font-medium text-gray-800">{item.color || "-"}</span>
+                    Color: <span className="font-medium text-gray-800" style={{ textTransform: 'capitalize' }}>{item.color || "-"}</span>
                   </p>
                   <p className="text-sm text-gray-500">
-                    Size: <span className="font-medium text-gray-800">{item.size || "NIL"}</span>
+                    Size: <span className="font-medium text-gray-800" style={{ textTransform: 'capitalize' }}>{item.size || "NIL"}</span>
                   </p>
 
                   <p className="text-sm text-gray-900 font-semibold mt-2">Item Total</p>
                   <p className="text-xs text-gray-500">
-                    ({qty} × {price.toFixed(2)})
+                     ({qty} x {price.toFixed(2)}) 
                   </p>
-                  <p className="text-sm font-bold text-gray-800">${itemTotal.toFixed(2)}</p>
+                  <p className="text-sm font-bold text-gray-800">{itemTotal.toFixed(2)} <span style={{ fontWeight: 'bold' }}>{item.currency}</span> </p>
                 </div>
               </div>
             </div>

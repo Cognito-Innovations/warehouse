@@ -25,7 +25,7 @@ interface RequestData {
 
 const PICKUP_TRACKING_STEPS = [
   { id: 'REQUESTED', title: 'Requested', description: 'Requested by {userName}' },
-  { id: 'QUOTED', title: 'Quotation Ready', description: 'Quoted by {userName}', defaultDescription: 'Quotation is not ready yet!' },
+  { id: 'QUOTED', title: 'Quotation Ready', description: 'Quoted for {userName}', defaultDescription: 'Quotation is not ready yet!' },
   { id: 'CONFIRMED', title: 'Confirmed', description: 'Confirmed by {userName}', defaultDescription: 'Waiting for confirmation!' },
   { id: 'PICKED', title: 'Picked', description: 'Picked by {userName}', defaultDescription: 'Waiting for complete' },
 ];

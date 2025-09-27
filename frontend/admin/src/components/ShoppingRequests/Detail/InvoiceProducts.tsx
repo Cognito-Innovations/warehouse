@@ -24,29 +24,12 @@ export default function InvoiceProducts({ products }: { products?: InvoiceDetail
     );
   }
 
-  const formatCurrency = (amount: number, currency = "USD") => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
-  };
-
-  const totalAmount = products.reduce((sum, product) => 
-    sum + (product.unit_price * product.quantity), 0
-  );
-
   return (
     <Box>
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
         <Typography variant="subtitle1" fontWeight="bold" color="primary">
           Products ({products.length})
         </Typography>
-        <Chip 
-          label={`Total: ${formatCurrency(totalAmount)}`}
-          color="primary"
-          variant="outlined"
-          size="small"
-        />
       </Box>
       
       <Table size="small" sx={{ 
@@ -60,7 +43,6 @@ export default function InvoiceProducts({ products }: { products?: InvoiceDetail
             <TableCell sx={{ fontWeight: 600 }}>Product Name</TableCell>
             <TableCell sx={{ fontWeight: 600 }} align="center">Quantity</TableCell>
             <TableCell sx={{ fontWeight: 600 }} align="right">Unit Price</TableCell>
-            <TableCell sx={{ fontWeight: 600 }} align="right">Total</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -94,9 +76,6 @@ export default function InvoiceProducts({ products }: { products?: InvoiceDetail
               </TableCell>
               <TableCell align="right">
                 {product.unit_price && product.currency && <p>{product.unit_price}</p>}
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600 }}>
-                {product.unit_price && product.quantity && <p>{product.unit_price * product.quantity}</p>}
               </TableCell>
             </TableRow>
           ))}

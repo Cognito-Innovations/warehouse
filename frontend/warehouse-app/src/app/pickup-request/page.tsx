@@ -164,18 +164,6 @@ export default function PickupRequestPage() {
             !loading && renderEmptyState(<ReceiptLongIcon sx={{ fontSize: "inherit" }} />, "No Pickup Requests Found")
           )}
           </TabPanel>
-
-          {/* TODO: Add uncomment this when pagination is implemented */}
-          {/* <Paper elevation={1} sx={{ p: 1.5, borderRadius: '8px' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="body2" color="text.secondary" sx={{ pl: 1 }}>Showing 1 to 1 of 1 Requests</Typography>
-              <Box>
-                <Button variant="outlined" size="small" sx={{ mr: 1, textTransform: 'none' }}>Previous</Button>
-                <Button variant="outlined" size="small" sx={{ textTransform: 'none' }}>Next</Button>
-              </Box>
-            </Box>
-          </Paper> */}
-
         <TabPanel value={activeTab} index={1}>
           {renderEmptyState(<HistoryIcon sx={{ fontSize: "inherit" }} />, "No History Available")}
         </TabPanel>

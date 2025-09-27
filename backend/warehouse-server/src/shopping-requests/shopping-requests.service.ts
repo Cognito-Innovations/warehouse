@@ -201,7 +201,18 @@ export class ShoppingRequestsService {
       request_code: shoppingRequest.request_code,
       courier: shoppingRequest.courier?.name,
       items_count: shoppingRequest.items_count,
-      shopping_request_products: shoppingRequestProducts,
+      shopping_request_products: await Promise.all(
+        shoppingRequestProducts.map(async (product) => ({
+          ...product,
+          unit_price: await this.userPreferencesService.getConvertedPrice(
+            shoppingRequest.user_id,
+            product.unit_price,
+          ),
+          currency: await this.userPreferencesService.getUserCurrency(
+            shoppingRequest.user_id,
+          ),
+        })),
+      ),
       remarks: shoppingRequest.remarks,
       status: shoppingRequest.status,
       payment_slips: slips,
@@ -231,7 +242,9 @@ export class ShoppingRequestsService {
                     shoppingRequest.user_id,
                     product.unit_price,
                   ),
-                currency: product.currency,
+                currency: await this.userPreferencesService.getUserCurrency(
+                  shoppingRequest.user_id,
+                ),
                 quantity: product.quantity,
                 url: product.url,
                 size: product.size,
