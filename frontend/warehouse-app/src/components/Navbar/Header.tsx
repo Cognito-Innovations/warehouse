@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AddressDetailsModal from "../Modals/AddressDetailsModal/AddressDetailsModal";
@@ -149,9 +150,8 @@ const Header = () => {
             href="/"
             className="text-2xl font-bold text-white hover:opacity-80 transition-opacity"
           >
-            Palakart
+             <Image src="/palakart.png" alt="Palakart" width={150} height={150} />
           </Link>
-
           {/* Navigation Items */}
           <nav className="flex-1 flex justify-center">
             <ul className="flex space-x-2">

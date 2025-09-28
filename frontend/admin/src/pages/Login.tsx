@@ -145,11 +145,12 @@ const Login: React.FC = () => {
           borderRadius: 3,
           boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
           background: 'white',
-          overflow: 'visible', // ✨ This is the fix!
+          overflow: 'visible'
         }}
       >
         {/* Logo */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <img src="/palakart.png" alt="Palakart" width={150} height={100} style={{  backgroundColor: '#8b5cf6', borderRadius: '10px'}}/>
           <Typography
             variant="h4"
             sx={{
@@ -159,7 +160,6 @@ const Login: React.FC = () => {
               letterSpacing: '-0.5px',
             }}
           >
-            Palakart Admin
           </Typography>
         </Box>
 

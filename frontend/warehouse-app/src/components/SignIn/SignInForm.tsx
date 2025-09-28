@@ -124,9 +124,9 @@ export default function SignInForm() {
     <Box sx={{ width: "100%", maxWidth: 380, overflow: "visible" }}>
       <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
         <img
-          src="/logo.png"
+          src="/palakart-text-logo.png"
           alt="Palakart Logo"
-          style={{ maxWidth: "200px", height: "auto" }}
+          style={{ maxWidth: "200px", height: "auto", margin:10 }}
         />
       </Box>
 

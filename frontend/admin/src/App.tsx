@@ -66,7 +66,7 @@ function App() {
           <Route path="/*" element={
             <ProtectedRoute>
               <Sidebar 
-                logo={'S'} 
+                logo={'P'}
                 menuItems={visibleMenuItems}
                 onSubMenuToggle={setIsSubMenuOpen}
               />
