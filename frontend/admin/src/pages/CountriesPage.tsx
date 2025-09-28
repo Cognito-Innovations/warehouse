@@ -59,7 +59,6 @@ const CountriesPage: React.FC = () => {
           image: formData.image 
         });
         // TODO: Override the updatd object with old countries
-        console.log("Updated:", updated);
         setCountries([...countries, formData])
         // setCountries(countries.map(c => c.id === editingCountry.id ? updated : c));
       } else {

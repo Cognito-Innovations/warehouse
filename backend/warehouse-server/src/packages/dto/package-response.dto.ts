@@ -55,6 +55,7 @@ export class PackageResponseDto {
   updated_at?: number;
   measurements?: PackageMeasurementResponseDto[];
   items?: PackageItemResponseDto[];
+  charges?: PackageChargeResponseDto[];
 }
 
 export class PackageMeasurementResponseDto {
@@ -76,6 +77,13 @@ export class PackageItemResponseDto {
   quantity: number;
   unit_price: number;
   total_price: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export class PackageChargeResponseDto {
+  id: string;
+  amount: string;
   created_at: number;
   updated_at: number;
 }

@@ -19,7 +19,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { toast } from 'sonner';
-import { updatePackageStatus } from '../../services/api.services';
+import { createPackageCharge, updatePackageStatus } from '../../services/api.services';
 
 interface Charge {
   category: string;
@@ -76,13 +76,17 @@ const RaiseInvoiceModal: React.FC<{
   const handleRaiseInvoice = async () => {
     try {
       setLoading(true);  
+      //TODO: Combine both and move to in backend side with wrapping transaction
       await updatePackageStatus(packageData.id, "Payment Pending");
+      await createPackageCharge({package_id: packageData.actual_id, amount: Number(calculateTotal())});
       onUpdated?.();
       toast.success("Invoice raised successfully! Status updated to Payment Pending.");
       onClose();
     } catch (error) {
       console.error("Failed to raise invoice:", error);
       toast.error("Failed to raise invoice");
+    } finally {
+      setLoading(false);
     }
   };
 

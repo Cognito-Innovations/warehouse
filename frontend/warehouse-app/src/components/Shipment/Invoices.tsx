@@ -15,24 +15,24 @@ interface InvoiceRequest {
   documents?: {
     document_url: string;
   }[];
+  charges: {
+    amount: number;
+  }[];
 }
 
 const PAID_STATUSES = ["Payment Approved", "Ready To Ship", "Departed"];
 
-export default function Invoices({ request, payment_slips, onUpdate }: { request: InvoiceRequest, onUpdate?: () => void; }) {
+export default function Invoices({ request, payment_slips, onUpdate }: { request: InvoiceRequest, payment_slips: {document_url:string}[], onUpdate?: () => void; }) {
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const number = request.invoice?.invoice_no || "No Invoice Number";
-  const amount = request.invoice?.total || "No Amount";
-  const date = request.invoice?.created_at || "No Date";
-
+  const amount = request?.charges?.[0]?.amount || "No Amount";
   const isPaid = PAID_STATUSES.includes(request.status);
 
   useEffect(() => {
     if (payment_slips?.length) {
-      setUploadedUrls(payment_slips.map((slip) => slip.document_url));
+      setUploadedUrls(payment_slips.map((slip:{document_url:string}) => slip.document_url));
     } else {
       setUploadedUrls([]);
     }
@@ -74,10 +74,9 @@ export default function Invoices({ request, payment_slips, onUpdate }: { request
       <div className="bg-white p-4 rounded-lg border border-gray-200">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-semibold text-gray-900">{number}</p>
-            <p className="text-sm text-gray-500">USD {amount}</p>
+            <p className="font-semibold text-gray-900">Package Amount</p>
+            <p className="text-sm text-gray-500"> {amount}</p>
           </div>
-          <p className="text-sm text-gray-500">{formatDateTime(date)}</p>
           <span
             className={`px-2 py-1 text-xs rounded text-white ${
               isPaid ? "bg-green-500" : "bg-red-500"
@@ -85,12 +84,6 @@ export default function Invoices({ request, payment_slips, onUpdate }: { request
           >
             {isPaid ? "Paid" : "Unpaid"}
           </span>
-          {/* <button 
-            className="px-3 py-1 border rounded-md text-sm text-gray-700 hover:bg-gray-100"
-             onClick={() => generateInvoicePDF(request)}
-          >
-            View
-          </button> */}
         </div>
 
         <div className="mt-6">

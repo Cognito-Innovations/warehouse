@@ -126,6 +126,19 @@ const PackageDetail: React.FC = () => {
     }
   };
 
+  const getInvoice = (packageData: any) => {
+    const invoice = packageData.invoice;
+    if (invoice > 0) {
+      return invoice;
+    } else if (packageData.charges.length > 0) {
+      const charges = packageData.charges[0];
+      return {id: "charges", invoice_no: "Package Charges", amount: charges.amount, total: charges.amount, status: "UNPAID"};
+    } else {
+      return {id: "temp", invoice_no: "-", amount: 0, total: 0, status: "UNPAID"};
+    }
+  };
+
+
   const handleApprovePayment = async () => {
     if (!id) return;
     setIsApprovingPayment(true);
@@ -273,7 +286,7 @@ const PackageDetail: React.FC = () => {
           {showInvoiceTable && (
             <InvoiceTable 
               id={displayPackageData.actual_id}
-              invoice={packageData.invoice || {id: "temp", invoice_no: "-", amount: 0, total: 0, status: "UNPAID"}}
+              invoice={getInvoice(packageData)}
               payment_slips={paymentSlips}
               status={packageData.status.value}
               isApprovingPayment={isApprovingPayment}

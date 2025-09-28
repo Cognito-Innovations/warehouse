@@ -27,6 +27,7 @@ import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
 import { UpdatePackageDto } from '../dto/update-package.dto';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
+import { CreatePackageChargeDto } from '../dto/create-package-charge.dto';
 
 interface AuthenticatedRequest extends ExpressRequest {
   user: {
@@ -275,6 +276,15 @@ export class PackagesController {
       trackingNumber,
       status,
     );
+  }
+
+  @Post('shipments/charges')
+  @ApiOperation({ summary: 'Create a package shipment charge' })
+  @ApiBody({ type: CreatePackageChargeDto })
+  async createPackageCharge(
+    @Body() createPackageChargeDto: CreatePackageChargeDto,
+  ): Promise<any> {
+    return this.packagesService.createPackageCharges(createPackageChargeDto);
   }
 
   @Delete(':id')

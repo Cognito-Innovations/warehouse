@@ -16,12 +16,15 @@ import { PackageActionLogsService } from './service/package-action-logs.service'
 import { PackagesController } from './controller/packages.controller';
 import { User } from 'src/users/user.entity';
 import { Rack } from 'src/racks/rack.entity';
+import { PackageCharge } from './entities';
 import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { DocumentsModule } from 'src/documents/documents.module';
+import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
+      PackageCharge,
       Package,
       PackageActionLog,
       PackageItem,
@@ -33,6 +36,7 @@ import { DocumentsModule } from 'src/documents/documents.module';
     ]),
     SharedModule,
     DocumentsModule,
+    UserPreferencesModule,
   ],
   controllers: [PackagesController],
   providers: [
