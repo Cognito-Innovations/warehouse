@@ -18,7 +18,7 @@ const ShipmentHeader: React.FC<ShipmentHeaderProps> = ({ shipment }) => {
             {shipment.requestCode}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            UFLASH INTERNATIONAL COURIER, India
+            PALAKART INTERNATIONAL COURIER
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             {shipment.boxes?.length || 0} Box / 0 Shipment

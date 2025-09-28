@@ -161,6 +161,8 @@ export const InvoiceRow: React.FC<Props> = ({
             {(invoice.total)}
           </Box>
         </TableCell>
+        {/* 
+        TODO: Add status column when functionality is implemented i.e for shipping its not working properly
         <TableCell align="center">
           <Chip
             label={invoice.status.replace("_", " ")}
@@ -169,7 +171,7 @@ export const InvoiceRow: React.FC<Props> = ({
             variant="outlined"
             sx={{ fontWeight: 600 }}
           />
-        </TableCell>
+        </TableCell> */}
         <TableCell align="center">
           <Box display="flex" gap={0.5} justifyContent="center">
             <Tooltip title="View Details">

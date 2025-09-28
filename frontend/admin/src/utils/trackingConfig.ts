@@ -119,11 +119,6 @@ export const StatusActionMap = {
     [TRACKING_STATUS.READY_TO_SHIP]: [
       {
         id:0,
-        label: 'Update To Departed',
-        component: UpdateToDepartedButton,
-      },
-      {
-        id:0,
         label: 'Print Hold Label',
         component: PrintHoldLabelButton,
       },
