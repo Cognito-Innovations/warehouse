@@ -52,41 +52,41 @@ export const generateInvoicePDF = (request: any) => {
   const defaultCurrency = request.currency || '₹';
 
   // Header Section
-  doc.setFillColor(...primaryColor);
+  // doc.setFillColor(...primaryColor);
   doc.rect(0, 0, 210, 35, 'F');
   
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
-  doc.setFont(undefined, 'bold');
+  doc.setFont("", 'bold');
   doc.text("Palakart International Courier", 14, 15);
   
   doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
+  doc.setFont("", 'normal');
   doc.text("654, Palakart Nagar, India 637502", 14, 22);
   
   doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
+  doc.setFont("", 'bold');
   doc.text(`Invoice No: ${request.invoice?.invoice_no || "-"}`, 150, 15);
   
   // Status with colored background
   const status = request.invoice?.status || "-";
   const statusColor = status === 'PAID' ? [76, 175, 80] : [244, 67, 54]; // Green or Red
-  doc.setFillColor(...statusColor);
+  doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
   doc.rect(150, 20, 30, 8, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
   doc.text(status, 155, 25);
 
   // Reset text color
-  doc.setTextColor(...textColor);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
 
   // Customer Details Section
   doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
+  doc.setFont("", 'bold');
   doc.text("Customer Details:", 14, 45);
   
   doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
+  doc.setFont("", 'normal');
   doc.text(request.user?.name || "Unknown", 14, 52);
   doc.text(`Suite No: ${request.user?.suite_no || "-"}`, 14, 58);
   doc.text(request.user?.email || "-", 14, 64);
@@ -121,13 +121,13 @@ export const generateInvoicePDF = (request: any) => {
     head: [["Description", "Qty", "Rate", "Amount"]],
     body: tableData,
     headStyles: {
-      fillColor: primaryColor,
+      fillColor: [primaryColor[0], primaryColor[1], primaryColor[2]],
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       fontSize: 10,
     },
     bodyStyles: {
-      textColor: textColor,
+      textColor: [textColor[0], textColor[1], textColor[2]],
       fontSize: 9,
     },
     alternateRowStyles: {
@@ -146,7 +146,7 @@ export const generateInvoicePDF = (request: any) => {
   
   // Amount and Total Section
   doc.setFontSize(11);
-  doc.setFont(undefined, 'bold');
+  doc.setFont("", 'bold');
   
   // Parse amounts with currency
   const amountInfo = parseCurrency(request.invoice?.amount || '0', defaultCurrency);
@@ -157,11 +157,11 @@ export const generateInvoicePDF = (request: any) => {
 
   // Account Details Section
   doc.setFontSize(11);
-  doc.setFont(undefined, 'bold');
+  doc.setFont("", 'bold');
 
   // Footer
   doc.setFontSize(8);
-  doc.setTextColor(...secondaryColor);
+  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
   doc.text("Thank you for your business!", 14, finalY + 55);
   doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, finalY + 60);
 

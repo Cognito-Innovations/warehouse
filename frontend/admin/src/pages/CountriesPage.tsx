@@ -7,7 +7,6 @@ import CountriesList from '../components/settings/CountriesList';
 import AddEditCountryDialog from '../components/settings/AddEditCountryDialog';
 import { getCountries, createCountry, updateCountry } from '../services/api.services';
 import type { Country, CreateCountryPayload } from '../types';
-import { FormatIndentDecreaseSharp } from '@mui/icons-material';
 
 const CountriesPage: React.FC = () => {
   const [countries, setCountries] = useState<Country[]>([]);
@@ -52,7 +51,7 @@ const CountriesPage: React.FC = () => {
     const action = editingCountry ? 'update' : 'add';
     try {
       if (editingCountry) {
-        const updated = await updateCountry(editingCountry.id, {
+        await updateCountry(editingCountry.id, {
           name: formData.name, 
           code: formData.code, 
           phone_code: formData.phone_code, 

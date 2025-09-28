@@ -40,7 +40,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               id: storedUser.id,
               email: storedUser.email,
               name: storedUser.name,
-              image: undefined,
             };
             setUser(userData);
           } else {
@@ -70,7 +69,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userData: User = {
         id: loginResponse.id,
         email: loginResponse.email,
-        name: loginResponse.name,
+        name: loginResponse.name || '',
         image: undefined, // Not provided in login response
       };
       setUser(userData);

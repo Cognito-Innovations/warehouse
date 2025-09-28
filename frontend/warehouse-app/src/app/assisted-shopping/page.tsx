@@ -41,6 +41,8 @@ export default function AssistedShopping() {
   const user_id = (session?.user as any)?.user_id;
 
   const fetchRequests = async () => {
+    if (!user_id) return;
+    
     setIsLoading(true);
     try {
       const data = await getShoppingRequestsByUser(user_id);
@@ -119,7 +121,7 @@ export default function AssistedShopping() {
       return false;
     }
 
-    return request.shopping_request_products.some((product) =>
+    return request.shopping_request_products.some((product: {name: string}) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
@@ -134,6 +136,11 @@ export default function AssistedShopping() {
           const statusMeta = STATUS_ICONS[request.status] || STATUS_ICONS.REQUESTED;
           const { Icon } = statusMeta;
 
+          // Skip requests without valid request_code during build
+          if (!request?.request_code) {
+            return null;
+          }
+
           return (
             <Link 
               href={`/assisted-shopping/${encodeURIComponent(request.request_code)}`} 
@@ -143,7 +150,7 @@ export default function AssistedShopping() {
               <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
                 <div className="flex items-center space-x-6">
                   <div>
-                    <p className="font-semibold text-gray-900">{request.request_code}</p>
+                    <p className="font-semibold text-gray-900">{request.request_code || "N/A"}</p>
                     <p className="text-sm text-gray-600">{formatDateTime(request.created_at)}</p>
                   </div>
                   <div className="flex-1 flex justify-center">

@@ -17,6 +17,13 @@ interface IShipmentRequest {
   id: string;
   shipment_id: string;
   shipment_uuid: string;
+  country: {
+    id: string;
+    name: string;
+  };
+  charges:{
+    amount: number;
+  }[];
   status: {
     label: string;
     value: string;

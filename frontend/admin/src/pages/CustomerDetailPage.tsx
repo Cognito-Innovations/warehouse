@@ -1,12 +1,9 @@
 import { useParams } from 'react-router-dom';
-import { Box, CircularProgress, Grid, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
 import TopNavbar from '../components/Layout/TopNavbar';
 import CustomerHeader from '../components/Customers/CustomerHeader';
-import CustomerStats from '../components/Customers/CustomerStats';
 import CustomerAddressList from '../components/Customers/CustomerAddressList';
-import CustomerDocuments from '../components/Customers/CustomerDocuments';
-import { customers } from '../data/customers';
 import { useEffect, useState } from 'react';
 import type { User } from '../types';
 import { getUserBySuiteNo } from '../services/api.services';

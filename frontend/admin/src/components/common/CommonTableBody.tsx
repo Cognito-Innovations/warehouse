@@ -1,4 +1,3 @@
-import React from 'react';
 import { TableBody, TableCell, TableRow, IconButton } from '@mui/material';
 import { VisibilityOutlined as ViewIcon } from '@mui/icons-material';
 import { type ColumnDefinition } from '../../types/table';

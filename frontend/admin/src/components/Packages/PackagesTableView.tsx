@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import {
   VisibilityOutlined as ViewIcon,
-  MoreVert as MoreIcon,
 } from '@mui/icons-material';
 import { getStatusColor } from '../../data/packages';
 import { formatDateTime } from '../../utils/formatDateTime';
@@ -50,7 +49,6 @@ const PackagesTableView: React.FC<PackagesTableViewProps> = ({
   totalFilteredItems,
   onPageChange,
   onViewDetails,
-  onOpenMenu,
 }) => {
   return (
     <>

@@ -8,12 +8,12 @@ import RemarkModal from './RemarkModal';
 interface ItemsTableRowProps {
   item: any;
   index: number;
-  requestStatus: string;
+  requestStatus?: string;
   onUpdate: (updates: any) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
 }
 
-const ItemsTableRow = ({ item, index, requestStatus, onUpdate, onSelectionChange, }: ItemsTableRowProps) => {
+const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange, }: ItemsTableRowProps) => {
 
   const [checked, setChecked] = useState(false);
   const [editOpen, setEditOpen] = useState(false);

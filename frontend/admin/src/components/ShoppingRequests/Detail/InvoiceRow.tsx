@@ -5,7 +5,6 @@ import {
   IconButton,
   TableCell,
   TableRow,
-  Chip,
   Tooltip,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {Edit,} from "@mui/icons-material";
 import EditProfileModal, { ProfileData } from "../Modals/EditProfileModal";
 import {Box,Typography,Button,Card,CardContent,Grid,Switch, CircularProgress } from "@mui/material";
@@ -22,33 +22,33 @@ export default function ProfilePage() {
     email_verified: false,
   });
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, [user?.id]);
-
-  const fetchUserProfile = async () => {
-    if (user?.id) {
-      try {
-        const userInfo = await getUser(user.id);
-        setProfileData({
-          id_card_passport_no: userInfo.id_card_passport_no || "",
-          name: userInfo.name || "",
-          email: userInfo.email || "",
-          phone_number: userInfo.phone_number || "",
-          alternate_phone_number: userInfo.alternate_phone_number || "",
-          gender: userInfo.gender || "",
-          dob: userInfo.dob?.split("T")[0] || "",
-          email_verified: userInfo.email_verified || false,
-        });
-      } catch (error) {
-        console.error("Failed to fetch user profile", error);
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setLoading(false);
-    }
-  };
+    const fetchUserProfile = useCallback(async () => {
+        if (user?.id) {
+          try {
+            const userInfo = await getUser(user.id);
+            setProfileData({
+              id_card_passport_no: userInfo.id_card_passport_no || "",
+              name: userInfo.name || "",
+              email: userInfo.email || "",
+              phone_number: userInfo.phone_number || "",
+              alternate_phone_number: userInfo.alternate_phone_number || "",
+              gender: userInfo.gender || "",
+              dob: userInfo.dob?.split("T")[0] || "",
+              email_verified: userInfo.email_verified || false,
+            });
+          } catch (error) {
+            console.error("Failed to fetch user profile", error);
+          } finally {
+            setLoading(false);
+          }
+        } else {
+          setLoading(false);
+        }
+      }, [user?.id]);
+    
+      useEffect(() => {
+        fetchUserProfile();
+      }, [user?.id, fetchUserProfile]);
 
   const handleProfileUpdate = (updatedData: Partial<ProfileData>) => {
     setProfileData((prev) => ({

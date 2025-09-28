@@ -47,7 +47,7 @@ const PickupRequests: React.FC = () => {
       return requests;
     }
     const statusesToFilter = Array.isArray(selectedStatus) ? selectedStatus : [selectedStatus];
-    return requests.filter(req => statusesToFilter.includes(req.status || 'REQUESTED'));
+    return requests.filter((req: any) => statusesToFilter.includes(req.status || 'REQUESTED'));
   }, [requests, selectedStatus]);
 
   const columns: ColumnDefinition<PickupRequest>[] = [

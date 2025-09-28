@@ -8,15 +8,11 @@ import {
   ListItem, 
   ListItemText, 
   ListItemIcon,
-  Divider,
   ClickAwayListener,
   Typography
   } from '@mui/material';
 import { 
-  Person as PersonIcon, 
-  Settings as SettingsIcon, 
-  Logout as LogoutIcon,
-  AccountCircle as AccountIcon
+  Logout as LogoutIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';

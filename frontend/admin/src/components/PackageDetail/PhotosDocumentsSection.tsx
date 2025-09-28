@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Box, Typography, Card, CardContent, Button, CircularProgress } from '@mui/material';
 import { Add as AddIcon, CloudUpload as UploadIcon, PictureAsPdf as PictureAsPdfIcon } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { uploadToCloudinary } from '../../utils/cloudinary.api';
-import { addShipmentDocument, getShipmentDocuments } from '../../services/api.services';
+import { addShipmentDocument } from '../../services/api.services';
 import { formatFileName } from '../../utils/formatFileName';
 
 interface Document {

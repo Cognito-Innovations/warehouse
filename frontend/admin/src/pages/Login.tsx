@@ -150,7 +150,7 @@ const Login: React.FC = () => {
       >
         {/* Logo */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <img src="/palakart.png" alt="Palakart" width={150} height={100} style={{  backgroundColor: '#8b5cf6', borderRadius: '10px'}}/>
+        <img src="/palakart-text-logo.png" alt="Palakart" width={250} height={100}/>
           <Typography
             variant="h4"
             sx={{

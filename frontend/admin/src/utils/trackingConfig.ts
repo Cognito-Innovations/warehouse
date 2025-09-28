@@ -5,7 +5,6 @@ import PrintCarrierLabelButton from "../components/ActionButtons/PrintCarrierLab
 import PrintHoldLabelButton from "../components/ActionButtons/PrintHoldLabel"
 import PrintLabelButton from "../components/ActionButtons/PrintLabelButton"
 import RaiseInvoiceButton from "../components/ActionButtons/RaiseInvoiceButton"
-import UpdateToDepartedButton from "../components/ActionButtons/UpdateToDepartedButton"
 
 export enum TRACKING_STATUS {
   ALL = 'ALL',

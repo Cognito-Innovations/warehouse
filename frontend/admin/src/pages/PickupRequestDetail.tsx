@@ -44,8 +44,8 @@ const PickupRequestDetail: React.FC = () => {
   return (
     <Box>
       <TopNavbar pageTitle="Pickup Request" pageSubtitle="All" />
-      <RequestDetailHeader request={pickupRequest} onStatusUpdate={fetchRequest} />
-      <RequestDetailContent request={pickupRequest} />
+      {pickupRequest && <RequestDetailHeader request={pickupRequest} onStatusUpdate={fetchRequest} />}
+      {pickupRequest && <RequestDetailContent request={pickupRequest} />}
     </Box>
   );
 };

@@ -13,7 +13,7 @@ const CustomerFilters = ({ customers, onFilter }: CustomerFiltersProps) => {
 
   const filtered = customers.filter(customer => {
     if (emailVerified === 'All') return true;
-    return (customer.isEmailVerified ? 'YES' : 'NO') === emailVerified;
+    return (customer.email_verified ? 'YES' : 'NO') === emailVerified;
   });
   
   useEffect(() => {

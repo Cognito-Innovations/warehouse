@@ -73,6 +73,7 @@ const AddressUsageExample: React.FC = () => {
   const handleAddNewAddress = () => {
     // Example: Add a new address
     const newAddress = {
+      country_id: "country-id-1",
       id: `address-${Date.now()}`, // Generate unique ID
       name: "New Company",
       address: "123 New Street, Singapore",

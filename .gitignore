@@ -19,3 +19,8 @@ coverage/
 
 # React/Vite specific
 .vite/
+
+.firebaserc
+firebase.json
+hosting.cHVibGlj.cache
+hosting.ZGlzdA.cache

@@ -5,7 +5,10 @@ import { Loader } from "./Loader";
 import { formatDateTime } from "@/lib/utils";
 
 interface InvoiceRequest {
-  status: string;
+  status: {
+    label: string;
+    value: string;
+  };
   shipment_uuid: string;
   invoice?: {
     invoice_no?: string;
@@ -28,7 +31,7 @@ export default function Invoices({ request, payment_slips, onUpdate }: { request
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const amount = request?.charges?.[0]?.amount || "No Amount";
-  const isPaid = PAID_STATUSES.includes(request.status);
+  const isPaid = PAID_STATUSES.includes(request.status.value);
 
   useEffect(() => {
     if (payment_slips?.length) {

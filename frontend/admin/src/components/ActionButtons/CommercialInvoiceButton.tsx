@@ -113,14 +113,14 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
 
             // --- 4. Items Table ---
             const tableColumns = ["Description", "Qty", "Amount", "Total"];
-            const tableRows = data.items.map((item: any) => [
+            const tableRows = data.items.map((item: {name: string, quantity: number, unit_price: string, total_price: string}) => [
                 `${item.name || 'N/A'}`,
                 item.quantity,
                 parseFloat(item.unit_price).toFixed(2),
                 `USD ${parseFloat(item.total_price).toFixed(2)}`
             ]);
             
-            const grandTotal = data.items.reduce((sum: number, item: any) => sum + parseFloat(item.total_price), 0);
+            const grandTotal = data.items.reduce((sum: number, item: {total_price: string}) => sum + parseFloat(item.total_price), 0);
             
             autoTable(doc, {
                 startY: yPos + boxHeaderH + boxBodyH + 10,
@@ -128,7 +128,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
                 body: tableRows,
                 theme: 'grid',
                 headStyles: {
-                    fillColor: purpleColor,
+                    fillColor: [purpleColor[0], purpleColor[1], purpleColor[2]],
                     textColor: [255, 255, 255],
                     fontStyle: 'bold',
                     fontSize: 10,
@@ -154,7 +154,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
                         const textPos = data.cell.getTextPos();
                         
                         // Erase the default text
-                        doc.setFillColor(data.cell.styles.fillColor);
+                        doc.setFillColor(data.cell.styles.fillColor as string);
                         doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
                         
                         // Draw main text

@@ -14,7 +14,7 @@ interface TopNavbarProps {
   onSearchChange?: (value: string) => void;
 }
 
-const TopNavbar: React.FC<TopNavbarProps> = ({ pageTitle, pageSubtitle, searchValue, onSearchChange }) => {
+const TopNavbar: React.FC<TopNavbarProps> = ({ pageTitle, pageSubtitle }) => {
   //TODO: Don't use this way, correct it
   // const { togglePageSidebar } = useTabContext();
   return (

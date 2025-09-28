@@ -108,7 +108,10 @@ export default function SignInForm() {
   };
 
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/dashboard" });
+    signIn("google", { 
+      callbackUrl: "/dashboard",
+      redirect: true 
+    });
   };
 
   // Show loading while checking authentication status

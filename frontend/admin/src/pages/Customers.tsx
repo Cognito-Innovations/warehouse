@@ -18,10 +18,10 @@ const mapApiUserToCustomer = (user: User): User => ({
   identifier: user.identifier,
   isVerified: user.verified,
   isActive: true,
-  gender: user.gender || undefined,
+  gender: user.gender || null,
   dob: user.dob
     ? new Date(user.dob).toISOString().split('T')[0]
-    : undefined,
+    : null,
 });
 
 const Customers = () => {
