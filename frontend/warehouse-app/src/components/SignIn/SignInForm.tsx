@@ -66,7 +66,8 @@ export default function SignInForm() {
         });
 
         if (result?.ok) {
-          router.replace("/dashboard");
+          // TODO: /dashboard
+          router.replace("/");
         } else {
           setError("Invalid email or password. Please try again.");
         }

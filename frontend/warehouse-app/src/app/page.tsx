@@ -13,6 +13,7 @@ export default function Page() {
   // Redirect authenticated users to dashboard
   useEffect(() => {
     if (user) {
+      console.log("Calling from authentication post login");
       router.replace("/dashboard");
     }
   }, [user, router]);
