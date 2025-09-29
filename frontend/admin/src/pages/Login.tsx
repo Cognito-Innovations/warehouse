@@ -219,7 +219,7 @@ const Login: React.FC = () => {
                       edge="end"
                       sx={{ color: '#64748b', marginRight: '1px' }}
                     >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
                     </IconButton>
                   </InputAdornment>
                 ),

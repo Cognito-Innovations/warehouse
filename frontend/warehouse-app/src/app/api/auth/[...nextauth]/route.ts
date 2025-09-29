@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
-import { hashPassword, generateSequentialSuiteNumber } from "../../../../utils/auth.utils";
+import { generateSequentialSuiteNumber } from "../../../../utils/auth.utils";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 

@@ -38,7 +38,6 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { data: session, status } = useSession();
-  console.log("AuthContext Status:", status, "Session:", session);
 
   const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
 

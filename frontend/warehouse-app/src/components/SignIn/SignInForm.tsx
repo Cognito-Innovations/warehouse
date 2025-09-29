@@ -1,12 +1,12 @@
 "use client";
 
-import { Box, Button, TextField, Typography, Link, Divider, Alert, Snackbar, InputAdornment, IconButton } from "@mui/material";
+import { Box, Button, TextField, Typography, Link, Divider, Alert, Snackbar, InputAdornment, IconButton, CircularProgress } from "@mui/material";
 import { signIn } from "next-auth/react";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
-import { hashPassword, generateSequentialSuiteNumber } from "../../utils/auth.utils";
+import { generateSequentialSuiteNumber } from "../../utils/auth.utils";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import PasswordStrength from "./PasswordStrength";
 
@@ -26,7 +26,7 @@ export default function SignInForm() {
   
   useEffect(() => {
     if (user) {
-      router.replace("/dashboard");
+      router.push("/dashboard");
     }
   }, [user, router]);
 
@@ -58,27 +58,24 @@ export default function SignInForm() {
     try {
       if (isLogin) {
         // Use NextAuth credentials provider for login
-        const hashedPasswordValue = hashPassword(password);
         const result = await signIn("credentials", {
           email,
-          password: hashedPasswordValue,
+          password: password,
           redirect: false,
         });
 
         if (result?.ok) {
-          // TODO: /dashboard
-          router.replace("/");
+          router.push("/dashboard");
         } else {
           setError("Invalid email or password. Please try again.");
         }
       } else {
         // For registration, call backend directly then sign in
-        const hashedPasswordValue = hashPassword(password);
         const suiteNumber = generateSequentialSuiteNumber();
         
         const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"}/auth/register`, {
           email,
-          password: hashedPasswordValue,
+          password: password,
           name,
           suite_no: suiteNumber,
         });
@@ -87,12 +84,12 @@ export default function SignInForm() {
           // After successful registration, sign in with credentials
           const result = await signIn("credentials", {
             email,
-            password: hashedPasswordValue,
+            password: password,
             redirect: false,
           });
 
           if (result?.ok) {
-            router.replace("/dashboard");
+            router.push("/dashboard");
           } else {
             setError("Registration successful but login failed. Please try logging in.");
           }
@@ -108,10 +105,9 @@ export default function SignInForm() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    signIn("google", { 
-      callbackUrl: "/dashboard",
-      redirect: true 
+  const handleGoogleSignIn = async () => {
+    signIn("google", {
+      callbackUrl: "https://warehouse-app-henna.vercel.app/dashboard",
     });
   };
 
@@ -119,7 +115,7 @@ export default function SignInForm() {
   if (authLoading) {
     return (
       <Box sx={{ width: "100%", maxWidth: 380, textAlign: "center" }}>
-        <Typography variant="h6">Loading...</Typography>
+        <CircularProgress />
       </Box>
     );
   }
@@ -185,7 +181,7 @@ export default function SignInForm() {
                   onClick={() => setShowPassword(!showPassword)}
                   edge="end"
                   >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                  {showPassword ? <Visibility /> : <VisibilityOff />}
                   </IconButton>
               </InputAdornment>
               ),

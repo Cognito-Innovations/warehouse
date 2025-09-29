@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import SignInForm from "../components/SignIn/SignInForm";
 import { useAuth } from "../contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -12,18 +12,17 @@ export default function Page() {
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
-    if (user) {
-      console.log("Calling from authentication post login");
-      router.replace("/dashboard");
+    if (!loading && user) {
+      router.push("/dashboard");
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
   // Show loading while checking authentication
   if (loading) {
     return (
       <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
         <Box sx={{ textAlign: "center" }}>
-          <Typography variant="h6">Loading...</Typography>
+          <CircularProgress />
         </Box>
       </Box>
     );
@@ -31,7 +30,11 @@ export default function Page() {
 
   // Don't render login form if user is authenticated
   if (user) {
-    return null;
+    return (
+       <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
+        <CircularProgress />
+       </Box>
+    );
   }
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>

@@ -38,7 +38,7 @@ export class User extends BaseTimestampEntity {
   @Column({ nullable: true })
   name: string;
 
-  @Column()
+  @Column({ type: 'enum', enum: Role, default: Role.User })
   role: Role;
 
   @Column()

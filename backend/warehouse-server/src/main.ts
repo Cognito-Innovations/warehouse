@@ -17,7 +17,6 @@ async function bootstrap() {
       'http://localhost:5173',
       'https://palakart.vercel.app',
       'https://palakart-admin.web.app',
-      'https://warehouse-app-opal.vercel.app'
     ], // Frontend URLs (warehouse-app, admin)
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
