@@ -57,9 +57,13 @@ const CountriesPage: React.FC = () => {
           phone_code: formData.phone_code, 
           image: formData.image 
         });
-        // TODO: Override the updatd object with old countries
-        setCountries([...countries, formData])
-        // setCountries(countries.map(c => c.id === editingCountry.id ? updated : c));
+        setCountries(
+          countries.map((c) =>
+            c.id === editingCountry.id
+              ? { ...c, ...formData }
+              : c
+          )
+        );
       } else {
         const newCountry = await createCountry(formData);
         setCountries([newCountry, ...countries]);
