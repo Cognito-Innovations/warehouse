@@ -106,9 +106,23 @@ export default function SignInForm() {
   };
 
   const handleGoogleSignIn = async () => {
-    signIn("google", {
-      callbackUrl: "/dashboard",
-    });
+    try {
+      const result = await signIn("google", {
+        callbackUrl: "/dashboard",
+        redirect: false
+      });
+      
+      if (result?.ok) {
+        // Force a page reload to ensure session is properly set
+        window.location.href = "/dashboard";
+      } else if (result?.error) {
+        console.error("Google sign-in error:", result.error);
+        setError("Google sign-in failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setError("Google sign-in failed. Please try again.");
+    }
   };
 
   // Show loading while checking authentication status

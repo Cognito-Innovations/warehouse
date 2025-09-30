@@ -7,6 +7,9 @@ import { generateSequentialSuiteNumber } from "../../../../utils/auth.utils";
 const API_BASE_URL = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001";
 
 const handler = NextAuth({
+  // Explicitly set the URL for production
+  url: process.env.NEXTAUTH_URL,
+  debug: process.env.NODE_ENV === "development",
   cookies: {
     sessionToken: {
       name: "next-auth.session-token",
@@ -39,6 +42,13 @@ const handler = NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
     CredentialsProvider({
       name: "credentials",
@@ -82,31 +92,37 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-      try {
-        const suiteNumber = generateSequentialSuiteNumber();
-        
-        const res = await fetch(`${API_BASE_URL}/auth/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: user.email,
-            name: user.name,
-            role: "user",
-            suite_no: suiteNumber,
-            identifier: "google",
-          }),
-        });
-        const data = await res.json();
-        (user as any).user_id = data.id;
-        (user as any).access_token = data.access_token;
-        (user as any).verified = data.verified ?? false;
-        (user as any).role = data.role;
-        (user as any).suite_no = data.suite_no;
-        (user as any).identifier = data.identifier;
-      } catch (err) {
-        console.error("Error calling Nest backend:", err);
-        return false;
-      }
+        try {
+          const suiteNumber = generateSequentialSuiteNumber();
+          
+          const res = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name,
+              role: "user",
+              suite_no: suiteNumber,
+              identifier: "google",
+            }),
+          });
+          
+          if (!res.ok) {
+            console.error("Backend registration failed:", res.status, res.statusText);
+            return false;
+          }
+          
+          const data = await res.json();
+          (user as any).user_id = data.id;
+          (user as any).access_token = data.access_token;
+          (user as any).verified = data.verified ?? false;
+          (user as any).role = data.role;
+          (user as any).suite_no = data.suite_no;
+          (user as any).identifier = data.identifier;
+        } catch (err) {
+          console.error("Error calling Nest backend:", err);
+          return false;
+        }
       }
       return true;
     },
@@ -143,6 +159,33 @@ const handler = NextAuth({
         (session as any).access_token = token.access_token;
       } 
       return session;
+    },
+
+    async redirect({ url, baseUrl }) {
+      console.log("Redirect callback - url:", url, "baseUrl:", baseUrl);
+      
+      // Always redirect to dashboard after successful authentication
+      if (url === baseUrl || url === `${baseUrl}/`) {
+        return `${baseUrl}/dashboard`;
+      }
+      
+      // If url is relative, make it absolute
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      
+      // If url is on the same origin, allow it
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.origin === baseUrl) {
+          return url;
+        }
+      } catch (e) {
+        console.error("Invalid URL in redirect:", url);
+      }
+      
+      // Default to dashboard
+      return `${baseUrl}/dashboard`;
     },
   },
   pages: {
