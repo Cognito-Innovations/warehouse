@@ -73,7 +73,7 @@ export default function SignInForm() {
         // For registration, call backend directly then sign in
         const suiteNumber = generateSequentialSuiteNumber();
         
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"}/auth/register`, {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001"}/auth/register`, {
           email,
           password: password,
           name,
@@ -107,7 +107,7 @@ export default function SignInForm() {
 
   const handleGoogleSignIn = async () => {
     signIn("google", {
-      callbackUrl: "https://warehouse-app-henna.vercel.app/dashboard",
+      callbackUrl: "/dashboard",
     });
   };
 
