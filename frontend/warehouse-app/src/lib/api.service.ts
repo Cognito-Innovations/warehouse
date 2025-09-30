@@ -254,3 +254,16 @@ export const fetchUserAddresses = async (userId: string) => {
   const res = await authenticatedApi.get(`/user-address/user/${userId}`);
   return res.data;
 };
+
+export const createPreArrival = async (body: {
+  customer?: string;
+  suite?: string;
+  otp: number;
+  tracking_no?: string | null;
+  estimate_arrival_time?: string | null;
+  details?: string | null;
+  status?: string;
+}) => {
+  const res = await authenticatedApi.post("/pre-arrival", body);
+  return res.data;
+};

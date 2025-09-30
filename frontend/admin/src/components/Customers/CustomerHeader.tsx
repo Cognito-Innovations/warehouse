@@ -114,8 +114,8 @@ const CustomerHeader = ({ customer }: { customer: User }) => {
           {/* Status Chips */}
           <Stack direction="row" spacing={1} alignItems="center">
             {getStatusChip(customer.verified, 'Verified')}
-            {getStatusChip(customer.isActive, 'Active')}
-            {customer.provider && (
+            {getStatusChip(customer.is_active, 'Active')}
+            {customer.identifier && (
               <Chip
                 label={customer.identifier}
                 size="small"

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, Typography, Chip, Grid, Link } from '@mui/material';
+import { Box, Card, Typography, Chip, Link, Grid } from '@mui/material';
 import { LocalPhoneOutlined, MailOutline, PersonOutline } from '@mui/icons-material';
 
 interface Customer {

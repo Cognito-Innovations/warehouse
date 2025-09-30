@@ -41,6 +41,7 @@ const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) =
   //TODO: Needs to improve this code
   const prepareTrackingData = () => {
     const trackingHistory = request.tracking_requests || [];
+    const isRejected = request.status.toUpperCase() === 'REJECTED';
 
     const statuses: Status[] = PICKUP_TRACKING_STEPS.map(step => {
       let description = step.defaultDescription || '';
@@ -48,9 +49,10 @@ const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) =
       let isComplete = false;
       const userName = request.user.name;
 
-      const historyItem = trackingHistory.find(
-        track => STATUS_TO_STEP_ID_MAPPING[track.status.toUpperCase()] === step.id
-      );
+      const historyItem = trackingHistory.find( track => {
+        const upperCaseStatus = track.status.toUpperCase();
+        return STATUS_TO_STEP_ID_MAPPING[upperCaseStatus] === step.id || upperCaseStatus === step.id;
+      });
 
       if (historyItem) {
         isComplete = true;
@@ -70,8 +72,29 @@ const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) =
       };
     });
     
-    const currentStageId = STATUS_TO_STEP_ID_MAPPING[request.status.toUpperCase()] || 'REQUESTED';
-    
+    let currentStageId: string;
+    const upperCaseStatus = request.status.toUpperCase();
+    const mappedId = STATUS_TO_STEP_ID_MAPPING[upperCaseStatus];
+
+    if (mappedId && !isRejected) {
+      currentStageId = mappedId;
+    } else {
+      const lastCompletedStep = [...statuses].reverse().find(s => s.date && s.date.trim() !== '');
+      currentStageId = lastCompletedStep ? (lastCompletedStep.id as string) : 'REQUESTED';
+    }
+
+    if (isRejected) {
+      const currentStageIndex = statuses.findIndex(s => s.id === currentStageId);
+      if (currentStageIndex > -1) {
+        for (let i = currentStageIndex + 1; i < statuses.length; i++) {
+          const originalStep = PICKUP_TRACKING_STEPS.find(s => s.id === statuses[i].id);
+          
+          statuses[i].date = formatDateTime(undefined);
+          statuses[i].description = originalStep?.defaultDescription || '';
+        }
+      }
+    }
+
     return { statuses, currentStageId };
   };
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Card, Chip, Typography } from "@mui/material";
-import { getStatusColor } from "../../data/shipmentExports";
 import { formatDateTime } from "../../utils/formatDateTime";
+import { getStatusColor } from "../../utils/statusUtils";
 
 interface ShipmentHeaderProps {
   shipment: any;

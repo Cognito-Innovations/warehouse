@@ -1,6 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { Rack } from './rack.entity';
 import { CreateRackDto } from './dto/create-rack.dto';
 import { RackResponseDto } from './dto/rack-response.dto';
@@ -74,12 +74,26 @@ export class RacksService {
   }
 
   async deleteRack(id: string): Promise<{ success: boolean }> {
-    const result = await this.rackRepository.delete(id);
+    try {
+      const result = await this.rackRepository.delete(id);
 
-    if (result.affected === 0) {
-      throw new Error('Rack not found');
+      if (result.affected === 0) {
+        throw new Error('Rack not found');
+      }
+
+      return { success: true };
+    } catch (err) {
+      if (err instanceof QueryFailedError) {
+        const driverError = (
+          err as QueryFailedError & { driverError?: { code?: string } }
+        ).driverError;
+        if (driverError?.code === '23503') {
+          throw new ConflictException(
+            'This rack slot is added to a package and cannot be deleted.',
+          );
+        }
+      }
+      throw err;
     }
-
-    return { success: true };
   }
 }

@@ -12,25 +12,26 @@ export interface User {
   identifier: 'google' | 'email' | undefined;
   verified: boolean;
   email_verified: boolean;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
   image?:string;
 }
 
 export interface Customer {
-  suiteNo: string;
-  name: string;
   id: string;
+  suite_no: string;
+  name: string;
   email: string;
-  isEmailVerified: boolean;
-  emailVerifiedOn: string;
-  phone: string;
-  identifier: 'google' | 'email' | undefined;
-  isVerified: boolean;
-  isActive: boolean;
+  phone_number: string;
   gender?: 'male' | 'female' | 'other' | null;
-  dob?: string;
+  dob?: string | null;
+  verified: boolean;
+  email_verified: boolean;
+  is_active: boolean;
+  identifier?: 'google' | 'email' | undefined;
 }
+
 
 export interface Rack {
   id: string;
@@ -91,6 +92,7 @@ export interface Package {
     id: string;
     name: string;
   };
+  shipment_uuid: string;
   created_at?: string;
   updated_at?: string;
   items?: any[];

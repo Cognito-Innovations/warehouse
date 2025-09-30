@@ -34,12 +34,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         if (isAuthenticated()) {
           const storedUser = getStoredUser();
-          if (storedUser && storedUser.access_token) {
+          if (storedUser && storedUser.user && storedUser.access_token) {
             // Convert stored user data to User type
             const userData: User = {
-              id: storedUser.id,
-              email: storedUser.email,
-              name: storedUser.name,
+              id: storedUser.user.id,
+              email: storedUser.user.email,
+              name: storedUser.user.name,
             };
             setUser(userData);
           } else {
@@ -67,10 +67,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Convert LoginResponse to User type
       const userData: User = {
-        id: loginResponse.id,
-        email: loginResponse.email,
-        name: loginResponse.name || '',
-        image: undefined, // Not provided in login response
+        id: loginResponse.user.id,
+        email: loginResponse.user.email,
+        name: loginResponse.user.name || '',
+        image: undefined,
       };
       setUser(userData);
     } catch (error) {

@@ -113,4 +113,14 @@ export class PreArrivalService {
       updated_at: updatedPreArrival.updated_at,
     };
   }
+
+  async deletePreArrival(id: string): Promise<void> {
+    const preArrival = await this.preArrivalRepository.findOne({
+      where: { id },
+    });
+    if (!preArrival) {
+      throw new NotFoundException(`Pre-arrival with id ${id} not found`);
+    }
+    await this.preArrivalRepository.remove(preArrival);
+  }
 }

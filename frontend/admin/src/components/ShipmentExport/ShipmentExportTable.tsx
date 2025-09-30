@@ -45,7 +45,8 @@ const ShipmentExportTable: React.FC = () => {
 
   const filteredRows = selectedDate
     ? rows.filter((row) =>
-        dayjs(row.date).format('YYYY-MM-DD') === selectedDate.format('YYYY-MM-DD')
+        dayjs.unix(Number(row.created_at)).format('YYYY-MM-DD') === 
+        selectedDate.format('YYYY-MM-DD')
       )
     : rows;
 

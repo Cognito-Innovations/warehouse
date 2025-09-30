@@ -16,6 +16,7 @@ export const shoppingRequestMessages: Record<string, string> = {
   CONFIRMED: "Your order has been confirmed. We will proceed with the purchase.",
   ORDER_PLACED: "Your order has been placed successfully. We will now start processing and keep you updated on the progress.",
   CANCELLED: "This request has been cancelled.",
+  REJECTED: "This request has been rejected. No further actions can be taken. Please contact support for assistance.",
 };
 
 export const STATUS_ICONS: Record<
@@ -43,7 +44,7 @@ export const STATUS_ICONS: Record<
   ORDER_PLACED: {
     Icon: ShoppingCartIcon,
   },
-  CANCELLED: {
+  REJECTED: {
     Icon: CancelIcon,
   },
 };

@@ -2,9 +2,10 @@ import { Button, CircularProgress } from '@mui/material';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { getDisplayStatus, getRequestStatusColor } from '../../../data/shoppingRequests';
+import { getDisplayStatus, } from '../../../data/shoppingRequests';
 import { updateShoppingRequestStatus } from '../../../services/api.services';
 import RequestHeader from '../../common/RequestHeader';
+import { getStatusColor } from '../../../utils/statusUtils';
 
 interface RequestDetailCardProps {
   request: any;
@@ -26,7 +27,7 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
   };
 
   const latestStatus = normalizeStatus(request.status);
-  const statusStyles = getRequestStatusColor(latestStatus);
+  const statusStyles = getStatusColor(latestStatus);
 
   const handleStatusChange = async (newStatus: string) => {
     setLoading(true);

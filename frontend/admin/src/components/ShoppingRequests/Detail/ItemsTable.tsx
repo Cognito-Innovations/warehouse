@@ -60,6 +60,8 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelect
     return { subTotal, commission, total, currency };
   }, [products]);
 
+  const isRejected = details.status === 'REJECTED';
+
   return (
     <Box sx={{ p: 0 }}>
       <Box sx={{ p: 2 }}>
@@ -91,6 +93,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelect
                     item={{...item, remarks: details.remarks }} 
                     index={i}
                     requestStatus={details.status}
+                    disabled={isRejected}
                     onUpdate={(updates) => {
                       if (item.id) {
                         onItemUpdate(item.id, updates)

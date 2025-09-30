@@ -1,6 +1,8 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+const COMMISSION_RATE = 0.08;
+
 // Helper function to extract currency symbol and amount
 const parseCurrency = (currencyString: string, defaultCurrency: string = '₹') => {
   if (!currencyString) return { symbol: defaultCurrency, amount: '0' };
@@ -142,18 +144,50 @@ export const generateInvoicePDF = (request: any) => {
     margin: { left: 14, right: 14 },
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  let finalY = (doc as any).lastAutoTable.finalY;
   
   // Amount and Total Section
   doc.setFontSize(11);
   doc.setFont("", 'bold');
   
   // Parse amounts with currency
-  const amountInfo = parseCurrency(request.invoice?.amount || '0', defaultCurrency);
-  const totalInfo = parseCurrency(request.invoice?.total || '0', defaultCurrency);
+  const subTotal = request.invoice?.products?.reduce((sum: number, item: any) => {
+    const unitPriceInfo = parseCurrency(item.unit_price, defaultCurrency);
+    const unitPrice = parseFloat(unitPriceInfo.amount.replace(/,/g, '')) || 0;
+    return sum + (item.quantity || 0) * unitPrice;
+  }, 0) || 0;
+
+  const commission = subTotal * COMMISSION_RATE;
+  const total = subTotal + commission;
   
-  doc.text(`Amount:${parseFloat(amountInfo.amount.replace(/,/g, '') || '0').toFixed(2)}`, 14, finalY);
-  doc.text(`Total:${parseFloat(totalInfo.amount.replace(/,/g, '') || '0').toFixed(2)}`, 14, finalY + 8);
+  // Position variables for the summary section on the right
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const rightMargin = 14;
+  const summaryLabelX = pageWidth - rightMargin - 50;
+  const summaryValueX = pageWidth - rightMargin;
+
+  // Draw SubTotal
+  doc.setFontSize(10);
+  doc.setFont("", 'normal');
+  doc.text("SubTotal:", summaryLabelX, finalY + 10);
+  doc.text(subTotal.toFixed(2), summaryValueX, finalY + 10, { align: "right" });
+
+  // Draw Commission
+  doc.text("Commission (8%):", summaryLabelX, finalY + 17);
+  doc.text(commission.toFixed(2), summaryValueX, finalY + 17, { align: "right" });
+
+  // Draw Separator Line
+  doc.setLineWidth(0.2);
+  doc.line(summaryLabelX, finalY + 21, summaryValueX, finalY + 21);
+
+  // Draw Total
+  doc.setFontSize(11);
+  doc.setFont("", 'bold');
+  doc.text("Total:", summaryLabelX, finalY + 26);
+  doc.text(total.toFixed(2), summaryValueX, finalY + 26, { align: "right" });
+
+  // Update finalY to position the footer correctly
+  finalY += 40;
 
   // Account Details Section
   doc.setFontSize(11);

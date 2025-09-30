@@ -39,6 +39,7 @@ export enum TrackingStatus {
   Requested = 'requested',
   Shipped = 'shipped',
   Picked = 'picked',
+  Rejected = 'rejected',
 }
 
 @Entity('tracking_request')

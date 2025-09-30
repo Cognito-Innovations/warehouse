@@ -2,9 +2,10 @@ export async function uploadToCloudinary(file: File): Promise<string | null> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", "ALLOWED_PRESET");
+  formData.append("resource_type", "auto");
 
   try {
-    const response = await fetch("https://api.cloudinary.com/v1_1/de9unppfa/image/upload", {
+    const response = await fetch("https://api.cloudinary.com/v1_1/de9unppfa/auto/upload", {
       method: "POST",
       body: formData,
     });

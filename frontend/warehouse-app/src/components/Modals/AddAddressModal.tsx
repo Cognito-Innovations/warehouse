@@ -85,17 +85,13 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: "12px",
-          p: 1,
-        },
-      }}
+      PaperProps={{ sx: {borderRadius: "12px"} }}
     >
       <DialogTitle sx={{ 
         display: "flex", 
         justifyContent: "space-between", 
         alignItems: "center",
+        p: 3,
         pb: 2
       }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -106,8 +102,8 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
         </IconButton>
       </DialogTitle>
       
-      <DialogContent sx={{ pb: 2 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <DialogContent>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
           <TextField
             label="Contact Person / Receiver Name / Business Name *"
             value={formData.name}
@@ -120,7 +116,6 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
               },
             }}
           />
-          
           
           <TextField
             label="Address"
@@ -183,6 +178,13 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
               sx={{
                 borderRadius: "8px",
               }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxHeight: 100,
+                  },
+                },
+              }}
             >
               {countries.map((country) => (
                 <MenuItem key={country} value={country}>
@@ -194,17 +196,18 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
         </Box>
       </DialogContent>
       
-      <DialogActions sx={{ p: 3, pt: 1 }}>
+      <DialogActions sx={{ p: 3 }}>
         <Button
           variant="contained"
           onClick={handleSave}
+          fullWidth
           sx={{
             bgcolor: "primary.main",
             color: "white",
             textTransform: "none",
             borderRadius: "8px",
             px: 4,
-            py: 1,
+            py: 1.5,
             "&:hover": {
               bgcolor: "primary.dark",
             },

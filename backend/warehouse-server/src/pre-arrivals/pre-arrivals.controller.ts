@@ -1,5 +1,5 @@
 import { PreArrivalService } from './pre-arrivals.service';
-import { Body, Controller, Get, Post, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param, Patch, Delete } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -81,5 +81,16 @@ export class PreArrivaController {
     @Param('id') id: string,
   ): Promise<PreArrivalResponseDto> {
     return this.preArrivalService.updateStatusToReceived(id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a pre-arrival by ID' })
+  @ApiOkResponse({ description: 'Pre-arrival deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Pre-arrival not found' })
+  async deletePreArrival(
+    @Param('id') id: string
+  ): Promise<{ message: string }> {
+    await this.preArrivalService.deletePreArrival(id);
+    return { message: 'Pre-arrival deleted successfully' };
   }
 }

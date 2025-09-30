@@ -1,11 +1,11 @@
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, IconButton, Box } from '@mui/material';
 import { VisibilityOutlined as ViewIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
-import { getStatusChipColor } from '../../data/customers';
-import type { User } from '../../types';
+import { getStatusColor } from '../../utils/statusUtils';
+import type { Customer } from '../../types';
 
 const StatusBadge = ({ status }: { status: boolean }) => {
-  const { color, bgColor } = getStatusChipColor(status);
+  const { color, bgColor } = getStatusColor(status ? "YES" : "NO");
   return (
     <Box component="span" sx={{ display: 'inline-block', bgcolor: bgColor, color, fontWeight: 'bold', fontSize: '0.75rem', borderRadius: '6px', px: 1.25, py: 0.5 }}>
       {status ? 'YES' : 'NO'}
@@ -13,7 +13,7 @@ const StatusBadge = ({ status }: { status: boolean }) => {
   );
 };
 
-const CustomerTable = ({ rows }: { rows: User[] }) => (
+const CustomerTable = ({ rows }: { rows: Customer[] }) => (
   <Paper sx={{ borderRadius: 3, boxShadow: 'none', overflow: 'hidden' }}>
     <TableContainer>
       <Table sx={{ minWidth: 650 }}>
@@ -26,9 +26,9 @@ const CustomerTable = ({ rows }: { rows: User[] }) => (
 
         <TableBody sx={{ '& .MuiTableCell-root': { borderBottom: '1px solid #f1f5f9', py: 1.5 }, '& .MuiTypography-root': { fontSize: '0.875rem' } }}>
           {rows.map((customer, index) => (
-            <TableRow key={customer.suiteNo} sx={{ '&:last-child td': { border: 0 }, bgcolor: index === 10 ? '#eef2ff' : 'inherit', '&:hover': { bgcolor: '#f8fafc' } }}>
+            <TableRow key={customer.suite_no} sx={{ '&:last-child td': { border: 0 }, bgcolor: index === 10 ? '#eef2ff' : 'inherit', '&:hover': { bgcolor: '#f8fafc' } }}>
               <TableCell>
-                <Typography fontWeight={500} color="#1e293b">{customer.suiteNo}</Typography>
+                <Typography fontWeight={500} color="#1e293b">{customer.suite_no}</Typography>
               </TableCell>
 
               <TableCell>
@@ -46,16 +46,16 @@ const CustomerTable = ({ rows }: { rows: User[] }) => (
                 <Typography component="div" fontWeight={500} color="#1e293b">
                   {customer.email}
                 </Typography>
-                {customer.emailVerifiedOn && 
+                {customer.email_verified && 
                   <Typography variant="caption" color="#64748b">
-                    {customer.emailVerifiedOn}
+                    {customer.email_verified}
                   </Typography>
                 }
               </TableCell>
 
               <TableCell>
                 <Typography color="#334155">
-                  {customer.phone || '—'}
+                  {customer.phone_number || '—'}
                 </Typography>
               </TableCell>
 
@@ -66,15 +66,15 @@ const CustomerTable = ({ rows }: { rows: User[] }) => (
               </TableCell>
 
               <TableCell>
-                <StatusBadge status={customer.isEmailVerified} />
+                <StatusBadge status={customer.email_verified} />
               </TableCell>
 
               <TableCell>
-                <StatusBadge status={customer.isActive} />
+                <StatusBadge status={customer.is_active} />
               </TableCell>
 
               <TableCell align="center">
-                <Link to={`/customers/${customer.suiteNo}`} style={{ textDecoration: "none" }}>
+                <Link to={`/customers/${customer.suite_no}`} style={{ textDecoration: "none" }}>
                   <IconButton size="small" sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' } }}>
                     <ViewIcon fontSize="small" />
                   </IconButton>

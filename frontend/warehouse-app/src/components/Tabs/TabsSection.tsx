@@ -18,14 +18,15 @@ import ShipmentsTable from "./ShipmentsTable";
 import { formatDateTime } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CircularProgress } from "@mui/material";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TabsSection = () => {
+  const { user } = useAuth();
   const { data: session } = useSession();
   const [value, setValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOTPModalOpen, setIsOTPModalOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [packages, setPackages] = useState<any[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [shipments, setShipments] = useState<any[]>([]);
@@ -34,8 +35,10 @@ const TabsSection = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // TODO: Remove this HARDCODED VALUES 
-  const { submitPreArrival, loading: submitting, error: submitError } = usePreArrival({ customer: "Rohit Sharma", suite: "102-529" });
+  const { submitPreArrival, loading: submitting } = usePreArrival({
+    customer: user?.name,
+    suite: user?.suite_no,
+  });
 
   const SHIPMENT_STATUSES = [
     "Request Ship",
@@ -119,7 +122,6 @@ const TabsSection = () => {
   };
 
   const handleOTPSubmit = async (data: any) => {
-    setIsSubmitting(true);
     try {
       await submitPreArrival(data);
       setIsOTPModalOpen(false);
@@ -128,8 +130,6 @@ const TabsSection = () => {
       toast.error("Failed to send OTP", {
         description: err instanceof Error ? err.message : "An unexpected error occurred. Please try again.",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -284,7 +284,7 @@ const TabsSection = () => {
         isOpen={isOTPModalOpen} 
         onClose={handleOTPModalClose} 
         onSubmit={handleOTPSubmit}
-        isLoading={isSubmitting}
+        isLoading={submitting}
       />
     </div>
   );

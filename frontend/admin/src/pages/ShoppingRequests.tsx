@@ -36,7 +36,7 @@ const ShoppingRequests: React.FC = () => {
     { value: 'REQUESTED', label: 'Requested' },
     { value: 'PAID', label: 'Paid' },
     { value: 'CANCELLED', label: 'Cancelled' },
-    { value: 'ORDER PLACED', label: 'Order Placed' },
+    { value: 'ORDER_PLACED', label: 'Order Placed' },
   ];
 
   const mappedRows = useMemo(() => {
