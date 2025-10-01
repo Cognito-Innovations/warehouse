@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Paper, Typography, Box, Chip } from '@mui/material';
-import { formatDateTime } from '@/lib/utils';
+import { Paper, Typography, Box, Chip } from "@mui/material";
+import { formatDateTime } from "@/lib/utils";
 
 interface RequestDetailsProps {
   details: any;
@@ -16,11 +16,11 @@ export default function RequestDetails({ details }: RequestDetailsProps) {
         flex: 1,
         p: 2.5,
         borderRadius: 2,
-        border: '1px solid #E0E0E0',
-        backgroundColor: '#fff',
+        border: "1px solid #E0E0E0",
+        backgroundColor: "#fff",
       }}
     >
-    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', mb: 1 }}>
+    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", mb: 1 }}>
         <Box>
           <Typography variant="body2">{details.request_no || `PR/IN/${details.id}`}</Typography>
           <Typography variant="body2" fontWeight="bold">
@@ -32,7 +32,7 @@ export default function RequestDetails({ details }: RequestDetailsProps) {
             Request From
           </Typography>
           <Typography variant="body2" fontWeight="bold">
-            {details.country || 'India'}
+            {details.country || "India"}
           </Typography>
         </Box>
         <Box>
@@ -45,7 +45,7 @@ export default function RequestDetails({ details }: RequestDetailsProps) {
         </Box>
     </Box>
 
-    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', mb: 2 }}>
+    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", mb: 2 }}>
         <Box>
           <Typography variant="body2" color="text.secondary">
             Supplier Contact
@@ -53,7 +53,7 @@ export default function RequestDetails({ details }: RequestDetailsProps) {
           <Typography variant="body2" fontWeight="bold">
             {[details.supplier_phone_number, details.alt_supplier_phone_number]
               .filter(Boolean)
-              .join(' / ')
+              .join(" / ")
             }
           </Typography>
         </Box>
@@ -62,7 +62,7 @@ export default function RequestDetails({ details }: RequestDetailsProps) {
             No. of Box/PCS
           </Typography>
           <Typography variant="body2" fontWeight="bold">
-            {details.pcs_box || '—'}
+            {details.pcs_box || "—"}
           </Typography>
         </Box>
         <Box>
@@ -70,7 +70,7 @@ export default function RequestDetails({ details }: RequestDetailsProps) {
             Est Weight
           </Typography>
           <Typography variant="body2" fontWeight="bold">
-            {details.est_weight ? `${details.est_weight}kg` : '—'}
+            {details.est_weight ? `${details.est_weight}kg` : "—"}
           </Typography>
         </Box>
     </Box>
@@ -100,19 +100,19 @@ export default function RequestDetails({ details }: RequestDetailsProps) {
         label={status}
         sx={{
           mt: 0.5,
-          fontWeight: 'bold',
-          textTransform: 'uppercase',
+          fontWeight: "bold",
+          textTransform: "uppercase",
           backgroundColor:
-            status === 'REQUESTED'
-              ? '#FF9800'
-              : status === 'QUOTED'
-              ? '#4CAF50'
-              : status === 'PICKED'
-              ? '#4CAF50'
-              : status === 'CANCELLED'
-              ? '#EF4444'
-              : '#9E9E9E',
-          color: '#fff',
+            status === "REQUESTED"
+              ? "#FF9800"
+              : status === "QUOTED"
+              ? "#4CAF50"
+              : status === "PICKED" || status === "CONFIRMED"
+              ? "#4CAF50"
+              : status === "CANCELLED"
+              ? "#EF4444"
+              : "#9E9E9E",
+          color: "#fff",
         }}
       />
     </Box>

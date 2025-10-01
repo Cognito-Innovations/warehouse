@@ -11,11 +11,10 @@ const headers = [
   { key: "name", label: "Item Name" },
   { key: "colorSize", label: "Color/Size" },
   { key: "available", label: "Available" },
-  { key: "status", label: "Status" },
   { key: "quantity", label: "Quantity" },
   { key: "price", label: "Price" },
   { key: "total", label: "Total" },
-  { key: "actions", label: "" },
+  { key: "actions", label: "Action" },
 ];
 
 interface ShoppingRequestProduct {
@@ -30,6 +29,7 @@ interface ShoppingRequestProduct {
 
 interface ItemsTableProps {
   details: {
+    status: string;
     shopping_request_products?: ShoppingRequestProduct[];
     [key: string]: any;
   };
@@ -39,12 +39,7 @@ interface ItemsTableProps {
 
 const COMMISSION_RATE = 0.08;
 
-const currencySymbols: Record<string, string> = {
-  IN: "₹",
-  US: "$",
-  EU: "€",
-  UK: "£",
-};
+
 
 const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelectionChange }) => {
   const products = details.shopping_request_products ?? [];
@@ -64,6 +59,8 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelect
 
     return { subTotal, commission, total, currency };
   }, [products]);
+
+  const isRejected = details.status === 'REJECTED';
 
   return (
     <Box sx={{ p: 0 }}>
@@ -95,6 +92,8 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelect
                     key={item.id} 
                     item={{...item, remarks: details.remarks }} 
                     index={i}
+                    requestStatus={details.status}
+                    disabled={isRejected}
                     onUpdate={(updates) => {
                       if (item.id) {
                         onItemUpdate(item.id, updates)
@@ -115,7 +114,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelect
             </TableBody>
           </Table>
         </TableContainer>
-        <ItemsTableSummary summary={summary} currencySymbol={currencySymbols[summary.currency] || "$"} />
+        <ItemsTableSummary summary={summary} />
       </Card>
     </Box>
   );

@@ -33,11 +33,9 @@ export class InvoicesService {
     );
 
     const COMMISSION_RATE = 0.08;
-    const GST_RATE = 0.08;
 
     const commission = amount * COMMISSION_RATE;
-    const gst = amount * GST_RATE;
-    const total = amount + commission + gst;
+    const total = amount + commission;
 
     const counter = await this.invoiceRepository.count();
     const invoiceNo = this.generateInvoiceNo(
@@ -49,7 +47,6 @@ export class InvoicesService {
     const invoice = this.invoiceRepository.create({
       invoice_no: invoiceNo,
       amount,
-      gst,
       total,
       status: InvoiceStatus.UNPAID,
       shopping_request: shoppingRequest,

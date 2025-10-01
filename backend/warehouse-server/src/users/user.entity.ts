@@ -38,7 +38,7 @@ export class User extends BaseTimestampEntity {
   @Column({ nullable: true })
   name: string;
 
-  @Column()
+  @Column({ type: 'enum', enum: Role, default: Role.User })
   role: Role;
 
   @Column()
@@ -62,6 +62,15 @@ export class User extends BaseTimestampEntity {
 
   @Column({ default: false })
   verified: boolean;
+
+  @Column({ default: false })
+  email_verified: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  otp: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  otp_expires_at: Date | null;
 
   @Column({ nullable: true })
   last_logout: number;

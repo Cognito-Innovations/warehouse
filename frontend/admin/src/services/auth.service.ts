@@ -14,12 +14,14 @@ const authApi = axios.create({
 
 export interface LoginResponse {
   access_token: string;
-  id: string;
-  email: string;
-  name?: string;
-  role: string;
-  suite_no?: string;
-  country?: string;
+  user: {
+    id: string;
+    email: string;
+    name?: string;
+    role: string;
+    suite_no?: string;
+    country?: string;
+  }
 }
 
 export interface RegisterResponse {
@@ -41,17 +43,17 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       password,
     });
 
-    const user = response.data;
-    if (user.id && user.access_token) {
+    const loginData = response.data;
+    if (loginData.user && loginData.access_token) {
       // Store user data in cookie (7 days expiration)
-      setCookie('user_data', JSON.stringify(user), {
+      setCookie('user_data', JSON.stringify(loginData), {
         maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
         secure: window.location.protocol === 'https:',
         sameSite: 'lax'
       });
     }
     
-    return user;
+    return loginData;
   } catch (error: any) {
     throw error;
   }

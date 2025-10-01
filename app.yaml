@@ -1,0 +1,20 @@
+runtime: custom
+env: flex
+
+env_variables:
+  DB_HOST: "projects/video-459417/secrets/DB_HOST/versions/latest"
+  DB_PORT: "projects/video-459417/secrets/DB_PORT/versions/latest"
+  DB_NAME: "projects/video-459417/secrets/DB_NAME/versions/latest"
+  DB_USERNAME: "projects/video-459417/secrets/DB_USERNAME/versions/latest"
+  DB_PASSWORD: "projects/video-459417/secrets/DB_PASSWORD/versions/latest"
+  CLOUDINARY_CLOUD_NAME: "projects/video-459417/secrets/CLOUDINARY_CLOUD_NAME/versions/latest"
+  CLOUDINARY_API_KEY: "projects/video-459417/secrets/CLOUDINARY_API_KEY/versions/latest"
+  CLOUDINARY_API_SECRET: "projects/video-459417/secrets/CLOUDINARY_API_SECRET/versions/latest"
+
+manual_scaling:
+  instances: 1
+
+resources:
+  cpu: 1
+  memory_gb: 0.5
+  disk_size_gb: 10

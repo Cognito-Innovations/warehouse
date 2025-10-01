@@ -7,7 +7,6 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { type InvoiceDetails } from "./InvoiceRow";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DownloadIcon from "@mui/icons-material/Download";
 

@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { join } from 'path';
 import { databaseConfig } from './config/database.config';
 import { GlobalAuthGuard } from './auth/guards/global-auth.guard';
 
@@ -31,12 +34,34 @@ import { DocumentsModule } from './documents/documents.module';
 import { InvoicesModule } from './invoice/invoices.module';
 import { UserPreferencesModule } from './user-preferences/user-preferences.module';
 import { CurrenciesModule } from './currencies/currencies.module';
+import { UserAddressModule } from './user_address/user_address.module';
 
 @Module({
   imports: [
+    MailerModule.forRoot({
+      transport: {
+        host: 'smtp.gmail.com',
+        secure: false,
+        auth: {
+          user: 'saurabhpingale93@gmail.com',
+          pass: 'umca lcon axee phdf',
+        },
+      },
+      defaults: {
+        from: '"No Reply" <saurabhpingale93@gmail.com>',
+      },
+      template: {
+        dir: join(__dirname, '..', 'src', 'users'),
+        adapter: new HandlebarsAdapter(),
+        options: {
+          strict: true,
+        },
+      },
+    }),
     TypeOrmModule.forRoot(databaseConfig),
     SharedModule,
     UsersModule,
+    UserAddressModule,
     AuthModule,
     CountriesModule,
     CourierCompaniesModule,

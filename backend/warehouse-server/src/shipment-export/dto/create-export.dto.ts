@@ -1,4 +1,9 @@
-import { IsString, IsNumber, IsOptional, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  ValidateNested,
+} from 'class-validator';
 import { CreateBoxDto } from './create-box.dto';
 import { Type } from 'class-transformer';
 

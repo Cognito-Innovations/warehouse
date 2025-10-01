@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { CircularProgress, Box } from '@mui/material';
+import { toast } from 'sonner';
+
 import PageHeader from '../components/shared/PageHeader';
 import CountriesList from '../components/settings/CountriesList';
-import AddCountryDialog from '../components/settings/AddCountryDialog';
-import { toast } from 'sonner';
-import { createCountry, getCountries } from '../services/api.services';
+import AddEditCountryDialog from '../components/settings/AddEditCountryDialog';
+import { getCountries, createCountry, updateCountry } from '../services/api.services';
+import type { Country, CreateCountryPayload } from '../types';
 
 const CountriesPage: React.FC = () => {
-  const [countries, setCountries] = useState<any[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingCountry, setEditingCountry] = useState<Country | null>(null);
 
   useEffect(() => {
     fetchCountries();
@@ -29,19 +32,47 @@ const CountriesPage: React.FC = () => {
     }
   };
 
-  const handleOpenDialog = () => setDialogOpen(true);
-  const handleCloseDialog = () => setDialogOpen(false);
+  const handleOpenAddDialog = () => {
+    setEditingCountry(null);
+    setDialogOpen(true);
+  };
 
-  const handleSaveCountry = async (country: { name: string; code: string }) => {
+  const handleOpenEditDialog = (country: Country) => {
+    setEditingCountry(country);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+  };
+
+  const handleSaveCountry = async (formData: CreateCountryPayload) => {
+    setSaving(true);
+    const action = editingCountry ? 'update' : 'add';
     try {
-      setSaving(true);
-      await createCountry(country);
-      toast.success(`Country "${country.name}" added successfully!`);
-      setCountries((prev) => [...prev, country]);
+      if (editingCountry) {
+        await updateCountry(editingCountry.id, {
+          name: formData.name, 
+          code: formData.code, 
+          phone_code: formData.phone_code, 
+          image: formData.image 
+        });
+        setCountries(
+          countries.map((c) =>
+            c.id === editingCountry.id
+              ? { ...c, ...formData }
+              : c
+          )
+        );
+      } else {
+        const newCountry = await createCountry(formData);
+        setCountries([newCountry, ...countries]);
+      }
+      toast.success(`Country "${formData.name}" ${action === 'add' ? 'added' : 'updated'} successfully!`);
       handleCloseDialog();
     } catch (err) {
       console.error(err);
-      toast.error('Failed to add country');
+      toast.error(`Failed to ${action} country`);
     } finally {
       setSaving(false);
     }
@@ -49,23 +80,22 @@ const CountriesPage: React.FC = () => {
 
   return (
     <>
-      <PageHeader
-        title="Countries"
-        buttonText="Add Country"
-        onButtonClick={handleOpenDialog}
-      />
+      <PageHeader title="Countries" buttonText="Add Country" onButtonClick={handleOpenAddDialog} />
+      
       {loading ? (
         <Box display="flex" justifyContent="center" mt={4}>
           <CircularProgress />
         </Box>
       ) : (
-        <CountriesList countries={countries} />
+        <CountriesList countries={countries} onEdit={handleOpenEditDialog} />
       )}
-      <AddCountryDialog
+
+      <AddEditCountryDialog
         open={isDialogOpen}
         onClose={handleCloseDialog}
         onSave={handleSaveCountry}
         saving={saving}
+        initialData={editingCountry}
       />
     </>
   );

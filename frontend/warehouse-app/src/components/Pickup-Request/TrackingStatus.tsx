@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Box, Typography } from '@mui/material';
-import { CheckCircle } from '@mui/icons-material';
-import { formatDateTime } from '@/lib/utils';
+import { Box, Typography } from "@mui/material";
+import { CheckCircle } from "@mui/icons-material";
+import { formatDateTime } from "@/lib/utils";
 
 interface TrackingStatusProps {
   details: any;
@@ -10,17 +10,17 @@ interface TrackingStatusProps {
 
 export default function TrackingStatus({ details }: TrackingStatusProps) {
   const TRACKING_STEPS = [
-    { label: 'Requested', defaultDescription: 'Awaiting confirmation' },
-    { label: 'Quotation Ready', defaultDescription: 'Quotation is not ready yet!' },
-    { label: 'Confirmed', defaultDescription: 'Waiting for user confirmation!' },
-    { label: 'Picked', defaultDescription: 'Package has not been picked up yet.' },
+    { label: "Requested", defaultDescription: "Awaiting confirmation" },
+    { label: "Quotation Ready", defaultDescription: "Quotation is not ready yet!" },
+    { label: "Confirmed", defaultDescription: "Waiting for user confirmation!" },
+    { label: "Picked", defaultDescription: "Package has not been picked up yet." },
   ];
 
   const STATUS_MAPPING: Record<string, string> = {
-    REQUESTED: 'Requested',
-    QUOTED: 'Quotation Ready',
-    CONFIRMED: 'Confirmed',
-    PICKED: 'Picked',
+    REQUESTED: "Requested",
+    QUOTED: "Quotation Ready",
+    CONFIRMED: "Confirmed",
+    PICKED: "Picked",
   };
   
   const trackingRequests = details?.tracking_requests || [];
@@ -31,7 +31,7 @@ export default function TrackingStatus({ details }: TrackingStatusProps) {
         Tracking
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         {TRACKING_STEPS.map((step, index) => {
           const historyItem = trackingRequests.find(
             (track: any) =>
@@ -46,25 +46,25 @@ export default function TrackingStatus({ details }: TrackingStatusProps) {
             : step.defaultDescription;
 
           return (
-            <Box key={step.label} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <Box key={step.label} sx={{ display: "flex", alignItems: "flex-start" }}>
               <Box
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                   mr: 2,
                 }}
               >
                 {isCompleted ? (
-                  <CheckCircle sx={{ color: '#3B82F6', zIndex: 1 }} />
+                  <CheckCircle sx={{ color: "#3B82F6", zIndex: 1 }} />
                 ) : (
                   <Box
                     sx={{
                       width: 24,
                       height: 24,
-                      borderRadius: '50%',
-                      border: '2px solid #BDBDBD',
-                      backgroundColor: 'background.paper',
+                      borderRadius: "50%",
+                      border: "2px solid #BDBDBD",
+                      backgroundColor: "background.paper",
                       zIndex: 1,
                     }}
                   />
@@ -73,10 +73,10 @@ export default function TrackingStatus({ details }: TrackingStatusProps) {
                 {index < TRACKING_STEPS.length - 1 && (
                   <Box
                     sx={{
-                      width: '2px',
-                      mt: '-4px',
-                      height: '32px',
-                      backgroundColor: isCompleted ? '#3B82F6' : '#E0E0E0',
+                      width: "2px",
+                      mt: "-4px",
+                      height: "32px",
+                      backgroundColor: isCompleted ? "#3B82F6" : "#E0E0E0",
                     }}
                   />
                 )}
@@ -87,7 +87,7 @@ export default function TrackingStatus({ details }: TrackingStatusProps) {
                   variant="body2"
                   sx={{
                     fontWeight: 600,
-                    color: isCompleted ? '#3B82F6' : 'text.primary',
+                    color: isCompleted ? "#3B82F6" : "text.primary",
                   }}
                 >
                   {step.label}
@@ -95,7 +95,7 @@ export default function TrackingStatus({ details }: TrackingStatusProps) {
                 <Typography
                   variant="caption"
                   sx={{
-                    color: isCompleted ? '#3B82F6' : 'text.secondary',
+                    color: isCompleted ? "#3B82F6" : "text.secondary",
                   }}
                 >
                   {description}

@@ -1,4 +1,4 @@
-import { Paper, Stack, Box, Typography, Button } from '@mui/material';
+import { Paper, Stack, Box, Typography } from '@mui/material';
 
 const CustomerAddressList = () => (
   <Box>
@@ -11,22 +11,6 @@ const CustomerAddressList = () => (
           Shipping Addresses
         </Typography>
       </Box>
-      <Button 
-        size="small" 
-        variant="contained" 
-        sx={{ 
-          bgcolor: '#3b82f6', 
-          '&:hover': { bgcolor: '#2563eb' },
-          boxShadow: 'none', 
-          textTransform: 'none',
-          fontSize: '14px',
-          fontWeight: 400,
-          px: 2,
-          py: 0.5
-        }}
-      >
-        Add Address
-      </Button>
     </Stack>
     
     <Paper 

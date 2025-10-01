@@ -1,11 +1,14 @@
 import React from 'react';
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import { IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import type { Currency } from '../../types';
 
 interface CurrenciesListProps {
   currencies: any[];
+  onEdit: (currency: Currency) => void;
 }
 
-const CurrenciesList: React.FC<CurrenciesListProps> = ({ currencies }) => {
+const CurrenciesList: React.FC<CurrenciesListProps> = ({ currencies, onEdit }) => {
   return (
     <TableContainer component={Paper} sx={{ borderRadius: 2, border: '1px solid #e2e8f0' }}>
       <Table sx={{ minWidth: 650 }} aria-label="currencies table">
@@ -14,6 +17,7 @@ const CurrenciesList: React.FC<CurrenciesListProps> = ({ currencies }) => {
             <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Currency Symbol</TableCell>
             <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Rate</TableCell>
             <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Country</TableCell>
+            <TableCell sx={{ fontWeight: 600, color: '#475569', textAlign: 'right' }}>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -27,6 +31,13 @@ const CurrenciesList: React.FC<CurrenciesListProps> = ({ currencies }) => {
               </TableCell>
               <TableCell>
                 <Typography variant="body2" color="text.secondary">{row.country?.name}</Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Tooltip title="Edit Currency">
+                  <IconButton onClick={() => onEdit(row)}>
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               </TableCell>
             </TableRow>
           ))}

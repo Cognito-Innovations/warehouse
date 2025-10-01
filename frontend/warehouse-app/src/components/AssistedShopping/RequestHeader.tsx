@@ -1,6 +1,6 @@
-import React from 'react';
-import { Delete as DeleteIcon } from '@mui/icons-material';
-import { formatDateTime } from '@/lib/utils';
+import React from "react";
+import { Delete as DeleteIcon } from "@mui/icons-material";
+import { formatDateTime } from "@/lib/utils";
 
 interface Country {
   id: string;
@@ -45,23 +45,23 @@ interface RequestHeaderProps {
 }
 
 const statusStyles: { [key: string]: string } = {
-  REQUESTED: 'bg-orange-100 text-orange-700 border border-orange-200',
-  QUOTATION_READY: 'bg-blue-100 text-blue-700 border border-blue-200',
-  QUOTATION_CONFIRMED: 'bg-green-100 text-green-700 border border-green-200',
-  INVOICED: 'bg-green-100 text-green-700 border border-green-200',
-  PAYMENT_PENDING: 'bg-orange-100 text-orange-700 border border-orange-200',
-  PAYMENT_APPROVED: 'bg-green-100 text-green-700 border border-green-200',
-  ORDER_PLACED: 'bg-blue-100 text-blue-700 border border-blue-200',
+  REQUESTED: "bg-orange-100 text-orange-700 border border-orange-200",
+  QUOTATION_READY: "bg-blue-100 text-blue-700 border border-blue-200",
+  QUOTATION_CONFIRMED: "bg-green-100 text-green-700 border border-green-200",
+  INVOICED: "bg-green-100 text-green-700 border border-green-200",
+  PAYMENT_PENDING: "bg-orange-100 text-orange-700 border border-orange-200",
+  PAYMENT_APPROVED: "bg-green-100 text-green-700 border border-green-200",
+  ORDER_PLACED: "bg-blue-100 text-blue-700 border border-blue-200",
 };
 
 const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onDelete }) => {
   const statusClassName =
-    statusStyles[request.status.toUpperCase()] || 'bg-gray-100 text-gray-700';
+    statusStyles[request.status.toUpperCase()] || "bg-gray-100 text-gray-700";
 
   const countryName =
     request.tracking_requests?.[0]?.courier?.country?.name;
 
-  const NON_DELETABLE_STATUSES = ['PAYMENT_APPROVED', 'ORDER_PLACED'];
+  const NON_DELETABLE_STATUSES = ["PAYMENT_APPROVED", "ORDER_PLACED"];
 
   return (
     <div className="bg-white p-4 rounded-lg border border-gray-200 flex justify-between items-center">

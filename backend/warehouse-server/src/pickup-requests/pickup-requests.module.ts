@@ -8,12 +8,14 @@ import { UserPreferencesService } from 'src/user-preferences/user-preferences.se
 import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { SharedModule } from 'src/shared/shared.module';
 import { TrackingRequestsModule } from 'src/tracking-requests/tracking-requests.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([PickupRequest, TrackingRequest, UserPreference]),
     SharedModule,
-    TrackingRequestsModule
+    TrackingRequestsModule,
+    UsersModule,
   ],
   controllers: [PickupRequestsController],
   providers: [PickupRequestsService, UserPreferencesService],

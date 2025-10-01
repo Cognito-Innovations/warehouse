@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Box, Typography } from '@mui/material';
-import { CheckCircle } from '@mui/icons-material';
-import { formatDateTime } from '@/lib/utils';
+import { Box, Typography } from "@mui/material";
+import { CheckCircle } from "@mui/icons-material";
+import { formatDateTime } from "@/lib/utils";
 
 interface TrackingStatusProps {
   status: string;
@@ -10,15 +10,15 @@ interface TrackingStatusProps {
 }
 
 const TRACKING_STEPS = [
-  { label: 'Ship Request', defaultDescription: 'Requested by User' },
-  { label: 'Payment Pending', defaultDescription: 'Waiting for confirmation!' },
-  { label: 'Payment Approved', defaultDescription: 'Waiting for payment approval' },
-  { label: 'Ready To Ship', defaultDescription: 'Waiting for ready to ship' },
+  { label: "Ship Request", defaultDescription: "Requested by User" },
+  { label: "Payment Pending", defaultDescription: "Waiting for confirmation!" },
+  { label: "Payment Approved", defaultDescription: "Waiting for payment approval" },
+  { label: "Ready To Ship", defaultDescription: "Waiting for ready to ship" },
 ];
 
 const STATUS_UI_MAP = new Map([
-  ['departed', 'Ready To Ship'],
-  ['request ship', 'Ship Request']
+  ["departed", "Ready To Ship"],
+  ["request ship", "Ship Request"]
 ]);
 
 const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) => {
@@ -35,7 +35,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) =>
         Tracking
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         {TRACKING_STEPS.map((step, index) => {
           const isCompleted = index <= currentStepIndex;
           const isActive = index === currentStepIndex;
@@ -45,37 +45,37 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) =>
             : step.defaultDescription;
 
           return (
-            <Box key={step.label} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <Box key={step.label} sx={{ display: "flex", alignItems: "flex-start" }}>
               <Box
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                   mr: 2,
                 }}
               >
                 {isCompleted ? (
-                  <CheckCircle sx={{ color: '#3B82F6', zIndex: 1 }} />
+                  <CheckCircle sx={{ color: "#3B82F6", zIndex: 1 }} />
                 ) : (
                   <Box
                     sx={{
                       width: 20,
                       height: 20,
-                      borderRadius: '50%',
-                      border: '2px solid #BDBDBD',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      borderRadius: "50%",
+                      border: "2px solid #BDBDBD",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       zIndex: 1,
-                      backgroundColor: 'background.paper',
+                      backgroundColor: "background.paper",
                     }}
                   >
                     <Box
                       sx={{
                         width: 8,
                         height: 8,
-                        borderRadius: '50%',
-                        backgroundColor: '#BDBDBD',
+                        borderRadius: "50%",
+                        backgroundColor: "#BDBDBD",
                       }}
                     />
                   </Box>
@@ -85,8 +85,8 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) =>
                   <Box
                     sx={{
                       flexGrow: 1,
-                      width: '2px',
-                      backgroundColor: isCompleted && index < currentStepIndex ? '#3B82F6' : '#E0E0E0',
+                      width: "2px",
+                      backgroundColor: isCompleted && index < currentStepIndex ? "#3B82F6" : "#E0E0E0",
                       minHeight: 24,
                     }}
                   />
@@ -98,7 +98,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) =>
                   variant="body2"
                   sx={{
                     fontWeight: 600,
-                    color: isCompleted ? '#3B82F6' : '#424242',
+                    color: isCompleted ? "#3B82F6" : "#424242",
                   }}
                 >
                   {step.label}
@@ -106,7 +106,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) =>
                 <Typography
                   variant="caption"
                   sx={{
-                    color: isCompleted ? '#3B82F6' : 'text.secondary',
+                    color: isCompleted ? "#3B82F6" : "text.secondary",
                   }}
                 >
                   {description}

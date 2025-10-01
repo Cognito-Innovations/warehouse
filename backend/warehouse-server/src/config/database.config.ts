@@ -31,6 +31,7 @@ import { Invoice } from 'src/invoice/invoice.entity';
 import { Currency } from 'src/currencies/currency.entity';
 import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { SupportedCountry } from 'src/supported-countries/supported-country.entity';
+import { UserAddress } from 'src/user_address/user_address.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -46,6 +47,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     SupportedCountry,
     UserPreference,
     CourierCompany,
+    UserAddress,
     Rack,
     Supplier,
     User,

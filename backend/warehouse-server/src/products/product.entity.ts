@@ -30,7 +30,7 @@ export class Product extends BaseTimestampEntity {
   unit_price: number;
 
   @Column({ type: 'varchar', length: 10, default: 'US' })
-  currency: string; 
+  currency: string;
 
   @Column({ default: 1 })
   quantity: number;

@@ -11,7 +11,7 @@ export default function AddressLayout({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (!authLoading && !user) {
-            router.replace("/");
+            router.push("/");
         }
     }, [user, authLoading, router]);
 
@@ -19,11 +19,11 @@ export default function AddressLayout({ children }: { children: ReactNode }) {
         return (
             <Box
                 sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '100vh',
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "100vh",
                     gap: 2,
                 }}
             >
@@ -33,5 +33,5 @@ export default function AddressLayout({ children }: { children: ReactNode }) {
         );
     }
 
-    return <>{children}</>
+    return <>{children}</>;
 }

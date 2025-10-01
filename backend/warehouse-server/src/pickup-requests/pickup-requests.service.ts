@@ -10,20 +10,21 @@ import { CreatePickupRequestDto } from './dto/create-pickup-request.dto';
 import { PickupRequestResponseDto } from './dto/pickup-request-response.dto';
 import {
   FeatureType,
+  TrackingRequest,
   TrackingStatus,
 } from 'src/tracking-requests/tracking-request.entity';
-import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
 import { mapPickupToTrackingStatus } from './status-mapper';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class PickupRequestsService {
   constructor(
     @InjectRepository(PickupRequest)
     private readonly pickupRequestRepository: Repository<PickupRequest>,
-    private readonly userPreferencesService: UserPreferencesService,
     private readonly dataSource: DataSource,
     private readonly trackingRequestsService: TrackingRequestsService,
+    private readonly usersService: UsersService,
   ) {}
 
   async createPickupRequest(
@@ -106,34 +107,24 @@ export class PickupRequestsService {
         relations: ['user', 'country'],
       });
 
-      return Promise.all(
-        pickupRequests.map(async (request) => {
-          //TODO: Why are we using external function ? instead of expanding relations ?
-          const trackingRequests =
-            await this.trackingRequestsService.getTrackingRequestsByFeature(
-              FeatureType.PickupRequest,
-              request.id,
-            );
-
-          return {
-            id: request.id,
-            country: request.country?.name,
-            status: request.status,
-            pickup_address: request.pickup_address,
-            supplier_name: request.supplier_name,
-            supplier_phone_number: request.supplier_phone_number,
-            alt_supplier_phone_number: request.alt_supplier_phone_number,
-            pcs_box: request.pcs_box,
-            est_weight: request.est_weight,
-            pkg_details: request.pkg_details,
-            remarks: request.remarks,
-            created_at: request.created_at,
-            updated_at: request.updated_at,
-            user: request.user,
-            tracking_requests: trackingRequests,
-          };
-        })
-      );
+      return pickupRequests.map((request) => ({
+        id: request.id,
+        country: request.country?.name,
+        status: request.status,
+        pickup_address: request.pickup_address,
+        supplier_name: request.supplier_name,
+        supplier_phone_number: request.supplier_phone_number,
+        alt_supplier_phone_number: request.alt_supplier_phone_number,
+        pcs_box: request.pcs_box,
+        est_weight: request.est_weight,
+        pkg_details: request.pkg_details,
+        remarks: request.remarks,
+        created_at: request.created_at,
+        updated_at: request.updated_at,
+        user: request.user
+          ? this.usersService.mapToUserResponseDto(request.user)
+          : undefined,
+      }));
     } catch (error) {
       throw new BadRequestException(
         `Failed to fetch pickup requests: ${(error as Error).message}`,
@@ -151,33 +142,24 @@ export class PickupRequestsService {
         relations: ['user', 'country'],
       });
 
-      return Promise.all(
-        pickupRequests.map(async (request) => {
-          const trackingRequests =
-            await this.trackingRequestsService.getTrackingRequestsByFeature(
-              FeatureType.PickupRequest,
-              request.id,
-            );
-
-          return {
-            id: request.id,
-            country: request.country?.name,
-            pickup_address: request.pickup_address,
-            supplier_name: request.supplier_name,
-            supplier_phone_number: request.supplier_phone_number,
-            alt_supplier_phone_number: request.alt_supplier_phone_number,
-            pcs_box: request.pcs_box,
-            est_weight: request.est_weight,
-            pkg_details: request.pkg_details,
-            remarks: request.remarks,
-            status: request.status,
-            created_at: request.created_at,
-            updated_at: request.updated_at,
-            user: request.user,
-            tracking_requests: trackingRequests,
-          };
-        })
-      );
+      return pickupRequests.map((request) => {
+        return {
+          id: request.id,
+          country: request.country?.name,
+          pickup_address: request.pickup_address,
+          supplier_name: request.supplier_name,
+          supplier_phone_number: request.supplier_phone_number,
+          alt_supplier_phone_number: request.alt_supplier_phone_number,
+          pcs_box: request.pcs_box,
+          est_weight: request.est_weight,
+          pkg_details: request.pkg_details,
+          remarks: request.remarks,
+          status: request.status,
+          price: request.price,
+          created_at: request.created_at,
+          updated_at: request.updated_at,
+        };
+      });
     } catch (error) {
       throw new BadRequestException(
         `Failed to fetch pickup requests for user: ${(error as Error).message}`,
@@ -196,8 +178,7 @@ export class PickupRequestsService {
         throw new NotFoundException(`Pickup request with id ${id} not found`);
       }
 
-      //TODO: Why are we using external function ? instead of expanding relations ?
-      const trackingRequests = 
+      const trackingRequests =
         await this.trackingRequestsService.getTrackingRequestsByFeature(
           FeatureType.PickupRequest,
           pickupRequest.id,
@@ -218,7 +199,9 @@ export class PickupRequestsService {
         remarks: pickupRequest.remarks,
         created_at: pickupRequest.created_at,
         updated_at: pickupRequest.updated_at,
-        user: pickupRequest.user,
+        user: pickupRequest.user
+          ? this.usersService.mapToUserResponseDto(pickupRequest.user)
+          : undefined,
         tracking_requests: trackingRequests,
       };
     } catch (error) {
@@ -277,6 +260,16 @@ export class PickupRequestsService {
         pickupRequest,
       );
 
+      if (updatedPickupRequest.user) {
+        const trackingRequest = queryRunner.manager.create(TrackingRequest, {
+          feature_type: FeatureType.PickupRequest,
+          feature_fid: updatedPickupRequest.id,
+          status: mapPickupToTrackingStatus(updatedPickupRequest.status),
+          user: updatedPickupRequest.user.id as any,
+        });
+        await queryRunner.manager.save(trackingRequest);
+      }
+
       // Commit the transaction
       await queryRunner.commitTransaction();
 
@@ -293,15 +286,6 @@ export class PickupRequestsService {
         );
       }
 
-      //TODO: This piece of code should be inside commit transaction
-      await this.trackingRequestsService.createTrackingRequest({
-        feature_type: FeatureType.PickupRequest,
-        feature_fid: pickupRequestWithRelations.id,
-        status: mapPickupToTrackingStatus(pickupRequestWithRelations.status),
-        user: pickupRequestWithRelations.user?.id,
-      });
-
-      //TODO: Why are we using external function ? instead of expanding relations ?
       const trackingRequests =
         await this.trackingRequestsService.getTrackingRequestsByFeature(
           FeatureType.PickupRequest,
@@ -323,7 +307,11 @@ export class PickupRequestsService {
         remarks: pickupRequestWithRelations.remarks,
         created_at: pickupRequestWithRelations.created_at,
         updated_at: pickupRequestWithRelations.updated_at,
-        user: pickupRequestWithRelations.user,
+        user: pickupRequestWithRelations.user
+          ? this.usersService.mapToUserResponseDto(
+              pickupRequestWithRelations.user
+            )
+          : undefined,
         tracking_requests: trackingRequests,
       };
     } catch (error) {
@@ -347,7 +335,7 @@ export class PickupRequestsService {
 
   async deletePickupRequest(id: string): Promise<void> {
     const pickupRequest = await this.pickupRequestRepository.findOne({
-      where: { id }
+      where: { id },
     });
     if (!pickupRequest) {
       throw new NotFoundException(`Pickup request with id ${id} not found`);
@@ -355,5 +343,4 @@ export class PickupRequestsService {
 
     await this.pickupRequestRepository.remove(pickupRequest);
   }
-
 }

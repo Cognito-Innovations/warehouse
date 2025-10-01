@@ -1,5 +1,5 @@
-'use client';
-import React, { useEffect, useState } from 'react';
+"use client";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,16 +13,17 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Typography,
   FormHelperText,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Close,
-} from '@mui/icons-material';
-import { getCourierCompanies, getCurrencies, getUserPreferences, updatePreferences, updateUser } from '@/lib/api.service';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAddressActions } from '@/contexts/AddressContext';
+} from "@mui/icons-material";
+import { toast, Toaster } from "sonner";
+import { getCourierCompanies, getCurrencies, getUserPreferences, sendEmailOtp, updatePreferences, updateUser, verifyEmailOtp } from "@/lib/api.service";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAddressActions } from "@/contexts/AddressContext";
+import OtpVerification from "../PageComponents/OtpVerification";
 
 export interface ProfileData {
   id_card_passport_no: string;
@@ -32,6 +33,7 @@ export interface ProfileData {
   alternate_phone_number: string;
   gender: string;
   dob: string;
+  email_verified: boolean;
 }
 
 interface PreferencesData {
@@ -43,16 +45,19 @@ interface EditProfileModalProps {
   open: boolean;
   onClose: () => void;
   profileData: ProfileData;
-   onProfileUpdate: (updatedData: Partial<ProfileData>) => void; 
+  onProfileUpdate: (updatedData: Partial<ProfileData>) => void;
+  loading: boolean;
 }
 
-export default function EditProfileModal({ open, onClose, profileData, onProfileUpdate }: EditProfileModalProps) {
+export default function EditProfileModal({ open, onClose, profileData, onProfileUpdate, loading }: EditProfileModalProps) {
+
   const { user } = useAuth();
   const { refreshUserPreferences } = useAddressActions();
   const [formData, setFormData] = useState(profileData);
-  const [preferencesFormData, setPreferencesFormData] = useState<PreferencesData>({courier_id: "", currency_id: ""});
+  const [preferencesFormData, setPreferencesFormData] = useState<PreferencesData>({ courier_id: "", currency_id: "" });
   const [courierCompanies, setCourierCompanies] = useState<any[]>([]);
   const [currencies, setCurrencies] = useState<any[]>([]);
+  const [isEmailVerified, setIsEmailVerified] = useState(profileData.email_verified);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingPreferences, setLoadingPreferences] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -61,21 +66,26 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     const [courierCompaniesData, currenciesData] = await Promise.all([getCourierCompanies(), getCurrencies()]);
     setCourierCompanies(courierCompaniesData);
     setCurrencies(currenciesData);
-  };  
+  };
 
   useEffect(() => {
     if (open) {
       fetchData();
+      setIsEmailVerified(profileData.email_verified);
     }
   }, [open, profileData]);
+
+  useEffect(() => {
+    setIsSaving(loading || false);
+  }, [loading]);
 
   const fetchData = async () => {
     setLoadingPreferences(true);
     await fetchCourierCompanies();
     setFormData({
-    ...profileData,
-    dob: profileData.dob ? profileData.dob.split('T')[0] : '',
-      });
+      ...profileData,
+      dob: profileData.dob ? profileData.dob.split("T")[0] : "",
+    });
     await fetchUserPreferences();
     setErrors({});
   };
@@ -87,12 +97,12 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       const prefs = await getUserPreferences(user.id);
       if (prefs) {
         setPreferencesFormData({
-          courier_id: prefs.courier?.id || '',
-          currency_id: prefs.currency?.id || ''
+          courier_id: prefs.courier?.id || "",
+          currency_id: prefs.currency?.id || ""
         });
       }
     } catch (error) {
-      console.error('Failed to load preferences', error);
+      console.error("Failed to load preferences", error);
     } finally {
       setLoadingPreferences(false);
     }
@@ -106,12 +116,12 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     }));
 
     if (errors[field]) {
-    setErrors(prevErrors => {
-      const newErrors = { ...prevErrors };
-      delete (newErrors as any)[field];
-      return newErrors;
-    });
-  }
+      setErrors(prevErrors => {
+        const newErrors = { ...prevErrors };
+        delete (newErrors as any)[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleChangePreferences = (field: keyof PreferencesData) => (event: any) => {
@@ -122,15 +132,25 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     }));
 
     if (errors[field]) {
-    setErrors(prevErrors => {
+      setErrors(prevErrors => {
         const newErrors = { ...prevErrors };
         delete (newErrors as any)[field];
         return newErrors;
-    });
-  }
+      });
+    }
+  };
+
+  const handleVerificationSuccess = () => {
+    setIsEmailVerified(true);
+    onProfileUpdate({ email_verified: true });
   };
 
   const handleSave = async () => {
+    if (!isEmailVerified) {
+      toast.error("Please verify your email to save changes.");
+      return;
+    }
+
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -158,7 +178,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       onProfileUpdate(payload);
       onClose();
     } catch (error) {
-      console.error('Failed to update profile', error);
+      console.error("Failed to update profile", error);
     } finally {
       setIsSaving(false);
     }
@@ -167,13 +187,13 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.id_card_passport_no || !formData.id_card_passport_no.trim()) newErrors.id_card_passport_no = 'ID Card/Passport No. is required';
-    if (!formData.name || !formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.dob || !formData.dob.trim()) newErrors.dob = 'Date of birth is required';
-    if (!formData.phone_number || !formData.phone_number.trim()) newErrors.phone_number = 'Contact number is required';
-    if (!formData.gender) newErrors.gender = 'Gender is required';
-    if (!preferencesFormData.courier_id) newErrors.courier_id = 'Courier is required';
-    if (!preferencesFormData.currency_id) newErrors.currency_id = 'Currency is required';
+    if (!formData.id_card_passport_no || !formData.id_card_passport_no.trim()) newErrors.id_card_passport_no = "ID Card/Passport No. is required";
+    if (!formData.name || !formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.dob || !formData.dob.trim()) newErrors.dob = "Date of birth is required";
+    if (!formData.phone_number || !formData.phone_number.trim()) newErrors.phone_number = "Contact number is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!preferencesFormData.courier_id) newErrors.courier_id = "Courier is required";
+    if (!preferencesFormData.currency_id) newErrors.currency_id = "Currency is required";
 
     return newErrors;
   };
@@ -186,51 +206,57 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: '12px',
-          p: 1,
+          borderRadius: "12px",
         },
       }}
     >
       <DialogTitle sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
         pb: 2
       }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <p className="font-semibold">
           Edit Profile
-        </Typography>
+        </p>
         <IconButton onClick={onClose} size="small">
           <Close />
         </IconButton>
       </DialogTitle>
+      <Toaster />
+      <DialogContent dividers>
+        <>
+          {loadingPreferences && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 2,
+                mb: 2,
+                bgcolor: "rgba(0, 0, 0, 0.02)",
+                borderRadius: 1,
+              }}
+            >
+              <CircularProgress size={24} />
+              <Box sx={{ ml: 2, color: "text.secondary" }}>
+                Loading preferences...
+              </Box>
+            </Box>
+          )}
 
-      <DialogContent sx={{ pb: 2 }}>
-        {loadingPreferences ? (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '200px',
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        ) : (
-          <>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pb: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pb: 2 }}>
             <TextField
               label="ID Card / Passport No *"
               value={formData.id_card_passport_no}
-              onChange={handleChange('id_card_passport_no')}
+              onChange={handleChange("id_card_passport_no")}
               error={!!errors.id_card_passport_no}
               helperText={errors.id_card_passport_no}
               fullWidth
               size="medium"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
                 },
               }}
             />
@@ -238,14 +264,14 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             <TextField
               label="Name *"
               value={formData.name}
-              onChange={handleChange('name')}
+              onChange={handleChange("name")}
               error={!!errors.name}
               helperText={errors.name}
               fullWidth
               size="medium"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
                 },
               }}
             />
@@ -254,7 +280,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               label="DOB"
               type="date"
               value={formData.dob}
-              onChange={handleChange('dob')}
+              onChange={handleChange("dob")}
               error={!!errors.dob}
               helperText={errors.dob}
               fullWidth
@@ -264,8 +290,8 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               }}
               placeholder="dd/mm/yyyy"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
                 },
               }}
             />
@@ -273,14 +299,14 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             <TextField
               label="Contact No"
               value={formData.phone_number}
-              onChange={handleChange('phone_number')}
+              onChange={handleChange("phone_number")}
               error={!!errors.phone_number}
               helperText={errors.phone_number}
               fullWidth
               size="medium"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
                 },
               }}
             />
@@ -288,12 +314,12 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             <TextField
               label="Alternative Contact No"
               value={formData.alternate_phone_number}
-              onChange={handleChange('alternate_phone_number')}
+              onChange={handleChange("alternate_phone_number")}
               fullWidth
               size="medium"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
                 },
               }}
             />
@@ -302,10 +328,10 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               <InputLabel>Gender</InputLabel>
               <Select
                 value={formData.gender}
-                onChange={handleChange('gender')}
+                onChange={handleChange("gender")}
                 label="Gender"
                 sx={{
-                  borderRadius: '8px',
+                  borderRadius: "8px",
                 }}
               >
                 <MenuItem value="male">Male</MenuItem>
@@ -317,26 +343,44 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             </FormControl>
           </Box>
 
-          <Typography variant="h6" pb={2} sx={{ fontWeight: 600 }}>
+          <OtpVerification
+            userId={user?.id}
+            email={formData.email}
+            isVerified={isEmailVerified}
+            onVerificationSuccess={handleVerificationSuccess}
+          />
+          {errors.email && <FormHelperText error sx={{ mt: -2, ml: 2 }}>{errors.email}</FormHelperText>}
+
+
+          <p className="pb-2 font-semibold">
             Preferences
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-             <FormControl fullWidth size="medium" error={!!errors.courier_id}>
+          </p>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            <FormControl fullWidth size="medium" error={!!errors.courier_id}>
               <InputLabel>Courier</InputLabel>
               <Select
                 value={preferencesFormData.courier_id}
-                onChange={handleChangePreferences('courier_id')}
+                onChange={handleChangePreferences("courier_id")}
                 label="Courier"
                 disabled={loadingPreferences}
                 sx={{
-                  borderRadius: '8px',
+                  borderRadius: "8px",
                 }}
               >
-                {courierCompanies?.map((courier: any) => (
-                  <MenuItem key={courier.id} value={courier.id}>
-                    {courier.name}, {courier.address}, {courier.country || courier.country?.name}
+                {loadingPreferences ? (
+                  <MenuItem disabled>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <CircularProgress size={16} />
+                      Loading couriers...
+                    </Box>
                   </MenuItem>
-                ))}
+                ) : (
+                  courierCompanies?.map((courier: any) => (
+                    <MenuItem key={courier.id} value={courier.id}>
+                      {courier.name}, {courier.address}, {courier.country || courier.country?.name}
+                    </MenuItem>
+                  ))
+                )}
               </Select>
               {errors.courier_id && <FormHelperText>{errors.courier_id}</FormHelperText>}
             </FormControl>
@@ -345,45 +389,56 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               <InputLabel>Currency</InputLabel>
               <Select
                 value={preferencesFormData.currency_id}
-                onChange={handleChangePreferences('currency_id')}
+                onChange={handleChangePreferences("currency_id")}
                 label="Currency"
                 disabled={loadingPreferences}
                 sx={{
-                  borderRadius: '8px',
+                  borderRadius: "8px",
                 }}
               >
-                {currencies?.map((currency: any) => (
-                  <MenuItem key={currency.id} value={currency.id}>{currency.currency_symbol}</MenuItem>
-                ))}
+                {loadingPreferences ? (
+                  <MenuItem disabled>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <CircularProgress size={16} />
+                      Loading currencies...
+                    </Box>
+                  </MenuItem>
+                ) : (
+                  currencies?.map((currency: any) => (
+                    <MenuItem key={currency.id} value={currency.id}>{currency.currency_symbol}</MenuItem>
+                  ))
+                )}
               </Select>
               {errors.currency_id && <FormHelperText>{errors.currency_id}</FormHelperText>}
             </FormControl>
           </Box>
         </>
-      )}          
-    </DialogContent>
-    
+
+
+      </DialogContent>
       <DialogActions sx={{ p: 3, pt: 1 }}>
-        {!loadingPreferences && (
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={isSaving}
-            sx={{
-              bgcolor: 'primary.main',
-              color: 'white',
-              textTransform: 'none',
-              borderRadius: '8px',
-              px: 4,
-              py: 1,
-              '&:hover': {
-                bgcolor: 'primary.dark',
-              },
-            }}
-          >
-            {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save'}
-          </Button>
-        )}
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={isSaving || loadingPreferences}
+          sx={{
+            bgcolor: "primary.main",
+            color: "white",
+            textTransform: "none",
+            borderRadius: "8px",
+            px: 4,
+            py: 1,
+            "&:hover": {
+              bgcolor: "primary.dark",
+            },
+            "&:disabled": {
+              bgcolor: "action.disabled",
+              color: "action.disabled",
+            },
+          }}
+        >
+          {isSaving ? "Saving..." : loadingPreferences ? "Loading..." : "Save"}
+        </Button>
       </DialogActions>
     </Dialog>
   );

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box} from '@mui/material';
+import { Box, CircularProgress} from '@mui/material';
 import { useParams } from 'react-router-dom';
 
 import TopNavbar from '../components/Layout/TopNavbar';
@@ -10,15 +10,19 @@ import { getPickupRequestById } from '../services/api.services.ts';
 const PickupRequestDetail: React.FC = () => {
   const { id } = useParams();
   const [pickupRequest, setPickupRequest] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchRequest = async () => {
     if (!id) return;
+    setLoading(true);
     try {
       const data = await getPickupRequestById(id);
 
       setPickupRequest(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -26,13 +30,22 @@ const PickupRequestDetail: React.FC = () => {
     fetchRequest();
   }, [id]);
 
-  if (!pickupRequest) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <Box sx={{ p: 1 }}>
+        <TopNavbar />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+          <CircularProgress />
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box>
       <TopNavbar pageTitle="Pickup Request" pageSubtitle="All" />
-      <RequestDetailHeader request={pickupRequest} onStatusUpdate={fetchRequest} />
-      <RequestDetailContent request={pickupRequest} />
+      {pickupRequest && <RequestDetailHeader request={pickupRequest} onStatusUpdate={fetchRequest} />}
+      {pickupRequest && <RequestDetailContent request={pickupRequest} />}
     </Box>
   );
 };

@@ -1,7 +1,7 @@
-'use client';
-import React, { useState, useEffect } from 'react';
-import ReactCountryFlag from 'react-country-flag';
-import { useAddressAPI } from '../../hooks/useAddressAPI';
+"use client";
+import React, { useState, useEffect } from "react";
+import ReactCountryFlag from "react-country-flag";
+import { useAddressAPI } from "../../hooks/useAddressAPI";
 
 const AddressSection = () => {
   const {
@@ -18,7 +18,7 @@ const AddressSection = () => {
 
   const getCountryCode = (country: string) => {
     const countryInfo = availableCountries.find(c => c.name === country);
-    return countryInfo?.code || '';
+    return countryInfo?.code || "";
   };
   return (
     <div className="bg-white border-b border-gray-200">
@@ -31,10 +31,10 @@ const AddressSection = () => {
                   countryCode={getCountryCode(selectedCountry)}
                   svg
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    objectFit: 'cover'
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: "50%",
+                    objectFit: "cover"
                   }}
                   title={selectedCountry}
                 />

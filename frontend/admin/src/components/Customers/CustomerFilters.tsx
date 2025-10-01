@@ -1,46 +1,64 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Paper, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
-import { customers, type Customer } from '../../data/customers';
+import type { Customer } from '../../types';
 
-const CustomerFilters = ({ onFilter }: { onFilter: (list: Customer[]) => void }) => {
-  const [status, setStatus] = useState<'All' | 'YES' | 'NO'>('All');
-  const [verify, setVerify] = useState<'All' | 'YES' | 'NO'>('All');
-  const [email, setEmail] = useState<'All' | 'YES' | 'NO'>('All');
+interface CustomerFiltersProps {
+  customers: Customer[];
+  onFilter: (list: Customer[]) => void;
+}
 
-  const handleChange = (type: 'status' | 'verify' | 'email', value: any) => {
-    if (type === 'status') setStatus(value);
-    if (type === 'verify') setVerify(value);
-    if (type === 'email') setEmail(value);
-    const filtered = customers.filter(c =>
-      (status === 'All' || (c.isActive ? 'YES' : 'NO') === (type === 'status' ? value : status)) &&
-      (verify === 'All' || (c.isVerified ? 'YES' : 'NO') === (type === 'verify' ? value : verify)) &&
-      (email === 'All' || (c.emailVerifiedOn ? 'YES' : 'NO') === (type === 'email' ? value : email))
-    );
+const CustomerFilters = ({ customers, onFilter }: CustomerFiltersProps) => {
+  const [emailVerified, setEmailVerified] = useState<'All' | 'YES' | 'NO'>('All');
+
+  const filtered = customers.filter(customer => {
+    if (emailVerified === 'All') return true;
+    return (customer.email_verified ? 'YES' : 'NO') === emailVerified;
+  });
+  
+  useEffect(() => {
     onFilter(filtered);
-  };
+  }, [emailVerified, customers, onFilter]);
 
-  const renderSelect = (label: string, value: any, type: 'status' | 'verify' | 'email') => (
+  const renderSelect = (
+    label: string,
+    value: 'All' | 'YES' | 'NO',
+    type: 'email'
+  ) => (
     <FormControl size="small" sx={{ minWidth: 150 }}>
       <InputLabel>{label}</InputLabel>
-      <Select value={value} label={label} onChange={e => handleChange(type, e.target.value)}>
+      <Select
+        value={value}
+        label={label}
+        onChange={e => {
+          if (type === 'email') {
+            setEmailVerified(e.target.value as 'All' | 'YES' | 'NO');
+          }
+        }}
+      >
         <MenuItem value="All">All</MenuItem>
-        <MenuItem value="YES">YES</MenuItem>
-        <MenuItem value="NO">NO</MenuItem>
+        <MenuItem value="YES">Yes</MenuItem>
+        <MenuItem value="NO">No</MenuItem>
       </Select>
     </FormControl>
   );
 
   return (
-    <Paper sx={{ borderRadius: 3, boxShadow: 'none', p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+    <Paper
+      sx={{
+        borderRadius: 3,
+        boxShadow: 'none',
+        p: 2,
+        mb: 2,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+      }}
+    >
       <IconButton>
         <FilterAltOutlinedIcon color="action" />
-     </IconButton>
-  
-      {/* <FilterIcon sx={{ color: '#64748b' }} /> */}
-      {renderSelect('Status', status, 'status')}
-      {renderSelect('Verify', verify, 'verify')}
-      {renderSelect('Email Verified', email, 'email')}
+      </IconButton>
+      {renderSelect('Email Verified', emailVerified, 'email')}
     </Paper>
   );
 };

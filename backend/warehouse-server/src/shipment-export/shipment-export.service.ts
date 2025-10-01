@@ -99,10 +99,9 @@ export class ShipmentExportsService {
     });
     if (!reloaded)
       throw new NotFoundException(
-        `Export with id ${saved.id} not found after update`
+        `Export with id ${saved.id} not found after update`,
       );
 
     return reloaded;
   }
-
 }

@@ -6,12 +6,14 @@ import { FeatureType, TrackingRequest } from './tracking-request.entity';
 import { CreateTrackingRequestDto } from './dto/create-tracking-request.dto';
 import { UpdateTrackingRequestDto } from './dto/update-tracking-request.dto';
 import { TrackingRequestResponseDto } from './dto/tracking-request-response.dto';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class TrackingRequestsService {
   constructor(
     @InjectRepository(TrackingRequest)
     private readonly trackingRequestRepository: Repository<TrackingRequest>,
+    private readonly usersService: UsersService,
   ) {}
 
   async createTrackingRequest(
@@ -34,10 +36,10 @@ export class TrackingRequestsService {
     return {
       id: savedTrackingRequest.id,
       courier: savedTrackingRequest.courier,
-      user: savedTrackingRequest.user,
-      feature_type: savedTrackingRequest.feature_type,
+      user: savedTrackingRequest.user 
+        ? this.usersService.mapToUserResponseDto(savedTrackingRequest.user) 
+        : undefined,
       status: savedTrackingRequest.status,
-      feature_fid: savedTrackingRequest.feature_fid,
       created_at: savedTrackingRequest.created_at,
       updated_at: savedTrackingRequest.updated_at,
     };
@@ -46,16 +48,16 @@ export class TrackingRequestsService {
   async getAllTrackingRequests(): Promise<TrackingRequestResponseDto[]> {
     const trackingRequests = await this.trackingRequestRepository.find({
       order: { created_at: 'DESC' },
-      relations: ['admin', 'user'],
+      relations: ['user'],
     });
 
     return trackingRequests.map((request) => ({
       id: request.id,
       courier: request.courier,
-      user: request.user,
-      feature_type: request.feature_type,
+      user: request.user 
+        ? this.usersService.mapToUserResponseDto(request.user) 
+        : undefined,
       status: request.status,
-      feature_fid: request.feature_fid,
       created_at: request.created_at,
       updated_at: request.updated_at,
     }));
@@ -66,7 +68,7 @@ export class TrackingRequestsService {
   ): Promise<TrackingRequestResponseDto> {
     const trackingRequest = await this.trackingRequestRepository.findOne({
       where: { id },
-      relations: ['admin', 'user'],
+      relations: ['user'],
     });
 
     if (!trackingRequest) {
@@ -76,10 +78,10 @@ export class TrackingRequestsService {
     return {
       id: trackingRequest.id,
       courier: trackingRequest.courier,
-      user: trackingRequest.user,
-      feature_type: trackingRequest.feature_type,
+      user: trackingRequest.user 
+        ? this.usersService.mapToUserResponseDto(trackingRequest.user) 
+        : undefined,
       status: trackingRequest.status,
-      feature_fid: trackingRequest.feature_fid,
       created_at: trackingRequest.created_at,
       updated_at: trackingRequest.updated_at,
     };
@@ -91,16 +93,16 @@ export class TrackingRequestsService {
     const trackingRequests = await this.trackingRequestRepository.find({
       where: { user: { id: userId } },
       order: { created_at: 'DESC' },
-      relations: ['admin', 'user'],
+      relations: ['user'],
     });
 
     return trackingRequests.map((request) => ({
       id: request.id,
       courier: request.courier,
-      user: request.user,
-      feature_type: request.feature_type,
+      user: request.user 
+        ? this.usersService.mapToUserResponseDto(request.user) 
+        : undefined,
       status: request.status,
-      feature_fid: request.feature_fid,
       created_at: request.created_at,
       updated_at: request.updated_at,
     }));
@@ -116,16 +118,16 @@ export class TrackingRequestsService {
         feature_fid: featureFid,
       },
       order: { created_at: 'DESC' },
-      relations: ['admin', 'user'],
+      relations: ['user'],
     });
 
     return trackingRequests.map((request) => ({
       id: request.id,
       courier: request.courier,
-      user: request.user,
-      feature_type: request.feature_type,
+      user: request.user 
+        ? this.usersService.mapToUserResponseDto(request.user) 
+        : undefined,
       status: request.status,
-      feature_fid: request.feature_fid,
       created_at: request.created_at,
       updated_at: request.updated_at,
     }));
@@ -150,10 +152,10 @@ export class TrackingRequestsService {
     return {
       id: updatedTrackingRequest.id,
       courier: updatedTrackingRequest.courier,
-      user: updatedTrackingRequest.user,
-      feature_type: updatedTrackingRequest.feature_type,
+      user: updatedTrackingRequest.user 
+        ? this.usersService.mapToUserResponseDto(updatedTrackingRequest.user) 
+        : undefined,
       status: updatedTrackingRequest.status,
-      feature_fid: updatedTrackingRequest.feature_fid,
       created_at: updatedTrackingRequest.created_at,
       updated_at: updatedTrackingRequest.updated_at,
     };

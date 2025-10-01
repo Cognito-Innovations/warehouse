@@ -17,7 +17,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
-  currency?: string; 
+  currency?: string;
 
   @IsOptional()
   @IsNumber()

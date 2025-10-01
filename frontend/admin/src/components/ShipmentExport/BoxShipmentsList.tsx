@@ -43,6 +43,7 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
   shipments,
   isLoading,
 }) => {
+
   const handleDeletePackage = async (packageId: string) => {
     if (!boxId) return;
     try {
@@ -91,9 +92,9 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
               }}
             >
               <TableCell>Shipment No.</TableCell>
-              {/* <TableCell>Tracking No.</TableCell>
+              <TableCell>Tracking No.</TableCell>
               <TableCell>Customer</TableCell>
-              <TableCell>Date</TableCell> */}
+              <TableCell>Date</TableCell>
               <TableCell align="center" />
             </TableRow>
           </TableHead>
@@ -119,21 +120,18 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
             ) : (
               shipments.map((pkg) => (
                 <TableRow key={pkg.id}>
-                  <TableCell>{pkg.id}</TableCell>
+                  <TableCell>{pkg.shipment_id}</TableCell>
 
                   <TableCell>
-                    <Typography fontWeight={500}>{pkg.trackingNo}</Typography>
-                    <Typography variant="caption" color="text.secondary">{pkg.courier}</Typography>
+                    <Typography fontWeight={500}>{pkg.tracking_no}</Typography>
                   </TableCell>
 
                   <TableCell>
-                    <Typography fontWeight={500}>{pkg.customer}</Typography>
-                    <Typography variant="caption" color="text.secondary">{pkg.customerCode}</Typography>
+                    <Typography fontWeight={500}>{pkg.user.name}</Typography>
                   </TableCell>
 
                   <TableCell>
-                    <Typography fontWeight={500}>{formatDateTime(pkg.date)}</Typography>
-                    <Typography variant="caption" color="text.secondary">{pkg.time}</Typography>
+                    <Typography fontWeight={500}>{formatDateTime(pkg.updated_at)}</Typography>
                   </TableCell>
 
                   <TableCell align="center">

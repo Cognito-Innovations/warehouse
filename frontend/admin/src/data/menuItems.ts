@@ -5,13 +5,12 @@ import {
     Assignment as RequestsIcon,
     Business as SuiteIcon,
     People as CustomersIcon,
-    Assessment as ReportsIcon,
-    AdminPanelSettings as MasterIcon,
     FileDownload as ExportIcon,
     Settings as SettingsIcon,
     Flag as CountriesIcon,
     AttachMoney as CurrenciesIcon,
-} from '@mui/icons-material';
+  } from '@mui/icons-material';
+import CouriersIcon from '@mui/icons-material/LocalShipping';
 
 export type UserRole = 'super_admin' | 'admin' | 'user';
 
@@ -40,8 +39,6 @@ export const menuItems: MenuItem[] = [
     icon: ShipmentsIcon,
     defaultPath: '/shipments/export',
     subMenu: [
-      // TODO: Uncomment when functionality is implemented
-      // { text: 'Shipments', icon: ExportIcon, path: '/shipments' },
       { text: 'Shipment Export', icon: ExportIcon, path: '/shipments/export' },
     ],
   },
@@ -56,8 +53,6 @@ export const menuItems: MenuItem[] = [
   },
   { text: 'My Suite', icon: SuiteIcon, path: '/suite' },
   { text: 'Customers', icon: CustomersIcon, path: '/customers' },
-  { text: 'Reports', icon: ReportsIcon, path: '/reports' },
-  { text: 'Master', icon: MasterIcon, path: '/master' },
   {
     text: 'Settings',
     icon: SettingsIcon,
@@ -66,6 +61,7 @@ export const menuItems: MenuItem[] = [
     subMenu: [
         { text: 'Countries', icon: CountriesIcon, path: '/settings/countries' },
         { text: 'Currencies', icon: CurrenciesIcon, path: '/settings/currencies' },
+        { text: 'Couriers', icon: CouriersIcon, path: '/settings/couriers' },
     ],
   },
 ];

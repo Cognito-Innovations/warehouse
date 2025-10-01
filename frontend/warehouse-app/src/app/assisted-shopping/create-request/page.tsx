@@ -12,7 +12,7 @@ function CreateShoppingRequestContent() {
       className="min-h-screen bg-gray-100 antialiased"
       style={{
         fontFamily:
-          'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+          "Inter, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial",
         WebkitFontSmoothing: "antialiased",
         MozOsxFontSmoothing: "grayscale",
       }}

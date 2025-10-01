@@ -4,6 +4,9 @@ import { Visibility as VisibilityIcon, MoreVert as MoreVertIcon } from '@mui/ico
 import type { PreArrival } from '../../types/PreArrival';
 import ReceiveModal from './ReceiveModal';
 import ActionsMenu from './ActionsMenu';
+import { formatDateTime } from '../../utils/formatDateTime';
+import ConfirmDialog from '../common/ConfirmDialog';
+import { deletePreArrival } from '../../services/api.services';
 
 interface PreArrivalsTableProps {
   data: PreArrival[];
@@ -21,9 +24,40 @@ const PreArrivalsTable: React.FC<PreArrivalsTableProps> = ({ data, onMarkAsRecei
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRowItem, setSelectedRowItem] = useState<PreArrival | null>(null);
 
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<PreArrival | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const handleEyeClick = (item: PreArrival) => {
     setSelectedItem(item);
     setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (item: PreArrival) => {
+    setAnchorEl(null);
+    setSelectedRowItem(null);
+    setItemToDelete(item);
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    try {
+      setDeleteLoading(true);
+      await deletePreArrival(itemToDelete.id);
+      onDelete(itemToDelete)
+    } catch (err) {
+      console.error("Failed to delete pre-arrival:", err);
+    } finally {
+      setDeleteLoading(false);
+      setIsConfirmOpen(false);
+      setItemToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setIsConfirmOpen(false);
+    setItemToDelete(null);
   };
 
   const handleCloseModal = () => {
@@ -85,8 +119,7 @@ const PreArrivalsTable: React.FC<PreArrivalsTableProps> = ({ data, onMarkAsRecei
                     </TableCell>
                     <TableCell sx={{ paddingY: "10px" }}>
                       <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#696e74' }}>{new Date(row.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, color: '#595959ba' }}>{new Date(row.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#696e74' }}>{formatDateTime(row.created_at)}</Typography>
                       </Box>
                     </TableCell>
                     <TableCell sx={{ paddingY: "10px" }}>
@@ -122,7 +155,18 @@ const PreArrivalsTable: React.FC<PreArrivalsTableProps> = ({ data, onMarkAsRecei
         onClose={handleCloseMenu}
         selectedRowItem={selectedRowItem}
         onMarkAsReceive={() => selectedRowItem && onMarkAsReceive(selectedRowItem)}
-        onDelete={() => selectedRowItem && onDelete(selectedRowItem)}
+        onDelete={() => selectedRowItem && handleDeleteClick(selectedRowItem)}
+      />
+
+      <ConfirmDialog
+        open={isConfirmOpen}
+        title="Delete Pre-Arrival"
+        message="Are you sure you want to delete this pre-arrival? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onClose={handleCancelDelete}
+        isLoading={deleteLoading}
       />
     </>
   );

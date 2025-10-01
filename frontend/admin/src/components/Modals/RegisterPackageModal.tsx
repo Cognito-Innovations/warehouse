@@ -9,7 +9,6 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, 
 import FormFields from "./RegisterPackageModal/FormFields";
 
 import WeightSection from "./RegisterPackageModal/WeightSection";
-import OptionsSection from "./RegisterPackageModal/OptionsSection";
 import AddSupplierModal from "./RegisterPackageModal/AddSupplierModal";
 
 interface RegisterPackageModalProps {
@@ -51,7 +50,14 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
   const fetchUsers = async () => {
     try {
       const data = await getUsers();
-      setUsers(data);
+      const filteredUsers = data.filter(
+        (user: User) =>
+          user.name &&
+          user.name.trim() !== "" &&
+          user.suite_no &&
+          user.suite_no.trim() !== ""
+      );
+      setUsers(filteredUsers);
     } catch (err) {
       console.error("Failed to fetch users", err);
     }
@@ -133,6 +139,9 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     }
     if (!formData.trackingNo) {
       newErrors.trackingNo = "Reference Tracking is required";
+    }
+    if (!/^\d{1,13}$/.test(formData.trackingNo)) {
+      newErrors.trackingNo = "Tracking number must be digits only and less than 14 digits";
     }
 
     // Check if at least one piece has weight
@@ -333,7 +342,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       >
       <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 2 }}>
         <Typography component="span" sx={{ fontWeight: 600, fontSize: "1.25rem" }}>
-          Register Package
+          Register Package  
         </Typography>
         <IconButton onClick={onClose} size="small" disabled={isSubmitting}>
           <CloseIcon />
@@ -366,11 +375,6 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
                 onRemovePiece={handleRemovePiece}
                 calculateTotals={calculateTotals}
                 errors={errors}
-              />
-
-              <OptionsSection
-                formData={formData}
-                onInputChange={handleInputChange}
               />
             </Grid>
           )}

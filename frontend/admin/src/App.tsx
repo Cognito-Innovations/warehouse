@@ -32,6 +32,7 @@ import PickupRequestDetail from './pages/PickupRequestDetail';
 import ViewShipmentExportPage from './pages/ViewShipmentExportPage';
 import CountriesPage from './pages/CountriesPage';
 import CurrenciesPage from './pages/CurrenciesPage';
+import CouriersPage from './pages/CouriersPage';
 
 function App() {
   const { user } = useAuth()
@@ -65,7 +66,7 @@ function App() {
           <Route path="/*" element={
             <ProtectedRoute>
               <Sidebar 
-                logo={'S'} 
+                logo={'P'}
                 menuItems={visibleMenuItems}
                 onSubMenuToggle={setIsSubMenuOpen}
               />
@@ -97,10 +98,10 @@ function App() {
                   <Route path="/suite" element={<MySuiteContent />} />
                   <Route path="/customers" element={<Customers />} />
                   <Route path="/customers/:id" element={<CustomerDetailPage />} />
-                  <Route path="/reports" element={<Dashboard />} />
-                  <Route path="/master" element={<Dashboard />} />
+                  {/* these routes should be in super user able to access these pages */}
                   <Route path="/settings/countries" element={<CountriesPage />} />
                   <Route path="/settings/currencies" element={<CurrenciesPage />} />
+                  <Route path="/settings/couriers" element={<CouriersPage />} />
                 </Routes>
               </Box>
             </ProtectedRoute>

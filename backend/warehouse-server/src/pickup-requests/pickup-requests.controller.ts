@@ -161,7 +161,7 @@ export class PickupRequestsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a pickup request by ID' })
-  @ApiParam({ 
+  @ApiParam({
     name: 'id',
     description: 'Pickup request ID',
     example: '123e4567-e89b-12d3-a456-426614174000',

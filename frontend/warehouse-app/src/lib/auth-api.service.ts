@@ -1,12 +1,12 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001";
 
 // Create a base axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -15,8 +15,8 @@ export const getAuthenticatedApi = (token: string) => {
   return axios.create({
     baseURL: API_BASE_URL,
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
     },
   });
 };
@@ -35,7 +35,7 @@ export interface PickupRequestPayload {
 
 export const createPickupRequest = async (payload: PickupRequestPayload, token: string) => {
   const authenticatedApi = getAuthenticatedApi(token);
-  const res = await authenticatedApi.post('/pickup-requests', payload);
+  const res = await authenticatedApi.post("/pickup-requests", payload);
   return res.data;
 };
 

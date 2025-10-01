@@ -34,16 +34,16 @@ export interface AddressState {
 
 // Action Types
 export type AddressAction =
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SET_COUNTRIES'; payload: Country[] }
-  | { type: 'SET_ADDRESSES'; payload: AddressData[] }
-  | { type: 'SELECT_COUNTRY'; payload: string }
-  | { type: 'SELECT_ADDRESS'; payload: AddressData }
-  | { type: 'UPDATE_ADDRESS'; payload: AddressData }
-  | { type: 'ADD_ADDRESS'; payload: AddressData }
-  | { type: 'REMOVE_ADDRESS'; payload: string }
-  | { type: 'LOAD_USER_PREFERENCES_SUCCESS'; payload: AddressData }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_ERROR"; payload: string | null }
+  | { type: "SET_COUNTRIES"; payload: Country[] }
+  | { type: "SET_ADDRESSES"; payload: AddressData[] }
+  | { type: "SELECT_COUNTRY"; payload: string }
+  | { type: "SELECT_ADDRESS"; payload: AddressData }
+  | { type: "UPDATE_ADDRESS"; payload: AddressData }
+  | { type: "ADD_ADDRESS"; payload: AddressData }
+  | { type: "REMOVE_ADDRESS"; payload: string }
+  | { type: "LOAD_USER_PREFERENCES_SUCCESS"; payload: AddressData }
 
 const initialAddress: AddressData = {
   country_id: "",
@@ -177,10 +177,10 @@ const loadUserPreferences = async (userId: string, dispatch: React.Dispatch<Addr
       dispatch({ type: "SET_LOADING", payload: false });
     }
   } catch (error) {
-    console.error('[ADDRESS_CONTEXT] Failed to load user preferences:', error);
+    console.error("[ADDRESS_CONTEXT] Failed to load user preferences:", error);
     dispatch({ type: "SET_ERROR", payload: "Failed to load address details. Please try again." });
   }
-}
+};
 
 export const AddressProvider: React.FC<AddressProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(addressReducer, initialState);

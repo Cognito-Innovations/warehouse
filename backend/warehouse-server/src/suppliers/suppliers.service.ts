@@ -16,11 +16,11 @@ export class SuppliersService {
     createSupplierDto: CreateSupplierDto,
   ): Promise<SupplierResponseDto> {
     const existingSupplier = await this.supplierRepository.findOne({
-      where: { supplier_name: createSupplierDto.supplier_name }
+      where: { supplier_name: createSupplierDto.supplier_name },
     });
     if (existingSupplier) {
       throw new ConflictException(
-        `Supplier "${createSupplierDto.supplier_name}" already exists`
+        `Supplier "${createSupplierDto.supplier_name}" already exists`,
       );
     }
 

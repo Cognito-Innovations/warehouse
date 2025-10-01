@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../contexts/AuthContext';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../contexts/AuthContext";
+import { Box, CircularProgress, Typography } from "@mui/material";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace('/');
+      router.push("/");
     }
   }, [user, loading, router]);
 
@@ -23,11 +23,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return (
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
           gap: 2,
         }}
       >

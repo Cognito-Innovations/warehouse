@@ -1,17 +1,16 @@
 import React, { useState } from "react";
 import {
   Box,
+  Chip,
   Collapse,
   IconButton,
   TableCell,
   TableRow,
-  Chip,
   Tooltip,
-  Divider,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import CancelIcon from "@mui/icons-material/Cancel";
+// import CancelIcon from "@mui/icons-material/Cancel";
 import PrintIcon from "@mui/icons-material/Print";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import InvoiceProducts from "./InvoiceProducts";
@@ -46,7 +45,6 @@ interface Props {
 export const InvoiceRow: React.FC<Props> = ({
   invoice,
   payment_slips,
-  onStatusUpdated,
   isDiscarded,
 }) => {
   const [open, setOpen] = useState(false);
@@ -66,10 +64,6 @@ export const InvoiceRow: React.FC<Props> = ({
     }
   };
 
-  // TODO: correct this function with currency
-  const formatCurrency = (amount: number, currency = "USD") => {
-    return amount
-  };
 
   const handlePrint = () => {
     // Create a new window for printing
@@ -94,8 +88,8 @@ export const InvoiceRow: React.FC<Props> = ({
               <h1>Invoice ${invoice.invoice_no}</h1>
             </div>
             <div class="invoice-details">
-              <p><strong>Amount:</strong> ${formatCurrency(invoice.amount)}</p>
-              <p><strong>Total:</strong> ${formatCurrency(invoice.total)}</p>
+              <p><strong>Amount:</strong> ${(invoice.amount)}</p>
+              <p><strong>Total:</strong> ${(invoice.total)}</p>
               <p><strong>Status:</strong> ${invoice.status}</p>
             </div>
             ${invoice.products && invoice.products.length > 0 ? `
@@ -105,7 +99,6 @@ export const InvoiceRow: React.FC<Props> = ({
                     <th>Product Name</th>
                     <th>Quantity</th>
                     <th>Unit Price</th>
-                    <th>Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -113,8 +106,7 @@ export const InvoiceRow: React.FC<Props> = ({
                     <tr>
                       <td>${product.name}</td>
                       <td>${product.quantity}</td>
-                      <td>${formatCurrency(product.unit_price)}</td>
-                      <td>${formatCurrency(product.unit_price * product.quantity)}</td>
+                      <td>${(product.unit_price)}</td>
                     </tr>
                   `).join("")}
                 </tbody>
@@ -161,13 +153,15 @@ export const InvoiceRow: React.FC<Props> = ({
           {invoice.invoice_no}
         </TableCell>
         <TableCell align="right" sx={{ fontWeight: 500 }}>
-          {formatCurrency(invoice.amount)}
+          {(invoice.amount)}
         </TableCell>
         <TableCell align="right">
           <Box component="span" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>
-            {formatCurrency(invoice.total)}
+            {(invoice.total)}
           </Box>
         </TableCell>
+        {/* 
+        TODO: Add status column when functionality is implemented i.e for shipping its not working properly
         <TableCell align="center">
           <Chip
             label={invoice.status.replace("_", " ")}
@@ -176,7 +170,7 @@ export const InvoiceRow: React.FC<Props> = ({
             variant="outlined"
             sx={{ fontWeight: 600 }}
           />
-        </TableCell>
+        </TableCell> */}
         <TableCell align="center">
           <Box display="flex" gap={0.5} justifyContent="center">
             <Tooltip title="View Details">
@@ -205,7 +199,8 @@ export const InvoiceRow: React.FC<Props> = ({
                 <PrintIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Cancel Invoice">
+            {/* TODO: Uncomment when functionality is implemented */}
+            {/* <Tooltip title="Cancel Invoice">
               <IconButton
                 size="small"
                 color="error"
@@ -217,7 +212,7 @@ export const InvoiceRow: React.FC<Props> = ({
               >
                 <CancelIcon fontSize="small" />
               </IconButton>
-            </Tooltip>
+            </Tooltip> */}
           </Box>
         </TableCell>
       </TableRow>

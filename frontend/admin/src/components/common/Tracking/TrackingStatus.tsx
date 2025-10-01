@@ -23,14 +23,13 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({
   const currentStageIndex = statuses.findIndex(status => status.id === currentStageId);
 
   return (
-    <Box sx={{ p: 0 }}>
-      <Box sx={{ p: 2 }}>
+    <Box sx={{ pt: 1 }}>
+      <Card sx={{ p: 3, pt: 2 }}>
+      <Box sx={{ mb: 2 }}>
         <Typography variant="h6" fontWeight={600}>
           {title}
         </Typography>
       </Box>
-
-      <Card sx={{ p: 3 }}>
         {statuses.map((status, index) => {
           const isCompleted = currentStageIndex >= 0 && index <= currentStageIndex;
 

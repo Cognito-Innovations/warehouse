@@ -27,6 +27,7 @@ import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
 import { UpdatePackageDto } from '../dto/update-package.dto';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
+import { CreatePackageChargeDto } from '../dto/create-package-charge.dto';
 
 interface AuthenticatedRequest extends ExpressRequest {
   user: {
@@ -257,21 +258,33 @@ export class PackagesController {
 
   @Get('shipments/search')
   @ApiOperation({
-    summary: 'Search for a package by tracking number and status'
+    summary: 'Search for a package by tracking number and status',
   })
   @ApiQuery({ name: 'trackingNumber', type: String, required: true })
   @ApiQuery({
     name: 'status',
     type: String,
     required: true,
-    example: 'Ready To Ship'
+    example: 'Ready To Ship',
   })
   @ApiOkResponse({ description: 'Package found', type: PackageResponseDto })
   async searchPackage(
     @Query('trackingNumber') trackingNumber: string,
     @Query('status') status: string,
   ): Promise<PackageResponseDto> {
-    return this.packagesService.findByTrackingNumberAndStatus(trackingNumber, status);
+    return this.packagesService.findByTrackingNumberAndStatus(
+      trackingNumber,
+      status,
+    );
+  }
+
+  @Post('shipments/charges')
+  @ApiOperation({ summary: 'Create a package shipment charge' })
+  @ApiBody({ type: CreatePackageChargeDto })
+  async createPackageCharge(
+    @Body() createPackageChargeDto: CreatePackageChargeDto,
+  ): Promise<any> {
+    return this.packagesService.createPackageCharges(createPackageChargeDto);
   }
 
   @Delete(':id')
@@ -281,5 +294,4 @@ export class PackagesController {
   async delete(@Param('id') id: string): Promise<void> {
     return this.packagesService.deletePackage(id);
   }
-
 }

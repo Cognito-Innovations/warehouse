@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -15,10 +15,10 @@ import {
   FormControl,
   InputLabel,
   Typography,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Close,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 interface ProfileData {
   identifier: string;
@@ -47,7 +47,7 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
 
   const handleSave = () => {
     // Handle save logic here
-    console.log('Saving profile data:', formData);
+    console.log("Saving profile data:", formData);
     onClose();
   };
 
@@ -59,15 +59,15 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: '12px',
+          borderRadius: "12px",
           p: 1,
         },
       }}
     >
       <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
         pb: 2
       }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -79,16 +79,16 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
       </DialogTitle>
       
       <DialogContent sx={{ pb: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
           <TextField
             label="ID Card / Passport No *"
             value={formData.identifier}
-            onChange={handleChange('identifier')}
+            onChange={handleChange("identifier")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -96,12 +96,12 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
           <TextField
             label="Name *"
             value={formData.name}
-            onChange={handleChange('name')}
+            onChange={handleChange("name")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -118,8 +118,8 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
             }}
             placeholder="dd/mm/yyyy"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -127,12 +127,12 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
           <TextField
             label="Contact No"
             value={formData.contact}
-            onChange={handleChange('contact')}
+            onChange={handleChange("contact")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -140,12 +140,12 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
           <TextField
             label="Alternative Contact No"
             value={formData.alternativeContact}
-            onChange={handleChange('alternativeContact')}
+            onChange={handleChange("alternativeContact")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -154,10 +154,10 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
             <InputLabel>Gender</InputLabel>
             <Select
               value={formData.gender}
-              onChange={handleChange('gender')}
+              onChange={handleChange("gender")}
               label="Gender"
               sx={{
-                borderRadius: '8px',
+                borderRadius: "8px",
               }}
             >
               <MenuItem value="male">Male</MenuItem>
@@ -174,14 +174,14 @@ export default function EditProfileModal({ open, onClose, profileData }: EditPro
           variant="contained"
           onClick={handleSave}
           sx={{
-            bgcolor: 'primary.main',
-            color: 'white',
-            textTransform: 'none',
-            borderRadius: '8px',
+            bgcolor: "primary.main",
+            color: "white",
+            textTransform: "none",
+            borderRadius: "8px",
             px: 4,
             py: 1,
-            '&:hover': {
-              bgcolor: 'primary.dark',
+            "&:hover": {
+              bgcolor: "primary.dark",
             },
           }}
         >

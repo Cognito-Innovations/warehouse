@@ -130,7 +130,10 @@ export default function InvoiceTable({
               <TableCell sx={{ fontWeight: 600 }}>Invoice No.</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">Amount</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">Total</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="center">Status</TableCell>
+              {/* 
+              TODO: Add status column when functionality is implemented i.e for shipping its not working properly
+              <TableCell sx={{ fontWeight: 600 }} align="center">Status</TableCell> 
+              */}
               <TableCell sx={{ fontWeight: 600 }} align="center">Actions</TableCell>
             </TableRow>
           </TableHead>

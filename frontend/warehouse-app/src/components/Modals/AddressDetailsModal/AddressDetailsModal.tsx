@@ -1,7 +1,7 @@
-'use client';
-import React from 'react';
-import { X } from 'lucide-react';
-import { CopyButtonAdvanced } from '../../UI';
+"use client";
+import React from "react";
+import { X } from "lucide-react";
+import { CopyButtonAdvanced } from "../../UI";
 
 interface AddressData {
   id?: string;
@@ -30,11 +30,11 @@ const AddressDetailsModal: React.FC<AddressDetailsModalProps> = ({isOpen, onClos
   if (!isOpen) return null;
 
   const addressDetails = [
-    { label: 'Full Address', value: addressData.address +  ' ' + addressData.country_name },
-    { label: 'Full Name', value: addressData.name },
-    { label: 'Address Line 1', value: addressData.address },
-    { label: 'Phone Number', value: addressData.phone_number },
-    { label: 'Country', value: addressData.country_name },
+    { label: "Full Address", value: `${addressData.address   } ${  addressData.country_name}` },
+    { label: "Full Name", value: addressData.name },
+    { label: "Address Line 1", value: addressData.address },
+    { label: "Phone Number", value: addressData.phone_number },
+    { label: "Country", value: addressData.country_name },
   ];
 
 
@@ -88,7 +88,7 @@ const AddressDetailsModal: React.FC<AddressDetailsModalProps> = ({isOpen, onClos
                     <span className="text-sm text-gray-900">{detail.value}</span>
                   </div>
                   <div className="col-span-1 flex justify-center">
-                    {detail.value !== '-' && (
+                    {detail.value !== "-" && (
                       <CopyButtonAdvanced 
                         text={detail.value}
                         size="sm"

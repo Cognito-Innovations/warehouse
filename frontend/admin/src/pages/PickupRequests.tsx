@@ -8,16 +8,15 @@ import StatusChip from '../components/common/StatusChip';
 import CommonTable from '../components/common/CommonTable';
 import { formatDateTime } from '../utils/formatDateTime';
 import type { ColumnDefinition } from '../types/table';
-import type { PickupRequest } from '../types';
 import { pickupSummaryConfig } from '../utils/summaryConfig';
 import RequestSummary from '../components/common/RequestSummary';
 
 const statusOptions = [
-    { value: 'REQUESTED', label: 'Requested' },
-    { value: 'QUOTATION CONFIRMED', label: 'Quotation Confirmed' },
-    { value: 'ACCEPTED', label: 'Accepted' },
-    { value: 'PICKED', label: 'Picked' },
-    { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'requested', label: 'Requested' },
+  { value: 'quoted', label: 'Quotation Confirmed' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'picked', label: 'Picked' },
+  { value: 'cancelled', label: 'Cancelled' },
 ];
 
 const PickupRequests: React.FC = () => {
@@ -42,15 +41,25 @@ const PickupRequests: React.FC = () => {
     fetchRequests()
   }, []);
 
-  const filteredRequests = useMemo(() => {
-    if (!selectedStatus) {
-      return requests;
-    }
-    const statusesToFilter = Array.isArray(selectedStatus) ? selectedStatus : [selectedStatus];
-    return requests.filter(req => statusesToFilter.includes(req.status || 'REQUESTED'));
+  const mappedRows = useMemo(() => {
+    const filteredRequests = selectedStatus
+      ? requests.filter(req => {
+          const statusesToFilter = Array.isArray(selectedStatus) ? selectedStatus : [selectedStatus];
+          return statusesToFilter.includes(req.status);
+        })
+      : requests;
+
+    return filteredRequests.map((req: any) => ({
+      id: req.id!,
+      date: formatDateTime(req.created_at),
+      customer: req.user.name,
+      pickupLocation: req.pickup_address,
+      supplier: req.supplier_name,
+      status: req.status,
+    }));
   }, [requests, selectedStatus]);
 
-  const columns: ColumnDefinition<PickupRequest>[] = [
+  const columns: ColumnDefinition<typeof mappedRows[0]>[] = [
     {
       header: 'Request No.',
       cell: (row) => <Typography variant="body2" fontWeight={500}>{row.id}</Typography>,
@@ -58,27 +67,27 @@ const PickupRequests: React.FC = () => {
     },
     {
       header: 'Date',
-      cell: (row) => <Typography variant="body2">{formatDateTime(row.created_at)}</Typography>,
+      cell: (row) => <Typography variant="body2">{formatDateTime(row.date)}</Typography>,
       width: '20%',
     },
     {
       header: 'Customer',
-      cell: (row) => <Typography variant="body2">{row.user.name}</Typography>,
+      cell: (row) => <Typography variant="body2">{row.customer}</Typography>,
       width: '25%',
     },
     {
       header: 'Pickup Location',
-      cell: (row) => <Typography variant="body2">{row.pickup_address}</Typography>,
+      cell: (row) => <Typography variant="body2">{row.pickupLocation}</Typography>,
       width: '30%',
     },
     {
       header: 'Supplier',
-      cell: (row) => <Typography variant="body2">{row.supplier_name}</Typography>,
+      cell: (row) => <Typography variant="body2">{row.supplier}</Typography>,
       width: '20%',
     },
     {
       header: 'Status',
-      cell: (row) => <StatusChip status={row.status || 'REQUESTED'} />,
+      cell: (row) => <StatusChip status={row.status} />,
       width: '20%',
     },
   ];
@@ -100,7 +109,7 @@ const PickupRequests: React.FC = () => {
       />
 
       <CommonTable
-        rows={filteredRequests}
+        rows={mappedRows}
         columns={columns}
         loading={loading}
         statusOptions={statusOptions}

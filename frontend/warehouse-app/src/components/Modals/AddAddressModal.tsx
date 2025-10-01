@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -15,17 +15,18 @@ import {
   FormControl,
   InputLabel,
   Typography,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Close,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
+import { createUserAddress } from "@/lib/api.service";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 interface AddressData {
-  contactPerson: string;
-  contactNo: string;
-  addressLine1: string;
-  addressLine2: string;
-  zipCode: string;
+  name: string;
+  address: string;
+  zip_code: string;
   city: string;
   state: string;
   country: string;
@@ -36,27 +37,29 @@ interface AddAddressModalProps {
   onClose: () => void;
 }
 
+//TODO: These countries pull from db by loading in admin
 const countries = [
-  'Indonesia',
-  'South Korea',
-  'United States',
-  'United Kingdom',
-  'Japan',
-  'Singapore',
-  'Malaysia',
-  'Thailand',
+  "Indonesia",
+  "South Korea",
+  "United States",
+  "United Kingdom",
+  "Japan",
+  "Singapore",
+  "Malaysia",
+  "Thailand",
+  "India"
 ];
 
 export default function AddAddressModal({ open, onClose }: AddAddressModalProps) {
+  const { data: session, status } = useSession();
+  const user_id = (session?.user as any)?.user_id;
   const [formData, setFormData] = useState<AddressData>({
-    contactPerson: '',
-    contactNo: '',
-    addressLine1: '',
-    addressLine2: '',
-    zipCode: '',
-    city: '',
-    state: '',
-    country: 'Indonesia',
+    name: "",
+    address: "",
+    zip_code: "",
+    city: "",
+    state: "",
+    country: "",
   });
 
   const handleChange = (field: keyof AddressData) => (event: any) => {
@@ -67,9 +70,13 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
   };
 
   const handleSave = () => {
-    // Handle save logic here
-    console.log('Saving address data:', formData);
-    onClose();
+    createUserAddress({...formData, user_id: user_id}).then(() => {
+      toast.success("Address added successfully");
+      onClose();
+    }).catch((error) => {
+      toast.error("Failed to add address");
+      console.error("Error adding address:", error);
+    });
   };
 
   return (
@@ -78,90 +85,60 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '12px',
-          p: 1,
-        },
-      }}
+      PaperProps={{ sx: {borderRadius: "12px"} }}
     >
       <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
+        p: 3,
         pb: 2
       }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Add / Edit Address
+          Add Address
         </Typography>
         <IconButton onClick={onClose} size="small">
           <Close />
         </IconButton>
       </DialogTitle>
       
-      <DialogContent sx={{ pb: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <DialogContent>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
           <TextField
             label="Contact Person / Receiver Name / Business Name *"
-            value={formData.contactPerson}
-            onChange={handleChange('contactPerson')}
+            value={formData.name}
+            onChange={handleChange("name")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
           
           <TextField
-            label="Contact No *"
-            value={formData.contactNo}
-            onChange={handleChange('contactNo')}
+            label="Address"
+            value={formData.address}
+            onChange={handleChange("address")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
-          
-          <TextField
-            label="Address Line 1 *"
-            value={formData.addressLine1}
-            onChange={handleChange('addressLine1')}
-            fullWidth
-            size="medium"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
-            }}
-          />
-          
-          <TextField
-            label="Address Line 2"
-            value={formData.addressLine2}
-            onChange={handleChange('addressLine2')}
-            fullWidth
-            size="medium"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
-            }}
-          />
-          
+      
           <TextField
             label="Zip Code"
-            value={formData.zipCode}
-            onChange={handleChange('zipCode')}
+            value={formData.zip_code}
+            onChange={handleChange("zip_code")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -169,12 +146,12 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           <TextField
             label="City"
             value={formData.city}
-            onChange={handleChange('city')}
+            onChange={handleChange("city")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -182,12 +159,12 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           <TextField
             label="State"
             value={formData.state}
-            onChange={handleChange('state')}
+            onChange={handleChange("state")}
             fullWidth
             size="medium"
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -196,10 +173,17 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
             <InputLabel>Country *</InputLabel>
             <Select
               value={formData.country}
-              onChange={handleChange('country')}
+              onChange={handleChange("country")}
               label="Country *"
               sx={{
-                borderRadius: '8px',
+                borderRadius: "8px",
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxHeight: 100,
+                  },
+                },
               }}
             >
               {countries.map((country) => (
@@ -212,19 +196,20 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
         </Box>
       </DialogContent>
       
-      <DialogActions sx={{ p: 3, pt: 1 }}>
+      <DialogActions sx={{ p: 3 }}>
         <Button
           variant="contained"
           onClick={handleSave}
+          fullWidth
           sx={{
-            bgcolor: 'primary.main',
-            color: 'white',
-            textTransform: 'none',
-            borderRadius: '8px',
+            bgcolor: "primary.main",
+            color: "white",
+            textTransform: "none",
+            borderRadius: "8px",
             px: 4,
-            py: 1,
-            '&:hover': {
-              bgcolor: 'primary.dark',
+            py: 1.5,
+            "&:hover": {
+              bgcolor: "primary.dark",
             },
           }}
         >

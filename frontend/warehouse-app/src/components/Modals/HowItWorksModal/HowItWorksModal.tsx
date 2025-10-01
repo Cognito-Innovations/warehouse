@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { X } from 'lucide-react';
-import Link from 'next/link';
+import React from "react";
+import { X } from "lucide-react";
+import Link from "next/link";
 
 interface HowItWorksModalProps {
   isOpen: boolean;
@@ -35,7 +35,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClose }) =>
     },
     {
       number: 5,
-      text: "We will log the items as they are received to your Shopme suite. You can also view the shopping request status & item's status from your assisted shopping request portal."
+      text: "We will log the items as they are received to your Palakart suite. You can also view the shopping request status & item's status from your assisted shopping request portal."
     },
     {
       number: 6,
@@ -75,8 +75,8 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClose }) =>
           {/* Contact Information */}
           <div className="text-center mb-6">
             <p className="text-sm text-gray-600">
-              For help, call <span className="font-semibold">+9603344555</span> or Email to{' '}
-              <span className="font-semibold text-purple-700">support@shopme.mv</span>
+              For help, Email to{" "}
+              <span className="font-semibold text-purple-700">support@palakart.com</span>
             </p>
           </div>
 

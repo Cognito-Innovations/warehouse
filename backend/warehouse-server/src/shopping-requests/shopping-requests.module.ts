@@ -9,6 +9,7 @@ import { TrackingRequestsModule } from 'src/tracking-requests/tracking-requests.
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { InvoicesModule } from 'src/invoice/invoices.module';
 import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UserPreferencesModule } from 'src/user-preferences/user-preferences.mod
     TrackingRequestsModule,
     InvoicesModule,
     UserPreferencesModule,
+    UsersModule,
   ],
   controllers: [ShoppingRequestsController],
   providers: [ShoppingRequestsService],

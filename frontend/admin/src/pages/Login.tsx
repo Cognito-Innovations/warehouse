@@ -145,11 +145,12 @@ const Login: React.FC = () => {
           borderRadius: 3,
           boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
           background: 'white',
-          overflow: 'visible', // ✨ This is the fix!
+          overflow: 'visible'
         }}
       >
         {/* Logo */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <img src="/palakart-text-logo.png" alt="Palakart" width={250} height={100}/>
           <Typography
             variant="h4"
             sx={{
@@ -159,7 +160,6 @@ const Login: React.FC = () => {
               letterSpacing: '-0.5px',
             }}
           >
-            shopme.mv
           </Typography>
         </Box>
 
@@ -219,7 +219,7 @@ const Login: React.FC = () => {
                       edge="end"
                       sx={{ color: '#64748b', marginRight: '1px' }}
                     >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
                     </IconButton>
                   </InputAdornment>
                 ),

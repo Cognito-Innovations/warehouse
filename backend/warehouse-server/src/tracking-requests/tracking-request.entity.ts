@@ -39,6 +39,7 @@ export enum TrackingStatus {
   Requested = 'requested',
   Shipped = 'shipped',
   Picked = 'picked',
+  Rejected = 'rejected',
 }
 
 @Entity('tracking_request')
@@ -55,10 +56,6 @@ export class TrackingRequest extends BaseTimestampEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => User, { eager: true, nullable: true })
-  @JoinColumn({ name: 'admin_id' })
-  admin?: User;
-
   @Column({
     type: 'enum',
     enum: FeatureType,
@@ -71,6 +68,7 @@ export class TrackingRequest extends BaseTimestampEntity {
   })
   status: TrackingStatus;
 
+  //later:todo: these roles should be foriegn key of roles foreign table
   @Column({ default: Role.User })
   role: Role;
 

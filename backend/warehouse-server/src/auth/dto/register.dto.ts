@@ -24,11 +24,11 @@ export class RegisterDto {
   @IsString()
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   @Matches(/[A-Z]/, {
-    message: 'Password must contain at least one uppercase letter'
+    message: 'Password must contain at least one uppercase letter',
   })
   @Matches(/[0-9]/, { message: 'Password must contain at least one number' })
   @Matches(/[!@#$%^&*]/, {
-    message: 'Password must contain at least one special character'
+    message: 'Password must contain at least one special character',
   })
   password?: string;
 
