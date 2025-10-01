@@ -173,24 +173,43 @@ export class ShoppingRequestsService {
       );
     }
 
-    const shoppingRequestProducts = await this.productRepository.find({
-      where: { shopping_request_id: shoppingRequest.id },
-    });
-
-    const slips = await this.documentsService.findByFeature(
-      FeatureType.ShoppingRequest,
-      shoppingRequest.id,
-    );
-
-    const invoice = await this.invoicesService.getInvoiceByShoppingRequestId(
-      shoppingRequest.id,
-    );
-
-    const trackingRequests =
-      await this.trackingRequestsService.getTrackingRequestsByFeature(
+    const [
+      shoppingRequestProducts,
+      slips,
+      invoice,
+      trackingRequests,
+      userCurrency,
+    ] = await Promise.all([
+      this.productRepository.find({
+        where: { shopping_request_id: shoppingRequest.id },
+      }),
+      this.documentsService.findByFeature(
         FeatureType.ShoppingRequest,
         shoppingRequest.id,
+      ),
+      this.invoicesService.getInvoiceByShoppingRequestId(shoppingRequest.id),
+      this.trackingRequestsService.getTrackingRequestsByFeature(
+        FeatureType.ShoppingRequest,
+        shoppingRequest.id,
+      ),
+      this.userPreferencesService.getUserCurrency(shoppingRequest.user_id),
+    ]);
+
+    const convertPrice = async (price: number | null | undefined) => {
+      if (price === null || price === undefined) return price;
+      return this.userPreferencesService.getConvertedPrice(
+        shoppingRequest.user_id,
+        price,
       );
+    };
+
+    const formatPrice = async (price: number | null | undefined) => {
+      if (price === null || price === undefined) return price;
+      return this.userPreferencesService.getFormattedConvertedPrice(
+        shoppingRequest.user_id,
+        price,
+      );
+    }
 
     return {
       id: shoppingRequest.id,
@@ -204,13 +223,8 @@ export class ShoppingRequestsService {
       shopping_request_products: await Promise.all(
         shoppingRequestProducts.map(async (product) => ({
           ...product,
-          unit_price: await this.userPreferencesService.getConvertedPrice(
-            shoppingRequest.user_id,
-            product.unit_price,
-          ),
-          currency: await this.userPreferencesService.getUserCurrency(
-            shoppingRequest.user_id,
-          ),
+          unit_price: await convertPrice(product.unit_price),
+          currency: userCurrency, 
         })),
       ),
       remarks: shoppingRequest.remarks,
@@ -221,40 +235,14 @@ export class ShoppingRequestsService {
         ? {
             id: invoice.id,
             invoice_no: invoice.invoice_no,
-            amount:
-              await this.userPreferencesService.getFormattedConvertedPrice(
-                shoppingRequest.user_id,
-                invoice.amount,
-              ),
-            total: await this.userPreferencesService.getFormattedConvertedPrice(
-              shoppingRequest.user_id,
-              invoice.total,
-            ),
+            amount: (await formatPrice(invoice.amount)) ?? '',
+            total: (await formatPrice(invoice.total)) ?? '',
             status: invoice.status,
             products: await Promise.all(
               (invoice.products ?? []).map(async (product) => ({
-                id: product.id,
-                shopping_request_id: product.shopping_request_id,
-                name: product.name,
-                description: product.description,
-                unit_price:
-                  await this.userPreferencesService.getFormattedConvertedPrice(
-                    shoppingRequest.user_id,
-                    product.unit_price,
-                  ),
-                currency: await this.userPreferencesService.getUserCurrency(
-                  shoppingRequest.user_id,
-                ),
-                quantity: product.quantity,
-                url: product.url,
-                size: product.size,
-                color: product.color,
-                variants: product.variants,
-                if_not_available_quantity: product.if_not_available_quantity,
-                if_not_available_color: product.if_not_available_color,
-                available: product.available,
-                created_at: product.created_at,
-                updated_at: product.updated_at,
+                ...product,
+                unit_price: (await formatPrice(product.unit_price)) ?? '',
+                currency: userCurrency,
               })),
             ),
             created_at: invoice.created_at,

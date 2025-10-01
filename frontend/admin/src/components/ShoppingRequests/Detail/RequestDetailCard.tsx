@@ -1,4 +1,4 @@
-import { Button, CircularProgress } from '@mui/material';
+import { Box, Button, CircularProgress } from '@mui/material';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -63,43 +63,41 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
   const renderActionButton = () => {
     if (latestStatus === "REQUESTED") {
       return (
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{ mr: 1, textTransform: 'none' }}
-          onClick={handleSendQuotation}
-          disabled={loading}
-        >
-          {loading ?
-            <>
-              <CircularProgress size={20} color="inherit" />
-              Sending...
-            </>
-            : "Send Quotation"}
-        </Button>
-      );
-    }
+        <>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ mr: 1, textTransform: 'none' }}
+            onClick={handleSendQuotation}
+            disabled={loading}
+          >
+            {loading ?
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CircularProgress size={20} color="inherit" />
+                Sending...
+              </Box>
+              : "Send Quotation"}
+          </Button>
 
-    if (latestStatus === "QUOTATION_READY") {
-      return (
-        <Button
-          variant="contained"
-          sx={{
-            bgcolor: '#FEE2E2',
-            color: '#EF4444',
-            '&:hover': { bgcolor: '#FECACA' },
-            textTransform: 'none'
-          }}
-          onClick={() => handleStatusChange("REJECTED")}
-          disabled={loading}
-        >
-          {loading ?
-            <>
-              <CircularProgress size={20} color="inherit" />
-              Rejecting...
-            </>
-            : "Reject"}
-        </Button>
+          <Button
+            variant="contained"
+            sx={{
+              bgcolor: '#FEE2E2',
+              color: '#EF4444',
+              '&:hover': { bgcolor: '#FECACA' },
+              textTransform: 'none'
+            }}
+            onClick={() => handleStatusChange("REJECTED")}
+            disabled={loading}
+          >
+            {loading ?
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CircularProgress size={20} color="inherit" />
+                Rejecting...
+              </Box>
+              : "Reject"}
+          </Button>
+        </>
       );
     }
 
@@ -112,10 +110,10 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
           disabled={loading}
         >
           {loading ?
-            <>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <CircularProgress size={20} color="inherit" />
               Completing...
-            </>
+            </Box>
             : "Complete"}
         </Button>
       );

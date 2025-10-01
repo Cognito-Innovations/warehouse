@@ -5,11 +5,12 @@ import { createPackage, getRacks, getSuppliers, getUsers } from "../../services/
 import { toast } from "sonner";
 
 import { Close as CloseIcon } from "@mui/icons-material";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box, CircularProgress } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box, CircularProgress, TextField } from "@mui/material";
 import FormFields from "./RegisterPackageModal/FormFields";
 
 import WeightSection from "./RegisterPackageModal/WeightSection";
 import AddSupplierModal from "./RegisterPackageModal/AddSupplierModal";
+import OptionsSection from "./RegisterPackageModal/OptionsSection";
 
 interface RegisterPackageModalProps {
   open: boolean;
@@ -376,6 +377,11 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
                 calculateTotals={calculateTotals}
                 errors={errors}
               />
+
+            <OptionsSection
+              formData={formData}
+              onInputChange={handleInputChange}
+            />
             </Grid>
           )}
       </DialogContent>

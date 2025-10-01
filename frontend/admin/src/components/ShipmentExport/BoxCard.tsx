@@ -14,7 +14,7 @@ interface BoxCardProps {
   };
   index: number;
   total: number;
-  onEdit: (boxId: number) => void;
+  onEdit: (boxId: number, displayLabel: string) => void;
   onDelete: (boxId: number) => void;
   onSelect: (boxId: number) => void;
   selected: boolean;
@@ -70,7 +70,7 @@ const BoxCard: React.FC<BoxCardProps> = ({
           <IconButton
             size="small"
             sx={{ bgcolor: "#e0e7ff", color: "#4f46e5" }}
-            onClick={() => onEdit(box.id)}
+            onClick={() => onEdit(box.id, displayLabel)}
           >
             <EditIcon fontSize="small" />
           </IconButton>

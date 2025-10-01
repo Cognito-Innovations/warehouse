@@ -103,10 +103,10 @@ export default function InvoiceTable({
             }}
           >
             {isApprovingPayment ? (
-              <>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CircularProgress size={20} color="inherit" />
                 Approving...
-              </>
+              </Box>
             ) : (
               "Approve Payment"
             )}
