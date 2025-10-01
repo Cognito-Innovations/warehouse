@@ -381,3 +381,8 @@ export const updateCourier = async (id: string, data: UpdateCourierPayload): Pro
   const response = await api.patch<Courier>(`/courier-companies/${id}`, data);
   return response.data;
 };
+
+export const deletePreArrival = async (id: string) => {
+  const res = await api.delete(`/pre-arrival/${id}`);
+  return res.data;
+};

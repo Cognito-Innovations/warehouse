@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Paper, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
-import type { User } from '../../types';
+import type { Customer } from '../../types';
 
 interface CustomerFiltersProps {
-  customers: User[];
-  onFilter: (list: User[]) => void;
+  customers: Customer[];
+  onFilter: (list: Customer[]) => void;
 }
 
 const CustomerFilters = ({ customers, onFilter }: CustomerFiltersProps) => {

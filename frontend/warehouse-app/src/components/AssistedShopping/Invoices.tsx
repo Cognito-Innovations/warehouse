@@ -74,7 +74,7 @@ export default function Invoices({ request, onUpdate }: { request: any, onUpdate
         <div className="flex items-center justify-between">
           <div>
             <p className="font-semibold text-gray-900">{number}</p>
-            {/* todo: Uncomment - amount is getting incorrect is implemented  <p className="text-sm text-gray-500"> {amount}</p> */}
+            <p className="text-sm text-gray-500"> {amount}</p> 
           </div>
           <p className="text-sm text-gray-500">{formatDateTime(date)}</p>
           <span
@@ -145,18 +145,20 @@ export default function Invoices({ request, onUpdate }: { request: any, onUpdate
               <button
                 onClick={handleConfirm}
                 disabled={uploadedUrls.length === 0 || uploading || confirming}
-                className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
+                className={`px-4 py-2 rounded-md text-sm font-medium text-white flex items-center justify-center gap-2 ${
                   uploadedUrls.length === 0 || uploading || confirming
                     ? "bg-gray-300 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700"
                 }`}
               >
-                {confirming ?
+                {confirming ? (
                   <>
                     <Loader size={18} color="text-white" />
-                    Confirming...
+                    <span>Confirming...</span>
                   </>
-                : "Confirm"}
+                ) : (
+                  "Confirm"
+                )}
               </button>
             </div>
           )}

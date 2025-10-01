@@ -6,24 +6,24 @@ import PrintHoldLabelButton from "../components/ActionButtons/PrintHoldLabel"
 import PrintLabelButton from "../components/ActionButtons/PrintLabelButton"
 import RaiseInvoiceButton from "../components/ActionButtons/RaiseInvoiceButton"
 
-export enum TRACKING_STATUS {
-  ALL = 'ALL',
-  ACTION_REQUIRED = 'Action Required',
-  IN_REVIEW = 'In Review',
-  READY_TO_SEND = 'Ready To Send',
-  REQUESTED = 'REQUESTED',
-  QUOTED = 'QUOTED',
-  CONFIRMED = 'CONFIRMED',
-  PICKED = 'PICKED',
-  CANCELLED = 'CANCELLED',
-  READY_TO_SHIP = 'Ready To Ship',
-  REQUEST_SHIP = 'Request Ship',
-  SHIPPED = 'SHIPPED',
-  DISCARDED = 'DISCARDED',
-  INVOICED = 'INVOICED',
-  PAYMENT_PENDING = 'Payment Pending',
-  PAYMENT_APPROVED = 'Payment Approved',
-  UPDATE_TO_DEPARTED = 'Departed'
+export const TRACKING_STATUS = {
+  ALL: 'ALL',
+  ACTION_REQUIRED: 'Action Required',
+  IN_REVIEW: 'In Review',
+  READY_TO_SEND: 'Ready To Send',
+  REQUESTED: 'REQUESTED',
+  QUOTED: 'QUOTED',
+  CONFIRMED: 'CONFIRMED',
+  PICKED: 'PICKED',
+  CANCELLED: 'CANCELLED',
+  READY_TO_SHIP: 'Ready To Ship',
+  REQUEST_SHIP: 'Request Ship',
+  SHIPPED: 'SHIPPED',
+  DISCARDED: 'DISCARDED',
+  INVOICED: 'INVOICED',
+  PAYMENT_PENDING: 'Payment Pending',
+  PAYMENT_APPROVED: 'Payment Approved',
+  UPDATE_TO_DEPARTED: 'Departed'
 }
 
 export const FEATURE_CONFIG = {

@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {Edit,} from "@mui/icons-material";
 import EditProfileModal, { ProfileData } from "../Modals/EditProfileModal";
-import {Box,Typography,Button,Card,CardContent,Grid,Switch, CircularProgress } from "@mui/material";
+import {Box, Typography, Button, Card, CardContent, Grid, } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUser } from "@/lib/api.service";
 

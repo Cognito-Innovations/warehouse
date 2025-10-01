@@ -1,23 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
-
+import { getUsers } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
 import CustomerFilters from '../components/Customers/CustomerFilters';
 import CustomerTable from '../components/Customers/CustomerTable';
-import { getUsers } from '../services/api.services';
-import type { User } from '../types';
+import type { User, Customer } from '../types';
 
-const mapApiUserToCustomer = (user: User): User => ({
-  suiteNo: user.suite_no,
+const mapApiUserToCustomer = (user: User): Customer => ({
+  suite_no: user.suite_no,
   name: user.name,
   id: user.id,
   email: user.email,
-  isEmailVerified: user.email_verified,
-  emailVerifiedOn: user.email_verified ? new Date(user.updated_at).toLocaleDateString() : 'Pending',
-  phone: user.phone_number || '—',
+  email_verified: user.email_verified,
+  phone_number: user.phone_number || '—',
   identifier: user.identifier,
-  isVerified: user.verified,
-  isActive: true,
+  verified: user.verified,
+  is_active: true,
   gender: user.gender || null,
   dob: user.dob
     ? new Date(user.dob).toISOString().split('T')[0]
@@ -25,8 +23,8 @@ const mapApiUserToCustomer = (user: User): User => ({
 });
 
 const Customers = () => {
-  const [allCustomers, setAllCustomers] = useState<User[]>([]);
-  const [filteredCustomers, setFilteredCustomers] = useState<User[]>([]);
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 

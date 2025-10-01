@@ -32,7 +32,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const avatarRef = useRef<HTMLDivElement>(null);
 
-  const displayName = userName || user?.name || user?.email.split("@")[0];
+  const displayName = userName || user?.name || user?.email?.split("@")[0];
   const displayEmail = userEmail || user?.email || "user@example.com";
 
   const handleAvatarClick = () => {

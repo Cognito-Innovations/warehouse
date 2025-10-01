@@ -38,6 +38,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { data: session, status } = useSession();
+
   const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get user data from NextAuth session

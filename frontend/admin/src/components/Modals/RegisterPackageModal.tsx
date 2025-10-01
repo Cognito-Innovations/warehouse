@@ -50,7 +50,14 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
   const fetchUsers = async () => {
     try {
       const data = await getUsers();
-      setUsers(data);
+      const filteredUsers = data.filter(
+        (user: User) =>
+          user.name &&
+          user.name.trim() !== "" &&
+          user.suite_no &&
+          user.suite_no.trim() !== ""
+      );
+      setUsers(filteredUsers);
     } catch (err) {
       console.error("Failed to fetch users", err);
     }

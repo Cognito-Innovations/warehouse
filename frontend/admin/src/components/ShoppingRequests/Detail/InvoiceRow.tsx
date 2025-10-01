@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   Box,
+  Chip,
   Collapse,
   IconButton,
   TableCell,
@@ -9,7 +10,7 @@ import {
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import CancelIcon from "@mui/icons-material/Cancel";
+// import CancelIcon from "@mui/icons-material/Cancel";
 import PrintIcon from "@mui/icons-material/Print";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import InvoiceProducts from "./InvoiceProducts";
@@ -44,7 +45,6 @@ interface Props {
 export const InvoiceRow: React.FC<Props> = ({
   invoice,
   payment_slips,
-  onStatusUpdated,
   isDiscarded,
 }) => {
   const [open, setOpen] = useState(false);
@@ -199,7 +199,8 @@ export const InvoiceRow: React.FC<Props> = ({
                 <PrintIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Cancel Invoice">
+            {/* TODO: Uncomment when functionality is implemented */}
+            {/* <Tooltip title="Cancel Invoice">
               <IconButton
                 size="small"
                 color="error"
@@ -211,7 +212,7 @@ export const InvoiceRow: React.FC<Props> = ({
               >
                 <CancelIcon fontSize="small" />
               </IconButton>
-            </Tooltip>
+            </Tooltip> */}
           </Box>
         </TableCell>
       </TableRow>

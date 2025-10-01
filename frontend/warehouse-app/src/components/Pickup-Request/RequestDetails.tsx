@@ -107,7 +107,7 @@ export default function RequestDetails({ details }: RequestDetailsProps) {
               ? "#FF9800"
               : status === "QUOTED"
               ? "#4CAF50"
-              : status === "PICKED"
+              : status === "PICKED" || status === "CONFIRMED"
               ? "#4CAF50"
               : status === "CANCELLED"
               ? "#EF4444"

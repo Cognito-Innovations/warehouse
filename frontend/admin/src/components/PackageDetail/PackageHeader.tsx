@@ -2,7 +2,7 @@ import React from 'react';
 import RequestHeader from '../common/RequestHeader';
 import StatusActionButtons from '../StatusActionButtons/StatusActionButtons';
 import { FEATURE_CONFIG } from '../../utils/trackingConfig';
-import { getStatusColor } from '../../data/packages';
+import { getStatusColor } from '../../utils/statusUtils';
 
 interface PackageData {
   id: string;

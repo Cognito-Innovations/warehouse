@@ -9,11 +9,12 @@ interface ItemsTableRowProps {
   item: any;
   index: number;
   requestStatus?: string;
+  disabled: boolean;
   onUpdate: (updates: any) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
 }
 
-const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange, }: ItemsTableRowProps) => {
+const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange, disabled, }: ItemsTableRowProps) => {
 
   const [checked, setChecked] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -47,6 +48,7 @@ const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange, }: ItemsTable
             checked={checked}
             onChange={handleSelection}
             sx={{ p: 0 }}
+            disabled={disabled}
           />
           <Typography variant="body2">{index + 1}.</Typography>
         </Box>
@@ -132,9 +134,15 @@ const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange, }: ItemsTable
       
       <TableCell sx={{ verticalAlign: 'middle', textAlign: 'center' }}>
         <Box 
-          onClick={handleMenuTrigger}
-          sx={{cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+          onClick={disabled ? undefined : handleMenuTrigger}
+          sx={{
+            cursor: disabled ? 'default' : 'pointer', 
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
           <DropdownMenu
+            disabled={disabled}
             options={[
               { label: "Edit", onClick: () => setEditOpen(true) },
               { label: "View Remarks", onClick: () => setRemarkOpen(true) }

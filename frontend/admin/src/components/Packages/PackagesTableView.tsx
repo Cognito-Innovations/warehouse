@@ -16,8 +16,8 @@ import {
 import {
   VisibilityOutlined as ViewIcon,
 } from '@mui/icons-material';
-import { getStatusColor } from '../../data/packages';
 import { formatDateTime } from '../../utils/formatDateTime';
+import { getStatusColor } from '../../utils/statusUtils';
 
 interface Package {
   id: string;

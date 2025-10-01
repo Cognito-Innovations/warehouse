@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, Tabs, Tab, Stack, IconButton, Divider, Paper, CircularProgress } from '@mui/material';
-import { Edit, Delete, Add } from '@mui/icons-material';
+import { useEffect, useState } from 'react';
+import { Box, Typography, Button, Tabs, Tab, Stack, Paper, CircularProgress } from '@mui/material';
+import { Add } from '@mui/icons-material';
 
-import { createRack, deleteRack, getRacks, updateRack } from '../../services/api.services';
-import Modal from '../common/Modal';
-import AddRackForm from './AddRackForm';
-import CopyButton from './CopyButton';
+import { deleteRack, getRacks } from '../../services/api.services';
+import RackList from './RackList';
+import RackModal from './RackModal';
 import type { Rack } from '../../types';
+import { toast } from 'sonner';
 
 const MySuiteContent = () => {
   const [racks, setRacks] = useState<Rack[]>([]);
   const [tabValue, setTabValue] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRack, setEditingRack] = useState<Rack | null>(null);
+  const [deletingRackId, setDeletingRackId] = useState<string | null>(null);
   const [loadingRacks, setLoadingRacks] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   
   useEffect(() => {
     fetchRacks();
@@ -32,46 +32,30 @@ const MySuiteContent = () => {
     }
   };
 
-  const handleAddRack = async (label: string, color: string) => {
-    setSubmitting(true);
-    try {
-      const response = await createRack({ label, color, count: 0 });
-      const newRack = Array.isArray(response) ? response[0] : response;
-      setRacks(prev => [...prev, newRack]);
-      setIsModalOpen(false);
-    } catch (err) {
-      console.error('Failed to create rack', err);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleUpdateRack = async (id: string, label: string, color: string) => {
-    setSubmitting(true);
-    try {
-      const updated = await updateRack(id, { label, color });
-      setRacks(prev => prev.map(result => (result.id === id ? updated : result)));
-      setEditingRack(null);
-      setIsModalOpen(false);
-    } catch (err) {
-      console.error('Failed to update rack', err);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const handleDeleteRack = async (id: string) => {
+    setDeletingRackId(id);
     try {
       await deleteRack(id);
-      setRacks(prev => prev.filter(r => r.id !== id));
-    } catch (err) {
+      setRacks(prev => prev.filter(rack => rack.id !== id));
+      toast.success('Rack deleted successfully');
+    } catch (err: any) {
       console.error('Failed to delete rack', err);
+      const message =
+        err?.response?.data?.message || err?.message || 'Failed to delete rack';
+      toast.error(message);
+    } finally {
+      setDeletingRackId(null);
     }
+  };
+
+  const handleEditRack = (rack: Rack) => {
+    setEditingRack(rack);
+    setIsModalOpen(true);
   };
 
   return (
     <Paper sx={{ p: 3, borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-      <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Tabs value={tabValue} onChange={(_, value) => setTabValue(value)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tab label="Racks" sx={{ textTransform: 'none' }} />
       </Tabs>
 
@@ -98,63 +82,31 @@ const MySuiteContent = () => {
               No racks available. Add your first rack.
             </Typography>
           ) : (
-            <Box>
-              {racks.map((rack, i) => (
-                <React.Fragment key={rack.id}>
-                  <Stack direction="row" alignItems="center" sx={{ py: 2 }}>
-                    <Stack direction="row" alignItems="center" spacing={2} sx={{ flexGrow: 1 }}>
-                      <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: rack.color }} />
-                      <Typography fontWeight={500} flexGrow={1}>{rack.label}</Typography>
-                      <Typography color="text.secondary" fontWeight={500}>{rack.count}</Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={1} ml={3}>
-                      <CopyButton text={rack.label} />
-
-                      <IconButton 
-                        size="small" 
-                        sx={{ bgcolor: '#e0e7ff', color: '#4f46e5', '&:hover': { bgcolor: '#c7d2fe' } }}
-                        onClick={() => { setEditingRack(rack); setIsModalOpen(true); }}
-                      >
-                        <Edit fontSize="inherit" />
-                      </IconButton>
-
-                      <IconButton 
-                        size="small" 
-                        sx={{ bgcolor: '#ffe4e6', color: '#e11d48', '&:hover': { bgcolor: '#fecdd3' } }}
-                        onClick={() => handleDeleteRack(rack.id!)}
-                      >
-                        <Delete fontSize="inherit" />
-                      </IconButton>
-                    </Stack>
-                  </Stack>
-                  {i < racks.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </Box>
+            <RackList 
+              racks={racks} 
+              onEdit={handleEditRack} 
+              onDelete={handleDeleteRack}
+              deletingRackId={deletingRackId}
+            />
           )}
         </Box>
       )}
 
-      <Modal 
+      <RackModal 
         open={isModalOpen} 
+        rack={editingRack} 
         onClose={() => { setEditingRack(null); setIsModalOpen(false); }}
-        title={editingRack ? "Edit Rack" : "Add Rack"}
-      >
-        <AddRackForm
-          mode={editingRack ? "edit" : "add"}
-          initialLabel={editingRack?.label}
-          initialColor={editingRack?.color}
-          onCancel={() => { setEditingRack(null); setIsModalOpen(false); }}
-          onSubmit={(label, color) => {
-            if (editingRack) {
-              handleUpdateRack(editingRack.id!, label, color);
+        onSuccess={(rack) => {
+          setRacks(prev => {
+            const exists = prev.find(r => r.id === rack.id);
+            if (exists) {
+              return prev.map(r => r.id === rack.id ? rack : r);
             } else {
-              handleAddRack(label, color);
+              return [...prev, rack];
             }
-          }}
-          submitting={submitting}
-        />
-      </Modal>
+          });
+        }}
+      />
     </Paper>
   );
 };

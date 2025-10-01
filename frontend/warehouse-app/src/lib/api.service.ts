@@ -24,7 +24,7 @@ export interface PickupRequestPayload {
  */
 const createAuthenticatedApi = (): AxiosInstance => {
   const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+    baseURL: process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001",
     headers: {
       "Content-Type": "application/json",
     },
@@ -252,5 +252,18 @@ export const createUserAddress = async (data: any) => {
 
 export const fetchUserAddresses = async (userId: string) => {
   const res = await authenticatedApi.get(`/user-address/user/${userId}`);
+  return res.data;
+};
+
+export const createPreArrival = async (body: {
+  customer?: string;
+  suite?: string;
+  otp: number;
+  tracking_no?: string | null;
+  estimate_arrival_time?: string | null;
+  details?: string | null;
+  status?: string;
+}) => {
+  const res = await authenticatedApi.post("/pre-arrival", body);
   return res.data;
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TopNavbar from '../components/Layout/TopNavbar';
-import { Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import { getPreArrivals, markPreArrivalAsReceived } from '../services/api.services';
 import FiltersSection from '../components/PreArrivals/FiltersSection';
 import PreArrivalsTable from '../components/PreArrivals/PreArrivalsTable';
@@ -95,7 +95,19 @@ const PreArrivals: React.FC = () => {
     return (
       <>
         <TopNavbar searchValue={searchValue} onSearchChange={handleSearchChange} />
-        <Box sx={{ width: '100%', maxWidth: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '400px',
+            gap: 2,
+          }}
+        >
+          <CircularProgress />
           <div>Loading pre-arrivals...</div>
         </Box>
       </>

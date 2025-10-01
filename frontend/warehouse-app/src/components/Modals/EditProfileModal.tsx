@@ -224,28 +224,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
         </IconButton>
       </DialogTitle>
       <Toaster />
-      <DialogContent
-        dividers
-        sx={{
-          // Custom scrollbar styling
-          '&::-webkit-scrollbar': {
-            width: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            backgroundColor: 'transparent',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: (theme) => theme.palette.grey[300],
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb:hover': {
-            backgroundColor: (theme) => theme.palette.grey[400],
-          },
-          // Firefox scrollbar support
-          scrollbarWidth: 'thin',
-          scrollbarColor: (theme) => `${theme.palette.grey[300]} transparent`,
-        }}
-      >
+      <DialogContent dividers>
         <>
           {loadingPreferences && (
             <Box

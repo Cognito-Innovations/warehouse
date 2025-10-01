@@ -19,6 +19,7 @@ export enum ShoppingRequestStatus {
   PAYMENT_PENDING = 'PAYMENT_PENDING',
   PAYMENT_APPROVED = 'PAYMENT_APPROVED',
   ORDER_PLACED = 'ORDER_PLACED',
+  REJECTED = 'REJECTED',
 }
 
 @Entity('shopping_requests')

@@ -7,7 +7,7 @@ import {
   IsNumber,
   MinLength,
 } from 'class-validator';
-import { Gender } from '../user.entity';
+import { Gender, Identifier } from '../user.entity';
 
 export class UpdatePasswordDto {
   @IsString()
@@ -58,4 +58,13 @@ export class UpdateUserDto {
   @IsOptional()
   @IsNumber()
   last_logout?: number;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string;
+
+  @IsOptional()
+  @IsEnum(Identifier)
+  identifier?: Identifier;
 }

@@ -1,36 +1,47 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import SignInForm from "../components/SignIn/SignInForm";
 import { useAuth } from "../contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Page() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Redirect authenticated users to dashboard
   useEffect(() => {
-    if (user) {
+    if (!loading && user && !isRedirecting) {
+      setIsRedirecting(true);
       router.replace("/dashboard");
     }
-  }, [user, router]);
+  }, [user, loading, router, isRedirecting]);
 
-  // Show loading while checking authentication
-  if (loading) {
+  if (loading || isRedirecting) {
     return (
       <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
         <Box sx={{ textAlign: "center" }}>
-          <Typography variant="h6">Loading...</Typography>
+          <CircularProgress />
+          <Box sx={{ mt: 2, color: "text.secondary" }}>
+            {isRedirecting ? "Redirecting to dashboard..." : "Loading..."}
+          </Box>
         </Box>
       </Box>
     );
   }
 
-  // Don't render login form if user is authenticated
   if (user) {
-    return null;
+    return (
+       <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ textAlign: "center" }}>
+          <CircularProgress />
+          <Box sx={{ mt: 2, color: "text.secondary" }}>
+            Redirecting to dashboard...
+          </Box>
+        </Box>
+       </Box>
+    );
   }
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
@@ -38,6 +49,7 @@ export default function Page() {
         sx={{
           flex: { xs: "1 1 100%", sm: "1 1 50%", md: "1 1 30%" },
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           p: { xs: 2, sm: 4 },
