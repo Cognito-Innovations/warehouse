@@ -3,7 +3,7 @@ import { Box, Container } from '@mui/material';
 import { useParams } from 'react-router-dom';
 
 import TopNavbar from '../components/Layout/TopNavbar';
-import RequestDetailHeader from '../components/ShoppingRequests/Detail/RequestDetailHeader.tsx';
+import RequestDetailHeader from '../components/PickupRequests/Detail/RequestDetailHeader.tsx';
 import RequestDetailContent from '../components/ShoppingRequests/Detail/RequestDetailContent.tsx';
 import { getShoppingRequestByCode } from '../services/api.services.ts';
 

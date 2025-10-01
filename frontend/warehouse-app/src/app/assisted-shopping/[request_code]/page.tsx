@@ -41,6 +41,7 @@ export default function ViewShoppingRequestPage() {
   const isPaymentPending = request?.status === "PAYMENT_PENDING";
   const isPaymentApproved = request?.status === "PAYMENT_APPROVED";
   const isOrderPlaced = request?.status === "ORDER_PLACED";
+  const isRejected = request?.status === "REJECTED";
 
   const fetchRequest = async () => {
     setLoading(true);
@@ -117,6 +118,7 @@ export default function ViewShoppingRequestPage() {
         <div className="mb-6">
           <RequestHeader
             request={request}
+            isRejected={isRejected}
             onDelete={(id) => {
               setDeleteId(id);
               setConfirmOpen(true);
@@ -132,8 +134,11 @@ export default function ViewShoppingRequestPage() {
             />
           </div>
 
-          <div className="w-full lg:flex-1 space-y-6">
-            <InfoBanner message={shoppingRequestMessages[request.status] || "No updates available."} />
+          <div className={`w-full lg:flex-1 space-y-6 ${isRejected ? 'opacity-60 pointer-events-none' : ''}`}>
+            <InfoBanner
+              message={shoppingRequestMessages[request.status] || "No updates available."} 
+              isRejected={isRejected}
+            />
             {isQuotation || isQuotationConfirmed || isInvoiced || isPaymentPending || isPaymentApproved || isOrderPlaced ? (
               <>
                 {(isInvoiced || isPaymentPending || isPaymentApproved || isOrderPlaced) && (

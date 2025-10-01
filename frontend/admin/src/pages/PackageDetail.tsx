@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Grid, CircularProgress, Alert, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { getPackageById, updatePackageStatus, getPackageDocuments, getPaymentSlips } from '../services/api.services';
+import { getPackageById, updatePackageStatus, getPackageDocuments, getPaymentSlips, getShipmentDocuments } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
 import PackageHeader from '../components/PackageDetail/PackageHeader';
 import ActionLogsSection from '../components/PackageDetail/ActionLogsSection';
@@ -20,6 +20,7 @@ const PackageDetail: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ id: string, name: string, url: string, type: string }>>([]);
+  const [shipmentDocuments, setShipmentDocuments] = useState<any[]>([]);
   const [packageItems, setPackageItems] = useState<any[]>([]);
   const [isApprovingPayment, setIsApprovingPayment] = useState(false);
   const [paymentSlips, setPaymentSlips] = useState<any[]>([]);
@@ -40,6 +41,20 @@ const PackageDetail: React.FC = () => {
       console.error('Failed to fetch documents:', err);
     }
   };
+
+   const fetchShipmentDocuments = async (shipment_uuid: string) => {
+    if (!shipment_uuid) {
+      setShipmentDocuments([]);
+      return;
+    }
+    try {
+      const docs = await getShipmentDocuments(shipment_uuid);
+      setShipmentDocuments(docs);
+    } catch (err) {
+      console.error('Failed to fetch shipment documents:', err);
+      toast.error('Failed to load shipment documents.');
+    }
+  };
 
   const fetchPaymentSlips = async (shipment_uuid: string) => {
     try {
@@ -69,7 +84,8 @@ const PackageDetail: React.FC = () => {
       
       await Promise.all([
         fetchPaymentSlips(data.shipment_uuid),
-        fetchDocuments()
+        fetchDocuments(),
+        fetchShipmentDocuments(data.shipment_uuid)
       ]);
     } catch (err) {
       console.error('Failed to fetch package data:', err);
@@ -103,11 +119,25 @@ const PackageDetail: React.FC = () => {
       
       await fetchPaymentSlips(data.shipment_uuid);
       await fetchDocuments();
+      await fetchShipmentDocuments(data.shipment_uuid);
     } catch (err) {
       console.error('Failed to refetch package data:', err);
       toast.error('Failed to refresh package details');
     }
   };
+
+  const getInvoice = (packageData: any) => {
+    const invoice = packageData.invoice;
+    if (invoice > 0) {
+      return invoice;
+    } else if (packageData.charges.length > 0) {
+      const charges = packageData.charges[0];
+      return {id: "charges", invoice_no: "Package Charges", amount: charges.amount, total: charges.amount, status: "UNPAID"};
+    } else {
+      return {id: "temp", invoice_no: "-", amount: 0, total: 0, status: "UNPAID"};
+    }
+  };
+
 
   const handleApprovePayment = async () => {
     if (!id) return;
@@ -160,7 +190,7 @@ const PackageDetail: React.FC = () => {
     shipment_id: packageData.shipment_id,
     shipment_uuid: packageData.shipment_uuid,
     status: packageData.status,
-    customer: packageData.customer?.name || 'Unknown',
+    customer: packageData.customer?.name || '',
     suite: packageData.customer?.suite_no || 'N/A',
     email: packageData.customer?.email || 'N/A',
     phone: packageData.customer?.phone_number || 'N/A',
@@ -172,9 +202,11 @@ const PackageDetail: React.FC = () => {
     rack: packageData.rack_slot?.label ? `${packageData.rack_slot.label}` : 'N/A',
     rackColor: packageData.rack_slot?.color ? `${packageData.rack_slot.color}` : 'N/A',
     count: packageData.rack_slot?.count ? packageData.rack_slot.count : 0,
-    createdBy: packageData.created_by?.name || 'Unknown',
+    createdBy: packageData.created_by?.name || '',
     createdAt: formatDateTime(Number(packageData.created_at) * 1000),
-    vendor: packageData.vendor?.supplier_name || 'Unknown',
+    updatedBy: packageData.updated_by?.name || '',
+    updatedAt: formatDateTime(packageData.updated_at),
+    vendor: packageData.vendor?.supplier_name || '',
     remarks: packageData.remarks || 'No remarks',
     allowCustomerItems: packageData.allow_customer_items || false,
     shopInvoiceReceived: packageData.shop_invoice_received || false,
@@ -254,7 +286,7 @@ const PackageDetail: React.FC = () => {
           {showInvoiceTable && (
             <InvoiceTable 
               id={displayPackageData.actual_id}
-              invoice={packageData.invoice || {id: "temp", invoice_no: "-", amount: 0, total: 0, status: "UNPAID"}}
+              invoice={getInvoice(packageData)}
               payment_slips={paymentSlips}
               status={packageData.status.value}
               isApprovingPayment={isApprovingPayment}
@@ -285,6 +317,7 @@ const PackageDetail: React.FC = () => {
 
           <PhotosDocumentsSection 
             packageData={displayPackageData}
+            documents={shipmentDocuments}
             onUploadSuccess={handleActionLogUpdate}
             isDiscarded={isDiscarded}
           />

@@ -1,22 +1,61 @@
 import { useParams } from 'react-router-dom';
-import { Box, Grid, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
 import TopNavbar from '../components/Layout/TopNavbar';
 import CustomerHeader from '../components/Customers/CustomerHeader';
-import CustomerStats from '../components/Customers/CustomerStats';
 import CustomerAddressList from '../components/Customers/CustomerAddressList';
-import CustomerDocuments from '../components/Customers/CustomerDocuments';
-import { customers } from '../data/customers';
+import { useEffect, useState } from 'react';
+import type { User } from '../types';
+import { getUserBySuiteNo } from '../services/api.services';
 
 const CustomerDetailPage = () => {
   const { id } = useParams();
-  const customer = customers.find(c => c.suiteNo === id);
+  const [customer, setCustomer] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!customer) {
+  const fetchCustomer = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      if (id) {
+        const data = await getUserBySuiteNo(id);
+        setCustomer(data);
+      }
+    } catch (err) {
+      setError('Failed to fetch customer details.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomer();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error || !customer) {
     return (
       <Box>
         <TopNavbar pageTitle="Customers" pageSubtitle="/ Not Found" />
-        <Typography sx={{ p: 3 }}>Customer not found.</Typography>
+        <Typography sx={{ p: 3 }}>
+          {error || 'Customer not found.'}
+        </Typography>
       </Box>
     );
   }

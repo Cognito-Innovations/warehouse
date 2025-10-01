@@ -17,6 +17,13 @@ interface IShipmentRequest {
   id: string;
   shipment_id: string;
   shipment_uuid: string;
+  country: {
+    id: string;
+    name: string;
+  };
+  charges:{
+    amount: number;
+  }[];
   status: {
     label: string;
     value: string;
@@ -149,9 +156,15 @@ export default function ShipmentDetailPage() {
 
           <div className="w-full lg:flex-1 space-y-6">
             {displayInvoiceSection && (
-              <Invoices request={request} payment_slips={paymentSlips} onUpdate={fetchRequest} />
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">Note:</span> The charges shown below include packing and shipping costs for your shipment.
+                  </p>
+                </div>
+                <Invoices request={request} payment_slips={paymentSlips} onUpdate={fetchRequest} />
+              </>
             )}
-            <ActionsCard />
           </div>
         </div>
       </div>

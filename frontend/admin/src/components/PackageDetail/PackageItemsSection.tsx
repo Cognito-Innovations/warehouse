@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, CircularProgress } from '@mui/material';
-import { Download as DownloadIcon, Upload as UploadIcon, Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { addPackageItem, bulkUploadPackageItems, deletePackageItem, updatePackageItem } from '../../services/api.services';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { addPackageItem, deletePackageItem, updatePackageItem } from '../../services/api.services';
 import AddItemModal from './AddItemModal';
 
 interface PackageItem {
@@ -207,7 +207,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
 
                   return (
                     <TableRow key={item.id}>
-                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.name}</TableCell>
+                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }} style={{ textTransform: 'capitalize' }}>{item.name}</TableCell>
                       <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.quantity}</TableCell>
                       <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>${item.amount || item.unit_price}</TableCell>
                       <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>${item.total || item.total_price}</TableCell>

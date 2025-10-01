@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -23,9 +23,11 @@ const ShoppingRequestDetail: React.FC = () => {
   const [shoppingRequest, setShoppingRequest] = useState<any | null>(null);
   const [products, setProducts] = useState<ShoppingRequestProduct[]>([]);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
 
   const fetchRequest = async () => {
     if (!id) return;
+    setLoading(true);
     try {
       const data = await getShoppingRequestByCode(id);
       setShoppingRequest(data);
@@ -34,6 +36,8 @@ const ShoppingRequestDetail: React.FC = () => {
     } catch (err) {
       console.error("Error fetching shopping request:", err);
       toast.error("Failed to fetch shopping request details.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,7 +84,16 @@ const ShoppingRequestDetail: React.FC = () => {
     });
   };
 
-  if (!shoppingRequest) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <Box sx={{ p: 1 }}>
+        <TopNavbar />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+          <CircularProgress />
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box>

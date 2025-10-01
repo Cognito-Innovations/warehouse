@@ -24,7 +24,7 @@ export interface PickupRequestPayload {
  */
 const createAuthenticatedApi = (): AxiosInstance => {
   const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+    baseURL: process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001",
     headers: {
       "Content-Type": "application/json",
     },
@@ -225,7 +225,6 @@ export const updateUser = async (userId: string, data: Partial<ProfileData>) => 
   return res.data;
 };
 
-
 export const getUserPreferences = async (userId: string) => {
   const res = await authenticatedApi.get(`/user-preferences/by-user/${userId}`);
   return res.data;
@@ -233,5 +232,38 @@ export const getUserPreferences = async (userId: string) => {
 
 export const getUser = async (userId: string) => {
   const res = await authenticatedApi.get(`/users/${userId}`);
+  return res.data;
+};
+
+export const sendEmailOtp = async (userId: string) => {
+  const res = await authenticatedApi.post(`/users/${userId}/send-otp`);
+  return res.data;
+};
+
+export const verifyEmailOtp = async (userId: string, otp: string) => {
+  const res = await authenticatedApi.post(`/users/${userId}/verify-otp`, { otp });
+  return res.data;
+};
+
+export const createUserAddress = async (data: any) => {
+  const res = await authenticatedApi.post(`/user-address`, data);
+  return res.data;
+};
+
+export const fetchUserAddresses = async (userId: string) => {
+  const res = await authenticatedApi.get(`/user-address/user/${userId}`);
+  return res.data;
+};
+
+export const createPreArrival = async (body: {
+  customer?: string;
+  suite?: string;
+  otp: number;
+  tracking_no?: string | null;
+  estimate_arrival_time?: string | null;
+  details?: string | null;
+  status?: string;
+}) => {
+  const res = await authenticatedApi.post("/pre-arrival", body);
   return res.data;
 };

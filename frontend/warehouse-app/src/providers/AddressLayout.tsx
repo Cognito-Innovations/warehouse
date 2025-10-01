@@ -11,7 +11,7 @@ export default function AddressLayout({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (!authLoading && !user) {
-            router.replace("/");
+            router.push("/");
         }
     }, [user, authLoading, router]);
 

@@ -9,49 +9,42 @@ import {
 
 export const shoppingRequestMessages: Record<string, string> = {
   REQUESTED: "Your request has been received. We will get back to you shortly.",
-  QUOTATION_READY: "Quotation is ready. Please review the quotation and confirm. You can unselect the items you don't want to purchase.",
+  QUOTATION_READY: "Quotation is ready. Please review the quotation and confirm.",
   INVOICED: "Invoice is ready. Please make the payment and upload payment slip.",
   PAYMENT_PENDING: "Your payment slip has been uploaded and is pending approval from our team.",
   PAYMENT_APPROVED: "Your payment has been approved. We will proceed with your order.",
   CONFIRMED: "Your order has been confirmed. We will proceed with the purchase.",
   ORDER_PLACED: "Your order has been placed successfully. We will now start processing and keep you updated on the progress.",
   CANCELLED: "This request has been cancelled.",
+  REJECTED: "This request has been rejected. No further actions can be taken. Please contact support for assistance.",
 };
 
 export const STATUS_ICONS: Record<
   string,
-  { icon: React.ReactNode; color: string }
+  { Icon: React.ElementType; }
 > = {
   REQUESTED: {
-    icon: <HourglassIcon className="w-5 h-5 text-gray-500" />,
-    color: "text-gray-600",
+    Icon: HourglassIcon,
   },
   QUOTED: {
-    icon: <ReceiptIcon className="w-5 h-5 text-blue-500" />,
-    color: "text-blue-600",
+    Icon: ReceiptIcon,
   },
   QUOTATION_CONFIRMED: {
-    icon: <CheckIcon className="w-5 h-5 text-green-500" />,
-    color: "text-green-600",
+    Icon: CheckIcon,
   },
   INVOICED: {
-    icon: <ReceiptIcon className="w-5 h-5 text-purple-500" />,
-    color: "text-purple-600",
+    Icon: ReceiptIcon,
   },
   PAYMENT_PENDING: {
-    icon: <PaymentIcon className="w-5 h-5 text-orange-500" />,
-    color: "text-orange-600",
+    Icon: PaymentIcon,
   },
   PAYMENT_APPROVED: {
-    icon: <CheckIcon className="w-5 h-5 text-green-600" />,
-    color: "text-green-700",
+    Icon: CheckIcon,
   },
   ORDER_PLACED: {
-    icon: <ShoppingCartIcon className="w-5 h-5 text-indigo-500" />,
-    color: "text-indigo-600",
+    Icon: ShoppingCartIcon,
   },
-  CANCELLED: {
-    icon: <CancelIcon className="w-5 h-5 text-red-500" />,
-    color: "text-red-600",
+  REJECTED: {
+    Icon: CancelIcon,
   },
 };

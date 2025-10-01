@@ -19,6 +19,8 @@ export function mapToTrackingStatus(
       return TrackingStatus.PaymentApproved;
     case ShoppingRequestStatus.ORDER_PLACED:
       return TrackingStatus.OrderPlaced;
+    case ShoppingRequestStatus.REJECTED:
+      return TrackingStatus.Rejected;
     default:
       return TrackingStatus.Requested;
   }

@@ -15,10 +15,9 @@ import {
 } from '@mui/material';
 import {
   VisibilityOutlined as ViewIcon,
-  MoreVert as MoreIcon,
 } from '@mui/icons-material';
-import { getStatusColor } from '../../data/packages';
 import { formatDateTime } from '../../utils/formatDateTime';
+import { getStatusColor } from '../../utils/statusUtils';
 
 interface Package {
   id: string;
@@ -50,7 +49,6 @@ const PackagesTableView: React.FC<PackagesTableViewProps> = ({
   totalFilteredItems,
   onPageChange,
   onViewDetails,
-  onOpenMenu,
 }) => {
   return (
     <>
@@ -139,7 +137,7 @@ const PackagesTableView: React.FC<PackagesTableViewProps> = ({
                       })()}
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Box style={{paddingLeft:"10px"}}>
                         <IconButton
                           size="small"
                           sx={{ bgcolor: '#6366f1', color: 'white', '&:hover': { bgcolor: '#4f46e5' } }}
@@ -147,13 +145,14 @@ const PackagesTableView: React.FC<PackagesTableViewProps> = ({
                         >
                           <ViewIcon fontSize="small" />
                         </IconButton>
+                        {/* TODO: Implement delete icon when functionality got updated
                         <IconButton
                           size="small"
                           sx={{ bgcolor: '#3b82f6', color: 'white', '&:hover': { bgcolor: '#2563eb' } }}
                           onClick={(e) => onOpenMenu(e, row.id)}
                         >
                           <MoreIcon fontSize="small" />
-                        </IconButton>
+                        </IconButton> */}
                       </Box>
                     </TableCell>
                   </TableRow>

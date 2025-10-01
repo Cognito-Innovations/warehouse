@@ -1,4 +1,4 @@
-import { ListItemButton, ListItemIcon, ListItemText, Tooltip, Typography } from "@mui/material";
+import { ListItemButton, ListItemIcon, Tooltip } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import type { MenuItem } from "../../data/menuItems";
 

@@ -3,7 +3,7 @@ import ProfileSidebar from "@/components/Sidebar/ProfileSidebar";
 import { Box } from "@mui/material";
 
 export const metadata: Metadata = {
-  title: "Profile - ShopMe Dashboard",
+  title: "Profile - Palakart Dashboard",
   description: "Manage your profile settings",
 };
 

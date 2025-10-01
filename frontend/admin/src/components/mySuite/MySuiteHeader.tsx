@@ -6,27 +6,27 @@ const MySuiteHeader = () => (
     <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
       <Box>
         <Typography variant="h5" fontWeight="bold" mb={2}>
-          UGFLASH INTERNATIONAL COURIER
+          Palakart INTERNATIONAL COURIER
         </Typography>
         <Stack spacing={1} color="text.secondary">
           <Stack direction="row" alignItems="center" spacing={1}>
             <LocationOnOutlined fontSize="small" />
             <Typography variant="body2">
-              6/454, Ugflash Nagar, Amman Kovil Road, Perumagoundampatti, Elampillai, Salem, Tamil Nadu, 637502, India
+              6/454, Palakart Nagar, Amman Kovil Road, Perumagoundampatti, Elampillai, Salem, Tamil Nadu, 637502, India
             </Typography>
           </Stack>
           <Stack direction="row" spacing={3}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <PhoneOutlined fontSize="small" />
-              <Typography variant="body2">+91 90429 99312</Typography>
+              <Typography variant="body2">+91 90429 99312</Typography> {/* TODO: Change this to the actual phone number */}
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <EmailOutlined fontSize="small" />
-              <Typography variant="body2">ugflash@shopme.mv</Typography>
+              <Typography variant="body2">support@palakart.com</Typography> {/* TODO: Change this to the actual email */}
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <AccessTimeOutlined fontSize="small" />
-              <Typography variant="body2">10:00 AM TO 06:00 PM (Sunday Closed)</Typography>
+              <Typography variant="body2">10:00 AM TO 06:00 PM (Sunday Closed)</Typography> {/* TODO: Change this to the actual timing */}
             </Stack>
           </Stack>
         </Stack>

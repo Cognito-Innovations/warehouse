@@ -15,7 +15,10 @@ interface RequestHeaderProps {
       name: string;
       email: string;
       suite_no: string;
-      country: string; 
+    };
+    country: {
+      id: string;
+      name: string;
     };
   };
   onDelete?: (id: string) => void;
@@ -46,7 +49,7 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onDelete }) => {
         <div>
           <p className="text-sm text-gray-500">Request From</p>
           <p className="font-semibold text-gray-900">
-            {request.customer?.country}
+            {request.country.name}
           </p>
         </div>
         <div>

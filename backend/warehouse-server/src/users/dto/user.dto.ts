@@ -11,6 +11,7 @@ export class UserDto {
   gender?: string;
   dob?: Date;
   verified: boolean;
+  email_verified: boolean;
   created_at?: number;
   updated_at?: number;
   last_logout?: number;

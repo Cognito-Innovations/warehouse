@@ -1,35 +1,25 @@
-import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default withAuth(
-  (req) => {
+export function middleware(request: NextRequest) {
+  // Only protect specific routes, not all routes
+  const { pathname } = request.nextUrl;
+  
+  // Allow public routes
+  if (pathname === "/" || pathname.startsWith("/api/auth")) {
     return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        // Allow access to home page and auth pages without authentication
-        if (req.nextUrl.pathname === "/" || req.nextUrl.pathname.startsWith("/api/auth")) {
-          return true;
-        }
-        
-        // Require authentication for all other routes
-        return !!token;
-      },
-    },
   }
-);
+  
+  // For protected routes, let NextAuth handle authentication
+  // Don't interfere with the authentication flow
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public assets like .png, .jpg, .jpeg, .svg, .gif, .webp
-     */
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|gif|webp)$).*)",
+    "/dashboard/:path*",
+    "/profile/:path*",
+    "/assisted-shopping/:path*",
+    "/shipment/:path*"
   ],
 };

@@ -1,5 +1,4 @@
 import { Box, Typography, Link, Divider } from '@mui/material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 const SummaryRow = ({ label, value, children }: any) => (
   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>

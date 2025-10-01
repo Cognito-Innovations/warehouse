@@ -1,10 +1,11 @@
 import { Repository } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Country, CountryCode, CountryPhoneCode } from './country.entity';
 import { CreateCountryDto } from './dto/create-country.dto';
 import { CountryResponseDto } from './dto/countries-response.dto';
+import { UpdateCountryDto } from './dto/update-country.dto';
 
 @Injectable()
 export class CountriesService {
@@ -75,5 +76,19 @@ export class CountriesService {
       created_at: country.created_at,
       updated_at: country.updated_at,
     }));
+  }
+
+  async updateCountry(
+    id: string,
+    updateCountryDto: UpdateCountryDto
+  ) {
+    const data = updateCountryDto;
+
+    const country = await this.countryRepository.update({id}, data);
+
+    if (!country) {
+      throw new NotFoundException(`Country with ID "${id}" not found`);
+    }
+    return {status: "success"}
   }
 }

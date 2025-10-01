@@ -15,6 +15,9 @@ async function bootstrap() {
       'http://localhost:3000',
       'http://localhost:3002',
       'http://localhost:5173',
+      'https://palakart.vercel.app',
+      'https://palakart-admin.web.app',
+      'https://nasa-believed-opponents-cakes.trycloudflare.com',
     ], // Frontend URLs (warehouse-app, admin)
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

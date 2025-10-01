@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Card, Chip, Typography } from "@mui/material";
-import { getStatusColor } from "../../data/shipmentExports";
 import { formatDateTime } from "../../utils/formatDateTime";
+import { getStatusColor } from "../../utils/statusUtils";
 
 interface ShipmentHeaderProps {
   shipment: any;
@@ -18,7 +18,7 @@ const ShipmentHeader: React.FC<ShipmentHeaderProps> = ({ shipment }) => {
             {shipment.requestCode}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            UFLASH INTERNATIONAL COURIER, India
+            PALAKART INTERNATIONAL COURIER
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             {shipment.boxes?.length || 0} Box / 0 Shipment

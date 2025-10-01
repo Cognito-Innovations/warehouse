@@ -40,6 +40,14 @@ export class UserPreferencesService {
     };
   }
 
+  async getUserCurrency(userId: string) {
+    const userPreference = await this.userPreferenceRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['currency'],
+    });
+    return userPreference?.currency.currency_symbol;
+  }
+
   async getFormattedConvertedPrice(userId: string, price: number) {
     const userPreference = await this.userPreferenceRepository.findOne({
       where: { user: { id: userId } },
@@ -54,6 +62,19 @@ export class UserPreferencesService {
       return `${formattedPrice} ${currency_symbol}`;
     }
     return String(price);
+  }
+
+  async getConvertedPrice(userId: string, price: number) {
+    const userPreference = await this.userPreferenceRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['currency'],
+    });
+    const rate = userPreference?.currency.rate;
+    if (rate && price) {
+      const convertedPrice = price * (rate || 0);
+      return convertedPrice;
+    }
+    return price;
   }
 
   async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {

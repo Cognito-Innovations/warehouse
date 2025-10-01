@@ -16,9 +16,10 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { deleteShipmentExport } from '../../services/api.services';
-import { getStatusColor } from '../../data/shipmentExports';
 import UpdateMawbModal from './UpdateMawbModal';
 import ConfirmDialog from '../common/ConfirmDialog';
+import { getStatusColor } from '../../utils/statusUtils';
+import { formatDateTime } from '../../utils/formatDateTime';
 
 interface ShipmentExportTableBodyProps {
   rows: any[];
@@ -105,7 +106,7 @@ const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows,
             <TableCell>
               <Typography variant="body2">{row.export_code}</Typography>
             </TableCell>
-            <TableCell>{row.created_at}</TableCell>
+            <TableCell>{formatDateTime(row.created_at)}</TableCell>
             <TableCell>
               {row.mawb ? (
                 <Typography variant="body2">{row.mawb}</Typography>

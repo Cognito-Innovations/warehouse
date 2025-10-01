@@ -27,19 +27,19 @@ export const shoppingSummaryConfig: SummaryCardConfig[] = [
 export const pickupSummaryConfig: SummaryCardConfig[] = [
     {
         title: "Pending Accepted",
-        status: ["REQUESTED", "ACCEPTED"],
+        status: ["requested", "accepted"],
         icon: <ShoppingBagOutlinedIcon />,
         bgColor: "#F87171",
     },
     {
         title: "Quotation Confirmed",
-        status: "QUOTATION CONFIRMED",
+        status: "quoted",
         icon: <RedeemOutlinedIcon />,
         bgColor: "#EC4899",
     },
     {
         title: "Picked",
-        status: "PICKED",
+        status: "picked",
         icon: <FlightTakeoffOutlinedIcon />,
         bgColor: "#34D399",
     },

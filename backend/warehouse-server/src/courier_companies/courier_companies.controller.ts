@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Patch } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -11,6 +11,7 @@ import { CourierCompaniesService } from './courier_companies.service';
 import { CreateCourierCompanyDto } from './dto/create-courier_company.dto';
 import { CourierCompanyResponsesDto } from './dto/get-all-courier_company.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { UpdateCourierCompanyDto } from './dto/update-courier_company.dto';
 
 @ApiTags('Courier Companies')
 @Controller('courier-companies')
@@ -56,6 +57,21 @@ export class CourierCompaniesController {
   })
   async findAll(): Promise<CourierCompanyResponsesDto[]> {
     return this.courierCompaniesService.findAll();
+  }
+
+  @Public()
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a courier company' })
+  @ApiOkResponse({
+    description: 'Courier company updated successfully',
+    type: CourierCompanyResponsesDto,
+  })
+  @ApiBody({ type: UpdateCourierCompanyDto })
+  update(
+    @Param('id') id: string,
+    @Body() updateCourierCompanyDto: UpdateCourierCompanyDto,
+  ) {
+    return this.courierCompaniesService.update(id, updateCourierCompanyDto);
   }
 
   @Get(':id')

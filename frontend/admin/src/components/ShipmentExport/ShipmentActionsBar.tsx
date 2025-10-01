@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Box, Button, CircularProgress, InputAdornment, TextField, Typography } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { 
   addPackageToBox,
   markShipmentExportDeparted,
@@ -94,7 +93,7 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
         <TextField
           variant="outlined"
           size="small"
-          placeholder="Search shipment"
+          placeholder="Search tracking number"
           disabled={!selectedBoxId}
           value={trackingNumber}
           onChange={handleTrackingChange}
@@ -141,6 +140,8 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
               )}
             </Button>
           )}
+          {/* 
+          TODO: Add functionality when it is implemented
           <Button variant="contained" startIcon={<FileDownloadIcon />} sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, textTransform: "none" }}>
             Export
           </Button>
@@ -149,7 +150,7 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
           </Button>
           <Button variant="contained" startIcon={<FileDownloadIcon />} sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, textTransform: "none" }}>
             Packing List
-          </Button>
+          </Button> */}
         </Box>
       )}
     </Box>
