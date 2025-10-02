@@ -212,6 +212,9 @@ const TabsSection = () => {
                         {pkg.total_weight && (
                           <p className="text-sm text-gray-600">Weight: {pkg.total_weight} kg</p>
                         )}
+                        {pkg.remarks && (
+                          <p className="text-sm text-gray-600">Remarks: {pkg.remarks}</p>
+                        )}
                       </div>
                       <div className="flex flex-col items-end space-y-2">
                         <div className="text-right">
