@@ -31,6 +31,7 @@ const TabsSection = () => {
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [shipments, setShipments] = useState<any[]>([]);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
+  const [isRequestShipLoading, setIsRequestShipLoading] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,10 +70,17 @@ const TabsSection = () => {
 
     setShipmentsLoading(true);
     try {
-      const results = await Promise.all(
+      const results = await Promise.allSettled(
         SHIPMENT_STATUSES.map((status) => getPackagesByUserAndStatus(userId, status))
       );
-      setShipments(results.flat());
+      const fulfilledShipments = results
+        .filter((res) => res.status === "fulfilled")
+        .map((res: any) => res.value)
+        .flat();
+      setShipments(fulfilledShipments);
+      if (results.some((res) => res.status === "rejected")) {
+        toast.error("Some shipments could not be fetched");
+      }
     } catch (error) {
       toast.error("Failed to fetch shipments");
     } finally {
@@ -135,6 +143,7 @@ const TabsSection = () => {
 
   const handleRequestShip = async (packageId: string) => {
     try {
+      setIsRequestShipLoading(true);
       await updatePackageStatus(packageId, "Request Ship");
       toast.success("Ship request submitted successfully!");
       // Refresh packages and shipments after status change
@@ -142,6 +151,8 @@ const TabsSection = () => {
       fetchShipments();
     } catch (error) {
       toast.error("Failed to request ship. Please try again.");
+    } finally {
+      setIsRequestShipLoading(false);
     }
   };
 
@@ -210,10 +221,11 @@ const TabsSection = () => {
                           )}
                         </div>
                         <button
+                          disabled={isRequestShipLoading}
                           onClick={() => handleRequestShip(pkg.id)}
                           className="inline-flex bg-blue-600 hover:bg-blue-700 text-white items-center px-4 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
-                          Request Ship
+                          {isRequestShipLoading ? "Requesting..." : "Request Ship"}
                         </button>
                       </div>
                     </div>

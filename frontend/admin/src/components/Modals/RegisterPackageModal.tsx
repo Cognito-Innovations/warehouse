@@ -85,7 +85,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
   const loadInitialData = async () => {
     setIsLoadingData(true);
     try {
-      await Promise.all([fetchUsers(), fetchRacks(), fetchSuppliers()]);
+      await Promise.allSettled([fetchUsers(), fetchRacks(), fetchSuppliers()]);
     } catch (error) {
       console.error("Failed to load initial data for modal", error);
       toast.error("Could not load required data. Please try again.");

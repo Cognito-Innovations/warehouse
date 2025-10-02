@@ -174,12 +174,12 @@ export class ShoppingRequestsService {
     }
 
     const [
-      shoppingRequestProducts,
-      slips,
-      invoice,
-      trackingRequests,
-      userCurrency,
-    ] = await Promise.all([
+      shoppingRequestProductsResult,
+      slipsResult,
+      invoiceResult,
+      trackingRequestsResult,
+      userCurrencyResult,
+    ] = await Promise.allSettled([
       this.productRepository.find({
         where: { shopping_request_id: shoppingRequest.id },
       }),
@@ -195,6 +195,22 @@ export class ShoppingRequestsService {
       this.userPreferencesService.getUserCurrency(shoppingRequest.user_id),
     ]);
 
+    const shoppingRequestProducts =
+      shoppingRequestProductsResult.status === 'fulfilled'
+        ? shoppingRequestProductsResult.value
+        : [];
+    const slips = slipsResult.status === 'fulfilled' ? slipsResult.value : [];
+    const invoice =
+      invoiceResult.status === 'fulfilled' ? invoiceResult.value : null;
+    const trackingRequests =
+      trackingRequestsResult.status === 'fulfilled'
+        ? trackingRequestsResult.value
+        : [];
+    const userCurrency =
+      userCurrencyResult.status === 'fulfilled'
+        ? userCurrencyResult.value
+        : 'USD';
+
     const convertPrice = async (price: number | null | undefined) => {
       if (price === null || price === undefined) return price;
       return this.userPreferencesService.getConvertedPrice(
@@ -209,7 +225,7 @@ export class ShoppingRequestsService {
         shoppingRequest.user_id,
         price,
       );
-    }
+    };
 
     return {
       id: shoppingRequest.id,
@@ -224,7 +240,7 @@ export class ShoppingRequestsService {
         shoppingRequestProducts.map(async (product) => ({
           ...product,
           unit_price: await convertPrice(product.unit_price),
-          currency: userCurrency, 
+          currency: userCurrency,
         })),
       ),
       remarks: shoppingRequest.remarks,

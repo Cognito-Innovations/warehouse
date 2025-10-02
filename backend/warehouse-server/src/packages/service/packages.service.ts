@@ -325,9 +325,16 @@ export class PackagesService {
       order: { created_at: 'DESC' },
     });
 
-    return Promise.all(
+    const results = await Promise.allSettled(
       packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
     );
+
+    return results
+      .filter(
+        (result): result is PromiseFulfilledResult<PackageResponseDto> =>
+          result.status === 'fulfilled',
+      )
+      .map((result) => result.value);
   }
 
   async getPackagesByUserAndStatus(
@@ -590,7 +597,7 @@ export class PackagesService {
   }
 
   async addShipmentDocument(
-    shipment_uuid: string,
+    package_uuid: string,
     dto: {
       url: string;
       original_filename: string;
@@ -601,31 +608,31 @@ export class PackagesService {
     userId: string,
   ) {
     const pkg = await this.packageRepository.findOne({
-      where: { shipment_uuid },
+      where: { id: package_uuid },
     });
     if (!pkg) {
       throw new NotFoundException(
-        `Package not found with shipment_uuid: ${shipment_uuid}`,
+        `Package not found with package_uuid: ${package_uuid}`,
       );
     }
 
     await this.documentsService.create({
       uploaded_by: userId,
       feature_type: FeatureType.Package,
-      feature_fid: shipment_uuid,
-      document_name: 'Shipment Document',
+      feature_fid: package_uuid,
+      document_name: 'Package Document',
       original_filename: dto.original_filename,
       document_url: dto.url,
       document_type: dto.document_type || 'photo',
       file_size: dto.file_size,
       mime_type: dto.mime_type,
-      category: 'SHIPMENT',
+      category: 'PACKAGE',
       is_required: false,
     });
 
     return this.documentsService.findByFeature(
       FeatureType.Package,
-      shipment_uuid,
+      package_uuid,
     );
   }
 

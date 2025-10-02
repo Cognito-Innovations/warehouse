@@ -62,7 +62,7 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
       if (updated.boxes) {
         const allPackages = updated.boxes.flatMap((box: any) => box.packages || []);
         if (allPackages.length > 0) {
-          await Promise.all(
+          await Promise.allSettled(
             allPackages.map((pkg: any) =>
               updatePackageStatus(pkg.id, "Departed")
             )

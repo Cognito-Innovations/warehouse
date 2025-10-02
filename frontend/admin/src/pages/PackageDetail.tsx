@@ -42,13 +42,13 @@ const PackageDetail: React.FC = () => {
     }
   };
 
-   const fetchShipmentDocuments = async (shipment_uuid: string) => {
-    if (!shipment_uuid) {
+   const fetchShipmentDocuments = async (package_uuid: string) => {
+    if (!package_uuid) {
       setShipmentDocuments([]);
       return;
     }
     try {
-      const docs = await getShipmentDocuments(shipment_uuid);
+      const docs = await getShipmentDocuments(package_uuid);
       setShipmentDocuments(docs);
     } catch (err) {
       console.error('Failed to fetch shipment documents:', err);
@@ -78,14 +78,13 @@ const PackageDetail: React.FC = () => {
     setError(null);
 
     try {
-      const data = await getPackageById(id);
+      const data = await getPackageById(id) as any; //TODO: Remove any
       setPackageData(data);
       setPackageItems(data.items || []);
-      
-      await Promise.all([
+      await Promise.allSettled([
         fetchPaymentSlips(data.shipment_uuid),
         fetchDocuments(),
-        fetchShipmentDocuments(data.shipment_uuid)
+        fetchShipmentDocuments(data.id)
       ]);
     } catch (err) {
       console.error('Failed to fetch package data:', err);
@@ -113,13 +112,12 @@ const PackageDetail: React.FC = () => {
     if (!id) return;
 
     try {
-      const data = await getPackageById(id);
+      const data = await getPackageById(id) as any; //TODO: Remove any
       setPackageData(data);
       setPackageItems(data.items || []);
-      
       await fetchPaymentSlips(data.shipment_uuid);
       await fetchDocuments();
-      await fetchShipmentDocuments(data.shipment_uuid);
+      await fetchShipmentDocuments(data.id);
     } catch (err) {
       console.error('Failed to refetch package data:', err);
       toast.error('Failed to refresh package details');

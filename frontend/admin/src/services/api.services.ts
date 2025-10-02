@@ -157,8 +157,8 @@ export const updatePackage = async (id: string, payload: Partial<{
   return data;
 };
 
-export const getShipmentDocuments = async (shipment_uuid: string): Promise<any> => {
-  const response = await api.get(`/packages/shipments/${shipment_uuid}/documents`);
+export const getShipmentDocuments = async (package_uuid: string): Promise<any> => {
+  const response = await api.get(`/packages/shipments/${package_uuid}/documents`);
   return response.data;
 };
 

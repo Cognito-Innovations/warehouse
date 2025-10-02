@@ -167,10 +167,10 @@ export class PackagesController {
     return this.packagesService.updatePackageInfo(id, dto, req.user.id);
   }
 
-  @Post('shipments/:shipment_uuid/documents')
+  @Post('shipments/:package_uuid/documents')
   @ApiOperation({ summary: 'Upload shipment document/photo' })
   async uploadShipmentDocument(
-    @Param('shipment_uuid') shipment_uuid: string,
+    @Param('package_uuid') package_uuid: string,
     @Body()
     body: {
       url: string;
@@ -182,19 +182,19 @@ export class PackagesController {
     @Request() req: AuthenticatedRequest,
   ) {
     return this.packagesService.addShipmentDocument(
-      shipment_uuid,
+      package_uuid,
       body,
       req.user.id,
     );
   }
 
-  @Get('shipments/:shipment_uuid/documents')
+  @Get('shipments/:package_uuid/documents')
   @ApiOperation({ summary: 'Get all documents/photos for a shipment' })
-  async getShipmentDocuments(@Param('shipment_uuid') shipment_uuid: string) {
+  async getShipmentDocuments(@Param('package_uuid') package_uuid: string) {
     return this.packagesService['documentsService'].findByFeature(
       FeatureType.Package,
-      shipment_uuid,
-      'SHIPMENT',
+      package_uuid,
+      'PACKAGE',
     );
   }
 

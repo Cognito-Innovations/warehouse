@@ -63,7 +63,9 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchCourierCompanies = async () => {
-    const [courierCompaniesData, currenciesData] = await Promise.all([getCourierCompanies(), getCurrencies()]);
+    const results = await Promise.allSettled([getCourierCompanies(), getCurrencies()]);
+    const courierCompaniesData = results[0].status === "fulfilled" ? results[0].value : [];
+    const currenciesData = results[1].status === "fulfilled" ? results[1].value : [];
     setCourierCompanies(courierCompaniesData);
     setCurrencies(currenciesData);
   };

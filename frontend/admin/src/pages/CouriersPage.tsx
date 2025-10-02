@@ -24,12 +24,22 @@ const CouriersPage: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [couriersData, countriesData] = await Promise.all([
+      const results = await Promise.allSettled([
         getCouriers(),
         getCountries(),
       ]);
-      setCouriers(couriersData);
-      setCountries(countriesData);
+      if (results[0].status === 'fulfilled') {
+        setCouriers(results[0].value);
+      } else {
+        console.error(results[0].reason);
+        toast.error('Failed to fetch couriers');
+      }
+      if (results[1].status === 'fulfilled') {
+        setCountries(results[1].value);
+      } else {
+        console.error(results[1].reason);
+        toast.error('Failed to fetch countries');
+      }
     } catch (err) {
       console.error(err);
       toast.error('Failed to fetch required data');
