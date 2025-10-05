@@ -137,14 +137,27 @@ export class UsersService {
     user.otp_expires_at = otp_expires_at;
     await this.userRepository.save(user);
 
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #4A90E2; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="margin: 0; font-size: 24px;">Verify Your Email Address</h1>
+        </div>
+        <div style="background-color: #ffffff; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+          <p>Hello ${user.name || 'User'},</p>
+          <p>Thank you for updating your profile. Please use the One-Time Password (OTP) below to verify your email address. This code is valid for <strong>10 minutes</strong>.</p>
+          <div style="background-color: #eef4ff; border: 2px dashed #4A90E2; color: #4A90E2; font-size: 32px; font-weight: bold; text-align: center; padding: 20px; border-radius: 8px; margin: 25px 0; letter-spacing: 8px;">
+            ${otp}
+          </div>
+          <p>If you did not request this verification, you can safely ignore this email.</p>
+          <p>Thanks,<br>The Team</p>
+        </div>
+      </div>
+    `;
+
     await this.mailerService.sendMail({
       to: user.email,
       subject: 'Your Email Verification Code',
-      template: 'email-verification',
-      context: {
-        name: user.name || 'User',
-        otp: otp,
-      },
+      html: htmlContent,
     });
 
     return { message: 'OTP has been sent to your email.' };
