@@ -2,6 +2,15 @@ import React, { useEffect, useState } from "react";
 import { Box, Button, CircularProgress, TextField } from "@mui/material";
 import { numberInputStyle } from "../../styles/numberInputStyle";
 
+interface BoxDetailsValues {
+  label: string;
+  length: string;
+  breadth: string;
+  height: string;
+  volumetricWeight: string;
+  massWeight: string;
+}
+
 interface BoxDetailsFormProps {
   initialValues?: {
     label: string;
@@ -11,7 +20,7 @@ interface BoxDetailsFormProps {
     volumetricWeight: string;
     massWeight: string;
   };
-  onSave: (values: any) => Promise<void>;
+  onSave: (values: BoxDetailsValues) => Promise<void>;
 }
 
 const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({

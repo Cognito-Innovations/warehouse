@@ -12,7 +12,7 @@ interface PackageData {
   email: string;
   phone: string;
   phone2: string;
-  [key: string]: any; 
+  [key: string]: unknown; 
 }
 
 interface PackageHeaderProps {

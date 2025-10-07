@@ -2,9 +2,10 @@ import { Button } from "@mui/material"
 import { useState } from "react";
 import Modal from "../common/Modal";
 import RaiseInvoiceModal from "../PackageDetail/RaiseInvoiceModal";
+import type { PackageData } from "../../types";
 
 interface RaiseInvoiceButtonProps {
-    data: any;
+    data: PackageData;
     onRefresh: () => void;
 }
 

@@ -11,12 +11,11 @@ interface CustomerFiltersProps {
 const CustomerFilters = ({ customers, onFilter }: CustomerFiltersProps) => {
   const [emailVerified, setEmailVerified] = useState<'All' | 'YES' | 'NO'>('All');
 
-  const filtered = customers.filter(customer => {
-    if (emailVerified === 'All') return true;
-    return (customer.email_verified ? 'YES' : 'NO') === emailVerified;
-  });
-  
   useEffect(() => {
+    const filtered = customers.filter(customer => {
+      if (emailVerified === 'All') return true;
+      return (customer.email_verified ? 'YES' : 'NO') === emailVerified;
+    });
     onFilter(filtered);
   }, [emailVerified, customers, onFilter]);
 

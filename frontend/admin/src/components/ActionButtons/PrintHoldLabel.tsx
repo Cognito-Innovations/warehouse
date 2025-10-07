@@ -5,8 +5,24 @@ import QRCode from 'qrcode';
 import JsBarcode from "jsbarcode";
 import { toast } from "sonner";
 
+interface Measurement {
+  length: number;
+  width: number;
+  height: number;
+}
+
+interface HoldLabelData {
+    shipment_id: string;
+    shipment_uuid?: string;
+    customer: string;
+    suite?: string;
+    weight?: string;
+    measurements: Measurement[];
+    createdAt?: string;
+}
+
 interface PrintHoldLabelButtonProps {
-  data: any;
+  data: HoldLabelData;
 }
 
 const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => {
@@ -94,7 +110,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.setLineDashPattern([], 0); // Reset dash pattern
 
             // 7. Weight / Pcs (Bottom-Left)
-            const weight = parseFloat(data.weight || 0).toFixed(2);
+            const weight = parseFloat(data.weight || '0').toFixed(2);
             const pieces = data.measurements.length || 0;
             const weightText = `WEIGHT: ${weight} KG / ${pieces} PCS`;
             doc.setFontSize(9);

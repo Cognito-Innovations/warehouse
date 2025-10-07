@@ -21,22 +21,33 @@ import ConfirmDialog from '../common/ConfirmDialog';
 import { getStatusColor } from '../../utils/statusUtils';
 import { formatDateTime } from '../../utils/formatDateTime';
 
+export interface ShipmentExportRow {
+  id: string;
+  export_code: string;
+  created_at: number | string;
+  mawb?: string;
+  boxes_count: number;
+  created_by: string;
+  status: string;
+  [key: string]: unknown;
+}
+
 interface ShipmentExportTableBodyProps {
-  rows: any[];
+  rows: ShipmentExportRow[];
   loading: boolean;
   onUpdate: () => void;
 }
 
 const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows, loading, onUpdate }) => {
   const [mawbModalOpen, setMawbModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<any | null>(null);
+  const [selectedRow, setSelectedRow] = useState<ShipmentExportRow | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const navigate = useNavigate();
 
-  const handleOpenMawbModal = (row: any) => {
+  const handleOpenMawbModal = (row: ShipmentExportRow) => {
     setSelectedRow(row);
     setMawbModalOpen(true);
   };
@@ -66,7 +77,7 @@ const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows,
     }
   };
 
-  const handleViewDetails = (row: any) => {
+  const handleViewDetails = (row: ShipmentExportRow) => {
     navigate(`/shipment/export/${row.id}`);
   };
 

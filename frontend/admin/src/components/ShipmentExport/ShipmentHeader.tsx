@@ -3,8 +3,15 @@ import { Box, Card, Chip, Typography } from "@mui/material";
 import { formatDateTime } from "../../utils/formatDateTime";
 import { getStatusColor } from "../../utils/statusUtils";
 
+interface Shipment {
+  requestCode: string;
+  status: string;
+  boxes?: { id: string }[];
+  created_at: number | string;
+}
+
 interface ShipmentHeaderProps {
-  shipment: any;
+  shipment: Shipment;
 }
 
 const ShipmentHeader: React.FC<ShipmentHeaderProps> = ({ shipment }) => {

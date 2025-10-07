@@ -28,6 +28,12 @@ interface Charge {
   total: number;
 }
 
+interface PackageData {
+  id: string;
+  actual_id: string;
+  weight?: string | number;
+}
+
 const availableCharges = [
   { name: 'Dangerous Goods', amount: 5.00 },
   { name: 'Pickup Charge', amount: 10.00 },
@@ -38,7 +44,7 @@ const availableCharges = [
 ];
 
 const RaiseInvoiceModal: React.FC<{ 
-    packageData: any; 
+    packageData: PackageData; 
     onClose: () => void;
     onUpdated?: () => void;
 }> = ({ packageData, onClose, onUpdated }) => {

@@ -62,6 +62,8 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
   const [loadingPreferences, setLoadingPreferences] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  const today = new Date().toISOString().split("T")[0];
+
   const fetchCourierCompanies = async () => {
     const results = await Promise.allSettled([getCourierCompanies(), getCurrencies()]);
     const courierCompaniesData = results[0].status === "fulfilled" ? results[0].value : [];
@@ -75,7 +77,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       fetchData();
       setIsEmailVerified(profileData.email_verified);
     }
-  }, [open, profileData]);
+  }, [open]);
 
   useEffect(() => {
     setIsSaving(loading || false);
@@ -111,7 +113,13 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
   };
 
   const handleChange = (field: keyof ProfileData) => (event: any) => {
-    const { value } = event.target;
+    let { value } = event.target;
+
+    if (field === 'phone_number' || field === 'alternate_phone_number') {
+      const NON_NUMERIC_CHARACTERS = /[^0-9]/g;
+      value = value.replace(NON_NUMERIC_CHARACTERS, "").slice(0, 10);
+    }
+
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -290,6 +298,9 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               InputLabelProps={{
                 shrink: true,
               }}
+              inputProps={{
+                max: today,
+              }}
               placeholder="dd/mm/yyyy"
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -300,12 +311,16 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
 
             <TextField
               label="Contact No"
+              type="tel"
               value={formData.phone_number}
               onChange={handleChange("phone_number")}
               error={!!errors.phone_number}
               helperText={errors.phone_number}
               fullWidth
               size="medium"
+              inputProps={{
+                maxLength: 10
+              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
@@ -315,10 +330,14 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
 
             <TextField
               label="Alternative Contact No"
+              type="tel"
               value={formData.alternate_phone_number}
               onChange={handleChange("alternate_phone_number")}
               fullWidth
               size="medium"
+              inputProps={{
+                maxLength: 10
+              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",

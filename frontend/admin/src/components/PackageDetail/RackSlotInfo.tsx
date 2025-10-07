@@ -8,7 +8,7 @@ interface RackSlotInfoProps {
     trackingNo: string;
     rack?: string;
     count?: number;
-    [key: string]: any; 
+    [key: string]: unknown; 
   };
   isDiscarded: boolean;
   onRefresh: () => void;
@@ -53,7 +53,14 @@ const RackSlotInfo: React.FC<RackSlotInfoProps> = ({ packageData, isDiscarded, o
           open={rackModalOpen}
           onClose={handleCloseRackModal}
           onRefresh={onRefresh}
-          packageData={packageData}
+          packageData={{
+            actual_id: packageData.actual_id,
+            rack: packageData.rack,
+            createdBy: (packageData.createdBy as string) || 'N/A',
+            createdAt: (packageData.createdAt as string) || 'N/A',
+            updatedBy: (packageData.updatedBy as string) || 'N/A',
+            updatedAt: (packageData.updatedAt as string) || 'N/A',
+          }}
         />
       )}
     </>

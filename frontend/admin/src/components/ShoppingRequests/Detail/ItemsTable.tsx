@@ -24,14 +24,15 @@ interface ShoppingRequestProduct {
   unit_price?: number | null;
   currency?: string;
   available?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface ItemsTableProps {
   details: {
     status: string;
     shopping_request_products?: ShoppingRequestProduct[];
-    [key: string]: any;
+    remarks?: string;
+    [key: string]: unknown;
   };
   onItemUpdate: (itemId: string, updates: Partial<ShoppingRequestProduct>) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
@@ -39,19 +40,17 @@ interface ItemsTableProps {
 
 const COMMISSION_RATE = 0.08;
 
-
-
 const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelectionChange }) => {
-  const products = details.shopping_request_products ?? [];
+  const products = useMemo(() => details.shopping_request_products ?? [], [details.shopping_request_products]);
 
   const sortedProducts = useMemo(() => {
-    return [...products].sort((a, b) => (a.id && b.id ? a.id.localeCompare(b.id) : 0));
-  }, [products]);
+    return [...products].sort((a, b) => (a.id && b.id ? a.id.localeCompare(b.id) : 0));
+  }, [products]);
 
   const summary = useMemo(() => {
     if (products.length === 0) return { subTotal: 0, commission: 0, total: 0, currency: "US" };
 
-    const subTotal = products.reduce((acc, p) => acc + (p.unit_price || 0) * (p.quantity || 0), 0);
+    const subTotal = products.reduce((acc, product) => acc + (product.unit_price || 0) * (product.quantity || 0), 0);
     const commission = subTotal * COMMISSION_RATE;
 
     const currency = products[0]?.currency || "US";

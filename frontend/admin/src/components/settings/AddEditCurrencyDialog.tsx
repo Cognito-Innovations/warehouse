@@ -16,7 +16,7 @@ const emptyForm = { country: '', currency_symbol: '', rate: '' };
 const AddEditCurrencyDialog: React.FC<AddEditCurrencyDialogProps> = ({ open, onClose, onSave, saving, initialData }) => {
   const [countries, setCountries] = useState<Pick<Country, 'id' | 'name'>[]>([]);
   const [form, setForm] = useState(emptyForm);
-  const isEditing = !!initialData;
+  const isEditing = React.useMemo(() => !!initialData, [initialData]);
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -33,14 +33,14 @@ const AddEditCurrencyDialog: React.FC<AddEditCurrencyDialogProps> = ({ open, onC
   useEffect(() => {
     if (isEditing && open) {
       setForm({
-        country: initialData.country?.id || '',
-        currency_symbol: initialData.currency_symbol || '',
-        rate: initialData.rate?.toString() || '',
+        country: initialData?.country?.id || '',
+        currency_symbol: initialData?.currency_symbol || '',
+        rate: initialData?.rate?.toString() || '',
       });
     } else {
       setForm(emptyForm);
     }
-  }, [initialData, open]);
+  }, [initialData, open, isEditing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });

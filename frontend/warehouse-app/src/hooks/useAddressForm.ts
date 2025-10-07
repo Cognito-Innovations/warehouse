@@ -1,4 +1,5 @@
 "use client";
+import { useMemo } from "react";
 import { useAddressAPI } from "./useAddressAPI";
 
 /**
@@ -9,16 +10,32 @@ export const useAddressForm = () => {
   const {
     selectedCountry,
     selectedAddress,
-    currentCountryInfo,
-    selectedAddressWithCountry,
-    addressesForCurrentCountry,
     savedAddresses,
+    availableCountries,
     selectCountry,
     selectAddress,
     updateAddress,
     addAddress,
     removeAddress,
   } = useAddressAPI();
+
+   const currentCountryInfo = useMemo(() => {
+    return availableCountries.find((country) => country.name === selectedCountry);
+  }, [availableCountries, selectedCountry]);
+
+  const addressesForCurrentCountry = useMemo(() => {
+    return savedAddresses.filter(
+      (addr) => addr.country_name === selectedCountry
+    );
+  }, [savedAddresses, selectedCountry]);
+
+  const selectedAddressWithCountry = useMemo(() => {
+    if (!selectedAddress || !currentCountryInfo) return null;
+    return {
+      ...selectedAddress,
+      country: currentCountryInfo,
+    };
+  }, [selectedAddress, currentCountryInfo]);
 
   // Get country ID for API calls (you might need to map this to your backend)
   const getCountryId = () => {

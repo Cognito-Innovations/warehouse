@@ -19,7 +19,7 @@ interface Product {
   shopping_request_id: string;
   name: string;
   description?: string | null;
-  unit_price: string;
+  unit_price: number;
   quantity: number;
   url?: string;
   size?: string;
@@ -35,8 +35,8 @@ interface Product {
 interface Invoice {
   id: string;
   invoice_no: string;
-  amount: string;
-  total: string;
+  amount: number;
+  total: number;
   status: string;
   products: Product[];
   created_at: string;
@@ -51,8 +51,16 @@ interface PaymentSlip {
   category: string;
   file_size: number;
   mime_type: string;
+  amount?: number;
+  status?: string;
   created_at: string;
   updated_at: string;
+}
+
+interface TrackingRequest {
+  status: string;
+  created_at: string;
+  [key: string]: unknown;
 }
 
 export interface RequestData {
@@ -66,7 +74,7 @@ export interface RequestData {
   remarks?: string;
   status: string;
   payment_slips?: PaymentSlip[];
-  tracking_requests?: any[];
+  tracking_requests?: TrackingRequest[];
   invoice?: Invoice;
   created_at: string;
   updated_at: string;
@@ -75,7 +83,7 @@ export interface RequestData {
 interface RequestDetailContentProps {
   request: RequestData;
   onStatusUpdated?: () => void;
-  onItemUpdate: (itemId: string, updates: any) => void;
+  onItemUpdate: (itemId: string, updates: Partial<Product>) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
 }
 
@@ -120,9 +128,9 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
       let userName = request.user.name;
 
       const historyItem = trackingHistory.find(track => {
-        const upperCaseStatus = track.status.toUpperCase();
-        return STATUS_TO_STEP_ID_MAPPING[upperCaseStatus] === step.id || upperCaseStatus === step.id;
-      });
+      const upperCaseStatus = track.status.toUpperCase();
+        return STATUS_TO_STEP_ID_MAPPING[upperCaseStatus] === step.id || upperCaseStatus === step.id;
+      });
 
       if (historyItem) {
         isComplete = true;
@@ -167,23 +175,23 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
     const mappedId = STATUS_TO_STEP_ID_MAPPING[upperCaseStatus];
 
     if (mappedId && !isRejected) {
-      currentStageId = mappedId;
-    } else {
-      const lastCompletedStep = [...statuses].reverse().find(s => s.date && s.date.trim() !== '');
-      currentStageId = lastCompletedStep ? (lastCompletedStep.id as string) : 'REQUESTED';
-    }
+      currentStageId = mappedId;
+    } else {
+      const lastCompletedStep = [...statuses].reverse().find(s => s.date && s.date.trim() !== '');
+      currentStageId = lastCompletedStep ? (lastCompletedStep.id as string) : 'REQUESTED';
+    }
 
-     if (isRejected) {
-      const currentStageIndex = statuses.findIndex(s => s.id === currentStageId);
+    if (isRejected) {
+      const currentStageIndex = statuses.findIndex(s => s.id === currentStageId);
 
-      if (currentStageIndex > -1) {
-        for (let i = currentStageIndex + 1; i < statuses.length; i++) {
-          const originalStep = SHOPPING_TRACKING_STEPS.find(s => s.id === statuses[i].id);
-          
-          statuses[i].date = formatDateTime(undefined);
-          statuses[i].description = originalStep?.defaultDescription || '';
-        }
-      }
+      if (currentStageIndex > -1) {
+        for (let i = currentStageIndex + 1; i < statuses.length; i++) {
+          const originalStep = SHOPPING_TRACKING_STEPS.find(s => s.id === statuses[i].id);
+
+          statuses[i].date = formatDateTime(undefined);
+          statuses[i].description = originalStep?.defaultDescription || '';
+        }
+      }
     }
 
     return { statuses, currentStageId };

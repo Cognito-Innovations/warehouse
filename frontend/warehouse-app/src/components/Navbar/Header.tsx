@@ -10,18 +10,9 @@ import HeaderAddressSection from "./HeaderAddressSection";
 import { AccountCircle, Logout } from "@mui/icons-material";
 import { useAddressAPI } from "../../hooks/useAddressAPI";
 import { useAddressForm } from "@/hooks/useAddressForm";
+import { AddressData } from "../../contexts/AddressContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { Avatar, Menu, MenuItem, IconButton, ListItemIcon, ListItemText, Box, Typography, Divider, Badge } from "@mui/material";
-
-interface AddressData {
-  id?: string;
-  name: string;
-  address: string;
-  country_name: string;
-  country_code: string;
-  country_phone_code: string;
-  phone_number: string;
-}
 
 const Header = () => {
   const {updateAddress} = useAddressForm();

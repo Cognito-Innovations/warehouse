@@ -8,6 +8,21 @@ import {
   updatePackageStatus,
 } from "../../services/api.services";
 
+interface Package {
+  id: string;
+  [key: string]: unknown;
+}
+
+interface BoxItem {
+  id: string | number;
+  packages?: Package[];
+}
+
+interface ShipmentExport {
+  status: string;
+  boxes?: BoxItem[];
+}
+
 interface ShipmentActionsBarProps {
   selectedBoxId: number | null;
   onPackageAdded: () => void;
@@ -45,9 +60,10 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
       } else {
         setError("Package not found.");
       }
-    } catch (err: any) {
+    } catch (err) {
+      const typedErr = err as { response?: { data?: { message?: string } } };
       console.error("Failed to add package:", err);
-      setError(err.response?.data?.message || "Package not found or could not be added.");
+      setError(typedErr.response?.data?.message || "Package not found or could not be added.");
     } finally {
       setIsSearching(false);
     }
@@ -56,14 +72,14 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
   const handleUpdateDeparted = async () => {
     try {
       setLoading(true);
-      const updated = await markShipmentExportDeparted(exportId);
+      const updated: ShipmentExport = await markShipmentExportDeparted(exportId);
       onStatusUpdated(updated.status);
 
       if (updated.boxes) {
-        const allPackages = updated.boxes.flatMap((box: any) => box.packages || []);
+        const allPackages: Package[] = updated.boxes.flatMap((box) => box.packages ?? []);
         if (allPackages.length > 0) {
           await Promise.allSettled(
-            allPackages.map((pkg: any) =>
+            allPackages.map((pkg) =>
               updatePackageStatus(pkg.id, "Departed")
             )
           );
