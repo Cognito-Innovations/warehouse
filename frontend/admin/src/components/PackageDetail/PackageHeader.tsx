@@ -3,20 +3,10 @@ import RequestHeader from '../common/RequestHeader';
 import StatusActionButtons from '../StatusActionButtons/StatusActionButtons';
 import { FEATURE_CONFIG } from '../../utils/trackingConfig';
 import { getStatusColor } from '../../utils/statusUtils';
-
-interface PackageData {
-  id: string;
-  status: { value: string }; 
-  customer: string;
-  suite: string;
-  email: string;
-  phone: string;
-  phone2: string;
-  [key: string]: unknown; 
-}
+import type { Package } from '../../types';
 
 interface PackageHeaderProps {
-  packageData: PackageData;
+  packageData: Package;
   onRefresh?: () => void;
   isDiscarded: boolean;
 }
@@ -27,17 +17,17 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({
   isDiscarded,
 }) => {
   const customer = {
-    name: packageData.customer,
-    suite_no: packageData.suite,
-    email: packageData.email,
-    phone: packageData.phone === 'N/A' ? null : packageData.phone,
-    alt_phone: packageData.phone2 === 'N/A' ? null : packageData.phone2,
+    name: packageData.customer?.name ?? '',
+    suite_no: packageData.customer?.suite_no ?? '',
+    email: packageData.customer?.email ?? '',
+    phone: packageData.customer?.phone_number === 'N/A' ? null : packageData.customer?.phone_number,
+    alt_phone: packageData.customer?.phone_number_2 === 'N/A' ? null : packageData.customer?.phone_number_2,
   };
 
   const actionButtons = (
     <StatusActionButtons
       feature={FEATURE_CONFIG.PACKAGE}
-      status={packageData.status.value}
+      status={packageData.status?.value ?? ''}
       data={packageData}
       onRefresh={onRefresh}
       disabled={isDiscarded}
@@ -47,9 +37,9 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({
   return (
     <RequestHeader
       title="Package"
-      requestCode={packageData.id}
-      statusDisplay={packageData.status.value}
-      statusChipStyles={getStatusColor(packageData.status.value)}
+      requestCode={packageData.id!}
+      statusDisplay={packageData.status?.value ?? ''}
+      statusChipStyles={getStatusColor(packageData.status?.value ?? '')}
       customer={customer}
       actionButtons={actionButtons}
     />

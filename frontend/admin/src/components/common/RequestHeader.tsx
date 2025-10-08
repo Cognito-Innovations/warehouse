@@ -4,8 +4,8 @@ import { LocalPhoneOutlined, MailOutline, PersonOutline } from '@mui/icons-mater
 
 interface Customer {
   name: string;
-  suite_no?: string;
   email: string;
+  suite_no?: string;
   phone?: string | null;
   alt_phone?: string | null;
 }

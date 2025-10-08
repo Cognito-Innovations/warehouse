@@ -35,7 +35,7 @@ export const createSupplier = async (supplier: {
 };
 
 export interface CreatePackageDto {
-  customer: string;
+  user: string;
   rack_slot: string;
   tracking_no?: string;
   vendor: string;
@@ -44,7 +44,7 @@ export interface CreatePackageDto {
   width: string;
   height: string;
   volumetric_weight: string;
-  allow_customer_items: boolean;
+  allow_user_items: boolean;
   shop_invoice_received: boolean;
   remarks: string;
   pieces: Array<{

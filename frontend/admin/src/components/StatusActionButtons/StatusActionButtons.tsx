@@ -1,12 +1,13 @@
 import React from 'react';
 import { Stack } from '@mui/material';
 import { StatusActionMap } from '../../utils/trackingConfig';
+import type { Package } from '../../types';
 
 interface StatusActionButtonsProps {
   feature: string;
   status: string;
-  data: any;
-  [key: string]: any;
+  data: Package;
+  [key: string]: unknown;
 }
 
 const StatusActionButtons: React.FC<StatusActionButtonsProps> = ({ feature, status, data, ...restProps }) => {
