@@ -9,8 +9,13 @@ export interface SummaryCardConfig {
   bgColor: string;
 }
 
+export interface Request {
+  status: string;
+  [key: string]: unknown;
+}
+
 interface RequestSummaryProps {
-  requests: any[];
+  requests: Request[];
   loading: boolean;
   summaryConfig: SummaryCardConfig[];
   onCardClick: (status: string | string[] | null) => void;

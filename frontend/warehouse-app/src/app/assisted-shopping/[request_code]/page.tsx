@@ -118,7 +118,6 @@ export default function ViewShoppingRequestPage() {
         <div className="mb-6">
           <RequestHeader
             request={request}
-            isRejected={isRejected}
             onDelete={(id) => {
               setDeleteId(id);
               setConfirmOpen(true);

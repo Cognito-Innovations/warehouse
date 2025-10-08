@@ -1,12 +1,13 @@
 import { Button } from "@mui/material"
 import React, { useState } from "react";
-import ConfirmDialog from "../common/ConfirmDialog";
 import { useNavigate } from "react-router-dom";
-import { updatePackageStatus } from "../../services/api.services";
 import { toast } from "sonner";
+import ConfirmDialog from "../common/ConfirmDialog";
+import { updatePackageStatus } from "../../services/api.services";
+import type { PackageData } from "../../types";
 
 interface DiscardButtonProps {
-    data: any;
+    data: PackageData;
 }
 
 const DiscardButton: React.FC<DiscardButtonProps> = ({ data }) => {

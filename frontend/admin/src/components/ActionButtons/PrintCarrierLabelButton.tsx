@@ -4,8 +4,36 @@ import { toast } from "sonner";
 import { updatePackageStatus } from "../../services/api.services";
 import { generateCarrierLabelPDF } from "../PDF/CarrierLabelPDF";
 
+export interface CarrierLabelData {
+    id: string;
+    trackingNo: string;
+    status?: { value: string };
+    createdAt?: string;
+    weight?: string;
+    num_pieces?: string;
+    origin_country?: string;
+    destination_country?: string;
+    dimensions_cm?: string;
+    value_usd?: string;
+    reference?: string;
+    piece_id?: string;
+    contents?: string;
+    from_address?: {
+        address?: string;
+        lines?: string[];
+        phone?: string;
+    };
+    to_address?: {
+        name?: string;
+        address?: string;
+        lines?: string[];
+        phone?: string;
+        contact_numbers?: string[];
+    };
+}
+
 interface PrintCarrierLabelButtonProps {
-    data: any;
+    data: CarrierLabelData;
     onRefresh: () => void;
 }
 

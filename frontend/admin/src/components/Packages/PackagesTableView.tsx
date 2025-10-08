@@ -19,7 +19,7 @@ import {
 import { formatDateTime } from '../../utils/formatDateTime';
 import { getStatusColor } from '../../utils/statusUtils';
 
-interface Package {
+export interface Package {
   id: string;
   package_id?: string;
   tracking_no?: string;

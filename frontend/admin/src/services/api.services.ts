@@ -34,7 +34,7 @@ export const createSupplier = async (supplier: {
   return response.data;
 };
 
-interface CreatePackageDto {
+export interface CreatePackageDto {
   customer: string;
   rack_slot: string;
   tracking_no?: string;

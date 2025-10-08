@@ -55,6 +55,19 @@ interface PackageInfoModalProps {
   };
 }
 
+interface IncomingPackage {
+  id?: string;
+  packageNo?: string;
+  statusType?: string;
+  status?: string;
+  customer?: string;
+  customerCode?: string;
+  carrier?: string;
+  trackingNo?: string;
+  receivedAt?: string;
+  time?: string;
+}
+
 const PackageInfoModal: React.FC<PackageInfoModalProps> = ({ open, onClose, packageData }) => {
   const defaultPackageData = {
     id: 'IN2025638',
@@ -80,7 +93,7 @@ const PackageInfoModal: React.FC<PackageInfoModalProps> = ({ open, onClose, pack
   };
 
   // Map package data from packages table to modal format
-  const mapPackageData = (pkg: any) => {
+  const mapPackageData = (pkg?: IncomingPackage) => {
     if (!pkg) return defaultPackageData;
     
     return {

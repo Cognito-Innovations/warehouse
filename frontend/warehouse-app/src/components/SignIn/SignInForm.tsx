@@ -65,7 +65,7 @@ export default function SignInForm() {
         });
 
         if (result?.ok) {
-          router.push("/dashboard");
+          window.location.href = "/dashboard";
         } else {
           setError("Invalid email or password. Please try again.");
         }
@@ -89,7 +89,7 @@ export default function SignInForm() {
           });
 
           if (result?.ok) {
-            router.push("/dashboard");
+            window.location.href = "/dashboard";
           } else {
             setError("Registration successful but login failed. Please try logging in.");
           }

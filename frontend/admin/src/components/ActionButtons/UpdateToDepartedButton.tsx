@@ -1,9 +1,10 @@
 import { Button, CircularProgress } from "@mui/material";
 import React, { useState } from "react";
 import { updatePackageStatus } from "../../services/api.services";
+import type { PackageData } from "../../types";
 
 interface UpdateToDepartedButtonProps {
-  data: any;
+  data: PackageData;
   onRefresh: () => void;
 }
 

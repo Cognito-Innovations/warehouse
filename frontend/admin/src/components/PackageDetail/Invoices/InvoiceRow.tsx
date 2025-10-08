@@ -11,7 +11,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import CloseIcon from "@mui/icons-material/Close";
 import PrintIcon from "@mui/icons-material/Print";
-import InvoiceProducts from "./InvoiceProducts";
+import InvoiceProducts, { type InvoiceItem } from "./InvoiceProducts";
 import InvoiceSlips from "./InvoiceSlips";
 import { toast } from 'sonner';
 
@@ -20,7 +20,7 @@ interface InvoiceDetails {
   amount: number;
   total: number;
   status: 'UNPAID' | 'PAID';
-  items?: any[];
+  items?: InvoiceItem[];
 }
 
 const InvoiceRow: React.FC<{ invoice: InvoiceDetails }> = ({ invoice }) => {

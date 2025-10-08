@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -12,7 +12,8 @@ import { toast } from 'sonner';
 import { deletePackage, getPackage } from '../../services/api.services';
 import PackageFilter from './PackageFilter';
 import ConfirmDialog from '../common/ConfirmDialog';
-import PackagesTableView from './PackagesTableView';
+import PackagesTableView, { type Package as ViewPackage } from './PackagesTableView';
+import { type Package as ApiPackage } from '../../types';
 
 interface PackagesTableProps {
   selectedStatus?: string | null;
@@ -27,8 +28,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
 }) => {
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(15);
-  const [packages, setPackages] = useState<any[]>([]);
-  const [filteredPackages, setFilteredPackages] = useState<any[]>([]);
+  const [packages, setPackages] = useState<ViewPackage[]>([]);
+  const [filteredPackages, setFilteredPackages] = useState<ViewPackage[]>([]);
   const [statusCounts, setStatusCounts] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -79,19 +80,38 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     setPage(value);
   };
 
-  const handleInfoClick = (packageData: any) => { 
+  const handleInfoClick = (packageData: ViewPackage) => { 
     navigate(`/packages/${packageData.id}`);
   };
 
   const fetchPackages = async () => {
     try {
       setLoading(true);
-      const data = await getPackage();
-      setPackages(data);
+      const data: ApiPackage[] = await getPackage();
+      const validPackages: ViewPackage[] = data
+      .filter(pkg => !!pkg.id)
+      .map(pkg => ({
+        id: pkg.id!,
+        package_id: pkg.package_id || '',
+        tracking_no: pkg.tracking_no || '',
+        customer: pkg.customer
+          ? { name: pkg.customer.name || 'Unknown', suite_no: pkg.customer.suite_no || 'N/A' }
+          : { name: 'Unknown', suite_no: 'N/A' },
+        vendor: pkg.vendor
+          ? { supplier_name: pkg.vendor.supplier_name || 'Unknown' }
+          : { supplier_name: 'Unknown' },
+        created_at: pkg.created_at || '',
+        status: { value: pkg.status?.value || 'Unknown' },
+        rack_slot: pkg.rack_slot
+          ? { label: pkg.rack_slot.label || 'N/A' }
+          : { label: 'N/A' }
+      }));
+
+      setPackages(validPackages);
       
       // Calculate status counts
-      const counts = data.reduce((acc: any, pkg: any) => {
-        const status = pkg.status.value || 'Unknown';
+      const counts = validPackages.reduce((acc: { [key: string]: number }, pkg: ViewPackage) => {
+        const status = pkg.status.value;
         acc[status] = (acc[status] || 0) + 1;
         return acc;
       }, {});
@@ -104,15 +124,13 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   };
 
   // Filter packages based on selected status and search value
-  const filterPackages = () => {
+  const filterPackages = useCallback(() => {
     let filtered = packages;
 
-    // Filter by status
     if (selectedStatus) {
       filtered = filtered.filter(pkg => pkg.status.value === selectedStatus);
     }
 
-    // Filter by search value
     if (searchValue) {
       const searchLower = searchValue.toLowerCase();
       filtered = filtered.filter(pkg => 
@@ -124,18 +142,16 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     }
 
     setFilteredPackages(filtered);
-  };
+  },[packages, selectedStatus, searchValue]);
 
   useEffect(() => {
     fetchPackages();
   }, []);
 
-  // Remove this useEffect that was causing infinite loops
-
   useEffect(() => {
     filterPackages();
-    setPage(1); // Reset to first page when filters change
-  }, [packages, selectedStatus, searchValue]);
+    setPage(1);
+  }, [filterPackages]);
 
   const paginatedData = filteredPackages.slice(
     (page - 1) * rowsPerPage,

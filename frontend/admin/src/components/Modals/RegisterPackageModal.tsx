@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PackageInfoModal from "./PackageInfoModal";
 import type { Rack, Supplier, User } from "../../types";
-import { createPackage, getRacks, getSuppliers, getUsers } from "../../services/api.services";
+import { createPackage, getRacks, getSuppliers, getUsers, type CreatePackageDto } from "../../services/api.services";
 import { toast } from "sonner";
 
 import { Close as CloseIcon } from "@mui/icons-material";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box, CircularProgress, TextField } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box, CircularProgress } from "@mui/material";
 import FormFields from "./RegisterPackageModal/FormFields";
 
 import WeightSection from "./RegisterPackageModal/WeightSection";
@@ -82,7 +82,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     }
   };
 
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setIsLoadingData(true);
     try {
       await Promise.allSettled([fetchUsers(), fetchRacks(), fetchSuppliers()]);
@@ -93,13 +93,13 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     } finally {
       setIsLoadingData(false);
     }
-  };
+  }, [onClose]);
 
   useEffect(() => {
     if (open) {
       loadInitialData();
     }
-  }, [open]);
+  }, [open, loadInitialData]);
 
   // Reset form data when modal opens
   useEffect(() => {
@@ -187,8 +187,8 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
         return sum + (parseFloat(volWeight) || 0);
       }, 0);
 
-      const payload = {
-        user: formData.customer,
+      const payload: CreatePackageDto = {
+        customer: formData.customer,
         rack_slot: formData.rackSlot,
         tracking_no: formData.trackingNo,
         vendor: formData.vendor,
@@ -197,7 +197,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
         width: pieces[0]?.width || "",
         height: pieces[0]?.height || "",
         volumetric_weight: totalVolWeight.toString(),
-        allow_user_items: formData.allowCustomerItems,
+        allow_customer_items: formData.allowCustomerItems,
         shop_invoice_received: formData.shopInvoiceReceived,
         remarks: formData.remarks,
         pieces: pieces.map(piece => ({

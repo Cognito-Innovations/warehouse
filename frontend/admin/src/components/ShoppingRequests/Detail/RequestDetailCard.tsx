@@ -7,10 +7,31 @@ import { updateShoppingRequestStatus } from '../../../services/api.services';
 import RequestHeader from '../../common/RequestHeader';
 import { getStatusColor } from '../../../utils/statusUtils';
 
+interface Product {
+  id: string;
+  name?: string;
+  unit_price?: number;
+  [key: string]: unknown;
+}
+
+interface Request {
+  id: string;
+  request_code: string;
+  status: string;
+  user?: {
+    name: string;
+    suite_no?: string;
+    email: string;
+    phone?: string | null;
+    alt_phone?: string | null;
+  };
+  [key: string]: unknown;
+}
+
 interface RequestDetailCardProps {
-  request: any;
+  request: Request;
   onStatusUpdated: () => void;
-  products: any[];
+  products: Product[];
   selectedItemIds: Set<string>;
 }
 
@@ -138,7 +159,7 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
           color: statusStyles.color,
           bgColor: statusStyles.bgColor,
         }}
-        customer={request.user}
+        customer={request.user ?? { name: "Unknown", email: "unknown@example.com" }}
         actionButtons={renderActionButton()}
       />
     </>

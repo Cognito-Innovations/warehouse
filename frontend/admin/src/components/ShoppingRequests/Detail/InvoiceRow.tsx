@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Box,
-  Chip,
   Collapse,
   IconButton,
   TableCell,
@@ -34,10 +33,17 @@ export interface InvoiceDetails {
   updated_at?: number;
 }
 
+export interface PaymentSlip {
+  id: string;
+  amount: number;
+  status: string;
+  date?: number;
+}
+
 interface Props {
   invoice: InvoiceDetails;
   status: string;
-  payment_slips: any[];
+  payment_slips: PaymentSlip[];
   onStatusUpdated: () => void;
   isDiscarded: boolean;
 }
@@ -48,22 +54,6 @@ export const InvoiceRow: React.FC<Props> = ({
   isDiscarded,
 }) => {
   const [open, setOpen] = useState(false);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "UNPAID":
-        return "error";
-      case "PAID":
-        return "success";
-      case "PAYMENT_PENDING":
-        return "warning";
-      case "PAYMENT_APPROVED":
-        return "success";
-      default:
-        return "default";
-    }
-  };
-
 
   const handlePrint = () => {
     // Create a new window for printing

@@ -1,7 +1,19 @@
 import { Box, TableCell, TableRow, Checkbox, Link, Typography, IconButton } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-const ItemsTableRow = ({ item }: { item: any }) => (
+interface Item {
+  name: string;
+  link: string;
+  colorSize: string;
+  details: string;
+  available: string | number;
+  status: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+const ItemsTableRow = ({ item }: { item: Item }) => (
   <TableRow sx={{ '& td': { whiteSpace: 'pre-line', verticalAlign: 'top' } }}>
     <TableCell sx={{width: '30%'}}>
       <Box sx={{ display: 'flex' }}>

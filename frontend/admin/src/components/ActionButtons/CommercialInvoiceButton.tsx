@@ -1,15 +1,40 @@
 import React, { useState } from "react";
 import { Button, CircularProgress } from "@mui/material";
 import jsPDF from "jspdf";
-import autoTable from 'jspdf-autotable';
+import autoTable, { type UserOptions } from 'jspdf-autotable';
 import { toast } from "sonner";
 
+interface AutoTableFinalY {
+  finalY: number;
+}
+
 interface jsPDFWithAutoTable extends jsPDF {
-    autoTable: (options: any) => jsPDF;
+    autoTable: (options: UserOptions) => jsPDF;
+    lastAutoTable?: AutoTableFinalY;
+}
+
+interface InvoiceItem {
+    name: string;
+    quantity: number;
+    unit_price: string;
+    total_price: string;
+}
+
+interface InvoiceData {
+    id: string;
+    customer: string;
+    phone?: string;
+    suite?: string;
+    updatedAt?: string;
+    to_address?: {
+        line1?: string;
+        zip_code?: string;
+    };
+    items: InvoiceItem[];
 }
 
 interface CommercialInvoiceButtonProps {
-    data: any;
+    data: InvoiceData;
 }
 
 const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data }) => {
@@ -174,7 +199,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
 
              // --- 5. Total Section ---
              autoTable(doc, {
-                startY: (doc as any).lastAutoTable.finalY,
+                startY: doc.lastAutoTable?.finalY || yPos + boxHeaderH + boxBodyH + 10,
                 body: [
                     [
                         { content: 'TOTAL', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fontSize: 10 } },

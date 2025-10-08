@@ -11,10 +11,10 @@ import {
 import dayjs, { Dayjs } from 'dayjs';
 import { getShipmentExports } from '../../services/api.services';
 import ShipmentExportFilters from './ShipmentExportFilters';
-import ShipmentExportTableBody from './ShipmentExportTableBody';
+import ShipmentExportTableBody, { type ShipmentExportRow } from './ShipmentExportTableBody';
 
 const ShipmentExportTable: React.FC = () => {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<ShipmentExportRow[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);

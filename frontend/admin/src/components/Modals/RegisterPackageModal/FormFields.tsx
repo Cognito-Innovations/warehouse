@@ -28,8 +28,11 @@ const FormFields: React.FC<FormFieldsProps> = ({
   onAddSupplier,
 }) => {
   // Helper function to validate select values
-  const getValidSelectValue = (value: string, options: any[], idField: string = 'id') => {
-    return options.some(option => option[idField] === value) ? value : "";
+  const getValidSelectValue = <T extends { id: string }>(
+    value: string, 
+    options: T[],
+  ): string => {
+    return options.some(option => option.id === value) ? value : "";
   };
   return (
     <>

@@ -5,12 +5,29 @@ import DropdownMenu from '../../common/DropdownMenu';
 import EditItemModal from './EditItemModal';
 import RemarkModal from './RemarkModal';
 
+interface ItemsTableRowItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit_price?: number;
+  currency?: string;
+  available?: boolean;
+  color?: string;
+  size?: string;
+  details?: string;
+  url?: string;
+  remarks?: string;
+  if_not_available_color?: string;
+  if_not_available_quantity?: string | number;
+  [key: string]: unknown;
+}
+
 interface ItemsTableRowProps {
-  item: any;
+  item: ItemsTableRowItem;
   index: number;
   requestStatus?: string;
   disabled: boolean;
-  onUpdate: (updates: any) => void;
+  onUpdate: (updates: Partial<ItemsTableRowItem>) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
 }
 

@@ -3,16 +3,7 @@
 import React from "react";
 import { Close as CloseIcon } from "@mui/icons-material";
 import ReactCountryFlag from "react-country-flag";
-
-interface AddressData {
-  id?: string;
-  name: string;
-  address: string;
-  country_name: string;
-  country_code: string;
-  country_phone_code: string;
-  phone_number: string;
-}
+import { AddressData } from "../../../contexts/AddressContext";
 
 interface SavedAddressesModalProps {
   isOpen: boolean;

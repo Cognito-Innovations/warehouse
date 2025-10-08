@@ -86,7 +86,7 @@ export interface Package {
   allow_customer_items?: boolean;
   shop_invoice_received?: boolean;
   remarks?: string;
-  status?: string;
+  status?: { value: string };
   created_by?: string;
   creator?: {
     id: string;
@@ -95,11 +95,11 @@ export interface Package {
   shipment_uuid: string;
   created_at?: string;
   updated_at?: string;
-  items?: any[];
-  documents?: any[];
-  measurements?: any[];
-  charges?: any[];
-  action_logs?: any[];
+  items?: unknown[];
+  documents?: unknown[];
+  measurements?: unknown[];
+  charges?: unknown[];
+  action_logs?: unknown[];
 }
 
 export interface PickupRequest {
@@ -154,3 +154,16 @@ export type UpdateCurrencyPayload = Partial<CreateCurrencyPayload>;
 
 export type CreateCourierPayload = Omit<Courier, 'id' | 'country_name'>;
 export type UpdateCourierPayload = Partial<CreateCourierPayload>;
+
+export interface PackageItem {
+  [key: string]: unknown;
+}
+
+export interface PackageData {
+  id: string;
+  customer: string;
+  suite?: string;
+  weight?: string;
+  items?: PackageItem[];
+  createdAt: string | Date;
+}
