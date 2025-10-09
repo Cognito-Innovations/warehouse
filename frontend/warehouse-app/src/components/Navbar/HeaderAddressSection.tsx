@@ -14,6 +14,7 @@ interface AddressData {
   country_code: string;
   country_phone_code: string;
   phone_number: string;
+  suite_no?: string;
 }
 
 interface HeaderAddressSectionProps {
@@ -122,6 +123,9 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
           {/* Address Information */}
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-gray-800">{addressData.name}</h3>
+            {addressData.suite_no && (
+              <p className="text-sm text-gray-700 mb-1">Suite No: {addressData.suite_no}</p>
+            )}
             <p className="text-sm text-gray-600 mb-1">{addressData.address}</p>
             <p className="text-sm text-gray-600 mb-1">{addressData.country_name}</p>
             <p className="text-sm text-gray-600 mb-1">{addressData.phone_number}</p>

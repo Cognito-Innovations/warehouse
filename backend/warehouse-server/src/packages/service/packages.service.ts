@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { isUUID } from 'class-validator'; 
 
 import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
@@ -385,21 +386,45 @@ export class PackagesService {
   }
 
   async searchPackages(query: string): Promise<PackageResponseDto[]> {
-    const packages = await this.packageRepository
+    const qb = this.packageRepository
       .createQueryBuilder('package')
       .leftJoinAndSelect('package.measurements', 'measurements')
       .leftJoinAndSelect('package.items', 'items')
       .leftJoinAndSelect('package.user', 'user')
-      .where(
-        'package.id = :exactQuery OR package.package_id = :exactQuery OR package.tracking_no ILIKE :likeQuery',
-        {
-          exactQuery: query,
-          likeQuery: `%${query}%`,
-        },
-      )
-      .orderBy('package.created_at', 'DESC')
-      .getMany();
 
+      if (isUUID(query)) {
+        qb.where(
+          'package.id = :query OR package.package_id = :query OR package.tracking_no ILIKE :likeQuery',
+          {
+            query,
+            likeQuery: `%${query}%`,
+          }
+        );
+      } else {
+        qb.where(
+          'package.package_id = :query OR package.tracking_no ILIKE :likeQuery', {
+            query,
+            likeQuery: `%${query}%`,
+          }
+        );
+      }
+      
+      const packages = await qb.orderBy('package.created_at', 'DESC').getMany();
+
+    return Promise.all(
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
+    );
+  }
+
+  async getPackagesByUser(userId: string): Promise<PackageResponseDto[]> {
+    const packages = await this.packageRepository.find({
+      where: {
+        user: { id: userId },
+      },
+      relations: ['measurements', 'items', 'user'],
+      order: { created_at: 'DESC' },
+    });
+  
     return Promise.all(
       packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
     );

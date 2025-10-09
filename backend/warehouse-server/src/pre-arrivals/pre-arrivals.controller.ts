@@ -83,6 +83,18 @@ export class PreArrivaController {
     return this.preArrivalService.updateStatusToReceived(id);
   }
 
+  @Get('user/:customer')
+  @ApiOperation({ summary: 'Get all pre-arrival OTPs by customer name' })
+  @ApiOkResponse({
+    description: 'List of OTPs for the customer',
+    type: [PreArrivalResponseDto],
+  })
+  async getOTPsByUser(
+    @Param('customer') customer: string
+  ): Promise<PreArrivalResponseDto[]> {
+    return this.preArrivalService.getOTPsByUser(customer);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a pre-arrival by ID' })
   @ApiOkResponse({ description: 'Pre-arrival deleted successfully' })

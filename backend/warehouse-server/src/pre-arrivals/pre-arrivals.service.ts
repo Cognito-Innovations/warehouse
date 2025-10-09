@@ -114,6 +114,26 @@ export class PreArrivalService {
     };
   }
 
+  async getOTPsByUser(customer: string): Promise<PreArrivalResponseDto[]> {
+    const preArrivals = await this.preArrivalRepository.find({
+      where: { customer },
+      order: { created_at: 'DESC' },
+    });
+
+    return preArrivals.map((preArrival) => ({
+      id: preArrival.id,
+      customer: preArrival.customer,
+      suite: preArrival.suite,
+      otp: preArrival.otp,
+      tracking_no: preArrival.tracking_no,
+      estimate_arrival_time: preArrival.estimate_arrival_time,
+      details: preArrival.details,
+      status: preArrival.status,
+      created_at: preArrival.created_at,
+      updated_at: preArrival.updated_at,
+    }));
+  }
+
   async deletePreArrival(id: string): Promise<void> {
     const preArrival = await this.preArrivalRepository.findOne({
       where: { id },
