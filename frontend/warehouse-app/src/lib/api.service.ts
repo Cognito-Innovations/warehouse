@@ -147,6 +147,11 @@ export const getPackagesByUserAndStatus = async (userId: string, status: string)
   return res.data;
 };
 
+export const getPackagesByUser = async (userId: string) => {
+  const res = await authenticatedApi.get(`/packages/user/${userId}`);
+  return res.data;
+};
+
 export const getPackagesByShipmentId = async (shipmentId: string) => {
   const res = await authenticatedApi.get(`/packages/shipments/id/${shipmentId}`);
   return res.data;
@@ -265,5 +270,15 @@ export const createPreArrival = async (body: {
   status?: string;
 }) => {
   const res = await authenticatedApi.post("/pre-arrival", body);
+  return res.data;
+};
+
+export const getOTPsByUser = async (customer: string) => {
+  const res = await authenticatedApi.get(`/pre-arrival/user/${customer}`);
+  return res.data;
+};
+
+export const deletePreArrival = async (id: string) => {
+  const res = await authenticatedApi.delete(`/pre-arrival/${id}`);
   return res.data;
 };

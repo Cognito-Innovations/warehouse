@@ -71,6 +71,13 @@ export const getPackageById = async (id: string): Promise<Package> => {
   return response.data;
 };
 
+export const searchPackages = async (query: string): Promise<Package[]> => {
+  const response = await api.get<Package[]>('/packages', {
+    params: { search: query }
+  });
+  return response.data;
+}
+
 export const updatePackageStatus = async (id: string, status: string): Promise<Package> => {
   const response = await api.patch<Package>(`/packages/${id}/status`, { status });
   return response.data;

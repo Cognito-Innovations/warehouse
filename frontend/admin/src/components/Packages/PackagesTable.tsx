@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -9,7 +9,8 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { toast } from 'sonner';
-import { deletePackage, getPackage } from '../../services/api.services';
+import { useDebounce } from '../../hooks/useDebounce';
+import { deletePackage, getPackage, searchPackages } from '../../services/api.services';
 import PackageFilter from './PackageFilter';
 import ConfirmDialog from '../common/ConfirmDialog';
 import PackagesTableView, { type Package as ViewPackage } from './PackagesTableView';
@@ -37,6 +38,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const debouncedSearchValue = useDebounce(searchValue, 500);
 
   const navigate = useNavigate();
 
@@ -84,74 +87,62 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
     navigate(`/packages/${packageData.id}`);
   };
 
-  const fetchPackages = async () => {
+  const loadPackages = async () => {
     try {
-      setLoading(true);
-      const data: ApiPackage[] = await getPackage();
-      const validPackages: ViewPackage[] = data
-      .filter(pkg => !!pkg.id)
-      .map(pkg => ({
-        id: pkg.id!,
-        package_id: pkg.package_id || '',
-        tracking_no: pkg.tracking_no || '',
-        customer: pkg.customer
-          ? { name: pkg.customer.name || 'Unknown', suite_no: pkg.customer.suite_no || 'N/A' }
-          : { name: 'Unknown', suite_no: 'N/A' },
-        vendor: pkg.vendor
-          ? { supplier_name: pkg.vendor.supplier_name || 'Unknown' }
-          : { supplier_name: 'Unknown' },
-        created_at: pkg.created_at || '',
-        status: { value: pkg.status?.value || 'Unknown' },
-        rack_slot: pkg.rack_slot
-          ? { label: pkg.rack_slot.label || 'N/A' }
-          : { label: 'N/A' }
-      }));
+        setLoading(true);
+        const data: ApiPackage[] = debouncedSearchValue
+          ? await searchPackages(debouncedSearchValue)
+          : await getPackage();
 
-      setPackages(validPackages);
-      
-      // Calculate status counts
-      const counts = validPackages.reduce((acc: { [key: string]: number }, pkg: ViewPackage) => {
-        const status = pkg.status.value;
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-      }, {});
-      setStatusCounts(counts);
-    } catch (error) {
-      console.error('Failed to fetch packages:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const validPackages: ViewPackage[] = data
+          .filter(pkg => !!pkg.id)
+          .map(pkg => ({
+            id: pkg.id!,
+            package_id: pkg.package_id || '',
+            tracking_no: pkg.tracking_no || '',
+            customer: pkg.customer
+              ? { name: pkg.customer.name || 'Unknown', suite_no: pkg.customer.suite_no || 'N/A' }
+              : { name: 'Unknown', suite_no: 'N/A' },
+            vendor: pkg.vendor
+              ? { supplier_name: pkg.vendor.supplier_name || 'Unknown' }
+              : { supplier_name: 'Unknown' },
+            created_at: pkg.created_at || '',
+            status: { value: pkg.status?.value || 'Unknown' },
+            rack_slot: pkg.rack_slot
+              ? { label: pkg.rack_slot.label || 'N/A' }
+              : { label: 'N/A' }
+          }));
 
-  // Filter packages based on selected status and search value
-  const filterPackages = useCallback(() => {
-    let filtered = packages;
+        setPackages(validPackages);
+        
+        // Calculate status counts
+        const counts = validPackages.reduce((acc: { [key: string]: number }, pkg: ViewPackage) => {
+          const status = pkg.status.value;
+          acc[status] = (acc[status] || 0) + 1;
+          return acc;
+        }, {});
+        setStatusCounts(counts);
 
-    if (selectedStatus) {
-      filtered = filtered.filter(pkg => pkg.status.value === selectedStatus);
-    }
+        let statusFiltered = validPackages;
+        if (selectedStatus) {
+          statusFiltered = validPackages.filter(pkg => pkg.status.value === selectedStatus);
+        }
 
-    if (searchValue) {
-      const searchLower = searchValue.toLowerCase();
-      filtered = filtered.filter(pkg => 
-        pkg.package_id?.toLowerCase().includes(searchLower) ||
-        pkg.tracking_no?.toLowerCase().includes(searchLower) ||
-        pkg.customer?.name?.toLowerCase().includes(searchLower) ||
-        pkg.vendor?.supplier_name?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    setFilteredPackages(filtered);
-  },[packages, selectedStatus, searchValue]);
+        setFilteredPackages(statusFiltered);
+        setPage(1);
+      } catch (error) {
+        console.error('Failed to fetch packages:', error);
+        toast.error("Failed to load packages.");
+        setPackages([]);
+        setFilteredPackages([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
-    fetchPackages();
-  }, []);
-
-  useEffect(() => {
-    filterPackages();
-    setPage(1);
-  }, [filterPackages]);
+    loadPackages();
+  }, [debouncedSearchValue, selectedStatus]);
 
   const paginatedData = filteredPackages.slice(
     (page - 1) * rowsPerPage,

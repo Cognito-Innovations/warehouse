@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
+import SearchBar from './SearchBar';
 
 // import { useTabContext } from '../../App';
 
@@ -14,7 +15,12 @@ interface TopNavbarProps {
   onSearchChange?: (value: string) => void;
 }
 
-const TopNavbar: React.FC<TopNavbarProps> = ({ pageTitle, pageSubtitle }) => {
+const TopNavbar: React.FC<TopNavbarProps> = ({
+  pageTitle,
+  pageSubtitle,
+  searchValue,
+  onSearchChange,
+}) => {
   //TODO: Don't use this way, correct it
   // const { togglePageSidebar } = useTabContext();
   return (
@@ -33,6 +39,10 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ pageTitle, pageSubtitle }) => {
         {pageTitle && (
           <PageTitle title={pageTitle} subtitle={pageSubtitle} />
         )}
+      </Box>
+
+      <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', maxWidth: '500px', width: '100%' }}>
+        <SearchBar value={searchValue} onChange={onSearchChange} />
       </Box>
       
       {/* Right Side: Notifications and Avatar */}
