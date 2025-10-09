@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { Delete as DeleteIcon, HourglassEmpty as HourglassIcon } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import CheckIcon from '@mui/icons-material/Check';
-import { getPackagesByUserAndStatus, updatePackageStatus, getShipmentsByUser, getPackagesByUser, getOTPsByUser, deletePreArrival } from "../../lib/api.service";
+import { getPackagesByUserAndStatus, updatePackageStatus, getPackagesByUser, getOTPsByUser, deletePreArrival } from "../../lib/api.service";
 
 import usePreArrival from "../../hooks/usePreArrival";
 import PrePackageArrivalOTPModal from "../Modals/PrePackageArrivalOTPModal/PrePackageArrivalOTPModal";
@@ -64,7 +64,7 @@ const TabsSection = () => {
 
     setPackagesLoading(true);
     try {
-      const data = await getPackagesByUser(userId)
+      const data = await getPackagesByUser(userId);
 
       const filteredPackages = data.filter(
         (pkg: any) => ["Action Required", "In Review", "Ready To Send"].includes(pkg.status.value)
@@ -213,7 +213,7 @@ const TabsSection = () => {
   const tabs = [
     { label: "Packages", count: packages.length, icon: <PackageIcon /> },
     { label: "Shipments", count: shipments.length, icon: <ShipmentIcon /> },
-    { label: "History", icon: <HistoryIcon />, index: 1 },
+    { label: "History", count: otpHistory.length, icon: <HistoryIcon />, index: 1 },
   ];
 
   return (
