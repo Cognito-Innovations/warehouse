@@ -10,7 +10,10 @@ import { getStatusColor } from '../../../utils/statusUtils';
 interface Product {
   id: string;
   name?: string;
-  unit_price?: number;
+  quantity: number;
+  unit_price?: number | null;
+  currency?: string;
+  available?: boolean;
   [key: string]: unknown;
 }
 

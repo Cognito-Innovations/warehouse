@@ -3,11 +3,13 @@ import { toast } from "sonner";
 import React, { useState, useMemo, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Delete as DeleteIcon, HourglassEmpty as HourglassIcon } from "@mui/icons-material";
-import { getPackagesByUserAndStatus, updatePackageStatus, getShipmentsByUser } from "../../lib/api.service";
+import HistoryIcon from "@mui/icons-material/History";
+import CheckIcon from '@mui/icons-material/Check';
+import { getPackagesByUserAndStatus, updatePackageStatus, getShipmentsByUser, getPackagesByUser, getOTPsByUser, deletePreArrival } from "../../lib/api.service";
 
 import usePreArrival from "../../hooks/usePreArrival";
 import PrePackageArrivalOTPModal from "../Modals/PrePackageArrivalOTPModal/PrePackageArrivalOTPModal";
-import { Inventory as PackageIcon, LocalShipping as ShipmentIcon, History as HistoryIcon } from "@mui/icons-material";
+import { Inventory as PackageIcon, LocalShipping as ShipmentIcon } from "@mui/icons-material";
 
 // Import extracted components
 import TabPanel from "./TabPanel";
@@ -19,6 +21,8 @@ import { formatDateTime } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CircularProgress } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
+import SearchBar from "./SearchBar";
+import PreArrivalOTPPopup from "../Modals/PrePackageArrivalOTPModal/PreArrivalOTPPopup";
 
 const TabsSection = () => {
   const { user } = useAuth();
@@ -32,6 +36,11 @@ const TabsSection = () => {
   const [shipments, setShipments] = useState<any[]>([]);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
   const [isRequestShipLoading, setIsRequestShipLoading] = useState(false);
+  const [otpHistory, setOtpHistory] = useState<any[]>([]);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [newOTP, setNewOTP] = useState<any | null>(null);
+  const [isOTPPopupOpen, setIsOTPPopupOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,8 +64,13 @@ const TabsSection = () => {
 
     setPackagesLoading(true);
     try {
-      const data = await getPackagesByUserAndStatus(userId, "Ready To Send");
-      setPackages(data);
+      const data = await getPackagesByUser(userId)
+
+      const filteredPackages = data.filter(
+        (pkg: any) => ["Action Required", "In Review", "Ready To Send"].includes(pkg.status.value)
+      );
+
+      setPackages(filteredPackages);
     } catch (error) {
       toast.error("Failed to fetch packages");
     } finally {
@@ -88,9 +102,23 @@ const TabsSection = () => {
     }
   };
 
+  const fetchOtpHistory = async () => {
+    if (!user?.name) return;
+    setOtpLoading(true);
+    try {
+      const data = await getOTPsByUser(user.name);
+      setOtpHistory(data);
+    } catch (err) {
+      toast.error("Failed to fetch OTP history");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPackages();
     fetchShipments();
+    fetchOtpHistory();
   }, [(session?.user as any)?.user_id]);
 
   const filteredShipments = useMemo(() => {
@@ -131,7 +159,9 @@ const TabsSection = () => {
 
   const handleOTPSubmit = async (data: any) => {
     try {
-      await submitPreArrival(data);
+      const createdOTP = await submitPreArrival(data);
+      setNewOTP(createdOTP);
+      setIsOTPPopupOpen(true);
       setIsOTPModalOpen(false);
       toast.success("OTP sent successfully!");
     } catch (err) {
@@ -156,9 +186,34 @@ const TabsSection = () => {
     }
   };
 
+  const handleCreateNewFromPopup = () => {
+    setIsOTPPopupOpen(false);
+    setIsOTPModalOpen(true); 
+  };
+
+  const handleDeletePreArrival = async () => {
+    if (!newOTP?.id) return;
+    setIsDeleting(true);
+
+    try {
+      await deletePreArrival(newOTP.id);
+      toast.success("Pre-arrival deleted successfully!");
+      setIsOTPPopupOpen(false);
+      fetchOtpHistory();
+    } catch (err) {
+      toast.error("Failed to delete pre-arrival", {
+        description:
+          err instanceof Error ? err.message : "An unexpected error occurred.",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const tabs = [
     { label: "Packages", count: packages.length, icon: <PackageIcon /> },
-    { label: "Shipments", count: shipments.length, icon: <ShipmentIcon /> }
+    { label: "Shipments", count: shipments.length, icon: <ShipmentIcon /> },
+    { label: "History", icon: <HistoryIcon />, index: 1 },
   ];
 
   return (
@@ -167,7 +222,7 @@ const TabsSection = () => {
       <TabNavigation tabs={tabs} value={value} onChange={handleChange}/>
 
       {/* Search + Filter: show for Shipments and History */}
-      {(value === 1 || value === 2) && (
+      {(value === 1) && (
         <SearchAndFilter
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -175,6 +230,16 @@ const TabsSection = () => {
           onFilterChange={setSelectedFilter}
           placeholder={`Search ${tabs[value].label.toLowerCase()}...`}
         />
+      )}
+
+      {value === 2 && (
+        <div className="p-4">
+          <SearchBar
+            placeholder="Search by Tracking Number..."
+            value={searchTerm}
+            onChange={setSearchTerm}
+          />
+        </div>
       )}
       
       {/* Share OTP Button - Only show on Packages tab */}
@@ -223,13 +288,15 @@ const TabsSection = () => {
                             <p className="text-sm text-gray-500">Country: {pkg.country?.name}</p>
                           )}
                         </div>
-                        <button
-                          disabled={isRequestShipLoading}
-                          onClick={() => handleRequestShip(pkg.id)}
-                          className="inline-flex bg-blue-600 hover:bg-blue-700 text-white items-center px-4 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                          {isRequestShipLoading ? "Requesting..." : "Request Ship"}
-                        </button>
+                        {pkg.status.value === "Ready To Send" && (
+                          <button
+                            disabled={isRequestShipLoading}
+                            onClick={() => handleRequestShip(pkg.id)}
+                            className="inline-flex bg-blue-600 hover:bg-blue-700 text-white items-center px-4 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          >
+                            {isRequestShipLoading ? "Requesting..." : "Request Ship"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -286,12 +353,58 @@ const TabsSection = () => {
         </TabPanel>
 
         <TabPanel value={value} index={2}>
-          {filteredShipments.length === 0 ? (
-            <EmptyState icon={<HistoryIcon />} message="No History Available" />
+          {otpLoading ? (
+            <div className="flex justify-center items-center py-8">
+              <CircularProgress />
+            </div>
+          ) : otpHistory.length === 0 ? (
+            <EmptyState icon={<HistoryIcon />} message="No OTP History Available" />
           ) : (
-            <ShipmentsTable shipments={filteredShipments} />
+            <div className="p-4 space-y-4">
+              {otpHistory
+              .filter((otp) =>
+                !searchTerm || otp.tracking_no.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .map((otp) => (
+                <div
+                  key={otp.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex justify-between items-center"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-700 font-medium truncate">
+                      Tracking No: <span className="font-semibold">{otp.tracking_no}</span>
+                    </p>
+                  </div>
+              
+                  <div className="flex-1 text-center">
+                    <p className="text-sm text-gray-700 font-medium truncate">
+                      OTP: <span className="font-semibold">{otp.otp}</span>
+                    </p>
+                  </div>
+              
+                  <div className="flex items-center gap-2">
+                    {otp.status === "pending" ? (
+                      <>
+                        <HourglassIcon className="text-yellow-500" />
+                        <span className="text-yellow-600 font-semibold uppercase text-sm">
+                          Pending
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckIcon className="text-green-500" />
+                        <span className="text-green-600 font-semibold uppercase text-sm">
+                          Received
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </TabPanel>
+
       </div>
 
       {/* OTP Modal */}
@@ -300,6 +413,22 @@ const TabsSection = () => {
         onClose={handleOTPModalClose} 
         onSubmit={handleOTPSubmit}
         isLoading={submitting}
+      />
+
+      <PreArrivalOTPPopup
+        isOpen={isOTPPopupOpen}
+        onClose={() => setIsOTPPopupOpen(false)}
+        onDelete={handleDeletePreArrival}
+        onCreateNew={handleCreateNewFromPopup}
+        otpData={newOTP ? {
+          otp: newOTP.otp,
+          eta: newOTP.estimate_arrival_time,
+          trackingNo: newOTP.tracking_no,
+          requestedAt: formatDateTime(newOTP.created_at),
+          status: newOTP.status,
+          details: newOTP.details || 'NOTHING'
+        } : null}
+        isDeleting={isDeleting}
       />
     </div>
   );

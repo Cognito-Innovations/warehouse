@@ -17,7 +17,7 @@ const headers = [
   { key: "actions", label: "Action" },
 ];
 
-interface ShoppingRequestProduct {
+export interface ShoppingRequestProduct {
   id?: string;
   name?: string;
   quantity: number;
@@ -86,7 +86,8 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelect
             </TableHead>
             <TableBody>
               {sortedProducts.length > 0 ? (
-                sortedProducts.map((item, i) => ( 
+                sortedProducts
+                .map((item, i) => ( 
                   <ItemsTableRow 
                     key={item.id} 
                     item={{...item, remarks: details.remarks }} 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, InputBase } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 
@@ -9,10 +9,12 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ 
-  placeholder = "Search by otp no, tracking or suite no",
+  placeholder = "Search by tracking or suite no",
   value = "",
   onChange
 }) => {
+  const [isFocused, setIsFocused] = useState(false);
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange?.(event.target.value);
   };
@@ -26,13 +28,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
       px: 2, 
       py: 1, 
       minWidth: 400, 
-      border: '1px solid #e2e8f0'
+      border: `1px solid ${isFocused ? '#6366f1' : '#e2e8f0'}`,
+      transition: 'border-color 0.2s ease-in-out',
     }}>
       <SearchIcon sx={{ color: '#64748b', mr: 1, fontSize: 20 }} />
       <InputBase 
         placeholder={placeholder}
         value={value}
         onChange={handleChange}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         sx={{ 
           flex: 1, 
           fontSize: '0.875rem',

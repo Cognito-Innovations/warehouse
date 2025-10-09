@@ -112,6 +112,16 @@ export class PackagesController {
     return this.packagesService.getPackageById(id);
   }
 
+  @Get('user/:userId')
+  @ApiOperation({ summary: 'Get all packages for a user' })
+  @ApiParam({ name: 'userId', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOkResponse({ type: [PackageResponseDto] })
+  async findByUser(
+    @Param('userId') userId: string,
+  ): Promise<PackageResponseDto[]> {
+    return this.packagesService.getPackagesByUser(userId);
+  }
+
   @Get('user/:userId/status/:status')
   @ApiOperation({ summary: 'Get packages by user and status' })
   @ApiParam({ name: 'userId', example: '123e4567-e89b-12d3-a456-426614174000' })

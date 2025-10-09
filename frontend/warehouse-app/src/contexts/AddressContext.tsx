@@ -171,7 +171,10 @@ const loadUserPreferences = async (userId: string, dispatch: React.Dispatch<Addr
     const prefs = await getUserPreferences(userId);
     
     if (prefs?.courier) {
-      const mappedAddress = mapCourierToAddress(prefs.courier);
+      const mappedAddress = {
+        ...mapCourierToAddress(prefs.courier),
+        suite_no: prefs?.user?.suite_no || "",
+      };
       dispatch({ type: "LOAD_USER_PREFERENCES_SUCCESS", payload: mappedAddress });
     } else {
       dispatch({ type: "SET_LOADING", payload: false });

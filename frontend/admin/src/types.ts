@@ -1,5 +1,13 @@
 import type { UserRole } from "./data/menuItems";
 
+export interface UserData {
+  id: string;
+  email: string;
+  name: string;
+  image?: string;
+  role?: UserRole
+}
+
 export interface User {
   id: string;
   email: string;
@@ -53,6 +61,7 @@ export interface Supplier {
 export interface Package {
   id?: string;
   package_id?: string;
+  actual_id?: string;
   customer_id?: string;
   customer?: {
     id: string;

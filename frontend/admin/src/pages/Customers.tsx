@@ -53,16 +53,16 @@ const Customers = () => {
     <Box>
       <TopNavbar pageTitle="Customers" pageSubtitle="All" />
 
-      <CustomerFilters customers={allCustomers} onFilter={setFilteredCustomers} />
+      <CustomerFilters customers={allCustomers} onFilter={setFilteredCustomers} />
 
-      {loading ? (
+      {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Typography color="error" sx={{ textAlign: 'center', my: 4 }}>{error}</Typography>
+       <Typography color="error" sx={{ textAlign: 'center', my: 4 }}>{error}</Typography>
       ) : (
-        <CustomerTable rows={filteredCustomers} />
+       <CustomerTable rows={filteredCustomers} />
       )}
 
     </Box>

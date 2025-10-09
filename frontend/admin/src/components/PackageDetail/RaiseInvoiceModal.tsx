@@ -30,7 +30,7 @@ interface Charge {
 
 interface PackageData {
   id: string;
-  actual_id: string;
+  actual_id?: string;
   weight?: string | number;
 }
 

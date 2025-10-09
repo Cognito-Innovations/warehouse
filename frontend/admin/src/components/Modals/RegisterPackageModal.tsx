@@ -188,7 +188,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       }, 0);
 
       const payload: CreatePackageDto = {
-        customer: formData.customer,
+        user: formData.customer,
         rack_slot: formData.rackSlot,
         tracking_no: formData.trackingNo,
         vendor: formData.vendor,
@@ -197,7 +197,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
         width: pieces[0]?.width || "",
         height: pieces[0]?.height || "",
         volumetric_weight: totalVolWeight.toString(),
-        allow_customer_items: formData.allowCustomerItems,
+        allow_user_items: formData.allowCustomerItems,
         shop_invoice_received: formData.shopInvoiceReceived,
         remarks: formData.remarks,
         pieces: pieces.map(piece => ({

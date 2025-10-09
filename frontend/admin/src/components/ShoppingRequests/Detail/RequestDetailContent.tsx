@@ -14,12 +14,12 @@ interface User {
   verified: boolean;
 }
 
-interface Product {
+export interface Product {
   id: string;
   shopping_request_id: string;
   name: string;
   description?: string | null;
-  unit_price: number;
+  unit_price: number | null;
   quantity: number;
   url?: string;
   size?: string;
@@ -28,11 +28,13 @@ interface Product {
   if_not_available_quantity?: string;
   if_not_available_color?: string;
   available: boolean;
+  currency?: string;
   created_at: string;
   updated_at: string;
+  [key: string]: unknown;
 }
 
-interface Invoice {
+export interface Invoice {
   id: string;
   invoice_no: string;
   amount: number;
@@ -43,7 +45,7 @@ interface Invoice {
   updated_at: string;
 }
 
-interface PaymentSlip {
+export interface PaymentSlip {
   id: string;
   document_name: string;
   document_url: string;
@@ -51,7 +53,7 @@ interface PaymentSlip {
   category: string;
   file_size: number;
   mime_type: string;
-  amount?: number;
+  amount: number;
   status?: string;
   created_at: string;
   updated_at: string;
@@ -78,6 +80,7 @@ export interface RequestData {
   invoice?: Invoice;
   created_at: string;
   updated_at: string;
+  [key: string]: unknown;
 }
 
 interface RequestDetailContentProps {

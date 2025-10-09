@@ -6,10 +6,10 @@ import EditItemModal from './EditItemModal';
 import RemarkModal from './RemarkModal';
 
 interface ItemsTableRowItem {
-  id: string;
-  name: string;
+  id?: string;
+  name?: string;
   quantity: number;
-  unit_price?: number;
+  unit_price?: number | null;
   currency?: string;
   available?: boolean;
   color?: string;
@@ -44,13 +44,13 @@ const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange, disabled, }: 
   const handleSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const isSelected = e.target.checked;
     setChecked(isSelected);
-    onSelectionChange(item.id, isSelected); 
+    onSelectionChange(item.id!, isSelected); 
   }
 
   const handleMenuTrigger = () => {
     if (!checked) {
       setChecked(true);
-      onSelectionChange(item.id, true);
+      onSelectionChange(item.id!, true);
     }
   };
 
