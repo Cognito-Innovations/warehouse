@@ -2,7 +2,7 @@ import { IsString, IsNumber, IsOptional, IsIn } from 'class-validator';
 
 export class CreatePreArrivalDto {
   @IsString()
-  customer: string;
+  user: string;
 
   @IsString()
   suite: string;

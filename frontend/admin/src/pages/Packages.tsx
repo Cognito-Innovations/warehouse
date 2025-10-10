@@ -111,6 +111,7 @@ const Packages: React.FC = () => {
         pageTitle="Packages"
         searchValue={searchValue} 
         onSearchChange={handleSearchChange}
+        showSearchBar
       />
       <StatusCards 
         onRegisterPackage={handleRegisterPackage}

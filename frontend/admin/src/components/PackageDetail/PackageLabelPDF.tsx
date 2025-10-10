@@ -71,15 +71,15 @@ export const usePackageLabelPDF = ({ data }: PackageLabelPDFProps) => {
       doc.setFont("helvetica", "bold");
       doc.text("PACKAGE ARRIVED", arrivedBoxX + (arrivedBoxWidth / 2), arrivedY + 5.5, { align: 'center' });
 
-      // Customer Information
-      const customerY = arrivedY + 12;
+      // User Information
+      const userY = arrivedY + 12;
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
-      doc.text(`${data.customer || 'N/A'} (${data.suite || 'N/A'})`, margin + 8, customerY);
+      doc.text(`${data.user || 'N/A'} (${data.suite || 'N/A'})`, margin + 8, userY);
 
       // Suite Information - Position it better
-      const suiteY = customerY + 8;
+      const suiteY = userY + 8;
       const suiteBoxWidth = 35;
       const suiteBoxHeight = 12;
       

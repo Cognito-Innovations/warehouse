@@ -99,7 +99,7 @@ export class PackagesController {
       id: pkg.id,
       tracking_no: pkg.tracking_no,
       status: pkg.status,
-      customer_id: pkg.customer?.id,
+      user_id: pkg.user?.id,
       created_at: pkg.created_at,
     }));
   }

@@ -13,6 +13,7 @@ interface TopNavbarProps {
   pageSubtitle?: string;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
+  showSearchBar?: boolean;
 }
 
 const TopNavbar: React.FC<TopNavbarProps> = ({
@@ -20,6 +21,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
   pageSubtitle,
   searchValue,
   onSearchChange,
+  showSearchBar = false,
 }) => {
   //TODO: Don't use this way, correct it
   // const { togglePageSidebar } = useTabContext();
@@ -41,9 +43,11 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
         )}
       </Box>
 
-      <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', maxWidth: '500px', width: '100%' }}>
-        <SearchBar value={searchValue} onChange={onSearchChange} />
-      </Box>
+      {showSearchBar && (
+        <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', maxWidth: '500px', width: '100%' }}>
+          <SearchBar value={searchValue} onChange={onSearchChange} />
+        </Box>
+      )}
       
       {/* Right Side: Notifications and Avatar */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

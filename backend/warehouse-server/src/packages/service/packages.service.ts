@@ -52,7 +52,7 @@ export class PackagesService {
       },
       shipment_id: pkg.shipment_id,
       shipment_uuid: pkg.shipment_uuid,
-      customer: pkg.user
+      user: pkg.user
         ? {
             id: pkg.user.id,
             email: pkg.user.email,
@@ -87,7 +87,7 @@ export class PackagesService {
       total_weight: pkg.total_weight,
       total_volumetric_weight: pkg.total_volumetric_weight,
       country: pkg.country,
-      allow_customer_items: pkg.allow_user_items,
+      allow_user_items: pkg.allow_user_items,
       shop_invoice_received: pkg.shop_invoice_received,
       remarks: pkg.remarks,
       dangerous_good: pkg.dangerous_good,
@@ -386,30 +386,32 @@ export class PackagesService {
   }
 
   async searchPackages(query: string): Promise<PackageResponseDto[]> {
-    const qb = this.packageRepository
+    const packageQuery = this.packageRepository
       .createQueryBuilder('package')
       .leftJoinAndSelect('package.measurements', 'measurements')
       .leftJoinAndSelect('package.items', 'items')
       .leftJoinAndSelect('package.user', 'user')
 
-      if (isUUID(query)) {
-        qb.where(
-          'package.id = :query OR package.package_id = :query OR package.tracking_no ILIKE :likeQuery',
-          {
-            query,
-            likeQuery: `%${query}%`,
-          }
-        );
-      } else {
-        qb.where(
-          'package.package_id = :query OR package.tracking_no ILIKE :likeQuery', {
-            query,
-            likeQuery: `%${query}%`,
-          }
-        );
-      }
-      
-      const packages = await qb.orderBy('package.created_at', 'DESC').getMany();
+    if (isUUID(query)) {
+      packageQuery.where(
+        'package.id = :query OR package.package_id = :query OR package.tracking_no ILIKE :likeQuery',
+        {
+          query,
+          likeQuery: `%${query}%`,
+        }
+      );
+    } else {
+      packageQuery.where(
+        'package.package_id = :query OR package.tracking_no ILIKE :likeQuery', {
+          query,
+          likeQuery: `%${query}%`,
+        }
+      );
+    }
+
+    const packages = await packageQuery
+      .orderBy('package.created_at', 'DESC')
+      .getMany();
 
     return Promise.all(
       packages.map((pkg) => this.mapPackageToResponseDto(pkg)),

@@ -7,7 +7,7 @@ export class PreArrival extends BaseTimestampEntity {
   id: string;
 
   @Column()
-  customer: string;
+  user: string;
 
   @Column()
   suite: string;

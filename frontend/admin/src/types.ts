@@ -62,8 +62,8 @@ export interface Package {
   id?: string;
   package_id?: string;
   actual_id?: string;
-  customer_id?: string;
-  customer?: {
+  user_id?: string;
+  user?: {
     id: string;
     name: string;
     suite_no: string;
@@ -92,7 +92,7 @@ export interface Package {
   total_weight?: number;
   total_volumetric_weight?: number;
   dangerous_good?: boolean;
-  allow_customer_items?: boolean;
+  allow_user_items?: boolean;
   shop_invoice_received?: boolean;
   remarks?: string;
   status?: { value: string };
@@ -170,7 +170,7 @@ export interface PackageItem {
 
 export interface PackageData {
   id: string;
-  customer: string;
+  user: string;
   suite?: string;
   weight?: string;
   items?: PackageItem[];

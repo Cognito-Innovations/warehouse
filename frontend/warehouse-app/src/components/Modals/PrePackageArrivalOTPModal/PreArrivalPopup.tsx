@@ -3,12 +3,12 @@ import { X as CloseIcon } from "lucide-react";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 
-interface PreArrivalOTPPopupProps {
+interface PreArrivalPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onDelete: () => void;
   onCreateNew: () => void;
-  otpData: {
+  preArrivalData: {
     otp: string | number;
     eta?: string;
     trackingNo?: string;
@@ -19,15 +19,15 @@ interface PreArrivalOTPPopupProps {
   isDeleting?: boolean;
 }
 
-const PreArrivalOTPPopup: React.FC<PreArrivalOTPPopupProps> = ({
+const PreArrivalPopup: React.FC<PreArrivalPopupProps> = ({
   isOpen,
   onClose,
   onDelete,
   onCreateNew,
-  otpData,
+  preArrivalData,
   isDeleting,
 }) => {
-  if (!isOpen || !otpData) return null;
+  if (!isOpen || !preArrivalData) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 p-4">
@@ -56,13 +56,13 @@ const PreArrivalOTPPopup: React.FC<PreArrivalOTPPopupProps> = ({
             <div className="space-y-2 text-sm leading-6">
               <div className="flex">
                 <span className="text-gray-600 font-medium w-[130px]">OTP:</span>
-                <span className="font-semibold text-gray-900">{otpData.otp}</span>
+                <span className="font-semibold text-gray-900">{preArrivalData.otp}</span>
               </div>
 
-              {otpData.eta && (
+              {preArrivalData.eta && (
                 <div className="flex">
                   <span className="text-gray-600 font-medium w-[130px]">ETA:</span>
-                  <span className="text-gray-900">{otpData.eta}</span>
+                  <span className="text-gray-900">{preArrivalData.eta}</span>
                 </div>
               )}
 
@@ -71,20 +71,20 @@ const PreArrivalOTPPopup: React.FC<PreArrivalOTPPopupProps> = ({
                   Tracking / Order No.:
                 </span>
                 <span className="text-gray-900">
-                  {otpData.trackingNo || "1236478"}
+                  {preArrivalData.trackingNo || "1236478"}
                 </span>
               </div>
 
-              {otpData.requestedAt && (
+              {preArrivalData.requestedAt && (
                 <div className="flex">
                   <span className="text-gray-600 font-medium w-[130px]">
                     Requested At:
                   </span>
-                  <span className="text-gray-900">{otpData.requestedAt}</span>
+                  <span className="text-gray-900">{preArrivalData.requestedAt}</span>
                 </div>
               )}
 
-              <div className="text-gray-500 italic mt-3">{otpData.details}</div>
+              <div className="text-gray-500 italic mt-3">{preArrivalData.details}</div>
             </div>
           </div>
 
@@ -122,4 +122,4 @@ const PreArrivalOTPPopup: React.FC<PreArrivalOTPPopupProps> = ({
   );
 };
 
-export default PreArrivalOTPPopup;
+export default PreArrivalPopup;

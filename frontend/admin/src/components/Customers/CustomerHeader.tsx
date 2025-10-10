@@ -14,7 +14,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import type { User } from '../../types';
 
-const CustomerHeader = ({ customer }: { customer: User }) => {
+const CustomerHeader = ({ user }: { user: User }) => {
   const getStatusChip = (status: boolean, label: string) => (
     <Chip
       label={label}
@@ -55,7 +55,7 @@ const CustomerHeader = ({ customer }: { customer: User }) => {
                 mb: 1 
               }}
             >
-              {customer.name}
+              {user.name}
             </Typography>
             <Typography 
               sx={{ 
@@ -65,7 +65,7 @@ const CustomerHeader = ({ customer }: { customer: User }) => {
                 mb: 2 
               }}
             >
-              Suite: {customer.suite_no}
+              Suite: {user.suite_no}
             </Typography>
 
             {/* Customer Details */}
@@ -73,38 +73,38 @@ const CustomerHeader = ({ customer }: { customer: User }) => {
               <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
                 <Stack direction="row" alignItems="center" spacing={0.8}>
                   <EmailOutlined sx={{ fontSize: '18px', color: '#475569' }} />
-                  <Typography sx={{ fontSize: '14px' }}>{customer.email}</Typography>
+                  <Typography sx={{ fontSize: '14px' }}>{user.email}</Typography>
                 </Stack>
                 
-                {customer.id && (
+                {user.id && (
                   <Stack direction="row" alignItems="center" spacing={0.8}>
                     <BadgeIcon sx={{ fontSize: '18px', color: '#475569' }} />
-                    <Typography sx={{ fontSize: '14px' }}>{customer.id}</Typography>
+                    <Typography sx={{ fontSize: '14px' }}>{user.id}</Typography>
                   </Stack>
                 )}
                 
-                {customer.gender && (
+                {user.gender && (
                   <Stack direction="row" alignItems="center" spacing={0.8}>
                     <PersonIcon sx={{ fontSize: '18px', color: '#475569' }} />
                     <Typography sx={{ fontSize: '14px', textTransform: 'capitalize' }}>
-                      {customer.gender}
+                      {user.gender}
                     </Typography>
                   </Stack>
                 )}
               </Stack>
               
               <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
-                {customer.phone_number && (
+                {user.phone_number && (
                   <Stack direction="row" alignItems="center" spacing={0.8}>
                     <PhoneOutlined sx={{ fontSize: '18px', color: '#475569' }} />
-                    <Typography sx={{ fontSize: '14px' }}>{customer.phone_number}</Typography>
+                    <Typography sx={{ fontSize: '14px' }}>{user.phone_number}</Typography>
                   </Stack>
                 )}
                 
-                {customer.dob && (
+                {user.dob && (
                   <Stack direction="row" alignItems="center" spacing={0.8}>
                     <CalendarTodayIcon sx={{ fontSize: '18px', color: '#475569' }} />
-                    <Typography sx={{ fontSize: '14px' }}>{customer.dob}</Typography>
+                    <Typography sx={{ fontSize: '14px' }}>{user.dob}</Typography>
                   </Stack>
                 )}
               </Stack>
@@ -113,11 +113,11 @@ const CustomerHeader = ({ customer }: { customer: User }) => {
 
           {/* Status Chips */}
           <Stack direction="row" spacing={1} alignItems="center">
-            {getStatusChip(customer.verified, 'Verified')}
-            {getStatusChip(customer.is_active, 'Active')}
-            {customer.identifier && (
+            {getStatusChip(user.verified, 'Verified')}
+            {getStatusChip(user.is_active, 'Active')}
+            {user.identifier && (
               <Chip
-                label={customer.identifier}
+                label={user.identifier}
                 size="small"
                 sx={{
                   bgcolor: '#e0e7ff',

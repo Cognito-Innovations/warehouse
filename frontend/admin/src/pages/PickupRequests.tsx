@@ -52,7 +52,7 @@ const PickupRequests: React.FC = () => {
     return filteredRequests.map((req: any) => ({
       id: req.id!,
       date: formatDateTime(req.created_at),
-      customer: req.user.name,
+      user: req.user.name,
       pickupLocation: req.pickup_address,
       supplier: req.supplier_name,
       status: req.status,
@@ -72,7 +72,7 @@ const PickupRequests: React.FC = () => {
     },
     {
       header: 'Customer',
-      cell: (row) => <Typography variant="body2">{row.customer}</Typography>,
+      cell: (row) => <Typography variant="body2">{row.user}</Typography>,
       width: '25%',
     },
     {

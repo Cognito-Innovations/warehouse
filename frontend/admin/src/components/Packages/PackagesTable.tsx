@@ -100,8 +100,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
             id: pkg.id!,
             package_id: pkg.package_id || '',
             tracking_no: pkg.tracking_no || '',
-            customer: pkg.customer
-              ? { name: pkg.customer.name || 'Unknown', suite_no: pkg.customer.suite_no || 'N/A' }
+            user: pkg.user
+              ? { name: pkg.user.name || 'Unknown', suite_no: pkg.user.suite_no || 'N/A' }
               : { name: 'Unknown', suite_no: 'N/A' },
             vendor: pkg.vendor
               ? { supplier_name: pkg.vendor.supplier_name || 'Unknown' }

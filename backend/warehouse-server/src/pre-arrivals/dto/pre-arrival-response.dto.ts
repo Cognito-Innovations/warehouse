@@ -1,6 +1,6 @@
 export class PreArrivalResponseDto {
   id: string;
-  customer: string;
+  user: string;
   suite: string;
   otp: number;
   tracking_no: string;
