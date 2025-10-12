@@ -63,14 +63,11 @@ export interface Package {
   package_id?: string;
   actual_id?: string;
   user_id?: string;
-  user?: {
-    id: string;
-    name: string;
-    suite_no: string;
-    email: string;
-    phone_number?: string;
-    phone_number_2?: string;
-  };
+  name: string;
+  suite_no: string;
+  email: string;
+  phone_number?: string;
+  phone_number_2?: string;
   rack_slot_id?: string;
   rack_slot?: {
     id: string;
