@@ -2,9 +2,10 @@ import { Button, CircularProgress } from "@mui/material"
 import { useState } from "react";
 import { updatePackageStatus } from "../../services/api.services";
 import { toast } from "sonner";
+import type { PackageData } from "../../types";
 
 interface ApprovePaymentButtonProps {
-    data: any;
+    data: PackageData;
     onRefresh: () => void;
 }
 

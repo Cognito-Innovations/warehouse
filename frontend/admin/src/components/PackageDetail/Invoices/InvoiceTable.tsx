@@ -16,7 +16,7 @@ const InvoiceTable = ({ packageData }) => {
     invoice_no: `INV/CN/${new Date().getFullYear()}/${packageData.id}`,
     amount: 36.50,
     total: 36.50,
-    status: packageData.status === 'PAYMENT_PENDING' ? 'UNPAID' : 'PAID',
+    status: (packageData.status === 'PAYMENT_PENDING' ? 'UNPAID' : 'PAID') as 'UNPAID' | 'PAID',
     items: packageData.items,
   };
 

@@ -3,7 +3,7 @@ import { Grid, Box, Typography, TextField, Checkbox, FormControlLabel } from '@m
 
 interface OptionsSectionProps {
   formData: {
-    allowCustomerItems: boolean;
+    allowUserItems: boolean;
     shopInvoiceReceived: boolean;
     remarks: string;
   };
@@ -20,7 +20,7 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
       <Grid size={{ xs: 12 }}>
         <Box sx={{ display: "flex", flexDirection: "column" }}>
           <FormControlLabel control={
-            <Checkbox checked={formData.allowCustomerItems} onChange={(e) => onInputChange("allowCustomerItems", e.target.checked)}
+            <Checkbox checked={formData.allowUserItems} onChange={(e) => onInputChange("allowUserItems", e.target.checked)}
               sx={{ "&.Mui-checked": { color: "#6366f1" } }} />
           }
             label="Allow customer to add items?"

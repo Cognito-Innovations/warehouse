@@ -14,6 +14,12 @@ interface StatusCard {
   status: string;
 }
 
+interface Package {
+  status?: {
+    value?: string;
+  };
+}
+
 const Packages: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -46,7 +52,7 @@ const Packages: React.FC = () => {
       const packages = await getPackage();
       
       // Count packages by status
-      const statusCounts = packages.reduce((acc: any, pkg: any) => {
+      const statusCounts = packages.reduce<Record<string, number>>((acc, pkg: Package) => {
         const statusValue = pkg.status?.value || 'Unknown';
         acc[statusValue] = (acc[statusValue] || 0) + 1;
         return acc;
@@ -105,6 +111,7 @@ const Packages: React.FC = () => {
         pageTitle="Packages"
         searchValue={searchValue} 
         onSearchChange={handleSearchChange}
+        showSearchBar
       />
       <StatusCards 
         onRegisterPackage={handleRegisterPackage}

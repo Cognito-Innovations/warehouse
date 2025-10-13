@@ -4,7 +4,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import type { Country } from '../../types';
 
 interface CountriesListProps {
-  countries: any[];
+  countries: Country[];
   onEdit: (country: Country) => void;
 }
 

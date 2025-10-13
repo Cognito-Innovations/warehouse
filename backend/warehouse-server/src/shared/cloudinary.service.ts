@@ -84,7 +84,10 @@ export class CloudinaryService {
     folder: string = 'warehouse',
   ): Promise<CloudinaryUploadResult[]> {
     const uploadPromises = files.map((file) => this.uploadFile(file, folder));
-    return Promise.all(uploadPromises);
+    const results = await Promise.allSettled(uploadPromises);
+    return results
+      .filter((result) => result.status === 'fulfilled')
+      .map((result) => result.value);
   }
 
   async deleteFile(publicId: string): Promise<{ result: string }> {

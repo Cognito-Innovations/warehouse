@@ -7,9 +7,14 @@ interface PackageChargesSectionProps {
   isDiscarded: boolean;
 }
 
+interface Charge {
+  summary: string;
+  price: number;
+}
+
 const PackageChargesSection: React.FC<PackageChargesSectionProps> = ({ isDiscarded }) => {
   // Mock data - replace with actual data from props or API
-  const charges: any[] = [
+  const charges: Charge[] = [
     // { summary: 'Storage Fee', price: 25.00 },
     // { summary: 'Handling Fee', price: 15.00 },
   ];

@@ -4,21 +4,20 @@ import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import type { Customer } from '../../types';
 
 interface CustomerFiltersProps {
-  customers: Customer[];
+  users: Customer[];
   onFilter: (list: Customer[]) => void;
 }
 
-const CustomerFilters = ({ customers, onFilter }: CustomerFiltersProps) => {
+const CustomerFilters = ({ users, onFilter }: CustomerFiltersProps) => {
   const [emailVerified, setEmailVerified] = useState<'All' | 'YES' | 'NO'>('All');
 
-  const filtered = customers.filter(customer => {
-    if (emailVerified === 'All') return true;
-    return (customer.email_verified ? 'YES' : 'NO') === emailVerified;
-  });
-  
   useEffect(() => {
+    const filtered = users.filter(user => {
+      if (emailVerified === 'All') return true;
+      return (user.email_verified ? 'YES' : 'NO') === emailVerified;
+    });
     onFilter(filtered);
-  }, [emailVerified, customers, onFilter]);
+  }, [emailVerified, users, onFilter]);
 
   const renderSelect = (
     label: string,

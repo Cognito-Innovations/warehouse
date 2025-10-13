@@ -17,41 +17,41 @@ const headers = [
   { key: "actions", label: "Action" },
 ];
 
-interface ShoppingRequestProduct {
+export interface ShoppingRequestProduct {
   id?: string;
   name?: string;
   quantity: number;
   unit_price?: number | null;
   currency?: string;
   available?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface ItemsTableProps {
   details: {
     status: string;
     shopping_request_products?: ShoppingRequestProduct[];
-    [key: string]: any;
+    remarks?: string;
+    [key: string]: unknown;
   };
   onItemUpdate: (itemId: string, updates: Partial<ShoppingRequestProduct>) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
+  selectedItemIds: Set<string>;
 }
 
 const COMMISSION_RATE = 0.08;
 
-
-
-const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelectionChange }) => {
-  const products = details.shopping_request_products ?? [];
+const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelectionChange, selectedItemIds }) => {
+  const products = useMemo(() => details.shopping_request_products ?? [], [details.shopping_request_products]);
 
   const sortedProducts = useMemo(() => {
-    return [...products].sort((a, b) => (a.id && b.id ? a.id.localeCompare(b.id) : 0));
-  }, [products]);
+    return [...products].sort((a, b) => (a.id && b.id ? a.id.localeCompare(b.id) : 0));
+  }, [products]);
 
   const summary = useMemo(() => {
     if (products.length === 0) return { subTotal: 0, commission: 0, total: 0, currency: "US" };
 
-    const subTotal = products.reduce((acc, p) => acc + (p.unit_price || 0) * (p.quantity || 0), 0);
+    const subTotal = products.reduce((acc, product) => acc + (product.unit_price || 0) * (product.quantity || 0), 0);
     const commission = subTotal * COMMISSION_RATE;
 
     const currency = products[0]?.currency || "US";
@@ -87,13 +87,15 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelect
             </TableHead>
             <TableBody>
               {sortedProducts.length > 0 ? (
-                sortedProducts.map((item, i) => ( 
+                sortedProducts
+                .map((item, i) => ( 
                   <ItemsTableRow 
                     key={item.id} 
                     item={{...item, remarks: details.remarks }} 
                     index={i}
                     requestStatus={details.status}
                     disabled={isRejected}
+                    isSelected={selectedItemIds.has(item.id!)}
                     onUpdate={(updates) => {
                       if (item.id) {
                         onItemUpdate(item.id, updates)

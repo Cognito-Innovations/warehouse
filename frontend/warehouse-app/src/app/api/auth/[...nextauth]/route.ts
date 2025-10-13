@@ -8,7 +8,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localho
 
 const handler = NextAuth({
   // Explicitly set the URL for production
-  url: process.env.NEXTAUTH_URL,
+  // TODO: 'url' does not exist in type 'AuthOptions'
+  // url: process.env.NEXTAUTH_URL,
   debug: process.env.NODE_ENV === "development",
   cookies: {
     sessionToken: {

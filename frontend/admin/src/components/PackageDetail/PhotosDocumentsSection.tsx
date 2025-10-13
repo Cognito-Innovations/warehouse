@@ -13,10 +13,17 @@ interface Document {
   mime_type: string;
 }
 
+interface PackageData {
+  actual_id?: string;
+  createdBy?: string;
+  createdAt?: string;
+  [key: string]: unknown;
+}
+
 interface PhotosDocumentsSectionProps {
-  packageData: any;
+  packageData: PackageData;
   documents: Document[];
-  onUploadSuccess?: () => void;
+  onUploadSuccess?: () => Promise<void>;
   isDiscarded: boolean;
 }
 
@@ -30,11 +37,10 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const isUploadDisabled = !packageData.shipment_uuid;
-
+  const isUploadDisabled = !packageData.actual_id;
   const handleFileSelect = async (files: FileList | null) => {
     if (isUploadDisabled) {
-      toast.error("You can't upload files until the package is added to a shipment.");
+      toast.error("You can't upload files until the package is created.");
       return;
     }
 
@@ -46,7 +52,7 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({
       for (const file of filesArray) {
         const url = await uploadToCloudinary(file);
         if (url) {
-          await addShipmentDocument(packageData.shipment_uuid, {
+          await addShipmentDocument(packageData.actual_id!, {
             url,
             original_filename: file.name,
             mime_type: file.type,
@@ -54,8 +60,8 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({
           });
         }
       }
+      await onUploadSuccess?.();
       toast.success('Files uploaded successfully');
-      onUploadSuccess?.();
     } catch (error) {
       console.error('Upload failed:', error);
       toast.error('Failed to upload files.');
@@ -82,10 +88,6 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({
   };
   
   const handleFileClick = () => {
-    if (isUploadDisabled) {
-      toast.error("You can't upload files until the package is added to a shipment.");
-      return;
-    }
     if (!uploading) fileInputRef.current?.click();
   };
 
@@ -125,7 +127,7 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({
               Uploaded Files
             </Typography>
             <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontSize: '0.875rem' }}>
-              View or upload shipment photos and documents.
+              View or upload photos and documents.
             </Typography>
 
             <input

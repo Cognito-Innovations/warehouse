@@ -42,13 +42,13 @@ const PackageDetail: React.FC = () => {
     }
   };
 
-   const fetchShipmentDocuments = async (shipment_uuid: string) => {
-    if (!shipment_uuid) {
+   const fetchShipmentDocuments = async (package_uuid: string) => {
+    if (!package_uuid) {
       setShipmentDocuments([]);
       return;
     }
     try {
-      const docs = await getShipmentDocuments(shipment_uuid);
+      const docs = await getShipmentDocuments(package_uuid);
       setShipmentDocuments(docs);
     } catch (err) {
       console.error('Failed to fetch shipment documents:', err);
@@ -78,14 +78,13 @@ const PackageDetail: React.FC = () => {
     setError(null);
 
     try {
-      const data = await getPackageById(id);
+      const data = await getPackageById(id) as any; //TODO: Remove any
       setPackageData(data);
       setPackageItems(data.items || []);
-      
-      await Promise.all([
+      await Promise.allSettled([
         fetchPaymentSlips(data.shipment_uuid),
         fetchDocuments(),
-        fetchShipmentDocuments(data.shipment_uuid)
+        fetchShipmentDocuments(data.id)
       ]);
     } catch (err) {
       console.error('Failed to fetch package data:', err);
@@ -113,13 +112,12 @@ const PackageDetail: React.FC = () => {
     if (!id) return;
 
     try {
-      const data = await getPackageById(id);
+      const data = await getPackageById(id) as any; //TODO: Remove any
       setPackageData(data);
       setPackageItems(data.items || []);
-      
       await fetchPaymentSlips(data.shipment_uuid);
       await fetchDocuments();
-      await fetchShipmentDocuments(data.shipment_uuid);
+      await fetchShipmentDocuments(data.id);
     } catch (err) {
       console.error('Failed to refetch package data:', err);
       toast.error('Failed to refresh package details');
@@ -190,11 +188,11 @@ const PackageDetail: React.FC = () => {
     shipment_id: packageData.shipment_id,
     shipment_uuid: packageData.shipment_uuid,
     status: packageData.status,
-    customer: packageData.customer?.name || '',
-    suite: packageData.customer?.suite_no || 'N/A',
-    email: packageData.customer?.email || 'N/A',
-    phone: packageData.customer?.phone_number || 'N/A',
-    phone2: packageData.customer?.phone_number_2 || 'N/A',
+    name: packageData.user?.name || '',
+    suite_no: packageData.user?.suite_no || 'N/A',
+    email: packageData.user?.email || 'N/A',
+    phone: packageData.user?.phone_number || 'N/A',
+    phone2: packageData.user?.phone_number_2 || 'N/A',
     trackingNo: packageData.tracking_no || 'N/A',
     weight: `${packageData.total_weight || 0}Kg`,
     volumetricWeight: packageData.total_volumetric_weight ? `${packageData.total_volumetric_weight}Kg` : '-',
@@ -208,7 +206,7 @@ const PackageDetail: React.FC = () => {
     updatedAt: formatDateTime(packageData.updated_at),
     vendor: packageData.vendor?.supplier_name || '',
     remarks: packageData.remarks || 'No remarks',
-    allowCustomerItems: packageData.allow_customer_items || false,
+    allowUserItems: packageData.allow_user_items || false,
     shopInvoiceReceived: packageData.shop_invoice_received || false,
     items: packageItems,
     measurements: packageData.measurements?.map((measurement: any) => {

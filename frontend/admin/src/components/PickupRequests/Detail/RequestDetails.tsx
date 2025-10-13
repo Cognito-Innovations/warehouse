@@ -37,7 +37,7 @@ const DetailItem: React.FC<DetailItemProps> = ({ label, value }) => (
   </Box>
 );
 
-interface RequestDetailsData {
+export interface RequestDetailsData {
   status: string;
   pickup_address: string;
   supplier_name: string;
@@ -55,6 +55,8 @@ interface RequestDetailsProps {
 }
 
 const RequestDetails: React.FC<RequestDetailsProps> = ({ details }) => {
+  if (!details) return null;
+  
   const showQuotationDetails = details.status !== 'REQUESTED';
 
   const total = details.price && details.pcs_box

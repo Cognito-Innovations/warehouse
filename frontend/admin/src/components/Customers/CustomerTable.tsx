@@ -25,56 +25,56 @@ const CustomerTable = ({ rows }: { rows: Customer[] }) => (
         </TableHead>
 
         <TableBody sx={{ '& .MuiTableCell-root': { borderBottom: '1px solid #f1f5f9', py: 1.5 }, '& .MuiTypography-root': { fontSize: '0.875rem' } }}>
-          {rows.map((customer, index) => (
-            <TableRow key={customer.suite_no} sx={{ '&:last-child td': { border: 0 }, bgcolor: index === 10 ? '#eef2ff' : 'inherit', '&:hover': { bgcolor: '#f8fafc' } }}>
+          {rows.map((user, index) => (
+            <TableRow key={user.suite_no} sx={{ '&:last-child td': { border: 0 }, bgcolor: index === 10 ? '#eef2ff' : 'inherit', '&:hover': { bgcolor: '#f8fafc' } }}>
               <TableCell>
-                <Typography fontWeight={500} color="#1e293b">{customer.suite_no}</Typography>
+                <Typography fontWeight={500} color="#1e293b">{user.suite_no}</Typography>
               </TableCell>
 
               <TableCell>
                 <Typography component="div" fontWeight={500} color="#1e293b">
-                  {customer.name}
+                  {user.name}
                 </Typography>
-                {customer.id && 
+                {user.id && 
                   <Typography variant="caption" color="#64748b">
-                    {customer.id}
+                    {user.id}
                   </Typography>
                 }
               </TableCell>
 
               <TableCell>
                 <Typography component="div" fontWeight={500} color="#1e293b">
-                  {customer.email}
+                  {user.email}
                 </Typography>
-                {customer.email_verified && 
+                {user.email_verified && 
                   <Typography variant="caption" color="#64748b">
-                    {customer.email_verified}
+                    {user.email_verified}
                   </Typography>
                 }
               </TableCell>
 
               <TableCell>
                 <Typography color="#334155">
-                  {customer.phone_number || '—'}
+                  {user.phone_number || '—'}
                 </Typography>
               </TableCell>
 
               <TableCell>
                 <Typography color="#334155">
-                  {customer.identifier || '—'}
+                  {user.identifier || '—'}
                 </Typography>
               </TableCell>
 
               <TableCell>
-                <StatusBadge status={customer.email_verified} />
+                <StatusBadge status={user.email_verified} />
               </TableCell>
 
               <TableCell>
-                <StatusBadge status={customer.is_active} />
+                <StatusBadge status={user.is_active} />
               </TableCell>
 
               <TableCell align="center">
-                <Link to={`/customers/${customer.suite_no}`} style={{ textDecoration: "none" }}>
+                <Link to={`/customers/${user.suite_no}`} style={{ textDecoration: "none" }}>
                   <IconButton size="small" sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' } }}>
                     <ViewIcon fontSize="small" />
                   </IconButton>

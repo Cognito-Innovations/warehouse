@@ -3,11 +3,13 @@ export const getStatusColor = (status: string) => {
     case 'REQUESTED':
     case 'DRAFT':
     case 'NO':
+    case 'PAYMENT PENDING':
     case 'PAYMENT_PENDING':
       return { color: '#F59E0B', bgColor: '#FEF3C7' }; // Amber
     
     case 'QUOTATION_READY':
     case 'QUOTATION_CONFIRMED':
+    case 'PAYMENT APPROVED':
     case 'PAYMENT_APPROVED':          
     case 'INVOICED':  
       return { color: '#10b981', bgColor: '#d1fae5' };

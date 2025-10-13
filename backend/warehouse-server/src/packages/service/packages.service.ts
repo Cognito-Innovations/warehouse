@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { isUUID } from 'class-validator'; 
 
 import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
@@ -51,7 +52,7 @@ export class PackagesService {
       },
       shipment_id: pkg.shipment_id,
       shipment_uuid: pkg.shipment_uuid,
-      customer: pkg.user
+      user: pkg.user
         ? {
             id: pkg.user.id,
             email: pkg.user.email,
@@ -86,7 +87,7 @@ export class PackagesService {
       total_weight: pkg.total_weight,
       total_volumetric_weight: pkg.total_volumetric_weight,
       country: pkg.country,
-      allow_customer_items: pkg.allow_user_items,
+      allow_user_items: pkg.allow_user_items,
       shop_invoice_received: pkg.shop_invoice_received,
       remarks: pkg.remarks,
       dangerous_good: pkg.dangerous_good,
@@ -325,9 +326,16 @@ export class PackagesService {
       order: { created_at: 'DESC' },
     });
 
-    return Promise.all(
+    const results = await Promise.allSettled(
       packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
     );
+
+    return results
+      .filter(
+        (result): result is PromiseFulfilledResult<PackageResponseDto> =>
+          result.status === 'fulfilled',
+      )
+      .map((result) => result.value);
   }
 
   async getPackagesByUserAndStatus(
@@ -378,21 +386,47 @@ export class PackagesService {
   }
 
   async searchPackages(query: string): Promise<PackageResponseDto[]> {
-    const packages = await this.packageRepository
+    const packageQuery = this.packageRepository
       .createQueryBuilder('package')
       .leftJoinAndSelect('package.measurements', 'measurements')
       .leftJoinAndSelect('package.items', 'items')
       .leftJoinAndSelect('package.user', 'user')
-      .where(
-        'package.id = :exactQuery OR package.package_id = :exactQuery OR package.tracking_no ILIKE :likeQuery',
+
+    if (isUUID(query)) {
+      packageQuery.where(
+        'package.id = :query OR package.package_id = :query OR package.tracking_no ILIKE :likeQuery',
         {
-          exactQuery: query,
+          query,
           likeQuery: `%${query}%`,
-        },
-      )
+        }
+      );
+    } else {
+      packageQuery.where(
+        'package.package_id = :query OR package.tracking_no ILIKE :likeQuery', {
+          query,
+          likeQuery: `%${query}%`,
+        }
+      );
+    }
+
+    const packages = await packageQuery
       .orderBy('package.created_at', 'DESC')
       .getMany();
 
+    return Promise.all(
+      packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
+    );
+  }
+
+  async getPackagesByUser(userId: string): Promise<PackageResponseDto[]> {
+    const packages = await this.packageRepository.find({
+      where: {
+        user: { id: userId },
+      },
+      relations: ['measurements', 'items', 'user'],
+      order: { created_at: 'DESC' },
+    });
+  
     return Promise.all(
       packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
     );
@@ -590,7 +624,7 @@ export class PackagesService {
   }
 
   async addShipmentDocument(
-    shipment_uuid: string,
+    package_uuid: string,
     dto: {
       url: string;
       original_filename: string;
@@ -601,31 +635,31 @@ export class PackagesService {
     userId: string,
   ) {
     const pkg = await this.packageRepository.findOne({
-      where: { shipment_uuid },
+      where: { id: package_uuid },
     });
     if (!pkg) {
       throw new NotFoundException(
-        `Package not found with shipment_uuid: ${shipment_uuid}`,
+        `Package not found with package_uuid: ${package_uuid}`,
       );
     }
 
     await this.documentsService.create({
       uploaded_by: userId,
       feature_type: FeatureType.Package,
-      feature_fid: shipment_uuid,
-      document_name: 'Shipment Document',
+      feature_fid: package_uuid,
+      document_name: 'Package Document',
       original_filename: dto.original_filename,
       document_url: dto.url,
       document_type: dto.document_type || 'photo',
       file_size: dto.file_size,
       mime_type: dto.mime_type,
-      category: 'SHIPMENT',
+      category: 'PACKAGE',
       is_required: false,
     });
 
     return this.documentsService.findByFeature(
       FeatureType.Package,
-      shipment_uuid,
+      package_uuid,
     );
   }
 

@@ -1,5 +1,13 @@
 import type { UserRole } from "./data/menuItems";
 
+export interface UserData {
+  id: string;
+  email: string;
+  name: string;
+  image?: string;
+  role?: UserRole
+}
+
 export interface User {
   id: string;
   email: string;
@@ -53,15 +61,13 @@ export interface Supplier {
 export interface Package {
   id?: string;
   package_id?: string;
-  customer_id?: string;
-  customer?: {
-    id: string;
-    name: string;
-    suite_no: string;
-    email: string;
-    phone_number?: string;
-    phone_number_2?: string;
-  };
+  actual_id?: string;
+  user_id?: string;
+  name: string;
+  suite_no: string;
+  email: string;
+  phone_number?: string;
+  phone_number_2?: string;
   rack_slot_id?: string;
   rack_slot?: {
     id: string;
@@ -83,10 +89,10 @@ export interface Package {
   total_weight?: number;
   total_volumetric_weight?: number;
   dangerous_good?: boolean;
-  allow_customer_items?: boolean;
+  allow_user_items?: boolean;
   shop_invoice_received?: boolean;
   remarks?: string;
-  status?: string;
+  status?: { value: string };
   created_by?: string;
   creator?: {
     id: string;
@@ -95,11 +101,11 @@ export interface Package {
   shipment_uuid: string;
   created_at?: string;
   updated_at?: string;
-  items?: any[];
-  documents?: any[];
-  measurements?: any[];
-  charges?: any[];
-  action_logs?: any[];
+  items?: unknown[];
+  documents?: unknown[];
+  measurements?: unknown[];
+  charges?: unknown[];
+  action_logs?: unknown[];
 }
 
 export interface PickupRequest {
@@ -154,3 +160,16 @@ export type UpdateCurrencyPayload = Partial<CreateCurrencyPayload>;
 
 export type CreateCourierPayload = Omit<Courier, 'id' | 'country_name'>;
 export type UpdateCourierPayload = Partial<CreateCourierPayload>;
+
+export interface PackageItem {
+  [key: string]: unknown;
+}
+
+export interface PackageData {
+  id: string;
+  user: string;
+  suite?: string;
+  weight?: string;
+  items?: PackageItem[];
+  createdAt: string | Date;
+}

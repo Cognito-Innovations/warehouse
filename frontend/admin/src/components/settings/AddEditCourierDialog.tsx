@@ -49,21 +49,21 @@ const AddEditCourierDialog: React.FC<AddEditCourierDialogProps> = ({
   countries,
 }) => {
   const [form, setForm] = useState<CourierFormData>(emptyForm);
-  const isEditing = !!initialData;
+  const isEditing = React.useMemo(() => !!initialData, [initialData]);
 
   useEffect(() => {
     if (isEditing && open) {
       setForm({
-        name: initialData.name || '',
-        address: initialData.address || '',
-        phone_number: initialData.phone_number || '',
-        email: initialData.email || '',
-        country_id: initialData.country_id || '',
+        name: initialData?.name || '',
+        address: initialData?.address || '',
+        phone_number: initialData?.phone_number || '',
+        email: initialData?.email || '',
+        country_id: initialData?.country_id || '',
       });
     } else {
       setForm(emptyForm);
     }
-  }, [initialData, open]);
+  }, [initialData, open, isEditing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });

@@ -10,20 +10,20 @@ import { getUserBySuiteNo } from '../services/api.services';
 
 const CustomerDetailPage = () => {
   const { id } = useParams();
-  const [customer, setCustomer] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCustomer = async () => {
+  const fetchUser = async () => {
     try {
       setLoading(true);
       setError(null);
       if (id) {
         const data = await getUserBySuiteNo(id);
-        setCustomer(data);
+        setUser(data);
       }
     } catch (err) {
-      setError('Failed to fetch customer details.');
+      setError('Failed to fetch user details.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -31,7 +31,7 @@ const CustomerDetailPage = () => {
   };
 
   useEffect(() => {
-    fetchCustomer();
+    fetchUser();
   }, [id]);
 
   if (loading) {
@@ -49,7 +49,7 @@ const CustomerDetailPage = () => {
     );
   }
 
-  if (error || !customer) {
+  if (error || !user) {
     return (
       <Box>
         <TopNavbar pageTitle="Customers" pageSubtitle="/ Not Found" />
@@ -62,9 +62,9 @@ const CustomerDetailPage = () => {
 
   return (
     <Box sx={{ bgcolor: '#f8fafc', minHeight: '100vh' }}>
-      <TopNavbar pageTitle="Customers" pageSubtitle={`${customer.name}`} />
+      <TopNavbar pageTitle="Customers" pageSubtitle={`${user.name}`} />
       <Box>
-        <CustomerHeader customer={customer} />
+        <CustomerHeader user={user} />
         <CustomerAddressList />
       </Box>
     </Box>

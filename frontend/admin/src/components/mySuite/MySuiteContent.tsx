@@ -38,10 +38,14 @@ const MySuiteContent = () => {
       await deleteRack(id);
       setRacks(prev => prev.filter(rack => rack.id !== id));
       toast.success('Rack deleted successfully');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to delete rack', err);
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
       const message =
-        err?.response?.data?.message || err?.message || 'Failed to delete rack';
+        error?.response?.data?.message || error?.message || 'Failed to delete rack';
       toast.error(message);
     } finally {
       setDeletingRackId(null);
