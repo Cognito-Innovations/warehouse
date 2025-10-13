@@ -18,7 +18,7 @@ interface PackageItem {
 
 interface PackageItemsSectionProps {
   packageItems: PackageItem[];
-  setPackageItems: React.Dispatch<React.SetStateAction<any[]>>;
+  setPackageItems: React.Dispatch<React.SetStateAction<PackageItem[]>>;
   isDiscarded: boolean;
 }
 
@@ -30,7 +30,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
   const { id } = useParams<{ id: string }>();
 
   const [addItemModalOpen, setAddItemModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<PackageItem | null>(null);
   const [isSavingItem, setIsSavingItem] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [newItem, setNewItem] = useState({
@@ -52,7 +52,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
     setNewItem({ name: '', quantity: 1, amount: '', total: '' });
   };
 
-  const handleEditItem = (item: any) => {
+  const handleEditItem = (item: PackageItem) => {
     setEditingItem(item);
     setNewItem({ ...item });
     setAddItemModalOpen(true);
@@ -99,7 +99,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
         setPackageItems(prev => prev.map(item =>
           item.id === editingItem.id 
           ? { 
-            ...newItem, 
+            ...item, 
             name: updatedItem.name,
             quantity: updatedItem.quantity,
             amount: updatedItem.unit_price.toFixed(2),

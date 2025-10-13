@@ -34,8 +34,8 @@ export const createSupplier = async (supplier: {
   return response.data;
 };
 
-interface CreatePackageDto {
-  customer: string;
+export interface CreatePackageDto {
+  user: string;
   rack_slot: string;
   tracking_no?: string;
   vendor: string;
@@ -44,7 +44,7 @@ interface CreatePackageDto {
   width: string;
   height: string;
   volumetric_weight: string;
-  allow_customer_items: boolean;
+  allow_user_items: boolean;
   shop_invoice_received: boolean;
   remarks: string;
   pieces: Array<{
@@ -70,6 +70,13 @@ export const getPackageById = async (id: string): Promise<Package> => {
   const response = await api.get<Package>(`/packages/${id}`);
   return response.data;
 };
+
+export const searchPackages = async (query: string): Promise<Package[]> => {
+  const response = await api.get<Package[]>('/packages', {
+    params: { search: query }
+  });
+  return response.data;
+}
 
 export const updatePackageStatus = async (id: string, status: string): Promise<Package> => {
   const response = await api.patch<Package>(`/packages/${id}/status`, { status });

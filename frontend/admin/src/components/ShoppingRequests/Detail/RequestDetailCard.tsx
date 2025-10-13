@@ -7,15 +7,39 @@ import { updateShoppingRequestStatus } from '../../../services/api.services';
 import RequestHeader from '../../common/RequestHeader';
 import { getStatusColor } from '../../../utils/statusUtils';
 
+interface Product {
+  id: string;
+  name?: string;
+  quantity: number;
+  unit_price?: number | null;
+  currency?: string;
+  available?: boolean;
+  [key: string]: unknown;
+}
+
+interface Request {
+  id: string;
+  request_code: string;
+  status: string;
+  user?: {
+    name: string;
+    suite_no?: string;
+    email: string;
+    phone?: string | null;
+    alt_phone?: string | null;
+  };
+  [key: string]: unknown;
+}
+
 interface RequestDetailCardProps {
-  request: any;
+  request: Request;
   onStatusUpdated: () => void;
-  products: any[];
+  products: Product[];
   selectedItemIds: Set<string>;
 }
 
 const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds }: RequestDetailCardProps) => {
-  const [loading, setLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
 
   const normalizeStatus = (status: string) => {
     switch (status.toUpperCase()) {
@@ -29,8 +53,8 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
   const latestStatus = normalizeStatus(request.status);
   const statusStyles = getStatusColor(latestStatus);
 
-  const handleStatusChange = async (newStatus: string) => {
-    setLoading(true);
+  const handleStatusChange = async (newStatus: string, actionName: string) => {
+    setActiveAction(actionName);
     try {
       await updateShoppingRequestStatus(request.id, newStatus);
       onStatusUpdated();
@@ -39,7 +63,7 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
       console.error("Failed to update status:", err);
       toast.error("Failed to update status.");
     } finally {
-      setLoading(false);
+      setActiveAction(null);
     }
   };
 
@@ -57,28 +81,38 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
       return;
     }
 
-    handleStatusChange("QUOTATION_READY");
+    handleStatusChange("QUOTATION_READY", "sending");
   }
 
   const renderActionButton = () => {
-    if (latestStatus === "REQUESTED") {
-      return (
-        <>
+    const rejectableStatuses = [
+      "REQUESTED", 
+      "QUOTATION_READY", 
+      "QUOTATION_CONFIRMED", 
+      "INVOICED", 
+      "PAYMENT_PENDING"
+    ];
+
+    return (
+      <>
+        {latestStatus === "REQUESTED" && (
           <Button
             variant="contained"
             color="primary"
             sx={{ mr: 1, textTransform: 'none' }}
             onClick={handleSendQuotation}
-            disabled={loading}
+            disabled={!!activeAction}
           >
-            {loading ?
+            {activeAction === 'sending' ? (
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CircularProgress size={20} color="inherit" />
                 Sending...
               </Box>
-              : "Send Quotation"}
+            ) : "Send Quotation"}
           </Button>
+        )}
 
+        {rejectableStatuses.includes(latestStatus) && (
           <Button
             variant="contained"
             sx={{
@@ -87,40 +121,36 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
               '&:hover': { bgcolor: '#FECACA' },
               textTransform: 'none'
             }}
-            onClick={() => handleStatusChange("REJECTED")}
-            disabled={loading}
+            onClick={() => handleStatusChange("REJECTED", 'reject')}
+            disabled={!!activeAction}
           >
-            {loading ?
+            {activeAction === 'rejecting' ? (
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CircularProgress size={20} color="inherit" />
                 Rejecting...
               </Box>
-              : "Reject"}
+            ) : "Reject"}
           </Button>
-        </>
-      );
-    }
-
-    if (latestStatus === "PAYMENT_APPROVED") {
-      return (
-        <Button
-          variant="contained"
-          sx={{ textTransform: 'none' }}
-          onClick={() => handleStatusChange("ORDER_PLACED")}
-          disabled={loading}
-        >
-          {loading ?
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <CircularProgress size={20} color="inherit" />
-              Completing...
-            </Box>
-            : "Complete"}
-        </Button>
-      );
-    }
-
-    return null;
-  };
+        )}
+    
+    {latestStatus === "PAYMENT_APPROVED" && (
+      <Button
+        variant="contained"
+        sx={{ textTransform: 'none' }}
+        onClick={() => handleStatusChange("ORDER_PLACED", "approving")}
+        disabled={!!activeAction}
+      >
+        {activeAction === "approving" ?
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <CircularProgress size={20} color="inherit" />
+            Completing...
+          </Box>
+          : "Complete"}
+      </Button>
+      )}
+    </>
+  );
+};
 
   return (
     <>
@@ -132,7 +162,7 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
           color: statusStyles.color,
           bgColor: statusStyles.bgColor,
         }}
-        customer={request.user}
+        user={request.user ?? { name: "Unknown", email: "unknown@example.com" }}
         actionButtons={renderActionButton()}
       />
     </>

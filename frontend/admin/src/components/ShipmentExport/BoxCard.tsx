@@ -54,13 +54,13 @@ const BoxCard: React.FC<BoxCardProps> = ({
             Dimension (LxBxH):
           </Typography>
           <Typography variant="body2" color="text.secondary" fontWeight={500}>
-            {parseFloat(box.length_cm as any) || 0} x {parseFloat(box.breadth_cm as any) || 0} x {parseFloat(box.height_cm as any) || 0}
+            {parseFloat(String(box.length_cm)) || 0} x {parseFloat(String(box.breadth_cm)) || 0} x {parseFloat(String(box.height_cm)) || 0}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Gross Weight: {parseFloat(box.volumetric_weight as any) ?? "-"}
+            Gross Weight: {parseFloat(String(box.volumetric_weight)) ?? "-"}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Mass Weight: {parseFloat(box.mass_weight as any) ?? "-"}
+            Mass Weight: {parseFloat(String(box.mass_weight)) ?? "-"}
           </Typography>
         </Box>
         <Box

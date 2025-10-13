@@ -7,16 +7,35 @@ import {
   updateShipmentExportBox,
 } from "../../services/api.services";
 import BoxCard from "./BoxCard";
-import BoxShipmentsList from "./BoxShipmentsList";
+import BoxShipmentsList, { type Package } from "./BoxShipmentsList";
 import Modal from "../common/Modal";
 import BoxDetailsForm from "./BoxDetailsForm";
 
+interface BoxItem {
+  id: number;
+  label: string;
+  length_cm: number;
+  breadth_cm: number;
+  height_cm: number;
+  volumetric_weight?: number;
+  mass_weight?: number;
+}
+
+interface BoxFormValues {
+  label: string;
+  length: string;
+  breadth: string;
+  height: string;
+  volumetricWeight: string;
+  massWeight: string;
+}
+
 interface BoxesSectionProps {
-  boxes: any[];
+  boxes: BoxItem[];
   selectedBoxId: number | null;
   setSelectedBoxId: React.Dispatch<React.SetStateAction<number | null>>;
   shipmentId: string;
-  packagesInSelectedBox: any[];
+  packagesInSelectedBox: Package[];
   loadingPackages: boolean;
   refreshPackages: () => void;
   onBoxAdded: () => void;
@@ -51,7 +70,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
     setEditingBoxLabel(null);
   };
 
-  const handleSave = async (values: any) => {
+  const handleSave = async (values: BoxFormValues) => {
     if (!selectedBoxId) return;
 
     try {

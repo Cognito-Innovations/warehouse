@@ -8,11 +8,16 @@ import {
 import { updateShipmentExport } from '../../services/api.services';
 import Modal from '../common/Modal';
 
+interface Shipment {
+  id: string;
+  mawb?: string;
+}
+
 interface UpdateMawbModalProps {
   open: boolean;
   onClose: () => void;
   onUpdate: () => void;
-  shipment: any | null;
+  shipment: Shipment | null;
 }
 
 const UpdateMawbModal: React.FC<UpdateMawbModalProps> = ({ open, onClose, onUpdate, shipment }) => {

@@ -2,9 +2,10 @@ import JsBarcode from "jsbarcode";
 import jsPDF from "jspdf";
 import QRCode from 'qrcode';
 import { format } from 'date-fns';
+import type { PackageData } from "../../types";
 
 interface PackageLabelPDFProps {
-  data: any;
+  data: PackageData;
 }
 
 export const usePackageLabelPDF = ({ data }: PackageLabelPDFProps) => {
@@ -70,15 +71,15 @@ export const usePackageLabelPDF = ({ data }: PackageLabelPDFProps) => {
       doc.setFont("helvetica", "bold");
       doc.text("PACKAGE ARRIVED", arrivedBoxX + (arrivedBoxWidth / 2), arrivedY + 5.5, { align: 'center' });
 
-      // Customer Information
-      const customerY = arrivedY + 12;
+      // User Information
+      const userY = arrivedY + 12;
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
-      doc.text(`${data.customer || 'N/A'} (${data.suite || 'N/A'})`, margin + 8, customerY);
+      doc.text(`${data.user || 'N/A'} (${data.suite || 'N/A'})`, margin + 8, userY);
 
       // Suite Information - Position it better
-      const suiteY = customerY + 8;
+      const suiteY = userY + 8;
       const suiteBoxWidth = 35;
       const suiteBoxHeight = 12;
       
@@ -106,7 +107,7 @@ export const usePackageLabelPDF = ({ data }: PackageLabelPDFProps) => {
 
       // Weight and Registration Date - Side by side
       const detailsY = dashY + 8;
-      const weightText = `WEIGHT: ${parseFloat(data.weight || 0).toFixed(1)} KG / ${data.items?.length || 0} PCS`;
+      const weightText = `WEIGHT: ${parseFloat(data.weight || '0').toFixed(1)} KG / ${data.items?.length || 0} PCS`;
       doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
       doc.text(weightText, margin + 8, detailsY);

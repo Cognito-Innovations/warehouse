@@ -9,6 +9,8 @@ import { TRACKING_STATUS } from '../../../utils/trackingConfig';
 import { getChipStyles } from '../../../utils/pickupStatus';
 import { numberInputStyle } from '../../../styles/numberInputStyle';
 
+type TrackingStatusValue = (typeof TRACKING_STATUS)[keyof typeof TRACKING_STATUS];
+
 interface Users {
   id: string;
   name: string;
@@ -43,7 +45,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
     setOpenModal(false);
   }
 
-  const handleStatusUpdate = async (status: TRACKING_STATUS, price?: number) => {
+  const handleStatusUpdate = async (status: TrackingStatusValue, price?: number) => {
     try {
       setLoading(true);
       await updatePickupRequestStatus(request.id, status, price);
@@ -58,7 +60,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
     }
   };
 
-  const customerForHeader = {
+  const userForHeader = {
     name: request.user.name,
     email: request.user.email,
     phone: request.user.phone_number,
@@ -106,7 +108,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
           color: chipStyles.color,
           bgColor: chipStyles.backgroundColor,
         }}
-        customer={customerForHeader}
+        user={userForHeader}
         actionButtons={renderActionButtons()}
       />
 

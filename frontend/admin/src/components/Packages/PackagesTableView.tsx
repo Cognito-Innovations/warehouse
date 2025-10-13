@@ -19,11 +19,11 @@ import {
 import { formatDateTime } from '../../utils/formatDateTime';
 import { getStatusColor } from '../../utils/statusUtils';
 
-interface Package {
+export interface Package {
   id: string;
   package_id?: string;
   tracking_no?: string;
-  customer?: { name?: string; suite_no?: string };
+  user?: { name?: string; suite_no?: string };
   vendor?: { supplier_name?: string };
   created_at: string;
   status: { value: string };
@@ -102,10 +102,10 @@ const PackagesTableView: React.FC<PackagesTableViewProps> = ({
                     <TableCell>
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                          {row.customer?.name || 'Unknown'}
+                          {row.user?.name || 'Unknown'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {row.customer?.suite_no || 'N/A'}
+                          {row.user?.suite_no || 'N/A'}
                         </Typography>
                       </Box>
                     </TableCell>

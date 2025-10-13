@@ -119,7 +119,7 @@ const PreArrivalsTable: React.FC<PreArrivalsTableProps> = ({ data, onMarkAsRecei
                     </TableCell>
                     <TableCell sx={{ paddingY: "10px" }}>
                       <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0e0e0eba' }}>{row.customer}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0e0e0eba' }}>{row.user}</Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, color: '#595959ba' }}>{row.suite}</Typography>
                       </Box>
                     </TableCell>

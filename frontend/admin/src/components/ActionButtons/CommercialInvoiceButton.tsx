@@ -1,15 +1,40 @@
 import React, { useState } from "react";
 import { Button, CircularProgress } from "@mui/material";
 import jsPDF from "jspdf";
-import autoTable from 'jspdf-autotable';
+import autoTable, { type UserOptions } from 'jspdf-autotable';
 import { toast } from "sonner";
 
+interface AutoTableFinalY {
+  finalY: number;
+}
+
 interface jsPDFWithAutoTable extends jsPDF {
-    autoTable: (options: any) => jsPDF;
+    autoTable: (options: UserOptions) => jsPDF;
+    lastAutoTable?: AutoTableFinalY;
+}
+
+interface InvoiceItem {
+    name: string;
+    quantity: number;
+    unit_price: string;
+    total_price: string;
+}
+
+interface InvoiceData {
+    id: string;
+    user: string;
+    phone?: string;
+    suite?: string;
+    updatedAt?: string;
+    to_address?: {
+        line1?: string;
+        zip_code?: string;
+    };
+    items: InvoiceItem[];
 }
 
 interface CommercialInvoiceButtonProps {
-    data: any;
+    data: InvoiceData;
 }
 
 const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data }) => {
@@ -18,7 +43,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
     const handleCommercialInvoiceButton = async () => {
         setIsPrinting(true);
         try {
-            if (!data || !data.id || !data.customer || !data.items) {
+            if (!data || !data.id || !data.user || !data.items) {
                 toast.error("Required data for the invoice is missing.");
                 return;
             }
@@ -86,7 +111,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
 
             // Ship To Box
             const shipToContent = [
-                data.customer || 'Maryam Maana',
+                data.user || 'Maryam Maana',
                 data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City Kaafu",
                 data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
                 data.phone || '9834396'
@@ -95,7 +120,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
             
             // Bill To Box
             const billToContent = [
-                data.customer || 'Maryam Maana',
+                data.user || 'Maryam Maana',
                 data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City",
                 data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
                 data.phone || '9834396'
@@ -174,7 +199,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
 
              // --- 5. Total Section ---
              autoTable(doc, {
-                startY: (doc as any).lastAutoTable.finalY,
+                startY: doc.lastAutoTable?.finalY || yPos + boxHeaderH + boxBodyH + 10,
                 body: [
                     [
                         { content: 'TOTAL', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fontSize: 10 } },

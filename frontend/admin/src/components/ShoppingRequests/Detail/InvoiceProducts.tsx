@@ -8,9 +8,9 @@ import {
   Box,
   Chip,
 } from "@mui/material";
-import { type InvoiceDetails } from "./InvoiceRow";
+import type { Invoice } from "./RequestDetailContent";
 
-export default function InvoiceProducts({ products }: { products?: InvoiceDetails["products"] }) {
+export default function InvoiceProducts({ products }: { products?: Invoice["products"] }) {
   if (!products?.length) {
     return (
       <Box>

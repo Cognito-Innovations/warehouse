@@ -8,7 +8,7 @@ interface PrePackageArrivalOTPModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: {
-    customer?: string;
+    user?: string;
     suite?: string;
     otp: string | number;
     tracking_no?: string | null;

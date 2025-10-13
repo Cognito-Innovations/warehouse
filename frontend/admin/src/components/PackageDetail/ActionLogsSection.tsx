@@ -13,11 +13,17 @@ interface UploadedDocument {
   type: string;
 }
 
+interface PackageItem {
+  id: string;
+  name: string;
+  quantity: number;
+}
+
 interface ActionLogsSectionProps {
   packageId: string;
   initialStatus: { label: string; value: string };
   initialDocuments: UploadedDocument[];
-  packageItems: any[];
+  packageItems: PackageItem[];
   packageCreationData: {
     createdBy: string;
     createdAt: string;

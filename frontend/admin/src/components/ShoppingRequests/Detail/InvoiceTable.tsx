@@ -12,9 +12,23 @@ import {
   Chip,
   CircularProgress,
 } from "@mui/material";
-import { InvoiceRow, type InvoiceDetails } from "./InvoiceRow";
-import { updateShoppingRequestStatus } from "../../../services/api.services";
 import { useState } from "react";
+import { InvoiceRow } from "./InvoiceRow";
+import { updateShoppingRequestStatus } from "../../../services/api.services";
+import type { Invoice, PaymentSlip } from "./RequestDetailContent";
+
+interface InvoiceTableProps {
+  id: string;
+  invoice: Invoice;
+  payment_slips: PaymentSlip[];
+  status: string;
+  isApprovingPayment?: boolean;
+  onApprovePayment?: () => void;
+  onStatusUpdated?: () => void;
+  isDiscarded?: boolean;
+}
+
+type StatusColor = "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning";
 
 export default function InvoiceTable({
   id,
@@ -23,19 +37,10 @@ export default function InvoiceTable({
   status,
   onStatusUpdated,
   isDiscarded,
-}: {
-  id: string;
-  invoice: InvoiceDetails;
-  payment_slips: string[];
-  status: string;
-  isApprovingPayment: boolean;
-  onApprovePayment: () => void;
-  onStatusUpdated: () => void;
-  isDiscarded: boolean;
-}) {
+}: InvoiceTableProps) {
   const [isApprovingPayment, setIsApprovingPayment] = useState(false);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): StatusColor => {
     switch (status) {
       case "PAYMENT_PENDING":
         return "warning";
@@ -84,7 +89,7 @@ export default function InvoiceTable({
           </Typography>
           <Chip
             label={status.replace("_", " ")}
-            color={getStatusColor(status) as any}
+            color={getStatusColor(status)}
             size="small"
             variant="outlined"
           />

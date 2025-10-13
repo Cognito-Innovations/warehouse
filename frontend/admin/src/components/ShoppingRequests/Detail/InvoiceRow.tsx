@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Box,
-  Chip,
   Collapse,
   IconButton,
   TableCell,
@@ -15,31 +14,14 @@ import PrintIcon from "@mui/icons-material/Print";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import InvoiceProducts from "./InvoiceProducts";
 import InvoiceSlips from "./InvoiceSlips";
-
-export interface InvoiceDetails {
-  id: string;
-  invoice_no: string;
-  amount: number;
-  total: number;
-  status: string;
-  products?: { 
-    id: string;
-    name: string; 
-    unit_price: number;
-    quantity: number;
-    currency?: string;
-    description?: string;
-  }[];
-  created_at?: number;
-  updated_at?: number;
-}
+import type { Invoice, PaymentSlip } from "./RequestDetailContent";
 
 interface Props {
-  invoice: InvoiceDetails;
+  invoice: Invoice;
   status: string;
-  payment_slips: any[];
-  onStatusUpdated: () => void;
-  isDiscarded: boolean;
+  payment_slips: PaymentSlip[];
+  onStatusUpdated?: () => void;
+  isDiscarded?: boolean;
 }
 
 export const InvoiceRow: React.FC<Props> = ({
@@ -48,22 +30,6 @@ export const InvoiceRow: React.FC<Props> = ({
   isDiscarded,
 }) => {
   const [open, setOpen] = useState(false);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "UNPAID":
-        return "error";
-      case "PAID":
-        return "success";
-      case "PAYMENT_PENDING":
-        return "warning";
-      case "PAYMENT_APPROVED":
-        return "success";
-      default:
-        return "default";
-    }
-  };
-
 
   const handlePrint = () => {
     // Create a new window for printing

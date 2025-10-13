@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -15,11 +15,13 @@ import {
   FormControl,
   InputLabel,
   Typography,
+  CircularProgress,
+  FormHelperText,
 } from "@mui/material";
 import {
   Close,
 } from "@mui/icons-material";
-import { createUserAddress } from "@/lib/api.service";
+import { createUserAddress, getCountries } from "@/lib/api.service";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 
@@ -32,51 +34,107 @@ interface AddressData {
   country: string;
 }
 
+interface Country {
+  id: string;
+  name: string;
+}
+
 interface AddAddressModalProps {
   open: boolean;
   onClose: () => void;
+  onAddressAdded: () => void;
 }
 
-//TODO: These countries pull from db by loading in admin
-const countries = [
-  "Indonesia",
-  "South Korea",
-  "United States",
-  "United Kingdom",
-  "Japan",
-  "Singapore",
-  "Malaysia",
-  "Thailand",
-  "India"
-];
-
-export default function AddAddressModal({ open, onClose }: AddAddressModalProps) {
-  const { data: session, status } = useSession();
+export default function AddAddressModal({ open, onClose, onAddressAdded }: AddAddressModalProps) {
+  const { data: session } = useSession();
   const user_id = (session?.user as any)?.user_id;
-  const [formData, setFormData] = useState<AddressData>({
+
+  const initialFormData = {
     name: "",
     address: "",
     zip_code: "",
     city: "",
     state: "",
     country: "",
-  });
-
-  const handleChange = (field: keyof AddressData) => (event: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: event.target.value
-    }));
   };
 
-  const handleSave = () => {
-    createUserAddress({...formData, user_id: user_id}).then(() => {
+  const [formData, setFormData] = useState<AddressData>(initialFormData);
+  const [countriesList, setCountriesList] = useState<Country[]>([]);
+  const [isLoadingCountries, setIsLoadingCountries] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof AddressData, string>>>({});
+  
+  const fetchCountries = async () => {
+    setIsLoadingCountries(true);
+    try {
+      const data = await getCountries();
+      setCountriesList(data);
+    } catch (error) {
+      console.error("Failed to fetch countries:", error);
+      toast.error("Could not load the list of countries.");
+    } finally {
+      setIsLoadingCountries(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && countriesList.length === 0) {
+      fetchCountries();
+    }
+  }, [open, countriesList.length]);
+
+  useEffect(() => {
+    if (!open) {
+      setFormData(initialFormData);
+      setErrors({});
+    }
+  }, [open]);
+
+  const handleChange = (field: keyof AddressData) => (event: any) => {
+    const { value } = event.target;
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<Record<keyof AddressData, string>> = {};
+    
+    if (!formData.name.trim()) newErrors.name = "Receiver name is required.";
+    if (!formData.address.trim()) newErrors.address = "Address is required.";
+    if (!formData.zip_code.trim()) newErrors.zip_code = "Zip code is required.";
+    if (!formData.city.trim()) newErrors.city = "City is required.";
+    if (!formData.state.trim()) newErrors.state = "State is required.";
+    if (!formData.country.trim()) newErrors.country = "Country is required.";
+    
+    setErrors(newErrors);
+    
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (isSaving || !validateForm()) return;
+
+    setIsSaving(true);
+    try {
+      await createUserAddress({ ...formData, user_id });
       toast.success("Address added successfully");
-      onClose();
-    }).catch((error) => {
-      toast.error("Failed to add address");
+      onAddressAdded();
+    } catch (error) {
       console.error("Error adding address:", error);
-    });
+      toast.error("Failed to add address");
+    } finally {
+      setIsSaving(false);
+    };
   };
 
   return (
@@ -110,6 +168,8 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
             onChange={handleChange("name")}
             fullWidth
             size="medium"
+            error={!!errors.name}
+            helperText={errors.name}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
@@ -123,6 +183,8 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
             onChange={handleChange("address")}
             fullWidth
             size="medium"
+            error={!!errors.address}
+            helperText={errors.address}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
@@ -136,6 +198,8 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
             onChange={handleChange("zip_code")}
             fullWidth
             size="medium"
+            error={!!errors.zip_code}
+            helperText={errors.zip_code}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
@@ -149,6 +213,8 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
             onChange={handleChange("city")}
             fullWidth
             size="medium"
+            error={!!errors.city}
+            helperText={errors.city}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
@@ -162,6 +228,8 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
             onChange={handleChange("state")}
             fullWidth
             size="medium"
+            error={!!errors.state}
+            helperText={errors.state}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
@@ -169,7 +237,7 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
             }}
           />
           
-          <FormControl fullWidth size="medium">
+          <FormControl fullWidth size="medium" error={!!errors.country}>
             <InputLabel>Country *</InputLabel>
             <Select
               value={formData.country}
@@ -186,12 +254,22 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
                 },
               }}
             >
-              {countries.map((country) => (
-                <MenuItem key={country} value={country}>
-                  {country}
+              {isLoadingCountries && (
+                <MenuItem disabled value="">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CircularProgress size={20} />
+                    <Typography>Loading countries...</Typography>
+                  </Box>
+                </MenuItem>
+              )}
+              
+              {!isLoadingCountries && countriesList.map((country) => (
+                <MenuItem key={country.id} value={country.name}>
+                  {country.name}
                 </MenuItem>
               ))}
             </Select>
+            {errors.country && <FormHelperText>{errors.country}</FormHelperText>}
           </FormControl>
         </Box>
       </DialogContent>
@@ -201,6 +279,7 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           variant="contained"
           onClick={handleSave}
           fullWidth
+          disabled={isSaving}
           sx={{
             bgcolor: "primary.main",
             color: "white",
@@ -213,7 +292,8 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
             },
           }}
         >
-          Add Address
+          {isSaving && <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />}
+          {isSaving ? "Adding Address..." : "Add Address"}
         </Button>
       </DialogActions>
     </Dialog>

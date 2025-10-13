@@ -13,8 +13,15 @@ interface Document {
   mime_type: string;
 }
 
+interface PackageData {
+  actual_id?: string;
+  createdBy?: string;
+  createdAt?: string;
+  [key: string]: unknown;
+}
+
 interface PhotosDocumentsSectionProps {
-  packageData: any;
+  packageData: PackageData;
   documents: Document[];
   onUploadSuccess?: () => Promise<void>;
   isDiscarded: boolean;
@@ -45,7 +52,7 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({
       for (const file of filesArray) {
         const url = await uploadToCloudinary(file);
         if (url) {
-          await addShipmentDocument(packageData.actual_id, {
+          await addShipmentDocument(packageData.actual_id!, {
             url,
             original_filename: file.name,
             mime_type: file.type,

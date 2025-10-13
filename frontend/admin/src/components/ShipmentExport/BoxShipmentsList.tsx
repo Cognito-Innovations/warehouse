@@ -14,14 +14,18 @@ import { Delete as DeleteIcon } from "@mui/icons-material";
 import { formatDateTime } from "../../utils/formatDateTime";
 import { removePackageFromBox } from "../../services/api.services";
 
-interface Package {
+export interface Package {
   id: string;
-  trackingNo: string;
+  tracking_no: string;
+  shipment_id: string;
   courier: string;
   customer: string;
   customerCode: string;
-  date: string;
+  updated_at: string;
   time: string;
+  user: {
+    name: string;
+  }
 }
 
 interface BoxShipmentsListProps {

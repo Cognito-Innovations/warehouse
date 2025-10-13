@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   CardContent,
+  CircularProgress,
 } from "@mui/material";
 import {
   Add,
@@ -41,6 +42,7 @@ export default function AddressesPage() {
   const [loading, setLoading] = useState(true);
 
   const getUserAddresses = async () => {
+    if (!userId) return;
     try {
       setLoading(true);
       const res = await fetchUserAddresses(userId);
@@ -53,9 +55,16 @@ export default function AddressesPage() {
     }
   };
 
+  const handleAddressAdded = () => {
+    setAddModalOpen(false);
+    getUserAddresses();
+  };
+
   useEffect(() => {
     if (userId) {
       getUserAddresses();
+    } else {
+      setLoading(false);
     }
   }, [userId]);
 
@@ -70,7 +79,7 @@ export default function AddressesPage() {
             Your delivery addresses
           </Typography>
         </Box>
-        {Object.keys(address).length === 0 && (
+        {Object.keys(address).length === 0 && !loading && (
           <Button
             variant="contained"
             startIcon={<Add />}
@@ -98,11 +107,14 @@ export default function AddressesPage() {
             <Box
               sx={{
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 minHeight: 350,
+                gap: 1,
               }}
             >
+              <CircularProgress size={24} />
               <Typography variant="body1" sx={{ color: "grey.600" }}>
                 Loading addresses...
               </Typography>
@@ -187,6 +199,7 @@ export default function AddressesPage() {
       <AddAddressModal
         open={addModalOpen}
         onClose={() => setAddModalOpen(false)}
+        onAddressAdded={handleAddressAdded}
       />
     </Box>
   );

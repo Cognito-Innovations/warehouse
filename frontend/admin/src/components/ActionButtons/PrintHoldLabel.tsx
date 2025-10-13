@@ -5,8 +5,24 @@ import QRCode from 'qrcode';
 import JsBarcode from "jsbarcode";
 import { toast } from "sonner";
 
+interface Measurement {
+  length: number;
+  width: number;
+  height: number;
+}
+
+interface HoldLabelData {
+    shipment_id: string;
+    shipment_uuid?: string;
+    user: string;
+    suite?: string;
+    weight?: string;
+    measurements: Measurement[];
+    createdAt?: string;
+}
+
 interface PrintHoldLabelButtonProps {
-  data: any;
+  data: HoldLabelData;
 }
 
 const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => {
@@ -15,7 +31,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
     const handlePrintHoldLabel = async () => {
         setIsPrintingHold(true);
         try {
-            if (!data || !data.shipment_id || !data.customer || !data.measurements) {
+            if (!data || !data.shipment_id || !data.user || !data.measurements) {
                 toast.error("Required data for hold label is missing.");
                 console.error("Missing data for hold label:", data);
                 return;
@@ -82,11 +98,11 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.setFont("helvetica", "bold");
             doc.text(suiteNo, 122.5, 40, { align: 'center' });
 
-            // 5. Customer Name (Right)
-            const customerName = data.customer|| '';
+            // 5. User Name (Right)
+            const userName = data.user|| '';
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
-            doc.text(`${customerName} (${suiteNo})`, 100, 50);
+            doc.text(`${userName} (${suiteNo})`, 100, 50);
 
             // 6. Dashed Separator Line
             doc.setLineDashPattern([1, 1], 0);
@@ -94,7 +110,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.setLineDashPattern([], 0); // Reset dash pattern
 
             // 7. Weight / Pcs (Bottom-Left)
-            const weight = parseFloat(data.weight || 0).toFixed(2);
+            const weight = parseFloat(data.weight || '0').toFixed(2);
             const pieces = data.measurements.length || 0;
             const weightText = `WEIGHT: ${weight} KG / ${pieces} PCS`;
             doc.setFontSize(9);
