@@ -28,7 +28,7 @@ export class PreArrivalService {
 
     return {
       id: savedPreArrival.id,
-      customer: savedPreArrival.customer,
+      user: savedPreArrival.user,
       suite: savedPreArrival.suite,
       otp: savedPreArrival.otp,
       tracking_no: savedPreArrival.tracking_no,
@@ -47,7 +47,7 @@ export class PreArrivalService {
 
     return preArrivals.map((preArrival) => ({
       id: preArrival.id,
-      customer: preArrival.customer,
+      user: preArrival.user,
       suite: preArrival.suite,
       otp: preArrival.otp,
       tracking_no: preArrival.tracking_no,
@@ -59,7 +59,7 @@ export class PreArrivalService {
     }));
   }
 
-  async getOTPById(id: string): Promise<PreArrivalResponseDto> {
+  async getPreArrivalById(id: string): Promise<PreArrivalResponseDto> {
     const preArrival = await this.preArrivalRepository.findOne({
       where: { id },
     });
@@ -70,7 +70,7 @@ export class PreArrivalService {
 
     return {
       id: preArrival.id,
-      customer: preArrival.customer,
+      user: preArrival.user,
       suite: preArrival.suite,
       otp: preArrival.otp,
       tracking_no: preArrival.tracking_no,
@@ -102,7 +102,7 @@ export class PreArrivalService {
 
     return {
       id: updatedPreArrival.id,
-      customer: updatedPreArrival.customer,
+      user: updatedPreArrival.user,
       suite: updatedPreArrival.suite,
       otp: updatedPreArrival.otp,
       tracking_no: updatedPreArrival.tracking_no,
@@ -112,6 +112,15 @@ export class PreArrivalService {
       created_at: updatedPreArrival.created_at,
       updated_at: updatedPreArrival.updated_at,
     };
+  }
+
+  async getPreArrivalsByUser(user: string): Promise<PreArrivalResponseDto[]> {
+    const preArrivals = await this.preArrivalRepository.find({
+      where: { user },
+      order: { created_at: 'DESC' },
+    });
+
+    return preArrivals;
   }
 
   async deletePreArrival(id: string): Promise<void> {

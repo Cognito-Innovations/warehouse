@@ -91,7 +91,7 @@ export default function ShoppingRequestForm() {
       const requestRes = await createShoppingRequest(shoppingRequest);
       const requestId = requestRes.id;
 
-      await Promise.all(
+      await Promise.allSettled(
         items.map((item) =>
           createShoppingRequestProduct({
             shopping_request_id: requestId,

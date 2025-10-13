@@ -2,9 +2,10 @@ import { Button, CircularProgress } from "@mui/material";
 import { useState } from "react";
 import { toast } from "sonner";
 import { usePackageLabelPDF } from "../PackageDetail/PackageLabelPDF";
+import type { PackageData } from "../../types";
 
 interface PrintLabelButtonProps {
-  data: any;
+  data: PackageData;
 }
 
 const PrintLabelButton: React.FC<PrintLabelButtonProps> = ({ data }) => {

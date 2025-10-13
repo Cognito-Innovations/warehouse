@@ -1,5 +1,5 @@
-import React from 'react';
-import { Box, Typography, Modal, IconButton, Button, Chip } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Modal, IconButton, Button, Chip, CircularProgress } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import type { PreArrival } from '../../types/PreArrival';
 
@@ -16,8 +16,32 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({
   selectedItem,
   onReceive
 }) => {
+  const [isReceiving, setIsReceiving] = useState(false);
+
+  const handleReceiveClick = async () => {
+    setIsReceiving(true);
+    try {
+      await onReceive();
+    } catch (error) {
+      console.error("Failed to receive item:", error);
+    } finally {
+      setIsReceiving(false);
+    }
+  };
+
+  if (!selectedItem) return null;
+
   return (
-    <Modal open={isOpen} onClose={onClose} aria-labelledby="customer-details-modal" aria-describedby="customer-details-description">
+    <Modal
+      open={isOpen}
+      onClose={() => {
+        if (!isReceiving) {
+            onClose();
+        }
+      }} 
+      aria-labelledby="customer-details-modal"
+      aria-describedby="customer-details-description"
+    >
       <Box sx={{
         position: 'absolute',
         top: '50%',
@@ -47,7 +71,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({
                 Customer
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: '1rem', color: '#111827' }}>
-                {selectedItem.customer} ({selectedItem.suite})
+                {selectedItem.user} ({selectedItem.suite})
               </Typography>
             </Box>
 
@@ -112,10 +136,11 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({
           <Button
             variant="contained"
             color="primary"
-            onClick={onReceive}
-            disabled={selectedItem?.status.toLowerCase() === 'received'}
-            sx={{ minWidth: 100, fontWeight: 600, bgcolor: '#8b5cf6','&:hover': { bgcolor: '#7c3aed'}}}>
-            Receive
+            onClick={handleReceiveClick}
+            disabled={selectedItem?.status.toLowerCase() === 'received' || isReceiving}
+            sx={{ minWidth: 100, fontWeight: 600, bgcolor: '#8b5cf6','&:hover': { bgcolor: '#7c3aed'}}}
+          >
+            {isReceiving ? <CircularProgress size={24} color="inherit" /> : 'Receive'}
           </Button>
         </Box>
       </Box>

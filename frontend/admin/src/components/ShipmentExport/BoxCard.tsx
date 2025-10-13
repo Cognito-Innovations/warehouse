@@ -14,7 +14,7 @@ interface BoxCardProps {
   };
   index: number;
   total: number;
-  onEdit: (boxId: number) => void;
+  onEdit: (boxId: number, displayLabel: string) => void;
   onDelete: (boxId: number) => void;
   onSelect: (boxId: number) => void;
   selected: boolean;
@@ -54,13 +54,13 @@ const BoxCard: React.FC<BoxCardProps> = ({
             Dimension (LxBxH):
           </Typography>
           <Typography variant="body2" color="text.secondary" fontWeight={500}>
-            {parseFloat(box.length_cm as any) || 0} x {parseFloat(box.breadth_cm as any) || 0} x {parseFloat(box.height_cm as any) || 0}
+            {parseFloat(String(box.length_cm)) || 0} x {parseFloat(String(box.breadth_cm)) || 0} x {parseFloat(String(box.height_cm)) || 0}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Gross Weight: {parseFloat(box.volumetric_weight as any) ?? "-"}
+            Gross Weight: {parseFloat(String(box.volumetric_weight)) ?? "-"}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Mass Weight: {parseFloat(box.mass_weight as any) ?? "-"}
+            Mass Weight: {parseFloat(String(box.mass_weight)) ?? "-"}
           </Typography>
         </Box>
         <Box
@@ -70,7 +70,7 @@ const BoxCard: React.FC<BoxCardProps> = ({
           <IconButton
             size="small"
             sx={{ bgcolor: "#e0e7ff", color: "#4f46e5" }}
-            onClick={() => onEdit(box.id)}
+            onClick={() => onEdit(box.id, displayLabel)}
           >
             <EditIcon fontSize="small" />
           </IconButton>

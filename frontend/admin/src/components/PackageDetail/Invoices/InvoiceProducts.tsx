@@ -1,7 +1,18 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 
-const InvoiceProducts: React.FC<{ items?: any[] }> = ({ items }) => {
+export interface InvoiceItem {
+  name: string;
+  quantity: number;
+  amount: number;
+  total: number;
+}
+
+interface InvoiceProductsProps {
+  items?: InvoiceItem[];
+}
+
+const InvoiceProducts: React.FC<InvoiceProductsProps> = ({ items }) => {
   if (!items?.length) return null;
 
   return (

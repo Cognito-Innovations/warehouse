@@ -4,7 +4,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import type { Currency } from '../../types';
 
 interface CurrenciesListProps {
-  currencies: any[];
+  currencies: Currency[];
   onEdit: (currency: Currency) => void;
 }
 

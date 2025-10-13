@@ -99,7 +99,7 @@ export class PackagesController {
       id: pkg.id,
       tracking_no: pkg.tracking_no,
       status: pkg.status,
-      customer_id: pkg.customer?.id,
+      user_id: pkg.user?.id,
       created_at: pkg.created_at,
     }));
   }
@@ -110,6 +110,16 @@ export class PackagesController {
   @ApiOkResponse({ type: PackageResponseDto })
   async findOne(@Param('id') id: string): Promise<PackageResponseDto> {
     return this.packagesService.getPackageById(id);
+  }
+
+  @Get('user/:userId')
+  @ApiOperation({ summary: 'Get all packages for a user' })
+  @ApiParam({ name: 'userId', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOkResponse({ type: [PackageResponseDto] })
+  async findByUser(
+    @Param('userId') userId: string,
+  ): Promise<PackageResponseDto[]> {
+    return this.packagesService.getPackagesByUser(userId);
   }
 
   @Get('user/:userId/status/:status')
@@ -167,10 +177,10 @@ export class PackagesController {
     return this.packagesService.updatePackageInfo(id, dto, req.user.id);
   }
 
-  @Post('shipments/:shipment_uuid/documents')
+  @Post('shipments/:package_uuid/documents')
   @ApiOperation({ summary: 'Upload shipment document/photo' })
   async uploadShipmentDocument(
-    @Param('shipment_uuid') shipment_uuid: string,
+    @Param('package_uuid') package_uuid: string,
     @Body()
     body: {
       url: string;
@@ -182,19 +192,19 @@ export class PackagesController {
     @Request() req: AuthenticatedRequest,
   ) {
     return this.packagesService.addShipmentDocument(
-      shipment_uuid,
+      package_uuid,
       body,
       req.user.id,
     );
   }
 
-  @Get('shipments/:shipment_uuid/documents')
+  @Get('shipments/:package_uuid/documents')
   @ApiOperation({ summary: 'Get all documents/photos for a shipment' })
-  async getShipmentDocuments(@Param('shipment_uuid') shipment_uuid: string) {
+  async getShipmentDocuments(@Param('package_uuid') package_uuid: string) {
     return this.packagesService['documentsService'].findByFeature(
       FeatureType.Package,
-      shipment_uuid,
-      'SHIPMENT',
+      package_uuid,
+      'PACKAGE',
     );
   }
 

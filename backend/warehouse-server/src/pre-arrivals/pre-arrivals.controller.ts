@@ -1,5 +1,13 @@
 import { PreArrivalService } from './pre-arrivals.service';
-import { Body, Controller, Get, Post, Param, Patch, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -28,7 +36,7 @@ export class PreArrivaController {
       Example1: {
         summary: 'Pending Pre-Arrival',
         value: {
-          customer: 'John Doe',
+          user: 'John Doe',
           suite: 'A101',
           otp: 123456,
           tracking_no: 'TRACK12345',
@@ -62,8 +70,10 @@ export class PreArrivaController {
     type: PreArrivalResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Pre-arrival not found' })
-  async getOtpById(@Param('id') id: string): Promise<PreArrivalResponseDto> {
-    return this.preArrivalService.getOTPById(id);
+  async getPreArrivalById(
+    @Param('id') id: string
+  ): Promise<PreArrivalResponseDto> {
+    return this.preArrivalService.getPreArrivalById(id);
   }
 
   @Patch(':id')
@@ -81,6 +91,18 @@ export class PreArrivaController {
     @Param('id') id: string,
   ): Promise<PreArrivalResponseDto> {
     return this.preArrivalService.updateStatusToReceived(id);
+  }
+
+  @Get('user/:user')
+  @ApiOperation({ summary: 'Get all pre-arrival OTPs by user name' })
+  @ApiOkResponse({
+    description: 'List of OTPs for the user',
+    type: [PreArrivalResponseDto],
+  })
+  async getPreArrivalByUser(
+    @Param('user') user: string
+  ): Promise<PreArrivalResponseDto[]> {
+    return this.preArrivalService.getPreArrivalsByUser(user);
   }
 
   @Delete(':id')

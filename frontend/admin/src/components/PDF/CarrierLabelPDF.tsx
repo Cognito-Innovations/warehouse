@@ -1,12 +1,13 @@
 import jsPDF from "jspdf";
 import QRCode from 'qrcode';
 import JsBarcode from "jsbarcode";
+import type { CarrierLabelData } from "../ActionButtons/PrintCarrierLabelButton";
 
 const topRoundedRect = (doc: jsPDF, x: number, y: number, w: number, h: number, r: number) => {
     doc.roundedRect(x, y, w, h, r, r, 'S'); // Stroke only
 };
 
-export const generateCarrierLabelPDF = async (data: any): Promise<void> => {
+export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<void> => {
     // --- 1. Data Validation
     if (!data) {
         throw new Error("Required data for carrier label is missing.");
@@ -70,7 +71,6 @@ export const generateCarrierLabelPDF = async (data: any): Promise<void> => {
     const tableWidth = pageW - (margin * 2);
     const col1Width = 42; // Much increased width for first column
     const col2Width = 50; // Much increased width for second column
-    const col3Width = tableWidth - col1Width - col2Width; // Remaining width for third column
     
     doc.rect(margin, yPos, tableWidth, 40, 'S'); // Much increased height for better spacing
     doc.line(margin + col1Width, yPos, margin + col1Width, yPos + 40); // Vertical line 1

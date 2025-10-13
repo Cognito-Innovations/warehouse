@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, IconButton } from '@mui/material';
 import { Visibility as VisibilityIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import type { PreArrival } from '../../types/PreArrival';
@@ -10,9 +10,9 @@ import { deletePreArrival } from '../../services/api.services';
 
 interface PreArrivalsTableProps {
   data: PreArrival[];
-  onMarkAsReceive: (item: PreArrival) => void;
+  onMarkAsReceive: (item: PreArrival) => Promise<void>;
   onDelete: (item: PreArrival) => void;
-  onReceive: (item: PreArrival) => void;
+  onReceive: (item: PreArrival) => Promise<void>;
 }
 
 const PreArrivalsTable: React.FC<PreArrivalsTableProps> = ({ data, onMarkAsReceive, onDelete, onReceive }) => {
@@ -27,6 +27,15 @@ const PreArrivalsTable: React.FC<PreArrivalsTableProps> = ({ data, onMarkAsRecei
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<PreArrival | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedItem) {
+      const updatedItem = data.find(item => item.id === selectedItem.id);
+      if (updatedItem) {
+        setSelectedItem(updatedItem);
+      }
+    }
+  }, [data, selectedItem]);
 
   const handleEyeClick = (item: PreArrival) => {
     setSelectedItem(item);
@@ -110,7 +119,7 @@ const PreArrivalsTable: React.FC<PreArrivalsTableProps> = ({ data, onMarkAsRecei
                     </TableCell>
                     <TableCell sx={{ paddingY: "10px" }}>
                       <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0e0e0eba' }}>{row.customer}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0e0e0eba' }}>{row.user}</Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, color: '#595959ba' }}>{row.suite}</Typography>
                       </Box>
                     </TableCell>
@@ -147,14 +156,14 @@ const PreArrivalsTable: React.FC<PreArrivalsTableProps> = ({ data, onMarkAsRecei
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         selectedItem={selectedItem}
-        onReceive={() => selectedItem && onReceive(selectedItem)}
+        onReceive={() => selectedItem ? onReceive(selectedItem) : Promise.reject('No item selected')}
       />
 
       <ActionsMenu
         anchorEl={anchorEl}
         onClose={handleCloseMenu}
         selectedRowItem={selectedRowItem}
-        onMarkAsReceive={() => selectedRowItem && onMarkAsReceive(selectedRowItem)}
+        onMarkAsReceive={() => selectedRowItem ? onMarkAsReceive(selectedRowItem) : Promise.resolve()}
         onDelete={() => selectedRowItem && handleDeleteClick(selectedRowItem)}
       />
 

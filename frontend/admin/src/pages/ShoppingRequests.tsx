@@ -55,7 +55,7 @@ const ShoppingRequests: React.FC = () => {
           date: createdAt.toLocaleDateString('en-GB'),
           time: createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
-        customer: {
+        user: {
           name: req.user?.name || 'Unknown',
           suite_no: req.user?.suite_no || '',
         },
@@ -85,8 +85,8 @@ const ShoppingRequests: React.FC = () => {
       header: 'Customer',
       cell: (row) => (
         <>
-          <Typography variant="body2" fontWeight={500}>{row.customer.name}</Typography>
-          <Typography variant="caption" color="text.secondary">{row.customer.suite_no}</Typography>
+          <Typography variant="body2" fontWeight={500}>{row.user.name}</Typography>
+          <Typography variant="caption" color="text.secondary">{row.user.suite_no}</Typography>
         </>
       ),
       width: '20%',

@@ -1,7 +1,17 @@
 import React from 'react';
 import { Box, Typography } from "@mui/material";
 
-const InvoiceSlips: React.FC<{ slips?: any[] }> = ({ slips }) => {
+interface InvoiceSlip {
+  id: string;
+  fileName: string;
+  url?: string;
+}
+
+interface InvoiceSlipsProps {
+  slips?: InvoiceSlip[];
+}
+
+const InvoiceSlips: React.FC<InvoiceSlipsProps> = ({ slips }) => {
   return (
     <Box mt={2} mb={2}>
       <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>

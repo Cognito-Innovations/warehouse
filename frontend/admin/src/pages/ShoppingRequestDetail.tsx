@@ -9,20 +9,20 @@ import RequestDetailContent from '../components/ShoppingRequests/Detail/RequestD
 import RequestDetailCard from '../components/ShoppingRequests/Detail/RequestDetailCard.tsx';
 
 interface ShoppingRequestProduct {
-  id?: string;
-  name?: string;
-  quantity: number;
-  unit_price?: number | null;
-  currency?: string;
-  available?: boolean;
-  [key: string]: any;
+  id: string;
+  name?: string;
+  quantity: number;
+  unit_price?: number | null;
+  currency?: string;
+  available?: boolean;
+  [key: string]: unknown;
 }
 
 const ShoppingRequestDetail: React.FC = () => {
   const { id } = useParams();
   const [shoppingRequest, setShoppingRequest] = useState<any | null>(null);
   const [products, setProducts] = useState<ShoppingRequestProduct[]>([]);
-  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   const fetchRequest = async () => {
@@ -32,7 +32,7 @@ const ShoppingRequestDetail: React.FC = () => {
       const data = await getShoppingRequestByCode(id);
       setShoppingRequest(data);
       setProducts(data.shopping_request_products ?? []);
-      setSelectedItemIds(new Set());
+      setSelectedItemIds(new Set());
     } catch (err) {
       console.error("Error fetching shopping request:", err);
       toast.error("Failed to fetch shopping request details.");
@@ -111,6 +111,7 @@ const ShoppingRequestDetail: React.FC = () => {
         onStatusUpdated={fetchRequest}
         onItemUpdate={handleItemUpdate}
         onSelectionChange={handleSelectionChange}
+        selectedItemIds={selectedItemIds}
       />
     </Box>
   );

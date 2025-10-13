@@ -7,16 +7,35 @@ import {
   updateShipmentExportBox,
 } from "../../services/api.services";
 import BoxCard from "./BoxCard";
-import BoxShipmentsList from "./BoxShipmentsList";
+import BoxShipmentsList, { type Package } from "./BoxShipmentsList";
 import Modal from "../common/Modal";
 import BoxDetailsForm from "./BoxDetailsForm";
 
+interface BoxItem {
+  id: number;
+  label: string;
+  length_cm: number;
+  breadth_cm: number;
+  height_cm: number;
+  volumetric_weight?: number;
+  mass_weight?: number;
+}
+
+interface BoxFormValues {
+  label: string;
+  length: string;
+  breadth: string;
+  height: string;
+  volumetricWeight: string;
+  massWeight: string;
+}
+
 interface BoxesSectionProps {
-  boxes: any[];
+  boxes: BoxItem[];
   selectedBoxId: number | null;
   setSelectedBoxId: React.Dispatch<React.SetStateAction<number | null>>;
   shipmentId: string;
-  packagesInSelectedBox: any[];
+  packagesInSelectedBox: Package[];
   loadingPackages: boolean;
   refreshPackages: () => void;
   onBoxAdded: () => void;
@@ -35,20 +54,23 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
   const [open, setOpen] = useState(false);
   const [isAddingBox, setIsAddingBox] = useState(false);
   const [deletingBoxId, setDeletingBoxId] = useState<number | null>(null);
+  const [editingBoxLabel, setEditingBoxLabel] = useState<string | null>(null);
 
   const selectedBoxData = boxes.find((b) => b.id === selectedBoxId);
 
-  const handleEditClick = (boxId: number) => {
+  const handleEditClick = (boxId: number, displayLabel: string) => {
     setSelectedBoxId(boxId);
+    setEditingBoxLabel(displayLabel);
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
     setSelectedBoxId(null);
+    setEditingBoxLabel(null);
   };
 
-  const handleSave = async (values: any) => {
+  const handleSave = async (values: BoxFormValues) => {
     if (!selectedBoxId) return;
 
     try {
@@ -64,6 +86,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
       onBoxAdded();
       setOpen(false);
       setSelectedBoxId(null);
+      setEditingBoxLabel(null);
     } catch (error) {
       console.error("Failed to update box:", error);
     }
@@ -177,7 +200,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
           <BoxDetailsForm
             onSave={handleSave}
             initialValues={{
-              label: selectedBoxData.label,
+              label: editingBoxLabel ?? selectedBoxData.label,
               length: String(selectedBoxData.length_cm),
               breadth: String(selectedBoxData.breadth_cm),
               height: String(selectedBoxData.height_cm),

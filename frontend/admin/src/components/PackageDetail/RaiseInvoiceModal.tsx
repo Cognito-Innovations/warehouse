@@ -28,6 +28,12 @@ interface Charge {
   total: number;
 }
 
+interface PackageData {
+  id: string;
+  actual_id?: string;
+  weight?: string | number;
+}
+
 const availableCharges = [
   { name: 'Dangerous Goods', amount: 5.00 },
   { name: 'Pickup Charge', amount: 10.00 },
@@ -38,14 +44,14 @@ const availableCharges = [
 ];
 
 const RaiseInvoiceModal: React.FC<{ 
-    packageData: any; 
+    packageData: PackageData; 
     onClose: () => void;
     onUpdated?: () => void;
 }> = ({ packageData, onClose, onUpdated }) => {
   const initialCharges: Charge[] = [
     { category: 'Packing Options', description: 'Remove unnecessary packaging and bulky boxes & repack it as single package', amount: 1.00, total: 1.00 },
     { category: 'Other', description: 'Repacking charges from country of origin', amount: 2.00, total: 2.00 },
-    { category: 'Freight Charge', description: `REDBOX from IN to MV Chargeable Weight ${packageData.weight || '5 KG'}`, amount: 35.00, total: 35.00 },
+    { category: 'Freight Charge', description: `REDBOX Chargeable Weight ${packageData.weight || '5 KG'}`, amount: 35.00, total: 35.00 },
   ];
 
   const [charges, setCharges] = useState<Charge[]>(initialCharges);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, Box, Grid, TextField, Button, CircularProgress, MenuItem, Stack, Typography, IconButton
 } from '@mui/material';
@@ -26,7 +26,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
   const [saving, setSaving] = useState(false);
   const [loadingRacks, setLoadingRacks] = useState(false);
 
-  const fetchRacks = async () => {
+  const fetchRacks = useCallback(async () => {
     setLoadingRacks(true);
     try {
       const data = await getRacks();
@@ -40,13 +40,13 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
     } finally {
       setLoadingRacks(false);
     }
-  };
+  }, [packageData.rack]);
 
   useEffect(() => {
     if (open) {
       fetchRacks();
     }
-  }, [open, packageData.rack]);
+  }, [open, fetchRacks]);
 
   const currentRack = useMemo(() =>
     rackSlots.find(r => r.id === selectedRackSlot || r.label === packageData.rack),

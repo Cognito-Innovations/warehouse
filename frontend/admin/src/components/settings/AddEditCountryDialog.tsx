@@ -15,20 +15,20 @@ const emptyForm: CreateCountryPayload = { name: '', code: '', phone_code: '', im
 
 const AddEditCountryDialog: React.FC<AddEditCountryDialogProps> = ({ open, onClose, onSave, saving, initialData }) => {
   const [form, setForm] = useState(emptyForm);
-  const isEditing = !!initialData;
+  const isEditing = React.useMemo(() => !!initialData, [initialData]);
 
   useEffect(() => {
     if (isEditing && open) {
       setForm({
-        name: initialData.name || '',
-        code: initialData.code || '',
-        phone_code: initialData.phone_code || '',
-        image: initialData.image || '',
+        name: initialData?.name || '',
+        code: initialData?.code || '',
+        phone_code: initialData?.phone_code || '',
+        image: initialData?.image || '',
       });
     } else {
       setForm(emptyForm);
     }
-  }, [initialData, open]);
+  }, [initialData, open, isEditing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });

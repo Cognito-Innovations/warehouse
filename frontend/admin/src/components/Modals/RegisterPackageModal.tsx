@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PackageInfoModal from "./PackageInfoModal";
 import type { Rack, Supplier, User } from "../../types";
-import { createPackage, getRacks, getSuppliers, getUsers } from "../../services/api.services";
+import { createPackage, getRacks, getSuppliers, getUsers, type CreatePackageDto } from "../../services/api.services";
 import { toast } from "sonner";
 
 import { Close as CloseIcon } from "@mui/icons-material";
@@ -10,6 +10,7 @@ import FormFields from "./RegisterPackageModal/FormFields";
 
 import WeightSection from "./RegisterPackageModal/WeightSection";
 import AddSupplierModal from "./RegisterPackageModal/AddSupplierModal";
+import OptionsSection from "./RegisterPackageModal/OptionsSection";
 
 interface RegisterPackageModalProps {
   open: boolean;
@@ -19,7 +20,7 @@ interface RegisterPackageModalProps {
 
 const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClose, onPackageCreated }) => {
   const [formData, setFormData] = useState({
-    customer: "",
+    user: "",
     rackSlot: "",
     trackingNo: "",
     vendor: "",
@@ -28,7 +29,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     width: "",
     height: "",
     volumetricWeight: "",
-    allowCustomerItems: false,
+    allowUserItems: false,
     shopInvoiceReceived: false,
     remarks: "",
   });
@@ -81,10 +82,10 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     }
   };
 
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setIsLoadingData(true);
     try {
-      await Promise.all([fetchUsers(), fetchRacks(), fetchSuppliers()]);
+      await Promise.allSettled([fetchUsers(), fetchRacks(), fetchSuppliers()]);
     } catch (error) {
       console.error("Failed to load initial data for modal", error);
       toast.error("Could not load required data. Please try again.");
@@ -92,19 +93,19 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     } finally {
       setIsLoadingData(false);
     }
-  };
+  }, [onClose]);
 
   useEffect(() => {
     if (open) {
       loadInitialData();
     }
-  }, [open]);
+  }, [open, loadInitialData]);
 
   // Reset form data when modal opens
   useEffect(() => {
     if (open) {
       setFormData({
-        customer: "",
+        user: "",
         rackSlot: "",
         trackingNo:"",
         vendor: "",
@@ -113,7 +114,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
         width: "",
         height: "",
         volumetricWeight: "",
-        allowCustomerItems: false,
+        allowUserItems: false,
         shopInvoiceReceived: false,
         remarks: "",
       });
@@ -128,8 +129,8 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     // Validate required fields
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.customer) {
-      newErrors.customer = "Select Customer is required";
+    if (!formData.user) {
+      newErrors.user = "Select Customer is required";
     }
     if (!formData.rackSlot) {
       newErrors.rackSlot = "Rack Slot is required";
@@ -186,8 +187,8 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
         return sum + (parseFloat(volWeight) || 0);
       }, 0);
 
-      const payload = {
-        user: formData.customer,
+      const payload: CreatePackageDto = {
+        user: formData.user,
         rack_slot: formData.rackSlot,
         tracking_no: formData.trackingNo,
         vendor: formData.vendor,
@@ -196,7 +197,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
         width: pieces[0]?.width || "",
         height: pieces[0]?.height || "",
         volumetric_weight: totalVolWeight.toString(),
-        allow_user_items: formData.allowCustomerItems,
+        allow_user_items: formData.allowUserItems,
         shop_invoice_received: formData.shopInvoiceReceived,
         remarks: formData.remarks,
         pieces: pieces.map(piece => ({
@@ -222,9 +223,9 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
 
   const handleInputChange = (field: string, value: string | boolean) => {
     // Validate that the value exists in the available options for select fields
-    if (field === "customer" && typeof value === "string") {
+    if (field === "user" && typeof value === "string") {
       if (value && !users.some(user => user.id === value)) {
-        return; // Don't set invalid customer value
+        return; // Don't set invalid user value
       }
     }
     if (field === "rackSlot" && typeof value === "string") {
@@ -376,6 +377,11 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
                 calculateTotals={calculateTotals}
                 errors={errors}
               />
+
+            <OptionsSection
+              formData={formData}
+              onInputChange={handleInputChange}
+            />
             </Grid>
           )}
       </DialogContent>

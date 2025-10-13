@@ -55,9 +55,10 @@ export default function AssistedShopping() {
   };
 
   useEffect(() => {
-    if (!user_id || status === "loading") return; 
-    fetchRequests();
-  }, []);
+    if (status === "authenticated" && user_id) {
+      fetchRequests();
+    }
+  }, [user_id, status]); 
 
   const handleChange = (newValue: number) => {
     setValue(newValue);
@@ -117,13 +118,9 @@ export default function AssistedShopping() {
 
   const renderShoppingRequests = () => {
     const filteredRequests = shoppingRequests.filter((request) => {
-    if (!request.shopping_request_products || request.shopping_request_products.length === 0) {
-      return false;
-    }
+    if (!request.request_code) return false;
 
-    return request.shopping_request_products.some((product: {name: string}) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return request.request_code.toLowerCase().includes(searchTerm.toLowerCase())
   });
 
     if (filteredRequests.length === 0) {

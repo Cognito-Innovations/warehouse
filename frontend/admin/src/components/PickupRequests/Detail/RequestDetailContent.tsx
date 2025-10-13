@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import RequestDetails from './RequestDetails';
+import RequestDetails, { type RequestDetailsData } from './RequestDetails';
 import TrackingStatus, { type Status } from '../../../components/common/Tracking/TrackingStatus';
 import { formatDateTime } from '../../../utils/formatDateTime';
 
@@ -15,12 +15,12 @@ interface TrackingRequest {
   created_at: string;
 }
 
-interface RequestData {
-  details: any; 
+interface RequestData extends RequestDetailsData {
+  id: string;
   status: string;
   user: User;
   tracking_requests?: TrackingRequest[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const PICKUP_TRACKING_STEPS = [
@@ -77,22 +77,22 @@ const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) =
     const mappedId = STATUS_TO_STEP_ID_MAPPING[upperCaseStatus];
 
     if (mappedId && !isRejected) {
-      currentStageId = mappedId;
+      currentStageId = mappedId;
     } else {
-      const lastCompletedStep = [...statuses].reverse().find(s => s.date && s.date.trim() !== '');
-      currentStageId = lastCompletedStep ? (lastCompletedStep.id as string) : 'REQUESTED';
+      const lastCompletedStep = [...statuses].reverse().find(s => s.date && s.date.trim() !== '');
+      currentStageId = lastCompletedStep ? (lastCompletedStep.id as string) : 'REQUESTED';
     }
 
     if (isRejected) {
-      const currentStageIndex = statuses.findIndex(s => s.id === currentStageId);
-      if (currentStageIndex > -1) {
-        for (let i = currentStageIndex + 1; i < statuses.length; i++) {
-          const originalStep = PICKUP_TRACKING_STEPS.find(s => s.id === statuses[i].id);
-          
-          statuses[i].date = formatDateTime(undefined);
-          statuses[i].description = originalStep?.defaultDescription || '';
-        }
-      }
+      const currentStageIndex = statuses.findIndex(s => s.id === currentStageId);
+      if (currentStageIndex > -1) {
+        for (let i = currentStageIndex + 1; i < statuses.length; i++) {
+          const originalStep = PICKUP_TRACKING_STEPS.find(s => s.id === statuses[i].id);
+
+          statuses[i].date = formatDateTime(undefined);
+          statuses[i].description = originalStep?.defaultDescription || '';
+        }
+      }
     }
 
     return { statuses, currentStageId };
