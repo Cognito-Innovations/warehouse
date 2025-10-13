@@ -84,7 +84,7 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
   };
 
   const handleInfoClick = (packageData: ViewPackage) => { 
-    navigate(`/packages/${packageData.id}`);
+    navigate(`/packages/${packageData.package_id}`);
   };
 
   const loadPackages = async () => {

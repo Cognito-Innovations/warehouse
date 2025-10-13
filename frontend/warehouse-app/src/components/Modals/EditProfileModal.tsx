@@ -120,6 +120,19 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       value = value.replace(NON_NUMERIC_CHARACTERS, "").slice(0, 10);
     }
 
+    if (field === "dob") {
+      const todayDate = new Date().toISOString().split("T")[0];
+      if (value && value > todayDate) {
+        setErrors(prev => ({ ...prev, dob: "Future date is not allowed" }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.dob;
+          return newErrors;
+        });
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -207,6 +220,16 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
 
     return newErrors;
   };
+
+  const isFormInvalid =
+    Object.keys(errors).length > 0 ||
+    !formData.id_card_passport_no?.trim() ||
+    !formData.name?.trim() ||
+    !formData.dob?.trim() ||
+    !formData.phone_number?.trim() ||
+    !formData.gender ||
+    !preferencesFormData.courier_id ||
+    !preferencesFormData.currency_id;
 
   return (
     <Dialog
@@ -300,6 +323,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               }}
               inputProps={{
                 max: today,
+                style: { colorScheme: "light" },
               }}
               placeholder="dd/mm/yyyy"
               sx={{
@@ -441,7 +465,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={isSaving || loadingPreferences}
+          disabled={isSaving || loadingPreferences || isFormInvalid}
           sx={{
             bgcolor: "primary.main",
             color: "white",

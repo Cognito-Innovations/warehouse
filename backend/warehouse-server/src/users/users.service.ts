@@ -33,6 +33,8 @@ export class UsersService {
       alternate_phone_number: user.alternate_phone_number,
       gender: user.gender,
       dob: user.dob,
+      preference: user.preference,
+      address: user.address,
       identifier: user.identifier,
       verified: user.verified,
       email_verified: user.email_verified,
@@ -52,12 +54,14 @@ export class UsersService {
   async findById(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { id },
+      relations: ['preference', 'address'],
     });
   }
 
   async findBySuiteNo(suiteNo: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { suite_no: suiteNo },
+      relations: ['preference', 'address'],
     });
   }
 
@@ -66,6 +70,7 @@ export class UsersService {
       where: {
         email: email,
       },
+      relations: ['preference', 'address'],
     });
   }
 
@@ -133,6 +138,7 @@ export class UsersService {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const otp_expires_at = new Date(Date.now() + 10 * 60 * 1000);
     const BRAND_COLOR = '#7C3AED';
+    const BRAND_NAME = 'Palakart';
 
     user.otp = otp;
     user.otp_expires_at = otp_expires_at;
@@ -150,7 +156,10 @@ export class UsersService {
             ${otp}
           </div>
           <p>If you did not request this verification, you can safely ignore this email.</p>
-          <p>Thanks,<br>The Team</p>
+          <p>Thanks,<br>The ${BRAND_NAME} Team</p>
+        </div>
+        <div style="text-align: center; margin-top: 20px; font-size: 14px; color: #888;">
+          <p style="margin: 0;">&copy; ${new Date().getFullYear()} <span style="color: ${BRAND_COLOR}; font-weight: bold;">${BRAND_NAME}</span>. All rights reserved.</p>
         </div>
       </div>
     `;

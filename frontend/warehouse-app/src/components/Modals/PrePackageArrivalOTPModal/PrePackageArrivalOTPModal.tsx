@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Close as CloseIcon, Inventory as PackageIcon } from "@mui/icons-material";
+import { Close as CloseIcon } from "@mui/icons-material";
 import { Loader2 } from "lucide-react";
 
 interface PrePackageArrivalOTPModalProps {
@@ -16,6 +16,7 @@ interface PrePackageArrivalOTPModalProps {
     details?: string | null;
   }) => void;
   isLoading?: boolean;
+  errors?: Record<string, string>;
 }
 
 interface OTPFormData {
@@ -25,14 +26,19 @@ interface OTPFormData {
   otherDetails: string;
 }
 
-const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false }) => {
+const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading = false,
+  errors = {},
+}) => {
   const [formData, setFormData] = useState<OTPFormData>({
     otp: "",
     trackingNumber: "",
     estimatedArrivalTime: "",
     otherDetails: ""
   });
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -42,7 +48,6 @@ const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({ i
         estimatedArrivalTime: "",
         otherDetails: ""
       });
-      setError(null);
     }
   }, [isOpen]);
 
@@ -56,12 +61,6 @@ const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({ i
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
-    if (!formData.otp) {
-      setError("Please enter the OTP.");
-      return;
-    }
 
     // prepare payload and hand to parent via onSubmit (no network here)
     const payload = {
@@ -113,9 +112,13 @@ const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({ i
                 name="otp"
                 value={formData.otp}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className={`
+                  w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500
+                  ${errors.otp ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}
+                `}
                 required
               />
+              {errors.otp && <p className="mt-1 text-xs text-red-600">{errors.otp}</p>}
             </div>
 
             <div>
@@ -128,8 +131,12 @@ const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({ i
                 name="trackingNumber"
                 value={formData.trackingNumber}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className={`
+                  w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+                  ${errors.trackingNumber ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}
+                `}
               />
+              {errors.trackingNumber && <p className="mt-1 text-xs text-red-600">{errors.trackingNumber}</p>}
             </div>
           </div>
 
@@ -187,8 +194,6 @@ const PrePackageArrivalOTPModal: React.FC<PrePackageArrivalOTPModalProps> = ({ i
               )}
             </button>
           </div>
-
-          {error && <div className="mt-4 text-sm text-red-600">{error}</div>}
         </form>
       </div>
     </div>

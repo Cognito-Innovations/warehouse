@@ -98,6 +98,10 @@ export interface Package {
     id: string;
     name: string;
   };
+  user?: {
+    name?: string;
+    suite_no?: string;
+  };
   shipment_uuid: string;
   created_at?: string;
   updated_at?: string;
@@ -167,8 +171,8 @@ export interface PackageItem {
 
 export interface PackageData {
   id: string;
-  user: string;
-  suite?: string;
+  name: string;
+  suite_no?: string;
   weight?: string;
   items?: PackageItem[];
   createdAt: string | Date;

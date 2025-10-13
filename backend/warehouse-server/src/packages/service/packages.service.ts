@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, ILike, Repository } from 'typeorm';
 import { isUUID } from 'class-validator'; 
 
 import { CreatePackageDto } from '../dto/create-package.dto';
@@ -58,6 +58,10 @@ export class PackagesService {
             email: pkg.user.email,
             name: pkg.user.name,
             suite_no: pkg.user.suite_no,
+            phone_number: pkg.user.phone_number,
+            phone_number_2: pkg.user.alternate_phone_number,
+            preference: pkg.user.preference,
+            address: pkg.user.address,
           }
         : undefined,
       vendor: pkg.vendor
@@ -369,13 +373,27 @@ export class PackagesService {
       // Search by original ID
       packageEntity = await this.packageRepository.findOne({
         where: { id },
-        relations: ['measurements', 'items', 'user', 'charges'],
+        relations: [
+          'measurements',
+          'items',
+          'user',
+          'user.preference',
+          'user.address',
+          'charges'
+        ],
       });
     } else {
       // Search by package_id or tracking_no
       packageEntity = await this.packageRepository.findOne({
         where: [{ package_id: id }, { tracking_no: id }],
-        relations: ['measurements', 'items', 'user', 'charges'],
+        relations: [
+          'measurements',
+          'items',
+          'user',
+          'user.preference',
+          'user.address',
+          'charges',
+        ],
       });
     }
 
@@ -385,33 +403,21 @@ export class PackagesService {
     return this.mapPackageToResponseDto(packageEntity);
   }
 
-  async searchPackages(query: string): Promise<PackageResponseDto[]> {
-    const packageQuery = this.packageRepository
-      .createQueryBuilder('package')
-      .leftJoinAndSelect('package.measurements', 'measurements')
-      .leftJoinAndSelect('package.items', 'items')
-      .leftJoinAndSelect('package.user', 'user')
+  async searchPackages(searchTerm: string): Promise<PackageResponseDto[]> {
+    const whereConditions: FindOptionsWhere<Package>[] = [
+      { package_id: searchTerm },
+      { tracking_no: ILike(`%${searchTerm}%`) },
+    ];
 
-    if (isUUID(query)) {
-      packageQuery.where(
-        'package.id = :query OR package.package_id = :query OR package.tracking_no ILIKE :likeQuery',
-        {
-          query,
-          likeQuery: `%${query}%`,
-        }
-      );
-    } else {
-      packageQuery.where(
-        'package.package_id = :query OR package.tracking_no ILIKE :likeQuery', {
-          query,
-          likeQuery: `%${query}%`,
-        }
-      );
+    if (isUUID(searchTerm)) {
+      whereConditions.push({ id: searchTerm });
     }
 
-    const packages = await packageQuery
-      .orderBy('package.created_at', 'DESC')
-      .getMany();
+    const packages = await this.packageRepository.find({
+      where: whereConditions,
+      relations: ['measurements', 'items', 'user'],
+      order: { created_at: 'DESC' },
+    });
 
     return Promise.all(
       packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
@@ -423,7 +429,13 @@ export class PackagesService {
       where: {
         user: { id: userId },
       },
-      relations: ['measurements', 'items', 'user'],
+      relations: [
+        'measurements',
+        'items',
+        'user',
+        'user.preference',
+        'user.address',
+      ],
       order: { created_at: 'DESC' },
     });
   

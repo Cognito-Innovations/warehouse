@@ -25,7 +25,7 @@ const PackageDetail: React.FC = () => {
   const [isApprovingPayment, setIsApprovingPayment] = useState(false);
   const [paymentSlips, setPaymentSlips] = useState<any[]>([]);
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = async (id: string) => {
     if (!id) return;
     
     try {
@@ -42,19 +42,19 @@ const PackageDetail: React.FC = () => {
     }
   };
 
-   const fetchShipmentDocuments = async (package_uuid: string) => {
-    if (!package_uuid) {
-      setShipmentDocuments([]);
-      return;
-    }
-    try {
-      const docs = await getShipmentDocuments(package_uuid);
-      setShipmentDocuments(docs);
-    } catch (err) {
-      console.error('Failed to fetch shipment documents:', err);
-      toast.error('Failed to load shipment documents.');
-    }
-  };
+  const fetchShipmentDocuments = async (package_uuid: string) => {
+    if (!package_uuid) {
+      setShipmentDocuments([]);
+      return;
+    }
+    try {
+     const docs = await getShipmentDocuments(package_uuid);
+     setShipmentDocuments(docs);
+    } catch (err) {
+      console.error('Failed to fetch shipment documents:', err);
+      toast.error('Failed to load shipment documents.');
+   }
+  };
 
   const fetchPaymentSlips = async (shipment_uuid: string) => {
     try {
@@ -83,7 +83,7 @@ const PackageDetail: React.FC = () => {
       setPackageItems(data.items || []);
       await Promise.allSettled([
         fetchPaymentSlips(data.shipment_uuid),
-        fetchDocuments(),
+        fetchDocuments(data.id),
         fetchShipmentDocuments(data.id)
       ]);
     } catch (err) {
@@ -116,7 +116,7 @@ const PackageDetail: React.FC = () => {
       setPackageData(data);
       setPackageItems(data.items || []);
       await fetchPaymentSlips(data.shipment_uuid);
-      await fetchDocuments();
+      await fetchDocuments(data.id);
       await fetchShipmentDocuments(data.id);
     } catch (err) {
       console.error('Failed to refetch package data:', err);
@@ -183,7 +183,7 @@ const PackageDetail: React.FC = () => {
   );
 
   const displayPackageData = {
-    id: packageData.package_id || packageData.id,
+    id: packageData.package_id,
     actual_id: packageData.id,
     shipment_id: packageData.shipment_id,
     shipment_uuid: packageData.shipment_uuid,
@@ -191,8 +191,11 @@ const PackageDetail: React.FC = () => {
     name: packageData.user?.name || '',
     suite_no: packageData.user?.suite_no || 'N/A',
     email: packageData.user?.email || 'N/A',
-    phone: packageData.user?.phone_number || 'N/A',
-    phone2: packageData.user?.phone_number_2 || 'N/A',
+    phone: packageData.user?.phone_number,
+    phone2: packageData.user?.phone_number_2,
+    courier_address: packageData.user?.preference?.courier?.address,
+    courier_phone: packageData.user?.preference?.courier?.phone_number,
+    address: packageData.user?.address,
     trackingNo: packageData.tracking_no || 'N/A',
     weight: `${packageData.total_weight || 0}Kg`,
     volumetricWeight: packageData.total_volumetric_weight ? `${packageData.total_volumetric_weight}Kg` : '-',
@@ -239,7 +242,7 @@ const PackageDetail: React.FC = () => {
     <Box sx={{ p: 1 }}>
       <TopNavbar 
         pageTitle="Packages"
-        pageSubtitle={packageData.id}
+        pageSubtitle={packageData.package_id}
       />
       {showDiscardedMessage}
       {packageItems.length === 0 && (
@@ -276,6 +279,7 @@ const PackageDetail: React.FC = () => {
           />
 
           <PackageItemsSection
+            id={packageData.id}
             packageItems={packageItems}
             setPackageItems={setPackageItems}
             isDiscarded={isDiscarded}

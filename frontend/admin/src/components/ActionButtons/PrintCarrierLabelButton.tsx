@@ -13,22 +13,28 @@ export interface CarrierLabelData {
     num_pieces?: string;
     origin_country?: string;
     destination_country?: string;
-    dimensions_cm?: string;
+    length?: string;
+    width?: string;
+    height?: string;
     value_usd?: string;
-    reference?: string;
+    shipment_id?: string;
     piece_id?: string;
-    contents?: string;
-    from_address?: {
+    name?: string;
+    courier_address?: string;
+    courier_phone?: string;
+    items?: [
+      {
+        name: string,
+        quantity: string,
+      }
+    ],
+    phone?: string;
+    phone2?: string;
+    address?: {
         address?: string;
-        lines?: string[];
-        phone?: string;
-    };
-    to_address?: {
-        name?: string;
-        address?: string;
-        lines?: string[];
-        phone?: string;
-        contact_numbers?: string[];
+        city?: string;
+        state?: string,
+        country?: string;
     };
 }
 

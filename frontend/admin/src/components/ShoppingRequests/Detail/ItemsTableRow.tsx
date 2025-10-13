@@ -138,7 +138,7 @@ const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange, disabled, isS
         {item.unit_price ? `${item.unit_price && item.unit_price.toFixed(2)}` : null}
       </TableCell>
 
-      <TableCell sx={{ verticalAlign: 'middle', textAlign: 'center' }}>
+      <TableCell sx={{ verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap', minWidth: 100 }}>
         {total ? `${item.currency}${total.toFixed(2)}` : null}
       </TableCell>
       

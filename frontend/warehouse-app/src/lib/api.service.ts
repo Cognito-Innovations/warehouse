@@ -157,6 +157,20 @@ export const getPackagesByShipmentId = async (shipmentId: string) => {
   return res.data;
 };
 
+export const uploadPackageDocuments = async (packageId: string, files: File[]): Promise<any> => {
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append('files', file);
+  });
+  
+  const response = await authenticatedApi.post(`/packages/${packageId}/documents/upload`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
 export const updatePackageStatus = async (packageId: string, status: string) => {
   const session = await getSession();
   const userId = (session?.user as any)?.user_id;
@@ -261,8 +275,7 @@ export const fetchUserAddresses = async (userId: string) => {
 };
 
 export const createPreArrival = async (body: {
-  user?: string;
-  suite?: string;
+  userId?: string;
   otp: number;
   tracking_no?: string | null;
   estimate_arrival_time?: string | null;
@@ -273,8 +286,8 @@ export const createPreArrival = async (body: {
   return res.data;
 };
 
-export const getPreArrivalsByUser = async (user: string) => {
-  const res = await authenticatedApi.get(`/pre-arrival/user/${user}`);
+export const getPreArrivalsByUser = async (userId: string) => {
+  const res = await authenticatedApi.get(`/pre-arrival/user/${userId}`);
   return res.data;
 };
 
