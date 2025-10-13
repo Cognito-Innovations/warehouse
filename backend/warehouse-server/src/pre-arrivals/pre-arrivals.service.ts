@@ -28,7 +28,7 @@ export class PreArrivalService {
 
     return {
       id: savedPreArrival.id,
-      customer: savedPreArrival.customer,
+      user: savedPreArrival.user,
       suite: savedPreArrival.suite,
       otp: savedPreArrival.otp,
       tracking_no: savedPreArrival.tracking_no,
@@ -47,7 +47,7 @@ export class PreArrivalService {
 
     return preArrivals.map((preArrival) => ({
       id: preArrival.id,
-      customer: preArrival.customer,
+      user: preArrival.user,
       suite: preArrival.suite,
       otp: preArrival.otp,
       tracking_no: preArrival.tracking_no,
@@ -59,7 +59,7 @@ export class PreArrivalService {
     }));
   }
 
-  async getOTPById(id: string): Promise<PreArrivalResponseDto> {
+  async getPreArrivalById(id: string): Promise<PreArrivalResponseDto> {
     const preArrival = await this.preArrivalRepository.findOne({
       where: { id },
     });
@@ -70,7 +70,7 @@ export class PreArrivalService {
 
     return {
       id: preArrival.id,
-      customer: preArrival.customer,
+      user: preArrival.user,
       suite: preArrival.suite,
       otp: preArrival.otp,
       tracking_no: preArrival.tracking_no,
@@ -102,7 +102,7 @@ export class PreArrivalService {
 
     return {
       id: updatedPreArrival.id,
-      customer: updatedPreArrival.customer,
+      user: updatedPreArrival.user,
       suite: updatedPreArrival.suite,
       otp: updatedPreArrival.otp,
       tracking_no: updatedPreArrival.tracking_no,
@@ -114,24 +114,13 @@ export class PreArrivalService {
     };
   }
 
-  async getOTPsByUser(customer: string): Promise<PreArrivalResponseDto[]> {
+  async getPreArrivalsByUser(user: string): Promise<PreArrivalResponseDto[]> {
     const preArrivals = await this.preArrivalRepository.find({
-      where: { customer },
+      where: { user },
       order: { created_at: 'DESC' },
     });
 
-    return preArrivals.map((preArrival) => ({
-      id: preArrival.id,
-      customer: preArrival.customer,
-      suite: preArrival.suite,
-      otp: preArrival.otp,
-      tracking_no: preArrival.tracking_no,
-      estimate_arrival_time: preArrival.estimate_arrival_time,
-      details: preArrival.details,
-      status: preArrival.status,
-      created_at: preArrival.created_at,
-      updated_at: preArrival.updated_at,
-    }));
+    return preArrivals;
   }
 
   async deletePreArrival(id: string): Promise<void> {

@@ -111,6 +111,7 @@ const ShoppingRequestDetail: React.FC = () => {
         onStatusUpdated={fetchRequest}
         onItemUpdate={handleItemUpdate}
         onSelectionChange={handleSelectionChange}
+        selectedItemIds={selectedItemIds}
       />
     </Box>
   );

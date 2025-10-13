@@ -12,7 +12,7 @@ export class PackageResponseDto {
   status: StatusDto;
   shipment_id?: string | null;
   shipment_uuid?: string | null;
-  customer?: {
+  user?: {
     id: string;
     email: string;
     name?: string;
@@ -36,7 +36,7 @@ export class PackageResponseDto {
   total_weight?: number | null;
   total_volumetric_weight?: number | null;
   country: Country;
-  allow_customer_items: boolean;
+  allow_user_items: boolean;
   shop_invoice_received: boolean;
   remarks?: string | null;
   dangerous_good: boolean;

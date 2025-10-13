@@ -1,11 +1,11 @@
 "use client";
 import { toast } from "sonner";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Delete as DeleteIcon, HourglassEmpty as HourglassIcon } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import CheckIcon from '@mui/icons-material/Check';
-import { getPackagesByUserAndStatus, updatePackageStatus, getPackagesByUser, getOTPsByUser, deletePreArrival } from "../../lib/api.service";
+import { getPackagesByUserAndStatus, updatePackageStatus, getPackagesByUser, getPreArrivalsByUser, deletePreArrival } from "../../lib/api.service";
 
 import usePreArrival from "../../hooks/usePreArrival";
 import PrePackageArrivalOTPModal from "../Modals/PrePackageArrivalOTPModal/PrePackageArrivalOTPModal";
@@ -16,13 +16,12 @@ import TabPanel from "./TabPanel";
 import TabNavigation from "./TabNavigation";
 import SearchAndFilter from "./SearchAndFilter";
 import EmptyState from "./EmptyState";
-import ShipmentsTable from "./ShipmentsTable";
 import { formatDateTime } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CircularProgress } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
 import SearchBar from "./SearchBar";
-import PreArrivalOTPPopup from "../Modals/PrePackageArrivalOTPModal/PreArrivalOTPPopup";
+import PreArrivalPopup from "../Modals/PrePackageArrivalOTPModal/PreArrivalPopup";
 
 const TabsSection = () => {
   const { user } = useAuth();
@@ -36,17 +35,17 @@ const TabsSection = () => {
   const [shipments, setShipments] = useState<any[]>([]);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
   const [isRequestShipLoading, setIsRequestShipLoading] = useState(false);
-  const [otpHistory, setOtpHistory] = useState<any[]>([]);
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [newOTP, setNewOTP] = useState<any | null>(null);
-  const [isOTPPopupOpen, setIsOTPPopupOpen] = useState(false);
+  const [preArrivalHistory, setPreArrivalHistory] = useState<any[]>([]);
+  const [preArrivalLoading, setPreArrivalLoading] = useState(false);
+  const [newPreArrival, setNewPreArrival] = useState<any | null>(null);
+  const [isPreArrivalPopupOpen, setIsPreArrivalPopupOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const { submitPreArrival, loading: submitting } = usePreArrival({
-    customer: user?.name,
+    user: user?.name,
     suite: user?.suite_no,
   });
 
@@ -102,34 +101,24 @@ const TabsSection = () => {
     }
   };
 
-  const fetchOtpHistory = async () => {
+  const fetchPreArrivals = async () => {
     if (!user?.name) return;
-    setOtpLoading(true);
+    setPreArrivalLoading(true);
     try {
-      const data = await getOTPsByUser(user.name);
-      setOtpHistory(data);
+      const data = await getPreArrivalsByUser(user.name);
+      setPreArrivalHistory(data);
     } catch (err) {
       toast.error("Failed to fetch OTP history");
     } finally {
-      setOtpLoading(false);
+      setPreArrivalLoading(false);
     }
   };
 
   useEffect(() => {
     fetchPackages();
     fetchShipments();
-    fetchOtpHistory();
+    fetchPreArrivals();
   }, [(session?.user as any)?.user_id]);
-
-  const filteredShipments = useMemo(() => {
-    const shipmentsDataState: any[] = [];
-    return shipmentsDataState.filter((s) => {
-      const matchesFilter = selectedFilter === "all" || s.status === selectedFilter;
-      const matchesSearch =
-        !searchTerm || s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.id.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesFilter && matchesSearch;
-    });
-  }, [selectedFilter, searchTerm]);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -160,8 +149,8 @@ const TabsSection = () => {
   const handleOTPSubmit = async (data: any) => {
     try {
       const createdOTP = await submitPreArrival(data);
-      setNewOTP(createdOTP);
-      setIsOTPPopupOpen(true);
+      setNewPreArrival(createdOTP);
+      setIsPreArrivalPopupOpen(true);
       setIsOTPModalOpen(false);
       toast.success("OTP sent successfully!");
     } catch (err) {
@@ -187,19 +176,19 @@ const TabsSection = () => {
   };
 
   const handleCreateNewFromPopup = () => {
-    setIsOTPPopupOpen(false);
+    setIsPreArrivalPopupOpen(false);
     setIsOTPModalOpen(true); 
   };
 
   const handleDeletePreArrival = async () => {
-    if (!newOTP?.id) return;
+    if (!newPreArrival?.id) return;
     setIsDeleting(true);
 
     try {
-      await deletePreArrival(newOTP.id);
+      await deletePreArrival(newPreArrival.id);
       toast.success("Pre-arrival deleted successfully!");
-      setIsOTPPopupOpen(false);
-      fetchOtpHistory();
+      setIsPreArrivalPopupOpen(false);
+      fetchPreArrivals();
     } catch (err) {
       toast.error("Failed to delete pre-arrival", {
         description:
@@ -213,7 +202,7 @@ const TabsSection = () => {
   const tabs = [
     { label: "Packages", count: packages.length, icon: <PackageIcon /> },
     { label: "Shipments", count: shipments.length, icon: <ShipmentIcon /> },
-    { label: "History", count: otpHistory.length, icon: <HistoryIcon />, index: 1 },
+    { label: "History", count: preArrivalHistory.length, icon: <HistoryIcon /> },
   ];
 
   return (
@@ -271,8 +260,8 @@ const TabsSection = () => {
                         <h4 className="font-semibold text-gray-900">{pkg.tracking_no}</h4>
                         <p className="text-sm text-gray-600">Package ID: {pkg.package_id}</p>
                         <p className="text-sm text-gray-600">Status: <span className="text-green-600 font-medium">{pkg.status.value}</span></p>
-                        {pkg.customer && (
-                          <p className="text-sm text-gray-600">Customer: <span className="font-medium">{pkg.customer.name}</span></p>
+                        {pkg.user && (
+                          <p className="text-sm text-gray-600">Customer: <span className="font-medium">{pkg.user.name}</span></p>
                         )}
                         {pkg.total_weight && (
                           <p className="text-sm text-gray-600">Weight: {pkg.total_weight} kg</p>
@@ -353,37 +342,37 @@ const TabsSection = () => {
         </TabPanel>
 
         <TabPanel value={value} index={2}>
-          {otpLoading ? (
+          {preArrivalLoading ? (
             <div className="flex justify-center items-center py-8">
               <CircularProgress />
             </div>
-          ) : otpHistory.length === 0 ? (
+          ) : preArrivalHistory.length === 0 ? (
             <EmptyState icon={<HistoryIcon />} message="No OTP History Available" />
           ) : (
             <div className="p-4 space-y-4">
-              {otpHistory
-              .filter((otp) =>
-                !searchTerm || otp.tracking_no.toLowerCase().includes(searchTerm.toLowerCase())
+              {preArrivalHistory
+              .filter((preArrival) =>
+                !searchTerm || preArrival.tracking_no.toLowerCase().includes(searchTerm.toLowerCase())
               )
-              .map((otp) => (
+              .map((preArrival) => (
                 <div
-                  key={otp.id}
+                  key={preArrival.id}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex justify-between items-center"
                 >
                   <div className="flex-1">
                     <p className="text-sm text-gray-700 font-medium truncate">
-                      Tracking No: <span className="font-semibold">{otp.tracking_no}</span>
+                      Tracking No: <span className="font-semibold">{preArrival.tracking_no}</span>
                     </p>
                   </div>
               
                   <div className="flex-1 text-center">
                     <p className="text-sm text-gray-700 font-medium truncate">
-                      OTP: <span className="font-semibold">{otp.otp}</span>
+                      OTP: <span className="font-semibold">{preArrival.otp}</span>
                     </p>
                   </div>
               
                   <div className="flex items-center gap-2">
-                    {otp.status === "pending" ? (
+                    {preArrival.status === "pending" ? (
                       <>
                         <HourglassIcon className="text-yellow-500" />
                         <span className="text-yellow-600 font-semibold uppercase text-sm">
@@ -415,18 +404,18 @@ const TabsSection = () => {
         isLoading={submitting}
       />
 
-      <PreArrivalOTPPopup
-        isOpen={isOTPPopupOpen}
-        onClose={() => setIsOTPPopupOpen(false)}
+      <PreArrivalPopup
+        isOpen={isPreArrivalPopupOpen}
+        onClose={() => setIsPreArrivalPopupOpen(false)}
         onDelete={handleDeletePreArrival}
         onCreateNew={handleCreateNewFromPopup}
-        otpData={newOTP ? {
-          otp: newOTP.otp,
-          eta: newOTP.estimate_arrival_time,
-          trackingNo: newOTP.tracking_no,
-          requestedAt: formatDateTime(newOTP.created_at),
-          status: newOTP.status,
-          details: newOTP.details || 'NOTHING'
+        preArrivalData={newPreArrival ? {
+          otp: newPreArrival.otp,
+          eta: newPreArrival.estimate_arrival_time,
+          trackingNo: newPreArrival.tracking_no,
+          requestedAt: formatDateTime(newPreArrival.created_at),
+          status: newPreArrival.status,
+          details: newPreArrival.details || 'NOTHING'
         } : null}
         isDeleting={isDeleting}
       />

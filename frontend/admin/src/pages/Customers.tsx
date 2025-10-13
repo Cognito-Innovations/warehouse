@@ -53,7 +53,7 @@ const Customers = () => {
     <Box>
       <TopNavbar pageTitle="Customers" pageSubtitle="All" />
 
-      <CustomerFilters customers={allCustomers} onFilter={setFilteredCustomers} />
+      <CustomerFilters users={allCustomers} onFilter={setFilteredCustomers} />
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>

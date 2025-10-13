@@ -11,7 +11,7 @@ interface RequestHeaderProps {
       value: string;
     };
     created_at: string;
-    customer?: {
+    user?: {
       name: string;
       email: string;
       suite_no: string;

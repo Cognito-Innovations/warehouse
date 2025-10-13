@@ -19,6 +19,8 @@ const statusOptions = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
+//TODO P0: Code is very hard to read, please remove columns ->  header,  cell, width, its not the right approach.
+//TODO P0: Refer old git project for reference.
 const PickupRequests: React.FC = () => {
   const [requests, setRequests] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState<string | string[] | null>(null);
@@ -52,7 +54,7 @@ const PickupRequests: React.FC = () => {
     return filteredRequests.map((req: any) => ({
       id: req.id!,
       date: formatDateTime(req.created_at),
-      customer: req.user.name,
+      user: req.user.name,
       pickupLocation: req.pickup_address,
       supplier: req.supplier_name,
       status: req.status,
@@ -67,12 +69,12 @@ const PickupRequests: React.FC = () => {
     },
     {
       header: 'Date',
-      cell: (row) => <Typography variant="body2">{formatDateTime(row.date)}</Typography>,
+      cell: (row) => <Typography variant="body2">{(row.date)}</Typography>,
       width: '20%',
     },
     {
       header: 'Customer',
-      cell: (row) => <Typography variant="body2">{row.customer}</Typography>,
+      cell: (row) => <Typography variant="body2">{row.user}</Typography>,
       width: '25%',
     },
     {

@@ -22,7 +22,7 @@ interface InvoiceItem {
 
 interface InvoiceData {
     id: string;
-    customer: string;
+    user: string;
     phone?: string;
     suite?: string;
     updatedAt?: string;
@@ -43,7 +43,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
     const handleCommercialInvoiceButton = async () => {
         setIsPrinting(true);
         try {
-            if (!data || !data.id || !data.customer || !data.items) {
+            if (!data || !data.id || !data.user || !data.items) {
                 toast.error("Required data for the invoice is missing.");
                 return;
             }
@@ -111,7 +111,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
 
             // Ship To Box
             const shipToContent = [
-                data.customer || 'Maryam Maana',
+                data.user || 'Maryam Maana',
                 data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City Kaafu",
                 data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
                 data.phone || '9834396'
@@ -120,7 +120,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
             
             // Bill To Box
             const billToContent = [
-                data.customer || 'Maryam Maana',
+                data.user || 'Maryam Maana',
                 data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City",
                 data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
                 data.phone || '9834396'

@@ -162,7 +162,7 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
           color: statusStyles.color,
           bgColor: statusStyles.bgColor,
         }}
-        customer={request.user ?? { name: "Unknown", email: "unknown@example.com" }}
+        user={request.user ?? { name: "Unknown", email: "unknown@example.com" }}
         actionButtons={renderActionButton()}
       />
     </>

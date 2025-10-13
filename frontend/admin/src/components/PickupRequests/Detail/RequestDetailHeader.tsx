@@ -60,7 +60,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
     }
   };
 
-  const customerForHeader = {
+  const userForHeader = {
     name: request.user.name,
     email: request.user.email,
     phone: request.user.phone_number,
@@ -108,7 +108,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
           color: chipStyles.color,
           bgColor: chipStyles.backgroundColor,
         }}
-        customer={customerForHeader}
+        user={userForHeader}
         actionButtons={renderActionButtons()}
       />
 

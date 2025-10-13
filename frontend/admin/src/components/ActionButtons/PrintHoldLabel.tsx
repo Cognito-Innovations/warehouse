@@ -14,7 +14,7 @@ interface Measurement {
 interface HoldLabelData {
     shipment_id: string;
     shipment_uuid?: string;
-    customer: string;
+    user: string;
     suite?: string;
     weight?: string;
     measurements: Measurement[];
@@ -31,7 +31,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
     const handlePrintHoldLabel = async () => {
         setIsPrintingHold(true);
         try {
-            if (!data || !data.shipment_id || !data.customer || !data.measurements) {
+            if (!data || !data.shipment_id || !data.user || !data.measurements) {
                 toast.error("Required data for hold label is missing.");
                 console.error("Missing data for hold label:", data);
                 return;
@@ -98,11 +98,11 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.setFont("helvetica", "bold");
             doc.text(suiteNo, 122.5, 40, { align: 'center' });
 
-            // 5. Customer Name (Right)
-            const customerName = data.customer|| '';
+            // 5. User Name (Right)
+            const userName = data.user|| '';
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
-            doc.text(`${customerName} (${suiteNo})`, 100, 50);
+            doc.text(`${userName} (${suiteNo})`, 100, 50);
 
             // 6. Dashed Separator Line
             doc.setLineDashPattern([1, 1], 0);

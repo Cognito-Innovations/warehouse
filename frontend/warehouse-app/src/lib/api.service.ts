@@ -261,7 +261,7 @@ export const fetchUserAddresses = async (userId: string) => {
 };
 
 export const createPreArrival = async (body: {
-  customer?: string;
+  user?: string;
   suite?: string;
   otp: number;
   tracking_no?: string | null;
@@ -273,8 +273,8 @@ export const createPreArrival = async (body: {
   return res.data;
 };
 
-export const getOTPsByUser = async (customer: string) => {
-  const res = await authenticatedApi.get(`/pre-arrival/user/${customer}`);
+export const getPreArrivalsByUser = async (user: string) => {
+  const res = await authenticatedApi.get(`/pre-arrival/user/${user}`);
   return res.data;
 };
 

@@ -5,7 +5,7 @@ import type { User, Rack, Supplier } from '../../../types';
 
 interface FormFieldsProps {
   formData: {
-    customer: string;
+    user: string;
     rackSlot: string;
     trackingNo: string;
     vendor: string;
@@ -38,12 +38,12 @@ const FormFields: React.FC<FormFieldsProps> = ({
     <>
       {/* Customer Selection */}
       <Grid size={{ xs: 12, sm: 6 }}>
-        <FormControl fullWidth required error={!!errors.customer}>
+        <FormControl fullWidth required error={!!errors.user}>
           <InputLabel>Select Customer</InputLabel>
           <Select
-            value={getValidSelectValue(formData.customer, users)}
+            value={getValidSelectValue(formData.user, users)}
             label="Select Customer"
-            onChange={(e) => onInputChange("customer", e.target.value)}
+            onChange={(e) => onInputChange("user", e.target.value)}
           >
             {users
               .filter((user) => user.role === 'user')
@@ -53,13 +53,13 @@ const FormFields: React.FC<FormFieldsProps> = ({
               </MenuItem>
             ))}
           </Select>
-          {errors.customer && (
+          {errors.user && (
             <Typography
               variant="caption"
               color="error"
               sx={{ mt: 0.5, ml: 1.75 }}
             >
-              {errors.customer}
+              {errors.user}
             </Typography>
           )}
         </FormControl>

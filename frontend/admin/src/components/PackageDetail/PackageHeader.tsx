@@ -16,12 +16,12 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({
   onRefresh,
   isDiscarded,
 }) => {
-  const customer = {
-    name: packageData.customer?.name ?? '',
-    suite_no: packageData.customer?.suite_no ?? '',
-    email: packageData.customer?.email ?? '',
-    phone: packageData.customer?.phone_number === 'N/A' ? null : packageData.customer?.phone_number,
-    alt_phone: packageData.customer?.phone_number_2 === 'N/A' ? null : packageData.customer?.phone_number_2,
+  const user = {
+    name: packageData?.name || '',
+    suite_no: packageData?.suite_no ?? '',
+    email: packageData?.email ?? '',
+    phone: packageData?.phone_number === 'N/A' ? null : packageData?.phone_number,
+    alt_phone: packageData?.phone_number_2 === 'N/A' ? null : packageData?.phone_number_2,
   };
 
   const actionButtons = (
@@ -33,14 +33,13 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({
       disabled={isDiscarded}
     />
   );
-
   return (
     <RequestHeader
       title="Package"
       requestCode={packageData.id!}
       statusDisplay={packageData.status?.value ?? ''}
       statusChipStyles={getStatusColor(packageData.status?.value ?? '')}
-      customer={customer}
+      user={user}
       actionButtons={actionButtons}
     />
   );

@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Card, Typography, Chip, Link, Grid } from '@mui/material';
 import { LocalPhoneOutlined, MailOutline, PersonOutline } from '@mui/icons-material';
 
-interface Customer {
+interface User {
   name: string;
   email: string;
   suite_no?: string;
@@ -20,7 +20,7 @@ interface RequestHeaderProps {
   requestCode: string;
   statusDisplay: string;
   statusChipStyles: StatusChipStyles;
-  customer: Customer;
+  user: User;
   actionButtons?: React.ReactNode;
 }
 
@@ -29,7 +29,7 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
   requestCode,
   statusDisplay,
   statusChipStyles,
-  customer,
+  user,
   actionButtons,
 }) => {
   return (
@@ -60,32 +60,32 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <PersonOutline fontSize="small" color="action" />
               <Typography variant="body2" sx={{ ml: 1 }}>
-                {customer.name}
-                {customer.suite_no && `(${customer.suite_no})`}
+                {user.name}
+                {user.suite_no && `(${user.suite_no})`}
               </Typography>
             </Box>
 
-            {(customer.phone || customer.alt_phone) && (
+            {(user.phone || user.alt_phone) && (
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <LocalPhoneOutlined fontSize="small" color="action" />
                 <Box sx={{ ml: 1 }}>
-                  {customer.phone && (
+                  {user.phone && (
                     <Typography
                       variant="body2"
                       sx={{ color: "text.primary", cursor: "default" }}
                     >
-                      {customer.phone}
+                      {user.phone}
                     </Typography>
                   )}
-                  {customer.phone && customer.alt_phone && (
+                  {user.phone && user.alt_phone && (
                     <Typography variant="body2" sx={{ color: "text.primary" }}>,</Typography>
                   )}
-                  {customer.alt_phone && (
+                  {user.alt_phone && (
                     <Typography
                       variant="body2"
                       sx={{ color: "text.primary", cursor: "default" }}
                     >
-                      {customer.alt_phone}
+                      {user.alt_phone}
                     </Typography>
                   )}
                 </Box>
@@ -97,7 +97,7 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <MailOutline fontSize="small" color="action" />
               <Link
-                href={`mailto:${customer.email}`}
+                href={`mailto:${user.email}`}
                 variant="body2"
                 sx={{
                   ml: 1,
@@ -111,7 +111,7 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
                   },
                 }}
               >
-                {customer.email}
+                {user.email}
               </Link>
             </Box>
           </Grid>

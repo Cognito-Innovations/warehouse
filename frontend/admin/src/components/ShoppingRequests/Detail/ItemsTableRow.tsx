@@ -1,6 +1,6 @@
 import { Box, TableCell, TableRow, Checkbox, Link, Typography, Chip } from '@mui/material';
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import DropdownMenu from '../../common/DropdownMenu';
 import EditItemModal from './EditItemModal';
 import RemarkModal from './RemarkModal';
@@ -29,27 +29,20 @@ interface ItemsTableRowProps {
   disabled: boolean;
   onUpdate: (updates: Partial<ItemsTableRowItem>) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
+  isSelected: boolean;
 }
 
-const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange, disabled, }: ItemsTableRowProps) => {
+const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange, disabled, isSelected, }: ItemsTableRowProps) => {
 
-  const [checked, setChecked] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [remarkOpen, setRemarkOpen] = useState(false);
 
-  useEffect(() => {
-    setChecked(false);
-  }, [item.id]);
-
   const handleSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const isSelected = e.target.checked;
-    setChecked(isSelected);
-    onSelectionChange(item.id!, isSelected); 
+    onSelectionChange(item.id!, e.target.checked);
   }
 
   const handleMenuTrigger = () => {
-    if (!checked) {
-      setChecked(true);
+    if (!isSelected) {
       onSelectionChange(item.id!, true);
     }
   };
@@ -62,7 +55,7 @@ const ItemsTableRow = ({ item, index, onUpdate, onSelectionChange, disabled, }: 
       <TableCell sx={{  verticalAlign: 'middle' }}>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <Checkbox 
-            checked={checked}
+            checked={isSelected}
             onChange={handleSelection}
             sx={{ p: 0 }}
             disabled={disabled}

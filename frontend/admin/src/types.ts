@@ -62,15 +62,12 @@ export interface Package {
   id?: string;
   package_id?: string;
   actual_id?: string;
-  customer_id?: string;
-  customer?: {
-    id: string;
-    name: string;
-    suite_no: string;
-    email: string;
-    phone_number?: string;
-    phone_number_2?: string;
-  };
+  user_id?: string;
+  name: string;
+  suite_no: string;
+  email: string;
+  phone_number?: string;
+  phone_number_2?: string;
   rack_slot_id?: string;
   rack_slot?: {
     id: string;
@@ -92,7 +89,7 @@ export interface Package {
   total_weight?: number;
   total_volumetric_weight?: number;
   dangerous_good?: boolean;
-  allow_customer_items?: boolean;
+  allow_user_items?: boolean;
   shop_invoice_received?: boolean;
   remarks?: string;
   status?: { value: string };
@@ -170,7 +167,7 @@ export interface PackageItem {
 
 export interface PackageData {
   id: string;
-  customer: string;
+  user: string;
   suite?: string;
   weight?: string;
   items?: PackageItem[];

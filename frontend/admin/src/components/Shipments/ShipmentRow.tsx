@@ -43,7 +43,7 @@ interface Shipment {
   id: string; 
   trackingNo: string; 
   courier: string;
-  customer: { name: string; suiteNo: string; };
+  user: { name: string; suiteNo: string; };
   requestAt: string; 
   requestTime: string; 
   status: string; 
@@ -72,8 +72,8 @@ const ShipmentRow: React.FC<{ row: Shipment }> = ({ row }) => {
           <Typography variant="caption" color="text.secondary">{row.courier}</Typography>
         </TableCell>
         <TableCell>
-          <Typography>{row.customer.name}</Typography>
-          <Typography variant="caption" color="text.secondary">{row.customer.suiteNo}</Typography>
+          <Typography>{row.user.name}</Typography>
+          <Typography variant="caption" color="text.secondary">{row.user.suiteNo}</Typography>
         </TableCell>
         <TableCell>
           <Typography>{row.requestAt}</Typography>

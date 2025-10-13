@@ -88,6 +88,7 @@ interface RequestDetailContentProps {
   onStatusUpdated?: () => void;
   onItemUpdate: (itemId: string, updates: Partial<Product>) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
+  selectedItemIds: Set<string>;
 }
 
 const SHOPPING_TRACKING_STEPS = [
@@ -115,6 +116,7 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
   onStatusUpdated,
   onItemUpdate,
   onSelectionChange,
+  selectedItemIds
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -222,6 +224,7 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
             details={request}
             onItemUpdate={onItemUpdate}
             onSelectionChange={onSelectionChange}
+            selectedItemIds={selectedItemIds}
           />
 
           {showInvoiceTable.includes(request.status) && request.invoice && (

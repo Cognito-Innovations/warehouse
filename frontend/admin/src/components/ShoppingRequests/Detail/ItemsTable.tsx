@@ -36,11 +36,12 @@ interface ItemsTableProps {
   };
   onItemUpdate: (itemId: string, updates: Partial<ShoppingRequestProduct>) => void;
   onSelectionChange: (itemId: string, isSelected: boolean) => void;
+  selectedItemIds: Set<string>;
 }
 
 const COMMISSION_RATE = 0.08;
 
-const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelectionChange }) => {
+const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelectionChange, selectedItemIds }) => {
   const products = useMemo(() => details.shopping_request_products ?? [], [details.shopping_request_products]);
 
   const sortedProducts = useMemo(() => {
@@ -94,6 +95,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({ details, onItemUpdate, onSelect
                     index={i}
                     requestStatus={details.status}
                     disabled={isRejected}
+                    isSelected={selectedItemIds.has(item.id!)}
                     onUpdate={(updates) => {
                       if (item.id) {
                         onItemUpdate(item.id, updates)

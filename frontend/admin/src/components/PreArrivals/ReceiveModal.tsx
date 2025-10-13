@@ -71,7 +71,7 @@ const ReceiveModal: React.FC<ReceiveModalProps> = ({
                 Customer
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: '1rem', color: '#111827' }}>
-                {selectedItem.customer} ({selectedItem.suite})
+                {selectedItem.user} ({selectedItem.suite})
               </Typography>
             </Box>
 
