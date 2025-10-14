@@ -213,9 +213,18 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       toast.success("Package registered successfully!");
       onPackageCreated?.(); // Refresh the data
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to register package", err);
-      toast.error("Failed to register package. Please try again.");
+
+      const errorMessage = err?.response?.data?.message;
+      if (errorMessage && errorMessage.toLowerCase().includes("tracking number") && errorMessage.toLowerCase().includes("already exists")) {
+        setErrors((prev) => ({
+          ...prev,
+          trackingNo: errorMessage,
+        }));
+      } else {
+        toast.error(errorMessage || "Failed to register package. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
