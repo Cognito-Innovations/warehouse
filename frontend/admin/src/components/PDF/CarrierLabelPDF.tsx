@@ -264,20 +264,20 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setFontSize(8.5);
     doc.setTextColor(0, 0, 0);
     doc.text(data.name!, margin + 22, y + 5);
-    
+
     // To Address
     const toAddressObj = data.address?.[0];
     let toAddressLines: string[] = [];
-
+    
+    if(toAddressObj){
     // Construct the address line by line
-    const addressLine1 = toAddressObj.address;
-    const addressLine2 = [toAddressObj.city, toAddressObj.state, toAddressObj.zip_code]
+    const addressLine1 = toAddressObj?.address;
+    const addressLine2 = [toAddressObj?.city, toAddressObj?.state, toAddressObj?.zip_code]
       .filter(Boolean)
       .join(", ");
-    const addressLine3 = toAddressObj.country;
+    const addressLine3 = toAddressObj?.country;
 
     toAddressLines = [addressLine1, addressLine2, addressLine3];
-
     let toLineY = y + 9;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
@@ -285,6 +285,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
         doc.text(line, margin + 22, toLineY);
         toLineY += 4;
     }
+  }
     
     // Contact Numbers
     doc.setFont("helvetica", "normal");
