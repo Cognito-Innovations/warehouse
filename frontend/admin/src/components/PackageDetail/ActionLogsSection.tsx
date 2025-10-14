@@ -51,6 +51,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -68,11 +69,8 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
     } catch (err) {
       console.error('Failed to update package status:', err);
       toast.error('Failed to update package status');
+      throw err;
     }
-  };
-
-  const handleAdminCheck = (checked: boolean) => {
-    setIsAdminChecked(checked);
   };
 
   const handleOpenUploadModal = () => setUploadModalOpen(true);
@@ -176,6 +174,23 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   };
   const handleClick = () => fileInputRef.current?.click();
 
+  const handleStatusToggle = async () => {
+    if (isDiscarded || isStatusUpdating || uploadedDocuments.length === 0) return;
+
+    if (actionLogStatus === 'In Review' && packageItems.length === 0) {
+      toast.error('Please add package items before verifying.');
+      return;
+    }
+
+    setIsStatusUpdating(true);
+    try {
+      const newStatus = visualChecked ? 'In Review' : 'Ready To Send';
+      await handleStatusChange(newStatus);
+    } finally {
+      setIsStatusUpdating(false);
+    }
+  };
+
   const allowedStatuses = [
     'Ready To Send',
     'Request Ship',
@@ -224,6 +239,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
               {/* Status Indicator - Clickable Checkbox */}
               <Box
                 sx={{
+                  position: 'relative',
                   width: 16,
                   height: 16,
                   borderRadius: '50%',
@@ -233,38 +249,35 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   mt: 0.5,
-                  cursor: isDiscarded ? 'not-allowed' : uploadedDocuments.length > 0 ? 'pointer' : 'not-allowed',
-                  opacity: isDiscarded ? 0.4 : uploadedDocuments.length > 0 ? 1 : 0.5,
+                  cursor: isDiscarded || isStatusUpdating ? 'not-allowed' : uploadedDocuments.length > 0 ? 'pointer' : 'not-allowed',
+                  opacity: isDiscarded || isStatusUpdating ? 0.5 : uploadedDocuments.length > 0 ? 1 : 0.5,
                   '&:hover': {
-                    bgcolor: uploadedDocuments.length > 0
-                      ? (visualChecked ? '#16a34a' : '#fef2f2')
-                      : 'transparent'
+                    bgcolor: isStatusUpdating || isDiscarded || uploadedDocuments.length === 0
+                      ? 'transparent'
+                      : (visualChecked ? '#16a34a' : '#fef2f2')
                   }
                 }}
-                onClick={() => {
-                  if (isDiscarded) return;
-
-                  if (actionLogStatus === 'In Review' && packageItems.length === 0) {
-                    toast.error('Please add package items before verifying.');
-                    return;
-                  }
-
-                  // Only allow clicking if documents are uploaded
-                  if (uploadedDocuments.length === 0) return;
-
-                  // Toggle visual check state
-                  const newCheckedState = !visualChecked;
-                  handleAdminCheck(newCheckedState);
-
-                  // Update status based on admin check
-                  if (newCheckedState) {
-                    handleStatusChange('Ready To Send');
-                  } else {
-                    handleStatusChange('In Review');
-                  }
-                }}
+                onClick={handleStatusToggle}
               >
-                {visualChecked ? (
+                 {isStatusUpdating ? (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <CircularProgress
+                      size={18}
+                      thickness={9}
+                      sx={{ color: '#3b82f6'}}
+                    />
+                  </Box>
+                ) : visualChecked ? (
                   <Box sx={{
                     width: 8,
                     height: 8,
@@ -278,7 +291,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                       borderLeft: '2px solid white',
                       borderBottom: '2px solid white',
                       transform: 'rotate(-45deg)',
-                      marginTop: '-1px'
+                      marginTop: '-2px'
                     }} />
                   </Box>
                 ) : null}

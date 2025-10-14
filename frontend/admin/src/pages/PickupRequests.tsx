@@ -79,7 +79,20 @@ const PickupRequests: React.FC = () => {
     },
     {
       header: 'Pickup Location',
-      cell: (row) => <Typography variant="body2">{row.pickupLocation}</Typography>,
+      cell: (row) => (
+        <Typography
+          variant="body2"
+          sx={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "250px",
+            display: "block",
+          }}
+          title={row.pickupLocation}
+        >
+            {row.pickupLocation}
+          </Typography>
+      ),
       width: '30%',
     },
     {
