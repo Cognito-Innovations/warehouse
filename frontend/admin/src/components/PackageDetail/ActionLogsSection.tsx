@@ -123,6 +123,11 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
         const otherDocuments = prev.filter(doc => !tempDocuments.some(temp => temp.id === doc.id));
         return [...otherDocuments, ...completedDocuments];
       });
+
+      if (actionLogStatus === 'Action Required') {
+        await handleStatusChange('In Review');
+        setIsAdminChecked(false);
+      }
       toast.success('Documents uploaded successfully!');
     } catch (err) {
       console.error('Failed to upload documents:', err);

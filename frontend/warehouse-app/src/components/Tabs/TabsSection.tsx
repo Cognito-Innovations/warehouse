@@ -35,7 +35,7 @@ const TabsSection = () => {
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [shipments, setShipments] = useState<any[]>([]);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
-  const [isRequestShipLoading, setIsRequestShipLoading] = useState(false);
+  const [isRequestShipLoadingPackageId, setIsRequestShipLoadingPackageId] = useState<string | null>(null);
   const [preArrivalHistory, setPreArrivalHistory] = useState<any[]>([]);
   const [preArrivalLoading, setPreArrivalLoading] = useState(false);
   const [newPreArrival, setNewPreArrival] = useState<any | null>(null);
@@ -184,7 +184,7 @@ const TabsSection = () => {
 
   const handleRequestShip = async (packageId: string) => {
     try {
-      setIsRequestShipLoading(true);
+      setIsRequestShipLoadingPackageId(packageId);
       await updatePackageStatus(packageId, "Request Ship");
       toast.success("Ship request submitted successfully!");
       // Refresh packages and shipments after status change
@@ -193,7 +193,7 @@ const TabsSection = () => {
     } catch (error) {
       toast.error("Failed to request ship. Please try again.");
     } finally {
-      setIsRequestShipLoading(false);
+      setIsRequestShipLoadingPackageId(null);
     }
   };
 
@@ -334,15 +334,19 @@ const TabsSection = () => {
                             <p className="text-sm text-gray-500">Country: {pkg.country?.name}</p>
                           )}
                         </div>
-                        {pkg.status.value === "Ready To Send" ? (
-                          <button
-                            disabled={isRequestShipLoading}
-                            onClick={() => handleRequestShip(pkg.id)}
-                            className="inline-flex bg-blue-600 hover:bg-blue-700 text-white items-center px-4 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                          >
-                            {isRequestShipLoading ? "Requesting..." : "Request Ship"}
-                          </button>
-                        ) : uploadedPackageIds.includes(pkg.id) ? (
+                        {pkg.status.value === "Ready To Send" ? (() => {
+                          const isRequestShipLoading = isRequestShipLoadingPackageId === pkg.id;
+                          return (
+                            <button
+                              disabled={isRequestShipLoading}
+                              onClick={() => handleRequestShip(pkg.id)}
+                              className="inline-flex bg-blue-600 hover:bg-blue-700 text-white items-center px-4 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                              {isRequestShipLoading ? "Requesting..." : "Request Ship"}
+                            </button>
+                          );
+                        })()
+                         : uploadedPackageIds.includes(pkg.id) ? (
                             <p className="text-green-600 text-sm font-medium">
                               Document uploaded successfully and under review.
                             </p>
