@@ -16,17 +16,10 @@ interface UploadedDocument {
   status?: 'uploading' | 'completed' | 'failed';
 }
 
-interface PackageItem {
-  id: string;
-  name: string;
-  quantity: number;
-}
-
 interface ActionLogsSectionProps {
   packageId: string;
   initialStatus: { label: string; value: string };
   initialDocuments: UploadedDocument[];
-  packageItems: PackageItem[];
   packageCreationData: {
     createdBy: string;
     createdAt: string;
@@ -39,7 +32,6 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   packageId,
   initialStatus,
   initialDocuments,
-  packageItems,
   packageCreationData,
   onActionLogUpdate,
   isDiscarded,
@@ -181,11 +173,6 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
 
   const handleStatusToggle = async () => {
     if (isDiscarded || isStatusUpdating || uploadedDocuments.length === 0) return;
-
-    if (actionLogStatus === 'In Review' && packageItems.length === 0) {
-      toast.error('Please add package items before verifying.');
-      return;
-    }
 
     setIsStatusUpdating(true);
     try {

@@ -141,8 +141,8 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     if (!formData.trackingNo) {
       newErrors.trackingNo = "Reference Tracking is required";
     }
-    if (!/^\d{5,15}$/.test(formData.trackingNo)) {
-      newErrors.trackingNo = "Tracking number must be between 5 and 15 digits.";
+    if (formData.trackingNo.length < 5 || formData.trackingNo.length > 15) {
+      newErrors.trackingNo = "Tracking number must be between 5 and 15 characters.";
     }
 
     // Check if at least one piece has weight

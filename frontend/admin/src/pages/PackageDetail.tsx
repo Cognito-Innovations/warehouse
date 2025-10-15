@@ -245,20 +245,6 @@ const PackageDetail: React.FC = () => {
         pageSubtitle={packageData.package_id}
       />
       {showDiscardedMessage}
-      {packageItems.length === 0 && (
-        <Box
-          sx={{
-            mb: 2,
-            p: 2,
-            bgcolor: '#fee2e2',
-            borderRadius: 1
-          }}
-        >
-          <Typography sx={{ color: '#b91c1c', fontWeight: 500 }}>
-            Please enter package items below.
-          </Typography>
-        </Box>
-      )}
 
         <PackageHeader 
           packageData={displayPackageData}
@@ -308,7 +294,6 @@ const PackageDetail: React.FC = () => {
             packageId={displayPackageData.actual_id}
             initialStatus={displayPackageData.status}
             initialDocuments={uploadedDocuments}
-            packageItems={packageItems}
             packageCreationData={{
               createdBy: displayPackageData.createdBy,
               createdAt: displayPackageData.createdAt,
