@@ -178,6 +178,8 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
     try {
       const newStatus = visualChecked ? 'In Review' : 'Ready To Send';
       await handleStatusChange(newStatus);
+    } catch (err) {
+      console.error('Failed to update package status:', err);
     } finally {
       setIsStatusUpdating(false);
     }
