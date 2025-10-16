@@ -131,6 +131,7 @@ function CreatePickupRequestPageContent() {
               placeholder="Enter full address"
               size="small"
               required
+              inputProps={{ maxLength: 100 }}
             />
             <Typography
               variant="caption"
@@ -151,6 +152,7 @@ function CreatePickupRequestPageContent() {
               placeholder="Enter supplier/shop name"
               size="small"
               required
+              inputProps={{ maxLength: 30 }}
             />
           </Box>
 
@@ -165,6 +167,7 @@ function CreatePickupRequestPageContent() {
                 placeholder="Enter supplier contact number"
                 size="small"
                 required
+                inputProps={{ maxLength: 10 }}
               />
             </Box>
             <Box sx={{ flex: 1 }}>
@@ -176,6 +179,7 @@ function CreatePickupRequestPageContent() {
                 fullWidth
                 placeholder="Enter supplier alternative contact number"
                 size="small"
+                inputProps={{ maxLength: 10 }}
               />
             </Box>
           </Box>
@@ -191,6 +195,7 @@ function CreatePickupRequestPageContent() {
                 placeholder="Enter number of pcs/box to pickup"
                 size="small"
                 required
+                inputProps={{ maxLength: 5 }}
               />
             </Box>
             <Box sx={{ flex: 1 }}>
@@ -203,6 +208,7 @@ function CreatePickupRequestPageContent() {
                 placeholder="Enter Estimate weight in Kg"
                 size="small"
                 required
+                inputProps={{ maxLength: 5 }}
               />
             </Box>
           </Box>
@@ -219,6 +225,7 @@ function CreatePickupRequestPageContent() {
               multiline
               rows={4}
               required
+              inputProps={{ maxLength: 300 }}
             />
             <Typography
               variant="caption"
@@ -240,6 +247,7 @@ function CreatePickupRequestPageContent() {
               size="small"
               multiline
               rows={4}
+              inputProps={{ maxLength: 200 }}
             />
           </Box>
 

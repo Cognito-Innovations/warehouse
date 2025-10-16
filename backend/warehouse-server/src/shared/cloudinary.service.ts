@@ -47,14 +47,17 @@ export class CloudinaryService {
       const base64String = file.buffer.toString('base64');
       const dataUri = `data:${file.mimetype};base64,${base64String}`;
 
+      const isImage = file.mimetype.startsWith('image/');
+      const resourceType = isImage ? 'image' : 'auto';
+
       // Upload to Cloudinary
       const result = await cloudinary.uploader.upload(dataUri, {
-        folder: folder,
-        resource_type: file.mimetype.startsWith('image/') ? 'image' : 'raw',
+        folder,
+        resource_type: resourceType,
         public_id: `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, '')}`,
         overwrite: false,
         invalidate: true,
-        transformation: file.mimetype.startsWith('image/')
+        transformation: isImage
           ? [{ quality: 'auto' }, { fetch_format: 'auto' }]
           : [],
       });
