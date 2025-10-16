@@ -36,8 +36,7 @@ export class PreArrivaController {
       Example1: {
         summary: 'Pending Pre-Arrival',
         value: {
-          user: 'John Doe',
-          suite: 'A101',
+          userId: '5aea64b1-3fbd-450d-9f76-2f29efee815f',
           otp: 123456,
           tracking_no: 'TRACK12345',
           estimate_arrival_time: '2025-09-08T12:00:00Z',
@@ -93,16 +92,16 @@ export class PreArrivaController {
     return this.preArrivalService.updateStatusToReceived(id);
   }
 
-  @Get('user/:user')
+  @Get('user/:userId')
   @ApiOperation({ summary: 'Get all pre-arrival OTPs by user name' })
   @ApiOkResponse({
     description: 'List of OTPs for the user',
     type: [PreArrivalResponseDto],
   })
   async getPreArrivalByUser(
-    @Param('user') user: string
+    @Param('userId') userId: string
   ): Promise<PreArrivalResponseDto[]> {
-    return this.preArrivalService.getPreArrivalsByUser(user);
+    return this.preArrivalService.getPreArrivalsByUser(userId);
   }
 
   @Delete(':id')

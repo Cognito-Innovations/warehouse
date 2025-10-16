@@ -1,5 +1,7 @@
 import { Country } from 'src/Countries/country.entity';
 import { DocumentSummaryDto } from 'src/documents/dto/document-response.dto';
+import { UserPreference } from 'src/user-preferences/user-preference.entity';
+import { UserAddress } from 'src/user_address/user_address.entity';
 
 export class StatusDto {
   label: string;
@@ -18,6 +20,10 @@ export class PackageResponseDto {
     name?: string;
     suite_no: string;
     country?: string;
+    phone_number: string;
+    phone_number_2: string;
+    preference?: UserPreference;
+    address?: UserAddress[];
   };
   vendor?: {
     id: string;

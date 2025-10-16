@@ -2,10 +2,10 @@
 import { toast } from "sonner";
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Delete as DeleteIcon, HourglassEmpty as HourglassIcon } from "@mui/icons-material";
+import { Delete as DeleteIcon, HourglassEmpty as HourglassIcon, Upload as UploadIcon } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import CheckIcon from '@mui/icons-material/Check';
-import { getPackagesByUserAndStatus, updatePackageStatus, getPackagesByUser, getPreArrivalsByUser, deletePreArrival } from "../../lib/api.service";
+import { getPackagesByUserAndStatus, updatePackageStatus, getPackagesByUser, getPreArrivalsByUser, deletePreArrival, uploadPackageDocuments } from "../../lib/api.service";
 
 import usePreArrival from "../../hooks/usePreArrival";
 import PrePackageArrivalOTPModal from "../Modals/PrePackageArrivalOTPModal/PrePackageArrivalOTPModal";
@@ -22,6 +22,7 @@ import { CircularProgress } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
 import SearchBar from "./SearchBar";
 import PreArrivalPopup from "../Modals/PrePackageArrivalOTPModal/PreArrivalPopup";
+import { getStatusProps } from "@/lib/statusUtils";
 
 const TabsSection = () => {
   const { user } = useAuth();
@@ -34,19 +35,21 @@ const TabsSection = () => {
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [shipments, setShipments] = useState<any[]>([]);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
-  const [isRequestShipLoading, setIsRequestShipLoading] = useState(false);
+  const [isRequestShipLoadingPackageId, setIsRequestShipLoadingPackageId] = useState<string | null>(null);
   const [preArrivalHistory, setPreArrivalHistory] = useState<any[]>([]);
   const [preArrivalLoading, setPreArrivalLoading] = useState(false);
   const [newPreArrival, setNewPreArrival] = useState<any | null>(null);
   const [isPreArrivalPopupOpen, setIsPreArrivalPopupOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [uploadedPackageIds, setUploadedPackageIds] = useState<string[]>([]);
+  const [uploadingPackageId, setUploadingPackageId] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const { submitPreArrival, loading: submitting } = usePreArrival({
-    user: user?.name,
-    suite: user?.suite_no,
+    userId: user?.id,
   });
 
   const SHIPMENT_STATUSES = [
@@ -102,10 +105,10 @@ const TabsSection = () => {
   };
 
   const fetchPreArrivals = async () => {
-    if (!user?.name) return;
+    if (!user?.id) return;
     setPreArrivalLoading(true);
     try {
-      const data = await getPreArrivalsByUser(user.name);
+      const data = await getPreArrivalsByUser(user.id);
       setPreArrivalHistory(data);
     } catch (err) {
       toast.error("Failed to fetch OTP history");
@@ -139,6 +142,7 @@ const TabsSection = () => {
   };
 
   const handleShareOTPClick = () => {
+    setFormErrors({});
     setIsOTPModalOpen(true);
   };
 
@@ -147,22 +151,40 @@ const TabsSection = () => {
   };
 
   const handleOTPSubmit = async (data: any) => {
+    setFormErrors({});
     try {
       const createdOTP = await submitPreArrival(data);
       setNewPreArrival(createdOTP);
       setIsPreArrivalPopupOpen(true);
       setIsOTPModalOpen(false);
       toast.success("OTP sent successfully!");
-    } catch (err) {
-      toast.error("Failed to send OTP", {
-        description: err instanceof Error ? err.message : "An unexpected error occurred. Please try again.",
-      });
+    } catch (err: any) {
+      if (err.response && err.response.data && err.response.data.message) {
+        const errorMessage = err.response.data.message;
+        const parsedErrors: Record<string, string> = {};
+
+        const errorParts = errorMessage.split(', ');
+        errorParts.forEach((part: string) => {
+          if (part.toLowerCase().includes('otp')) {
+            parsedErrors.otp = part;
+          }
+          if (part.toLowerCase().includes('tracking number')) {
+            parsedErrors.trackingNumber = part;
+          }
+        });
+        
+        setFormErrors(parsedErrors);
+      } else {
+        toast.error("Failed to send OTP", {
+          description: err.message || "An unexpected error occurred. Please try again.",
+        });
+      }
     }
   };
 
   const handleRequestShip = async (packageId: string) => {
     try {
-      setIsRequestShipLoading(true);
+      setIsRequestShipLoadingPackageId(packageId);
       await updatePackageStatus(packageId, "Request Ship");
       toast.success("Ship request submitted successfully!");
       // Refresh packages and shipments after status change
@@ -171,7 +193,7 @@ const TabsSection = () => {
     } catch (error) {
       toast.error("Failed to request ship. Please try again.");
     } finally {
-      setIsRequestShipLoading(false);
+      setIsRequestShipLoadingPackageId(null);
     }
   };
 
@@ -196,6 +218,41 @@ const TabsSection = () => {
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleUploadDocument = async (pkgId: string) => {
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,.pdf";
+      input.multiple = true;
+
+      input.onchange = async (event: Event) => {
+        const target = event.target as HTMLInputElement;
+        const files = Array.from(target.files || []) as File[];
+        if (files.length === 0) return;
+
+        setUploadingPackageId(pkgId);
+        try {
+          await uploadPackageDocuments(pkgId, files);
+          await updatePackageStatus(pkgId, "In Review");
+
+          toast.success("Document uploaded successfully and under review.");
+          setUploadedPackageIds((prev) => [...prev, pkgId]);
+          fetchPackages();
+        } catch (err) {
+          console.error("Upload failed:", err);
+          toast.error("Failed to upload document. Please tray again.")
+        } finally {
+          setUploadingPackageId(null);
+        }
+      };
+
+      input.click();
+    } catch (err) {
+      console.error("Upload failed:", err);
+      toast.error("Failed to upload document. Please try again.");
     }
   };
 
@@ -277,15 +334,45 @@ const TabsSection = () => {
                             <p className="text-sm text-gray-500">Country: {pkg.country?.name}</p>
                           )}
                         </div>
-                        {pkg.status.value === "Ready To Send" && (
-                          <button
-                            disabled={isRequestShipLoading}
-                            onClick={() => handleRequestShip(pkg.id)}
-                            className="inline-flex bg-blue-600 hover:bg-blue-700 text-white items-center px-4 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                          >
-                            {isRequestShipLoading ? "Requesting..." : "Request Ship"}
-                          </button>
-                        )}
+                        {pkg.status.value === "Ready To Send" ? (() => {
+                          const isRequestShipLoading = isRequestShipLoadingPackageId === pkg.id;
+                          return (
+                            <button
+                              disabled={isRequestShipLoading}
+                              onClick={() => handleRequestShip(pkg.id)}
+                              className="inline-flex bg-blue-600 hover:bg-blue-700 text-white items-center px-4 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                              {isRequestShipLoading ? "Requesting..." : "Request Ship"}
+                            </button>
+                          );
+                        })()
+                         : uploadedPackageIds.includes(pkg.id) ? (
+                            <p className="text-green-600 text-sm font-medium">
+                              Document uploaded successfully and under review.
+                            </p>
+                          ) : (
+                            <button
+                              disabled={uploadingPackageId === pkg.id}
+                              onClick={() => handleUploadDocument(pkg.id)}
+                              className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium border transition-all 
+                                ${uploadingPackageId === pkg.id 
+                                  ? "bg-gray-100 text-gray-500 border-gray-300 cursor-not-allowed" 
+                                  : "text-blue-600 border-blue-400 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                                }`}
+                            >
+                              {uploadingPackageId === pkg.id ? (
+                                <>
+                                  <CircularProgress size={16} className="mr-2 text-blue-500" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <UploadIcon className="mr-2" fontSize="small" />
+                                  Upload File
+                                </>
+                              )}
+                            </button>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -306,36 +393,39 @@ const TabsSection = () => {
             <div className="p-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Request Ship Packages</h3>
               <div className="space-y-4">
-                {shipments.map((shipment) => (
-                  <div
-                    key={shipment.id}
-                    onClick={() => router.push(`/shipment/${shipment.shipment_id}`)}
-                    className="flex justify-between items-center border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                  >
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {shipment.shipment_id}
-                      </h4>
-                      <p className="text-sm text-gray-500">
-                        {formatDateTime(shipment.created_at)}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2 text-gray-700">
-                        <HourglassIcon fontSize="small" className="text-gray-500" />
-                        <span className="uppercase font-medium">{shipment.status.value}</span>
+                {shipments.map((shipment) => {
+                  const { IconComponent, colorClassName } = getStatusProps(shipment.status.value);
+                  return (
+                    <div
+                      key={shipment.id}
+                      onClick={() => router.push(`/shipment/${shipment.shipment_id}`)}
+                      className="flex justify-between items-center border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                    >
+                      <div>
+                        <h4 className="font-semibold text-gray-900">
+                          {shipment.shipment_id}
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          {formatDateTime(shipment.created_at)}
+                        </p>
                       </div>
 
-                      <button
-                        className="text-red-500 hover:text-red-700 transition"
-                        onClick={() => console.log("delete", shipment.id)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </button>
+                      <div className="flex items-center gap-4">
+                        <div className={`flex items-center gap-2 font-medium ${colorClassName}`}>
+                          <IconComponent fontSize="small" />
+                          <span className="uppercase">{shipment.status.value}</span>
+                        </div>
+
+                        <button
+                          className="text-red-500 hover:text-red-700 transition"
+                          onClick={() => console.log("delete", shipment.id)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                );
+              })}
               </div>
             </div>
           )}
@@ -402,6 +492,7 @@ const TabsSection = () => {
         onClose={handleOTPModalClose} 
         onSubmit={handleOTPSubmit}
         isLoading={submitting}
+        errors={formErrors}
       />
 
       <PreArrivalPopup

@@ -1,6 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  OneToMany,
+} from 'typeorm';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import { IsEmail, MinLength } from 'class-validator';
+import { UserPreference } from 'src/user-preferences/user-preference.entity';
+import { PreArrival } from 'src/pre-arrivals/pre-arrival.entity';
+import { UserAddress } from 'src/user_address/user_address.entity';
 
 export enum Gender {
   Male = 'male',
@@ -74,4 +83,13 @@ export class User extends BaseTimestampEntity {
 
   @Column({ nullable: true })
   last_logout: number;
+
+  @OneToOne(() => UserPreference, (preference) => preference.user)
+  preference: UserPreference;
+
+  @OneToMany(() => PreArrival, (preArrival) => preArrival.user)
+  preArrivals: PreArrival[];
+
+  @OneToMany(() => UserAddress, (address) => address.user)
+  address: UserAddress[];
 }

@@ -133,7 +133,20 @@ export default function PickupRequestPage() {
 
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Typography variant="caption" color="text.secondary">Pickup Location</Typography>
-                        <Typography variant="body2" sx={{color: "text.primary" }}>{req.pickup_address}</Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "text.primary",
+                            wordBreak: "break-word",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical", 
+                          }}
+                        >
+                          {req.pickup_address}
+                        </Typography>
                       </Box>
 
                       <Box sx={{ flexShrink: 0, width: "18%" }}>

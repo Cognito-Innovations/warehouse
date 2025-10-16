@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, CircularProgress } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
@@ -17,18 +16,18 @@ interface PackageItem {
 }
 
 interface PackageItemsSectionProps {
+  id: string;
   packageItems: PackageItem[];
   setPackageItems: React.Dispatch<React.SetStateAction<PackageItem[]>>;
   isDiscarded: boolean;
 }
 
 const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
+  id,
   packageItems,
   setPackageItems,
   isDiscarded,
 }) => {
-  const { id } = useParams<{ id: string }>();
-
   const [addItemModalOpen, setAddItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PackageItem | null>(null);
   const [isSavingItem, setIsSavingItem] = useState(false);

@@ -141,8 +141,8 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     if (!formData.trackingNo) {
       newErrors.trackingNo = "Reference Tracking is required";
     }
-    if (!/^\d{1,13}$/.test(formData.trackingNo)) {
-      newErrors.trackingNo = "Tracking number must be digits only and less than 14 digits";
+    if (formData.trackingNo.length < 5 || formData.trackingNo.length > 15) {
+      newErrors.trackingNo = "Tracking number must be between 5 and 15 characters.";
     }
 
     // Check if at least one piece has weight
@@ -213,9 +213,18 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       toast.success("Package registered successfully!");
       onPackageCreated?.(); // Refresh the data
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to register package", err);
-      toast.error("Failed to register package. Please try again.");
+
+      const errorMessage = err?.response?.data?.message;
+      if (errorMessage && errorMessage.toLowerCase().includes("tracking number") && errorMessage.toLowerCase().includes("already exists")) {
+        setErrors((prev) => ({
+          ...prev,
+          trackingNo: errorMessage,
+        }));
+      } else {
+        toast.error(errorMessage || "Failed to register package. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }

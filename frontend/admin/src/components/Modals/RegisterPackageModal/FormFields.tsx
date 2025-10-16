@@ -100,8 +100,8 @@ const FormFields: React.FC<FormFieldsProps> = ({
           value={formData.trackingNo || ""}
           onChange={(e) => {
             const value = e.target.value;
-            // Allow only digits and max 13 characters
-            if (/^\d*$/.test(value) && value.length <= 13) {
+            // Allow any characters but limit to max 15
+            if (value.length <= 15) {
               onInputChange("trackingNo", value);
             }
           }}

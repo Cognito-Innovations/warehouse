@@ -4,26 +4,22 @@ import { Add as AddIcon, Close as CloseIcon, CloudUpload as UploadIcon, PictureA
 import { toast } from 'sonner';
 import { deletePackageDocument, updatePackageStatus, uploadPackageDocuments } from '../../services/api.services';
 import UploadModal from './UploadModal';
+import ImageWithPreview from './ImageWithPreview';
 import { formatFileName } from '../../utils/formatFileName';
 
 interface UploadedDocument {
   id: string;
   name: string;
   url: string;
+  localURL?: string;
   type: string;
-}
-
-interface PackageItem {
-  id: string;
-  name: string;
-  quantity: number;
+  status?: 'uploading' | 'completed' | 'failed';
 }
 
 interface ActionLogsSectionProps {
   packageId: string;
   initialStatus: { label: string; value: string };
   initialDocuments: UploadedDocument[];
-  packageItems: PackageItem[];
   packageCreationData: {
     createdBy: string;
     createdAt: string;
@@ -36,7 +32,6 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   packageId,
   initialStatus,
   initialDocuments,
-  packageItems,
   packageCreationData,
   onActionLogUpdate,
   isDiscarded,
@@ -44,17 +39,18 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   const [actionLogStatus, setActionLogStatus] = useState(initialStatus.value);
   const [isAdminChecked, setIsAdminChecked] = useState(initialStatus.value === 'Ready To Send');
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>(initialDocuments);
-  const [isUploading, setIsUploading] = useState(false);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setActionLogStatus(initialStatus.value);
     setIsAdminChecked(initialStatus.value === 'Ready To Send');
-    setUploadedDocuments(initialDocuments);
+    const formattedInitialDocs = initialDocuments.map(doc => ({ ...doc, status: 'completed' as const }));
+    setUploadedDocuments(formattedInitialDocs);
   }, [initialStatus, initialDocuments]);
 
   const handleStatusChange = async (newStatus: string) => {
@@ -65,11 +61,8 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
     } catch (err) {
       console.error('Failed to update package status:', err);
       toast.error('Failed to update package status');
+      throw err;
     }
-  };
-
-  const handleAdminCheck = (checked: boolean) => {
-    setIsAdminChecked(checked);
   };
 
   const handleOpenUploadModal = () => setUploadModalOpen(true);
@@ -92,12 +85,35 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   const performUpload = async (files: File[]) => {
     if (files.length === 0) return;
 
-    setIsUploading(true);
+    const tempDocuments: UploadedDocument[] = files.map(file => ({
+      id: `local-${Date.now()}-${file.name}`,
+      name: file.name,
+      url: '',
+      localURL: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+      type: file.type,
+      status: 'uploading',
+    }));
+
+    setUploadedDocuments(prev => [...prev, ...tempDocuments]);
+
     try {
-      await uploadPackageDocuments(packageId, files);
-      
-      onActionLogUpdate();
-      
+      const responseData = await uploadPackageDocuments(packageId, files);
+      const newDocuments = responseData.documents || [];
+
+      const completedDocuments = newDocuments.map((newDoc: any, index: number) => ({
+        id: newDoc.id,
+        name: newDoc.document_name,
+        url: newDoc.document_url,
+        localURL: tempDocuments[index]?.localURL,
+        type: files[index]?.type,
+        status: 'completed' as const,
+      }));
+
+      setUploadedDocuments(prev => {
+        const otherDocuments = prev.filter(doc => !tempDocuments.some(temp => temp.id === doc.id));
+        return [...otherDocuments, ...completedDocuments];
+      });
+
       if (actionLogStatus === 'Action Required') {
         await handleStatusChange('In Review');
         setIsAdminChecked(false);
@@ -106,8 +122,12 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
     } catch (err) {
       console.error('Failed to upload documents:', err);
       toast.error('Failed to upload documents');
-    } finally {
-      setIsUploading(false);
+
+      setUploadedDocuments(prev => 
+        prev.map(doc => 
+          tempDocuments.some(temp => temp.id === doc.id) ? { ...doc, status: 'failed' } : doc
+        )
+      );
     }
   };
 
@@ -123,10 +143,16 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   };
 
   const handleRemoveDocument = async (documentId: string) => {
+    const docToRemove = uploadedDocuments.find(d => d.id === documentId);
+    if (docToRemove?.status === 'uploading') {
+      toast.error("Please wait for the upload to complete before deleting.");
+      return;
+    }
+    
     setDeletingDocId(documentId);
     try {
       await deletePackageDocument(packageId, documentId);
-      onActionLogUpdate();
+      setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
       toast.success('Document removed.');
     } catch (err) {
       console.error('Failed to delete document:', err);
@@ -145,6 +171,18 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   };
   const handleClick = () => fileInputRef.current?.click();
 
+  const handleStatusToggle = async () => {
+    if (isDiscarded || isStatusUpdating || uploadedDocuments.length === 0) return;
+
+    setIsStatusUpdating(true);
+    try {
+      const newStatus = visualChecked ? 'In Review' : 'Ready To Send';
+      await handleStatusChange(newStatus);
+    } finally {
+      setIsStatusUpdating(false);
+    }
+  };
+
   const allowedStatuses = [
     'Ready To Send',
     'Request Ship',
@@ -154,6 +192,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
     'Departed',
   ];
   const visualChecked = isAdminChecked || allowedStatuses.includes(actionLogStatus);
+  const isCurrentlyUploading = uploadedDocuments.some(doc => doc.status === 'uploading');
   
   return (
     <>
@@ -192,6 +231,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
               {/* Status Indicator - Clickable Checkbox */}
               <Box
                 sx={{
+                  position: 'relative',
                   width: 16,
                   height: 16,
                   borderRadius: '50%',
@@ -201,38 +241,35 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   mt: 0.5,
-                  cursor: isDiscarded ? 'not-allowed' : uploadedDocuments.length > 0 ? 'pointer' : 'not-allowed',
-                  opacity: isDiscarded ? 0.4 : uploadedDocuments.length > 0 ? 1 : 0.5,
+                  cursor: isDiscarded || isStatusUpdating ? 'not-allowed' : uploadedDocuments.length > 0 ? 'pointer' : 'not-allowed',
+                  opacity: isDiscarded || isStatusUpdating ? 0.5 : uploadedDocuments.length > 0 ? 1 : 0.5,
                   '&:hover': {
-                    bgcolor: uploadedDocuments.length > 0
-                      ? (visualChecked ? '#16a34a' : '#fef2f2')
-                      : 'transparent'
+                    bgcolor: isStatusUpdating || isDiscarded || uploadedDocuments.length === 0
+                      ? 'transparent'
+                      : (visualChecked ? '#16a34a' : '#fef2f2')
                   }
                 }}
-                onClick={() => {
-                  if (isDiscarded) return;
-
-                  if (actionLogStatus === 'In Review' && packageItems.length === 0) {
-                    toast.error('Please add package items before verifying.');
-                    return;
-                  }
-
-                  // Only allow clicking if documents are uploaded
-                  if (uploadedDocuments.length === 0) return;
-
-                  // Toggle visual check state
-                  const newCheckedState = !visualChecked;
-                  handleAdminCheck(newCheckedState);
-
-                  // Update status based on admin check
-                  if (newCheckedState) {
-                    handleStatusChange('Ready To Send');
-                  } else {
-                    handleStatusChange('In Review');
-                  }
-                }}
+                onClick={handleStatusToggle}
               >
-                {visualChecked ? (
+                 {isStatusUpdating ? (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <CircularProgress
+                      size={18}
+                      thickness={9}
+                      sx={{ color: '#3b82f6'}}
+                    />
+                  </Box>
+                ) : visualChecked ? (
                   <Box sx={{
                     width: 8,
                     height: 8,
@@ -246,7 +283,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                       borderLeft: '2px solid white',
                       borderBottom: '2px solid white',
                       transform: 'rotate(-45deg)',
-                      marginTop: '-1px'
+                      marginTop: '-2px'
                     }} />
                   </Box>
                 ) : null}
@@ -280,23 +317,23 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                 {uploadedDocuments.length === 0 && (
                   <Box sx={{ mb: 2 }}>
                     <Box
-                      onClick={isUploading || isDiscarded ? undefined : handleClick}
-                      onDragOver={isUploading || isDiscarded ? undefined : handleDragOver}
-                      onDragLeave={isUploading || isDiscarded ? undefined : handleDragLeave}
-                      onDrop={isUploading || isDiscarded ? undefined : handleDrop}
+                      onClick={isCurrentlyUploading || isDiscarded ? undefined : handleClick}
+                      onDragOver={isCurrentlyUploading || isDiscarded ? undefined : handleDragOver}
+                      onDragLeave={isCurrentlyUploading || isDiscarded ? undefined : handleDragLeave}
+                      onDrop={isCurrentlyUploading || isDiscarded ? undefined : handleDrop}
                       sx={{
                         position: 'relative',
                         border: `2px dashed ${isDragOver ? '#3b82f6' : '#d1d5db'}`,
                         borderRadius: 2,
                         p: 3,
                         textAlign: 'center',
-                        cursor: isUploading || isDiscarded ? 'not-allowed' : 'pointer',
+                        cursor: isCurrentlyUploading || isDiscarded ? 'not-allowed' : 'pointer',
                         bgcolor: isDragOver ? '#f0f9ff' : '#fafafa',
                         transition: 'all 0.2s ease-in-out',
-                        opacity: isUploading || isDiscarded ? 0.5 : 1,
+                        opacity: isCurrentlyUploading || isDiscarded ? 0.5 : 1,
                         '&:hover': {
-                          borderColor: isUploading ? '#d1d5db' : '#3b82f6',
-                          bgcolor: isUploading ? '#fafafa' : '#f0f9ff'
+                          borderColor: isCurrentlyUploading ? '#d1d5db' : '#3b82f6',
+                          bgcolor: isCurrentlyUploading ? '#fafafa' : '#f0f9ff'
                         }
                       }}
                     > 
@@ -313,29 +350,6 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                       <Typography variant="caption" sx={{ color: '#9ca3af' }}>
                         PNG, JPG, PDF up to 10MB
                       </Typography>
-
-                      {isUploading && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            inset: 0,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: 'rgba(255,255,255,0.7)',
-                            borderRadius: 2,
-                          }}
-                        >
-                          <CircularProgress size={48} sx={{ color: '#3b82f6', mb: 1 }} />
-                          <Typography variant="body2" sx={{ color: '#6b7280', mb: 0.5 }}>
-                            Uploading files...
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#9ca3af' }}>
-                            Please wait while your files are being uploaded
-                          </Typography>
-                        </Box>
-                      )}
                     </Box>
                   </Box>
                 )}
@@ -350,7 +364,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                           <Box key={doc.id} sx={{ position: 'relative', textAlign: 'center', width: 80 }}>
                             {isPdf ? (
                               <Box
-                                onClick={() => window.open(doc.url, '_blank')}
+                                onClick={() => doc.url && window.open(doc.url, '_blank')}
                                 sx={{
                                   width: 80,
                                   height: 60,
@@ -367,21 +381,31 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                                 <PictureAsPdfIcon sx={{ fontSize: 36, color: '#64748b' }} />
                               </Box>
                             ) : (
-                              <Box
-                                component="img"
+                              <ImageWithPreview
+                                previewSrc={doc.localURL}
+                                finalSrc={doc.url}
+                                alt={doc.name}
+                                onClick={() => doc.url && window.open(doc.url, '_blank')}
                                 sx={{
                                   width: 80,
                                   height: 60,
                                   objectFit: 'cover',
                                   borderRadius: 1,
                                   border: '1px solid #e9ecef',
-                                  cursor: 'pointer'
+                                  cursor: 'pointer',
                                 }}
-                                alt={doc.name}
-                                src={doc.url}
-                                onClick={() => window.open(doc.url, '_blank')}
                               />
                             )}
+
+                            {doc.status === 'uploading' && (
+                              <Box sx={{
+                                position: 'absolute', inset: 0, display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', bgcolor: 'rgba(255, 255, 255, 0.8)',
+                                borderRadius: 1, height: 60,
+                              }}>
+                                <CircularProgress size={24} />
+                              </Box>
+                            )}                            
                             {deletingDocId === doc.id && (
                               <Box sx={{
                                 position: 'absolute',
@@ -411,24 +435,26 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                             >
                               {formatFileName(doc.name)}
                             </Typography>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleRemoveDocument(doc.id)}
-                              disabled={!!deletingDocId}
-                              sx={{
-                                position: 'absolute',
-                                top: -8,
-                                right: -8,
-                                width: 20,
-                                height: 20,
-                                bgcolor: '#ef4444',
-                                color: 'white',
-                                '&:hover': { bgcolor: '#dc2626' },
-                                '& .MuiSvgIcon-root': { fontSize: 12 }
-                              }}
-                            >
-                              <CloseIcon />
-                            </IconButton>
+                            {doc.status !== 'uploading' && (
+                              <IconButton
+                                size="small"
+                                onClick={() => handleRemoveDocument(doc.id)}
+                                disabled={!!deletingDocId || isDiscarded}
+                                sx={{
+                                  position: 'absolute',
+                                  top: -8,
+                                  right: -8,
+                                  width: 20,
+                                  height: 20,
+                                  bgcolor: '#ef4444',
+                                  color: 'white',
+                                  '&:hover': { bgcolor: '#dc2626' },
+                                  '& .MuiSvgIcon-root': { fontSize: 12 }
+                                }}
+                              >
+                                <CloseIcon />
+                              </IconButton>
+                            )}
                           </Box>
                         );
                       })}
@@ -438,12 +464,12 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
                     <Button
                       variant="outlined"
                       size="small"
-                      startIcon={isUploading ? <CircularProgress size={16} /> : <AddIcon />}
-                      onClick={isUploading || isDiscarded ? undefined : handleClick}
-                      disabled={isUploading || isDiscarded}
+                      startIcon={isCurrentlyUploading ? <CircularProgress size={16} /> : <AddIcon />}
+                      onClick={isCurrentlyUploading || isDiscarded ? undefined : handleClick}
+                      disabled={isCurrentlyUploading || isDiscarded}
                       sx={{ mt: 1, fontSize: '0.75rem' }}
                     >
-                      {isUploading ? 'Uploading...' : 'Add More Documents'}
+                      {isCurrentlyUploading ? 'Uploading...' : 'Add More Documents'}
                     </Button>
                   </Box>
                 )}
@@ -464,7 +490,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
         onFileSelect={handleFileSelectForModal}
         onUpload={handleUploadFromModal}
         onRemoveFile={handleRemoveFileFromModal}
-        isUploading={isUploading}
+        isUploading={isCurrentlyUploading }
       />
     </>
   );

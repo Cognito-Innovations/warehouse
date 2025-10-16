@@ -14,8 +14,8 @@ interface Measurement {
 interface HoldLabelData {
     shipment_id: string;
     shipment_uuid?: string;
-    user: string;
-    suite?: string;
+    name: string;
+    suite_no?: string;
     weight?: string;
     measurements: Measurement[];
     createdAt?: string;
@@ -31,7 +31,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
     const handlePrintHoldLabel = async () => {
         setIsPrintingHold(true);
         try {
-            if (!data || !data.shipment_id || !data.user || !data.measurements) {
+            if (!data || !data.shipment_id || !data.name || !data.measurements) {
                 toast.error("Required data for hold label is missing.");
                 console.error("Missing data for hold label:", data);
                 return;
@@ -42,6 +42,10 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
                 unit: 'mm',
                 format: [150, 100] // 15cm x 10cm, similar to a 6x4 inch label
             });
+
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.5);
+            doc.rect(3, 3, 144, 94); // slightly smaller than page to provide space
 
             // 1. MASTER Box (Top-Left)
             doc.setFillColor(0, 0, 0);
@@ -84,10 +88,16 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             const barcodeText = shipmentId;
             doc.setFont("helvetica", "normal");
             doc.setFontSize(12);
-            doc.text(barcodeText, 5, 50);
+
+            const barcodeX = 5;
+            const barcodeWidth = 90;
+            const textX = barcodeX + barcodeWidth / 2;
+            const textY = 20 + 25 + 5;
+
+            doc.text(barcodeText, textX, textY, { align: 'center' });
 
             // 4. Suite Box (Right)
-            const suiteNo = data.suite || '';
+            const suiteNo = data.suite_no || '';
             doc.setDrawColor(0, 0, 0);
             doc.setTextColor(0, 0, 0);
             doc.roundedRect(100, 28, 45, 15, 1.5, 1.5, 'S'); 
@@ -99,10 +109,10 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text(suiteNo, 122.5, 40, { align: 'center' });
 
             // 5. User Name (Right)
-            const userName = data.user|| '';
+            const userName = data.name|| '';
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
-            doc.text(`${userName} (${suiteNo})`, 100, 50);
+            doc.text(`${userName} (${suiteNo})`, 98, 50);
 
             // 6. Dashed Separator Line
             doc.setLineDashPattern([1, 1], 0);
@@ -118,7 +128,11 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text(weightText, 5, 65);
 
             // 8. REG. DATE (Bottom-Right)
-            doc.text(`REG. DATE: ${data.createdAt}`, 100, 65);
+            const regDateText = `REG. DATE: ${data.createdAt || ''}`;
+            const pageWidth = 150;
+            const margin = 5;
+            const textWidth = doc.getTextWidth(regDateText);
+            doc.text(regDateText, pageWidth - margin - textWidth, 65); // align inside wrapper
 
             // 9. REDBOX Box (Footer-Left)
             doc.setFillColor(0, 0, 0);
@@ -132,7 +146,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.setTextColor(0, 0, 0);
             doc.setFontSize(22);
             doc.setFont("helvetica", "bold");
-            doc.text("MV", 135, 85);
+            doc.text("MV", 130, 85);
 
             doc.save(`hold-label-${shipmentId}.pdf`);
             toast.success("Hold Label downloaded successfully!");

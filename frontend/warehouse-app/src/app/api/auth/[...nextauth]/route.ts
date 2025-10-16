@@ -10,7 +10,7 @@ const handler = NextAuth({
   // Explicitly set the URL for production
   // TODO: 'url' does not exist in type 'AuthOptions'
   // url: process.env.NEXTAUTH_URL,
-  debug: process.env.NODE_ENV === "development",
+  debug: false,
   cookies: {
     sessionToken: {
       name: "next-auth.session-token",
@@ -163,8 +163,6 @@ const handler = NextAuth({
     },
 
     async redirect({ url, baseUrl }) {
-      console.log("Redirect callback - url:", url, "baseUrl:", baseUrl);
-      
       // Always redirect to dashboard after successful authentication
       if (url === baseUrl || url === `${baseUrl}/`) {
         return `${baseUrl}/dashboard`;

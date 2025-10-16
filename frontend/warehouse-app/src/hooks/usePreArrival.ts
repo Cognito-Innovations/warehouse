@@ -2,8 +2,7 @@ import { createPreArrival } from "@/lib/api.service";
 import { useState } from "react";
 
 type PreArrivalPayload = {
-  user?: string;
-  suite?: string;
+  userId?: string;
   otp: string | number;
   tracking_no?: string | null;
   trackingNumber?: string | null;
@@ -13,7 +12,7 @@ type PreArrivalPayload = {
   status?: string;
 };
 
-export default function usePreArrival(defaults?: { user?: string; suite?: string }) {
+export default function usePreArrival(defaults?: { userId?: string; }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,8 +21,7 @@ export default function usePreArrival(defaults?: { user?: string; suite?: string
     setError(null);
 
     const body = {
-      user: payload.user ?? defaults?.user,
-      suite: payload.suite ?? defaults?.suite,
+      userId: payload.userId ?? defaults?.userId,
       otp: Number(payload.otp),
       tracking_no: payload.tracking_no ?? payload["trackingNumber"] ?? null,
       estimate_arrival_time: payload.estimate_arrival_time ?? payload["estimatedArrivalTime"] ?? null,

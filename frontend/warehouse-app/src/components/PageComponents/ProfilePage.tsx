@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {Edit,} from "@mui/icons-material";
 import EditProfileModal, { ProfileData } from "../Modals/EditProfileModal";
-import {Box, Typography, Button, Card, CardContent, Grid, } from "@mui/material";
+import {Box, Typography, Button, Card, CardContent, Grid, CircularProgress, } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUser } from "@/lib/api.service";
 
@@ -56,6 +56,26 @@ export default function ProfilePage() {
       ...updatedData,
     }));
   };
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "70vh",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
+        <CircularProgress color="primary" size={48} />
+        <Typography variant="body1" sx={{ color: "grey.700" }}>
+          Loading your profile...
+        </Typography>
+      </Box>
+    );
+  }
   
   return (
     <Box sx={{ maxWidth: 800, mx: "auto" }}>
