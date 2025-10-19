@@ -1,11 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EcommerceProduct } from '../entities/product.entity.js';
+import { EcommerceProduct } from '../entities/ecommerce-product.entity.js';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateProductDto } from '../dto/product/create-product.dto.js';
-import { UpdateProductDto } from '../dto/product/update-product.dto.js';
-import { Category } from '../entities/category.entity.js';
-import { SubCategory } from '../entities/sub_category.entity.js';
+import { CreateEcommerceProductDto } from '../dto/product/create-product.dto.js';
+import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto.js';
+import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.js';
 import { Country } from 'src/Countries/country.entity.js';
 
 @Injectable()
@@ -15,7 +14,9 @@ export class ProductsService {
     private readonly productRepository: Repository<EcommerceProduct>,
   ) {}
 
-  async create(createProductDto: CreateProductDto): Promise<EcommerceProduct> {
+  async create(
+    createProductDto: CreateEcommerceProductDto,
+  ): Promise<EcommerceProduct> {
     const product = this.productRepository.create({
       ...createProductDto,
       category: { id: createProductDto.category_id },
@@ -35,7 +36,7 @@ export class ProductsService {
 
   async update(
     id: string,
-    updateProductDto: UpdateProductDto,
+    updateEcommerceProductDto: UpdateEcommerceProductDto,
   ): Promise<EcommerceProduct> {
     const product = await this.productRepository.findOne({
       where: {
@@ -44,19 +45,14 @@ export class ProductsService {
     });
     if (!product) throw new NotFoundException('Product not found');
 
-    if (updateProductDto.category_id) {
-      product.category = {
-        id: updateProductDto.category_id,
-      } as Category;
-    }
-    if (updateProductDto.sub_category_id) {
+    if (updateEcommerceProductDto.sub_category_id) {
       product.sub_category = {
-        id: updateProductDto.sub_category_id,
-      } as SubCategory;
+        id: updateEcommerceProductDto.sub_category_id,
+      } as EcommerceSubCategory;
     }
-    if (updateProductDto.country_id) {
+    if (updateEcommerceProductDto.country_id) {
       product.country = {
-        id: updateProductDto.country_id,
+        id: updateEcommerceProductDto.country_id,
       } as Country;
     }
 

@@ -7,10 +7,10 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Category } from './category.entity';
-import { SubCategory } from './sub_category.entity';
+import { EcommerceCategory } from './ecommerce-category.entity';
+import { EcommerceSubCategory } from './ecommerce-sub-category.entity';
 
-@Entity('products')
+@Entity('ecommerce_products')
 export class EcommerceProduct extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -24,13 +24,13 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @Column()
   slug: string;
 
-  @ManyToOne(() => Category, { eager: true })
+  @ManyToOne(() => EcommerceCategory, { eager: true })
   @JoinColumn({ name: 'category_id' })
-  category: Category;
+  category: EcommerceCategory;
 
-  @ManyToOne(() => SubCategory, { eager: true })
+  @ManyToOne(() => EcommerceSubCategory, { eager: true })
   @JoinColumn({ name: 'sub_category_id' })
-  sub_category: SubCategory;
+  sub_category: EcommerceSubCategory;
 
   @ManyToOne(() => Country, { eager: true })
   @JoinColumn({ name: 'country_id' })

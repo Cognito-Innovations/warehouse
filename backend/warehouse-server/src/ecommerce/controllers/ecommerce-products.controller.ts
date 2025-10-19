@@ -7,16 +7,16 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { ProductsService } from '../services/products.service';
-import { CreateProductDto } from '../dto/product/create-product.dto';
-import { UpdateProductDto } from '../dto/product/update-product.dto';
+import { ProductsService } from '../services/ecommerce-products.service';
+import { CreateEcommerceProductDto } from '../dto/product/create-product.dto';
+import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto';
 
-@Controller('products')
+@Controller('ecommerce-products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  create(@Body() createProductDto: CreateProductDto) {
+  create(@Body() createProductDto: CreateEcommerceProductDto) {
     return this.productsService.create(createProductDto);
   }
 
@@ -31,7 +31,10 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateEcommerceProductDto,
+  ) {
     return this.productsService.update(id, updateProductDto);
   }
 

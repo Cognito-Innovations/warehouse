@@ -32,9 +32,9 @@ import { Currency } from 'src/currencies/currency.entity';
 import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { SupportedCountry } from 'src/supported-countries/supported-country.entity';
 import { UserAddress } from 'src/user_address/user_address.entity';
-import { SubCategory } from 'src/ecommerce/entities/sub_category.entity';
-import { Category } from 'src/ecommerce/entities/category.entity';
-import { EcommerceProduct } from 'src/ecommerce/entities/product.entity';
+import { EcommerceSubCategory } from 'src/ecommerce/entities/ecommerce-sub-category.entity';
+import { EcommerceCategory } from 'src/ecommerce/entities/ecommerce-category.entity';
+import { EcommerceProduct } from 'src/ecommerce/entities/ecommerce-product.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -75,8 +75,8 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ShipmentExportBox,
     Document,
     Invoice,
-    Category,
-    SubCategory,
+    EcommerceCategory,
+    EcommerceSubCategory,
     EcommerceProduct,
     ShoppingRequestProduct,
   ],

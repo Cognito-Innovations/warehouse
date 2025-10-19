@@ -7,11 +7,16 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { EcommerceCategory } from './ecommerce-category.entity';
 
-@Entity('categories')
-export class Category extends BaseTimestampEntity {
+@Entity('ecommerce_sub_categories')
+export class EcommerceSubCategory extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @ManyToOne(() => EcommerceCategory, { eager: true })
+  @JoinColumn({ name: 'category_id' })
+  category: EcommerceCategory;
 
   @Column()
   name: string;
@@ -19,10 +24,10 @@ export class Category extends BaseTimestampEntity {
   @Column()
   slug: string;
 
+  //TODO: Need to add discount percentage here because there might be chance entire sub category is on discount.
+
   @Column()
   image_url: string;
-
-  //TODO: Need to add discount percentage here because there might be chance entire category is on discount.
 
   @ManyToOne(() => Country, { eager: true })
   @JoinColumn({ name: 'country_id' })

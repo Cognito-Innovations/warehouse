@@ -1,22 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { SubCategory } from '../entities/sub_category.entity.js';
+import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.js';
+import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateSubCategoryDto } from '../dto/sub_category/create-sub_category.dto.js';
-import { UpdateSubCategoryDto } from '../dto/sub_category/update-sub_category.dto.js';
-import { Category } from '../entities/category.entity.js';
+import { CreateEcommerceSubCategoryDto } from '../dto/sub_category/create-sub_category.dto.js';
+import { UpdateEcommerceSubCategoryDto } from '../dto/sub_category/update-sub_category.dto.js';
 import { Country } from 'src/Countries/country.entity.js';
 
 @Injectable()
 export class SubCategoriesService {
   constructor(
-    @InjectRepository(SubCategory)
-    private readonly subCategoryRepository: Repository<SubCategory>,
+    @InjectRepository(EcommerceSubCategory)
+    private readonly subCategoryRepository: Repository<EcommerceSubCategory>,
   ) {}
 
   async create(
-    createSubCategoryDto: CreateSubCategoryDto,
-  ): Promise<SubCategory> {
+    createSubCategoryDto: CreateEcommerceSubCategoryDto,
+  ): Promise<EcommerceSubCategory> {
     const subCategory = this.subCategoryRepository.create({
       ...createSubCategoryDto,
       category: { id: createSubCategoryDto.category_id },
@@ -35,8 +35,8 @@ export class SubCategoriesService {
 
   async update(
     id: string,
-    updateSubCategoryDto: UpdateSubCategoryDto,
-  ): Promise<SubCategory> {
+    updateSubCategoryDto: UpdateEcommerceSubCategoryDto,
+  ): Promise<EcommerceSubCategory> {
     const subCategory = await this.subCategoryRepository.findOne({
       where: {
         id,
@@ -47,8 +47,9 @@ export class SubCategoriesService {
     if (updateSubCategoryDto.category_id) {
       subCategory.category = {
         id: updateSubCategoryDto.category_id,
-      } as Category;
+      } as EcommerceCategory;
     }
+
     if (updateSubCategoryDto.country_id) {
       subCategory.country = {
         id: updateSubCategoryDto.country_id,

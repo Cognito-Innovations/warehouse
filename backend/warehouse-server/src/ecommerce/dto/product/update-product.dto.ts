@@ -1,6 +1,6 @@
 import { IsOptional, IsUUID } from 'class-validator';
 
-export class UpdateProductDto {
+export class UpdateEcommerceProductDto {
   @IsUUID()
   @IsOptional()
   category_id?: string;

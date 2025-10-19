@@ -7,11 +7,11 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { CategoriesService } from '../services/categories.service';
-import { CreateCategoryDto } from '../dto/category/create-category.dto';
-import { UpdateCategoryDto } from '../dto/category/update-category.dto';
+import { CategoriesService } from '../services/ecommerce-categories.service';
+import { CreateCategoryDto } from '../dto/category/ecommerce-create-category.dto';
+import { UpdateCategoryDto } from '../dto/category/ecommerce-update-category.dto';
 
-@Controller('categories')
+@Controller('ecommerce-categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
@@ -40,6 +40,6 @@ export class CategoriesController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.categoriesService.remove(+id);
+    return this.categoriesService.remove(id);
   }
 }

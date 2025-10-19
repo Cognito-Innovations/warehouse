@@ -35,7 +35,7 @@ import { InvoicesModule } from './invoice/invoices.module';
 import { UserPreferencesModule } from './user-preferences/user-preferences.module';
 import { CurrenciesModule } from './currencies/currencies.module';
 import { UserAddressModule } from './user_address/user_address.module';
-import { EcommerceRouterModule } from './ecommerce/ecommerce-router.module';
+import { EcommerceModule } from './ecommerce/ecommerce.module';
 
 @Module({
   imports: [
@@ -81,7 +81,7 @@ import { EcommerceRouterModule } from './ecommerce/ecommerce-router.module';
     InvoicesModule,
     UserPreferencesModule,
     CurrenciesModule,
-    EcommerceRouterModule,
+    EcommerceModule,
   ],
   controllers: [
     PackageItemsController,

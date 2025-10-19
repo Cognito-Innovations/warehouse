@@ -7,7 +7,7 @@ import {
   IsPositive,
 } from 'class-validator';
 
-export class CreateProductDto {
+export class CreateEcommerceProductDto {
   @IsString()
   @IsNotEmpty()
   name: string;
