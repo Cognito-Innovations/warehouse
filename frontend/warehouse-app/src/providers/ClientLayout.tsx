@@ -10,6 +10,7 @@ interface ClientLayoutProps {
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const pathname = usePathname();
+  //To force move site, we need to update it here "/" to "/path-name".
   const hideHeader = pathname === "/";
 
   return (

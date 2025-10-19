@@ -2,14 +2,14 @@ runtime: custom
 env: flex
 
 env_variables:
-  DB_HOST: "projects/video-459417/secrets/DB_HOST/versions/latest"
-  DB_PORT: "projects/video-459417/secrets/DB_PORT/versions/latest"
-  DB_NAME: "projects/video-459417/secrets/DB_NAME/versions/latest"
-  DB_USERNAME: "projects/video-459417/secrets/DB_USERNAME/versions/latest"
-  DB_PASSWORD: "projects/video-459417/secrets/DB_PASSWORD/versions/latest"
-  CLOUDINARY_CLOUD_NAME: "projects/video-459417/secrets/CLOUDINARY_CLOUD_NAME/versions/latest"
-  CLOUDINARY_API_KEY: "projects/video-459417/secrets/CLOUDINARY_API_KEY/versions/latest"
-  CLOUDINARY_API_SECRET: "projects/video-459417/secrets/CLOUDINARY_API_SECRET/versions/latest"
+  DB_HOST: "aws-1-us-east-2.pooler.supabase.com"
+  DB_PORT: 5432
+  DB_NAME: "postgres"
+  DB_USERNAME: "postgres.kvtavhfrvgidwvihkvvi"
+  DB_PASSWORD: "4XSgDrvmeSUDB4jw"
+  CLOUDINARY_CLOUD_NAME: "dcfbmupyd"
+  CLOUDINARY_API_KEY: "122294826625949"
+  CLOUDINARY_API_SECRET: "fScVO1lp4CDXgzkjyGXVdsK90HU"
 
 manual_scaling:
   instances: 1

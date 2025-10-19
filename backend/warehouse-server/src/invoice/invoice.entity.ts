@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ShoppingRequest } from 'src/shopping-requests/shopping-request.entity';
-import { Product } from 'src/products/product.entity';
+import { ShoppingRequestProduct } from 'src/products/shopping-request-product.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 
 export enum InvoiceStatus {
@@ -39,6 +39,8 @@ export class Invoice extends BaseTimestampEntity {
   @JoinColumn({ name: 'shopping_request_id' })
   shopping_request: ShoppingRequest;
 
-  @OneToMany(() => Product, (product) => product.invoice, { cascade: true })
-  products: Product[];
+  @OneToMany(() => ShoppingRequestProduct, (product) => product.invoice, {
+    cascade: true,
+  })
+  products: ShoppingRequestProduct[];
 }

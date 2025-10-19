@@ -3,15 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Invoice, InvoiceStatus } from './invoice.entity';
 import { ShoppingRequest } from 'src/shopping-requests/shopping-request.entity';
-import { Product } from 'src/products/product.entity';
+import { ShoppingRequestProduct } from 'src/products/shopping-request-product.entity';
 
 @Injectable()
 export class InvoicesService {
   constructor(
     @InjectRepository(Invoice)
     private readonly invoiceRepository: Repository<Invoice>,
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
+    @InjectRepository(ShoppingRequestProduct)
+    private readonly productRepository: Repository<ShoppingRequestProduct>,
   ) {}
 
   private generateInvoiceNo(

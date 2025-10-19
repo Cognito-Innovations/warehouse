@@ -255,7 +255,7 @@ export const updateProduct = async (
   available?: boolean,
   currency?: string,
 ) => {
-  const res = await api.patch(`/products/${productId}`, {
+  const res = await api.patch(`/shopping-requests/${productId}`, {
     ...(unitPrice !== undefined && { unit_price: unitPrice }),
     ...(available !== undefined && { available }),
     ...(currency !== undefined && { currency }),

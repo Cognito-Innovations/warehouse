@@ -106,7 +106,7 @@ export const createShoppingRequest = async (request: any) => {
 };
 
 export const createShoppingRequestProduct = async (product: any) => {
-  const res = await authenticatedApi.post("/products", product);
+  const res = await authenticatedApi.post("/shopping-requests", product);
   return res.data;
 };
 

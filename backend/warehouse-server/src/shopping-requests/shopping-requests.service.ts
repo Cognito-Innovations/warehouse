@@ -7,7 +7,7 @@ import {
 } from './shopping-request.entity';
 import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
 import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
-import { Product } from 'src/products/product.entity';
+import { ShoppingRequestProduct } from 'src/products/shopping-request-product.entity';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
 import { DocumentsService } from 'src/documents/documents.service';
 import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
@@ -23,8 +23,8 @@ export class ShoppingRequestsService {
   constructor(
     @InjectRepository(ShoppingRequest)
     private readonly shoppingRequestRepository: Repository<ShoppingRequest>,
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
+    @InjectRepository(ShoppingRequestProduct)
+    private readonly productRepository: Repository<ShoppingRequestProduct>,
     @InjectRepository(CourierCompany)
     private readonly courierRepository: Repository<CourierCompany>,
     private readonly documentsService: DocumentsService,

@@ -5,13 +5,14 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useEffect, ReactNode } from "react";
 
+//TODO P0: Need to wrap address layout only required routes not in root
 export default function AddressLayout({ children }: { children: ReactNode }) {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
         if (!authLoading && !user) {
-            router.push("/");
+            router.push("/sign-in");
         }
     }, [user, authLoading, router]);
 

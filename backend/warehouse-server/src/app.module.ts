@@ -16,7 +16,7 @@ import { PackagesModule } from './packages/packages.module';
 import { PackageItemsModule } from './packages/package-items.module';
 import { PreArrivalsModule } from './pre-arrivals/pre-arrivals.module';
 import { ShoppingRequestsModule } from './shopping-requests/shopping-requests.module';
-import { ProductsModule } from './products/products.module';
+import { ShoppingRequestProductsModule } from './products/shopping-request-products.module';
 import { PickupRequestsModule } from './pickup-requests/pickup-requests.module';
 import { TrackingRequestsModule } from './tracking-requests/tracking-requests.module';
 import { ShipmentExportModule } from './shipment-export/shipment-export.module';
@@ -26,7 +26,7 @@ import { PackageDocumentsController } from './packages/controller/package-docume
 import { PreArrivaController } from './pre-arrivals/pre-arrivals.controller';
 import { PickupRequestsController } from './pickup-requests/pickup-requests.controller';
 import { ShoppingRequestsController } from './shopping-requests/shopping-requests.controller';
-import { ProductsController } from './products/products.controller';
+import { ShoppingRequestProductsController } from './products/shopping-request-products.controller';
 import { CourierCompaniesModule } from './courier_companies/courier_companies.module';
 import { CountriesModule } from './Countries/countries.module';
 import { SupportedCountriesModule } from './supported-countries/supported-countries.module';
@@ -35,6 +35,7 @@ import { InvoicesModule } from './invoice/invoices.module';
 import { UserPreferencesModule } from './user-preferences/user-preferences.module';
 import { CurrenciesModule } from './currencies/currencies.module';
 import { UserAddressModule } from './user_address/user_address.module';
+import { EcommerceRouterModule } from './ecommerce/ecommerce-router.module';
 
 @Module({
   imports: [
@@ -72,7 +73,7 @@ import { UserAddressModule } from './user_address/user_address.module';
     PackageItemsModule,
     PreArrivalsModule,
     ShoppingRequestsModule,
-    ProductsModule,
+    ShoppingRequestProductsModule,
     PickupRequestsModule,
     TrackingRequestsModule,
     ShipmentExportModule,
@@ -80,6 +81,7 @@ import { UserAddressModule } from './user_address/user_address.module';
     InvoicesModule,
     UserPreferencesModule,
     CurrenciesModule,
+    EcommerceRouterModule,
   ],
   controllers: [
     PackageItemsController,
@@ -87,7 +89,7 @@ import { UserAddressModule } from './user_address/user_address.module';
     PreArrivaController,
     PickupRequestsController,
     ShoppingRequestsController,
-    ProductsController,
+    ShoppingRequestProductsController,
   ],
   providers: [
     {

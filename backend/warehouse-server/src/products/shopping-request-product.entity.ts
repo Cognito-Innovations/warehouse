@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 
 @Entity('shopping_request_products')
-export class Product extends BaseTimestampEntity {
+export class ShoppingRequestProduct extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

@@ -15,15 +15,15 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ProductsService } from './products.service';
+import { ShoppingRequestProductsService } from './shopping-request-products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductResponseDto } from './dto/product-response.dto';
 
-@ApiTags('Products')
-@Controller('products')
+@ApiTags('Shopping Request Products')
+@Controller('shopping-request-products')
 @UseGuards(JwtAuthGuard)
-export class ProductsController {
-  constructor(private readonly service: ProductsService) {}
+export class ShoppingRequestProductsController {
+  constructor(private readonly service: ShoppingRequestProductsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new product under a shopping request' })

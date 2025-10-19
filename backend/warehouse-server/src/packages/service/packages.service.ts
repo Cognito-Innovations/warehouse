@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, ILike, Repository } from 'typeorm';
-import { isUUID } from 'class-validator'; 
+import { isUUID } from 'class-validator';
 
 import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
@@ -379,7 +379,7 @@ export class PackagesService {
           'user',
           'user.preference',
           'user.address',
-          'charges'
+          'charges',
         ],
       });
     } else {
@@ -438,7 +438,7 @@ export class PackagesService {
       ],
       order: { created_at: 'DESC' },
     });
-  
+
     return Promise.all(
       packages.map((pkg) => this.mapPackageToResponseDto(pkg)),
     );

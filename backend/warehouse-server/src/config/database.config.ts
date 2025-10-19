@@ -2,7 +2,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 import { Rack } from '../racks/rack.entity';
 import { User } from '../users/user.entity';
-import { Product } from '../products/product.entity';
+import { ShoppingRequestProduct } from '../products/shopping-request-product.entity';
 import { Supplier } from '../suppliers/supplier.entity';
 import { Package } from '../packages/entities/package.entity';
 import { PreArrival } from '../pre-arrivals/pre-arrival.entity';
@@ -32,6 +32,9 @@ import { Currency } from 'src/currencies/currency.entity';
 import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { SupportedCountry } from 'src/supported-countries/supported-country.entity';
 import { UserAddress } from 'src/user_address/user_address.entity';
+import { SubCategory } from 'src/ecommerce/entities/sub_category.entity';
+import { Category } from 'src/ecommerce/entities/category.entity';
+import { EcommerceProduct } from 'src/ecommerce/entities/product.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -54,7 +57,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     Package,
     PreArrival,
     ShoppingRequest,
-    Product,
+    ShoppingRequestProduct,
     PickupRequest,
     TrackingRequest,
     PackageActionLog,
@@ -72,6 +75,10 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ShipmentExportBox,
     Document,
     Invoice,
+    Category,
+    SubCategory,
+    EcommerceProduct,
+    ShoppingRequestProduct,
   ],
   synchronize: true, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],

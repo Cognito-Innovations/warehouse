@@ -65,7 +65,7 @@ export const createShoppingRequest = async (request: any, token: string) => {
 
 export const createShoppingRequestProduct = async (product: any, token: string) => {
   const authenticatedApi = getAuthenticatedApi(token);
-  const res = await authenticatedApi.post("/products", product);
+  const res = await authenticatedApi.post("/shopping-requests", product);
   return res.data;
 };
 
