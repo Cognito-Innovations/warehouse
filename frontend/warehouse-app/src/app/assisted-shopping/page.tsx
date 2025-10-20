@@ -120,7 +120,7 @@ export default function AssistedShopping() {
     const filteredRequests = shoppingRequests.filter((request) => {
     if (!request.request_code) return false;
 
-    return request.request_code.toLowerCase().includes(searchTerm.toLowerCase())
+    return request.request_code.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
     if (filteredRequests.length === 0) {

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Delete as DeleteIcon, HourglassEmpty as HourglassIcon, Upload as UploadIcon } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
-import CheckIcon from '@mui/icons-material/Check';
+import CheckIcon from "@mui/icons-material/Check";
 import { getPackagesByUserAndStatus, updatePackageStatus, getPackagesByUser, getPreArrivalsByUser, deletePreArrival, uploadPackageDocuments } from "../../lib/api.service";
 
 import usePreArrival from "../../hooks/usePreArrival";
@@ -163,12 +163,12 @@ const TabsSection = () => {
         const errorMessage = err.response.data.message;
         const parsedErrors: Record<string, string> = {};
 
-        const errorParts = errorMessage.split(', ');
+        const errorParts = errorMessage.split(", ");
         errorParts.forEach((part: string) => {
-          if (part.toLowerCase().includes('otp')) {
+          if (part.toLowerCase().includes("otp")) {
             parsedErrors.otp = part;
           }
-          if (part.toLowerCase().includes('tracking number')) {
+          if (part.toLowerCase().includes("tracking number")) {
             parsedErrors.trackingNumber = part;
           }
         });
@@ -243,7 +243,7 @@ const TabsSection = () => {
           fetchPackages();
         } catch (err) {
           console.error("Upload failed:", err);
-          toast.error("Failed to upload document. Please tray again.")
+          toast.error("Failed to upload document. Please tray again.");
         } finally {
           setUploadingPackageId(null);
         }
@@ -506,7 +506,7 @@ const TabsSection = () => {
           trackingNo: newPreArrival.tracking_no,
           requestedAt: formatDateTime(newPreArrival.created_at),
           status: newPreArrival.status,
-          details: newPreArrival.details || 'NOTHING'
+          details: newPreArrival.details || "NOTHING"
         } : null}
         isDeleting={isDeleting}
       />

@@ -256,7 +256,7 @@ export default function AddAddressModal({ open, onClose, onAddressAdded }: AddAd
             >
               {isLoadingCountries && (
                 <MenuItem disabled value="">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <CircularProgress size={20} />
                     <Typography>Loading countries...</Typography>
                   </Box>

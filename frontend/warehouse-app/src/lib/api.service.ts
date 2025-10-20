@@ -160,12 +160,12 @@ export const getPackagesByShipmentId = async (shipmentId: string) => {
 export const uploadPackageDocuments = async (packageId: string, files: File[]): Promise<any> => {
   const formData = new FormData();
   files.forEach(file => {
-    formData.append('files', file);
+    formData.append("files", file);
   });
   
   const response = await authenticatedApi.post(`/packages/${packageId}/documents/upload`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
   return response.data;
@@ -265,7 +265,7 @@ export const verifyEmailOtp = async (userId: string, otp: string) => {
 };
 
 export const createUserAddress = async (data: any) => {
-  const res = await authenticatedApi.post(`/user-address`, data);
+  const res = await authenticatedApi.post("/user-address", data);
   return res.data;
 };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { Toaster } from "sonner";
 import AddressLayout from "./AddressLayout";
 import Header from "@/components/Navbar/Header";
 
@@ -12,11 +13,15 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const pathname = usePathname();
   //To force move site, we need to update it here "/" to "/path-name".
   const hideHeader = pathname === "/";
+  
+  // Don't show header for ecommerce routes
+  const isEcommerceRoute = pathname.startsWith("/ecommerce");
 
   return (
     <>
-      {!hideHeader && <AddressLayout> <Header /> </AddressLayout>}
+      {!hideHeader && !isEcommerceRoute && <AddressLayout> <Header /> </AddressLayout>}
       {children}
+      <Toaster position="top-right" richColors />
     </>
   );
 }

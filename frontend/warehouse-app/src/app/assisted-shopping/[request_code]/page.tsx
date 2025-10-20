@@ -133,7 +133,7 @@ export default function ViewShoppingRequestPage() {
             />
           </div>
 
-          <div className={`w-full lg:flex-1 space-y-6 ${isRejected ? 'opacity-60 pointer-events-none' : ''}`}>
+          <div className={`w-full lg:flex-1 space-y-6 ${isRejected ? "opacity-60 pointer-events-none" : ""}`}>
             <InfoBanner
               message={shoppingRequestMessages[request.status] || "No updates available."} 
               isRejected={isRejected}

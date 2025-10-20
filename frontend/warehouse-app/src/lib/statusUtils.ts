@@ -1,8 +1,8 @@
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { SvgIconComponent } from "@mui/icons-material";
 
@@ -34,7 +34,7 @@ export const getStatusProps = (status: string): { IconComponent: SvgIconComponen
       return {
         IconComponent: FlightTakeoffIcon,
         colorClassName: "text-orange-500",
-      }
+      };
     default:
       return {
         IconComponent: HelpOutlineIcon,

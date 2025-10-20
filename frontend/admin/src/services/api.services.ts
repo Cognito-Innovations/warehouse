@@ -244,6 +244,11 @@ export const getShoppingRequestByCode = async (code: string) => {
   return response.data;
 };
 
+export const getEcommerceProducts = async () => {
+  const response = await api.get(`/ecommerce-categories`);
+  return response.data;
+}
+
 export const updateShoppingRequestStatus = async (id: string, status: string) => {
   const response = await api.patch(`/shopping-requests/${id}/status`, { status });
   return response.data;

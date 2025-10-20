@@ -103,7 +103,7 @@ export default function OtpVerification({ userId, email, isVerified, onVerificat
       {otpMessage && !otpSent && <FormHelperText sx={{ mt: 1 }}>{otpMessage}</FormHelperText>}
       
       {otpSent && !isVerified && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 2 }}>
           <TextField
             label="Enter 4-Digit OTP"
             value={otp}

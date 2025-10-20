@@ -33,6 +33,7 @@ const Header = () => {
 
   const navItems = [
     { name: "My Suite", path: "/dashboard" },
+    { name: "Ecommerce", path: "/ecommerce" },
     { name: "Assisted Shopping", path: "/assisted-shopping" },
     { name: "Pickup Request", path: "/pickup-request" },
   ];

@@ -74,7 +74,7 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
             {/* Placeholder Icon */}
             <div className="flex flex-col items-center gap-4">
               <div className="w-20 h-20 bg-gray-100 rounded-full border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
-                <Typography variant="h4" sx={{ color: 'grey.400' }}>📍</Typography>
+                <Typography variant="h4" sx={{ color: "grey.400" }}>📍</Typography>
               </div>
             </div>
           

@@ -1,14 +1,22 @@
 import { Module } from '@nestjs/common';
 import { CategoriesController } from './controllers/ecommerce-categories.controller';
 import { SubCategoriesController } from './controllers/ecommerce-sub-categories.controller';
+import { ProductsController } from './controllers/ecommerce-products.controller';
+import { CartController } from './controllers/ecommerce-cart.controller';
+import { OrderController } from './controllers/ecommerce-order.controller';
 import { CategoriesService } from './services/ecommerce-categories.service';
 import { SubCategoriesService } from './services/ecommerce-sub-categories.service';
 import { ProductsService } from './services/ecommerce-products.service';
-import { ProductsController } from './controllers/ecommerce-products.controller';
+import { CartService } from './services/ecommerce-cart.service';
+import { OrderService } from './services/ecommerce-order.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EcommerceCategory } from './entities/ecommerce-category.entity';
 import { EcommerceSubCategory } from './entities/ecommerce-sub-category.entity';
 import { EcommerceProduct } from './entities/ecommerce-product.entity';
+import { EcommerceCart } from './entities/ecommerce-cart.entity';
+import { EcommerceCartItem } from './entities/ecommerce-cart-item.entity';
+import { EcommerceOrder } from './entities/ecommerce-order.entity';
+import { EcommerceOrderItem } from './entities/ecommerce-order-item.entity';
 
 @Module({
   imports: [
@@ -16,13 +24,25 @@ import { EcommerceProduct } from './entities/ecommerce-product.entity';
       EcommerceCategory,
       EcommerceSubCategory,
       EcommerceProduct,
+      EcommerceCart,
+      EcommerceCartItem,
+      EcommerceOrder,
+      EcommerceOrderItem,
     ]),
   ],
   controllers: [
     CategoriesController,
     SubCategoriesController,
     ProductsController,
+    CartController,
+    OrderController,
   ],
-  providers: [CategoriesService, SubCategoriesService, ProductsService],
+  providers: [
+    CategoriesService,
+    SubCategoriesService,
+    ProductsService,
+    CartService,
+    OrderService,
+  ],
 })
 export class EcommerceModule {}
