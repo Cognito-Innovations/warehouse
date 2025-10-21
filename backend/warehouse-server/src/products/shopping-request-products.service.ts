@@ -5,6 +5,7 @@ import { ShoppingRequestProduct } from './shopping-request-product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductResponseDto } from './dto/product-response.dto';
 
+//TODO P0: Needs to rewrite return logic code
 @Injectable()
 export class ShoppingRequestProductsService {
   constructor(

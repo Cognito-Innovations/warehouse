@@ -14,6 +14,7 @@ import { AddressData } from "../../contexts/AddressContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { Avatar, Menu, MenuItem, IconButton, ListItemIcon, ListItemText, Box, Typography, Divider, Badge } from "@mui/material";
 
+//TODO P0: Needs to break all these code into smaller components for better readability and maintainability
 const Header = () => {
   const {updateAddress} = useAddressForm();
 

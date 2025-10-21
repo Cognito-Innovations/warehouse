@@ -61,6 +61,7 @@ export class ShoppingRequestsService {
       user: savedShoppingRequest.user_id,
       courier_id: savedShoppingRequest.courier.id,
     });
+    //TODO P0: Needs to rewrite return logic code
     return {
       id: savedShoppingRequest.id,
       user_id: savedShoppingRequest.user_id,
@@ -117,6 +118,7 @@ export class ShoppingRequestsService {
           where: { shopping_request_id: request.id },
         });
 
+        //TODO P0: Needs to rewrite return logic code
         const shoppingRequestProducts = await Promise.all(
           rawProducts.map(async (product) => ({
             id: product.id,

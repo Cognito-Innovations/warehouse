@@ -16,6 +16,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClose }) =>
     }
   };
 
+  //TODO P0: Needs to move all these steps to utils constants
   const steps = [
     {
       number: 1,

@@ -40,6 +40,7 @@ export class PackagesService {
     private readonly packageChargeRepository: Repository<PackageCharge>,
   ) {}
 
+  //TODO P0: Needs to remove this mapper and rewirte this logic
   private async mapPackageToResponseDto(
     pkg: Package,
   ): Promise<PackageResponseDto> {
