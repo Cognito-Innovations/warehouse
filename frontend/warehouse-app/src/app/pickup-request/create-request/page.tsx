@@ -84,6 +84,7 @@ function CreatePickupRequestPageContent() {
         pkg_details: "",
         remarks: "",
       });
+      //TODO P0: Needs to move all routes names to utils constants if possible use enums
       router.push("/pickup-request");
     } catch (err: any) {
       console.error(err);

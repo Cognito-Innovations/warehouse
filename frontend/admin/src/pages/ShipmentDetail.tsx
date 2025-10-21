@@ -27,6 +27,7 @@ const ShipmentDetail: React.FC = () => {
 
   if (!shoppingRequest) return <div>Loading...</div>;
 
+  //TODO P0: Resolve these typescript errors
   return (
     <Box sx={{ width: '100%', minHeight: '100vh', padding: "16px" }}>
       <TopNavbar pageTitle="Shipment Request" pageSubtitle="All" />

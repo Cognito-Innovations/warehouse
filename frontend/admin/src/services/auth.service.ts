@@ -36,6 +36,7 @@ export interface RegisterResponse {
   };
 }
 
+//TODO P0: Resolve these typescript errors
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
     const response = await authApi.post('/login', {

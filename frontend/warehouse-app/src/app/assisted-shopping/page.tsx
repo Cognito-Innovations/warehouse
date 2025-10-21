@@ -27,6 +27,7 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+//TODO P0: Improve the below code by breaking it and creating smaller components for better readability and maintainability
 export default function AssistedShopping() {
   const { data: session, status } = useSession();
   const [value, setValue] = useState(0);

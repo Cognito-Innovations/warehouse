@@ -28,6 +28,7 @@ const CouriersPage: React.FC = () => {
         getCouriers(),
         getCountries(),
       ]);
+      //TODO P0: Needs to move these status keywrods to utils constants if possible use enums
       if (results[0].status === 'fulfilled') {
         setCouriers(results[0].value);
       } else {

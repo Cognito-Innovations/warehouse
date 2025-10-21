@@ -59,6 +59,7 @@ const Packages: React.FC = () => {
       }, {});
 
       // Create status cards with real data - only the 3 needed statuses
+      //TODO P0: Needs to move these status to utils constants
       const cards: StatusCard[] = [
         {
           title: 'Action Required',

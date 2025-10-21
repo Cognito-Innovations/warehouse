@@ -182,6 +182,7 @@ const PackageDetail: React.FC = () => {
     </Alert>
   );
 
+  //TODO P0: Remove these mapping cleaning part.
   const displayPackageData = {
     id: packageData.package_id,
     actual_id: packageData.id,

@@ -18,6 +18,7 @@ const PreArrivals: React.FC = () => {
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(15);
 
+  //TODO P0: Remove this mock data if we are not using it
   // Mock data for Pre Arrivals
   const preArrivals: PreArrival[] = [
     {

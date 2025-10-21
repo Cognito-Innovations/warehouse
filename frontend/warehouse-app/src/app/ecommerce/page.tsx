@@ -43,6 +43,7 @@ interface TabPanelProps {
   value: number;
 }
 
+//TODO P0: If we are not using it remove it
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
   return (
