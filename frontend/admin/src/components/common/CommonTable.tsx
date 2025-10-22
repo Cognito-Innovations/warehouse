@@ -22,9 +22,11 @@ interface CommonTableProps<T> {
   rows: T[];
   columns: ColumnDefinition<T>[];
   loading: boolean;
-  statusOptions: { value: string; label: string }[];
+  statusOptions?: { value: string; label: string }[];
   noDataMessage: string;
-  onViewDetails: (id: string | number) => void;
+  onViewDetails?: (id: string | number) => void;
+  onEdit?: (id: string | number) => void;
+  onDelete?: (id: string | number) => void;
   getIdentifier: (row: T) => string | number;
   getRowStatus: (row: T) => string;
 }
@@ -36,6 +38,8 @@ const CommonTable = <T,>({
   statusOptions,
   noDataMessage,
   onViewDetails,
+  onEdit,
+  onDelete,
   getIdentifier,
   getRowStatus,
 }: CommonTableProps<T>) => {
@@ -64,27 +68,31 @@ const CommonTable = <T,>({
     setPage(0);
   };
 
+  const hasActions = Boolean(onViewDetails || onEdit || onDelete);
+
   return (
     <>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <IconButton>
-          <FilterAltOutlinedIcon color="action" />
-        </IconButton>
-        <TextField
-          select
-          value={statusFilter}
-          onChange={handleStatusChange}
-          size="small"
-          sx={{ minWidth: 150 }}
-        >
-          <MenuItem value="All">Status: All</MenuItem>
-          {statusOptions.map(option => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
-      </Box>
+      {statusOptions && statusOptions.length > 0 && (
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <IconButton>
+            <FilterAltOutlinedIcon color="action" />
+          </IconButton>
+          <TextField
+            select
+            value={statusFilter}
+            onChange={handleStatusChange}
+            size="small"
+            sx={{ minWidth: 150 }}
+          >
+            <MenuItem value="All">Status: All</MenuItem>
+            {statusOptions?.map(option => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
+      )}
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -117,24 +125,30 @@ const CommonTable = <T,>({
                       {column.header}
                     </TableCell>
                   ))}
-                  <TableCell
-                    align="right"
-                    sx={{
-                      py: 1.5,
-                      px: 2,
-                      fontWeight: 600,
-                      width: '100px'
-                    }}
-                  >
-                    Actions
-                  </TableCell>
+
+                  {hasActions && (
+                    <TableCell
+                      align="right"
+                      sx={{
+                        py: 1.5,
+                        px: 2,
+                        fontWeight: 600,
+                        width: '100px'
+                      }}
+                    >
+                      Actions
+                    </TableCell>
+                  )}
                 </TableRow>
               </TableHead>
               <CommonTableBody
                 rows={visibleRows}
                 columns={columns}
                 onViewDetails={onViewDetails}
+                onEdit={onEdit}
+                onDelete={onDelete}
                 getIdentifier={getIdentifier}
+                hasActions={hasActions}
               />
             </Table>
           </TableContainer>

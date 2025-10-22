@@ -5,6 +5,8 @@ import {
   IsUUID,
   IsNumber,
   IsPositive,
+  Min,
+  IsBoolean,
 } from 'class-validator';
 
 export class CreateEcommerceProductDto {
@@ -13,7 +15,7 @@ export class CreateEcommerceProductDto {
   name: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   description: string;
 
   @IsString()
@@ -33,7 +35,7 @@ export class CreateEcommerceProductDto {
   country_id: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   image_url: string;
 
   @IsNumber()
@@ -41,14 +43,22 @@ export class CreateEcommerceProductDto {
   price: number;
 
   @IsNumber()
-  @IsPositive()
+  @Min(0)
   discount_percentage: number;
 
   @IsNumber()
   @IsPositive()
-  quantity: number;
+  unit_value: number;
 
-  @IsString()
+  @IsNumber()
+  @Min(0)
+  stock_quantity: number;
+
+  @IsBoolean()
   @IsOptional()
-  measurement: string;
+  is_active: boolean;
+
+  @IsUUID()
+  @IsNotEmpty()
+  measurement_id: string;
 }

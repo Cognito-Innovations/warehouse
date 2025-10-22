@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { EcommerceCategory } from './ecommerce-category.entity';
 import { EcommerceSubCategory } from './ecommerce-sub-category.entity';
+import { EcommerceMeasurement } from './measurement.entity';
 
 @Entity('ecommerce_products')
 export class EcommerceProduct extends BaseTimestampEntity {
@@ -36,18 +37,25 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @JoinColumn({ name: 'country_id' })
   country: Country;
 
-  @Column()
+  @Column({ nullable: true })
   image_url: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   discount_percentage: number;
 
-  @Column()
-  quantity: number;
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  unit_value: number;
 
-  @Column({ type: 'text', nullable: true })
-  measurement: string;
+  @Column({ type: 'int', default: 0 })
+  stock_quantity: number;
+
+  @Column({ default: true })
+  is_active: boolean;
+
+  @ManyToOne(() => EcommerceMeasurement, { eager: true, nullable: true })
+  @JoinColumn({ name: 'measurement_id' })
+  measurement: EcommerceMeasurement;
 }

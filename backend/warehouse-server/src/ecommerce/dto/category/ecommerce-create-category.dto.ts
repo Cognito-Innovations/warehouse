@@ -11,10 +11,12 @@ export class CreateCategoryDto {
 
   @IsString()
   @IsNotEmpty()
+  @IsOptional()
   image_url: string;
 
   @IsString()
   @IsNotEmpty()
+  @IsOptional()
   country_id: string;
 
   @IsString()

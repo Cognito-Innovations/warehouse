@@ -17,14 +17,17 @@ export class CreateEcommerceSubCategoryDto {
 
   @IsString()
   @IsNotEmpty()
+  @IsOptional()
   image_url: string;
 
   @IsUUID()
   @IsNotEmpty()
+  @IsOptional()
   category_id: string;
 
   @IsUUID()
   @IsNotEmpty()
+  @IsOptional()
   country_id: string;
 
   @IsString()

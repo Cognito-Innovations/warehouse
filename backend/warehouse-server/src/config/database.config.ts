@@ -35,6 +35,9 @@ import { UserAddress } from 'src/user_address/user_address.entity';
 import { EcommerceSubCategory } from 'src/ecommerce/entities/ecommerce-sub-category.entity';
 import { EcommerceCategory } from 'src/ecommerce/entities/ecommerce-category.entity';
 import { EcommerceProduct } from 'src/ecommerce/entities/ecommerce-product.entity';
+import { EcommerceOrder } from 'src/ecommerce/entities/ecommerce-order.entity';
+import { EcommerceOrderItem } from 'src/ecommerce/entities/ecommerce-order-item.entity';
+import { EcommerceMeasurement } from 'src/ecommerce/entities/measurement.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -78,6 +81,9 @@ export const databaseConfig: TypeOrmModuleOptions = {
     EcommerceCategory,
     EcommerceSubCategory,
     EcommerceProduct,
+    EcommerceOrder,
+    EcommerceOrderItem,
+    EcommerceMeasurement,
     ShoppingRequestProduct,
   ],
   synchronize: true, // Disable schema synchronization to prevent modifying existing database

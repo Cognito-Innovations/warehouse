@@ -177,3 +177,34 @@ export interface PackageData {
   items?: PackageItem[];
   createdAt: string | Date;
 }
+
+export interface CategoryPayload {
+  id?: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+};
+
+export interface SubCategoryPayload {
+  id?: string;
+  category_id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+};
+
+export interface ProductPayload {
+  id?: string;
+  category_id: string;
+  sub_category_id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  discount_percentage: number;
+  unit_value: number;
+  measurement_id: string;
+  country_id: string;
+  stock_quantity: number;
+  is_active: boolean;
+};

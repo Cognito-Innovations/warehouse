@@ -17,11 +17,20 @@ export class ProductsService {
   async create(
     createProductDto: CreateEcommerceProductDto,
   ): Promise<EcommerceProduct> {
+    const {
+      category_id,
+      sub_category_id,
+      country_id,
+      measurement_id,
+      ...rest
+    } = createProductDto;
+
     const product = this.productRepository.create({
-      ...createProductDto,
-      category: { id: createProductDto.category_id },
-      sub_category: { id: createProductDto.sub_category_id },
-      country: { id: createProductDto.country_id },
+      ...rest,
+      category: { id: category_id },
+      sub_category: { id: sub_category_id },
+      country: { id: country_id },
+      measurement: { id: measurement_id },
     });
     return await this.productRepository.save(product);
   }

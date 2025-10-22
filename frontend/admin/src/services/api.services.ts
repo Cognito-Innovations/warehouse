@@ -1,5 +1,5 @@
 //TODO P0: Resolve these typescript errors
-import type { Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, Rack, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
+import type { CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
 import type { PreArrival } from '../types/PreArrival';
 import api from './axios';
 
@@ -398,4 +398,90 @@ export const updateCourier = async (id: string, data: UpdateCourierPayload): Pro
 export const deletePreArrival = async (id: string) => {
   const res = await api.delete(`/pre-arrival/${id}`);
   return res.data;
+};
+
+// Categories
+export const createCategory = async (
+  data: CategoryPayload
+) => {
+  const response = await api.post('/ecommerce-categories', data);
+  return response.data;
+};
+
+export const getCategories = async () => {
+  const response = await api.get("/ecommerce-categories");
+  return response.data;
+};
+
+export const updateCategory = async (id: string, data: CategoryPayload) => {
+  const response = await api.patch(`/ecommerce-categories/${id}`, data);
+  return response.data;
+};
+
+export const deleteCategory = async (id: string) => {
+  const response = await api.delete(`/ecommerce-categories/${id}`);
+  return response.data;
+};
+
+// Sub Categories
+export const createSubCategory = async (
+  data: SubCategoryPayload
+) => {
+  const response = await api.post('/ecommerce-sub-categories', data);
+  return response.data;
+};
+
+export const getSubCategories = async () => {
+  const response = await api.get("/ecommerce-sub-categories");
+  return response.data;
+};
+
+export const updateSubCategory = async (id: string, data: SubCategoryPayload) => {
+  const response = await api.patch(`/ecommerce-sub-categories/${id}`, data);
+  return response.data;
+};
+
+export const deleteSubCategory = async (id: string) => {
+  const response = await api.delete(`/ecommerce-sub-categories/${id}`);
+  return response.data;
+};
+
+// Products
+export const createProduct = async (
+  data: ProductPayload
+) => {
+  const response = await api.post('/ecommerce-products', data);
+  return response.data;
+};
+
+export const getProducts = async () => {
+  const response = await api.get("/ecommerce-products");
+  return response.data;
+};
+
+// Measurements
+export const getMeasurements = async () => {
+  const response = await api.get("/ecommerce-measurements");
+  return response.data;
+};
+
+// Orders
+export const getOrders = async () => {
+  const response = await api.get("/ecommerce-orders");
+  return response.data;
+};
+
+export const getOrderByOrderId = async (orderId: string) => {
+  const response = await api.get(`/ecommerce-orders/${orderId}`);
+  return response.data;
+};
+
+export const updateOrderStatus = async (id: string, status: string) => {
+  const response = await api.patch(`/ecommerce-orders/${id}/status`, status);
+  return response.data;
+};
+
+export const updatePaymentStatus = async (id: string, paymentStatus: string) => {
+  const response = await api.patch(`/ecommerce-orders/${id}/payment-status`, paymentStatus);
+  return response.data;
 };

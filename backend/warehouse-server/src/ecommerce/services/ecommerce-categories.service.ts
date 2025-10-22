@@ -16,10 +16,17 @@ export class CategoriesService {
   async create(
     createCategoryDto: CreateCategoryDto,
   ): Promise<EcommerceCategory> {
-    const category = this.categoryRepository.create({
-      ...createCategoryDto,
-      country: { id: createCategoryDto.country_id },
-    });
+    const { country_id, ...rest } = createCategoryDto;
+
+    const categoryPayload: Partial<EcommerceCategory> = {
+      ...rest,
+    };
+
+    if (country_id) {
+      categoryPayload.country = { id: country_id } as Country;
+    }
+
+    const category = this.categoryRepository.create(categoryPayload);
     return await this.categoryRepository.save(category);
   }
 
@@ -35,16 +42,22 @@ export class CategoriesService {
     id: string,
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<EcommerceCategory> {
+    const { country_id, ...rest } = updateCategoryDto;
+
     const category = await this.categoryRepository.findOne({
       where: {
         id,
       },
     });
     if (!category) throw new NotFoundException('Category not found');
-    if (updateCategoryDto.country_id) {
-      category.country = {
-        id: updateCategoryDto.country_id,
-      } as Country;
+    this.categoryRepository.merge(category, rest);
+
+    if (country_id! in updateCategoryDto) {
+      if (updateCategoryDto.country_id === null) {
+        category.country = null;
+      } else if (typeof updateCategoryDto.country_id === 'string') {
+        category.country = { id: updateCategoryDto.country_id } as Country;
+      }
     }
 
     return await this.categoryRepository.save(category);

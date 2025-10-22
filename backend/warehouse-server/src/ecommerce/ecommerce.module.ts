@@ -17,6 +17,9 @@ import { EcommerceCart } from './entities/ecommerce-cart.entity';
 import { EcommerceCartItem } from './entities/ecommerce-cart-item.entity';
 import { EcommerceOrder } from './entities/ecommerce-order.entity';
 import { EcommerceOrderItem } from './entities/ecommerce-order-item.entity';
+import { EcommerceMeasurement } from './entities/measurement.entity';
+import { MeasurementController } from './controllers/measurement.controller';
+import { MeasurementService } from './services/measurement.service';
 
 @Module({
   imports: [
@@ -28,6 +31,7 @@ import { EcommerceOrderItem } from './entities/ecommerce-order-item.entity';
       EcommerceCartItem,
       EcommerceOrder,
       EcommerceOrderItem,
+      EcommerceMeasurement,
     ]),
   ],
   controllers: [
@@ -36,6 +40,7 @@ import { EcommerceOrderItem } from './entities/ecommerce-order-item.entity';
     ProductsController,
     CartController,
     OrderController,
+    MeasurementController,
   ],
   providers: [
     CategoriesService,
@@ -43,6 +48,7 @@ import { EcommerceOrderItem } from './entities/ecommerce-order-item.entity';
     ProductsService,
     CartService,
     OrderService,
+    MeasurementService
   ],
 })
 export class EcommerceModule {}

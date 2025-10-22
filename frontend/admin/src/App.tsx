@@ -33,6 +33,10 @@ import ViewShipmentExportPage from './pages/ViewShipmentExportPage';
 import CountriesPage from './pages/CountriesPage';
 import CurrenciesPage from './pages/CurrenciesPage';
 import CouriersPage from './pages/CouriersPage';
+import Category from './pages/Category';
+import SubCategory from './pages/SubCategory';
+import Products from './pages/Products';
+import Orders from './pages/Orders';
 
 function App() {
   const { user } = useAuth()
@@ -95,6 +99,12 @@ function App() {
                   <Route path="/requests/:id" element={<ShoppingRequestDetail />} />
                   <Route path="/pickups" element={<PickupRequests />} />
                   <Route path="/pickups/:id" element={<PickupRequestDetail />} />
+
+                  <Route path="/category" element={<Category />} />
+                  <Route path="/sub-category" element={<SubCategory />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/orders" element={<Orders />} />
+
                   <Route path="/suite" element={<MySuiteContent />} />
                   <Route path="/customers" element={<Customers />} />
                   <Route path="/customers/:id" element={<CustomerDetailPage />} />

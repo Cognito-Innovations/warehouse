@@ -17,16 +17,28 @@ export class SubCategoriesService {
   async create(
     createSubCategoryDto: CreateEcommerceSubCategoryDto,
   ): Promise<EcommerceSubCategory> {
-    const subCategory = this.subCategoryRepository.create({
-      ...createSubCategoryDto,
-      category: { id: createSubCategoryDto.category_id },
-      country: { id: createSubCategoryDto.country_id },
-    });
+    const { country_id, category_id, ...rest } = createSubCategoryDto;
+
+    const subCategoryPayload: Partial<EcommerceSubCategory> = {
+      ...rest,
+    };
+
+    if (country_id) {
+      subCategoryPayload.country = { id: country_id } as Country;
+    }
+
+    if (category_id) {
+      subCategoryPayload.category = { id: category_id } as EcommerceCategory;
+    }
+
+    const subCategory = this.subCategoryRepository.create(subCategoryPayload);
     return await this.subCategoryRepository.save(subCategory);
   }
 
   findAll() {
-    return this.subCategoryRepository.find();
+    return this.subCategoryRepository.find({
+      relations: ['category'],
+    });
   }
 
   findOne(id: string) {
@@ -37,23 +49,30 @@ export class SubCategoriesService {
     id: string,
     updateSubCategoryDto: UpdateEcommerceSubCategoryDto,
   ): Promise<EcommerceSubCategory> {
+    const { country_id, category_id, ...rest } = updateSubCategoryDto;
+
     const subCategory = await this.subCategoryRepository.findOne({
       where: {
         id,
       },
     });
     if (!subCategory) throw new NotFoundException('Sub category not found');
+    this.subCategoryRepository.merge(subCategory, rest);
 
-    if (updateSubCategoryDto.category_id) {
+    if (category_id) {
       subCategory.category = {
-        id: updateSubCategoryDto.category_id,
+        id: category_id,
       } as EcommerceCategory;
     }
 
-    if (updateSubCategoryDto.country_id) {
-      subCategory.country = {
-        id: updateSubCategoryDto.country_id,
-      } as Country;
+    if (country_id! in updateSubCategoryDto) {
+      if (updateSubCategoryDto.country_id === null) {
+        subCategory.country = null;
+      } else if (typeof updateSubCategoryDto.country_id === 'string') {
+        subCategory.country = {
+          id: updateSubCategoryDto.country_id
+        } as Country;
+      }
     }
 
     return await this.subCategoryRepository.save(subCategory);

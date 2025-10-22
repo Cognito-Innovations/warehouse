@@ -24,14 +24,15 @@ export class EcommerceSubCategory extends BaseTimestampEntity {
   @Column()
   slug: string;
 
-  //TODO: Need to add discount percentage here because there might be chance entire sub category is on discount.
-
-  @Column()
+  @Column({ nullable: true })
   image_url: string;
 
-  @ManyToOne(() => Country, { eager: true })
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  discount_percentage: number;
+
+  @ManyToOne(() => Country, { eager: true, nullable: true })
   @JoinColumn({ name: 'country_id' })
-  country: Country;
+  country: Country | null;
 
   @Column({ type: 'text', nullable: true })
   description: string;
