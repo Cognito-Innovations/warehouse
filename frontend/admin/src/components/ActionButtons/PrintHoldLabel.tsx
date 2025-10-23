@@ -14,11 +14,13 @@ interface Measurement {
 interface HoldLabelData {
     shipment_id: string;
     shipment_uuid?: string;
-    name: string;
-    suite_no?: string;
-    weight?: string;
+    user?: {
+        name: string;
+        suite_no?: string;
+    }
+    total_weight?: string;
     measurements: Measurement[];
-    createdAt?: string;
+    created_at?: string;
 }
 
 interface PrintHoldLabelButtonProps {
@@ -31,7 +33,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
     const handlePrintHoldLabel = async () => {
         setIsPrintingHold(true);
         try {
-            if (!data || !data.shipment_id || !data.name || !data.measurements) {
+            if (!data || !data.shipment_id || !data.user?.name || !data.measurements) {
                 toast.error("Required data for hold label is missing.");
                 console.error("Missing data for hold label:", data);
                 return;
@@ -97,7 +99,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text(barcodeText, textX, textY, { align: 'center' });
 
             // 4. Suite Box (Right)
-            const suiteNo = data.suite_no || '';
+            const suiteNo = data.user?.suite_no || '';
             doc.setDrawColor(0, 0, 0);
             doc.setTextColor(0, 0, 0);
             doc.roundedRect(100, 28, 45, 15, 1.5, 1.5, 'S'); 
@@ -109,7 +111,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text(suiteNo, 122.5, 40, { align: 'center' });
 
             // 5. User Name (Right)
-            const userName = data.name|| '';
+            const userName = data.user?.name|| '';
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.text(`${userName} (${suiteNo})`, 98, 50);
@@ -120,7 +122,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.setLineDashPattern([], 0); // Reset dash pattern
 
             // 7. Weight / Pcs (Bottom-Left)
-            const weight = parseFloat(data.weight || '0').toFixed(2);
+            const weight = parseFloat(data.total_weight || '0').toFixed(2);
             const pieces = data.measurements.length || 0;
             const weightText = `WEIGHT: ${weight} KG / ${pieces} PCS`;
             doc.setFontSize(9);
@@ -128,7 +130,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text(weightText, 5, 65);
 
             // 8. REG. DATE (Bottom-Right)
-            const regDateText = `REG. DATE: ${data.createdAt || ''}`;
+            const regDateText = `REG. DATE: ${data.created_at || ''}`;
             const pageWidth = 150;
             const margin = 5;
             const textWidth = doc.getTextWidth(regDateText);

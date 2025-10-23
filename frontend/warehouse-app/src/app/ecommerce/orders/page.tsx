@@ -28,6 +28,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Order } from "../../../types/ecommerce";
 import { ecommerceService } from "../../../services/ecommerce.service";
+import { ROUTES } from "@/utils/constants";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -94,7 +95,7 @@ export default function OrdersPage() {
   };
 
   const handleViewOrder = (orderId: string) => {
-    router.push(`/ecommerce/orders/${orderId}`);
+    router.push(`${ROUTES.ORDER}/${orderId}`);
   };
 
   if (loading) {
@@ -125,7 +126,7 @@ export default function OrdersPage() {
         <Box sx={{ mb: 3 }}>
           <Button
             startIcon={<ArrowBack />}
-            onClick={() => router.push("/ecommerce")}
+            onClick={() => router.push(ROUTES.ECOMMERCE)}
             sx={{ mb: 2, textTransform: "none" }}
           >
             Back to Shopping
@@ -146,7 +147,7 @@ export default function OrdersPage() {
             </Typography>
             <Button
               variant="contained"
-              onClick={() => router.push("/ecommerce")}
+              onClick={() => router.push(ROUTES.ECOMMERCE)}
               sx={{ textTransform: "none" }}
             >
               Start Shopping

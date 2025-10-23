@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Grid, CircularProgress, Alert, Typography } from '@mui/material';
+import { Box, Grid, CircularProgress, Alert } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getPackageById, updatePackageStatus, getPackageDocuments, getPaymentSlips, getShipmentDocuments } from '../services/api.services';
@@ -182,59 +182,6 @@ const PackageDetail: React.FC = () => {
     </Alert>
   );
 
-  //TODO P0: Remove these mapping cleaning part.
-  const displayPackageData = {
-    id: packageData.package_id,
-    actual_id: packageData.id,
-    shipment_id: packageData.shipment_id,
-    shipment_uuid: packageData.shipment_uuid,
-    status: packageData.status,
-    name: packageData.user?.name || '',
-    suite_no: packageData.user?.suite_no || 'N/A',
-    email: packageData.user?.email || 'N/A',
-    phone: packageData.user?.phone_number,
-    phone2: packageData.user?.phone_number_2,
-    courier_address: packageData.user?.preference?.courier?.address,
-    courier_phone: packageData.user?.preference?.courier?.phone_number,
-    address: packageData.user?.address,
-    trackingNo: packageData.tracking_no || 'N/A',
-    weight: `${packageData.total_weight || 0}Kg`,
-    volumetricWeight: packageData.total_volumetric_weight ? `${packageData.total_volumetric_weight}Kg` : '-',
-    dangerousGood: packageData.dangerous_good ? 'Yes' : 'No',
-    rack: packageData.rack_slot?.label ? `${packageData.rack_slot.label}` : 'N/A',
-    rackColor: packageData.rack_slot?.color ? `${packageData.rack_slot.color}` : 'N/A',
-    count: packageData.rack_slot?.count ? packageData.rack_slot.count : 0,
-    createdBy: packageData.created_by?.name || '',
-    createdAt: formatDateTime(Number(packageData.created_at) * 1000),
-    updatedBy: packageData.updated_by?.name || '',
-    updatedAt: formatDateTime(packageData.updated_at),
-    vendor: packageData.vendor?.supplier_name || '',
-    remarks: packageData.remarks || 'No remarks',
-    allowUserItems: packageData.allow_user_items || false,
-    shopInvoiceReceived: packageData.shop_invoice_received || false,
-    items: packageItems,
-    measurements: packageData.measurements?.map((measurement: any) => {
-      let volumetricWeight = '-';
-      if (measurement.volumetric_weight) {
-        volumetricWeight = `${measurement.volumetric_weight}Kg`;
-      } else if (measurement.has_measurements && measurement.length && measurement.width && measurement.height) {
-        // Calculate volumetric weight: (L × W × H) / 5000 (for cm to kg)
-        const calculatedVolWeight = (parseFloat(measurement.length) * parseFloat(measurement.width) * parseFloat(measurement.height)) / 5000;
-        volumetricWeight = `${calculatedVolWeight.toFixed(3)}Kg`;
-      }
-      
-      return {
-        pieceNumber: measurement.piece_number,
-        weight: `${measurement.weight || 0}Kg`,
-        volumetricWeight: volumetricWeight,
-        hasMeasurements: measurement.has_measurements || false,
-        length: measurement.length,
-        width: measurement.width,
-        height: measurement.height
-      };
-    }) || []
-  };
-
   const showInvoiceTable = 
     ['Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed']
       .includes(packageData.status.value);
@@ -248,9 +195,9 @@ const PackageDetail: React.FC = () => {
       {showDiscardedMessage}
 
         <PackageHeader 
-          packageData={displayPackageData}
+          packageData={packageData}
           onRefresh={async () => {
-            const updated = await getPackageById(displayPackageData.id);
+            const updated = await getPackageById(packageData.package_id);
             setPackageData(updated);
           }}
           isDiscarded={isDiscarded}
@@ -259,14 +206,14 @@ const PackageDetail: React.FC = () => {
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 8 }}>
           <PackageDetailsSection 
-            packageData={displayPackageData}
+            packageData={packageData}
             isRefreshing={isRefreshing}
             onRefresh={handleRefresh}
             isDiscarded={isDiscarded}
           />
 
           <PackageItemsSection
-            id={packageData.id}
+            id={packageData.package_id}
             packageItems={packageItems}
             setPackageItems={setPackageItems}
             isDiscarded={isDiscarded}
@@ -274,14 +221,14 @@ const PackageDetail: React.FC = () => {
 
           {showInvoiceTable && (
             <InvoiceTable 
-              id={displayPackageData.actual_id}
+              id={packageData.id}
               invoice={getInvoice(packageData)}
               payment_slips={paymentSlips}
               status={packageData.status.value}
               isApprovingPayment={isApprovingPayment}
               onApprovePayment={handleApprovePayment}
               onStatusUpdated={async () => {
-                const updated = await getPackageById(displayPackageData.id);
+                const updated = await getPackageById(packageData.package_id);
                 setPackageData(updated);
                 await fetchPaymentSlips(updated.shipment_uuid);
               }}
@@ -292,19 +239,19 @@ const PackageDetail: React.FC = () => {
 
         <Grid size={{ xs: 12, md: 4 }}>
           <ActionLogsSection
-            packageId={displayPackageData.actual_id}
-            initialStatus={displayPackageData.status}
+            packageId={packageData.id}
+            initialStatus={packageData.status}
             initialDocuments={uploadedDocuments}
             packageCreationData={{
-              createdBy: displayPackageData.createdBy,
-              createdAt: displayPackageData.createdAt,
+              createdBy: packageData.created_by?.name,
+              createdAt: formatDateTime(Number(packageData.created_at)),
             }}
             onActionLogUpdate={handleActionLogUpdate}
             isDiscarded={isDiscarded}
           />
 
           <PhotosDocumentsSection 
-            packageData={displayPackageData}
+            packageData={packageData}
             documents={shipmentDocuments}
             onUploadSuccess={handleActionLogUpdate}
             isDiscarded={isDiscarded}

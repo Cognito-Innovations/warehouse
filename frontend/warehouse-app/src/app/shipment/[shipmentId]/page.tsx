@@ -12,6 +12,7 @@ import RequestHeader from "@/components/Shipment/RequestHeader";
 import ActionsCard from "@/components/Shipment/ActionsCard";
 import Invoices from "@/components/Shipment/Invoices";
 import ConfirmDialog from "@/components/Modals/ConfirmDialog";
+import { ROUTES } from "@/utils/constants";
 
 interface IShipmentRequest {
   id: string;
@@ -91,7 +92,7 @@ export default function ShipmentDetailPage() {
 
     try {
       toast.success("Request deleted successfully!");
-      router.push("/dashboard?tab=shipments");
+      router.push(`${ROUTES.DASHBOARD}?tab=shipments`);
     } catch (error) {
       console.error("Delete failed:", error);
       toast.error("Failed to delete request");

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -11,10 +11,10 @@ import {
 } from '@mui/material';
 
 interface Measurement {
-  pieceNumber: number;
+  piece_number: number;
   weight: string;
-  volumetricWeight: string;
-  hasMeasurements: boolean;
+  volumetric_weight: string;
+  has_measurements: boolean;
   length?: number;
   width?: number;
   height?: number;
@@ -22,15 +22,38 @@ interface Measurement {
 
 interface MeasurementsTableProps {
   measurements?: Measurement[];
-  createdBy: string;
-  createdAt: string;
+  createdBy?: string;
+  createdAt?: string;
 }
 
 const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ measurements, createdBy, createdAt }) => {
+  const processedMeasurements = useMemo(() => {
+    return measurements?.map((m) => {
+      let volumetricWeight = '-';
+      if (m.volumetric_weight) {
+        volumetricWeight = `${m.volumetric_weight}Kg`;
+      } else if (m.has_measurements && m.length && m.width && m.height) {
+        const calculatedVolWeight =
+          (parseFloat(String(m.length)) * parseFloat(String(m.width)) * parseFloat(String(m.height))) / 5000;
+        volumetricWeight = `${calculatedVolWeight.toFixed(3)}Kg`;
+      }
+
+      return {
+        pieceNumber: m.piece_number,
+        weight: `${m.weight || 0}Kg`,
+        volumetricWeight,
+        hasMeasurements: m.has_measurements,
+        length: m.length,
+        width: m.width,
+        height: m.height,
+      };
+    });
+  }, [measurements]);
+
   return (
     <Box sx={{ mt: 3 }}>
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#1e293b' }}>
-        {measurements?.length || 0} Piece Measurements
+        {processedMeasurements?.length || 0} Piece Measurements
       </Typography>
 
       {measurements && measurements.length > 0 ? (
@@ -45,7 +68,7 @@ const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ measurements, cre
               </TableRow>
             </TableHead>
             <TableBody>
-              {measurements.map((measurement, index) => (
+              {processedMeasurements?.map((measurement, index) => (
                 <TableRow key={index}>
                   <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{measurement.pieceNumber}</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{measurement.weight}</TableCell>

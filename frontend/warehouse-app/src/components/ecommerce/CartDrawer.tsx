@@ -28,6 +28,7 @@ import {
 } from "@mui/icons-material";
 import { useCart, useCartActions } from "../../store/ecommerceStore";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/utils/constants";
 
 interface CartDrawerProps {
   open: boolean;
@@ -49,7 +50,7 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
 
   const handleCheckout = () => {
     onClose();
-    router.push("/ecommerce/checkout");
+    router.push(ROUTES.CHECKOUT);
   };
 
   const handleUpdateQuantity = (itemId: string, newQuantity: number) => {

@@ -8,22 +8,25 @@ import type { Status } from '../../types';
 
 interface PackageDetailsSectionProps {
   packageData: {
-    actual_id: string;
-    trackingNo: string;
-    weight: string;
-    volumetricWeight: string;
-    dangerousGood: string;
-    createdBy: string;
-    createdAt: string;
+    id: string;
+    tracking_no: string;
+    total_weight: string;
+    total_volumetric_weight: string;
+    dangerous_good: string;
+    created_by?: {
+      name: string;
+    }
+    created_at: string;
+    updated_at: string;
     status?: Status;
     rack?: string,
     rackColor?: string,
     count?: number;
     measurements?: {
-      pieceNumber: number;
+      piece_number: number;
       weight: string;
-      volumetricWeight: string;
-      hasMeasurements: boolean;
+      volumetric_weight: string;
+      has_measurements: boolean;
       length?: number;
       width?: number;
       height?: number;
@@ -95,7 +98,7 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
                   Tracking No.
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                  {packageData.trackingNo}
+                  {packageData.tracking_no}
                 </Typography>
               </Box>
               <Box sx={{ mb: 2 }}>
@@ -103,7 +106,7 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
                   Volumetric Weight
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                  {packageData.volumetricWeight}
+                  {packageData.total_volumetric_weight}
                 </Typography>
               </Box>
             </Grid>
@@ -114,7 +117,7 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
                   Weight
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                  {packageData.weight}
+                  {packageData.total_weight}
                 </Typography>
               </Box>
               <Box sx={{ mb: 2 }}>
@@ -122,7 +125,7 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
                   Dangerous Good
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                  ⛔️ {packageData.dangerousGood}
+                  ⛔️ {packageData.dangerous_good}
                 </Typography>
               </Box>
             </Grid>
@@ -138,8 +141,8 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
 
           <MeasurementsTable 
             measurements={packageData.measurements}
-            createdBy={packageData.createdBy}
-            createdAt={packageData.createdAt}
+            createdBy={packageData.created_by?.name}
+            createdAt={packageData.created_at}
           />
         </CardContent>
       </Card>

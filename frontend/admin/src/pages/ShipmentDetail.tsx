@@ -32,7 +32,7 @@ const ShipmentDetail: React.FC = () => {
     <Box sx={{ width: '100%', minHeight: '100vh', padding: "16px" }}>
       <TopNavbar pageTitle="Shipment Request" pageSubtitle="All" />
       <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3 }, py: 3 }}>
-        <RequestDetailHeader request={shoppingRequest} onStatusUpdated={fetchRequest}/>
+        <RequestDetailHeader request={shoppingRequest} onStatusUpdate={fetchRequest}/>
         <RequestDetailContent request={shoppingRequest} onStatusUpdated={fetchRequest} />
       </Container>
     </Box>

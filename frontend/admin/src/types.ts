@@ -101,6 +101,9 @@ export interface Package {
   user?: {
     name?: string;
     suite_no?: string;
+    email?: string;
+    phone_number?: string;
+    phone_number_2?: string;
   };
   shipment_uuid: string;
   created_at?: string;
@@ -171,11 +174,13 @@ export interface PackageItem {
 
 export interface PackageData {
   id: string;
-  name: string;
-  suite_no?: string;
-  weight?: string;
+  user?: {
+    name: string;
+    suite_no?: string;
+  }
+  total_weight?: string;
   items?: PackageItem[];
-  createdAt: string | Date;
+  created_at: string | Date;
 }
 
 export interface CategoryPayload {

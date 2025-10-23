@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import SearchBar from "./SearchBar";
 import PreArrivalPopup from "../Modals/PrePackageArrivalOTPModal/PreArrivalPopup";
 import { getStatusProps } from "@/lib/statusUtils";
+import { ROUTES } from "@/utils/constants";
 
 const TabsSection = () => {
   const { user } = useAuth();
@@ -398,7 +399,7 @@ const TabsSection = () => {
                   return (
                     <div
                       key={shipment.id}
-                      onClick={() => router.push(`/shipment/${shipment.shipment_id}`)}
+                      onClick={() => router.push(`${ROUTES.SHIPMENT}/${shipment.shipment_id}`)}
                       className="flex justify-between items-center border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                     >
                       <div>

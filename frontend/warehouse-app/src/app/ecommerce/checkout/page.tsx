@@ -46,6 +46,7 @@ import { useRouter } from "next/navigation";
 import { useCart, useCartActions } from "../../../store/ecommerceStore";
 import { ecommerceService } from "../../../services/ecommerce.service";
 import { toast } from "sonner";
+import { ROUTES } from "@/utils/constants";
 
 export default function CheckoutPage() {
   const theme = useTheme();
@@ -63,7 +64,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!cart || cart.items.length === 0) {
-      router.push("/ecommerce");
+      router.push(ROUTES.ECOMMERCE);
     }
   }, [cart, router]);
 
@@ -91,7 +92,7 @@ export default function CheckoutPage() {
       
       toast.success("Order placed successfully!");
       clearCart();
-      router.push(`/ecommerce/orders/${order.id}`);
+      router.push(`${ROUTES.ORDER}/${order.id}`);
     } catch (err) {
       console.error("Error placing order:", err);
       setError("Failed to place order. Please try again.");

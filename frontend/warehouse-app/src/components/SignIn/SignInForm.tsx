@@ -9,6 +9,7 @@ import axios from "axios";
 import { generateSequentialSuiteNumber } from "../../utils/auth.utils";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import PasswordStrength from "./PasswordStrength";
+import { ROUTES } from "@/utils/constants";
 
 export default function SignInForm() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function SignInForm() {
   
   useEffect(() => {
     if (user) {
-      router.push("/dashboard");
+      router.push(ROUTES.DASHBOARD);
     }
   }, [user, router]);
 

@@ -11,12 +11,14 @@ interface UpdateRackSlotModalProps {
   onClose: () => void;
   onRefresh: () => void;
   packageData: {
-    actual_id: string;
-    rack?: string;
-    createdBy: string;
-    createdAt: string;
-    updatedBy: string;
-    updatedAt: string;
+    id: string;
+    rack_slot?:{
+      label: string;
+    };
+    updated_by?: {
+      name: string;
+    };
+    updated_at: string;
   };
 }
 
@@ -31,7 +33,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
     try {
       const data = await getRacks();
       setRackSlots(data);
-      const currentRack = data.find((r) => r.label === packageData.rack);
+      const currentRack = data.find((r) => r.label === packageData.rack_slot?.label);
       if (currentRack) {
         setSelectedRackSlot(currentRack.id);
       }
@@ -40,7 +42,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
     } finally {
       setLoadingRacks(false);
     }
-  }, [packageData.rack]);
+  }, [packageData.rack_slot?.label]);
 
   useEffect(() => {
     if (open) {
@@ -49,15 +51,15 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
   }, [open, fetchRacks]);
 
   const currentRack = useMemo(() =>
-    rackSlots.find(r => r.id === selectedRackSlot || r.label === packageData.rack),
-    [rackSlots, selectedRackSlot, packageData.rack]
+    rackSlots.find(r => r.id === selectedRackSlot || r.label === packageData.rack_slot?.label),
+    [rackSlots, selectedRackSlot, packageData.rack_slot?.label]
   );
 
   const handleSaveRackSlot = async () => {
     if (!selectedRackSlot) return;
     setSaving(true);
     try {
-      await updatePackage(packageData.actual_id, { rack_slot: selectedRackSlot });
+      await updatePackage(packageData.id, { rack_slot: selectedRackSlot });
       onRefresh();
       onClose();
     } catch (err) {
@@ -131,7 +133,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
                   onClick={handleSaveRackSlot}
                   variant="contained"
                   fullWidth
-                  disabled={saving || !selectedRackSlot || selectedRackSlot === rackSlots.find(r => r.label === packageData.rack)?.id}
+                  disabled={saving || !selectedRackSlot || selectedRackSlot === rackSlots.find(r => r.label === packageData.rack_slot?.label)?.id}
                   sx={{
                     textTransform: 'none',
                     bgcolor: '#4f46e5',
@@ -161,7 +163,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
                       {currentRack.label}
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#64748b' }}>
-                      {packageData.updatedBy} on {packageData.updatedAt}
+                      {packageData.updated_by?.name} on {packageData.updated_at}
                     </Typography>
                   </Box>
                 </Stack>

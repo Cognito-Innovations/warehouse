@@ -76,26 +76,13 @@ export class ShoppingRequestsService {
     };
   }
 
-  async getAllShoppingRequests(): Promise<ShoppingRequestResponseDto[]> {
+  async getAllShoppingRequests() {
     const shoppingRequests = await this.shoppingRequestRepository.find({
       order: { created_at: 'DESC' },
       relations: ['user', 'courier'],
     });
 
-    return shoppingRequests.map((request) => ({
-      id: request.id,
-      user_id: request.user_id,
-      user: request.user
-        ? this.usersService.mapToUserResponseDto(request.user)
-        : undefined,
-      request_code: request.request_code,
-      courier: request.courier.name,
-      items_count: request.items_count,
-      remarks: request.remarks,
-      status: request.status,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
-    }));
+    return shoppingRequests;
   }
 
   async getShoppingRequestsByUser(

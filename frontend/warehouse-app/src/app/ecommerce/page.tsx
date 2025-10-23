@@ -20,7 +20,6 @@ import {
   AppBar,
   Toolbar,
   useTheme,
-  useMediaQuery,
 } from "@mui/material";
 import {
   Search,
@@ -34,30 +33,9 @@ import {
   Refresh,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import { EcommerceCategory, EcommerceProduct } from "../../types/ecommerce";
+import { EcommerceProduct } from "../../types/ecommerce";
 import { useProducts, useCart, useCartActions, useProductActions } from "../../store/ecommerceStore";
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-//TODO P0: If we are not using it remove it
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+import { ROUTES } from "@/utils/constants";
 
 export default function Ecommerce() {
   const theme = useTheme();
@@ -65,7 +43,6 @@ export default function Ecommerce() {
   
   // Use Zustand store
   const { 
-    products, 
     filteredProducts, 
     categories, 
     searchQuery, 
@@ -78,10 +55,7 @@ export default function Ecommerce() {
   const { addToCart, updateCartItem, removeFromCart, fetchCart } = useCartActions();
   const { setSearchQuery, setSelectedCategory, fetchCategories, fetchProducts } = useProductActions();
 
-  const [tabValue, setTabValue] = useState(0);
-
   useEffect(() => {
-    // Load mock data on component mount
     fetchCategories();
     fetchProducts();
     fetchCart();
@@ -91,12 +65,8 @@ export default function Ecommerce() {
     setSelectedCategory(categoryId);
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
   const handleProductClick = (product: EcommerceProduct) => {
-    router.push(`/ecommerce/product/${product.id}`);
+    router.push(`${ROUTES.PRODUCT}/${product.id}`);
   };
 
   const handleAddToCart = (e: React.MouseEvent, product: EcommerceProduct) => {
@@ -194,7 +164,6 @@ export default function Ecommerce() {
           />
         </Box>
 
-
         {/* Category Navigation */}
         <Box sx={{ bgcolor: "white", px: 2, py: 1, borderBottom: "1px solid #e0e0e0" }} >
           <Box>
@@ -240,7 +209,7 @@ export default function Ecommerce() {
               </Box>
               <IconButton
                 color="inherit"
-                onClick={() => router.push("/ecommerce/cart")}
+                onClick={() => router.push(ROUTES.CART)}
                 sx={{ ml: 2 }}
               >
                 <Badge badgeContent={itemCount} color="error">
@@ -250,7 +219,6 @@ export default function Ecommerce() {
             </Box>
           </Box>
         </Box>
-
 
         {/* Suggested for You Section */}
         <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
@@ -348,7 +316,6 @@ export default function Ecommerce() {
                         >
                           {product.name}
                         </Typography>
-
 
                         {/* Price and Add Button */}
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
@@ -478,7 +445,7 @@ export default function Ecommerce() {
           <Button
             variant="text"
             startIcon={<ShoppingCart />}
-            onClick={() => router.push("/ecommerce/cart")}
+            onClick={() => router.push(ROUTES.CART)}
             sx={{ color: "#e91e63", textTransform: "none" }}
           >
             Cart ({itemCount})

@@ -3,6 +3,7 @@ import jsPDF from "jspdf";
 import QRCode from 'qrcode';
 import { format } from 'date-fns';
 import type { PackageData } from "../../types";
+import { formatDateTime } from "../../utils/formatDateTime";
 
 interface PackageLabelPDFProps {
   data: PackageData;
@@ -89,7 +90,7 @@ export const usePackageLabelPDF = ({ data }: PackageLabelPDFProps) => {
       doc.roundedRect(suiteX, suiteY + 1.5, suiteBoxWidth, suiteBoxHeight, 1, 1, 'S');
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.text(data.suite_no || 'N/A', suiteX + (suiteBoxWidth / 2), suiteY + 8, { align: 'center' });
+      doc.text(data.user?.suite_no || 'N/A', suiteX + (suiteBoxWidth / 2), suiteY + 8, { align: 'center' });
 
       // PACKAGE ARRIVED (Right)
       const arrivedBoxWidth = 60;
@@ -110,7 +111,7 @@ export const usePackageLabelPDF = ({ data }: PackageLabelPDFProps) => {
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
       const userInfoX = wrapperX + wrapperWidth - padding;
-      doc.text(`${data.name || 'N/A'} (${data.suite_no || 'N/A'})`, userInfoX, currentY, { align: 'right' });
+      doc.text(`${data.user?.name || 'N/A'} (${data.user?.suite_no || 'N/A'})`, userInfoX, currentY, { align: 'right' });
 
       // Dashed separator
       const dashY = currentY + 8;
@@ -122,13 +123,13 @@ export const usePackageLabelPDF = ({ data }: PackageLabelPDFProps) => {
 
       // Weight and Registration Date
       const detailsY = dashY + 8;
-      const weightText = `WEIGHT: ${parseFloat(data.weight || '0').toFixed(1)} KG / ${data.items?.length || 0} PCS`;
+      const weightText = `WEIGHT: ${parseFloat(data.total_weight || '0').toFixed(1)} KG / ${data.items?.length || 0} PCS`;
       doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
       doc.text(weightText, contentStartX, detailsY);
 
       doc.setFont("helvetica", "normal");
-      const formattedDate = format(new Date(data.createdAt), 'dd MMM yyyy - HH:mm');
+      const formattedDate = format(formatDateTime(Number(data.created_at)), 'dd MMM yyyy - HH:mm');
       doc.text(`REG. DATE: ${formattedDate}`, wrapperX + wrapperWidth - padding, detailsY, { align: 'right' });
 
       // Solid separator line

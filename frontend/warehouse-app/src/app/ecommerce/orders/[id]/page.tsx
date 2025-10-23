@@ -32,6 +32,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Order } from "../../../../types/ecommerce";
 import { ecommerceService } from "../../../../services/ecommerce.service";
+import { ROUTES } from "@/utils/constants";
 
 interface OrderDetailPageProps {
   params: {
@@ -131,7 +132,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         <Box sx={{ mb: 3 }}>
           <Button
             startIcon={<ArrowBack />}
-            onClick={() => router.push("/ecommerce/orders")}
+            onClick={() => router.push(ROUTES.ORDER)}
             sx={{ mb: 2, textTransform: "none" }}
           >
             Back to Orders

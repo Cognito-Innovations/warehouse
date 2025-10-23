@@ -22,10 +22,13 @@ interface InvoiceItem {
 
 interface InvoiceData {
     id: string;
-    name: string;
-    phone?: string;
-    suite?: string;
-    updatedAt?: string;
+    user?: {
+        name: string;
+        phone?: string;
+        suite_no?: string;
+        address?: string;
+    }
+    updated_at?: string;
     to_address?: {
         line1?: string;
         zip_code?: string;
@@ -43,7 +46,7 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
     const handleCommercialInvoiceButton = async () => {
         setIsPrinting(true);
         try {
-            if (!data || !data.id || !data.name || !data.items) {
+            if (!data || !data.id || !data.user?.name || !data.items) {
                 toast.error("Required data for the invoice is missing.");
                 return;
             }
@@ -111,27 +114,27 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
 
             // Ship To Box
             const shipToContent = [
-                data.name || 'Maryam Maana',
+                data.user?.name || 'Maryam Maana',
                 data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City Kaafu",
                 data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
-                data.phone || '9834396'
+                data.user?.phone || '9834396'
             ];
             drawInfoBox(margin, yPos, 'Ship To', shipToContent);
             
             // Bill To Box
             const billToContent = [
-                data.name || 'Maryam Maana',
+                data.user?.name || 'Maryam Maana',
                 data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City",
                 data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
-                data.phone || '9834396'
+                data.user?.phone || '9834396'
             ];
             drawInfoBox(margin + boxWidth + 6, yPos, 'Bill To', billToContent);
             
             // Invoice Details Box
             const invoiceDetailsContent = [
-                `Suite ID: ${data.suite || '714-881'}`,
+                `Suite ID: ${data.user?.suite_no || '714-881'}`,
                 `Invoice Number: ${data.id || 'S2025236IN'}`,
-                `Invoice Date: ${data.updatedAt || '2025-09-22'}`,
+                `Invoice Date: ${data.updated_at || '2025-09-22'}`,
                 'Currency: USD'
             ];
             drawInfoBox(margin + (boxWidth + 6) * 2, yPos, 'Invoice Details', invoiceDetailsContent);

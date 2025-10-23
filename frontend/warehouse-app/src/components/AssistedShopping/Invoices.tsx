@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { uploadToCloudinary } from "@/lib/cloudinary.api";
 import { addPaymentSlip, updateShoppingRequestStatus } from "@/lib/api.service";
 import { Loader } from "./Loader";
-import { formatDateTime } from "@/lib/utils";
 import { generateInvoicePDF } from "./InvoicePDF";
+import { formatDateTime } from "@/lib/utils";
+import { IMAGE_FILE_REGEX } from "@/utils/constants";
 
 export default function Invoices({ request, onUpdate }: { request: any, onUpdate?: () => void; }) {
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
@@ -98,8 +99,7 @@ export default function Invoices({ request, onUpdate }: { request: any, onUpdate
 
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 flex gap-3 flex-wrap">
             {uploadedUrls.map((url, index) => {
-              //TODO P0: Needs to move all these regex to utils constants
-              const isImage = typeof url === "string" && url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
+              const isImage = typeof url === "string" && IMAGE_FILE_REGEX.test(url);
 
               return (
               <div

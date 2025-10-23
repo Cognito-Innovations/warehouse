@@ -24,17 +24,13 @@ import {
   Security,
   Star,
 } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useProducts, useCart, useCartActions } from "../../../../store/ecommerceStore";
+import { ROUTES } from "@/utils/constants";
 
-interface ProductDetailPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function ProductDetailPage({ params }: ProductDetailPageProps) {
+export default function ProductDetailPage() {
   const router = useRouter();
+  const params = useParams();
   const { products } = useProducts();
   const { cart, itemCount } = useCart();
   const { addToCart, updateCartItem } = useCartActions();
@@ -141,7 +137,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             
             <IconButton 
               color="inherit" 
-              onClick={() => router.push("/ecommerce/cart")}
+              onClick={() => router.push(ROUTES.CART)}
             >
               <Badge badgeContent={itemCount} color="error">
                 <ShoppingCart />
@@ -290,7 +286,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   color="text.secondary"
                   sx={{ textDecoration: "line-through" }}
                 >
-                  ₹{product.price.toFixed(0)}
+                  ₹{Number(product.price).toFixed(0)}
                 </Typography>
               </Box>
 

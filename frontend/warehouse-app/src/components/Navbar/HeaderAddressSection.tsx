@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ErrorOutline } from "@mui/icons-material";
 import { Skeleton, Box, Typography, Button } from "@mui/material";
 import ReactCountryFlag from "react-country-flag";
+import { ROUTES } from "@/utils/constants";
 
 interface AddressData {
   id?: string;
@@ -86,7 +87,7 @@ const HeaderAddressSection: React.FC<HeaderAddressSectionProps> = ({
 
               <div className="flex items-center gap-4">
                 <button 
-                  onClick={() => router.push("/profile")}
+                  onClick={() => router.push(ROUTES.PROFILE)}
                   className="text-purple-700 text-sm font-medium hover:underline"
                 >
                   Complete Profile

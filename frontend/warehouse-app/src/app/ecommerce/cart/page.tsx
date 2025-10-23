@@ -47,6 +47,7 @@ import {
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useCart, useCartActions } from "../../../store/ecommerceStore";
+import { ROUTES } from "@/utils/constants";
 
 export default function CartPage() {
   const theme = useTheme();
@@ -98,7 +99,7 @@ export default function CartPage() {
             </Typography>
             <Button
               variant="contained"
-              onClick={() => router.push("/ecommerce")}
+              onClick={() => router.push(ROUTES.ECOMMERCE)}
               sx={{
                 bgcolor: "#e91e63",
                 textTransform: "none",
@@ -134,7 +135,7 @@ export default function CartPage() {
   };
 
   const handleProceedToCheckout = () => {
-    router.push("/ecommerce/checkout");
+    router.push(ROUTES.CHECKOUT);
   };
 
   const getDiscountPrice = (item: any) => {
@@ -435,7 +436,7 @@ export default function CartPage() {
                 <Typography variant="body2" color="text.secondary">
                   Continue Shopping
                 </Typography>
-                <IconButton onClick={() => router.push("/ecommerce")}>
+                <IconButton onClick={() => router.push(ROUTES.ECOMMERCE)}>
                   <Typography variant="h6">→</Typography>
                 </IconButton>
               </Box>

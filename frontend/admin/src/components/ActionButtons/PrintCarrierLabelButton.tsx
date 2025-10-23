@@ -6,36 +6,44 @@ import { generateCarrierLabelPDF } from "../PDF/CarrierLabelPDF";
 
 export interface CarrierLabelData {
     id: string;
-    trackingNo: string;
+    tracking_no: string;
     status?: { value: string };
-    createdAt?: string;
-    weight?: string;
+    created_at?: string;
+    total_weight?: string;
     num_pieces?: string;
     origin_country?: string;
     destination_country?: string;
-    length?: string;
-    width?: string;
-    height?: string;
+    measurements?:{
+        length?: string;
+        width?: string;
+        height?: string;
+    }
     value_usd?: string;
     shipment_id?: string;
     piece_id?: string;
-    name?: string;
-    courier_address?: string;
-    courier_phone?: string;
     items?: [
       {
         name: string,
         quantity: string,
       }
     ],
-    phone?: string;
-    phone2?: string;
-    address?: {
-        address?: string;
-        city?: string;
-        state?: string,
-        country?: string;
-    };
+    user?: {
+        name?: string;
+        phone_number?: string;
+        phone_number_2?: string;
+        address?: {
+            address?: string;
+            city?: string;
+            state?: string,
+            country?: string;
+        };
+        preference?: {
+            courier?: {
+                address?: string;
+                phone_number?: string;
+            }
+        }
+    }
 }
 
 interface PrintCarrierLabelButtonProps {
