@@ -6,12 +6,12 @@ import { deleteCategory, getCategories } from "../services/api.services";
 import TopNavbar from "../components/Layout/TopNavbar";
 import CommonTable from "../components/common/CommonTable";
 import StatusChip from "../components/common/StatusChip";
-import type { ColumnDefinition } from "../types/table";
 import AddActionButton from "../components/common/AddActionButton";
 import Modal from "../components/common/Modal";
 import CategoryForm from "../components/Category/CategoryForm";
-import type { CategoryPayload } from "../types";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import type { ColumnDefinition } from "../types/table";
+import type { CategoryPayload } from "../types";
 
 interface CategoryRow {
   id: string;
@@ -54,19 +54,19 @@ const Category: React.FC = () => {
   }, []);
 
   const handleEditCategory = (id: string | number) => {
-      const category = categories.find((c) => c.id === id);
-      if (!category) return;
-    
-      const payload: CategoryPayload = {
-        id: category.id,
-        name: category.name,
-        slug: category.slug,
-        is_active: category.status === "Active",
-      };
-
-      setEditingCategory(payload);
-      setModalOpen(true);
+    const category = categories.find((category) => category.id === id);
+    if (!category) return;
+  
+    const payload: CategoryPayload = {
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      is_active: category.status === "Active",
     };
+    
+    setEditingCategory(payload);
+    setModalOpen(true);
+  };
 
     const handleDeleteClick = (id: string | number) => {
       setDeletingCategoryId(String(id));
@@ -74,18 +74,18 @@ const Category: React.FC = () => {
     };
 
     const handleConfirmDelete = async () => {
-        if (!deletingCategoryId) return;
-        try {
-          setDeleteLoading(true);
-          await deleteCategory(deletingCategoryId);
-          setCategories((prev) => prev.filter((c) => c.id !== deletingCategoryId));
-          setDeleteDialogOpen(false);
-          setDeletingCategoryId(null);
-        } catch (error) {
-          console.error("Error deleting category:", error);
-        } finally {
-          setDeleteLoading(false);
-        }
+      if (!deletingCategoryId) return;
+      try {
+        setDeleteLoading(true);
+        await deleteCategory(deletingCategoryId);
+        setCategories((prev) => prev.filter((category) => category.id !== deletingCategoryId));
+        setDeleteDialogOpen(false);
+        setDeletingCategoryId(null);
+      } catch (error) {
+        console.error("Error deleting category:", error);
+      } finally {
+        setDeleteLoading(false);
+      }
     };
 
   const columns: ColumnDefinition<CategoryRow>[] = [

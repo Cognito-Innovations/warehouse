@@ -6,12 +6,12 @@ import { deleteSubCategory, getSubCategories } from "../services/api.services";
 import TopNavbar from "../components/Layout/TopNavbar";
 import CommonTable from "../components/common/CommonTable";
 import StatusChip from "../components/common/StatusChip";
-import type { ColumnDefinition } from "../types/table";
 import AddActionButton from "../components/common/AddActionButton";
 import Modal from "../components/common/Modal";
 import ConfirmDialog from "../components/common/ConfirmDialog";
-import type { SubCategoryPayload } from "../types";
 import SubCategoryForm from "../components/SubCategory/SubCategoryForm";
+import type { ColumnDefinition } from "../types/table";
+import type { SubCategoryPayload } from "../types";
 
 interface SubCategoryRow {
   id: string;
@@ -58,7 +58,7 @@ const SubCategory: React.FC = () => {
   }, []);
 
   const handleEditSubCategory = (id: string | number) => {
-    const sub_category = subcategories.find((c) => c.id === id);
+    const sub_category = subcategories.find((sub_category) => sub_category.id === id);
     if (!sub_category || !sub_category.categoryId) return;
   
     const payload: SubCategoryPayload = {
@@ -82,11 +82,11 @@ const SubCategory: React.FC = () => {
     try {
       setDeleteLoading(true);
       await deleteSubCategory(deletingCategoryId);
-      setSubCategories((prev) => prev.filter((c) => c.id !== deletingCategoryId));
+      setSubCategories((prev) => prev.filter((sub_category) => sub_category.id !== deletingCategoryId));
       setDeleteDialogOpen(false);
       setDeletingCategoryId(null);
     } catch (error) {
-      console.error("Error deleting category:", error);
+      console.error("Error deleting sub category:", error);
     } finally {
       setDeleteLoading(false);
     }

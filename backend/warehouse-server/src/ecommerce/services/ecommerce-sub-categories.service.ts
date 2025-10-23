@@ -3,9 +3,9 @@ import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.
 import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Country } from 'src/Countries/country.entity.js';
 import { CreateEcommerceSubCategoryDto } from '../dto/sub_category/create-sub_category.dto.js';
 import { UpdateEcommerceSubCategoryDto } from '../dto/sub_category/update-sub_category.dto.js';
-import { Country } from 'src/Countries/country.entity.js';
 
 @Injectable()
 export class SubCategoriesService {
@@ -21,14 +21,11 @@ export class SubCategoriesService {
 
     const subCategoryPayload: Partial<EcommerceSubCategory> = {
       ...rest,
+      category: { id: category_id } as EcommerceCategory,
     };
 
     if (country_id) {
       subCategoryPayload.country = { id: country_id } as Country;
-    }
-
-    if (category_id) {
-      subCategoryPayload.category = { id: category_id } as EcommerceCategory;
     }
 
     const subCategory = this.subCategoryRepository.create(subCategoryPayload);
@@ -59,20 +56,12 @@ export class SubCategoriesService {
     if (!subCategory) throw new NotFoundException('Sub category not found');
     this.subCategoryRepository.merge(subCategory, rest);
 
-    if (category_id) {
-      subCategory.category = {
-        id: category_id,
-      } as EcommerceCategory;
-    }
+    subCategory.category = { id: category_id } as EcommerceCategory;
 
-    if (country_id! in updateSubCategoryDto) {
-      if (updateSubCategoryDto.country_id === null) {
-        subCategory.country = null;
-      } else if (typeof updateSubCategoryDto.country_id === 'string') {
-        subCategory.country = {
-          id: updateSubCategoryDto.country_id
-        } as Country;
-      }
+    if (country_id === null) {
+      subCategory.country = null;
+    } else if (country_id) {
+      subCategory.country = { id: country_id } as Country;
     }
 
     return await this.subCategoryRepository.save(subCategory);

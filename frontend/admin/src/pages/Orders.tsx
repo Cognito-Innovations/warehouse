@@ -6,11 +6,11 @@ import { getOrderByOrderId, getOrders } from "../services/api.services";
 import TopNavbar from "../components/Layout/TopNavbar";
 import CommonTable from "../components/common/CommonTable";
 import StatusChip from "../components/common/StatusChip";
-import type { ColumnDefinition } from "../types/table";
-import { formatCurrency } from "../utils/formatCurrency";
-import type { OrderDetails } from "../types/order";
-import { formatDateTime } from "../utils/formatDateTime";
 import OrderDetailsModal from "../components/Orders/OrderDetailsModal";
+import { formatCurrency } from "../utils/formatCurrency";
+import { formatDateTime } from "../utils/formatDateTime";
+import type { OrderDetails } from "../types/order";
+import type { ColumnDefinition } from "../types/table";
 
 interface OrderRow {
   id: string;
@@ -107,11 +107,11 @@ const Orders: React.FC = () => {
     },
   ];
 
-  const fetchAndShowDetails = useCallback(async (orderId: string) => {
+  const handleViewDetails = useCallback(async (id: string | number) => {
     setIsModalOpen(true);
     setIsModalLoading(true);
     try {
-      const details = await getOrderByOrderId(orderId);
+      const details = await getOrderByOrderId(id);
       setSelectedOrder(details);
     } catch (error) {
       console.error("Error fetching order details:", error);
@@ -120,19 +120,6 @@ const Orders: React.FC = () => {
       setIsModalLoading(false);
     }
   }, []);
-
-  const handleViewDetails = useCallback(
-    (id: string | number) => {
-      if (typeof id === "string") {
-        fetchAndShowDetails(id).catch((err) => {
-          console.error("Error in fetchAndShowDetails:", err);
-        });
-      } else {
-        console.error("Received non-string ID:", id);
-      }
-    },
-    [fetchAndShowDetails]
-  );
 
   const handleCloseModal = () => {
     setIsModalOpen(false);

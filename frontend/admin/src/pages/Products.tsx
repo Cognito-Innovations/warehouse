@@ -6,10 +6,10 @@ import { getProducts } from "../services/api.services";
 import TopNavbar from "../components/Layout/TopNavbar";
 import CommonTable from "../components/common/CommonTable";
 import StatusChip from "../components/common/StatusChip";
-import type { ColumnDefinition } from "../types/table";
 import AddActionButton from "../components/common/AddActionButton";
 import ProductForm from "../components/Product/ProductForm";
 import Modal from "../components/common/Modal"; 
+import type { ColumnDefinition } from "../types/table";
 
 interface ProductRow {
   id: string;

@@ -22,7 +22,6 @@ export class CreateEcommerceSubCategoryDto {
 
   @IsUUID()
   @IsNotEmpty()
-  @IsOptional()
   category_id: string;
 
   @IsUUID()

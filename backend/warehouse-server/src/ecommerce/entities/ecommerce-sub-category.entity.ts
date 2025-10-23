@@ -14,7 +14,7 @@ export class EcommerceSubCategory extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => EcommerceCategory, { eager: true })
+  @ManyToOne(() => EcommerceCategory, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'category_id' })
   category: EcommerceCategory;
 

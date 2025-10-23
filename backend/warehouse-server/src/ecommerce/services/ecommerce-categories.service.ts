@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Country } from 'src/Countries/country.entity.js';
 import { CreateCategoryDto } from '../dto/category/ecommerce-create-category.dto.js';
 import { UpdateCategoryDto } from '../dto/category/ecommerce-update-category.dto.js';
-import { Country } from 'src/Countries/country.entity.js';
 
 @Injectable()
 export class CategoriesService {
@@ -52,12 +52,10 @@ export class CategoriesService {
     if (!category) throw new NotFoundException('Category not found');
     this.categoryRepository.merge(category, rest);
 
-    if (country_id! in updateCategoryDto) {
-      if (updateCategoryDto.country_id === null) {
-        category.country = null;
-      } else if (typeof updateCategoryDto.country_id === 'string') {
-        category.country = { id: updateCategoryDto.country_id } as Country;
-      }
+    if (country_id === null) {
+      category.country = null;
+    } else if (country_id) {
+      category.country = { id: country_id } as Country;
     }
 
     return await this.categoryRepository.save(category);

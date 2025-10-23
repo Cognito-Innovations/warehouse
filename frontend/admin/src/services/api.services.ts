@@ -471,7 +471,7 @@ export const getOrders = async () => {
   return response.data;
 };
 
-export const getOrderByOrderId = async (orderId: string) => {
+export const getOrderByOrderId = async (orderId: string | number) => {
   const response = await api.get(`/ecommerce-orders/${orderId}`);
   return response.data;
 };

@@ -32,7 +32,7 @@ export class CartService {
         user_id: userId,
         status: CartStatus.ACTIVE,
         total_amount: 0,
-        discount_amount: 0,
+        discount_percentage: 0,
         final_amount: 0,
       });
       cart = await this.cartRepository.save(cart);
@@ -72,9 +72,9 @@ export class CartService {
       await this.cartItemRepository.save(existingItem);
     } else {
       // Add new item
-      const discountAmount =
+      const discountPercentage =
         (product.price * product.discount_percentage) / 100;
-      const finalPrice = product.price - discountAmount;
+      const finalPrice = product.price - discountPercentage;
 
       const cartItem = this.cartItemRepository.create({
         cart_id: cart.id,
@@ -82,7 +82,7 @@ export class CartService {
         quantity,
         unit_price: finalPrice,
         total_price: finalPrice * quantity,
-        discount_amount: discountAmount * quantity,
+        discount_percentage: discountPercentage * quantity,
       });
 
       await this.cartItemRepository.save(cartItem);
@@ -111,7 +111,7 @@ export class CartService {
 
     cartItem.quantity = updateCartItemDto.quantity;
     cartItem.total_price = cartItem.quantity * cartItem.unit_price;
-    cartItem.discount_amount =
+    cartItem.discount_percentage =
       (cartItem.product.price - cartItem.unit_price) * cartItem.quantity;
 
     await this.cartItemRepository.save(cartItem);
@@ -159,14 +159,14 @@ export class CartService {
     });
 
     const totalAmount = items.reduce((sum, item) => sum + item.total_price, 0);
-    const discountAmount = items.reduce(
-      (sum, item) => sum + item.discount_amount,
+    const discountPercentage = items.reduce(
+      (sum, item) => sum + item.discount_percentage,
       0,
     );
     const finalAmount = totalAmount;
 
     cart.total_amount = totalAmount;
-    cart.discount_amount = discountAmount;
+    cart.discount_percentage = discountPercentage;
     cart.final_amount = finalAmount;
 
     await this.cartRepository.save(cart);

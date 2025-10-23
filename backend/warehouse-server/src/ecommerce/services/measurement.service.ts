@@ -15,7 +15,7 @@ export class MeasurementService {
     createEcommerceMeasurementDto: CreateEcommerceMeasurementDto,
   ): Promise<EcommerceMeasurement> {
     const existingMeasurement = await this.measurementRepository.findOne({
-        where: { label: createEcommerceMeasurementDto.label },
+      where: { label: createEcommerceMeasurementDto.label },
     });
     if (existingMeasurement) {
       throw new ConflictException(
@@ -24,7 +24,7 @@ export class MeasurementService {
     }
 
     const measurement = this.measurementRepository.create({
-        label: createEcommerceMeasurementDto.label,
+      label: createEcommerceMeasurementDto.label,
     });
     return await this.measurementRepository.save(measurement);
   }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Box, TextField, MenuItem, Stack, Button, CircularProgress } from "@mui/material";
+
 import { createCategory, updateCategory } from "../../services/api.services";
 import type { CategoryPayload } from "../../types";
 
@@ -15,31 +16,34 @@ const statusOptions = [
 ];
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [status, setStatus] = useState(true);
+  const [formData, setFormData] = useState({
+    name: "",
+    slug: "",
+    is_active: true,
+  });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (initialData) {
-      setName(initialData.name);
-      setSlug(initialData.slug);
-      setStatus(initialData.is_active);
-    } else {
-      setName("");
-      setSlug("");
-      setStatus(true);
-    }
+    setFormData({
+      name: initialData?.name || "",
+      slug: initialData?.slug || "",
+      is_active: initialData?.is_active ?? true,
+    });
   }, [initialData]);
 
+  const handleChange = (key: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleSubmit = async () => {
+    const { name, slug, is_active } = formData;
     if (!name || !slug) return;
 
     if (initialData) {
       const hasChanged =
         initialData.name !== name ||
         initialData.slug !== slug ||
-        initialData.is_active !== status;
+        initialData.is_active !== is_active;
 
       if (!hasChanged) {
         onClose();
@@ -49,10 +53,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
 
     try {
       setLoading(true);
-      if (initialData) {
-        await updateCategory(initialData.id!, { name, slug, is_active: status });
+      if (initialData?.id) {
+        await updateCategory(initialData.id, formData);
       } else {
-        await createCategory({ name, slug, is_active: status });
+        await createCategory(formData);
       }
       onSuccess?.();
       onClose();
@@ -68,24 +72,24 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
       <Stack spacing={2}>
         <TextField
           label="Category Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={formData.name}
+          onChange={(e) => handleChange("name", e.target.value)}
           required
           fullWidth
         />
         <TextField
           label="Slug"
-          value={slug}
+          value={formData.slug}
           helperText="URL-friendly version of the name"
-          onChange={(e) => setSlug(e.target.value)}
+          onChange={(e) => handleChange("slug", e.target.value)}
           required
           fullWidth
         />
         <TextField
           label="Status"
           select
-          value={status}
-          onChange={(e) => setStatus(e.target.value === "true")}
+          value={formData.is_active}
+          onChange={(e) => handleChange("is_active", e.target.value === "true")}
           fullWidth
         >
           {statusOptions.map((option) => (
@@ -102,7 +106,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={loading || !name || !slug}
+            disabled={loading || !formData.name || !formData.slug}
           >
             {loading ? <CircularProgress size={20} color="inherit" /> : (initialData ? "Update" : "Add")}
           </Button>

@@ -7,7 +7,6 @@ import {
   Button,
   Box,
   Typography,
-  Grid,
   Divider,
   Table,
   TableBody,
@@ -20,20 +19,21 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import StatusChip from "../common/StatusChip"; // Assuming you have this
-import type { OrderDetails, OrderItem } from "../../types/order";
+
+import StatusChip from "../common/StatusChip";
 import { formatDateTime } from "../../utils/formatDateTime";
 import { formatCurrency } from "../../utils/formatCurrency";
+import type { OrderDetails, OrderItem } from "../../types/order";
 
 interface OrderDetailsModalProps {
   open: boolean;
   onClose: () => void;
   order: OrderDetails | null;
   loading: boolean;
-  onUpdateStatus: () => void; // Placeholder for future functionality
+  onUpdateStatus: () => void;
 }
 
-// Helper component for the grey info boxes
+// Component for the grey info boxes
 const InfoBox: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
   children,
@@ -46,7 +46,7 @@ const InfoBox: React.FC<{ title: string; children: React.ReactNode }> = ({
   </Paper>
 );
 
-// Helper for label/value pairs
+// For label/value pairs
 const InfoPair: React.FC<{ label: string; value: string | React.ReactNode }> = ({
   label,
   value,
@@ -96,69 +96,138 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     }
 
     return (
-      <Grid container spacing={2}>
+      <Box
+        display="flex"
+        flexWrap="wrap"
+        sx={{ margin: (theme) => theme.spacing(-1) }}
+      >
         {/* Row 1: Status and Dates */}
-        <Grid item xs={12} md={4}>
+        <Box
+          sx={{
+            padding: (theme) => theme.spacing(1),
+            width: { xs: "100%", md: "33.33%" },
+          }}
+        >
           <InfoPair label="Status" value={<StatusChip status={order.status} />} />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <InfoPair
-            label="Order Date"
-            value={formatDateTime(order.order_date)}
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <InfoPair
-            label="Delivery Date"
-            value={formatDateTime(order.delivery_date)}
-          />
-        </Grid>
+        </Box>
+        <Box
+          sx={{
+            padding: (theme) => theme.spacing(1),
+            width: { xs: "100%", md: "33.33%" },
+          }}
+        >
+          <InfoPair label="Order Date" value={formatDateTime(order.order_date)} />
+        </Box>
+        <Box
+          sx={{
+            padding: (theme) => theme.spacing(1),
+            width: { xs: "100%", md: "33.33%" },
+          }}
+        >
+          <InfoPair label="Delivery Date" value={formatDateTime(order.delivery_date!)} />
+        </Box>
 
         {/* Row 2: Customer Information */}
-        <Grid item xs={12} md={7}>
+        <Box
+          sx={{
+            padding: (theme) => theme.spacing(1),
+            width: { xs: "100%", md: "58.33%" },
+          }}
+        >
           <InfoBox title="Customer Information">
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+            <Box
+              display="flex"
+              flexWrap="wrap"
+              sx={{ margin: (theme) => theme.spacing(-1) }}
+            >
+              <Box
+                sx={{
+                  padding: (theme) => theme.spacing(1),
+                  width: { xs: "100%", sm: "50%" },
+                }}
+              >
                 <InfoPair label="Name" value={order.customer_info.name} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Box>
+              <Box
+                sx={{
+                  padding: (theme) => theme.spacing(1),
+                  width: { xs: "100%", sm: "50%" },
+                }}
+              >
                 <InfoPair label="Email" value={order.customer_info.email} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Box>
+              <Box
+                sx={{
+                  padding: (theme) => theme.spacing(1),
+                  width: { xs: "100%", sm: "50%" },
+                }}
+              >
                 <InfoPair label="Phone" value={order.customer_info.phone} />
-              </Grid>
-              <Grid item xs={12}>
-                <InfoPair
-                  label="Shipping Address"
-                  value={order.customer_info.shipping_address}
-                />
-              </Grid>
-            </Grid>
+              </Box>
+              <Box
+                sx={{
+                  padding: (theme) => theme.spacing(1),
+                  width: "100%",
+                }}
+              >
+                <InfoPair label="Shipping Address" value={order.customer_info.shipping_address} />
+              </Box>
+            </Box>
           </InfoBox>
-        </Grid>
+        </Box>
 
         {/* Row 3 & 5: Payment & Summary */}
-        <Grid item xs={12} md={5}>
-          <Grid container spacing={2}>
+        <Box
+          sx={{
+            padding: (theme) => theme.spacing(1),
+            width: { xs: "100%", md: "41.67%" },
+          }}
+        >
+          <Box
+            display="flex"
+            flexWrap="wrap"
+            sx={{ margin: (theme) => theme.spacing(-1) }}
+          >
             {/* Row 3: Payment */}
-            <Grid item xs={12}>
+            <Box
+              sx={{
+                padding: (theme) => theme.spacing(1),
+                width: "100%",
+              }}
+            >
               <InfoBox title="Payment Information">
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                <Box
+                  display="flex"
+                  flexWrap="wrap"
+                  sx={{ margin: (theme) => theme.spacing(-1) }}
+                >
+                  <Box
+                    sx={{
+                      padding: (theme) => theme.spacing(1),
+                      width: "50%",
+                    }}
+                  >
                     <InfoPair label="Payment ID" value={order.payment_info.id} />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <InfoPair
-                      label="Payment Method"
-                      value={order.payment_info.method}
-                    />
-                  </Grid>
-                </Grid>
+                  </Box>
+                  <Box
+                    sx={{
+                      padding: (theme) => theme.spacing(1),
+                      width: "50%",
+                    }}
+                  >
+                    <InfoPair label="Payment Method" value={order.payment_info.method} />
+                  </Box>
+                </Box>
               </InfoBox>
-            </Grid>
-            
+            </Box>
+
             {/* Row 5: Order Summary */}
-            <Grid item xs={12}>
+            <Box
+              sx={{
+                padding: (theme) => theme.spacing(1),
+                width: "100%",
+              }}
+            >
               <InfoBox title="Order Summary">
                 <Box display="flex" justifyContent="space-between" mb={1}>
                   <Typography variant="body1">Subtotal</Typography>
@@ -186,12 +255,17 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                   </Typography>
                 </Box>
               </InfoBox>
-            </Grid>
-          </Grid>
-        </Grid>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Row 4: Order Items Table */}
-        <Grid item xs={12}>
+        <Box
+          sx={{
+            padding: (theme) => theme.spacing(1),
+            width: "100%",
+          }}
+        >
           <Typography variant="h6" gutterBottom>
             Order Items
           </Typography>
@@ -234,8 +308,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
               </TableBody>
             </Table>
           </TableContainer>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     );
   };
 

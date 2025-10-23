@@ -51,7 +51,7 @@ export class OrderService {
       status: createOrderDto.status || OrderStatus.PENDING,
       payment_status: createOrderDto.payment_status || PaymentStatus.PENDING,
       subtotal: cart.total_amount,
-      discount_amount: cart.discount_amount,
+      discount_percentage: cart.discount_percentage,
       shipping_amount: 0, // Can be calculated based on shipping rules
       tax_amount: 0, // Can be calculated based on tax rules
       total_amount: cart.final_amount,
@@ -70,7 +70,7 @@ export class OrderService {
         quantity: cartItem.quantity,
         unit_price: cartItem.unit_price,
         total_price: cartItem.total_price,
-        discount_amount: cartItem.discount_amount,
+        discount_percentage: cartItem.discount_percentage,
       }),
     );
 

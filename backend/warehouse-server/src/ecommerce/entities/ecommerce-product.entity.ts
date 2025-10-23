@@ -25,11 +25,11 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @Column()
   slug: string;
 
-  @ManyToOne(() => EcommerceCategory, { eager: true })
+  @ManyToOne(() => EcommerceCategory, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'category_id' })
   category: EcommerceCategory;
 
-  @ManyToOne(() => EcommerceSubCategory, { eager: true })
+  @ManyToOne(() => EcommerceSubCategory, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'sub_category_id' })
   sub_category: EcommerceSubCategory;
 

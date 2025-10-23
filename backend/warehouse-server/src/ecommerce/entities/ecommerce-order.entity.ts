@@ -60,7 +60,7 @@ export class EcommerceOrder extends BaseTimestampEntity {
   subtotal: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  discount_amount: number;
+  discount_percentage: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   shipping_amount: number;
@@ -80,8 +80,11 @@ export class EcommerceOrder extends BaseTimestampEntity {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
-  @OneToMany(() => EcommerceOrderItem, (item: EcommerceOrderItem) => item.order, {
-    cascade: true,
-  })
+  @OneToMany(
+    () => EcommerceOrderItem,
+    (item: EcommerceOrderItem) => item.order, {
+      cascade: true,
+    }
+  )
   items: EcommerceOrderItem[];
 }

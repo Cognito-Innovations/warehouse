@@ -19,18 +19,20 @@ const statusOptions = [
 ];
 
 const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
-  const [category_id, setCategoryId] = useState("");
-  const [sub_category_id, setSubCategoryId] = useState("");
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState<number | string>("");
-  const [discount, setDiscount] = useState<number | string>("");
-  const [unit_value, setUnitValue] = useState<number | string>("");
-  const [measurement_id, setMeasurementId] = useState("");
-  const [country_id, setCountryId] = useState("");
-  const [stock_quantity, setStockQuantity] = useState<number | string>("");
-  const [is_active, setIsActive] = useState(true);
+  const [formData, setFormData] = useState({
+    category_id: "",
+    sub_category_id: "",
+    name: "",
+    slug: "",
+    description: "",
+    price: "",
+    discount_percentage: "",
+    unit_value: "",
+    measurement_id: "",
+    country_id: "",
+    stock_quantity: "",
+    is_active: true,
+  });
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [allSubCategories, setAllSubCategories] = useState<SubCategoryItem[]>([]);
@@ -67,40 +69,30 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
   }, []);
 
   useEffect(() => {
-    if (category_id) {
+    if (formData.category_id) {
       const filtered = allSubCategories.filter(
-        (sub) => sub.category?.id === category_id
+        (sub) => sub.category?.id === formData.category_id
       );
       setFilteredSubCategories(filtered);
     } else {
       setFilteredSubCategories([]);
     }
-    setSubCategoryId("");
-  }, [category_id, allSubCategories]);
+    setFormData((prev) => ({ ...prev, sub_category_id: "" }));
+  }, [formData.category_id, allSubCategories]);
+
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async () => {
-    if (
-      !category_id || !sub_category_id || !name || !slug || !description ||
-      !price || discount === "" || !unit_value || !measurement_id ||
-      !country_id || stock_quantity === ""
-    ) {
-      console.error("All fields are required");
-      return;
-    }
+    const { price, discount_percentage, unit_value, stock_quantity } = formData;
 
     const payload: ProductPayload = {
-      category_id,
-      sub_category_id,
-      name,
-      slug,
-      description,
+      ...formData,
       price: Number(price),
-      discount_percentage: Number(discount),
+      discount_percentage: Number(discount_percentage),
       unit_value: Number(unit_value),
-      measurement_id,
-      country_id,
       stock_quantity: Number(stock_quantity),
-      is_active,
     };
 
     try {
@@ -116,9 +108,17 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
   };
 
   const allFieldsValid =
-    category_id && sub_category_id && name && slug && description &&
-    Number(price) > 0 && Number(discount) >= 0 && Number(unit_value) > 0 && 
-    measurement_id && country_id && Number(stock_quantity) >= 0;
+    formData.category_id &&
+    formData.sub_category_id &&
+    formData.name &&
+    formData.slug &&
+    formData.description &&
+    Number(formData.price) > 0 &&
+    Number(formData.discount_percentage) >= 0 &&
+    Number(formData.unit_value) > 0 &&
+    formData.measurement_id &&
+    formData.country_id &&
+    Number(formData.stock_quantity) >= 0;
 
   return (
     <Box component="form" noValidate autoComplete="off" sx={{ mt: 1 }}>
@@ -126,36 +126,36 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
         <TextField
           label="Category"
           select
-          value={category_id}
-          onChange={(e) => setCategoryId(e.target.value)}
+          value={formData.category_id}
+          onChange={(e) => handleChange("category_id", e.target.value)}
           fullWidth
           required
           disabled={fetching}
         >
-          {categories.map((cat) => (
-            <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
+          {categories.map((category) => (
+            <MenuItem key={category.id} value={category.id}>{category.name}</MenuItem>
           ))}
         </TextField>
         <TextField
           label="Sub Category"
           select
-          value={sub_category_id}
-          onChange={(e) => setSubCategoryId(e.target.value)}
+          value={formData.sub_category_id}
+          onChange={(e) => handleChange("sub_category_id", e.target.value)}
           fullWidth
           required
-          disabled={fetching || !category_id}
-          helperText={!category_id ? "Please select a category first" : ""}
+          disabled={fetching || !formData.category_id}
+          helperText={!formData.category_id ? "Please select a category first" : ""}
         >
-          {filteredSubCategories.map((sub) => (
-            <MenuItem key={sub.id} value={sub.id}>{sub.name}</MenuItem>
+          {filteredSubCategories.map((subCategory) => (
+            <MenuItem key={subCategory.id} value={subCategory.id}>{subCategory.name}</MenuItem>
           ))}
         </TextField>
       </Box>
 
       <TextField
         label="Product Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        value={formData.name}
+        onChange={(e) => handleChange("name", e.target.value)}
         fullWidth
         required
         sx={{ mb: 2.5 }}
@@ -163,8 +163,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
 
       <TextField
         label="Slug"
-        value={slug}
-        onChange={(e) => setSlug(e.target.value)}
+        value={formData.slug}
+        onChange={(e) => handleChange("slug", e.target.value)}
         fullWidth
         required
         helperText="URL-friendly version of the name (e.g., sweet-mangoes)"
@@ -173,8 +173,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
 
       <TextField
         label="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
+        value={formData.description}
+        onChange={(e) => handleChange("description", e.target.value)}
         fullWidth
         required
         multiline
@@ -185,16 +185,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
       <Box sx={{ display: 'flex', gap: 2.5, mb: 2.5, flexDirection: { xs: 'column', sm: 'row' } }}>
         <TextField
           label="Price (USD)"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
+          value={formData.price}
+          onChange={(e) => handleChange("price", e.target.value)}
           fullWidth
           required
           type="number"
         />
         <TextField
           label="Discount (%)"
-          value={discount}
-          onChange={(e) => setDiscount(e.target.value)}
+          value={formData.discount_percentage}
+          onChange={(e) => handleChange("discount_percentage", e.target.value)}
           fullWidth
           required
           type="number"
@@ -204,8 +204,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
       <Box sx={{ display: 'flex', gap: 2.5, mb: 2.5, flexDirection: { xs: 'column', sm: 'row' } }}>
         <TextField
           label="Unit Value"
-          value={unit_value}
-          onChange={(e) => setUnitValue(e.target.value)}
+          value={formData.unit_value}
+          onChange={(e) => handleChange("unit_value", e.target.value)}
           fullWidth
           required
           type="number"
@@ -213,14 +213,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
         <TextField
           label="Unit Type"
           select
-          value={measurement_id}
-          onChange={(e) => setMeasurementId(e.target.value)}
+          value={formData.measurement_id}
+          onChange={(e) => handleChange("measurement_id", e.target.value)}
           fullWidth
           required
           disabled={fetching}
         >
-          {measurements.map((m) => (
-            <MenuItem key={m.id} value={m.id}>{m.label}</MenuItem>
+          {measurements.map((measurement) => (
+            <MenuItem key={measurement.id} value={measurement.id}>{measurement.label}</MenuItem>
           ))}
         </TextField>
       </Box>
@@ -229,8 +229,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
         <TextField
           label="Country"
           select
-          value={country_id}
-          onChange={(e) => setCountryId(e.target.value)}
+          value={formData.country_id}
+          onChange={(e) => handleChange("country_id", e.target.value)}
           fullWidth
           required
           disabled={fetching}
@@ -241,8 +241,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
         </TextField>
         <TextField
           label="Stock Quantity"
-          value={stock_quantity}
-          onChange={(e) => setStockQuantity(e.target.value)}
+          value={formData.stock_quantity}
+          onChange={(e) => handleChange("stock_quantity", e.target.value)}
           fullWidth
           required
           type="number"
@@ -252,8 +252,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
       <TextField
         label="Status"
         select
-        value={String(is_active)}
-        onChange={(e) => setIsActive(e.target.value === "true")}
+        value={String(formData.is_active)}
+        onChange={(e) => handleChange("is_active", e.target.value === "true")}
         fullWidth
         required
       >

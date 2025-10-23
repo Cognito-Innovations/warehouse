@@ -16,52 +16,55 @@ const statusOptions = [
 ];
 
 const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
-  const [category, setCategory] = useState("");  
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [status, setStatus] = useState(true);
+  const [subCategories, setSubCategories] = useState<{ id: string; name: string }[]>([]);
+  const [formData, setFormData] = useState({
+    category_id: "",
+    name: "",
+    slug: "",
+    is_active: true,
+  });
   const [loading, setLoading] = useState(false);
-  const [fetchingCategories, setFetchingCategories] = useState(true);
+  const [fetchingSubCategories, setFetchingSubCategories] = useState(true);
+
+  const fetchSubCategories = async () => {
+    try {
+      setFetchingSubCategories(true);
+      const data = await getCategories();
+      setSubCategories(data);
+    } catch (err) {
+      console.error("Failed to fetch sub categories:", err);
+    } finally {
+      setFetchingSubCategories(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setFetchingCategories(true);
-        const data = await getCategories();
-        setCategories(data);
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-      } finally {
-        setFetchingCategories(false);
-      }
-    };
-    fetchCategories();
+    fetchSubCategories();
   }, []);
 
   useEffect(() => {
-    if (initialData) {
-      setCategory(initialData.category_id);
-      setName(initialData.name);
-      setSlug(initialData.slug);
-      setStatus(initialData.is_active);
-    } else {
-      setCategory("");
-      setName("");
-      setSlug("");
-      setStatus(true);
-    }
+    setFormData({
+      category_id: initialData?.category_id || "",
+      name: initialData?.name || "",
+      slug: initialData?.slug || "",
+      is_active: initialData?.is_active ?? true,
+    });
   }, [initialData]);
 
+  const handleChange = (key: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleSubmit = async () => {
+    const { category_id, name, slug, is_active } = formData;
     if (!name || !slug) return;
 
     if (initialData) {
       const hasChanged =
-        initialData.category_id !== category ||
+        initialData.category_id !== category_id ||
         initialData.name !== name ||
         initialData.slug !== slug ||
-        initialData.is_active !== status;
+        initialData.is_active !== is_active;
 
       if (!hasChanged) {
         onClose();
@@ -71,10 +74,10 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
 
     try {
       setLoading(true);
-      if (initialData) {
-        await updateSubCategory(initialData.id!, { category_id: category, name, slug, is_active: status });
+      if (initialData?.id) {
+        await updateSubCategory(initialData.id, formData);
       } else {
-        await createSubCategory({ category_id: category, name, slug, is_active: status });
+        await createSubCategory(formData);
       }
       onSuccess?.();
       onClose();
@@ -91,19 +94,19 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
         <TextField
           label="Parent Category"
           select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          value={formData.category_id}
+          onChange={(e) => handleChange("category_id", e.target.value)}
           fullWidth
-          disabled={fetchingCategories}
+          disabled={fetchingSubCategories}
         >
-          {fetchingCategories ? (
+          {fetchingSubCategories ? (
             <MenuItem value="">
               <CircularProgress size={20} />
             </MenuItem>
           ) : (
-            categories.map((cat) => (
-              <MenuItem key={cat.id} value={cat.id}>
-                {cat.name}
+            subCategories.map((subCategory) => (
+              <MenuItem key={subCategory.id} value={subCategory.id}>
+                {subCategory.name}
               </MenuItem>
             ))
           )}
@@ -111,17 +114,17 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
 
         <TextField
           label="Sub Category Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={formData.name}
+          onChange={(e) => handleChange("name", e.target.value)}
           required
           fullWidth
         />
 
         <TextField
           label="Slug"
-          value={slug}
+          value={formData.slug}
+          onChange={(e) => handleChange("slug", e.target.value)}
           helperText="URL-friendly version of the name"
-          onChange={(e) => setSlug(e.target.value)}
           required
           fullWidth
         />
@@ -129,8 +132,8 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
         <TextField
           label="Status"
           select
-          value={status}
-          onChange={(e) => setStatus(e.target.value === "true")}
+          value={formData.is_active}
+          onChange={(e) => handleChange("is_active", e.target.value === "true")}
           fullWidth
         >
           {statusOptions.map((option) => (
@@ -144,7 +147,11 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
           <Button variant="outlined" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleSubmit} disabled={loading || !name || !slug}>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={loading || !formData.name || !formData.slug}
+          >
             {loading ? <CircularProgress size={20} color="inherit" /> : initialData ? "Update" : "Add"}
           </Button>
         </Stack>
