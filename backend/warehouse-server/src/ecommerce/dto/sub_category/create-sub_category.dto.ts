@@ -1,9 +1,11 @@
 import {
   IsBoolean,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  Min,
 } from 'class-validator';
 
 export class CreateEcommerceSubCategoryDto {
@@ -26,8 +28,11 @@ export class CreateEcommerceSubCategoryDto {
 
   @IsUUID()
   @IsNotEmpty()
-  @IsOptional()
   country_id: string;
+
+  @IsNumber()
+  @Min(0)
+  discount_percentage: number;
 
   @IsString()
   @IsOptional()

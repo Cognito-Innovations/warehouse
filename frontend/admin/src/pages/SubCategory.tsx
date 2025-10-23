@@ -17,6 +17,8 @@ interface SubCategoryRow {
   id: string;
   name: string;
   slug: string;
+  discount_percentage: number,
+  country_id: string,
   categoryName: string;
   categoryId: string | null;
   products: number;
@@ -40,9 +42,11 @@ const SubCategory: React.FC = () => {
         id: item.id,
         name: item.name,
         slug: item.slug,
+        discount_percentage: item.discount_percentage,
+        country_id: item.country.id,
         categoryName: item.category?.name || "N/A",
         categoryId: item.category?.id || null,
-        products: item.products,
+        products: item.products_count ?? 0,
         status: item.is_active ? "Active" : "Inactive",
       }));
       setSubCategories(mappedData);
@@ -66,6 +70,8 @@ const SubCategory: React.FC = () => {
       category_id: sub_category.categoryId,
       name: sub_category.name,
       slug: sub_category.slug,
+      discount_percentage: sub_category.discount_percentage,
+      country_id: sub_category.country_id,
       is_active: sub_category.status === "Active",
     };
     setEditingSubCategory(payload);

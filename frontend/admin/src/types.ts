@@ -182,6 +182,8 @@ export interface CategoryPayload {
   id?: string;
   name: string;
   slug: string;
+  discount_percentage: number,
+  country_id: string,
   is_active: boolean;
 };
 
@@ -190,6 +192,8 @@ export interface SubCategoryPayload {
   category_id: string;
   name: string;
   slug: string;
+  discount_percentage: number,
+  country_id: string,
   is_active: boolean;
 };
 

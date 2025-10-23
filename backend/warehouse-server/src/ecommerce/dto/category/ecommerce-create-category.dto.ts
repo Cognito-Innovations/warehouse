@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class CreateCategoryDto {
   @IsString()
@@ -9,15 +9,18 @@ export class CreateCategoryDto {
   @IsNotEmpty()
   slug: string;
 
-  @IsString()
+  @IsNumber()
+  @Min(0)
+  discount_percentage: number;
+
+  @IsUUID()
   @IsNotEmpty()
-  @IsOptional()
-  image_url: string;
+  country_id: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  country_id: string;
+  image_url: string;
 
   @IsString()
   @IsOptional()

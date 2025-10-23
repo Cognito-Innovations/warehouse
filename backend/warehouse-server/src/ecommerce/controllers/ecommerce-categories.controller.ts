@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
+import { Public } from 'src/auth/decorators/public.decorator';
 import { CategoriesService } from '../services/ecommerce-categories.service';
 import { CreateCategoryDto } from '../dto/category/ecommerce-create-category.dto';
 import { UpdateCategoryDto } from '../dto/category/ecommerce-update-category.dto';
@@ -20,6 +21,7 @@ export class CategoriesController {
     return this.categoriesService.create(createCategoryDto);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.categoriesService.findAll();

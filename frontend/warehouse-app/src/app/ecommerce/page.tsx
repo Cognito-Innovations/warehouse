@@ -75,16 +75,17 @@ export default function Ecommerce() {
   } = useProducts();
   
   const { itemCount, cart } = useCart();
-  const { addToCart, updateCartItem, removeFromCart } = useCartActions();
-  const { setSearchQuery, setSelectedCategory, loadMockData } = useProductActions();
+  const { addToCart, updateCartItem, removeFromCart, fetchCart } = useCartActions();
+  const { setSearchQuery, setSelectedCategory, fetchCategories, fetchProducts } = useProductActions();
 
   const [tabValue, setTabValue] = useState(0);
 
   useEffect(() => {
     // Load mock data on component mount
-    loadMockData();
-  }, [loadMockData]);
-
+    fetchCategories();
+    fetchProducts();
+    fetchCart();
+  }, [fetchCategories, fetchProducts, fetchCart]);
 
   const handleCategoryChange = (categoryId: string | null) => {
     setSelectedCategory(categoryId);
@@ -331,7 +332,7 @@ export default function Ecommerce() {
                           color="text.secondary"
                           sx={{ display: "block", mb: 1 }}
                         >
-                          {product.quantity} {product.measurement}
+                          {product.quantity} {product.measurement?.label}
                         </Typography>
 
                         <Typography
@@ -365,7 +366,7 @@ export default function Ecommerce() {
                                 color="text.secondary"
                                 sx={{ textDecoration: "line-through" }}
                               >
-                                ₹{product.price.toFixed(0)}
+                                ₹{Number(product.price).toFixed(0)}
                               </Typography>
                             )}
                           </Box>

@@ -148,7 +148,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         quantity,
         unit_price: mockProduct.price,
         total_price: mockProduct.price * quantity,
-        discount_amount: 0,
+        discount_percentage: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -158,7 +158,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         user_id: "demo-user",
         total_items: 0,
         total_amount: 0,
-        discount_amount: 0,
+        discount_percentage: 0,
         final_amount: 0,
         status: "ACTIVE",
         items: [],
@@ -184,7 +184,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         items: updatedItems,
         total_items: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
         total_amount: updatedItems.reduce((sum, item) => sum + item.total_price, 0),
-        discount_amount: updatedItems.reduce((sum, item) => sum + item.discount_amount, 0),
+        discount_percentage: updatedItems.reduce((sum, item) => sum + item.discount_percentage, 0),
         final_amount: updatedItems.reduce((sum, item) => sum + item.total_price, 0) - updatedItems.reduce((sum, item) => sum + item.discount_amount, 0),
       };
       

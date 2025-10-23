@@ -22,20 +22,23 @@ export class SubCategoriesService {
     const subCategoryPayload: Partial<EcommerceSubCategory> = {
       ...rest,
       category: { id: category_id } as EcommerceCategory,
+      country: { id: country_id } as Country,
     };
-
-    if (country_id) {
-      subCategoryPayload.country = { id: country_id } as Country;
-    }
 
     const subCategory = this.subCategoryRepository.create(subCategoryPayload);
     return await this.subCategoryRepository.save(subCategory);
   }
 
   findAll() {
-    return this.subCategoryRepository.find({
-      relations: ['category'],
-    });
+    return this.subCategoryRepository
+      .createQueryBuilder('subCategory')
+      .leftJoinAndSelect('subCategory.country', 'country')
+      .leftJoinAndSelect('subCategory.category', 'category')
+      .loadRelationCountAndMap(
+        'subCategory.products_count',
+        'subCategory.products',
+      )
+      .getMany();
   }
 
   findOne(id: string) {
@@ -57,12 +60,7 @@ export class SubCategoriesService {
     this.subCategoryRepository.merge(subCategory, rest);
 
     subCategory.category = { id: category_id } as EcommerceCategory;
-
-    if (country_id === null) {
-      subCategory.country = null;
-    } else if (country_id) {
-      subCategory.country = { id: country_id } as Country;
-    }
+    subCategory.country = { id: country_id } as Country;
 
     return await this.subCategoryRepository.save(subCategory);
   }

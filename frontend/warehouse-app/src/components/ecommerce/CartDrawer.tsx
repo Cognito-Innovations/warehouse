@@ -259,7 +259,7 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
             </Box>
 
             {/* Discount */}
-            {cart.discount_amount > 0 && (
+            {cart.discount_percentage > 0 && (
               <Box
                 sx={{
                   display: "flex",
@@ -272,7 +272,7 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                   Discount
                 </Typography>
                 <Typography variant="body2" color="success.main" fontWeight="bold">
-                  -₹{cart.discount_amount.toFixed(0)}
+                  -₹{cart.discount_percentage.toFixed(0)}
                 </Typography>
               </Box>
             )}

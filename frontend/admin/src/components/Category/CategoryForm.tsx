@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Box, TextField, MenuItem, Stack, Button, CircularProgress } from "@mui/material";
 
-import { createCategory, updateCategory } from "../../services/api.services";
-import type { CategoryPayload } from "../../types";
+import { createCategory, getCountries, updateCategory } from "../../services/api.services";
+import type { CategoryPayload, Country } from "../../types";
 
 interface CategoryFormProps {
   onClose: () => void;
@@ -19,14 +19,36 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
+    discount_percentage: 0,
+    country_id: "",
     is_active: true,
   });
+  const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+
+  const fetchCountries = async () => {
+    try {
+      setFetching(true);
+      const countries = await getCountries();
+      setCountries(countries)
+    } catch (error) {
+      console.error("Failed to fetch countries:", error);
+    } finally {
+      setFetching(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchCountries();
+  }, []);
 
   useEffect(() => {
     setFormData({
       name: initialData?.name || "",
       slug: initialData?.slug || "",
+      discount_percentage: initialData?.discount_percentage || 0,
+      country_id: initialData?.country_id || "",
       is_active: initialData?.is_active ?? true,
     });
   }, [initialData]);
@@ -43,6 +65,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
       const hasChanged =
         initialData.name !== name ||
         initialData.slug !== slug ||
+        initialData.discount_percentage ||
+        initialData.country_id ||
         initialData.is_active !== is_active;
 
       if (!hasChanged) {
@@ -85,6 +109,31 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
           required
           fullWidth
         />
+        <TextField
+          label="Discount (%)"
+          value={formData.discount_percentage}
+          onChange={(e) => {
+            const value = e.target.value;
+            const numValue = parseFloat(value);
+            handleChange("discount_percentage", isNaN(numValue) ? 0 : numValue);
+          }}
+          fullWidth
+          required
+          type="number"
+        />
+        <TextField
+          label="Country"
+          select
+          value={formData.country_id}
+          onChange={(e) => handleChange("country_id", e.target.value)}
+          fullWidth
+          required
+          disabled={fetching}
+        >
+          {countries.map((c) => (
+            <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+          ))}
+        </TextField>
         <TextField
           label="Status"
           select

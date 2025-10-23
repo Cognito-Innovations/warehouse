@@ -1,4 +1,4 @@
-import { IsBoolean, IsString, IsOptional, ValidateIf } from 'class-validator';
+import { IsBoolean, IsString, IsOptional, ValidateIf, IsNumber, Min } from 'class-validator';
 
 export class UpdateCategoryDto {
   @IsString()
@@ -17,6 +17,11 @@ export class UpdateCategoryDto {
   @IsString()
   @IsOptional()
   country_id?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  discount_percentage?: number;
 
   @IsString()
   @IsOptional()

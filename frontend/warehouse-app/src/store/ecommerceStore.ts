@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { EcommerceCategory, EcommerceProduct, Cart, CartItem } from "../types/ecommerce";
+import {
+  EcommerceCategory,
+  EcommerceProduct,
+  Cart,
+  AddToCartRequest,
+  UpdateCartItemRequest,
+} from "../types/ecommerce";
+import { ecommerceService } from "@/services/ecommerce.service";
 
 // Product Store State
 interface ProductState {
@@ -22,7 +29,8 @@ interface ProductActions {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   filterProducts: () => void;
-  loadMockData: () => void;
+  fetchCategories: () => Promise<void>;
+  fetchProducts: () => Promise<void>;
 }
 
 // Cart Store State
@@ -36,238 +44,30 @@ interface CartState {
 
 // Cart Store Actions
 interface CartActions {
-  setCart: (cart: Cart) => void;
-  addToCart: (productId: string, quantity?: number) => void;
-  updateCartItem: (itemId: string, quantity: number) => void;
-  removeFromCart: (itemId: string) => void;
-  clearCart: () => void;
+  setCart: (cart: Cart | null) => void;
+  fetchCart: () => Promise<void>;
+  addToCart: (productId: string, quantity?: number) => Promise<void>;
+  updateCartItem: (itemId: string, quantity: number) => Promise<void>;
+  removeFromCart: (itemId: string) => Promise<void>;
+  clearCart: () => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
 
 // Combined Store
-interface EcommerceStore extends ProductState, ProductActions, CartState, CartActions {}
-
-// Mock Data
-const mockCategories: EcommerceCategory[] = [
-  {
-    id: "1",
-    name: "Fresh Vegetables",
-    slug: "fresh-vegetables",
-    description: "Fresh and organic vegetables",
-    image_url: "",
-    is_active: true,
-    country: { id: "1", name: "India" },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "2",
-    name: "Fruits",
-    slug: "fruits",
-    description: "Fresh seasonal fruits",
-    image_url: "",
-    is_active: true,
-    country: { id: "1", name: "India" },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "3",
-    name: "Dairy & Eggs",
-    slug: "dairy-eggs",
-    description: "Fresh dairy products",
-    image_url: "",
-    is_active: true,
-    country: { id: "1", name: "India" },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "4",
-    name: "Beverages",
-    slug: "beverages",
-    description: "Drinks and beverages",
-    image_url: "",
-    is_active: true,
-    country: { id: "1", name: "India" },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-];
-
-const mockProducts: EcommerceProduct[] = [
-  {
-    id: "1",
-    name: "Organic Tomatoes",
-    description: "Premium organic tomatoes, perfect for salads and cooking",
-    slug: "organic-tomatoes",
-    price: 120,
-    image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEWR1NDJV3TiF-Jl2uFSvZBn4Qksj548cXjw&s",
-    quantity: 1,
-    measurement: "kg",
-    discount_percentage: 10,
-    category: mockCategories[0],
-    sub_category: {
-      id: "1",
-      name: "Vegetables",
-      slug: "vegetables",
-      image_url: "",
-      description: "Fresh vegetables",
-      is_active: true,
-      category: mockCategories[0],
-      country: { id: "1", name: "India" },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    country: { id: "1", name: "India" },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    name: "Sweet Mangoes",
-    description: "Fresh and sweet mangoes from the best orchards",
-    slug: "sweet-mangoes",
-    price: 200,
-    image_url: "https://images.unsplash.com/photo-1559181567-c3190ca9959b?w=400",
-    quantity: 1,
-    measurement: "kg",
-    discount_percentage: 15,
-    category: mockCategories[1],
-    sub_category: {
-      id: "2",
-      name: "Tropical Fruits",
-      slug: "tropical-fruits",
-      image_url: "",
-      description: "Tropical fruits",
-      is_active: true,
-      category: mockCategories[1],
-      country: { id: "1", name: "India" },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    country: { id: "1", name: "India" },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "3",
-    name: "Fresh Milk",
-    description: "Pure and fresh milk, perfect for your daily needs",
-    slug: "fresh-milk",
-    price: 60,
-    image_url: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400",
-    quantity: 1,
-    measurement: "liter",
-    discount_percentage: 5,
-    category: mockCategories[2],
-    sub_category: {
-      id: "3",
-      name: "Dairy",
-      slug: "dairy",
-      image_url: "",
-      description: "Dairy products",
-      is_active: true,
-      category: mockCategories[2],
-      country: { id: "1", name: "India" },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    country: { id: "1", name: "India" },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "4",
-    name: "Orange Juice",
-    description: "Freshly squeezed orange juice, rich in vitamin C",
-    slug: "orange-juice",
-    price: 80,
-    image_url: "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400",
-    quantity: 1,
-    measurement: "liter",
-    discount_percentage: 20,
-    category: mockCategories[3],
-    sub_category: {
-      id: "4",
-      name: "Juices",
-      slug: "juices",
-      image_url: "",
-      description: "Fresh juices",
-      is_active: true,
-      category: mockCategories[3],
-      country: { id: "1", name: "India" },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    country: { id: "1", name: "India" },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "5",
-    name: "Banana Yellaki",
-    description: "Ready to eat bananas, perfect for snacking",
-    slug: "banana-yellaki",
-    price: 124,
-    image_url: "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400",
-    quantity: 500,
-    measurement: "g",
-    discount_percentage: 62,
-    category: mockCategories[1],
-    sub_category: {
-      id: "2",
-      name: "Tropical Fruits",
-      slug: "tropical-fruits",
-      image_url: "",
-      description: "Tropical fruits",
-      is_active: true,
-      category: mockCategories[1],
-      country: { id: "1", name: "India" },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    country: { id: "1", name: "India" },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "6",
-    name: "Grapes Blue",
-    description: "Sweet-sour grapes perfect for juices",
-    slug: "grapes-bangalore-blue",
-    price: 38,
-    image_url: "https://sahasa.in/wp-content/uploads/2020/11/economics-of-grape-farming..jpg",
-    quantity: 200,
-    measurement: "g",
-    discount_percentage: 34,
-    category: mockCategories[1],
-    sub_category: {
-      id: "2",
-      name: "Tropical Fruits",
-      slug: "tropical-fruits",
-      image_url: "",
-      description: "Tropical fruits",
-      is_active: true,
-      category: mockCategories[1],
-      country: { id: "1", name: "India" },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    country: { id: "1", name: "India" },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
+interface EcommerceStore
+  extends ProductState,
+    ProductActions,
+    CartState,
+    CartActions {}
 
 export const useEcommerceStore = create<EcommerceStore>()(
   persist(
     (set, get) => ({
       // Product State
-      categories: mockCategories,
-      products: mockProducts,
-      filteredProducts: mockProducts,
+      categories: [],
+      products: [],
+      filteredProducts: [],
       searchQuery: "",
       selectedCategory: null,
       loading: false,
@@ -296,150 +96,147 @@ export const useEcommerceStore = create<EcommerceStore>()(
         let filtered = products;
 
         if (searchQuery) {
-          filtered = filtered.filter(product =>
-            product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()))
+          filtered = filtered.filter(
+            (product) =>
+              product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (product.description &&
+                product.description
+                  .toLowerCase()
+                  .includes(searchQuery.toLowerCase())),
           );
         }
 
         if (selectedCategory) {
-          filtered = filtered.filter(product => product.category.id === selectedCategory);
+          filtered = filtered.filter(
+            (product) => product.category.id === selectedCategory,
+          );
         }
 
         set({ filteredProducts: filtered });
       },
-      loadMockData: () => {
-        set({
-          categories: mockCategories,
-          products: mockProducts,
-          filteredProducts: mockProducts,
-          loading: false,
-          error: null,
-        });
+      fetchCategories: async () => {
+        set({ loading: true, error: null });
+        try {
+          const categories = await ecommerceService.getCategories();
+          set({ categories, loading: false });
+        } catch (err: any) {
+          console.error("Failed to fetch categories:", err);
+          set({
+            error: err.message || "Failed to fetch categories",
+            loading: false,
+          });
+        }
+      },
+      fetchProducts: async () => {
+        set({ loading: true, error: null });
+        try {
+          const products = await ecommerceService.getProducts();
+          set({ products, filteredProducts: products, loading: false });
+        } catch (err: any) {
+          console.error("Failed to fetch products:", err);
+          set({
+            error: err.message || "Failed to fetch products",
+            loading: false,
+          });
+        }
       },
 
       // Cart Actions
       setCart: (cart) => {
+        if (!cart || !cart.items) {
+          set({
+            cart: null,
+            itemCount: 0,
+            totalAmount: 0,
+          });
+          return;
+        }
         set({
           cart,
           itemCount: cart.items.reduce((sum, item) => sum + item.quantity, 0),
           totalAmount: cart.final_amount,
         });
       },
-      addToCart: (productId, quantity = 1) => {
-        const { products, cart } = get();
-        const product = products.find(p => p.id === productId);
-        
-        if (!product) return;
-
-        const currentCart = cart || {
-          id: "demo-cart",
-          user_id: "demo-user",
-          total_items: 0,
-          total_amount: 0,
-          discount_amount: 0,
-          final_amount: 0,
-          status: "ACTIVE",
-          items: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        const existingItemIndex = currentCart.items.findIndex(item => item.product.id === productId);
-        let updatedItems;
-
-        if (existingItemIndex >= 0) {
-          updatedItems = currentCart.items.map((item, index) => 
-            index === existingItemIndex 
-              ? { 
-                  ...item, 
-                  quantity: item.quantity + quantity, 
-                  total_price: item.unit_price * (item.quantity + quantity),
-                  discount_amount: (item.unit_price * (item.quantity + quantity) * product.discount_percentage) / 100
-                }
-              : item
-          );
-        } else {
-          const discountAmount = (product.price * quantity * product.discount_percentage) / 100;
-          const newItem: CartItem = {
-            id: `item-${Date.now()}`,
-            product,
-            quantity,
-            unit_price: product.price,
-            total_price: product.price * quantity,
-            discount_amount: discountAmount,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          updatedItems = [...currentCart.items, newItem];
+      fetchCart: async () => {
+        set({ loading: true, error: null });
+        try {
+          const cart = await ecommerceService.getCart();
+          get().setCart(cart);
+          set({ loading: false });
+        } catch (err: any) {
+          console.error("Failed to fetch cart:", err);
+          if (err.response && err.response.status === 404) {
+            get().setCart(null);
+            set({ loading: false, error: null });
+          } else {
+            set({
+              error: err.message || "Failed to fetch cart",
+              loading: false,
+            });
+          }
         }
-
-        const updatedCart = {
-          ...currentCart,
-          items: updatedItems,
-          total_items: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
-          total_amount: updatedItems.reduce((sum, item) => sum + item.total_price, 0),
-          discount_amount: updatedItems.reduce((sum, item) => sum + item.discount_amount, 0),
-          final_amount: updatedItems.reduce((sum, item) => sum + item.total_price, 0) - updatedItems.reduce((sum, item) => sum + item.discount_amount, 0),
-        };
-
-        get().setCart(updatedCart);
       },
-      updateCartItem: (itemId, quantity) => {
-        const { cart } = get();
-        if (!cart) return;
-
+      addToCart: async (productId, quantity = 1) => {
+        set({ loading: true, error: null });
+        try {
+          const data: AddToCartRequest = { product_id: productId, quantity };
+          const updatedCart = await ecommerceService.addToCart(data);
+          get().setCart(updatedCart);
+          set({ loading: false });
+        } catch (err: any) {
+          console.error("Failed to add to cart:", err);
+          set({
+            error: err.message || "Failed to add to cart",
+            loading: false,
+          });
+        }
+      },
+      updateCartItem: async (itemId, quantity) => {
         if (quantity <= 0) {
           get().removeFromCart(itemId);
           return;
         }
-
-        const updatedItems = cart.items.map(item => {
-          if (item.id === itemId) {
-            const discountAmount = (item.unit_price * quantity * item.product.discount_percentage) / 100;
-            return {
-              ...item,
-              quantity,
-              total_price: item.unit_price * quantity,
-              discount_amount: discountAmount,
-            };
-          }
-          return item;
-        });
-
-        const updatedCart = {
-          ...cart,
-          items: updatedItems,
-          total_items: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
-          total_amount: updatedItems.reduce((sum, item) => sum + item.total_price, 0),
-          discount_amount: updatedItems.reduce((sum, item) => sum + item.discount_amount, 0),
-          final_amount: updatedItems.reduce((sum, item) => sum + item.total_price, 0) - updatedItems.reduce((sum, item) => sum + item.discount_amount, 0),
-        };
-
-        get().setCart(updatedCart);
+        set({ loading: true, error: null });
+        try {
+          const data: UpdateCartItemRequest = { quantity };
+          const updatedCart = await ecommerceService.updateCartItem(itemId, data);
+          get().setCart(updatedCart);
+          set({ loading: false });
+        } catch (err: any) {
+          console.error("Failed to update cart item:", err);
+          set({
+            error: err.message || "Failed to update cart item",
+            loading: false,
+          });
+        }
       },
-      removeFromCart: (itemId) => {
-        const { cart } = get();
-        if (!cart) return;
-
-        const updatedItems = cart.items.filter(item => item.id !== itemId);
-        const updatedCart = {
-          ...cart,
-          items: updatedItems,
-          total_items: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
-          total_amount: updatedItems.reduce((sum, item) => sum + item.total_price, 0),
-          discount_amount: updatedItems.reduce((sum, item) => sum + item.discount_amount, 0),
-          final_amount: updatedItems.reduce((sum, item) => sum + item.total_price, 0) - updatedItems.reduce((sum, item) => sum + item.discount_amount, 0),
-        };
-
-        get().setCart(updatedCart);
+      removeFromCart: async (itemId) => {
+        set({ loading: true, error: null });
+        try {
+          const updatedCart = await ecommerceService.removeFromCart(itemId);
+          get().setCart(updatedCart);
+          set({ loading: false });
+        } catch (err: any) {
+          console.error("Failed to remove item from cart:", err);
+          set({
+            error: err.message || "Failed to remove item from cart",
+            loading: false,
+          });
+        }
       },
-      clearCart: () => {
-        set({
-          cart: null,
-          itemCount: 0,
-          totalAmount: 0,
-        });
+      clearCart: async () => {
+        set({ loading: true, error: null });
+        try {
+          await ecommerceService.clearCart();
+          get().setCart(null);
+          set({ loading: false });
+        } catch (err: any) {
+          console.error("Failed to clear cart:", err);
+          set({
+            error: err.message || "Failed to clear cart",
+            loading: false,
+          });
+        }
       },
     }),
     {
@@ -487,14 +284,25 @@ export const useCartActions = () => {
   const removeFromCart = useEcommerceStore((state) => state.removeFromCart);
   const clearCart = useEcommerceStore((state) => state.clearCart);
   const setCart = useEcommerceStore((state) => state.setCart);
-  return { addToCart, updateCartItem, removeFromCart, clearCart, setCart };
+  const fetchCart = useEcommerceStore((state) => state.fetchCart);
+  return { addToCart, updateCartItem, removeFromCart, clearCart, setCart, fetchCart };
 };
 
 export const useProductActions = () => {
   const setSearchQuery = useEcommerceStore((state) => state.setSearchQuery);
-  const setSelectedCategory = useEcommerceStore((state) => state.setSelectedCategory);
-  const loadMockData = useEcommerceStore((state) => state.loadMockData);
+  const setSelectedCategory = useEcommerceStore(
+    (state) => state.setSelectedCategory,
+  );
+  const fetchCategories = useEcommerceStore((state) => state.fetchCategories);
+  const fetchProducts = useEcommerceStore((state) => state.fetchProducts);
   const setLoading = useEcommerceStore((state) => state.setLoading);
   const setError = useEcommerceStore((state) => state.setError);
-  return { setSearchQuery, setSelectedCategory, loadMockData, setLoading, setError };
+  return {
+    setSearchQuery,
+    setSelectedCategory,
+    fetchCategories,
+    fetchProducts,
+    setLoading,
+    setError,
+  };
 };

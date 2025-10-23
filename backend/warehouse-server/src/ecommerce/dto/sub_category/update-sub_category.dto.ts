@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class UpdateEcommerceSubCategoryDto {
   @IsString()
@@ -15,6 +15,11 @@ export class UpdateEcommerceSubCategoryDto {
   @IsString()
   @IsOptional()
   country_id?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  discount_percentage?: number;
 
   @IsBoolean()
   @IsOptional()

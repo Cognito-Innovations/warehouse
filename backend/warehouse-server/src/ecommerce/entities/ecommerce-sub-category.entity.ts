@@ -5,9 +5,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { EcommerceCategory } from './ecommerce-category.entity';
+import { EcommerceProduct } from './ecommerce-product.entity';
 
 @Entity('ecommerce_sub_categories')
 export class EcommerceSubCategory extends BaseTimestampEntity {
@@ -27,16 +29,19 @@ export class EcommerceSubCategory extends BaseTimestampEntity {
   @Column({ nullable: true })
   image_url: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   discount_percentage: number;
 
-  @ManyToOne(() => Country, { eager: true, nullable: true })
+  @ManyToOne(() => Country, { eager: true })
   @JoinColumn({ name: 'country_id' })
-  country: Country | null;
+  country: Country;
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
   @Column({ default: true })
   is_active: boolean;
+
+  @OneToMany(() => EcommerceProduct, (product) => product.sub_category)
+  products: EcommerceProduct[];
 }

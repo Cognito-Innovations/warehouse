@@ -20,18 +20,20 @@ export class CategoriesService {
 
     const categoryPayload: Partial<EcommerceCategory> = {
       ...rest,
+      country: { id: country_id } as Country,
     };
-
-    if (country_id) {
-      categoryPayload.country = { id: country_id } as Country;
-    }
 
     const category = this.categoryRepository.create(categoryPayload);
     return await this.categoryRepository.save(category);
   }
 
   findAll() {
-    return this.categoryRepository.find();
+    return this.categoryRepository
+      .createQueryBuilder('category')
+      .leftJoinAndSelect('category.country', 'country')
+      .loadRelationCountAndMap('category.products_count', 'category.products')
+      .orderBy('category.name', 'ASC')
+      .getMany();
   }
 
   findOne(id: string) {
@@ -52,11 +54,7 @@ export class CategoriesService {
     if (!category) throw new NotFoundException('Category not found');
     this.categoryRepository.merge(category, rest);
 
-    if (country_id === null) {
-      category.country = null;
-    } else if (country_id) {
-      category.country = { id: country_id } as Country;
-    }
+    category.country = { id: country_id } as Country;
 
     return await this.categoryRepository.save(category);
   }

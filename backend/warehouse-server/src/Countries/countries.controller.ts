@@ -84,6 +84,7 @@ export class CountriesController {
     return this.countriesService.createCountriesBulk(body.countries);
   }
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all countries' })
   @ApiOkResponse({

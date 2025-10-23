@@ -295,7 +295,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                   <Typography variant="body2">₹{order.subtotal.toFixed(0)}</Typography>
                 </Box>
                 
-                {order.discount_amount > 0 && (
+                {order.discount_percentage > 0 && (
                   <Box
                     sx={{
                       display: "flex",
@@ -308,7 +308,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                       Discount
                     </Typography>
                     <Typography variant="body2" color="success.main">
-                      -₹{order.discount_amount.toFixed(0)}
+                      -₹{order.discount_percentage.toFixed(0)}
                     </Typography>
                   </Box>
                 )}

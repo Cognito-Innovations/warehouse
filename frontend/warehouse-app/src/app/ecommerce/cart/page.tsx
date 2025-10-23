@@ -495,13 +495,13 @@ export default function CartPage() {
                   <Typography variant="body2">₹{cart.total_amount.toFixed(0)}</Typography>
                 </Box>
                 
-                {cart.discount_amount > 0 && (
+                {cart.discount_percentage > 0 && (
                   <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
                     <Typography variant="body2" color="success.main">
                       Discount
                     </Typography>
                     <Typography variant="body2" color="success.main">
-                      -₹{cart.discount_amount.toFixed(0)}
+                      -₹{cart.discount_percentage.toFixed(0)}
                     </Typography>
                   </Box>
                 )}

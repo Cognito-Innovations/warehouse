@@ -38,7 +38,9 @@ export interface EcommerceProduct {
   price: number;
   discount_percentage: number;
   quantity: number;
-  measurement?: string;
+  measurement?: {
+    label: string;
+  };
   category: EcommerceCategory;
   sub_category: EcommerceSubCategory;
   country: {
@@ -55,7 +57,7 @@ export interface CartItem {
   quantity: number;
   unit_price: number;
   total_price: number;
-  discount_amount: number;
+  discount_percentage: number;
   created_at: string;
   updated_at: string;
 }
@@ -65,7 +67,7 @@ export interface Cart {
   user_id: string;
   status: "ACTIVE" | "ABANDONED" | "CHECKED_OUT";
   total_amount: number;
-  discount_amount: number;
+  discount_percentage: number;
   final_amount: number;
   items: CartItem[];
   created_at: string;
@@ -78,7 +80,7 @@ export interface OrderItem {
   quantity: number;
   unit_price: number;
   total_price: number;
-  discount_amount: number;
+  discount_percentage: number;
   created_at: string;
   updated_at: string;
 }
@@ -90,7 +92,7 @@ export interface Order {
   status: "PENDING" | "CONFIRMED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "REFUNDED";
   payment_status: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
   subtotal: number;
-  discount_amount: number;
+  discount_percentage: number;
   shipping_amount: number;
   tax_amount: number;
   total_amount: number;

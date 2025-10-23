@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Box, TextField, MenuItem, Stack, Button, CircularProgress } from "@mui/material";
 
-import { createSubCategory, getCategories, updateSubCategory } from "../../services/api.services";
-import type { SubCategoryPayload } from "../../types";
+import { createSubCategory, getCategories, getCountries, updateSubCategory } from "../../services/api.services";
+import type { Country, SubCategoryPayload } from "../../types";
+import type { Category } from "../Product/ProductForm";
 
 interface SubCategoryFormProps {
   onClose: () => void;
@@ -16,30 +17,37 @@ const statusOptions = [
 ];
 
 const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
-  const [subCategories, setSubCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
   const [formData, setFormData] = useState({
     category_id: "",
     name: "",
     slug: "",
+    discount_percentage: 0,
+    country_id: "",
     is_active: true,
   });
   const [loading, setLoading] = useState(false);
-  const [fetchingSubCategories, setFetchingSubCategories] = useState(true);
+  const [fetching, setFetching] = useState(true);
 
-  const fetchSubCategories = async () => {
+  const fetchDropdownData = async () => {
     try {
-      setFetchingSubCategories(true);
-      const data = await getCategories();
-      setSubCategories(data);
-    } catch (err) {
-      console.error("Failed to fetch sub categories:", err);
+      setFetching(true);
+      const [categoriesData, countryData] = await Promise.all([
+        getCategories(),
+        getCountries(),
+      ]);
+      setCategories(categoriesData);
+      setCountries(countryData);
+    } catch (error) {
+      console.error("Failed to fetch dropdown data:", error);
     } finally {
-      setFetchingSubCategories(false);
+      setFetching(false);
     }
-  };
-
+  }
+  
   useEffect(() => {
-    fetchSubCategories();
+    fetchDropdownData();
   }, []);
 
   useEffect(() => {
@@ -47,6 +55,8 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
       category_id: initialData?.category_id || "",
       name: initialData?.name || "",
       slug: initialData?.slug || "",
+      discount_percentage: initialData?.discount_percentage || 0,
+      country_id: initialData?.country_id || "",
       is_active: initialData?.is_active ?? true,
     });
   }, [initialData]);
@@ -64,6 +74,8 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
         initialData.category_id !== category_id ||
         initialData.name !== name ||
         initialData.slug !== slug ||
+        initialData.discount_percentage ||
+        initialData.country_id ||
         initialData.is_active !== is_active;
 
       if (!hasChanged) {
@@ -97,16 +109,16 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
           value={formData.category_id}
           onChange={(e) => handleChange("category_id", e.target.value)}
           fullWidth
-          disabled={fetchingSubCategories}
+          disabled={fetching}
         >
-          {fetchingSubCategories ? (
+          {fetching ? (
             <MenuItem value="">
               <CircularProgress size={20} />
             </MenuItem>
           ) : (
-            subCategories.map((subCategory) => (
-              <MenuItem key={subCategory.id} value={subCategory.id}>
-                {subCategory.name}
+            categories.map((category) => (
+              <MenuItem key={category.id} value={category.id}>
+                {category.name}
               </MenuItem>
             ))
           )}
@@ -128,6 +140,33 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
           required
           fullWidth
         />
+
+        <TextField
+          label="Discount (%)"
+          value={formData.discount_percentage}
+          onChange={(e) => {
+            const value = e.target.value;
+            const numValue = parseFloat(value);
+            handleChange("discount_percentage", isNaN(numValue) ? 0 : numValue);
+          }}
+          fullWidth
+          required
+          type="number"
+        />
+
+        <TextField
+          label="Country"
+          select
+          value={formData.country_id}
+          onChange={(e) => handleChange("country_id", e.target.value)}
+          fullWidth
+          required
+          disabled={fetching}
+        >
+          {countries.map((c) => (
+            <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+          ))}
+        </TextField>
 
         <TextField
           label="Status"

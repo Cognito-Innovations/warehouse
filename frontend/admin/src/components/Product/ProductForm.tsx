@@ -4,7 +4,7 @@ import { Box, TextField, MenuItem, Stack, Button, CircularProgress } from "@mui/
 import { createProduct, getCategories, getCountries, getMeasurements, getSubCategories } from "../../services/api.services";
 import type { Country, ProductPayload } from "../../types";
 
-interface Category { id: string; name: string; }
+export interface Category { id: string; name: string; }
 interface SubCategoryItem { id: string; name: string; category: { id: string }; }
 interface Measurement { id: string; label: string; }
 
@@ -25,6 +25,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
     name: "",
     slug: "",
     description: "",
+    image_url: "",
     price: "",
     discount_percentage: "",
     unit_value: "",
@@ -113,12 +114,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
     formData.name &&
     formData.slug &&
     formData.description &&
+    formData.image_url &&
     Number(formData.price) > 0 &&
-    Number(formData.discount_percentage) >= 0 &&
+    Number(formData.discount_percentage) > 0 &&
     Number(formData.unit_value) > 0 &&
     formData.measurement_id &&
     formData.country_id &&
-    Number(formData.stock_quantity) >= 0;
+    Number(formData.stock_quantity) > 0;
 
   return (
     <Box component="form" noValidate autoComplete="off" sx={{ mt: 1 }}>
@@ -179,6 +181,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
         required
         multiline
         rows={4}
+        sx={{ mb: 2.5 }}
+      />
+
+      <TextField
+        label="Image URL"
+        value={formData.image_url}
+        onChange={(e) => handleChange("image_url", e.target.value)}
+        fullWidth
+        required
         sx={{ mb: 2.5 }}
       />
 

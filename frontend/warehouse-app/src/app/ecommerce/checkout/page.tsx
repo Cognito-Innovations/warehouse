@@ -193,7 +193,7 @@ export default function CheckoutPage() {
                   <Typography variant="body2">₹{cart.total_amount.toFixed(0)}</Typography>
                 </Box>
                 
-                {cart.discount_amount > 0 && (
+                {cart.discount_percentage > 0 && (
                   <Box
                     sx={{
                       display: "flex",
@@ -206,7 +206,7 @@ export default function CheckoutPage() {
                       Discount
                     </Typography>
                     <Typography variant="body2" color="success.main">
-                      -₹{cart.discount_amount.toFixed(0)}
+                      -₹{cart.discount_percentage.toFixed(0)}
                     </Typography>
                   </Box>
                 )}

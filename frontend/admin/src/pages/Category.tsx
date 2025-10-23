@@ -17,6 +17,8 @@ interface CategoryRow {
   id: string;
   name: string;
   slug: string;
+  discount_percentage: number,
+  country_id: string,
   products: number;
   status: string;
 }
@@ -38,7 +40,9 @@ const Category: React.FC = () => {
         id: item.id,
         name: item.name,
         slug: item.slug,
-        products: item.products,
+        discount_percentage: parseFloat(item.discount_percentage),
+        country_id: item.country.id,
+        products: item.products_count ?? 0,
         status: item.is_active ? "Active" : "Inactive",
       }));
       setCategories(mappedData);
@@ -61,6 +65,8 @@ const Category: React.FC = () => {
       id: category.id,
       name: category.name,
       slug: category.slug,
+      discount_percentage: category.discount_percentage,
+      country_id: category.country_id,
       is_active: category.status === "Active",
     };
     
