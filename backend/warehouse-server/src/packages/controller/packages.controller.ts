@@ -214,48 +214,6 @@ export class PackagesController {
     return this.packagesService.getPackagesByShipmentId(shipmentId);
   }
 
-  @Get('shipments/uuid/:shipment_uuid')
-  @ApiOperation({ summary: 'Get all packages by shipment_uuid' })
-  async findByShipmentUuid(@Param('shipment_uuid') shipmentUuid: string) {
-    return this.packagesService.getPackagesByShipmentUuid(shipmentUuid);
-  }
-
-  @Patch('shipments/:shipment_uuid/slips')
-  @ApiOperation({ summary: 'Add a payment slip to a shipment' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        url: {
-          type: 'string',
-          example: 'https://cdn.example.com/slips/payment-001.png',
-        },
-        original_filename: { type: 'string', example: 'payment-001.png' },
-        mime_type: { type: 'string', example: 'image/png' },
-        file_size: { type: 'number', example: 204800 },
-      },
-    },
-  })
-  async addPaymentSlip(
-    @Param('shipment_uuid') shipment_uuid: string,
-    @Body()
-    body: {
-      data: {
-        url: string;
-        original_filename: string;
-        mime_type?: string;
-        file_size?: number;
-      };
-    },
-    @Request() req: AuthenticatedRequest,
-  ): Promise<any> {
-    return this.packagesService.addPaymentSlip(
-      shipment_uuid,
-      body.data,
-      req.user.id,
-    );
-  }
-
   @Get('shipments/:shipment_uuid/slips')
   @ApiOperation({ summary: 'Get all payment slips for a shipment' })
   async getPaymentSlips(@Param('shipment_uuid') shipment_uuid: string) {

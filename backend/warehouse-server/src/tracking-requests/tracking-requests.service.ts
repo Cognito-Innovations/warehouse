@@ -33,15 +33,11 @@ export class TrackingRequestsService {
     const savedTrackingRequest =
       await this.trackingRequestRepository.save(trackingRequest);
 
+    const { user, ...rest } = savedTrackingRequest;
+
     return {
-      id: savedTrackingRequest.id,
-      courier: savedTrackingRequest.courier,
-      user: savedTrackingRequest.user 
-        ? this.usersService.mapToUserResponseDto(savedTrackingRequest.user) 
-        : undefined,
-      status: savedTrackingRequest.status,
-      created_at: savedTrackingRequest.created_at,
-      updated_at: savedTrackingRequest.updated_at,
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     };
   }
 
@@ -51,15 +47,9 @@ export class TrackingRequestsService {
       relations: ['user'],
     });
 
-    return trackingRequests.map((request) => ({
-      id: request.id,
-      courier: request.courier,
-      user: request.user 
-        ? this.usersService.mapToUserResponseDto(request.user) 
-        : undefined,
-      status: request.status,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
+    return trackingRequests.map(({ user, ...rest }) => ({
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     }));
   }
 
@@ -75,15 +65,11 @@ export class TrackingRequestsService {
       throw new NotFoundException(`Tracking request with id ${id} not found`);
     }
 
+    const { user, ...rest } = trackingRequest;
+
     return {
-      id: trackingRequest.id,
-      courier: trackingRequest.courier,
-      user: trackingRequest.user 
-        ? this.usersService.mapToUserResponseDto(trackingRequest.user) 
-        : undefined,
-      status: trackingRequest.status,
-      created_at: trackingRequest.created_at,
-      updated_at: trackingRequest.updated_at,
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     };
   }
 
@@ -96,15 +82,9 @@ export class TrackingRequestsService {
       relations: ['user'],
     });
 
-    return trackingRequests.map((request) => ({
-      id: request.id,
-      courier: request.courier,
-      user: request.user 
-        ? this.usersService.mapToUserResponseDto(request.user) 
-        : undefined,
-      status: request.status,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
+    return trackingRequests.map(({ user, ...rest }) => ({
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     }));
   }
 
@@ -121,15 +101,9 @@ export class TrackingRequestsService {
       relations: ['user'],
     });
 
-    return trackingRequests.map((request) => ({
-      id: request.id,
-      courier: request.courier,
-      user: request.user 
-        ? this.usersService.mapToUserResponseDto(request.user) 
-        : undefined,
-      status: request.status,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
+    return trackingRequests.map(({ user, ...rest }) => ({
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     }));
   }
 
@@ -149,15 +123,11 @@ export class TrackingRequestsService {
     const updatedTrackingRequest =
       await this.trackingRequestRepository.save(trackingRequest);
 
+    const { user, ...rest } = updatedTrackingRequest;
+
     return {
-      id: updatedTrackingRequest.id,
-      courier: updatedTrackingRequest.courier,
-      user: updatedTrackingRequest.user 
-        ? this.usersService.mapToUserResponseDto(updatedTrackingRequest.user) 
-        : undefined,
-      status: updatedTrackingRequest.status,
-      created_at: updatedTrackingRequest.created_at,
-      updated_at: updatedTrackingRequest.updated_at,
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     };
   }
 

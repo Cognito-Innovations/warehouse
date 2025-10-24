@@ -17,8 +17,10 @@ const TRACKING_STEPS = [
 ];
 
 const STATUS_UI_MAP = new Map([
-  ["departed", "Ready To Ship"],
-  ["request ship", "Ship Request"]
+  ["ship_request", "Ship Request"],
+  ["payment_pending", "Payment Pending"],
+  ["payment_approved", "Payment Approved"],
+  ["ready_to_ship", "Ready To Ship"],
 ]);
 
 const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) => {

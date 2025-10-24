@@ -8,17 +8,21 @@ import {
   TableHead,
   TableRow,
   Checkbox,
+  CircularProgress,
 } from '@mui/material';
-import { shipments } from '../../data/shipments';
 import ShipmentRow from './ShipmentRow';
 
 interface ShipmentsTableProps {
+  shipments: any[];
   status: string;
+  loading?: boolean;
 }
 
-const ShipmentsTable: React.FC<ShipmentsTableProps> = ({ status }) => {
-    const filtered = status === 'All' ? shipments : shipments.filter(shipment => shipment.status === status);
-
+const ShipmentsTable: React.FC<ShipmentsTableProps> = ({ shipments, status, loading }) => {
+  const filteredShipments = shipments.filter(
+    (s) => status === 'All' || s.status === status
+  );
+    
     return (
         <Card>
           <TableContainer>
@@ -50,7 +54,23 @@ const ShipmentsTable: React.FC<ShipmentsTableProps> = ({ status }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filtered.map((row) => <ShipmentRow key={row.id} row={row} />)}
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={10} align="center" sx={{ py: 5 }}>
+                      <CircularProgress />
+                    </TableCell>
+                  </TableRow>
+                ) : filteredShipments.length > 0 ? (
+                  filteredShipments.map((shipment) => ( 
+                  <ShipmentRow key={shipment.id} row={shipment} />
+                ))
+              ): (
+                <TableRow>
+                  <TableCell colSpan={10} align="center" sx={{ py: 5 }}>
+                    No shipments found
+                  </TableCell>
+                </TableRow>
+              )}
               </TableBody>
             </Table>
           </TableContainer>

@@ -5,11 +5,8 @@ import { Loader } from "./Loader";
 import { formatDateTime } from "@/lib/utils";
 
 interface InvoiceRequest {
-  status: {
-    label: string;
-    value: string;
-  };
-  shipment_uuid: string;
+  id: string;
+  status: string;
   invoice?: {
     invoice_no?: string;
     total?: number;
@@ -31,7 +28,7 @@ export default function Invoices({ request, payment_slips, onUpdate }: { request
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const amount = request?.charges?.[0]?.amount || "No Amount";
-  const isPaid = PAID_STATUSES.includes(request.status.value);
+  const isPaid = PAID_STATUSES.includes(request.status);
 
   useEffect(() => {
     if (payment_slips?.length) {
@@ -55,7 +52,7 @@ export default function Invoices({ request, payment_slips, onUpdate }: { request
       for (const file of filesArray) {
         const url = await uploadToCloudinary(file);
         if (url) {
-          await addPackagePaymentSlip(request.shipment_uuid, {
+          await addPackagePaymentSlip(request.id, {
             url,
             original_filename: file.name,
             mime_type: file.type,

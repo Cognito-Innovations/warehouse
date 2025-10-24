@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   TableCell,
@@ -18,44 +18,12 @@ import {
 } from '@mui/icons-material';
 import { getStatusAndInvoiceColor } from '../../data/shipments';
 import PackageRow from './PackageRow';
+import { formatDateTime } from '../../utils/formatDateTime';
 
-interface ItemDetail { 
-    name: string; 
-    quantity: number; 
-    amount: string; 
-    total: string; 
-}
-
-interface ExpandedItem {
-  id: number; 
-  packageNo: string; 
-  rack: string; 
-  trackingNo: string; 
-  courier: string;
-  receivedAt: string; 
-  receivedTime: string; 
-  weight: string; 
-  volWeight: string; 
-  items: ItemDetail[];
-}
-
-interface Shipment {
-  id: string; 
-  trackingNo: string; 
-  courier: string;
-  user: { name: string; suiteNo: string; };
-  requestAt: string; 
-  requestTime: string; 
-  status: string; 
-  pkgsCount: number; 
-  invoice: string;
-  items: ExpandedItem[];
-}
-
-const ShipmentRow: React.FC<{ row: Shipment }> = ({ row }) => {
+const ShipmentRow = ({ row }) => {
   const [open, setOpen] = useState(false);
   const statusColors = getStatusAndInvoiceColor(row.status);
-  const invoiceColors = getStatusAndInvoiceColor(row.invoice);
+  const invoiceColors = getStatusAndInvoiceColor(row.invoice || "PENDING");
 
   return (
     <>
@@ -66,25 +34,24 @@ const ShipmentRow: React.FC<{ row: Shipment }> = ({ row }) => {
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell><Typography>{row.id}</Typography></TableCell>
+        <TableCell><Typography>{row.shipment_no}</Typography></TableCell>
         <TableCell>
-          <Typography>{row.trackingNo}</Typography>
+          <Typography>{row.tracking_no}</Typography>
           <Typography variant="caption" color="text.secondary">{row.courier}</Typography>
         </TableCell>
         <TableCell>
           <Typography>{row.user.name}</Typography>
-          <Typography variant="caption" color="text.secondary">{row.user.suiteNo}</Typography>
+          <Typography variant="caption" color="text.secondary">{row.user.suite_no}</Typography>
         </TableCell>
         <TableCell>
-          <Typography>{row.requestAt}</Typography>
-          <Typography variant="caption" color="text.secondary">{row.requestTime}</Typography>
+          <Typography>{formatDateTime(row.created_at)}</Typography>
         </TableCell>
         <TableCell>
           <Chip label={row.status} size="small" sx={{ color: statusColors.color, bgcolor: statusColors.bgColor }} />
         </TableCell>
-        <TableCell align="center">{row.pkgsCount}</TableCell>
+        <TableCell align="center">{row.packages ? row.packages.length : 0}</TableCell>
         <TableCell>
-          <Chip label={row.invoice} size="small" sx={{ color: invoiceColors.color, bgcolor: invoiceColors.bgColor }} />
+          <Chip label={row.invoice || "PENDING"} size="small" sx={{ color: invoiceColors.color, bgcolor: invoiceColors.bgColor }} />
         </TableCell>
         {/* TODO: Add view icon when functionality is implemented*/}
         {/* <TableCell>
@@ -120,7 +87,7 @@ const ShipmentRow: React.FC<{ row: Shipment }> = ({ row }) => {
                 }}>
                   Package Details
                   <Chip 
-                    label={`${row.items.length} packages`} 
+                    label={`${row.packages.length} packages`} 
                     size="small" 
                     sx={{ 
                       bgcolor: '#e2e8f0', 
@@ -164,12 +131,12 @@ const ShipmentRow: React.FC<{ row: Shipment }> = ({ row }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {row.items.map((pkg, i) => (
+                    {row.packages.map((pkg, i) => (
                       <PackageRow 
                         key={pkg.id} 
                         item={pkg} 
                         index={i} 
-                        isLast={i === row.items.length - 1}
+                        isLast={i === row.packages.length - 1}
                       />
                     ))}
                   </TableBody>

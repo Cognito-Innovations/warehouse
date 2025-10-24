@@ -40,10 +40,11 @@ export const menuItems: MenuItem[] = [
     ],
   },
   {
-    text: 'Shipments Export',
+    text: 'Shipments',
     icon: ShipmentsIcon,
-    defaultPath: '/shipments/export',
+    defaultPath: '/shipments',
     subMenu: [
+      { text: 'Shipments', icon: ExportIcon, path: '/shipments' },
       { text: 'Shipment Export', icon: ExportIcon, path: '/shipments/export' },
     ],
   },

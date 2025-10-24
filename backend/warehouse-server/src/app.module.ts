@@ -27,6 +27,7 @@ import { PreArrivaController } from './pre-arrivals/pre-arrivals.controller';
 import { PickupRequestsController } from './pickup-requests/pickup-requests.controller';
 import { ShoppingRequestsController } from './shopping-requests/shopping-requests.controller';
 import { ShoppingRequestProductsController } from './products/shopping-request-products.controller';
+import { ShipmentsController } from './shipments/shipments.controller';
 import { CourierCompaniesModule } from './courier_companies/courier_companies.module';
 import { CountriesModule } from './Countries/countries.module';
 import { SupportedCountriesModule } from './supported-countries/supported-countries.module';
@@ -36,6 +37,7 @@ import { UserPreferencesModule } from './user-preferences/user-preferences.modul
 import { CurrenciesModule } from './currencies/currencies.module';
 import { UserAddressModule } from './user_address/user_address.module';
 import { EcommerceModule } from './ecommerce/ecommerce.module';
+import { ShipmentsModule } from './shipments/shipments.module';
 
 @Module({
   imports: [
@@ -82,6 +84,7 @@ import { EcommerceModule } from './ecommerce/ecommerce.module';
     UserPreferencesModule,
     CurrenciesModule,
     EcommerceModule,
+    ShipmentsModule,
   ],
   controllers: [
     PackageItemsController,
@@ -90,6 +93,7 @@ import { EcommerceModule } from './ecommerce/ecommerce.module';
     PickupRequestsController,
     ShoppingRequestsController,
     ShoppingRequestProductsController,
+    ShipmentsController,
   ],
   providers: [
     {

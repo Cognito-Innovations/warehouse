@@ -4,31 +4,29 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { CircularProgress } from "@mui/material";
-import { getPackagesByShipmentId, getPaymentSlips } from "@/lib/api.service";
+import { getPackagesByShipmentNo, 
+  // getPaymentSlips 
+} from "@/lib/api.service";
 import { toast } from "sonner";
 
 import TrackingStatus from "@/components/Shipment/TrackingStatus";
 import RequestHeader from "@/components/Shipment/RequestHeader";
-import ActionsCard from "@/components/Shipment/ActionsCard";
-import Invoices from "@/components/Shipment/Invoices";
-import ConfirmDialog from "@/components/Modals/ConfirmDialog";
-import { ROUTES } from "@/utils/constants";
+// import ActionsCard from "@/components/Shipment/ActionsCard";
+// import Invoices from "@/components/Shipment/Invoices";
+// import ConfirmDialog from "@/components/Modals/ConfirmDialog";
+// import { ROUTES } from "@/utils/constants";
 
 interface IShipmentRequest {
   id: string;
-  shipment_id: string;
-  shipment_uuid: string;
+  shipment_no: string;
   country: {
     id: string;
     name: string;
   };
-  charges:{
-    amount: number;
-  }[];
-  status: {
-    label: string;
-    value: string;
-  };
+  // charges:{
+  //   amount: number;
+  // }[];
+  status: string;
   created_at: string;
 }
 
@@ -36,79 +34,81 @@ export default function ShipmentDetailPage() {
   const params = useParams();
   const router = useRouter();
   
-  const shipmentId = Array.isArray(params.shipmentId) ? params.shipmentId[0] : params.shipmentId;
+  const shipmentNo = Array.isArray(params.shipmentNo) ? params.shipmentNo[0] : params.shipmentNo;
 
   const [request, setRequest] = useState<IShipmentRequest | null>(null);
-  const [paymentSlips, setPaymentSlips] = useState<any[]>([]);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  // const [paymentSlips, setPaymentSlips] = useState<any[]>([]);
+  // const [confirmOpen, setConfirmOpen] = useState(false);
+  // const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
+  // const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchRequest = useCallback(async () => {
-    if (!shipmentId) return;
+    if (!shipmentNo) return;
 
     setLoading(true);
     try {
-      const data = await getPackagesByShipmentId(shipmentId);
-      if (data && data.length > 0) {
-        setRequest(data[0]);
+      const data = await getPackagesByShipmentNo(shipmentNo);
+      if (data && data.id) {
+        setRequest(data);
       } else {
         setRequest(null);
-        toast.warning("Shipment request not found.");
+        toast.warning("Shipment not found.");
       }
     } catch (error) {
-      console.error("Failed to fetch shipment package:", error);
-      toast.error("Failed to fetch shipment package.");
+      console.error("Failed to fetch shipment:", error);
+      toast.error("Failed to fetch shipment.");
       setRequest(null);
     } finally {
       setLoading(false);
     }
-  }, [shipmentId]);
+  }, [shipmentNo]);
 
-  const fetchPaymentSlips = useCallback(async (shipment_uuid: string) => {
-    try {
-      const slips = await getPaymentSlips(shipment_uuid);
-      setPaymentSlips(slips);
-    } catch (err) {
-      console.error("Failed to fetch payment slips:", err);
-      toast.error("Failed to load payment slips.");
-    }
-  }, []);
+  // TODO: Uncomment when backend is ready
+  // const fetchPaymentSlips = useCallback(async (shipment_uuid: string) => {
+  //   try {
+  //     const slips = await getPaymentSlips(shipment_uuid);
+  //     setPaymentSlips(slips);
+  //   } catch (err) {
+  //     console.error("Failed to fetch payment slips:", err);
+  //     toast.error("Failed to load payment slips.");
+  //   }
+  // }, []);
 
   useEffect(() => {
     fetchRequest();
   }, [fetchRequest]);
 
-  useEffect(() => {
-    if (request?.shipment_uuid) {
-      fetchPaymentSlips(request.shipment_uuid);
-    }
-  }, [request, fetchPaymentSlips]);
+  // useEffect(() => {
+  //   if (request?.shipment_uuid) {
+  //     fetchPaymentSlips(request.shipment_uuid);
+  //   }
+  // }, [request, fetchPaymentSlips]);
 
-  const handleDelete = useCallback(async () => {
-    if (!deleteId) return;
-    setIsDeleting(true);
+  // TODO: Uncomment when backend is ready
+  // const handleDelete = useCallback(async () => {
+  //   if (!deleteId) return;
+  //   setIsDeleting(true);
 
-    try {
-      toast.success("Request deleted successfully!");
-      router.push(`${ROUTES.DASHBOARD}?tab=shipments`);
-    } catch (error) {
-      console.error("Delete failed:", error);
-      toast.error("Failed to delete request");
-    } finally {
-      setConfirmOpen(false);
-      setDeleteId(null);
-      setIsDeleting(false);
-    }
-  }, [deleteId, router]);
+  //   try {
+  //     toast.success("Request deleted successfully!");
+  //     router.push(`${ROUTES.DASHBOARD}?tab=shipments`);
+  //   } catch (error) {
+  //     console.error("Delete failed:", error);
+  //     toast.error("Failed to delete request");
+  //   } finally {
+  //     setConfirmOpen(false);
+  //     setDeleteId(null);
+  //     setIsDeleting(false);
+  //   }
+  // }, [deleteId, router]);
 
-  const openDeleteDialog = (id: string) => {
-    setDeleteId(id);
-    setConfirmOpen(true);
-  };
+  // const openDeleteDialog = (id: string) => {
+  //   setDeleteId(id);
+  //   setConfirmOpen(true);
+  // };
 
-  const displayInvoiceSection = request && ["Payment Pending", "Payment Approved", "Ready To Ship", "Departed"].includes(request.status.value);
+  const displayInvoiceSection = request && ["PAYMENT_PENDING", "PAYMENT_APPROVED", "READY_TO_SHIP", "DEPARTED"].includes(request.status);
 
   if (loading) {
     return (
@@ -143,14 +143,14 @@ export default function ShipmentDetailPage() {
         <div className="mb-6">
           <RequestHeader
             request={request}
-            onDelete={openDeleteDialog}
+            // onDelete={openDeleteDialog}
           />
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-[320px] lg:flex-shrink-0">
             <TrackingStatus
-              status={request.status.value}
+              status={request.status}
               createdAt={request.created_at}
             />
           </div>
@@ -163,14 +163,15 @@ export default function ShipmentDetailPage() {
                     <span className="font-medium">Note:</span> The charges shown below include packing and shipping costs for your shipment.
                   </p>
                 </div>
-                <Invoices request={request} payment_slips={paymentSlips} onUpdate={fetchRequest} />
+                {/* TODO: Uncomment when backend is ready */}
+                {/* <Invoices request={request} payment_slips={paymentSlips} onUpdate={fetchRequest} /> */}
               </>
             )}
           </div>
         </div>
       </div>
 
-      <ConfirmDialog
+      {/* <ConfirmDialog
         open={confirmOpen}
         title="Delete Request"
         message="Are you sure you want to delete this request? This action cannot be undone."
@@ -179,7 +180,7 @@ export default function ShipmentDetailPage() {
         onConfirm={handleDelete}
         onClose={() => setConfirmOpen(false)}
         isLoading={isDeleting}
-      />
+      /> */}
     </div>
   );
 }

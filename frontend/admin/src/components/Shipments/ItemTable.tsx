@@ -12,8 +12,8 @@ import {
 interface ItemDetail {
   name: string;
   quantity: number;
-  amount: string;
-  total: string;
+  unit_price: string;
+  total_price: string;
 }
 
 const ItemTable: React.FC<{ items: ItemDetail[] }> = ({ items }) => {
@@ -112,12 +112,12 @@ const ItemTable: React.FC<{ items: ItemDetail[] }> = ({ items }) => {
                 </TableCell>
                 <TableCell align="right" sx={{ py: 1.5 }}>
                   <Typography variant="body2">
-                    {detail.amount}
+                    {detail.unit_price}
                   </Typography>
                 </TableCell>
                 <TableCell align="right" sx={{ py: 1.5 }}>
-                  <Typography variant="body2" color="primary">
-                    {detail.total}
+                  <Typography variant="body2">
+                    {detail.total_price}
                   </Typography>
                 </TableCell>
               </TableRow>

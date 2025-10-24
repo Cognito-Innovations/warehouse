@@ -485,3 +485,16 @@ export const updatePaymentStatus = async (id: string, paymentStatus: string) => 
   const response = await api.patch(`/ecommerce-orders/${id}/payment-status`, paymentStatus);
   return response.data;
 };
+
+// Shipment
+export const getShipments = async () => {
+  const response = await api.get('/shipments');
+  return response.data;
+};
+
+export const getShipmentsByStatus = async (status: string) => {
+  const params = new URLSearchParams();
+  params.append('status', status);
+  const response = await api.get(`/shipments/by-status?${params.toString()}`);
+  return response.data;
+};

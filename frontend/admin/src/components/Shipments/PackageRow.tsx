@@ -14,28 +14,16 @@ import {
   VisibilityOutlined as ViewIcon,
 } from '@mui/icons-material';
 import ItemTable from './ItemTable';
+import { formatDateTime } from '../../utils/formatDateTime';
+import { useNavigate } from 'react-router-dom';
 
-interface ItemDetail {
-  name: string;
-  quantity: number;
-  amount: string;
-  total: string;
-}
-interface ExpandedItem {
-  id: number;
-  packageNo: string;
-  rack: string;
-  trackingNo: string;
-  courier: string;
-  receivedAt: string;
-  receivedTime: string;
-  weight: string;
-  volWeight: string;
-  items: ItemDetail[];
-}
-
-const PackageRow: React.FC<{ item: ExpandedItem; index: number; isLast?: boolean }> = ({ item, index, isLast }) => {
+const PackageRow = ({ item, index, isLast }) => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+
+  const handleViewPackage = (packageId: string) => {
+    navigate(`/packages/${packageId}`);
+  };
 
   return (
     <>
@@ -67,30 +55,31 @@ const PackageRow: React.FC<{ item: ExpandedItem; index: number; isLast?: boolean
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
           <Typography variant="body2">
-            {index + 1}. {item.packageNo}
+            {index + 1}. {item.package_id}
           </Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
-          <Typography variant="body2">{item.rack}</Typography>
+          <Typography variant="body2">{item.rack_slot?.label}</Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
-          <Typography variant="body2">{item.trackingNo}</Typography>
-          <Typography variant="caption" color="text.secondary">{item.courier}</Typography>
+          <Typography variant="body2">{item.tracking_no}</Typography>
+          <Typography variant="caption" color="text.secondary">{item.vendor?.supplier_name }</Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
-          <Typography variant="body2">{item.receivedAt}</Typography>
-          <Typography variant="caption" color="text.secondary">{item.receivedTime}</Typography>
+          <Typography variant="body2">{formatDateTime(item.created_at)}</Typography>
+          {/* <Typography variant="caption" color="text.secondary">{item.receivedTime}</Typography> */}
         </TableCell>
         <TableCell align="right" sx={{ py: 1.5 }}>
-          <Typography variant="body2">{item.weight}</Typography>
+          <Typography variant="body2">{item.total_weight}</Typography>
         </TableCell>
         <TableCell align="right" sx={{ py: 1.5 }}>
-          <Typography variant="body2">{item.volWeight}</Typography>
+          <Typography variant="body2">{item.total_volumetric_weight}</Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <IconButton 
               size="small" 
+              onClick={() => handleViewPackage(item.package_id)}
               sx={{ 
                 bgcolor: '#7360F2', 
                 color: '#f8f8f8', 
@@ -105,13 +94,23 @@ const PackageRow: React.FC<{ item: ExpandedItem; index: number; isLast?: boolean
         </TableCell>
       </TableRow>
 
-      <TableRow>
-        <TableCell colSpan={9} sx={{ py: 0 }}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <ItemTable items={item.items} />
-          </Collapse>
-        </TableCell>
-      </TableRow>
+      {item.items && item.items.length > 0 ? (
+        <TableRow>
+          <TableCell colSpan={9} sx={{ py: 0 }}>
+            <Collapse in={open} timeout="auto" unmountOnExit>
+              <ItemTable items={item.items} />
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      ) : (
+        <TableRow>
+          <TableCell colSpan={9} sx={{ py: 0 }}>
+            <Collapse in={open} timeout="auto" unmountOnExit>
+              <ItemTable items={[]} />
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      )}
     </>
   );
 };

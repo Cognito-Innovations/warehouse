@@ -10,22 +10,22 @@ export const getStatusProps = (status: string): { IconComponent: SvgIconComponen
   const normalizedStatus = status.toLowerCase();
 
   switch (normalizedStatus) {
-    case "request ship":
+    case "ship_request":
       return {
         IconComponent: LocalShippingIcon,
         colorClassName: "text-blue-500",
       };
-    case "payment pending":
+    case "payment_pending":
       return {
         IconComponent: HourglassBottomIcon,
         colorClassName: "text-yellow-500",
       };
-    case "payment approved":
+    case "payment_approved":
       return {
         IconComponent: CheckCircleIcon,
         colorClassName: "text-green-500",
       };
-    case "ready to ship":
+    case "ready_to_ship":
       return {
         IconComponent: Inventory2Icon,
         colorClassName: "text-purple-600",

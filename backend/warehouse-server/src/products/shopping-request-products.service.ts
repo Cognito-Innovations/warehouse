@@ -5,7 +5,6 @@ import { ShoppingRequestProduct } from './shopping-request-product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductResponseDto } from './dto/product-response.dto';
 
-//TODO P0: Needs to rewrite return logic code
 @Injectable()
 export class ShoppingRequestProductsService {
   constructor(
@@ -25,25 +24,12 @@ export class ShoppingRequestProductsService {
     const savedProduct = await this.productRepository.save(product);
 
     return {
-      id: savedProduct.id,
-      shopping_request_id: savedProduct.shopping_request_id,
-      name: savedProduct.name,
-      description: savedProduct.description,
+      ...savedProduct,
       unit_price:
         savedProduct.unit_price !== undefined &&
         savedProduct.unit_price !== null
           ? savedProduct.unit_price.toString()
           : undefined,
-      currency: savedProduct.currency,
-      quantity: savedProduct.quantity,
-      url: savedProduct.url,
-      size: savedProduct.size,
-      color: savedProduct.color,
-      variants: savedProduct.variants,
-      if_not_available_quantity: savedProduct.if_not_available_quantity,
-      if_not_available_color: savedProduct.if_not_available_color,
-      created_at: savedProduct.created_at,
-      updated_at: savedProduct.updated_at,
     };
   }
 
@@ -70,26 +56,12 @@ export class ShoppingRequestProductsService {
     const updatedProduct = await this.productRepository.save(product);
 
     return {
-      id: updatedProduct.id,
-      shopping_request_id: updatedProduct.shopping_request_id,
-      name: updatedProduct.name,
-      description: updatedProduct.description,
+      ...updatedProduct,
       unit_price:
         updatedProduct.unit_price !== undefined &&
         updatedProduct.unit_price !== null
           ? updatedProduct.unit_price.toString()
           : undefined,
-      currency: updatedProduct.currency,
-      quantity: updatedProduct.quantity,
-      url: updatedProduct.url,
-      size: updatedProduct.size,
-      color: updatedProduct.color,
-      variants: updatedProduct.variants,
-      if_not_available_quantity: updatedProduct.if_not_available_quantity,
-      if_not_available_color: updatedProduct.if_not_available_color,
-      available: updatedProduct.available,
-      created_at: updatedProduct.created_at,
-      updated_at: updatedProduct.updated_at,
     };
   }
 }

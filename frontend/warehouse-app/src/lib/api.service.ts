@@ -106,7 +106,7 @@ export const createShoppingRequest = async (request: any) => {
 };
 
 export const createShoppingRequestProduct = async (product: any) => {
-  const res = await authenticatedApi.post("/shopping-requests", product);
+  const res = await authenticatedApi.post("/shopping-request-products", product);
   return res.data;
 };
 
@@ -152,10 +152,20 @@ export const getPackagesByUser = async (userId: string) => {
   return res.data;
 };
 
-export const getPackagesByShipmentId = async (shipmentId: string) => {
-  const res = await authenticatedApi.get(`/packages/shipments/id/${shipmentId}`);
+export const createShipment = async (payload: any) => {
+  const res = await authenticatedApi.post(`/shipments`, payload);
   return res.data;
-};
+}
+
+export const getShipmentsByUser = async (userId: string) => {
+  const res = await authenticatedApi.get(`/shipments/${userId}`);
+  return res.data;
+}
+
+export const getPackagesByShipmentNo = async (shipmentNo: string) => {
+  const res = await authenticatedApi.get(`/shipments/detail/by-shipmentNo/${shipmentNo}`);
+  return res.data;
+}
 
 export const uploadPackageDocuments = async (packageId: string, files: File[]): Promise<any> => {
   const formData = new FormData();
@@ -184,11 +194,6 @@ export const updatePackageStatus = async (packageId: string, status: string) => 
     status: status,
     updated_by: userId
   });
-  return res.data;
-};
-
-export const getShipmentsByUser = async (userId: string) => {
-  const res = await authenticatedApi.get(`/packages/user/${userId}/status/Request Ship`);
   return res.data;
 };
 

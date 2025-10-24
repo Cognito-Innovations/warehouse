@@ -9,10 +9,18 @@ import {
 import { statusCards } from '../../data/shipments';
 
 interface StatusCardsProps {
+  shipments: any[];
   onSelectStatus: (status: string) => void;
+  currentStatus?: string;
 }
 
-const StatusCards: React.FC<StatusCardsProps> = ({ onSelectStatus }) => {
+const StatusCards: React.FC<StatusCardsProps> = ({ shipments, onSelectStatus, currentStatus }) => {
+  const counts: Record<string, number> = {};
+
+  shipments.forEach((shipment) => {
+    counts[shipment.status] = (counts[shipment.status] || 0) + 1;
+  });
+
   return (
     <Grid container spacing={3} sx={{ mb: 3 }}>
       {statusCards.map((card, index) => ( 
@@ -27,6 +35,10 @@ const StatusCards: React.FC<StatusCardsProps> = ({ onSelectStatus }) => {
               display: 'flex',
               alignItems: 'center',
               cursor: 'pointer',
+              ...(currentStatus === card.statusValue && {
+                border: '2px solid #7360F2',
+                boxShadow: '0 0 0 3px rgba(115,96,242,0.1)',
+              }),
               '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }
             }}
           >
@@ -43,7 +55,7 @@ const StatusCards: React.FC<StatusCardsProps> = ({ onSelectStatus }) => {
                     variant="h4"
                     sx={{ fontWeight: 700, fontSize: '1.8rem', color: 'text.primary' }}
                   >
-                    {card.value}
+                    {counts[card.statusValue] || 0}
                   </Typography>
                 </Box>
 

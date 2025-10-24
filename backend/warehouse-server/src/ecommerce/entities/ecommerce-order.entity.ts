@@ -27,6 +27,7 @@ export enum PaymentStatus {
   REFUNDED = 'REFUNDED',
 }
 
+// TODO: Need to update the entity
 @Entity('ecommerce_orders')
 export class EcommerceOrder extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')

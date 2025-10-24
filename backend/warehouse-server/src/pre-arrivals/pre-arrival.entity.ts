@@ -24,8 +24,8 @@ export class PreArrival extends BaseTimestampEntity {
   otp: number;
 
   @Column()
-  @Length(7, 10, {
-    message: 'Tracking number must be between 10 and 14 characters',
+  @Length(7, 14, {
+    message: 'Tracking number must be between 7 and 14 characters',
   })
   tracking_no: string;
 

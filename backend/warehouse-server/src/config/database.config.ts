@@ -38,6 +38,7 @@ import { EcommerceProduct } from 'src/ecommerce/entities/ecommerce-product.entit
 import { EcommerceOrder } from 'src/ecommerce/entities/ecommerce-order.entity';
 import { EcommerceOrderItem } from 'src/ecommerce/entities/ecommerce-order-item.entity';
 import { EcommerceMeasurement } from 'src/ecommerce/entities/measurement.entity';
+import { Shipment } from 'src/shipments/shipment.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -85,6 +86,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     EcommerceOrderItem,
     EcommerceMeasurement,
     ShoppingRequestProduct,
+    Shipment,
   ],
   synchronize: true, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],

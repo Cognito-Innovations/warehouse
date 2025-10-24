@@ -19,9 +19,11 @@ interface PackageDetailsSectionProps {
     created_at: string;
     updated_at: string;
     status?: Status;
-    rack?: string,
-    rackColor?: string,
-    count?: number;
+    rack_slot?: {
+      label: string;
+      color: string;
+      count?: number
+    }
     measurements?: {
       piece_number: number;
       weight: string;
@@ -131,7 +133,7 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
             </Grid>
           </Grid>
 
-          {packageData.rack && (
+          {packageData.rack_slot && (
             <RackSlotInfo
               packageData={packageData}
               isDiscarded={isDiscarded}
