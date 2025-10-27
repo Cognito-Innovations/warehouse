@@ -9,6 +9,11 @@ import { Shipment, ShipmentStatus } from './shipment.entity';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { ShipmentResponseDto } from './dto/shipment-response.dto';
 import { Package } from 'src/packages/entities';
+import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
+import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
+import { mapToTrackingStatus } from './status-mapper';
+import { DocumentsService } from 'src/documents/documents.service';
+import { UpdateShipmentDto } from './dto/update-shipment.dto';
 
 @Injectable()
 export class ShipmentsService {
@@ -18,6 +23,8 @@ export class ShipmentsService {
     @InjectRepository(Package)
     private readonly packageRepository: Repository<Package>,
     private readonly dataSource: DataSource,
+    private readonly trackingRequestsService: TrackingRequestsService,
+    private readonly documentsService: DocumentsService,
   ) {}
 
   private generateShipmentNo(countryCode: string): string {
@@ -50,7 +57,7 @@ export class ShipmentsService {
     try {
       const packages = await queryRunner.manager.getRepository(Package).find({
         where: packageIds.map((id) => ({ id })),
-        relations: ['user', 'country'],
+        relations: ['user', 'country', 'items'],
       });
 
       if (packages.length !== packageIds.length) {
@@ -90,6 +97,15 @@ export class ShipmentsService {
         }
       }
 
+      const customs_value = packages.reduce((sum, pkg) => {
+        if (!pkg.items) return sum;
+        const pkgValue = pkg.items.reduce(
+          (itemSum, item) => itemSum + Number(item.total_price || 0),
+          0,
+        );
+        return sum + pkgValue;
+      }, 0);
+
       const shipmentNo = this.generateShipmentNo(country.code || 'IN');
       const trackingNo = this.generateTrackingNo();
 
@@ -97,11 +113,19 @@ export class ShipmentsService {
         shipment_no: shipmentNo,
         tracking_no: trackingNo,
         status: ShipmentStatus.SHIP_REQUEST,
-        user: user,
-        country: country,
+        user,
+        country,
+        customs_value,
       });
 
       const savedShipment = await queryRunner.manager.save(newShipment);
+
+      await this.trackingRequestsService.createTrackingRequest({
+        feature_type: FeatureType.Shipment,
+        feature_fid: savedShipment.id,
+        status: mapToTrackingStatus(savedShipment.status),
+        user: savedShipment.user.id,
+      });
 
       for (const pkg of packages) {
         pkg.shipment = savedShipment;
@@ -146,14 +170,23 @@ export class ShipmentsService {
   ): Promise<ShipmentResponseDto> {
     const shipment = await this.shipmentRepository.findOne({
       where: { shipment_no: shipmentNo },
-      relations: ['user', 'packages', 'country'],
+      relations: ['user', 'packages', 'country', 'packages.items'],
     });
 
     if (!shipment) {
       throw new NotFoundException(`Shipment with code ${shipmentNo} not found`);
     }
 
-    return shipment;
+    const tracking_requests =
+      await this.trackingRequestsService.getTrackingRequestsByFeature(
+        FeatureType.Shipment,
+        shipment.id,
+      );
+
+    return {
+      ...shipment,
+      tracking_requests,
+    };
   }
 
   async getShipmentsByStatus(status: string): Promise<ShipmentResponseDto[]> {
@@ -169,5 +202,107 @@ export class ShipmentsService {
     })
 
     return shipments;
+  }
+
+  async updateStatus(
+    id: string,
+    status: ShipmentStatus,
+  ): Promise<ShipmentResponseDto> {
+    const shipment = await this.shipmentRepository.findOne({
+      where: { id },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException(`Shipment with id ${id} not found`);
+    }
+
+    const normalizedStatus =
+      status.toUpperCase() as keyof typeof ShipmentStatus;
+
+    if (!(normalizedStatus in ShipmentStatus)) {
+      throw new Error(`Invalid status: ${status}`);
+    }
+
+    shipment.status = ShipmentStatus[normalizedStatus];
+
+    const updatedShipment = await this.shipmentRepository.save(shipment);
+
+    await this.trackingRequestsService.createTrackingRequest({
+      feature_type: FeatureType.Shipment,
+      feature_fid: id,
+      status: mapToTrackingStatus(updatedShipment.status),
+      user: updatedShipment.user.id,
+    });
+
+    return updatedShipment;
+  }
+
+  async updateShipmentById(id: string, payload: UpdateShipmentDto) {
+    const shipment = await this.shipmentRepository.findOne({ where: { id } });
+
+    if (!shipment) {
+      throw new NotFoundException(`Shipment with id ${id} not found`);
+    }
+
+    const total_volumetric_weight = 
+      (payload.length * payload.width * payload.height) / 5000;
+
+    shipment.total_weight = payload.weight;
+    shipment.length = payload.length;
+    shipment.width = payload.width;
+    shipment.height = payload.height;
+    shipment.total_volumetric_weight = total_volumetric_weight;
+
+    await this.shipmentRepository.save(shipment);
+
+    return shipment;
+  }
+
+  async addPaymentSlip(
+    shipmentId: string,
+    dto: {
+      url: string;
+      original_filename: string;
+      document_type?: string;
+      file_size?: number;
+      mime_type?: string;
+    },
+    userId: string,
+  ): Promise<ShipmentResponseDto> {
+    await this.documentsService.create({
+      uploaded_by: userId,
+      feature_type: FeatureType.Shipment,
+      feature_fid: shipmentId,
+      document_name: 'Payment Slip',
+      original_filename: dto.original_filename,
+      document_url: dto.url,
+      document_type: dto.document_type || 'slip',
+      file_size: dto.file_size,
+      mime_type: dto.mime_type,
+      category: 'PAYMENT',
+      is_required: false,
+    });
+
+    return this.getShipmentByShipmentNo(
+      (
+        await this.shipmentRepository.findOneOrFail({
+          where: { id: shipmentId },
+        })
+      ).shipment_no,
+    );
+  }
+
+  async deleteShipment(id: string): Promise<{ message: string }> {
+    const shipment = await this.shipmentRepository.findOne({
+      where: { id },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException(`Shipment with id ${id} not found`);
+    }
+
+    await this.shipmentRepository.delete(id);
+
+    return { message: 'Shipment deleted successfully' };
   }
 }

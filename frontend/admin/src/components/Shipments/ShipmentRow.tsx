@@ -15,15 +15,23 @@ import {
 import {
   KeyboardArrowDown as KeyboardArrowDownIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
+  VisibilityOutlined as ViewIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { MoreVerticalIcon } from 'lucide-react';
 import { getStatusAndInvoiceColor } from '../../data/shipments';
 import PackageRow from './PackageRow';
 import { formatDateTime } from '../../utils/formatDateTime';
 
 const ShipmentRow = ({ row }) => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const statusColors = getStatusAndInvoiceColor(row.status);
   const invoiceColors = getStatusAndInvoiceColor(row.invoice || "PENDING");
+
+  const handleViewShipment = (shipmentNo: string) => {
+    navigate(`/shipments/${shipmentNo}`);
+  };
 
   return (
     <>
@@ -53,16 +61,23 @@ const ShipmentRow = ({ row }) => {
         <TableCell>
           <Chip label={row.invoice || "PENDING"} size="small" sx={{ color: invoiceColors.color, bgcolor: invoiceColors.bgColor }} />
         </TableCell>
-        {/* TODO: Add view icon when functionality is implemented*/}
-        {/* <TableCell>
+
+        <TableCell>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton size="small" sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' }}}><ViewIcon fontSize="small" /></IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleViewShipment(row.shipment_no)}
+              sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' }}}>
+              <ViewIcon fontSize="small" />
+            </IconButton>
             
             {row.invoice === 'PENDING' && (
-                <IconButton size="small" sx={{ bgcolor: '#0b84e3', color: '#f8f8f8', '&:hover': { backgroundColor: '#0969b8' }}}><MoreIcon fontSize="small" /></IconButton>
+                <IconButton size="small" sx={{ bgcolor: '#0b84e3', color: '#f8f8f8', '&:hover': { backgroundColor: '#0969b8' }}}>
+                  <MoreVerticalIcon fontSize="small" />
+                </IconButton>
             )}
           </Box>
-        </TableCell> */}
+        </TableCell>
       </TableRow>
 
       <TableRow>

@@ -1,10 +1,13 @@
 import ApprovePaymentButton from "../components/ActionButtons/ApprovePaymentButton"
 import CommercialInvoiceButton from "../components/ActionButtons/CommercialInvoiceButton"
 import DiscardButton from "../components/ActionButtons/DiscardButton"
+import DiscardShipmentButton from "../components/ActionButtons/DiscardShipmentButton"
+import MasterShipmentButton from "../components/ActionButtons/MasterShipmentButton"
 import PrintCarrierLabelButton from "../components/ActionButtons/PrintCarrierLabelButton"
 import PrintHoldLabelButton from "../components/ActionButtons/PrintHoldLabel"
 import PrintLabelButton from "../components/ActionButtons/PrintLabelButton"
 import RaiseInvoiceButton from "../components/ActionButtons/RaiseInvoiceButton"
+import UpdateToDepartedButton from "../components/ActionButtons/UpdateToDepartedButton"
 
 export const TRACKING_STATUS = {
   ALL: 'ALL',
@@ -17,13 +20,14 @@ export const TRACKING_STATUS = {
   PICKED: 'PICKED',
   CANCELLED: 'CANCELLED',
   READY_TO_SHIP: 'Ready To Ship',
-  REQUEST_SHIP: 'Request Ship',
+  SHIP_REQUEST: 'SHIP_REQUEST',
   SHIPPED: 'SHIPPED',
   DISCARDED: 'DISCARDED',
   INVOICED: 'INVOICED',
-  PAYMENT_PENDING: 'Payment Pending',
-  PAYMENT_APPROVED: 'Payment Approved',
-  UPDATE_TO_DEPARTED: 'Departed'
+  PAYMENT_PENDING: 'PAYMENT_PENDING',
+  PAYMENT_APPROVAL_PENDING: 'PAYMENT_APPROVAL_PENDING',
+  PAYMENT_APPROVED: 'PAYMENT_APPROVED',
+  DEPARTED_FROM_ORIGIN: 'DEPARTED'
 }
 
 export const FEATURE_CONFIG = {
@@ -64,7 +68,10 @@ export const StatusActionMap = {
         component: DiscardButton,
       },
     ],
-    [TRACKING_STATUS.REQUEST_SHIP]: [
+  },
+
+  [FEATURE_CONFIG.SHIPMENT]: {
+    [TRACKING_STATUS.SHIP_REQUEST]: [
       {
         id:0,
         label: 'Raise Invoice',
@@ -82,6 +89,28 @@ export const StatusActionMap = {
       },
     ],
     [TRACKING_STATUS.PAYMENT_PENDING]: [
+      {
+        id:0,
+        label: 'Approve Payment',
+        component: ApprovePaymentButton,
+      },
+      {
+        id:1,
+        label: 'Print Hold Label',
+        component: PrintHoldLabelButton,
+      },
+      {
+        id:2,
+        label: 'Discard',
+        component: DiscardShipmentButton,
+      },
+      {
+        id:3,
+        label: 'Commercial Invoice',
+        component: CommercialInvoiceButton,
+      },
+    ],
+    [TRACKING_STATUS.PAYMENT_APPROVAL_PENDING]: [
       {
         id:0,
         label: 'Approve Payment',
@@ -118,21 +147,31 @@ export const StatusActionMap = {
     [TRACKING_STATUS.READY_TO_SHIP]: [
       {
         id:0,
+        label: 'Update to Departed',
+        component: UpdateToDepartedButton,
+      },
+      {
+        id:1,
         label: 'Print Hold Label',
         component: PrintHoldLabelButton,
       },
       {
-        id:1,
+        id:2,
         label: 'Print Carrier Label',
         component: PrintCarrierLabelButton,
       },
       {
-        id:2,
+        id:3,
         label: 'Commercial Invoice',
         component: CommercialInvoiceButton,
       },
     ],
-    [TRACKING_STATUS.UPDATE_TO_DEPARTED]: [
+    [TRACKING_STATUS.DEPARTED_FROM_ORIGIN]: [
+      {
+        id:1,
+        label: 'Master Shipment',
+        component: MasterShipmentButton,
+      },
       {
         id:1,
         label: 'Print Hold Label',

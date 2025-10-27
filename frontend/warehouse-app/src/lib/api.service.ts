@@ -167,6 +167,11 @@ export const getPackagesByShipmentNo = async (shipmentNo: string) => {
   return res.data;
 }
 
+export const deleteShipment = async (id: string) => {
+  const res = await authenticatedApi.delete(`/shipments/${id}`);
+  return res.data;
+};
+
 export const uploadPackageDocuments = async (packageId: string, files: File[]): Promise<any> => {
   const formData = new FormData();
   files.forEach(file => {

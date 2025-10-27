@@ -37,6 +37,7 @@ import Category from './pages/Category';
 import SubCategory from './pages/SubCategory';
 import Products from './pages/Products';
 import Orders from './pages/Orders';
+import ShipmentDetail from './pages/ShipmentDetail';
 
 function App() {
   const { user } = useAuth()
@@ -92,7 +93,7 @@ function App() {
                   {/* TODO: Move this prearrivals to a separate page */}
                   <Route path="/packages/pre-arrivals" element={<PreArrivals />} />
                   <Route path="/shipments" element={<Shipments />} />
-                  {/* <Route path="/shipments/:id" element={<ShipmentDetail />} /> */}
+                  <Route path="/shipments/:shipment_no" element={<ShipmentDetail />} />
                   <Route path="/shipments/export" element={<ShipmentExport />} />
                   <Route path="/shipment/export/:id" element={<ViewShipmentExportPage />} />
                   <Route path="/requests" element={<ShoppingRequests />} />

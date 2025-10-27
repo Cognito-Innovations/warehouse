@@ -16,7 +16,8 @@ const ApprovePaymentButton: React.FC<ApprovePaymentButtonProps> = ({ data, onRef
       if (!data?.id) return;
       setLoading(true);
       try {
-        await updatePackageStatus(data.id, "Payment Approved");
+        // Replace it with Shipment
+        // await updatePackageStatus(data.id, "Payment Approved");
         onRefresh();
         toast.success("Payment approved successfully!");
       } catch (err) {

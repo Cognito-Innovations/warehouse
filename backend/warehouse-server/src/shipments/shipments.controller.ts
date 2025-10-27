@@ -8,11 +8,23 @@ import {
   Req,
   Query,
   BadRequestException,
+  Delete,
+  Patch,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ShipmentsService } from './shipments.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { ShipmentResponseDto } from './dto/shipment-response.dto';
+import { ShipmentStatus } from './shipment.entity';
+import { UpdateShipmentDto } from './dto/update-shipment.dto';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    email?: string;
+    role?: string;
+  };
+}
 
 @Controller('shipments')
 @UseGuards(JwtAuthGuard)
@@ -53,5 +65,43 @@ export class ShipmentsController {
     @Param('userId') userId: string,
   ): Promise<ShipmentResponseDto[]> {
     return this.shipmentsService.getShipmentsByUser(userId);
+  }
+
+  @Patch(':id/status')
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() body: { status: ShipmentStatus },
+  ): Promise<ShipmentResponseDto> {
+    return this.shipmentsService.updateStatus(id, body.status);
+  }
+
+  @Patch(':id')
+  async updateShipment(
+    @Param('id') id: string,
+    @Body() payload: UpdateShipmentDto,
+  ) {
+    return this.shipmentsService.updateShipmentById(id, payload);
+  }
+
+  @Patch(':id/slips')
+  async addPaymentSlip(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      data: {
+        url: string;
+        original_filename: string;
+        mime_type?: string;
+        file_size?: number;
+      };
+    },
+    @Req() req: AuthenticatedRequest,
+  ): Promise<ShipmentResponseDto> {
+    return this.shipmentsService.addPaymentSlip(id, body.data, req.user.id);
+  }
+
+  @Delete(':id')
+  async delete(@Param('id') id: string): Promise<{ message: string }> {
+    return this.shipmentsService.deleteShipment(id);
   }
 }

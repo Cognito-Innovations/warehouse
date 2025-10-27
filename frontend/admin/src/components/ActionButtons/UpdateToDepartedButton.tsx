@@ -1,6 +1,6 @@
 import { Button, CircularProgress } from "@mui/material";
 import React, { useState } from "react";
-import { updatePackageStatus } from "../../services/api.services";
+// import { updatePackageStatus } from "../../services/api.services";
 import type { PackageData } from "../../types";
 
 interface UpdateToDepartedButtonProps {
@@ -15,7 +15,8 @@ const UpdateToDepartedButton: React.FC<UpdateToDepartedButtonProps> = ({ data, o
     if (!data.id) return;
     try {
       setIsUpdating(true);
-      await updatePackageStatus(data.id, "Departed");
+      // Replace it with the Shipment
+      // await updatePackageStatus(data.id, "Departed");
       onRefresh?.();
     } catch (err) {
       console.error("Failed to update status to Departed:", err);

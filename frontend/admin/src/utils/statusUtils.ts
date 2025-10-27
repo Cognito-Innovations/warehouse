@@ -43,7 +43,7 @@ export const getStatusColor = (status: string) => {
     case 'IN REVIEW':
       return { color: '#3b82f6', bgColor: '#dbeafe' };
     
-    case 'REQUEST SHIP':
+    case 'SHIP_REQUEST':
       return { color: '#ff9800', bgColor: '#fff3e0' };
     
     case 'DEPARTED':

@@ -1,5 +1,5 @@
 import React from "react";
-import { Delete as DeleteIcon } from "@mui/icons-material";
+// import { Delete as DeleteIcon } from "@mui/icons-material";
 import { formatDateTime } from "@/lib/utils";
 
 interface RequestHeaderProps {
@@ -60,7 +60,7 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({ request,
         </div>
       </div>
 
-      {/* TODO: Uncomment when backend is ready */}
+      {/* TODO: Uncomment when we get clarified */}
       {/* {request.status === "SHIP_REQUEST" && (
         <button
           onClick={() => onDelete?.(request.id)}

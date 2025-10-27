@@ -4,16 +4,17 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { CircularProgress } from "@mui/material";
-import { getPackagesByShipmentNo, 
+import { toast } from "sonner";
+import { getPackagesByShipmentNo,
+  // deleteShipment, 
   // getPaymentSlips 
 } from "@/lib/api.service";
-import { toast } from "sonner";
 
 import TrackingStatus from "@/components/Shipment/TrackingStatus";
 import RequestHeader from "@/components/Shipment/RequestHeader";
+// import ConfirmDialog from "@/components/Modals/ConfirmDialog";
 // import ActionsCard from "@/components/Shipment/ActionsCard";
 // import Invoices from "@/components/Shipment/Invoices";
-// import ConfirmDialog from "@/components/Modals/ConfirmDialog";
 // import { ROUTES } from "@/utils/constants";
 
 interface IShipmentRequest {
@@ -85,12 +86,12 @@ export default function ShipmentDetailPage() {
   //   }
   // }, [request, fetchPaymentSlips]);
 
-  // TODO: Uncomment when backend is ready
   // const handleDelete = useCallback(async () => {
   //   if (!deleteId) return;
   //   setIsDeleting(true);
 
   //   try {
+  //     await deleteShipment(deleteId)
   //     toast.success("Request deleted successfully!");
   //     router.push(`${ROUTES.DASHBOARD}?tab=shipments`);
   //   } catch (error) {

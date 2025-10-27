@@ -498,3 +498,18 @@ export const getShipmentsByStatus = async (status: string) => {
   const response = await api.get(`/shipments/by-status?${params.toString()}`);
   return response.data;
 };
+
+export const getShipmentsByShipmentNo = async (shipmentNo: string) => {
+  const res = await api.get(`/shipments/detail/by-shipmentNo/${shipmentNo}`);
+  return res.data;
+}
+
+export const updateShipmentStatus = async (id: string, status: string) => {
+  const res = await api.patch(`/shipments/${id}/status`, {status});
+  return res.data;
+}
+
+export const updateShipment = async (id: string, payload: any) => {
+  const res = await api.patch(`/shipments/${id}`, payload);
+  return res.data;
+}

@@ -1,7 +1,9 @@
 import { Country } from 'src/Countries/country.entity';
 import { Package } from 'src/packages/entities';
+import { Rack } from 'src/racks/rack.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import { ShipmentExportBox } from 'src/shipment-export/shipment-export-box.entity';
+import { TrackingRequest } from 'src/tracking-requests/tracking-request.entity';
 import { User } from 'src/users/user.entity';
 import {
   Entity,
@@ -18,7 +20,7 @@ export enum ShipmentStatus {
   PAYMENT_APPROVED = 'PAYMENT_APPROVED',
   READY_TO_SHIP = 'READY_TO_SHIP',
   DEPARTED = 'DEPARTED',
-  REJECTED = 'REJECTED',
+  DISCARDED = 'DISCARDED',
 }
 
 @Entity('shipments')
@@ -56,4 +58,35 @@ export class Shipment extends BaseTimestampEntity {
 
   @OneToMany(() => Package, (pkg) => pkg.shipment)
   packages: Package[];
+
+  @ManyToOne(() => Rack, { eager: true, nullable: true })
+  @JoinColumn({ name: 'rack_slot_id' })
+  rack_slot: Rack | null;
+
+  @OneToMany(
+    () => TrackingRequest,
+    (trackingRequest) => trackingRequest.feature_fid
+  )
+  tracking_requests: TrackingRequest[];
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  customs_value: number;
+
+  @Column({ type: 'boolean', default: false })
+  dangerous_good: boolean;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  total_weight: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  total_volumetric_weight: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  length: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  width: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  height: number;
 }

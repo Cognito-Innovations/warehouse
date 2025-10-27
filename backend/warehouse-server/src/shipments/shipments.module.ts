@@ -4,9 +4,15 @@ import { Shipment } from './shipment.entity';
 import { ShipmentsController } from './shipments.controller';
 import { ShipmentsService } from './shipments.service';
 import { Package } from 'src/packages/entities';
+import { TrackingRequestsModule } from 'src/tracking-requests/tracking-requests.module';
+import { DocumentsModule } from 'src/documents/documents.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Shipment, Package])],
+  imports: [
+    TypeOrmModule.forFeature([Shipment, Package]),
+    TrackingRequestsModule,
+    DocumentsModule
+  ],
   controllers: [ShipmentsController],
   providers: [ShipmentsService],
   exports: [ShipmentsService],
