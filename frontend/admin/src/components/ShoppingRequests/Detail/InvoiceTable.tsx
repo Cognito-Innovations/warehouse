@@ -12,34 +12,29 @@ import {
   Chip,
   CircularProgress,
 } from "@mui/material";
-import { useState } from "react";
 import { InvoiceRow } from "./InvoiceRow";
-import { updateShoppingRequestStatus } from "../../../services/api.services";
 import type { Invoice, PaymentSlip } from "./RequestDetailContent";
 
 interface InvoiceTableProps {
-  id: string;
   invoice: Invoice;
   payment_slips: PaymentSlip[];
   status: string;
   isApprovingPayment?: boolean;
   onApprovePayment?: () => void;
-  onStatusUpdated?: () => void;
   isDiscarded?: boolean;
 }
 
 type StatusColor = "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning";
 
 export default function InvoiceTable({
-  id,
   invoice,
   payment_slips,
   status,
-  onStatusUpdated,
+  isApprovingPayment,
+  onApprovePayment,
   isDiscarded,
 }: InvoiceTableProps) {
-  const [isApprovingPayment, setIsApprovingPayment] = useState(false);
-
+  
   const getStatusColor = (status: string): StatusColor => {
     switch (status) {
       case "PAYMENT_PENDING":
@@ -52,18 +47,6 @@ export default function InvoiceTable({
         return "success";
       default:
         return "default";
-    }
-  };
-
-  const handleApprovePayment = async () => {
-    try {
-      setIsApprovingPayment(true);
-      await updateShoppingRequestStatus(id, "PAYMENT_APPROVED");
-      onStatusUpdated?.();
-    } catch (error) {
-      console.error("Failed to approve payment", error);
-    } finally {
-      setIsApprovingPayment(false);
     }
   };
 
@@ -99,7 +82,7 @@ export default function InvoiceTable({
           <Button
             variant="contained"
             size="medium"
-            onClick={isDiscarded ? undefined : handleApprovePayment}
+            onClick={isDiscarded ? undefined : onApprovePayment}
             disabled={isDiscarded ||isApprovingPayment}
             sx={{
               textTransform: "none",
@@ -148,7 +131,6 @@ export default function InvoiceTable({
               invoice={invoice}
               payment_slips={payment_slips}
               status={status}
-              onStatusUpdated={onStatusUpdated}
               isDiscarded={isDiscarded}
             />
           </TableBody>

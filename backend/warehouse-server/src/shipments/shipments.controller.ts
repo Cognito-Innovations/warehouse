@@ -53,6 +53,17 @@ export class ShipmentsController {
     return this.shipmentsService.getShipmentsByStatus(status);
   }
 
+  @Get('/search')
+  async searchShipment(
+    @Query('trackingNumber') trackingNumber: string,
+    @Query('status') status: ShipmentStatus,
+  ): Promise<ShipmentResponseDto> {
+    return this.shipmentsService.findByTrackingNumberAndStatus(
+      trackingNumber,
+      status,
+    );
+  }
+
   @Get('detail/by-shipmentNo/:shipmentNo')
   async findOneByShipmentNo(
     @Param('shipmentNo') shipmentNo: string,
@@ -83,8 +94,8 @@ export class ShipmentsController {
     return this.shipmentsService.updateShipmentById(id, payload);
   }
 
-  @Patch(':id/slips')
-  async addPaymentSlip(
+  @Post(':id/documents')
+  async addShipmentDocument(
     @Param('id') id: string,
     @Body()
     body: {
@@ -93,11 +104,16 @@ export class ShipmentsController {
         original_filename: string;
         mime_type?: string;
         file_size?: number;
+        category: 'PAYMENT' | 'SHIPMENT_PHOTO';
       };
     },
     @Req() req: AuthenticatedRequest,
   ): Promise<ShipmentResponseDto> {
-    return this.shipmentsService.addPaymentSlip(id, body.data, req.user.id);
+    return this.shipmentsService.addShipmentDocument(
+      id,
+      body.data,
+      req.user.id
+    );
   }
 
   @Delete(':id')

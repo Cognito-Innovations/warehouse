@@ -224,28 +224,6 @@ export class PackagesController {
     );
   }
 
-  @Get('shipments/search')
-  @ApiOperation({
-    summary: 'Search for a package by tracking number and status',
-  })
-  @ApiQuery({ name: 'trackingNumber', type: String, required: true })
-  @ApiQuery({
-    name: 'status',
-    type: String,
-    required: true,
-    example: 'Ready To Ship',
-  })
-  @ApiOkResponse({ description: 'Package found', type: PackageResponseDto })
-  async searchPackage(
-    @Query('trackingNumber') trackingNumber: string,
-    @Query('status') status: string,
-  ): Promise<PackageResponseDto> {
-    return this.packagesService.findByTrackingNumberAndStatus(
-      trackingNumber,
-      status,
-    );
-  }
-
   @Post('shipments/charges')
   @ApiOperation({ summary: 'Create a package shipment charge' })
   @ApiBody({ type: CreatePackageChargeDto })

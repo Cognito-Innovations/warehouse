@@ -13,7 +13,11 @@ interface jsPDFWithAutoTable extends jsPDF {
     lastAutoTable?: AutoTableFinalY;
 }
 
-interface InvoiceItem {
+interface Packages {
+    items: Item[];
+}
+
+interface Item {
     name: string;
     quantity: number;
     unit_price: string;
@@ -33,7 +37,7 @@ interface InvoiceData {
         line1?: string;
         zip_code?: string;
     };
-    items: InvoiceItem[];
+    packages: Packages[];
 }
 
 interface CommercialInvoiceButtonProps {
@@ -46,7 +50,10 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
     const handleCommercialInvoiceButton = async () => {
         setIsPrinting(true);
         try {
-            if (!data || !data.id || !data.user?.name || !data.items) {
+            const allItems = data.packages
+              ?.flatMap((pkg) => pkg.items) ?? [];
+
+            if (!data || !data.id || !data.user?.name || allItems.length === 0) {
                 toast.error("Required data for the invoice is missing.");
                 return;
             }
@@ -141,14 +148,14 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
 
             // --- 4. Items Table ---
             const tableColumns = ["Description", "Qty", "Amount", "Total"];
-            const tableRows = data.items.map((item: {name: string, quantity: number, unit_price: string, total_price: string}) => [
+            const tableRows = allItems.map((item: {name: string, quantity: number, unit_price: string, total_price: string}) => [
                 `${item.name || 'N/A'}`,
                 item.quantity,
                 parseFloat(item.unit_price).toFixed(2),
                 `USD ${parseFloat(item.total_price).toFixed(2)}`
             ]);
             
-            const grandTotal = data.items.reduce((sum: number, item: {total_price: string}) => sum + parseFloat(item.total_price), 0);
+            const grandTotal = allItems.reduce((sum: number, item: {total_price: string}) => sum + parseFloat(item.total_price), 0);
             
             autoTable(doc, {
                 startY: yPos + boxHeaderH + boxBodyH + 10,

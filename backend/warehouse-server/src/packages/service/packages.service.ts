@@ -653,25 +653,6 @@ export class PackagesService {
     return await this.packageChargeRepository.save(packageCharge);
   }
 
-  async findByTrackingNumberAndStatus(
-    trackingNumber: string,
-    status: string,
-  ): Promise<PackageResponseDto> {
-    const pkg = await this.packageRepository.findOne({
-      where: {
-        tracking_no: trackingNumber,
-        status: status,
-      },
-    });
-
-    if (!pkg) {
-      throw new NotFoundException(
-        `Package with tracking number ${trackingNumber} and status ${status} not found.`,
-      );
-    }
-    return this.mapPackageToResponseDto(pkg);
-  }
-
   async deletePackage(id: string): Promise<void> {
     const packageEntity = await this.packageRepository.findOne({
       where: { id },

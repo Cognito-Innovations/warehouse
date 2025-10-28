@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { uploadToCloudinary } from "@/lib/cloudinary.api";
-import { addPackagePaymentSlip } from "@/lib/api.service";
+import { createShipmentPaymentSlip } from "@/lib/api.service";
 import { Loader } from "./Loader";
-import { formatDateTime } from "@/lib/utils";
 
 interface InvoiceRequest {
   id: string;
@@ -20,7 +19,7 @@ interface InvoiceRequest {
   }[];
 }
 
-const PAID_STATUSES = ["Payment Approved", "Ready To Ship", "Departed"];
+const PAID_STATUSES = ["PAYMENT_APPROVED", "REAY_TO_SHIP", "DEPARTED"];
 
 export default function Invoices({ request, payment_slips, onUpdate }: { request: InvoiceRequest, payment_slips: {document_url:string}[], onUpdate?: () => void; }) {
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
@@ -52,12 +51,13 @@ export default function Invoices({ request, payment_slips, onUpdate }: { request
       for (const file of filesArray) {
         const url = await uploadToCloudinary(file);
         if (url) {
-          await addPackagePaymentSlip(request.id, {
+          await createShipmentPaymentSlip(request.id, {
             url,
             original_filename: file.name,
             mime_type: file.type,
             file_size: file.size,
-          });
+            category: 'PAYMENT'
+          })
           setUploadedUrls((prev) => [...prev, url]);
           onUpdate?.();
         }

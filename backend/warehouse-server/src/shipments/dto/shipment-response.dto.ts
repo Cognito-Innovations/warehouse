@@ -3,6 +3,7 @@ import { Package } from 'src/packages/entities';
 import { Rack } from 'src/racks/rack.entity';
 import { User } from 'src/users/user.entity';
 import { TrackingRequestResponseDto } from 'src/tracking-requests/dto/tracking-request-response.dto';
+import { DocumentResponseDto } from 'src/documents/dto/document-response.dto';
 
 export class ShipmentResponseDto {
   id: string;
@@ -13,7 +14,9 @@ export class ShipmentResponseDto {
   country: Country;
   packages: Package[];
   rack_slot: Rack | null;
-  tracking_requests: TrackingRequestResponseDto[];
+  tracking_requests?: TrackingRequestResponseDto[];
+  payment_slips?: DocumentResponseDto[];
+  shipment_photos?: DocumentResponseDto[];
   customs_value: number;
   dangerous_good: boolean;
   total_weight: number;

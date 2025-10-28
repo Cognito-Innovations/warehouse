@@ -17,9 +17,10 @@ import {
   InputLabel,
   Paper,
   CircularProgress,
+  TextField,
 } from '@mui/material';
 import { toast } from 'sonner';
-import { createPackageCharge, updatePackageStatus } from '../../services/api.services';
+import { updateShipmentStatus } from '../../services/api.services';
 
 interface Charge {
   category: string;
@@ -28,50 +29,51 @@ interface Charge {
   total: number;
 }
 
-interface PackageData {
+interface Shipment {
   id: string;
-  actual_id?: string;
   weight?: string | number;
 }
 
 const availableCharges = [
-  { name: 'Dangerous Goods', amount: 5.00 },
-  { name: 'Pickup Charge', amount: 10.00 },
-  { name: 'DG Handling', amount: 15.00 },
-  { name: 'Special Brand Handling', amount: 20.00 },
-  { name: 'Repacking', amount: 8.00 },
-  { name: 'Cargo Handling', amount: 12.00 },
+  { name: 'Dangerous Goods', amount: 0.00 },
+  { name: 'Pickup Charge', amount: 0.00 },
+  { name: 'DG Handling', amount: 0.00 },
+  { name: 'Special Brand Handling', amount: 0.00 },
+  { name: 'Repacking', amount: 0.00 },
+  { name: 'Cargo Handling', amount: 0.00 },
 ];
 
 const RaiseInvoiceModal: React.FC<{ 
-    packageData: PackageData; 
+    shipment: Shipment; 
     onClose: () => void;
     onUpdated?: () => void;
-}> = ({ packageData, onClose, onUpdated }) => {
+}> = ({ shipment, onClose, onUpdated }) => {
   const initialCharges: Charge[] = [
-    { category: 'Packing Options', description: 'Remove unnecessary packaging and bulky boxes & repack it as single package', amount: 1.00, total: 1.00 },
-    { category: 'Other', description: 'Repacking charges from country of origin', amount: 2.00, total: 2.00 },
-    { category: 'Freight Charge', description: `REDBOX Chargeable Weight ${packageData.weight || '5 KG'}`, amount: 35.00, total: 35.00 },
+    { category: 'Freight Charge', description: `REDBOX Chargeable Weight ${shipment.weight}`, amount: 35.00, total: 35.00 },
   ];
 
   const [charges, setCharges] = useState<Charge[]>(initialCharges);
   const [showAddCharges, setShowAddCharges] = useState(false);
   const [selectedCharge, setSelectedCharge] = useState('');
+  const [extraChargeAmount, setExtraChargeAmount] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   const handleAddCharge = () => {
-    const chargeToAdd = availableCharges.find(c => c.name === selectedCharge);
-    if (chargeToAdd && !charges.some(c => c.description === chargeToAdd.name)) {
+    const amountValue = parseFloat(extraChargeAmount);
+    if (!selectedCharge || isNaN(amountValue) || amountValue <= 0) return;
+
+    if (!charges.some(charge => charge.description === selectedCharge)) {
       setCharges(prev => [
         ...prev,
         {
           category: 'Additional Services',
-          description: chargeToAdd.name,
-          amount: chargeToAdd.amount,
-          total: chargeToAdd.amount,
+          description: selectedCharge,
+          amount: amountValue,
+          total: amountValue,
         },
       ]);
       setSelectedCharge('');
+      setExtraChargeAmount('');
     }
   };
 
@@ -82,9 +84,7 @@ const RaiseInvoiceModal: React.FC<{
   const handleRaiseInvoice = async () => {
     try {
       setLoading(true);  
-      //TODO: Combine both and move to in backend side with wrapping transaction
-      await updatePackageStatus(packageData.id, "Payment Pending");
-      await createPackageCharge({package_id: packageData.actual_id, amount: Number(calculateTotal())});
+      await updateShipmentStatus(shipment.id, "PAYMENT_PENDING")
       onUpdated?.();
       toast.success("Invoice raised successfully! Status updated to Payment Pending.");
       onClose();
@@ -111,7 +111,7 @@ const RaiseInvoiceModal: React.FC<{
           </TableHead>
           <TableBody>
             {charges.map((row, index) => (
-              <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+              <TableRow key={index}>
                 <TableCell component="th" scope="row">{index + 1}</TableCell>
                 <TableCell component="th" scope="row">{row.category}</TableCell>
                 <TableCell>{row.description}</TableCell>
@@ -150,14 +150,29 @@ const RaiseInvoiceModal: React.FC<{
               ))}
             </Select>
           </FormControl>
-          <Button
-            variant="contained"
-            onClick={handleAddCharge}
-            disabled={!selectedCharge}
-            sx={{ textTransform: 'none' }}
-          >
-            Add
-          </Button>
+
+          {selectedCharge && (
+            <>
+              <TextField
+                size="small"
+                type="number"
+                label="Amount"
+                value={extraChargeAmount}
+                onChange={(e) => setExtraChargeAmount(e.target.value)}
+                sx={{ width: 150 }}
+                inputProps={{ min: 0 }}
+              />
+
+              <Button
+                variant="contained"
+                onClick={handleAddCharge}
+                disabled={!selectedCharge || !extraChargeAmount || parseFloat(extraChargeAmount) <= 0}
+                sx={{ textTransform: 'none' }}
+              >
+                Add
+              </Button>
+            </>
+          )}
         </Box>
       )}
 

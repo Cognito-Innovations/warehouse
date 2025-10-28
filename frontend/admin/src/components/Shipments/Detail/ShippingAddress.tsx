@@ -7,10 +7,21 @@ interface ShippingAddressProps {
 }
 
 const ShippingAddress: React.FC<ShippingAddressProps> = ({ shipments }) => {
-  const address = shipments?.shipping_address || {};
+  const user = shipments?.user;
+  const address = user?.address?.[0];
+  const country = address?.country;
+  const countryCode = country?.substring(0, 2)?.toUpperCase();
+
+  const fullAddress = address
+    ? `${address.address}, ${address.city}, ${address.state}, ${address.country}`
+    : "Address not available";
+
+  const flagUrl = countryCode
+    ? `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
+    : "";
 
   return (
-    <Box sx={{ width: '500px', mt: 2 }}>
+    <Box sx={{ width: '100%', mt: 2 }}>
       <Typography
         variant="h6"
         sx={{
@@ -44,32 +55,36 @@ const ShippingAddress: React.FC<ShippingAddressProps> = ({ shipments }) => {
               position: "absolute",
               top: 12,
               right: 12,
-              width: 40,
-              height: 40,
-              bgcolor: "#f1f5f9",
-              borderRadius: 1.5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
-            <PublicIcon sx={{ color: "#3b82f6" }} />
+            {flagUrl ? (
+              <Box
+                component="img"
+                src={flagUrl}
+                alt={country}
+                sx={{
+                  width: 32,
+                  height: 24,
+                  borderRadius: "4px",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            ) : (
+              <PublicIcon sx={{ color: "#3b82f6" }} />
+            )}
           </Box>
 
           <Typography variant="body1" sx={{ fontWeight: 600, color: "#1e293b" }}>
-            {address.line1 || "Cozy, kashinaru magu, Hithadhoo, S Hithadhoo"}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "#374151" }}>
-            {address.line2 || "Addu, South"}
+            {fullAddress}
           </Typography>
 
           <Typography variant="body2" sx={{ color: "#6b7280", fontWeight: 500 }}>
-            POSTAL CODE: {address.postal_code || "19020"}
+            POSTAL CODE: {address?.zip_code}
           </Typography>
 
           <Typography variant="body2" sx={{ color: "#1e293b" }}>
-            {address.contact_name || "Ahmed Saamee Rasheed"} (
-            {address.contact_number || "9174966"})
+            {user?.name} ({user?.phone_number})
           </Typography>
         </CardContent>
       </Card>

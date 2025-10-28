@@ -1,11 +1,10 @@
 import { Button, CircularProgress } from "@mui/material"
 import { useState } from "react";
-import { updatePackageStatus } from "../../services/api.services";
 import { toast } from "sonner";
-import type { PackageData } from "../../types";
+import { updateShipmentStatus } from "../../services/api.services";
 
 interface ApprovePaymentButtonProps {
-    data: PackageData;
+    data: any;
     onRefresh: () => void;
 }
 
@@ -16,8 +15,7 @@ const ApprovePaymentButton: React.FC<ApprovePaymentButtonProps> = ({ data, onRef
       if (!data?.id) return;
       setLoading(true);
       try {
-        // Replace it with Shipment
-        // await updatePackageStatus(data.id, "Payment Approved");
+        await updateShipmentStatus(data.id, "PAYMENT_APPROVED");
         onRefresh();
         toast.success("Payment approved successfully!");
       } catch (err) {

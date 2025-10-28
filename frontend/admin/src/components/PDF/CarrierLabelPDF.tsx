@@ -144,9 +144,9 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.text(data.user?.address?.country || "MALDIVES", margin + tableOffsetX + 1, y + tableH + 8);
 
     // Dimensions
-    const length = data.measurements?.length ? Math.floor(Number(data.measurements?.length)) : null;
-    const height = data.measurements?.height ? Math.floor(Number(data.measurements?.height)) : null;
-    const width  = data.measurements?.width  ? Math.floor(Number(data.measurements?.width))  : null;
+    const length = data.length ? Math.floor(Number(data.length)) : null;
+    const height = data.height ? Math.floor(Number(data.height)) : null;
+    const width  = data.width  ? Math.floor(Number(data.width))  : null;
 
     const dimensionText = length && height && width ? `${length} X ${height} X ${width}` : "-";
 
@@ -317,7 +317,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(0, 0, 0);
-    doc.text(data.shipment_id!, margin + 1, y + 8);
+    doc.text(data.shipment_no!, margin + 1, y + 8);
     
     // TODO: When we have Piece ID then uncomment
     // Piece ID
@@ -359,13 +359,10 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setTextColor(0, 0, 0);
     let contents = "No items found";
 
-    if (Array.isArray(data.items) && data.items.length > 0) {
-      contents = data.items
-        .map((item) => {
-          const qty = item.quantity || 1;
-          const name = (item.name || "").trim().toUpperCase();
-          return `${qty}X ${name}`;
-        })
+    const items = data.packages?.flatMap((pkg) => pkg.items) || [];
+    if (items.length > 0) {
+      contents = items
+        .map((item) => `${item.quantity || 1}x ${(item.name || "").toUpperCase()}`)
         .join(", ");
     }
 

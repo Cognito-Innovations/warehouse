@@ -45,7 +45,7 @@ export class Shipment extends BaseTimestampEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => ShipmentExportBox, (box) => box.packages, {
+  @ManyToOne(() => ShipmentExportBox, (box) => box.shipments, {
     nullable: true,
     onDelete: 'SET NULL',
   })

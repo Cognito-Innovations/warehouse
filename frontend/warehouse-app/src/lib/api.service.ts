@@ -167,6 +167,21 @@ export const getPackagesByShipmentNo = async (shipmentNo: string) => {
   return res.data;
 }
 
+export const createShipmentPaymentSlip = async (
+  id: string,
+  data: {
+    url: string;
+    original_filename: string;
+    mime_type?: string;
+    file_size?: number;
+    category: 'PAYMENT' | 'SHIPMENT_PHOTO';
+  }
+) => {
+  const res = await authenticatedApi.post(`/shipments/${id}/documents`, { data });
+  return res.data;
+};
+
+
 export const deleteShipment = async (id: string) => {
   const res = await authenticatedApi.delete(`/shipments/${id}`);
   return res.data;
@@ -199,19 +214,6 @@ export const updatePackageStatus = async (packageId: string, status: string) => 
     status: status,
     updated_by: userId
   });
-  return res.data;
-};
-
-export const addPackagePaymentSlip = async (
-  shipmentUuid: string,
-  data: {
-    url: string;
-    original_filename: string;
-    mime_type?: string;
-    file_size?: number;
-  }
-) => {
-  const res = await authenticatedApi.patch(`/packages/shipments/${shipmentUuid}/slips`, { data });
   return res.data;
 };
 

@@ -17,11 +17,6 @@ export class CreateEcommerceSubCategoryDto {
   @IsNotEmpty()
   slug: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  image_url: string;
-
   @IsUUID()
   @IsNotEmpty()
   category_id: string;
@@ -39,6 +34,5 @@ export class CreateEcommerceSubCategoryDto {
   description: string;
 
   @IsBoolean()
-  @IsOptional()
   is_active: boolean;
 }

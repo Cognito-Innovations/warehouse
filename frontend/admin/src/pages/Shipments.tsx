@@ -51,6 +51,7 @@ const Shipments = () => {
       <SearchFilters 
         status={statusFilter} 
         setStatus={setStatusFilter} 
+        shipments={shipments}
       />
 
       <ShipmentsTable shipments={shipments} status={statusFilter} loading={loading} />

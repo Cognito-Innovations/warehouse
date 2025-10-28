@@ -5,21 +5,18 @@ import QRCode from 'qrcode';
 import JsBarcode from "jsbarcode";
 import { toast } from "sonner";
 
-interface Measurement {
-  length: number;
-  width: number;
-  height: number;
-}
-
 interface HoldLabelData {
-    shipment_id: string;
-    shipment_uuid?: string;
+    id: string;
+    shipment_no: string;
+    packages?: any;
     user?: {
         name: string;
         suite_no?: string;
     }
     total_weight?: string;
-    measurements: Measurement[];
+    length: number;
+    width: number;
+    height: number;
     created_at?: string;
 }
 
@@ -33,7 +30,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
     const handlePrintHoldLabel = async () => {
         setIsPrintingHold(true);
         try {
-            if (!data || !data.shipment_id || !data.user?.name || !data.measurements) {
+            if (!data || !data.id || !data.user?.name) {
                 toast.error("Required data for hold label is missing.");
                 console.error("Missing data for hold label:", data);
                 return;
@@ -64,14 +61,14 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text("SHIPMENT", 40, 12);
 
             // 2. QR Code (Top-Right)
-            const qrCodeUrl = data.shipment_uuid ? `${window.location.origin}/shipments/${data.shipment_uuid}` : 'No shipment UUID';
+            const qrCodeUrl = data.id ? `${window.location.origin}/shipments/${data.id}` : 'No shipment ID';
             const qrCodeDataURL = await QRCode.toDataURL(qrCodeUrl, { width: 100, margin: 1, errorCorrectionLevel: 'H' });
             doc.addImage(qrCodeDataURL, 'PNG', 125, 5, 20, 20);
 
             // 3. Barcode with "ONHOLD" overlay
             const canvas = document.createElement('canvas');
-            const shipmentId = data.shipment_id;
-            JsBarcode(canvas, shipmentId, {
+            const shipmentNo = data.shipment_no;
+            JsBarcode(canvas, shipmentNo, {
                 format: "CODE128",
                 displayValue: false,
                 height: 50,
@@ -87,7 +84,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text("ON HOLD", 50, 32, { align: 'center' });
             
             // Barcode Text (Below Barcode)
-            const barcodeText = shipmentId;
+            const barcodeText = shipmentNo;
             doc.setFont("helvetica", "normal");
             doc.setFontSize(12);
 
@@ -123,7 +120,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
 
             // 7. Weight / Pcs (Bottom-Left)
             const weight = parseFloat(data.total_weight || '0').toFixed(2);
-            const pieces = data.measurements.length || 0;
+            const pieces = data?.packages?.length || 0;
             const weightText = `WEIGHT: ${weight} KG / ${pieces} PCS`;
             doc.setFontSize(9);
             doc.setFont("helvetica", "normal");
@@ -150,7 +147,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.setFont("helvetica", "bold");
             doc.text("MV", 130, 85);
 
-            doc.save(`hold-label-${shipmentId}.pdf`);
+            doc.save(`hold-label-${shipmentNo}.pdf`);
             toast.success("Hold Label downloaded successfully!");
 
         } catch (error) {

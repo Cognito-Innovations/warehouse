@@ -38,6 +38,7 @@ import SubCategory from './pages/SubCategory';
 import Products from './pages/Products';
 import Orders from './pages/Orders';
 import ShipmentDetail from './pages/ShipmentDetail';
+import CreateShipment from './pages/CreateShipment';
 
 function App() {
   const { user } = useAuth()
@@ -94,6 +95,7 @@ function App() {
                   <Route path="/packages/pre-arrivals" element={<PreArrivals />} />
                   <Route path="/shipments" element={<Shipments />} />
                   <Route path="/shipments/:shipment_no" element={<ShipmentDetail />} />
+                  <Route path="/shipments/create" element={<CreateShipment />} />
                   <Route path="/shipments/export" element={<ShipmentExport />} />
                   <Route path="/shipment/export/:id" element={<ViewShipmentExportPage />} />
                   <Route path="/requests" element={<ShoppingRequests />} />

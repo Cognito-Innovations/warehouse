@@ -184,11 +184,6 @@ export const addShipmentDocument = async (
   return response.data;
 };
 
-export const getPaymentSlips = async (shipmentUuid: string): Promise<any[]> => {
-  const response = await api.get(`/packages/shipments/${shipmentUuid}/slips`);
-  return response.data;
-};
-
 export const createRack = async (rack: Omit<Rack, 'id'>): Promise<Rack> => {
   const response = await api.post<Rack>('/racks', rack);
   return response.data;
@@ -317,28 +312,28 @@ export const deleteShipmentExport = async (id: string) => {
   await api.delete(`/shipment-exports/${id}`);
 };
 
-export const searchReadyToShipPackage = async (trackingNumber: string) => {
-  const response = await api.get('/packages/shipments/search', {
+export const searchReadyToShipShipment = async (trackingNumber: string) => {
+  const response = await api.get('/shipments/search', {
     params: {
       trackingNumber,
-      status: 'Ready To Ship',
+      status: 'READY_TO_SHIP',
     },
   });
   return response.data;
 };
 
-export const addPackageToBox = async (boxId: number, packageId: string) => {
-  const response = await api.post(`/shipment-export-boxes/${boxId}/packages`, { packageId });
+export const addShipmentToBox = async (boxId: number, shipmentId: string) => {
+  const response = await api.post(`/shipment-export-boxes/${boxId}/shipments`, { shipmentId });
   return response.data;
 };
 
-export const getPackagesByBoxId = async (boxId: number) => {
-  const response = await api.get(`/shipment-export-boxes/${boxId}/packages`);
+export const getShipmentsByBoxId = async (boxId: number) => {
+  const response = await api.get(`/shipment-export-boxes/${boxId}/shipments`);
   return response.data;
 };
 
-export const removePackageFromBox = async (boxId: number, packageId: string) => {
-  const response = await api.delete(`/shipment-export-boxes/${boxId}/packages/${packageId}`);
+export const removeShipmentFromBox = async (boxId: number, shipmentId: string) => {
+  const response = await api.delete(`/shipment-export-boxes/${boxId}/shipments/${shipmentId}`);
   return response.data;
 };
 
@@ -511,5 +506,19 @@ export const updateShipmentStatus = async (id: string, status: string) => {
 
 export const updateShipment = async (id: string, payload: any) => {
   const res = await api.patch(`/shipments/${id}`, payload);
+  return res.data;
+}
+
+export const createShipmentDocument = async (
+  id: string,
+  data: {
+    url: string;
+    original_filename: string;
+    mime_type?: string;
+    file_size?: number;
+    category: 'PAYMENT' | 'SHIPMENT_PHOTO';
+  }
+) => {
+  const res = await api.post(`/shipments/${id}/documents`, { data });
   return res.data;
 }

@@ -2,14 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Grid, CircularProgress, Alert } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { getPackageById, updatePackageStatus, getPackageDocuments, getPaymentSlips, getShipmentDocuments } from '../services/api.services';
+import { getPackageById, getPackageDocuments, getShipmentDocuments } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
 import PackageHeader from '../components/PackageDetail/PackageHeader';
 import ActionLogsSection from '../components/PackageDetail/ActionLogsSection';
 import PackageItemsSection from '../components/PackageDetail/PackageItemsSection';
 import PackageDetailsSection from '../components/PackageDetail/PackageDetailsSection';
 import PhotosDocumentsSection from '../components/PackageDetail/PhotosDocumentsSection';
-import InvoiceTable from '../components/ShoppingRequests/Detail/InvoiceTable';
 import { formatDateTime } from '../utils/formatDateTime';
 
 const PackageDetail: React.FC = () => {
@@ -22,8 +21,6 @@ const PackageDetail: React.FC = () => {
   const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ id: string, name: string, url: string, type: string }>>([]);
   const [shipmentDocuments, setShipmentDocuments] = useState<any[]>([]);
   const [packageItems, setPackageItems] = useState<any[]>([]);
-  const [isApprovingPayment, setIsApprovingPayment] = useState(false);
-  const [paymentSlips, setPaymentSlips] = useState<any[]>([]);
 
   const fetchDocuments = async (id: string) => {
     if (!id) return;
@@ -56,16 +53,6 @@ const PackageDetail: React.FC = () => {
    }
   };
 
-  const fetchPaymentSlips = async (shipment_uuid: string) => {
-    try {
-      const slips = await getPaymentSlips(shipment_uuid);
-      setPaymentSlips(slips);
-    } catch (err) {
-      console.error('Failed to fetch payment slips:', err);
-      toast.error('Failed to load payment slips.');
-    }
-  };
-
   const fetchPackageData = async (initialLoad = false) => {
     if (!id) return;
 
@@ -82,7 +69,6 @@ const PackageDetail: React.FC = () => {
       setPackageData(data);
       setPackageItems(data.items || []);
       await Promise.allSettled([
-        fetchPaymentSlips(data.shipment_uuid),
         fetchDocuments(data.id),
         fetchShipmentDocuments(data.id)
       ]);
@@ -115,41 +101,11 @@ const PackageDetail: React.FC = () => {
       const data = await getPackageById(id) as any; //TODO: Remove any
       setPackageData(data);
       setPackageItems(data.items || []);
-      await fetchPaymentSlips(data.shipment_uuid);
       await fetchDocuments(data.id);
       await fetchShipmentDocuments(data.id);
     } catch (err) {
       console.error('Failed to refetch package data:', err);
       toast.error('Failed to refresh package details');
-    }
-  };
-
-  const getInvoice = (packageData: any) => {
-    const invoice = packageData.invoice;
-    if (invoice > 0) {
-      return invoice;
-    } else if (packageData.charges.length > 0) {
-      const charges = packageData.charges[0];
-      return {id: "charges", invoice_no: "Package Charges", amount: charges.amount, total: charges.amount, status: "UNPAID"};
-    } else {
-      return {id: "temp", invoice_no: "-", amount: 0, total: 0, status: "UNPAID"};
-    }
-  };
-
-
-  const handleApprovePayment = async () => {
-    if (!id) return;
-    setIsApprovingPayment(true);
-    try {
-      await updatePackageStatus(id, 'Payment Approved');
-      const updatedData = await getPackageById(id);
-      setPackageData(updatedData);
-      toast.success('Payment approved successfully!');
-    } catch (err) {
-      console.error('Failed to approve payment:', err);
-      toast.error('Failed to approve payment.');
-    } finally {
-      setIsApprovingPayment(false);
     }
   };
 
@@ -181,10 +137,6 @@ const PackageDetail: React.FC = () => {
       This package has been discarded. No further actions can be taken.
     </Alert>
   );
-
-  const showInvoiceTable = 
-    ['Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed']
-      .includes(packageData.status.value);
 
   return (
     <Box sx={{ p: 1 }}>
@@ -219,22 +171,6 @@ const PackageDetail: React.FC = () => {
             isDiscarded={isDiscarded}
           />
 
-          {showInvoiceTable && (
-            <InvoiceTable 
-              id={packageData.id}
-              invoice={getInvoice(packageData)}
-              payment_slips={paymentSlips}
-              status={packageData.status.value}
-              isApprovingPayment={isApprovingPayment}
-              onApprovePayment={handleApprovePayment}
-              onStatusUpdated={async () => {
-                const updated = await getPackageById(packageData.package_id);
-                setPackageData(updated);
-                await fetchPaymentSlips(updated.shipment_uuid);
-              }}
-              isDiscarded={isDiscarded}
-            />
-          )}
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>

@@ -1,6 +1,5 @@
 import {
   IsNotEmpty,
-  IsOptional,
   IsString,
   IsUUID,
   IsNumber,
@@ -35,7 +34,6 @@ export class CreateEcommerceProductDto {
   country_id: string;
 
   @IsString()
-  @IsOptional()
   image_url: string;
 
   @IsNumber()
@@ -55,7 +53,6 @@ export class CreateEcommerceProductDto {
   stock_quantity: number;
 
   @IsBoolean()
-  @IsOptional()
   is_active: boolean;
 
   @IsUUID()

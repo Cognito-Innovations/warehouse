@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -8,15 +8,36 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  IconButton,
+  CircularProgress,
 } from '@mui/material';
+import PrintIcon from '@mui/icons-material/Print';
 import { formatDateTime } from '../../../utils/formatDateTime';
 import { formatDimensions } from '../../../utils/formatDimenssion';
+import { generateCarrierLabelPDF } from '../../PDF/CarrierLabelPDF';
+import { toast } from 'sonner';
 
 interface MeasurementsTableProps {
   shipments?: any;
 }
 
 const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ shipments }) => {
+  const [loading, setLoading] = useState(false);
+
+  const handlePrintClick = async () => {
+    if (!shipments) return;
+    setLoading(true);
+    try {
+      await generateCarrierLabelPDF({ ...shipments, num_pieces: "1 PCS" })
+      toast.success("Carrier label generated")
+    } catch (error) {
+      toast.error("Failed to generate Carrier Label PDF");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const processedMeasurements = useMemo(() => {
     if (!shipments) {
       return [];
@@ -91,16 +112,37 @@ const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ shipments }) => {
                 <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Weight</TableCell>
                 <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Volumetric Weight(L×W×H)</TableCell>
                 <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>Label</TableCell>
+                <TableCell />
               </TableRow>
             </TableHead>
+
             <TableBody>
               {processedMeasurements?.map((measurement, index) => (
                 <TableRow key={index}>
                   <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{measurement.pieceNumber}</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{measurement.weight}</TableCell>
                   <TableCell>{measurement.volumetricWeightDisplay}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>
-                    {getLabel(shipments?.tracking_no)}
+                  <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{getLabel(shipments?.tracking_no)}</TableCell>
+
+                  <TableCell align='right' sx={{ pr: 2 }}>
+                    <IconButton
+                      onClick={handlePrintClick}
+                      disabled={loading}
+                      sx={{
+                        width: 26,
+                        height: 26,
+                        bgcolor: '#0ea5e9',
+                        color: '#fff',
+                        borderRadius: '50%',
+                        '&:hover': { bgcolor: '#0284c7' }
+                      }}
+                    >
+                      {loading ? (
+                        <CircularProgress size={20} sx={{ color: '#fff' }} />
+                      ) : (
+                        <PrintIcon fontSize='small' />
+                      )}
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}

@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 import { CloseOutlined } from '@mui/icons-material';
 import type { Rack } from '../../../types';
-import { getRacks } from '../../../services/api.services';
+import { getRacks, updateShipment } from '../../../services/api.services';
 
 interface UpdateRackSlotModalProps {
   open: boolean;
@@ -59,8 +59,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
     if (!selectedRackSlot) return;
     setSaving(true);
     try {
-        // Replce with to update rack slot of the Shipment
-    //   await updatePackage(packageData.id, { rack_slot: selectedRackSlot });
+      await updateShipment(shipments.id, { rack_slot: selectedRackSlot });
       onRefresh();
       onClose();
     } catch (err) {

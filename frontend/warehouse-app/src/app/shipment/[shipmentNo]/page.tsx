@@ -12,9 +12,9 @@ import { getPackagesByShipmentNo,
 
 import TrackingStatus from "@/components/Shipment/TrackingStatus";
 import RequestHeader from "@/components/Shipment/RequestHeader";
+import Invoices from "@/components/Shipment/Invoices";
 // import ConfirmDialog from "@/components/Modals/ConfirmDialog";
 // import ActionsCard from "@/components/Shipment/ActionsCard";
-// import Invoices from "@/components/Shipment/Invoices";
 // import { ROUTES } from "@/utils/constants";
 
 interface IShipmentRequest {
@@ -24,9 +24,10 @@ interface IShipmentRequest {
     id: string;
     name: string;
   };
-  // charges:{
-  //   amount: number;
-  // }[];
+  payment_slips: any[];
+  charges:{
+    amount: number;
+  }[];
   status: string;
   created_at: string;
 }
@@ -164,8 +165,8 @@ export default function ShipmentDetailPage() {
                     <span className="font-medium">Note:</span> The charges shown below include packing and shipping costs for your shipment.
                   </p>
                 </div>
-                {/* TODO: Uncomment when backend is ready */}
-                {/* <Invoices request={request} payment_slips={paymentSlips} onUpdate={fetchRequest} /> */}
+
+                <Invoices request={request} payment_slips={request.payment_slips} onUpdate={fetchRequest} />
               </>
             )}
           </div>

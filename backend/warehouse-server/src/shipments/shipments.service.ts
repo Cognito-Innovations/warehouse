@@ -14,6 +14,7 @@ import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
 import { mapToTrackingStatus } from './status-mapper';
 import { DocumentsService } from 'src/documents/documents.service';
 import { UpdateShipmentDto } from './dto/update-shipment.dto';
+import { Rack } from 'src/racks/rack.entity';
 
 @Injectable()
 export class ShipmentsService {
@@ -22,6 +23,8 @@ export class ShipmentsService {
     private readonly shipmentRepository: Repository<Shipment>,
     @InjectRepository(Package)
     private readonly packageRepository: Repository<Package>,
+    @InjectRepository(Rack)
+    private readonly rackRepository: Repository<Rack>,
     private readonly dataSource: DataSource,
     private readonly trackingRequestsService: TrackingRequestsService,
     private readonly documentsService: DocumentsService,
@@ -170,22 +173,50 @@ export class ShipmentsService {
   ): Promise<ShipmentResponseDto> {
     const shipment = await this.shipmentRepository.findOne({
       where: { shipment_no: shipmentNo },
-      relations: ['user', 'packages', 'country', 'packages.items'],
+      relations: [
+        'user',
+        'packages',
+        'country',
+        'packages.items',
+        'user.address',
+        'user.preference',
+        'shipmentExportBox',
+        'shipmentExportBox.shipmentExport',
+      ],
     });
 
     if (!shipment) {
       throw new NotFoundException(`Shipment with code ${shipmentNo} not found`);
     }
 
-    const tracking_requests =
-      await this.trackingRequestsService.getTrackingRequestsByFeature(
+    const [trackingRequestsResult, documentsResult] = await Promise.allSettled([
+      this.trackingRequestsService.getTrackingRequestsByFeature(
         FeatureType.Shipment,
         shipment.id,
-      );
+      ),
+      this.documentsService.findByFeature(FeatureType.Shipment, shipment.id),
+    ]);
+
+    const trackingRequests =
+      trackingRequestsResult.status === 'fulfilled'
+        ? trackingRequestsResult.value
+        : [];
+
+    const allDocuments =
+      documentsResult.status === 'fulfilled' ? documentsResult.value : [];
+
+    const paymentSlips = allDocuments.filter(
+      (doc) => doc.category === 'PAYMENT',
+    );
+    const shipmentPhotos = allDocuments.filter(
+      (doc) => doc.category === 'SHIPMENT_PHOTO',
+    );
 
     return {
       ...shipment,
-      tracking_requests,
+      tracking_requests: trackingRequests,
+      payment_slips: paymentSlips,
+      shipment_photos: shipmentPhotos
     };
   }
 
@@ -210,6 +241,7 @@ export class ShipmentsService {
   ): Promise<ShipmentResponseDto> {
     const shipment = await this.shipmentRepository.findOne({
       where: { id },
+      relations: ['user'],
     });
 
     if (!shipment) {
@@ -238,27 +270,59 @@ export class ShipmentsService {
   }
 
   async updateShipmentById(id: string, payload: UpdateShipmentDto) {
-    const shipment = await this.shipmentRepository.findOne({ where: { id } });
+    const shipment = await this.shipmentRepository.findOne({
+      where: { id },
+      relations: ['rack_slot'],
+    });
 
     if (!shipment) {
       throw new NotFoundException(`Shipment with id ${id} not found`);
     }
 
-    const total_volumetric_weight = 
-      (payload.length * payload.width * payload.height) / 5000;
+    const oldRack = shipment.rack_slot;
 
-    shipment.total_weight = payload.weight;
-    shipment.length = payload.length;
-    shipment.width = payload.width;
-    shipment.height = payload.height;
-    shipment.total_volumetric_weight = total_volumetric_weight;
+    if (payload.weight !== undefined) shipment.total_weight = payload.weight;
+    if (payload.length !== undefined) shipment.length = payload.length;
+    if (payload.width !== undefined) shipment.width = payload.width;
+    if (payload.height !== undefined) shipment.height = payload.height;
 
-    await this.shipmentRepository.save(shipment);
+    if (
+      typeof payload.length !== 'undefined' &&
+      typeof payload.width !== 'undefined' &&
+      typeof payload.height !== 'undefined'
+    ) {
+      const length = Number(payload.length);
+      const width = Number(payload.width);
+      const height = Number(payload.height);
 
-    return shipment;
+      if (isNaN(length) || isNaN(width) || isNaN(height)) {
+        throw new BadRequestException('Invalid dimensional values.');
+      }
+
+      shipment.total_volumetric_weight = (length * width * height) / 5000;
+    }
+
+    if (payload.rack_slot !== undefined && payload.rack_slot !== oldRack?.id) {
+      if (oldRack) {
+        oldRack.count = Math.max(0, oldRack.count - 1)
+        await this.rackRepository.save(oldRack);
+      }
+
+      if (payload.rack_slot) {
+        const newRack = await this.rackRepository.findOneBy({
+          id: payload.rack_slot
+        });
+        if (!newRack) throw new NotFoundException('New Rack not found');
+        newRack.count += 1;
+        await this.rackRepository.save(newRack);
+        shipment.rack_slot = newRack;
+      }
+    }
+
+    return await this.shipmentRepository.save(shipment);
   }
 
-  async addPaymentSlip(
+  async addShipmentDocument(
     shipmentId: string,
     dto: {
       url: string;
@@ -266,6 +330,7 @@ export class ShipmentsService {
       document_type?: string;
       file_size?: number;
       mime_type?: string;
+      category: 'PAYMENT' | 'SHIPMENT_PHOTO';
     },
     userId: string,
   ): Promise<ShipmentResponseDto> {
@@ -273,23 +338,42 @@ export class ShipmentsService {
       uploaded_by: userId,
       feature_type: FeatureType.Shipment,
       feature_fid: shipmentId,
-      document_name: 'Payment Slip',
+      document_name:
+        dto.category === 'PAYMENT' ? 'Payment Slip' : 'Shipment Photo',
       original_filename: dto.original_filename,
       document_url: dto.url,
-      document_type: dto.document_type || 'slip',
+      document_type: dto.document_type || 'file',
       file_size: dto.file_size,
       mime_type: dto.mime_type,
-      category: 'PAYMENT',
+      category: dto.category,
       is_required: false,
     });
 
-    return this.getShipmentByShipmentNo(
-      (
-        await this.shipmentRepository.findOneOrFail({
-          where: { id: shipmentId },
-        })
-      ).shipment_no,
-    );
+    const shipment = await this.shipmentRepository.findOneOrFail({
+      where: { id: shipmentId },
+    });
+
+    return this.getShipmentByShipmentNo(shipment.shipment_no);
+  }
+
+  async findByTrackingNumberAndStatus(
+    trackingNumber: string,
+    status: ShipmentStatus,
+  ): Promise<ShipmentResponseDto> {
+    const shipment = await this.shipmentRepository.findOne({
+      where: {
+        tracking_no: trackingNumber,
+        status: status,
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException(
+        `Shipment with tracking number ${trackingNumber} and status ${status} not found.`,
+      );
+    }
+
+    return shipment;
   }
 
   async deleteShipment(id: string): Promise<{ message: string }> {

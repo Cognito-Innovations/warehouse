@@ -26,9 +26,6 @@ export class EcommerceSubCategory extends BaseTimestampEntity {
   @Column()
   slug: string;
 
-  @Column({ nullable: true })
-  image_url: string;
-
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   discount_percentage: number;
 

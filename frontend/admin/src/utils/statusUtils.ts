@@ -33,7 +33,7 @@ export const getStatusColor = (status: string) => {
       return { color: '#2563EB', bgColor: '#DBEAFE' }; // Blue
     
     case 'READY TO SEND':
-    case 'READY TO SHIP':
+    case 'READY_TO_SHIP':
       return { color: '#22c55e', bgColor: '#dcfce7' };
     
     case 'ACTION REQUIRED':

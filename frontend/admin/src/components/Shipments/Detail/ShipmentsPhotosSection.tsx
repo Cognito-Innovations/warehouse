@@ -4,6 +4,8 @@ import { Box, Button, Card, CardContent, CircularProgress, Typography } from "@m
 import { Add as AddIcon, CloudUpload as UploadIcon, PictureAsPdf as PictureAsPdfIcon } from '@mui/icons-material';
 import { uploadToCloudinary } from "../../../utils/cloudinary.api";
 import { formatFileName } from "../../../utils/formatFileName";
+import { createShipmentDocument } from "../../../services/api.services";
+import { formatDateTime } from "../../../utils/formatDateTime";
 
 interface Document {
   id: string;
@@ -24,15 +26,13 @@ interface Shipments {
 interface ShipmentsPhotosSectionProps {
   shipments: Shipments;
   documents: Document[];
-//   onUploadSuccess?: () => Promise<void>;
-//   isDiscarded: boolean;
+  onUploadSuccess?: () => Promise<void>;
 }
 
 const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
     shipments,
     documents,
-    // onUploadSuccess,
-    // isDiscarded
+    onUploadSuccess,
 }) => {
     const [uploading, setUploading] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -54,15 +54,16 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
         for (const file of filesArray) {
           const url = await uploadToCloudinary(file);
           if (url) {
-            // await addShipmentDocument(shipments.id!, {
-            //   url,
-            //   original_filename: file.name,
-            //   mime_type: file.type,
-            //   file_size: file.size,
-            // });
+            await createShipmentDocument(shipments.id!, {
+              url,
+              original_filename: file.name,
+              mime_type: file.type,
+              file_size: file.size,
+              category: 'SHIPMENT_PHOTO',
+            })
           }
         }
-        // await onUploadSuccess?.();
+        await onUploadSuccess?.();
         toast.success('Files uploaded successfully');
       } catch (error) {
         console.error('Upload failed:', error);
@@ -72,22 +73,22 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
       }
     };
 
-    // const handleDragOver = (e: React.DragEvent) => {
-    //   e.preventDefault();
-    //   if (!uploading) setIsDragOver(true);
-    // };
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!uploading) setIsDragOver(true);
+    };
 
-    // const handleDragLeave = (e: React.DragEvent) => {
-    //   e.preventDefault();
-    //   setIsDragOver(false);
-    // };
+    const handleDragLeave = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+    };
 
-    // const handleDrop = (e: React.DragEvent) => {
-    //   e.preventDefault();
-    //   if (uploading) return;
-    //   setIsDragOver(false);
-    //   handleFileSelect(e.dataTransfer.files);
-    // };
+    const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      if (uploading) return;
+      setIsDragOver(false);
+      handleFileSelect(e.dataTransfer.files);
+    };
 
     const handleFileClick = () => {
       if (!uploading) fileInputRef.current?.click();
@@ -109,7 +110,7 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
                     textTransform: 'none',
                     borderRadius: 1,
                   }}
-                //   disabled={isDiscarded || uploading || isUploadDisabled}
+                  disabled={uploading || isUploadDisabled}
                 >
                   Upload
                 </Button>
@@ -145,17 +146,17 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
                     {documents.length === 0 ? (
                       <Box sx={{ mb: 2 }}>
                         <Box
-                          // onClick={isDiscarded ? undefined : handleFileClick}
-                          // onDragOver={isDiscarded || uploading ? undefined : handleDragOver}
-                          // onDragLeave={isDiscarded || uploading ? undefined : handleDragLeave}
-                          // onDrop={isDiscarded || uploading ? undefined : handleDrop}
+                          onClick={handleFileClick}
+                          onDragOver={uploading ? undefined : handleDragOver}
+                          onDragLeave={uploading ? undefined : handleDragLeave}
+                          onDrop={uploading ? undefined : handleDrop}
                           sx={{
                             border: `2px dashed ${isDragOver ? '#3b82f6' : '#d1d5db'}`,
                             borderRadius: 2, p: 3, textAlign: 'center',
-                          //   cursor: isDiscarded || uploading || isUploadDisabled ? 'not-allowed' : 'pointer',
+                            cursor: uploading || isUploadDisabled ? 'not-allowed' : 'pointer',
                             bgcolor: isDragOver ? '#f0f9ff' : '#fafafa',
                             transition: 'all 0.2s ease-in-out',
-                          //   opacity: isDiscarded || uploading ? 0.6 : 1,
+                            opacity: uploading ? 0.6 : 1,
                             '&:hover': {
                               borderColor: uploading ? '#d1d5db' : '#3b82f6',
                               bgcolor: uploading ? '#fafafa' : '#f0f9ff'
@@ -252,8 +253,8 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
                           variant="outlined"
                           size="small"
                           startIcon={uploading ? <CircularProgress size={16} /> : <AddIcon />}
-                          // onClick={isDiscarded ? undefined : handleFileClick}
-                          // disabled={isDiscarded || uploading || isUploadDisabled}
+                          onClick={handleFileClick}
+                          disabled={uploading || isUploadDisabled}
                           sx={{ mt: 1, fontSize: '0.75rem' }}
                         >
                           {uploading ? 'Uploading...' : 'Add More Documents'}
@@ -262,7 +263,7 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
                     )}
 
                     <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.75rem' }}>
-                      {shipments.created_by?.name} {shipments.created_at}
+                      {shipments.created_by?.name} {formatDateTime(shipments.created_at)}
                     </Typography>
                   </Box>
                 </Box>

@@ -25,6 +25,7 @@ export const getStatusAndInvoiceColor = (status: string) => {
         case 'PAYMENT_APPROVED':
             return { color: '#22c55e', bgColor: '#dcfce7' };
         case 'PAID':
+        case 'DEPARTED':
             return { color: '#22c55e', bgColor: '#dcfce7' };
         case 'READY_TO_SHIP':
             return { color: '#3b82f6', bgColor: '#dbeafe' };

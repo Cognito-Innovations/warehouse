@@ -9,22 +9,31 @@ import {
   Typography,
   Chip,
 } from '@mui/material';
-import { Add as AddIcon, AssessmentOutlined } from '@mui/icons-material';
+import { Add as AddIcon } from '@mui/icons-material';
 import { FilterList as FilterIcon } from '@mui/icons-material';
 import { statusMap, statusOptions } from '../../data/shipments';
+import ShipReportButton from './ShipReportButton';
+import { useNavigate } from 'react-router-dom';
 
 interface SearchFiltersProps {
   status: string;
   setStatus: (newStatus: string) => void;
+  shipments: any[];
 }
 
-const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus }) => {
+const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus, shipments }) => {
+  const navigate = useNavigate();
+
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus);
   };
 
   const handleClearFilters = () => {
     setStatus('All');
+  };
+
+  const handleCreateShipment = () => {
+    navigate("/shipments/create");
   };
 
   return (
@@ -94,23 +103,12 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus }) => {
       </Box>
 
       <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<AssessmentOutlined />}
-          sx={{
-            textTransform: 'none',
-            borderRadius: 2,
-            backgroundColor: '#7360F2',
-            '&:hover': {
-              backgroundColor: '#5b48d8',
-            },
-          }}
-        >
-          Ship Requested Report
-        </Button>
+        <ShipReportButton shipments={shipments} />
+
         <Button
           variant="contained"
           startIcon={<AddIcon />}
+          onClick={handleCreateShipment}
           sx={{
             textTransform: 'none',
             borderRadius: 2,

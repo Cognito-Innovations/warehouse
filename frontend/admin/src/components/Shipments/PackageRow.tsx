@@ -21,8 +21,8 @@ const PackageRow = ({ item, index, isLast }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  const handleViewPackage = (packageId: string) => {
-    navigate(`/packages/${packageId}`);
+  const handleViewPackage = () => {
+    navigate(`/packages/${item.package_id}`);
   };
 
   return (
@@ -36,10 +36,10 @@ const PackageRow = ({ item, index, isLast }) => {
           bgcolor: '#f8fafc'
         }
       }}>
-        <TableCell padding="checkbox" sx={{ py: 1.5 }}>
+        <TableCell padding="checkbox" sx={{ p: 0.5}}>
           <Checkbox color="primary" size="small" />
         </TableCell>
-        <TableCell sx={{ py: 1.5 }}>
+        <TableCell sx={{ p: 0.5 }}>
           <IconButton 
             size="small" 
             onClick={() => setOpen(!open)}
@@ -67,7 +67,6 @@ const PackageRow = ({ item, index, isLast }) => {
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
           <Typography variant="body2">{formatDateTime(item.created_at)}</Typography>
-          {/* <Typography variant="caption" color="text.secondary">{item.receivedTime}</Typography> */}
         </TableCell>
         <TableCell align="right" sx={{ py: 1.5 }}>
           <Typography variant="body2">{item.total_weight}</Typography>
@@ -79,7 +78,7 @@ const PackageRow = ({ item, index, isLast }) => {
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <IconButton 
               size="small" 
-              onClick={() => handleViewPackage(item.package_id)}
+              onClick={handleViewPackage}
               sx={{ 
                 bgcolor: '#7360F2', 
                 color: '#f8f8f8', 

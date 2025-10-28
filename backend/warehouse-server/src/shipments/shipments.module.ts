@@ -6,12 +6,13 @@ import { ShipmentsService } from './shipments.service';
 import { Package } from 'src/packages/entities';
 import { TrackingRequestsModule } from 'src/tracking-requests/tracking-requests.module';
 import { DocumentsModule } from 'src/documents/documents.module';
+import { Rack } from 'src/racks/rack.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Shipment, Package]),
+    TypeOrmModule.forFeature([Shipment, Package, Rack]),
     TrackingRequestsModule,
-    DocumentsModule
+    DocumentsModule,
   ],
   controllers: [ShipmentsController],
   providers: [ShipmentsService],

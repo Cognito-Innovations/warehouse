@@ -2,10 +2,9 @@ import { Button } from "@mui/material"
 import { useState } from "react";
 import Modal from "../common/Modal";
 import RaiseInvoiceModal from "../PackageDetail/RaiseInvoiceModal";
-import type { PackageData } from "../../types";
 
 interface RaiseInvoiceButtonProps {
-    data: PackageData;
+    data: any;
     onRefresh: () => void;
 }
 
@@ -32,7 +31,7 @@ const RaiseInvoiceButton: React.FC<RaiseInvoiceButtonProps> = ({ data, onRefresh
 
             <Modal open={open} onClose={handleClose} title="Raise Invoice" size="md">
               <RaiseInvoiceModal
-                packageData={data}
+                shipment={data}
                 onClose={handleClose}
                 onUpdated={onRefresh}
               />

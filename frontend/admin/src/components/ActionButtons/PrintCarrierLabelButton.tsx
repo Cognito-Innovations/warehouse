@@ -1,32 +1,34 @@
 import { useState } from "react";
 import { Button, CircularProgress } from "@mui/material";
 import { toast } from "sonner";
-import { updatePackageStatus } from "../../services/api.services";
+import { updateShipmentStatus } from "../../services/api.services";
 import { generateCarrierLabelPDF } from "../PDF/CarrierLabelPDF";
+
+interface Package {
+    items: Item[];
+}
+
+interface Item {
+    name: string,
+    quantity: string,
+}
 
 export interface CarrierLabelData {
     id: string;
     tracking_no: string;
-    status?: { value: string };
+    status?: string;
     created_at?: string;
     total_weight?: string;
     num_pieces?: string;
     origin_country?: string;
     destination_country?: string;
-    measurements?:{
-        length?: string;
-        width?: string;
-        height?: string;
-    }
+    length?: string;
+    width?: string;
+    height?: string;
     value_usd?: string;
-    shipment_id?: string;
+    shipment_no?: string;
     piece_id?: string;
-    items?: [
-      {
-        name: string,
-        quantity: string,
-      }
-    ],
+    packages?: Package[],
     user?: {
         name?: string;
         phone_number?: string;
@@ -68,9 +70,9 @@ const PrintCarrierLabelButton: React.FC<PrintCarrierLabelButtonProps> = ({ data,
             await generateCarrierLabelPDF(data);
             toast.success("Carrier Label downloaded successfully!");
 
-            // Update package status if needed
-            if (data.status?.value === "Payment Approved") {
-                await updatePackageStatus(data.id, "Ready To Ship");
+            // Update shipment status if needed
+            if (data.status === "PAYMENT_APPROVED") {
+                await updateShipmentStatus(data.id, "READY_TO_SHIP");
                 await onRefresh();
             }
 

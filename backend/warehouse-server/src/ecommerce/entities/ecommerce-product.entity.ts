@@ -37,7 +37,7 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @JoinColumn({ name: 'country_id' })
   country: Country;
 
-  @Column({ nullable: true })
+  @Column()
   image_url: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
