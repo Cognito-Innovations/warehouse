@@ -312,10 +312,10 @@ export const deleteShipmentExport = async (id: string) => {
   await api.delete(`/shipment-exports/${id}`);
 };
 
-export const searchReadyToShipShipment = async (trackingNumber: string) => {
+export const searchReadyToShipShipment = async (shipmentNumber: string) => {
   const response = await api.get('/shipments/search', {
     params: {
-      trackingNumber,
+      shipmentNumber,
       status: 'READY_TO_SHIP',
     },
   });
@@ -520,5 +520,26 @@ export const createShipmentDocument = async (
   }
 ) => {
   const res = await api.post(`/shipments/${id}/documents`, { data });
+  return res.data;
+}
+
+export const removePackageFromShipment = async (shipmentId, packageId) => {
+  const res = await api.patch(`/shipments/${shipmentId}/remove-package/${packageId}`);
+  return res.data;
+};
+
+export const createShipmentInvoice = async (
+  shipmentId: string,
+  payload: {
+    charges: {
+      category: string;
+      description: string;
+      amount: number;
+      total: number;
+    }[];
+    total: number;
+  }
+) => {
+  const res = await api.post(`/shipments/${shipmentId}/invoice/`, payload);
   return res.data;
 }

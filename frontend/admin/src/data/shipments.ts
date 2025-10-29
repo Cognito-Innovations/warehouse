@@ -21,6 +21,7 @@ export const getStatusAndInvoiceColor = (status: string) => {
         case 'PAYMENT_PENDING':
             return { color: '#ef4444', bgColor: '#fee2e2' };
         case 'UNPAID':
+        case 'DISCARDED':
             return { color: '#ef4444', bgColor: '#fee2e2' };
         case 'PAYMENT_APPROVED':
             return { color: '#22c55e', bgColor: '#dcfce7' };
@@ -29,6 +30,8 @@ export const getStatusAndInvoiceColor = (status: string) => {
             return { color: '#22c55e', bgColor: '#dcfce7' };
         case 'READY_TO_SHIP':
             return { color: '#3b82f6', bgColor: '#dbeafe' };
+        case 'INVOICE NOT GENERATED':
+            return { color: '#000000', bgColor: '#e5e7eb' };
         default:
             return { color: '#64748b', bgColor: '#f1f5f9' };
     }

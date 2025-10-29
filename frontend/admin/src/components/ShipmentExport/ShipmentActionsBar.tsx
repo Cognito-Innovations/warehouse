@@ -40,23 +40,23 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
   status,
   onStatusUpdated,
 }) => {
-  const [trackingNumber, setTrackingNumber] = useState("");
+  const [shipmentNumber, setShipmentNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearchAndAdd = async () => {
-    if (!selectedBoxId || !trackingNumber.trim()) return;
+    if (!selectedBoxId || !shipmentNumber.trim()) return;
     
     setIsSearching(true);
     setError(null);
 
     try {
-      const foundShipment = await searchReadyToShipShipment(trackingNumber.trim());
+      const foundShipment = await searchReadyToShipShipment(shipmentNumber.trim());
       if (foundShipment) {
         await addShipmentToBox(selectedBoxId, foundShipment.id);
         onPackageAdded();
-        setTrackingNumber("");
+        setShipmentNumber("");
       } else {
         setError("Shipment not found.");
       }
@@ -93,7 +93,7 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
   };
 
   const handleTrackingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTrackingNumber(event.target.value);
+    setShipmentNumber(event.target.value);
     if (error) setError(null);
   };
   
@@ -109,9 +109,9 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
         <TextField
           variant="outlined"
           size="small"
-          placeholder="Search tracking number"
+          placeholder="Search shipment number"
           disabled={!selectedBoxId}
-          value={trackingNumber}
+          value={shipmentNumber}
           onChange={handleTrackingChange}
           onKeyDown={handleKeyDown}
           error={!!error}

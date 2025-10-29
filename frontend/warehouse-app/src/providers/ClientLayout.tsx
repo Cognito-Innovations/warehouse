@@ -17,9 +17,15 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   // Don't show header for ecommerce routes
   const isEcommerceRoute = pathname.startsWith("/ecommerce");
 
+  const hideForAuth = pathname === "/sign-in";
+
   return (
     <>
-      {!hideHeader && !isEcommerceRoute && <AddressLayout> <Header /> </AddressLayout>}
+      {!hideHeader && !isEcommerceRoute && !hideForAuth && (
+        <AddressLayout>
+          <Header />
+        </AddressLayout>
+      )}
       {children}
       <Toaster position="top-right" richColors />
     </>

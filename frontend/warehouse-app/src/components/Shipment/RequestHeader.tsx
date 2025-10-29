@@ -27,6 +27,7 @@ const statusStyles: { [key: string]: string } = {
   "PAYMENT_APPROVED": "bg-green-100 text-green-700 border border-green-200",
   "READY_TO_SHIP": "bg-blue-100 text-blue-700 border border-blue-200",
   "DEPARTED": "bg-indigo-100 text-indigo-700 border border-indigo-200",
+  "DISCARDED": "bg-red-100 text-red-700 border border-red-200",
 };
 
 const RequestHeader: React.FC<RequestHeaderProps> = ({ request, 

@@ -9,25 +9,22 @@ interface InvoiceRequest {
   invoice?: {
     invoice_no?: string;
     total?: number;
+    amount?: number;
+    status?: string;
     created_at?: string;
   };
   documents?: {
     document_url: string;
   }[];
-  charges: {
-    amount: number;
-  }[];
 }
-
-const PAID_STATUSES = ["PAYMENT_APPROVED", "REAY_TO_SHIP", "DEPARTED"];
 
 export default function Invoices({ request, payment_slips, onUpdate }: { request: InvoiceRequest, payment_slips: {document_url:string}[], onUpdate?: () => void; }) {
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const amount = request?.charges?.[0]?.amount || "No Amount";
-  const isPaid = PAID_STATUSES.includes(request.status);
+  const amount = request?.invoice?.amount || "No Amount";
+  const isPaid = request?.invoice?.status === "PAID";
 
   useEffect(() => {
     if (payment_slips?.length) {

@@ -14,7 +14,7 @@ import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests
 import { mapToTrackingStatus } from './status-mapper';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { InvoicesService } from 'src/invoice/invoices.service';
-import { Invoice, InvoiceStatus } from 'src/invoice/invoice.entity';
+import { Invoice, InvoiceStatus } from 'src/invoice/entities/invoice.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { UsersService } from 'src/users/users.service';
 

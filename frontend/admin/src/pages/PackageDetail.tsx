@@ -165,7 +165,7 @@ const PackageDetail: React.FC = () => {
           />
 
           <PackageItemsSection
-            id={packageData.package_id}
+            id={packageData.id}
             packageItems={packageItems}
             setPackageItems={setPackageItems}
             isDiscarded={isDiscarded}

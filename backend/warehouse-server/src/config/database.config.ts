@@ -27,7 +27,7 @@ import {
 import { Country } from 'src/Countries/country.entity';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { Document } from 'src/documents/documents.entity';
-import { Invoice } from 'src/invoice/invoice.entity';
+import { Invoice } from 'src/invoice/entities/invoice.entity';
 import { Currency } from 'src/currencies/currency.entity';
 import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { SupportedCountry } from 'src/supported-countries/supported-country.entity';
@@ -39,6 +39,7 @@ import { EcommerceOrder } from 'src/ecommerce/entities/ecommerce-order.entity';
 import { EcommerceOrderItem } from 'src/ecommerce/entities/ecommerce-order-item.entity';
 import { EcommerceMeasurement } from 'src/ecommerce/entities/measurement.entity';
 import { Shipment } from 'src/shipments/shipment.entity';
+import { InvoiceCharge } from 'src/invoice/entities/invoice-charge.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -87,6 +88,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     EcommerceMeasurement,
     ShoppingRequestProduct,
     Shipment,
+    InvoiceCharge,
   ],
   synchronize: true, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],

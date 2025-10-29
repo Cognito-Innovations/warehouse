@@ -34,6 +34,7 @@ export const getStatusColor = (status: string) => {
     
     case 'READY TO SEND':
     case 'READY_TO_SHIP':
+    case 'READY TO SHIP':
       return { color: '#22c55e', bgColor: '#dcfce7' };
     
     case 'ACTION REQUIRED':
@@ -43,7 +44,8 @@ export const getStatusColor = (status: string) => {
     case 'IN REVIEW':
       return { color: '#3b82f6', bgColor: '#dbeafe' };
     
-    case 'SHIP_REQUEST':
+    case 'REQUEST_SHIP':
+    case 'REQUEST SHIP':
       return { color: '#ff9800', bgColor: '#fff3e0' };
     
     case 'DEPARTED':

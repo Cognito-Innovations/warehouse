@@ -18,13 +18,16 @@ interface RackSlotInfoProps {
     [key: string]: unknown; 
   };
   onRefresh: () => void;
+  isDiscarded: boolean;
 }
 
-const RackSlotInfo: React.FC<RackSlotInfoProps> = ({ shipments, onRefresh }) => {
+const RackSlotInfo: React.FC<RackSlotInfoProps> = ({ shipments, onRefresh, isDiscarded }) => {
   const [rackModalOpen, setRackModalOpen] = useState(false);
 
   const handleOpenRackModal = () => {
-    setRackModalOpen(true);
+    if (!isDiscarded) {
+      setRackModalOpen(true);
+    }
   };
 
   const handleCloseRackModal = () => setRackModalOpen(false);
@@ -34,13 +37,13 @@ const RackSlotInfo: React.FC<RackSlotInfoProps> = ({ shipments, onRefresh }) => 
       <Box
         onClick={handleOpenRackModal}
         sx={{
-          bgcolor: '#f0fdf4',
+          bgcolor: isDiscarded ? '#f1f5f9' : '#f0fdf4',
           p: 2,
           borderRadius: 2,
-          border: '1px solid #84cc16',
+          border: isDiscarded ? '1px solid #cbd5e1' : '1px solid #84cc16',
           width: '220px',
-          cursor: 'pointer',
-          opacity: 1,
+          cursor: isDiscarded ? 'not-allowed' : 'pointer',
+          opacity: isDiscarded ? 0.6 : 1,
           mb: 3,
         }}
       >

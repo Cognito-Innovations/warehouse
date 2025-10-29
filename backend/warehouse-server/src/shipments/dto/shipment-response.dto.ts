@@ -4,6 +4,7 @@ import { Rack } from 'src/racks/rack.entity';
 import { User } from 'src/users/user.entity';
 import { TrackingRequestResponseDto } from 'src/tracking-requests/dto/tracking-request-response.dto';
 import { DocumentResponseDto } from 'src/documents/dto/document-response.dto';
+import { InvoiceResponseDto } from 'src/invoice/dto/invoice-response.dto';
 
 export class ShipmentResponseDto {
   id: string;
@@ -13,6 +14,7 @@ export class ShipmentResponseDto {
   user: User;
   country: Country;
   packages: Package[];
+  invoice?: InvoiceResponseDto;
   rack_slot: Rack | null;
   tracking_requests?: TrackingRequestResponseDto[];
   payment_slips?: DocumentResponseDto[];

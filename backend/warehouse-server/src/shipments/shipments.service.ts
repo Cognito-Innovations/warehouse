@@ -15,6 +15,10 @@ import { mapToTrackingStatus } from './status-mapper';
 import { DocumentsService } from 'src/documents/documents.service';
 import { UpdateShipmentDto } from './dto/update-shipment.dto';
 import { Rack } from 'src/racks/rack.entity';
+import { InvoicesService } from 'src/invoice/invoices.service';
+import { Invoice, InvoiceStatus } from 'src/invoice/entities/invoice.entity';
+import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+import { CreateShipmentInvoiceDto } from './dto/create-shipment-invoice.dto';
 
 @Injectable()
 export class ShipmentsService {
@@ -28,6 +32,8 @@ export class ShipmentsService {
     private readonly dataSource: DataSource,
     private readonly trackingRequestsService: TrackingRequestsService,
     private readonly documentsService: DocumentsService,
+    private readonly invoicesService: InvoicesService,
+    private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
   private generateShipmentNo(countryCode: string): string {
@@ -153,7 +159,18 @@ export class ShipmentsService {
       relations: ['user', 'packages', 'packages.items'],
     });
 
-    return shipments;
+    const shipmentsWithInvoices = await Promise.all(
+      shipments.map(async (shipment) => {
+        const invoice = await this.invoicesService.getInvoiceByShipmentId(shipment.id)
+
+        return {
+          ...shipment,
+          invoice,
+        };
+      }),
+    );
+
+    return shipmentsWithInvoices;
   }
 
   async getShipmentsByUser(userId: string): Promise<ShipmentResponseDto[]> {
@@ -189,13 +206,15 @@ export class ShipmentsService {
       throw new NotFoundException(`Shipment with code ${shipmentNo} not found`);
     }
 
-    const [trackingRequestsResult, documentsResult] = await Promise.allSettled([
-      this.trackingRequestsService.getTrackingRequestsByFeature(
-        FeatureType.Shipment,
-        shipment.id,
-      ),
-      this.documentsService.findByFeature(FeatureType.Shipment, shipment.id),
-    ]);
+    const [trackingRequestsResult, documentsResult, invoiceResult] =
+      await Promise.allSettled([
+        this.trackingRequestsService.getTrackingRequestsByFeature(
+          FeatureType.Shipment,
+          shipment.id,
+        ),
+        this.documentsService.findByFeature(FeatureType.Shipment, shipment.id),
+        this.invoicesService.getInvoiceByShipmentId(shipment.id)
+      ]);
 
     const trackingRequests =
       trackingRequestsResult.status === 'fulfilled'
@@ -204,6 +223,9 @@ export class ShipmentsService {
 
     const allDocuments =
       documentsResult.status === 'fulfilled' ? documentsResult.value : [];
+
+    const invoice =
+      invoiceResult.status === 'fulfilled' ? invoiceResult.value : null;
 
     const paymentSlips = allDocuments.filter(
       (doc) => doc.category === 'PAYMENT',
@@ -216,7 +238,22 @@ export class ShipmentsService {
       ...shipment,
       tracking_requests: trackingRequests,
       payment_slips: paymentSlips,
-      shipment_photos: shipmentPhotos
+      shipment_photos: shipmentPhotos,
+      invoice: invoice
+        ? {
+            ...invoice,
+            products: undefined,
+            amount:
+              await this.userPreferencesService.getFormattedConvertedPrice(
+                shipment.user.id,
+                invoice.amount,
+              ),
+            total: await this.userPreferencesService.getFormattedConvertedPrice(
+              shipment.user.id,
+              invoice.total,
+            ),
+          }
+        : undefined,
     };
   }
 
@@ -235,13 +272,39 @@ export class ShipmentsService {
     return shipments;
   }
 
+  async createShipmentInvoice(id: string, dto: CreateShipmentInvoiceDto) {
+    const shipment = await this.shipmentRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
+    if (!shipment) throw new NotFoundException('Shipment not found');
+
+    const invoice = await this.invoicesService.createShipmentInvoice({
+      shipment,
+      charges: dto.charges,
+      total: dto.total,
+    });
+
+    shipment.status = ShipmentStatus.PAYMENT_PENDING;
+    await this.shipmentRepository.save(shipment);
+
+    await this.trackingRequestsService.createTrackingRequest({
+      feature_type: FeatureType.Shipment,
+      feature_fid: shipment.id,
+      status: mapToTrackingStatus(shipment.status),
+      user: shipment.user.id,
+    });
+
+    return invoice;
+  }
+
   async updateStatus(
     id: string,
     status: ShipmentStatus,
   ): Promise<ShipmentResponseDto> {
     const shipment = await this.shipmentRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ['country', 'user'],
     });
 
     if (!shipment) {
@@ -256,8 +319,16 @@ export class ShipmentsService {
     }
 
     shipment.status = ShipmentStatus[normalizedStatus];
-
     const updatedShipment = await this.shipmentRepository.save(shipment);
+
+    let invoice: Invoice | null = null;
+    if (normalizedStatus === 'PAYMENT_APPROVED') {
+      invoice = await this.invoicesService.getInvoiceByShipmentId(id);
+      if (invoice) {
+        invoice.status = InvoiceStatus.PAID;
+        await this.invoicesService.updateInvoice(invoice);
+      }
+    }
 
     await this.trackingRequestsService.createTrackingRequest({
       feature_type: FeatureType.Shipment,
@@ -266,7 +337,30 @@ export class ShipmentsService {
       user: updatedShipment.user.id,
     });
 
-    return updatedShipment;
+    if (!invoice) {
+      invoice = await this.invoicesService.getInvoiceByShipmentId(
+        updatedShipment.id,
+      );
+    }
+
+    return {
+      ...updatedShipment,
+      invoice: invoice
+        ? {
+            ...invoice,
+            products: undefined,
+            amount:
+              await this.userPreferencesService.getFormattedConvertedPrice(
+                updatedShipment.user.id,
+                invoice.amount,
+              ),
+            total: await this.userPreferencesService.getFormattedConvertedPrice(
+              updatedShipment.user.id,
+              invoice.total,
+            ),
+          }
+        : undefined,
+    };
   }
 
   async updateShipmentById(id: string, payload: UpdateShipmentDto) {
@@ -322,6 +416,27 @@ export class ShipmentsService {
     return await this.shipmentRepository.save(shipment);
   }
 
+  async removePackageFromShipment(shipmentId: string, packageId: string) {
+    const pkg = await this.packageRepository.findOne({
+      where: { id: packageId },
+    });
+
+    if (!pkg) {
+      throw new NotFoundException('Package not found');
+    }
+
+    if (pkg.shipment_id !== shipmentId) {
+      throw new NotFoundException('Package does not belong to this shipment');
+    }
+
+    pkg.shipment_id = null;
+    await this.packageRepository.save(pkg);
+
+    return{
+      message: 'Package removed successfully',
+    }
+  }
+
   async addShipmentDocument(
     shipmentId: string,
     dto: {
@@ -356,20 +471,20 @@ export class ShipmentsService {
     return this.getShipmentByShipmentNo(shipment.shipment_no);
   }
 
-  async findByTrackingNumberAndStatus(
-    trackingNumber: string,
+  async findByShipmentNumberAndStatus(
+    shipmentNumber: string,
     status: ShipmentStatus,
   ): Promise<ShipmentResponseDto> {
     const shipment = await this.shipmentRepository.findOne({
       where: {
-        tracking_no: trackingNumber,
+        shipment_no: shipmentNumber,
         status: status,
       },
     });
 
     if (!shipment) {
       throw new NotFoundException(
-        `Shipment with tracking number ${trackingNumber} and status ${status} not found.`,
+        `Shipment with number ${shipmentNumber} and status ${status} not found.`,
       );
     }
 

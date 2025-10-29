@@ -7,6 +7,7 @@ import {
   Typography,
   Checkbox,
   Collapse,
+  CircularProgress,
 } from '@mui/material';
 import {
   KeyboardArrowDown as KeyboardArrowDownIcon,
@@ -16,30 +17,69 @@ import {
 import ItemTable from './ItemTable';
 import { formatDateTime } from '../../utils/formatDateTime';
 import { useNavigate } from 'react-router-dom';
+import { removePackageFromShipment } from '../../services/api.services';
+import { toast } from 'sonner';
 
-const PackageRow = ({ item, index, isLast }) => {
+interface PackageRowProps {
+  item: any;
+  index: number;
+  showCancel?: boolean;
+  shipmentId?: string;
+  onPackageRemoved?: () => void;
+  isDiscarded?: boolean;
+}
+
+const PackageRow: React.FC<PackageRowProps> = ({
+  item,
+  index,
+  showCancel = false,
+  shipmentId,
+  onPackageRemoved,
+  isDiscarded,
+}) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  const handleRemovePackage = async () => {
+    try {
+      setRemoving(true);
+      await removePackageFromShipment(shipmentId, item.id);
+      onPackageRemoved?.()
+    } catch (error) {
+      console.error("Failed to remove package:", error);
+      toast.error("Failed to remove package.")
+    } finally {
+      setRemoving(false);
+    }
+  }
 
   const handleViewPackage = () => {
     navigate(`/packages/${item.package_id}`);
   };
+
+  const formatWeight = (value) => {
+    if (value === null) {
+      return "-"
+    }
+
+    const num = Number(value);
+    return Number.isInteger(num) ? `${num} KG` : `${num} KG`;
+  }
 
   return (
     <>
       <TableRow sx={{ 
         '& > *': { 
           border: 'none',
-          borderBottom: isLast ? 'none' : '1px solid #f1f5f9'
+          borderBottom: 'none',
+          borderTop: 'none', 
         },
         '&:hover': {
           bgcolor: '#f8fafc'
         }
       }}>
-        <TableCell padding="checkbox" sx={{ p: 0.5}}>
-          <Checkbox color="primary" size="small" />
-        </TableCell>
-        <TableCell sx={{ p: 0.5 }}>
+        <TableCell sx={{ py: 1, display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton 
             size="small" 
             onClick={() => setOpen(!open)}
@@ -52,11 +92,12 @@ const PackageRow = ({ item, index, isLast }) => {
           >
             {open ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
           </IconButton>
-        </TableCell>
-        <TableCell sx={{ py: 1.5 }}>
-          <Typography variant="body2">
-            {index + 1}. {item.package_id}
-          </Typography>
+
+          <Checkbox color="primary" size="small" sx={{ p: 0, mr: 0.5 }}/>
+          
+          <Typography variant="body2"> {index + 1}. </Typography>
+
+          <Typography variant="body2" sx={{ ml: 0.5 }}>{item.package_id}</Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
           <Typography variant="body2">{item.rack_slot?.label}</Typography>
@@ -68,20 +109,27 @@ const PackageRow = ({ item, index, isLast }) => {
         <TableCell sx={{ py: 1.5 }}>
           <Typography variant="body2">{formatDateTime(item.created_at)}</Typography>
         </TableCell>
-        <TableCell align="right" sx={{ py: 1.5 }}>
-          <Typography variant="body2">{item.total_weight}</Typography>
+        <TableCell sx={{ py: 1.5 }}>
+          <Typography variant="body2">
+            {formatWeight(item.total_weight)}
+          </Typography>
         </TableCell>
-        <TableCell align="right" sx={{ py: 1.5 }}>
-          <Typography variant="body2">{item.total_volumetric_weight}</Typography>
+        <TableCell sx={{ py: 1.5 }}>
+          <Typography variant="body2">
+            {formatWeight(item.total_volumetric_weight)}
+          </Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <IconButton 
               size="small" 
-              onClick={handleViewPackage}
+              onClick={!isDiscarded ? handleViewPackage : undefined}
+              disabled={isDiscarded}
               sx={{ 
-                bgcolor: '#7360F2', 
-                color: '#f8f8f8', 
+                bgcolor: isDiscarded ? '#cbd5e1' : '#7360F2',
+                color: isDiscarded ? '#64748b' : '#f8f8f8',  
+                cursor: isDiscarded ? 'not-allowed' : 'pointer',
+                opacity: isDiscarded ? 0.6 : 1,
                 '&:hover': { backgroundColor: '#5b48d8' },
                 width: 28,
                 height: 28
@@ -89,6 +137,30 @@ const PackageRow = ({ item, index, isLast }) => {
             >
               <ViewIcon fontSize="small" />
             </IconButton>
+
+            {showCancel && (
+              <IconButton
+                size="small"
+                disabled={ isDiscarded || removing}
+                onClick={!isDiscarded ? handleRemovePackage : undefined}
+                sx={{
+                  bgcolor: isDiscarded ? '#cbd5e1' : '#DC2626',
+                  color: isDiscarded ? '#64748b' : '#ffffff',
+                  cursor: isDiscarded ? 'not-allowed' : 'pointer',
+                  opacity: isDiscarded ? 0.6 : 1,
+                  '&:hover': { bgcolor: '#B91C1C' },
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                }}
+              >
+                {removing ? (
+                  <CircularProgress size={14} />
+                ) : (
+                  '✕'
+                )}
+              </IconButton>
+            )}
           </Box>
         </TableCell>
       </TableRow>

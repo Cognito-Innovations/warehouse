@@ -1,6 +1,6 @@
 import { Box, Button, Card, Typography } from '@mui/material';
 
-const ActionLogs = () => (
+const ActionLogs = ({ isDiscarded }) => (
     <Box sx={{ mt: 3 }}>
         <Box
             sx={{
@@ -20,7 +20,14 @@ const ActionLogs = () => (
             <Button
               variant="contained"
               size="small"
-              sx={{ textTransform: 'none' }}
+              disabled={isDiscarded}
+              sx={{
+                textTransform: 'none',
+                bgcolor: isDiscarded ? '#cbd5e1' : undefined,
+                color: isDiscarded ? '#64748b' : undefined,
+                cursor: isDiscarded ? 'not-allowed' : 'pointer',
+                opacity: isDiscarded ? 0.7 : 1,
+              }}
             >
               Add
             </Button>

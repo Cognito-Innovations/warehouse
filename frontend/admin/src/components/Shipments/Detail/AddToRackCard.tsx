@@ -5,12 +5,18 @@ import UpdateRackSlotModal from "./UpdateRackSlotModal";
 interface AddToRackCardProps {
   shipmentId: string;
   onRefresh: () => void;
+  isDiscarded: boolean;
 }
 
-const AddToRackCard: React.FC<AddToRackCardProps> = ({ shipmentId, onRefresh }) => {
+const AddToRackCard: React.FC<AddToRackCardProps> = ({ shipmentId, onRefresh, isDiscarded }) => {
   const [rackModalOpen, setRackModalOpen] = useState(false);
 
-  const handleOpenRackModal = () => setRackModalOpen(true);
+  const handleOpenRackModal = () => {
+    if (!isDiscarded) {
+      setRackModalOpen(true);
+    }
+  }
+
   const handleCloseRackModal = () => setRackModalOpen(false);
 
   return (
@@ -25,14 +31,15 @@ const AddToRackCard: React.FC<AddToRackCardProps> = ({ shipmentId, onRefresh }) 
           px: 2.5,
           py: 1.2,
           borderRadius: "8px",
-          border: "1px solid #64748b",
-          color: "#1e293b",
+          border: isDiscarded ? "1px solid #cbd5e1" : "1px solid #64748b",
+          color: isDiscarded ? "#64748b" : "#1e293b",
           fontSize: "0.875rem",
           fontWeight: 500,
-          backgroundColor: "#fff",
-          cursor: "pointer",
+          backgroundColor: isDiscarded ? "#f1f5f9" : "#fff",
+          cursor: isDiscarded ? "not-allowed" : "pointer",
+          opacity: isDiscarded ? 0.6 : 1,
           transition: "all 0.2s ease",
-          "&:hover": {
+          "&:hover": !isDiscarded && {
             backgroundColor: "#f8fafc",
             borderColor: "#475569",
           },

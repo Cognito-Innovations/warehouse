@@ -50,13 +50,13 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
     const handleCommercialInvoiceButton = async () => {
         setIsPrinting(true);
         try {
-            const allItems = data.packages
-              ?.flatMap((pkg) => pkg.items) ?? [];
-
-            if (!data || !data.id || !data.user?.name || allItems.length === 0) {
+            if (!data || !data.id || !data.user?.name) {
                 toast.error("Required data for the invoice is missing.");
                 return;
             }
+
+            const allItems = data.packages
+              ?.flatMap((pkg) => pkg.items) ?? [];
 
             const doc = new jsPDF() as jsPDFWithAutoTable;
             const pageW = doc.internal.pageSize.getWidth();
@@ -148,14 +148,24 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
 
             // --- 4. Items Table ---
             const tableColumns = ["Description", "Qty", "Amount", "Total"];
-            const tableRows = allItems.map((item: {name: string, quantity: number, unit_price: string, total_price: string}) => [
-                `${item.name || 'N/A'}`,
-                item.quantity,
-                parseFloat(item.unit_price).toFixed(2),
-                `USD ${parseFloat(item.total_price).toFixed(2)}`
-            ]);
+            let tableRows: any[] = []; 
+            let grandTotal = 0;
+
+            if (allItems.length === 0) {
+                tableRows = [["No items found", "", "", ""]]
+            } else {
+                tableRows = allItems.map(item => [
+                    item.name || 'N/A',
+                    item.quantity,
+                    parseFloat(item.unit_price).toFixed(2),
+                    `USD ${parseFloat(item.total_price).toFixed(2)}`
+                ]);
             
-            const grandTotal = allItems.reduce((sum: number, item: {total_price: string}) => sum + parseFloat(item.total_price), 0);
+                grandTotal = allItems.reduce(
+                    (sum, item) => sum + parseFloat(item.total_price), 
+                    0
+                );
+            }
             
             autoTable(doc, {
                 startY: yPos + boxHeaderH + boxBodyH + 10,
@@ -181,6 +191,9 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
                     1: { halign: 'center' },
                     2: { halign: 'right' },
                     3: { halign: 'right' },
+                },
+                bodyStyles: {
+                  textColor: allItems.length === 0 ? [120,120,120] : [0,0,0],
                 },
                 didDrawCell: (data) => {
                     // Custom draw the "Brand:, Model:" text in a smaller, grey font

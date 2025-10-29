@@ -20,7 +20,7 @@ import {
   TextField,
 } from '@mui/material';
 import { toast } from 'sonner';
-import { updateShipmentStatus } from '../../services/api.services';
+import { createShipmentInvoice } from '../../services/api.services';
 
 interface Charge {
   category: string;
@@ -31,7 +31,7 @@ interface Charge {
 
 interface Shipment {
   id: string;
-  weight?: string | number;
+  total_weight?: string | number;
 }
 
 const availableCharges = [
@@ -44,12 +44,21 @@ const availableCharges = [
 ];
 
 const RaiseInvoiceModal: React.FC<{ 
-    shipment: Shipment; 
-    onClose: () => void;
-    onUpdated?: () => void;
+  shipment: Shipment; 
+  onClose: () => void;
+  onUpdated?: () => void;
 }> = ({ shipment, onClose, onUpdated }) => {
+  const FREIGHT_RATE_PER_KG = 8.50;
+  const weight = Number(shipment.total_weight) || 0;
+  const freightAmount = weight * FREIGHT_RATE_PER_KG;
+
   const initialCharges: Charge[] = [
-    { category: 'Freight Charge', description: `REDBOX Chargeable Weight ${shipment.weight}`, amount: 35.00, total: 35.00 },
+    {
+      category: 'Freight Charge',
+      description: `REDBOX Chargeable Weight ${weight} kg`,
+      amount: FREIGHT_RATE_PER_KG,
+      total: freightAmount,
+    },
   ];
 
   const [charges, setCharges] = useState<Charge[]>(initialCharges);
@@ -84,7 +93,10 @@ const RaiseInvoiceModal: React.FC<{
   const handleRaiseInvoice = async () => {
     try {
       setLoading(true);  
-      await updateShipmentStatus(shipment.id, "PAYMENT_PENDING")
+      await createShipmentInvoice(shipment.id, {
+        charges,
+        total: Number(calculateTotal())
+      })
       onUpdated?.();
       toast.success("Invoice raised successfully! Status updated to Payment Pending.");
       onClose();

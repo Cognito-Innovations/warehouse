@@ -17,6 +17,7 @@ import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { ShipmentResponseDto } from './dto/shipment-response.dto';
 import { ShipmentStatus } from './shipment.entity';
 import { UpdateShipmentDto } from './dto/update-shipment.dto';
+import { CreateShipmentInvoiceDto } from './dto/create-shipment-invoice.dto';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -55,13 +56,32 @@ export class ShipmentsController {
 
   @Get('/search')
   async searchShipment(
-    @Query('trackingNumber') trackingNumber: string,
+    @Query('shipmentNumber') shipmentNumber: string,
     @Query('status') status: ShipmentStatus,
   ): Promise<ShipmentResponseDto> {
-    return this.shipmentsService.findByTrackingNumberAndStatus(
-      trackingNumber,
+    return this.shipmentsService.findByShipmentNumberAndStatus(
+      shipmentNumber,
       status,
     );
+  }
+
+  @Post(':id/invoice')
+  async createShipmentInvoice(
+    @Param('id') id: string,
+    @Body() dto: CreateShipmentInvoiceDto,
+  ) {
+    return this.shipmentsService.createShipmentInvoice(id, dto);
+  }
+
+  @Patch(':shipmentId/remove-package/:packageId')
+  async removePackageFromShipment(
+    @Param('shipmentId') shipmentId: string,
+    @Param('packageId') packageId: string,
+  ) {
+    return this.shipmentsService.removePackageFromShipment(
+      shipmentId,
+      packageId,
+    )
   }
 
   @Get('detail/by-shipmentNo/:shipmentNo')

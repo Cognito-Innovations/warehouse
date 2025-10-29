@@ -19,9 +19,10 @@ import { toast } from 'sonner';
 
 interface MeasurementsTableProps {
   shipments?: any;
+  isDiscarded: boolean;
 }
 
-const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ shipments }) => {
+const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ shipments, isDiscarded }) => {
   const [loading, setLoading] = useState(false);
 
   const handlePrintClick = async () => {
@@ -126,15 +127,19 @@ const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ shipments }) => {
 
                   <TableCell align='right' sx={{ pr: 2 }}>
                     <IconButton
-                      onClick={handlePrintClick}
-                      disabled={loading}
+                      onClick={!isDiscarded ? handlePrintClick : undefined}
+                      disabled={loading || isDiscarded}
                       sx={{
                         width: 26,
                         height: 26,
-                        bgcolor: '#0ea5e9',
-                        color: '#fff',
+                        bgcolor: isDiscarded ? '#cbd5e1' : '#0ea5e9',
+                        color: isDiscarded ? '#64748b' : '#fff',
                         borderRadius: '50%',
-                        '&:hover': { bgcolor: '#0284c7' }
+                        cursor: isDiscarded ? 'not-allowed' : 'pointer',
+                        opacity: isDiscarded ? 0.6 : 1,
+                        '&:hover': !isDiscarded && {
+                          bgcolor: '#0284c7'
+                        }
                       }}
                     >
                       {loading ? (

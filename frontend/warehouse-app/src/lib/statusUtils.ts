@@ -4,6 +4,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { SvgIconComponent } from "@mui/icons-material";
 
 export const getStatusProps = (status: string): { IconComponent: SvgIconComponent; colorClassName: string } => {
@@ -35,6 +36,11 @@ export const getStatusProps = (status: string): { IconComponent: SvgIconComponen
         IconComponent: FlightTakeoffIcon,
         colorClassName: "text-orange-500",
       };
+    case "discarded":
+      return {
+        IconComponent: CancelIcon,
+        colorClassName: "text-red-500",
+      }
     default:
       return {
         IconComponent: HelpOutlineIcon,

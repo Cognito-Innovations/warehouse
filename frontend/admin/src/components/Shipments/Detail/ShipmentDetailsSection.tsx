@@ -42,12 +42,14 @@ interface ShipmentDetailsSectionProps {
   };
   loading?: boolean
   onRefresh: () => void;
+  isDiscarded: boolean;
 }
 
 const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
   shipments,
   loading,
-  onRefresh
+  onRefresh,
+  isDiscarded,
 }) => {
   const [infoModalOpen, setInfoModalOpen] = useState(false);
 
@@ -85,6 +87,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
               variant="contained"
               startIcon={<EditIcon />}
               onClick={handleOpenInfoModal}
+              disabled={isDiscarded}
               sx={{
                 bgcolor: '#3b82f6',
                 '&:hover': { bgcolor: '#2563eb' },
@@ -199,11 +202,13 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
                       <RackSlotInfo
                         shipments={shipments}
                         onRefresh={onRefresh}
+                        isDiscarded={isDiscarded}
                       />
                     ) : (
                       <AddToRackCard
                         shipmentId={shipments.id}
                         onRefresh={onRefresh}
+                        isDiscarded={isDiscarded}
                       />
                     )}
                 </Grid>
@@ -211,6 +216,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
 
           <MeasurementsTable 
             shipments={shipments}
+            isDiscarded={isDiscarded}
           />
         </CardContent>
       </Card>

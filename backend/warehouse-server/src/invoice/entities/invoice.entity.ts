@@ -9,6 +9,8 @@ import {
 import { ShoppingRequest } from 'src/shopping-requests/shopping-request.entity';
 import { ShoppingRequestProduct } from 'src/products/shopping-request-product.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
+import { Shipment } from 'src/shipments/shipment.entity';
+import { InvoiceCharge } from './invoice-charge.entity';
 
 export enum InvoiceStatus {
   UNPAID = 'UNPAID',
@@ -43,4 +45,18 @@ export class Invoice extends BaseTimestampEntity {
     cascade: true,
   })
   products: ShoppingRequestProduct[];
+
+  @ManyToOne(() => Shipment, {
+    eager: true,
+    onDelete: 'CASCADE',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'shipment_id' })
+  shipment?: Shipment;
+
+  @OneToMany(() => InvoiceCharge, (charge) => charge.invoice, {
+    eager: true,
+    cascade: true,
+  })
+  charges?: InvoiceCharge[];
 }

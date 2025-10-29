@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, CircularProgress, Grid } from '@mui/material';
+import { Alert, Box, CircularProgress, Grid } from '@mui/material';
 import { useParams } from 'react-router-dom';
 
 import TopNavbar from '../components/Layout/TopNavbar.tsx';
@@ -69,15 +69,6 @@ const ShipmentDetail: React.FC = () => {
     payment_approved: 'payment_approved',
     ready_to_ship: 'ready_to_ship',
     departed: 'departed'
-  };
-
-  const getInvoice = (shipments: any) => {
-    const invoice = shipments.invoice;
-    if (invoice > 0) {
-      return invoice;
-    } else {
-      return {id: "temp", invoice_no: "-", amount: 0, total: 0, status: "UNPAID"};
-    }
   };
 
   const prepareTrackingData = () => {
@@ -152,16 +143,25 @@ const ShipmentDetail: React.FC = () => {
   const showInvoiceTable = ["PAYMENT_PENDING", "PAYMENT_APPROVAL_PENDING", "PAYMENT_APPROVED", "READY_TO_SHIP", "DEPARTED"]
     .includes(shipments.status);
 
+  const isDiscarded = shipments.status === 'DISCARDED';
+  const showDiscardedMessage = isDiscarded && (
+    <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
+      This shipment has been discarded. No further actions can be taken.
+    </Alert>
+  );
+
   return (
     <Box sx={{ p: 1 }}>
       <TopNavbar
         pageTitle="Shipments"
         pageSubtitle={shipment_no}
       />
+      {showDiscardedMessage}
 
       <ShipmentHeader 
         shipments={shipments}
         onRefresh={fetchShipments}
+        isDiscarded={isDiscarded}
       />
 
       <Grid container spacing={2}>
@@ -170,15 +170,19 @@ const ShipmentDetail: React.FC = () => {
             shipments={shipments}
             loading={loading}
             onRefresh={fetchShipments}
+            isDiscarded={isDiscarded}
           />
 
           <PackagesSection
-            packages={shipments?.packages} 
+            packages={shipments?.packages}
+            shipmentId={shipments?.id}
+            onPackageRemoved={fetchShipments} 
+            isDiscarded={isDiscarded}
           />
 
           {showInvoiceTable && (
             <InvoiceTable
-              invoice={getInvoice(shipments)}
+              invoice={shipments.invoice}
               payment_slips={shipments.payment_slips}
               status={shipments.status}
               isApprovingPayment={isApprovingPayment}
@@ -196,6 +200,7 @@ const ShipmentDetail: React.FC = () => {
             shipments={shipments}
             documents={shipments.shipment_photos || []}
             onUploadSuccess={fetchShipments}
+            isDiscarded={isDiscarded}
           />
 
           <TrackingStatus
@@ -203,7 +208,7 @@ const ShipmentDetail: React.FC = () => {
             currentStageId={currentStageId}
           />
 
-          <ActionLogs /> 
+          <ActionLogs isDiscarded={isDiscarded}/> 
         </Grid>
       </Grid>
     </Box>

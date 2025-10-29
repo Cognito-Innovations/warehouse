@@ -3,10 +3,18 @@ import PackageRow from "../PackageRow";
 import type React from "react";
 
 interface PackagesSectionProps {
-    packages: any[];
+  packages: any[];
+  shipmentId: string;
+  onPackageRemoved: () => void;
+  isDiscarded: boolean;
 }
 
-const PackagesSection: React.FC<PackagesSectionProps> = ({ packages }) => {
+const PackagesSection: React.FC<PackagesSectionProps> = ({
+  packages,
+  shipmentId,
+  onPackageRemoved,
+  isDiscarded,
+}) => {
     return (
         <Box sx={{ width: '100%', mt: 3 }}>
             <Typography
@@ -30,26 +38,35 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({ packages }) => {
               overflow: 'hidden',
               width: '100%'
             }}>
-              <Table size="small" sx={{ minWidth: 900 }}>
+              <Table
+                size="small"
+                sx={{
+                  tableLayout: "auto",
+                  width: "100%",
+                  borderCollapse: "separate",
+                  borderSpacing: 0,
+                  '& td, & th': {
+                    paddingY: 1,
+                    paddingX: 1.5,
+                  }
+                }}>
                 <TableHead>
                   <TableRow sx={{ 
                     bgcolor: '#f1f5f9',
                     '& > *': { 
                       border: 'none',
                       fontWeight: 600,
-                      color: '#374151',
+                      color: "#6b7280",
                       fontSize: '0.875rem',
                       py: 1.5
                     } 
                   }}>
-                    <TableCell sx={{ width: 40 }} />
-                    <TableCell sx={{ width: 40 }} />
-                    <TableCell>Package No.</TableCell>
+                    <TableCell sx={{ width: 200, textAlign: "center" }}>Package No.</TableCell>
                     <TableCell>Rack</TableCell>
                     <TableCell>Tracking No.</TableCell>
                     <TableCell>Received At</TableCell>
-                    <TableCell align="right">Weight</TableCell>
-                    <TableCell align="right">Vol. Weight</TableCell>
+                    <TableCell>Weight</TableCell>
+                    <TableCell sx={{ width: 100 }}>Vol. Weight</TableCell>
                     <TableCell sx={{ width: 80 }} />
                   </TableRow>
                 </TableHead>
@@ -59,8 +76,11 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({ packages }) => {
                     <PackageRow 
                       key={pkg.id} 
                       item={pkg} 
-                      index={i} 
-                      isLast={i === packages.length - 1}
+                      index={i}
+                      showCancel
+                      shipmentId={shipmentId}
+                      onPackageRemoved={onPackageRemoved}
+                      isDiscarded={isDiscarded}
                     />
                   ))}
                 </TableBody>

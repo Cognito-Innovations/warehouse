@@ -19,13 +19,20 @@ const ShipReportButton: React.FC<ShipReportButtonProps> = ({ shipments }) => {
         let serial = 1;
 
         shipments.forEach((shipment) => {
-            const { tracking_no, user, created_at, packages = [] } = shipment
+            const { tracking_no, user, created_at, packages = [], invoice } = shipment
             const customerName = user?.name || '';
             const suiteId = user?.suite_no || '';
             const requestedAt = created_at ? formatDateTime(created_at) : '';
             const carrier = 'REDBOX (air)';
             const noOfItems = packages.length;
-            const extraCharges = '';
+            let extraCharges = '';
+            if (invoice && invoice.charges) {
+                const additionalServices = invoice.charges
+                    .filter((charge: any) => charge.category === "Additional Services")
+                    .map((charge: any) => charge.description)
+                    .join(', ');
+                extraCharges = additionalServices
+            }
 
             packages.forEach((pkg: any, index: number) => {
                 const row: any = {};

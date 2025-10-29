@@ -27,7 +27,7 @@ const ShipmentRow = ({ row }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const statusColors = getStatusAndInvoiceColor(row.status);
-  const invoiceColors = getStatusAndInvoiceColor(row.invoice || "PENDING");
+  const invoiceColors = getStatusAndInvoiceColor(row.invoice?.status || "INVOICE NOT GENERATED");
 
   const handleViewShipment = (shipmentNo: string) => {
     navigate(`/shipments/${shipmentNo}`);
@@ -59,7 +59,7 @@ const ShipmentRow = ({ row }) => {
         </TableCell>
         <TableCell align="center">{row.packages ? row.packages.length : 0}</TableCell>
         <TableCell>
-          <Chip label={row.invoice || "PENDING"} size="small" sx={{ color: invoiceColors.color, bgcolor: invoiceColors.bgColor }} />
+          <Chip label={row.invoice?.status || "INVOICE NOT GENERATED"} size="small" sx={{ color: invoiceColors.color, bgcolor: invoiceColors.bgColor }} />
         </TableCell>
 
         <TableCell>
@@ -129,19 +129,17 @@ const ShipmentRow = ({ row }) => {
                       '& > *': { 
                         border: 'none',
                         fontWeight: 600,
-                        color: '#374151',
+                        color: "#6b7280",
                         fontSize: '0.875rem',
                         py: 1.5
                       } 
                     }}>
-                      <TableCell sx={{ width: 40 }} />
-                      <TableCell sx={{ width: 40 }} />
-                      <TableCell>Package No.</TableCell>
+                      <TableCell sx={{ width: 220, textAlign: "center" }}>Package No.</TableCell>
                       <TableCell>Rack</TableCell>
                       <TableCell>Tracking No.</TableCell>
                       <TableCell>Received At</TableCell>
-                      <TableCell align="right">Weight</TableCell>
-                      <TableCell align="right">Vol. Weight</TableCell>
+                      <TableCell >Weight</TableCell>
+                      <TableCell >Vol. Weight</TableCell>
                       <TableCell sx={{ width: 80 }} />
                     </TableRow>
                   </TableHead>
@@ -150,8 +148,7 @@ const ShipmentRow = ({ row }) => {
                       <PackageRow 
                         key={pkg.id} 
                         item={pkg} 
-                        index={i} 
-                        isLast={i === row.packages.length - 1}
+                        index={i}
                       />
                     ))}
                   </TableBody>

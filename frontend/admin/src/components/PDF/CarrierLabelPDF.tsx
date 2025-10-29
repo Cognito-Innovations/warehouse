@@ -125,7 +125,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setFontSize(8.5);
     doc.setTextColor(0, 0, 0);
     doc.text(data.origin_country || "INDIA", margin + tableOffsetX + 1, y + 8);
-    doc.text(data.total_weight!, margin + tableOffsetX + col1W + 1, y + 8);
+    doc.text(data.total_weight || "-", margin + tableOffsetX + col1W + 1, y + 8);
     doc.text(data.num_pieces || "1 PCS", margin + tableOffsetX + col1W + col2W + 1, y + 8);
 
     // Row 2

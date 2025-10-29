@@ -3,11 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { CircularProgress } from "@mui/material";
+import { Alert, CircularProgress } from "@mui/material";
 import { toast } from "sonner";
 import { getPackagesByShipmentNo,
-  // deleteShipment, 
-  // getPaymentSlips 
+  // deleteShipment,
 } from "@/lib/api.service";
 
 import TrackingStatus from "@/components/Shipment/TrackingStatus";
@@ -24,10 +23,8 @@ interface IShipmentRequest {
     id: string;
     name: string;
   };
+  tracking_requests: any[];
   payment_slips: any[];
-  charges:{
-    amount: number;
-  }[];
   status: string;
   created_at: string;
 }
@@ -39,7 +36,6 @@ export default function ShipmentDetailPage() {
   const shipmentNo = Array.isArray(params.shipmentNo) ? params.shipmentNo[0] : params.shipmentNo;
 
   const [request, setRequest] = useState<IShipmentRequest | null>(null);
-  // const [paymentSlips, setPaymentSlips] = useState<any[]>([]);
   // const [confirmOpen, setConfirmOpen] = useState(false);
   // const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,26 +62,9 @@ export default function ShipmentDetailPage() {
     }
   }, [shipmentNo]);
 
-  // TODO: Uncomment when backend is ready
-  // const fetchPaymentSlips = useCallback(async (shipment_uuid: string) => {
-  //   try {
-  //     const slips = await getPaymentSlips(shipment_uuid);
-  //     setPaymentSlips(slips);
-  //   } catch (err) {
-  //     console.error("Failed to fetch payment slips:", err);
-  //     toast.error("Failed to load payment slips.");
-  //   }
-  // }, []);
-
   useEffect(() => {
     fetchRequest();
   }, [fetchRequest]);
-
-  // useEffect(() => {
-  //   if (request?.shipment_uuid) {
-  //     fetchPaymentSlips(request.shipment_uuid);
-  //   }
-  // }, [request, fetchPaymentSlips]);
 
   // const handleDelete = useCallback(async () => {
   //   if (!deleteId) return;
@@ -110,7 +89,8 @@ export default function ShipmentDetailPage() {
   //   setConfirmOpen(true);
   // };
 
-  const displayInvoiceSection = request && ["PAYMENT_PENDING", "PAYMENT_APPROVED", "READY_TO_SHIP", "DEPARTED"].includes(request.status);
+  const displayInvoiceSection = request && ["PAYMENT_PENDING", "PAYMENT_APPROVED", "READY_TO_SHIP", "DEPARTED", "DISCARDED"].includes(request.status);
+  const isDiscarded = request?.status === "DISCARDED";
 
   if (loading) {
     return (
@@ -142,6 +122,12 @@ export default function ShipmentDetailPage() {
           <span className="font-medium text-gray-700">View Request</span>
         </p>
 
+        {isDiscarded && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            This shipment has been discarded. No further actions can be taken.
+          </Alert>
+        )}
+
         <div className="mb-6">
           <RequestHeader
             request={request}
@@ -152,8 +138,8 @@ export default function ShipmentDetailPage() {
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-[320px] lg:flex-shrink-0">
             <TrackingStatus
+              trackingRequests={request.tracking_requests || []}
               status={request.status}
-              createdAt={request.created_at}
             />
           </div>
 

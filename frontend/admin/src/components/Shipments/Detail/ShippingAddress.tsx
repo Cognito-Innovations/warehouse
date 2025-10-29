@@ -8,13 +8,12 @@ interface ShippingAddressProps {
 
 const ShippingAddress: React.FC<ShippingAddressProps> = ({ shipments }) => {
   const user = shipments?.user;
-  const address = user?.address?.[0];
-  const country = address?.country;
-  const countryCode = country?.substring(0, 2)?.toUpperCase();
+  const courier = user?.preference?.courier;
+  const address = courier?.address || '';
 
-  const fullAddress = address
-    ? `${address.address}, ${address.city}, ${address.state}, ${address.country}`
-    : "Address not available";
+  const addressParts = address.split(',').map(part => part.trim());
+  const country = addressParts.length > 0 ? addressParts[addressParts.length - 1] : '';
+  const countryCode = country.substring(0, 2).toLowerCase();
 
   const flagUrl = countryCode
     ? `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
@@ -76,15 +75,17 @@ const ShippingAddress: React.FC<ShippingAddressProps> = ({ shipments }) => {
           </Box>
 
           <Typography variant="body1" sx={{ fontWeight: 600, color: "#1e293b" }}>
-            {fullAddress}
+            {address}
           </Typography>
 
-          <Typography variant="body2" sx={{ color: "#6b7280", fontWeight: 500 }}>
-            POSTAL CODE: {address?.zip_code}
-          </Typography>
+          {address?.zip_code && (  
+            <Typography variant="body2" sx={{ color: "#6b7280", fontWeight: 500 }}>
+              POSTAL CODE: {address?.zip_code}
+            </Typography>
+          )}
 
           <Typography variant="body2" sx={{ color: "#1e293b" }}>
-            {user?.name} ({user?.phone_number})
+            {user?.name} ({courier?.phone_number})
           </Typography>
         </CardContent>
       </Card>

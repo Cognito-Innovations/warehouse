@@ -1,6 +1,6 @@
-import { Controller, Post, Param } from '@nestjs/common';
+import { Controller, Post, Param, Body } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
-import { Invoice } from './invoice.entity';
+import { Invoice } from './entities/invoice.entity';
 import { ShoppingRequest } from 'src/shopping-requests/shopping-request.entity';
 
 @Controller('invoices')

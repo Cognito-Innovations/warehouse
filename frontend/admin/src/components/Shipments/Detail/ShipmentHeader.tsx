@@ -7,11 +7,13 @@ import { getStatusColor } from '../../../utils/statusUtils';
 interface ShipmentHeaderProps {
   shipments: any;
   onRefresh?: () => void;
+  isDiscarded: boolean;
 }
 
 const ShipmentHeader: React.FC<ShipmentHeaderProps> = ({ 
   shipments,
   onRefresh,
+  isDiscarded
 }) => {
   const user = {
     name: shipments.user?.name || '',
@@ -27,6 +29,7 @@ const ShipmentHeader: React.FC<ShipmentHeaderProps> = ({
       status={shipments.status ?? ''}
       data={shipments}
       onRefresh={onRefresh}
+      disabled={isDiscarded}
     />
   );
   return (

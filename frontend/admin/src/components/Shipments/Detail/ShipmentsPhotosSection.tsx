@@ -27,12 +27,14 @@ interface ShipmentsPhotosSectionProps {
   shipments: Shipments;
   documents: Document[];
   onUploadSuccess?: () => Promise<void>;
+  isDiscarded: boolean;
 }
 
 const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
     shipments,
     documents,
     onUploadSuccess,
+    isDiscarded,
 }) => {
     const [uploading, setUploading] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -110,7 +112,7 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
                     textTransform: 'none',
                     borderRadius: 1,
                   }}
-                  disabled={uploading || isUploadDisabled}
+                  disabled={isDiscarded || uploading || isUploadDisabled}
                 >
                   Upload
                 </Button>
@@ -146,17 +148,17 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
                     {documents.length === 0 ? (
                       <Box sx={{ mb: 2 }}>
                         <Box
-                          onClick={handleFileClick}
-                          onDragOver={uploading ? undefined : handleDragOver}
-                          onDragLeave={uploading ? undefined : handleDragLeave}
-                          onDrop={uploading ? undefined : handleDrop}
+                          onClick={isDiscarded ? undefined : handleFileClick}
+                          onDragOver={isDiscarded || uploading ? undefined : handleDragOver}
+                          onDragLeave={isDiscarded || uploading ? undefined : handleDragLeave}
+                          onDrop={isDiscarded || uploading ? undefined : handleDrop}
                           sx={{
                             border: `2px dashed ${isDragOver ? '#3b82f6' : '#d1d5db'}`,
                             borderRadius: 2, p: 3, textAlign: 'center',
-                            cursor: uploading || isUploadDisabled ? 'not-allowed' : 'pointer',
+                            cursor: isDiscarded || uploading || isUploadDisabled ? 'not-allowed' : 'pointer',
                             bgcolor: isDragOver ? '#f0f9ff' : '#fafafa',
                             transition: 'all 0.2s ease-in-out',
-                            opacity: uploading ? 0.6 : 1,
+                            opacity: isDiscarded || uploading ? 0.6 : 1,
                             '&:hover': {
                               borderColor: uploading ? '#d1d5db' : '#3b82f6',
                               bgcolor: uploading ? '#fafafa' : '#f0f9ff'
@@ -253,8 +255,8 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
                           variant="outlined"
                           size="small"
                           startIcon={uploading ? <CircularProgress size={16} /> : <AddIcon />}
-                          onClick={handleFileClick}
-                          disabled={uploading || isUploadDisabled}
+                          onClick={isDiscarded ? undefined : handleFileClick}
+                          disabled={isDiscarded || uploading || isUploadDisabled}
                           sx={{ mt: 1, fontSize: '0.75rem' }}
                         >
                           {uploading ? 'Uploading...' : 'Add More Documents'}

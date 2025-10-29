@@ -190,6 +190,17 @@ export class PackagesService {
     try {
       const savedPackage = await this.packageRepository.save(packageEntity);
 
+      if (createPackageDto.rack_slot) {
+        const rack = await this.rackRepository.findOne({
+          where: { id: createPackageDto.rack_slot },
+        });
+
+        if (rack) {
+          rack.count = (rack.count || 0) + 1;
+          await this.rackRepository.save(rack);
+        }
+      }
+
       // Handle pieces array if provided
       if (createPackageDto.pieces && createPackageDto.pieces.length > 0) {
         const measurements: PackageMeasurement[] = [];
@@ -406,6 +417,7 @@ export class PackagesService {
         'user',
         'user.preference',
         'user.address',
+        'documents',
       ],
       order: { created_at: 'DESC' },
     });
