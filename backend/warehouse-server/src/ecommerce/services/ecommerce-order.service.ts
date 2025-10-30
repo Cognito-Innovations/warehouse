@@ -106,6 +106,16 @@ export class OrderService {
     return order;
   }
 
+  async getOrdersByUser(userId?: string): Promise<EcommerceOrder[]> {
+    const whereCondition = userId ? { user_id: userId } : {};
+
+    return this.orderRepository.find({
+      where: whereCondition,
+      relations: ['items', 'items.product', 'user'],
+      order: { created_at: 'DESC' },
+    });
+  }
+
   async findByOrderNumber(orderNumber: string): Promise<EcommerceOrder> {
     const order = await this.orderRepository.findOne({
       where: { order_number: orderNumber },

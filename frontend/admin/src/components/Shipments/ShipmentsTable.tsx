@@ -7,7 +7,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Checkbox,
   CircularProgress,
 } from '@mui/material';
 import ShipmentRow from './ShipmentRow';
@@ -32,20 +31,16 @@ const ShipmentsTable: React.FC<ShipmentsTableProps> = ({ shipments, status, load
                   sx={{
                     '& > *': {
                       whiteSpace: { xs: 'nowrap', sm: 'nowrap' },
-                      fontWeight: 700,
-                      fontSize: '0.95rem',
+                      fontWeight: 600,
                       color: '#374151',
                       py: 2,
                     },
                   }}
                 >
-                  <TableCell padding="checkbox">
-                    <Checkbox color="primary" />
-                  </TableCell>
-                  <TableCell />
+                  <TableCell/>
                   <TableCell>Shipment No.</TableCell>
                   <TableCell>Tracking No.</TableCell>
-                  <TableCell>Customer</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#374151', width: 140 }}>Customer</TableCell>
                   <TableCell>Request At</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="center">Pkgs Count</TableCell>

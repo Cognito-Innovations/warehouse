@@ -9,6 +9,18 @@ import {
 } from "../types/ecommerce";
 import { ecommerceService } from "@/services/ecommerce.service";
 
+interface LocalCartItem {
+  productId: string;
+  quantity: number;
+}
+
+const getAuthToken = (): string | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  return localStorage.getItem("auth-token");
+};
+
 // Product Store State
 interface ProductState {
   categories: EcommerceCategory[];
@@ -36,6 +48,7 @@ interface ProductActions {
 // Cart Store State
 interface CartState {
   cart: Cart | null;
+  localCartItems: LocalCartItem[];
   itemCount: number;
   totalAmount: number;
   loading: boolean;
@@ -50,6 +63,7 @@ interface CartActions {
   updateCartItem: (itemId: string, quantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   clearCart: () => Promise<void>;
+  syncLocalCartToServer: () => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -60,6 +74,51 @@ interface EcommerceStore
     ProductActions,
     CartState,
     CartActions {}
+
+const computeCartFromLocal = (
+  localItems: LocalCartItem[],
+  products: EcommerceProduct[]
+): Cart | null => {
+  if (!localItems.length) return null;
+
+  const items = localItems
+    .map((item) => {
+      const product = products.find((p) => p.id === item.productId);
+      if (!product) return null;
+
+      const unitPrice = product.price;
+      const totalPrice = unitPrice * item.quantity;
+
+      return {
+        id: `local-${product.id}`,
+        product,
+        quantity: item.quantity,
+        unit_price: unitPrice,
+        total_price: totalPrice,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  if (!items.length) return null;
+
+  const totalAmount = items.reduce((sum, item) => sum + item.total_price, 0);
+  let totalDiscount = 0;
+  items.forEach((item) => {
+    const disc =
+      item.total_price *
+      ((item.product.discount_percentage || 0) / 100);
+    totalDiscount += disc;
+  });
+  const finalAmount = totalAmount - totalDiscount;
+
+  return {
+    id: "local-cart-id",
+    items,
+    total_amount: totalAmount,
+    discount_percentage: totalDiscount,
+    final_amount: finalAmount,
+  } as Cart;
+};
 
 export const useEcommerceStore = create<EcommerceStore>()(
   persist(
@@ -75,6 +134,7 @@ export const useEcommerceStore = create<EcommerceStore>()(
 
       // Cart State
       cart: null,
+      localCartItems: [],
       itemCount: 0,
       totalAmount: 0,
 
@@ -132,6 +192,17 @@ export const useEcommerceStore = create<EcommerceStore>()(
         try {
           const products = await ecommerceService.getProducts();
           set({ products, filteredProducts: products, loading: false });
+          const token = getAuthToken();
+          if (!token) {
+            const state = get();
+            if (state.localCartItems.length > 0) {
+              const computed = computeCartFromLocal(
+                state.localCartItems,
+                products
+              );
+              state.setCart(computed);
+            }
+          }
         } catch (err: any) {
           console.error("Failed to fetch products:", err);
           set({
@@ -158,7 +229,15 @@ export const useEcommerceStore = create<EcommerceStore>()(
         });
       },
       fetchCart: async () => {
+        const token = getAuthToken();
         set({ loading: true, error: null });
+        if (!token) {
+          const { localCartItems, products } = get();
+          const computed = computeCartFromLocal(localCartItems, products);
+          get().setCart(computed);
+          set({ loading: false });
+          return;
+        }
         try {
           const cart = await ecommerceService.getCart();
           get().setCart(cart);
@@ -176,8 +255,35 @@ export const useEcommerceStore = create<EcommerceStore>()(
           }
         }
       },
-      addToCart: async (productId, quantity = 1) => {
+      addToCart: async (productId: string, quantity = 1) => {
+        const token = getAuthToken();
         set({ loading: true, error: null });
+        if (!token) {
+          set((state) => {
+            const existingItemIndex = state.localCartItems.findIndex(
+              (item) => item.productId === productId
+            );
+            let updatedLocalItems: LocalCartItem[];
+            if (existingItemIndex > -1) {
+              const updated = [...state.localCartItems];
+              updated[existingItemIndex].quantity += quantity;
+              updatedLocalItems = updated;
+            } else {
+              updatedLocalItems = [
+                ...state.localCartItems,
+                { productId, quantity },
+              ];
+            }
+            const computed = computeCartFromLocal(
+              updatedLocalItems,
+              state.products
+            );
+            get().setCart(computed);
+            return { localCartItems: updatedLocalItems };
+          });
+          set({ loading: false });
+          return;
+        }
         try {
           const data: AddToCartRequest = { product_id: productId, quantity };
           const updatedCart = await ecommerceService.addToCart(data);
@@ -191,7 +297,27 @@ export const useEcommerceStore = create<EcommerceStore>()(
           });
         }
       },
-      updateCartItem: async (itemId, quantity) => {
+      updateCartItem: async (itemId: string, quantity: number) => {
+        const token = getAuthToken();
+        if (!token) {
+          if (quantity <= 0) {
+            get().removeFromCart(itemId);
+            return;
+          }
+          set((state) => {
+            const productId = itemId.replace("local-", "");
+            const index = state.localCartItems.findIndex(
+              (i) => i.productId === productId
+            );
+            if (index === -1) return state;
+            const updated = [...state.localCartItems];
+            updated[index].quantity = quantity;
+            const computed = computeCartFromLocal(updated, state.products);
+            get().setCart(computed);
+            return { localCartItems: updated };
+          });
+          return;
+        }
         if (quantity <= 0) {
           get().removeFromCart(itemId);
           return;
@@ -210,7 +336,20 @@ export const useEcommerceStore = create<EcommerceStore>()(
           });
         }
       },
-      removeFromCart: async (itemId) => {
+      removeFromCart: async (itemId: string) => {
+        const token = getAuthToken();
+        if (!token) {
+          set((state) => {
+            const productId = itemId.replace("local-", "");
+            const updated = state.localCartItems.filter(
+              (i) => i.productId !== productId
+            );
+            const computed = computeCartFromLocal(updated, state.products);
+            get().setCart(computed);
+            return { localCartItems: updated };
+          });
+          return;
+        }
         set({ loading: true, error: null });
         try {
           const updatedCart = await ecommerceService.removeFromCart(itemId);
@@ -225,7 +364,14 @@ export const useEcommerceStore = create<EcommerceStore>()(
         }
       },
       clearCart: async () => {
+        const token = getAuthToken();
         set({ loading: true, error: null });
+        if (!token) {
+          set({ localCartItems: [] });
+          get().setCart(null);
+          set({ loading: false });
+          return;
+        }
         try {
           await ecommerceService.clearCart();
           get().setCart(null);
@@ -238,11 +384,40 @@ export const useEcommerceStore = create<EcommerceStore>()(
           });
         }
       },
+      syncLocalCartToServer: async () => {
+        const token = getAuthToken();
+        if (!token) return;
+        const { localCartItems } = get();
+        if (!localCartItems.length) return;
+        set({ loading: true, error: null });
+        try {
+          let updatedCart: Cart | null = null;
+          for (const item of localCartItems) {
+            const data: AddToCartRequest = {
+              product_id: item.productId,
+              quantity: item.quantity,
+            };
+            updatedCart = await ecommerceService.addToCart(data);
+          }
+          if (updatedCart) {
+            get().setCart(updatedCart);
+          }
+          set({ localCartItems: [] });
+          set({ loading: false });
+        } catch (err: any) {
+          console.error("Failed to sync local cart:", err);
+          set({
+            error: err.message || "Failed to sync cart",
+            loading: false,
+          });
+        }
+      },
     }),
     {
       name: "ecommerce-store",
       partialize: (state) => ({
         cart: state.cart,
+        localCartItems: state.localCartItems,
         itemCount: state.itemCount,
         totalAmount: state.totalAmount,
       }),
@@ -285,7 +460,18 @@ export const useCartActions = () => {
   const clearCart = useEcommerceStore((state) => state.clearCart);
   const setCart = useEcommerceStore((state) => state.setCart);
   const fetchCart = useEcommerceStore((state) => state.fetchCart);
-  return { addToCart, updateCartItem, removeFromCart, clearCart, setCart, fetchCart };
+  const syncLocalCartToServer = useEcommerceStore(
+    (state) => state.syncLocalCartToServer
+  );
+  return {
+    addToCart,
+    updateCartItem,
+    removeFromCart,
+    clearCart,
+    setCart,
+    fetchCart,
+    syncLocalCartToServer,
+  };
 };
 
 export const useProductActions = () => {

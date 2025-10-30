@@ -11,7 +11,11 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import PasswordStrength from "./PasswordStrength";
 import { ROUTES } from "@/utils/constants";
 
-export default function SignInForm() {
+interface SignInFormProps {
+  callbackUrl?: string;
+}
+
+export default function SignInForm({ callbackUrl }: SignInFormProps) {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -24,12 +28,14 @@ export default function SignInForm() {
   
   const { user, loading: authLoading } = useAuth();
   const buttonStyles = { py: 1.5, textTransform: "none", borderRadius: "6px" };
+
+  const redirectTo = callbackUrl || ROUTES.DASHBOARD;
   
   useEffect(() => {
     if (user) {
-      router.push(ROUTES.DASHBOARD);
+      router.push(redirectTo);
     }
-  }, [user, router]);
+  }, [user, router, redirectTo]);
 
   const passwordValidation = useMemo(() => {
     const pass = password;
@@ -66,7 +72,7 @@ export default function SignInForm() {
         });
 
         if (result?.ok) {
-          window.location.href = "/dashboard";
+          window.location.href = redirectTo;
         } else {
           setError("Invalid email or password. Please try again.");
         }
@@ -90,7 +96,7 @@ export default function SignInForm() {
           });
 
           if (result?.ok) {
-            window.location.href = "/dashboard";
+            window.location.href = redirectTo;
           } else {
             setError("Registration successful but login failed. Please try logging in.");
           }
@@ -109,13 +115,13 @@ export default function SignInForm() {
   const handleGoogleSignIn = async () => {
     try {
       const result = await signIn("google", {
-        callbackUrl: "/dashboard",
+        callbackUrl: redirectTo,
         redirect: false
       });
       
-      if (result?.ok) {
+      if (result?.url) {
         // Force a page reload to ensure session is properly set
-        window.location.href = "/dashboard";
+        window.location.href = result.url;
       } else if (result?.error) {
         console.error("Google sign-in error:", result.error);
         setError("Google sign-in failed. Please try again.");

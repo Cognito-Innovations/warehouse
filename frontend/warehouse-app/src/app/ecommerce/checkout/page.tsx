@@ -44,15 +44,19 @@ import {
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useCart, useCartActions } from "../../../store/ecommerceStore";
+import { useAuth } from "@/contexts/AuthContext";
 import { ecommerceService } from "../../../services/ecommerce.service";
 import { toast } from "sonner";
 import { ROUTES } from "@/utils/constants";
+import OrderSuccessPopup from "@/components/ecommerce/OrderSuccessPopup";
 
 export default function CheckoutPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
-  const { cart, loading, clearCart } = useCart();
+  const { cart, loading: cartLoading } = useCart();
+  const { clearCart, fetchCart } = useCartActions();
+  const { user, loading: authLoading } = useAuth();
 
   const [formData, setFormData] = useState({
     shippingAddress: "",
@@ -61,12 +65,19 @@ export default function CheckoutPage() {
   });
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOrderSuccessModalOpen, setIsOrderSuccessModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!cart || cart.items.length === 0) {
+    fetchCart();
+  }, [fetchCart]);
+
+  useEffect(() => {
+    if (!cart) return; 
+
+    if (!isOrderSuccessModalOpen && cart.items.length === 0) {
       router.push(ROUTES.ECOMMERCE);
     }
-  }, [cart, router]);
+  }, [cart, isOrderSuccessModalOpen, router]);
 
   const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -78,6 +89,16 @@ export default function CheckoutPage() {
   const handlePlaceOrder = async () => {
     if (!cart) return;
 
+    if (authLoading) {
+      return;
+    }
+
+    if (!user) {
+      toast.info("Please sign in to place your order");
+      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent('/ecommerce/checkout')}`);
+      return;
+    }
+
     try {
       setProcessing(true);
       setError(null);
@@ -88,11 +109,10 @@ export default function CheckoutPage() {
         notes: formData.notes,
       };
 
-      const order = await ecommerceService.createOrder(orderData);
-      
-      toast.success("Order placed successfully!");
+      await ecommerceService.createOrder(orderData);
+
       clearCart();
-      router.push(`${ROUTES.ORDER}/${order.id}`);
+      setIsOrderSuccessModalOpen(true);
     } catch (err) {
       console.error("Error placing order:", err);
       setError("Failed to place order. Please try again.");
@@ -102,7 +122,12 @@ export default function CheckoutPage() {
     }
   };
 
-  if (loading) {
+  const handleContinueShopping = () => {
+    setIsOrderSuccessModalOpen(false);
+    router.push(ROUTES.ECOMMERCE);
+  };
+
+  if (cartLoading || authLoading) {
     return (
       <Box
         display="flex"
@@ -115,7 +140,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!cart || cart.items.length === 0) {
+  if ((!cart || cart.items.length === 0) && !isOrderSuccessModalOpen) {
     return null;
   }
 
@@ -143,58 +168,51 @@ export default function CheckoutPage() {
         </Toolbar>
       </AppBar>
 
+      <OrderSuccessPopup
+        open={isOrderSuccessModalOpen}
+        onContinueShopping={handleContinueShopping}
+      />
+
       <Container maxWidth="lg" sx={{ py: 2 }}>
 
         <Grid container spacing={3}>
           {/* Order Summary */}
-          <Grid item xs={12} md={4}>
-            <Paper sx={{ p: 3, position: "sticky", top: 20 }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Order Summary
-              </Typography>
-              
-              <Box sx={{ mb: 2 }}>
-                {cart.items.map((item) => (
-                  <Box
-                    key={item.id}
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      py: 1,
-                    }}
-                  >
-                    <Box sx={{ flex: 1 }}>
+          {cart && (
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 3, position: "sticky", top: 20 }}>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Order Summary
+                </Typography>
+
+                <Box sx={{ mb: 2 }}>
+                  {cart.items.map((item) => (
+                    <Box
+                      key={item.id}
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        py: 1,
+                      }}
+                    >
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" fontWeight="bold">
+                          {item.product.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {item.quantity} × ₹{Number(item.unit_price).toFixed(0)}
+                        </Typography>
+                      </Box>
                       <Typography variant="body2" fontWeight="bold">
-                        {item.product.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {item.quantity} × ₹{item.unit_price.toFixed(0)}
+                        ₹{Number(item.total_price).toFixed(0)}
                       </Typography>
                     </Box>
-                    <Typography variant="body2" fontWeight="bold">
-                      ₹{item.total_price.toFixed(0)}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              <Box sx={{ mb: 2 }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 1,
-                  }}
-                >
-                  <Typography variant="body2">Subtotal</Typography>
-                  <Typography variant="body2">₹{cart.total_amount.toFixed(0)}</Typography>
+                  ))}
                 </Box>
-                
-                {cart.discount_percentage > 0 && (
+
+                <Divider sx={{ my: 2 }} />
+
+                <Box sx={{ mb: 2 }}>
                   <Box
                     sx={{
                       display: "flex",
@@ -203,130 +221,153 @@ export default function CheckoutPage() {
                       mb: 1,
                     }}
                   >
+                    <Typography variant="body2">Subtotal</Typography>
+                    <Typography variant="body2">₹{Number(cart.total_amount).toFixed(0)}</Typography>
+                  </Box>
+                  
+                  {cart.discount_percentage > 0 && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2" color="success.main">
+                        Discount
+                      </Typography>
+                      <Typography variant="body2" color="success.main">
+                        -₹{Number(cart.discount_percentage).toFixed(0)}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="body2">Shipping</Typography>
                     <Typography variant="body2" color="success.main">
-                      Discount
-                    </Typography>
-                    <Typography variant="body2" color="success.main">
-                      -₹{cart.discount_percentage.toFixed(0)}
+                      FREE
                     </Typography>
                   </Box>
-                )}
 
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 1,
-                  }}
-                >
-                  <Typography variant="body2">Shipping</Typography>
-                  <Typography variant="body2" color="success.main">
-                    FREE
-                  </Typography>
+                  <Divider sx={{ my: 1 }} />
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight="bold">
+                      Total
+                    </Typography>
+                    <Typography variant="h6" color="primary" fontWeight="bold">
+                      ₹{Number(cart.final_amount).toFixed(0)}
+                    </Typography>
+                  </Box>
                 </Box>
 
-                <Divider sx={{ my: 1 }} />
-
-                <Box
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  startIcon={<Payment />}
+                  onClick={handlePlaceOrder}
+                  disabled={processing || !formData.shippingAddress || authLoading}
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    textTransform: "none",
+                    fontWeight: "bold",
+                    py: 1.5,
                   }}
                 >
-                  <Typography variant="h6" fontWeight="bold">
-                    Total
-                  </Typography>
-                  <Typography variant="h6" color="primary" fontWeight="bold">
-                    ₹{cart.final_amount.toFixed(0)}
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Button
-                fullWidth
-                variant="contained"
-                size="large"
-                startIcon={<Payment />}
-                onClick={handlePlaceOrder}
-                disabled={processing || !formData.shippingAddress}
-                sx={{
-                  textTransform: "none",
-                  fontWeight: "bold",
-                  py: 1.5,
-                }}
-              >
-                {processing ? "Processing..." : "Place Order"}
-              </Button>
-            </Paper>
-          </Grid>
+                  {processing ? (
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <CircularProgress size={20} color="inherit" />
+                      Processing...
+                    </Box>
+                  ) : (
+                    "Place Order"
+                  )}
+                </Button>
+              </Paper>
+            </Grid>
+          )}
 
           {/* Checkout Form */}
-          <Grid item xs={12} md={8}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Delivery Information
-              </Typography>
-
-              {error && (
-                <Alert severity="error" sx={{ mb: 3 }}>
-                  {error}
-                </Alert>
-              )}
-
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Shipping Address"
-                    multiline
-                    rows={4}
-                    value={formData.shippingAddress}
-                    onChange={handleInputChange("shippingAddress")}
-                    placeholder="Enter your complete shipping address"
-                    required
-                    helperText="This is where your order will be delivered"
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Billing Address (Optional)"
-                    multiline
-                    rows={4}
-                    value={formData.billingAddress}
-                    onChange={handleInputChange("billingAddress")}
-                    placeholder="Enter your billing address (if different from shipping)"
-                    helperText="Leave empty if same as shipping address"
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Special Instructions (Optional)"
-                    multiline
-                    rows={3}
-                    value={formData.notes}
-                    onChange={handleInputChange("notes")}
-                    placeholder="Any special delivery instructions or notes"
-                  />
-                </Grid>
-              </Grid>
-
-              <Box sx={{ mt: 4, p: 2, bgcolor: "grey.50", borderRadius: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Delivery Information:</strong><br />
-                  • Orders are typically delivered within 1-2 business days<br />
-                  • Free shipping on all orders<br />
-                  • Fresh products are carefully packed and delivered<br />
-                  • Contact us if you have any special requirements
+          {!isOrderSuccessModalOpen && (
+            <Grid item xs={12} md={8}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Delivery Information
                 </Typography>
-              </Box>
-            </Paper>
-          </Grid>
+
+                {error && (
+                  <Alert severity="error" sx={{ mb: 3 }}>
+                    {error}
+                  </Alert>
+                )}
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Shipping Address"
+                      multiline
+                      rows={4}
+                      value={formData.shippingAddress}
+                      onChange={handleInputChange("shippingAddress")}
+                      placeholder="Enter your complete shipping address"
+                      required
+                      helperText="This is where your order will be delivered"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Billing Address (Optional)"
+                      multiline
+                      rows={4}
+                      value={formData.billingAddress}
+                      onChange={handleInputChange("billingAddress")}
+                      placeholder="Enter your billing address (if different from shipping)"
+                      helperText="Leave empty if same as shipping address"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Special Instructions (Optional)"
+                      multiline
+                      rows={3}
+                      value={formData.notes}
+                      onChange={handleInputChange("notes")}
+                      placeholder="Any special delivery instructions or notes"
+                    />
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ mt: 4, p: 2, bgcolor: "grey.50", borderRadius: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Delivery Information:</strong><br />
+                    • Orders are typically delivered within 1-2 business days<br />
+                    • Free shipping on all orders<br />
+                    • Fresh products are carefully packed and delivered<br />
+                    • Contact us if you have any special requirements
+                  </Typography>
+                </Box>
+              </Paper>
+            </Grid>
+          )}
         </Grid>
       </Container>
     </Box>

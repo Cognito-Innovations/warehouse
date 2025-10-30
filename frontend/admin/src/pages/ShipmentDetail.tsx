@@ -140,7 +140,7 @@ const ShipmentDetail: React.FC = () => {
   }
 
   const { statuses, currentStageId } = prepareTrackingData();
-  const showInvoiceTable = ["PAYMENT_PENDING", "PAYMENT_APPROVAL_PENDING", "PAYMENT_APPROVED", "READY_TO_SHIP", "DEPARTED"]
+  const showInvoiceTable = ["PAYMENT_PENDING", "PAYMENT_APPROVAL_PENDING", "PAYMENT_APPROVED", "READY_TO_SHIP", "DEPARTED", "DISCARDED"]
     .includes(shipments.status);
 
   const isDiscarded = shipments.status === 'DISCARDED';
@@ -187,6 +187,7 @@ const ShipmentDetail: React.FC = () => {
               status={shipments.status}
               isApprovingPayment={isApprovingPayment}
               onApprovePayment={() => handleApprovePayment(shipments.id)} 
+              isDiscarded={isDiscarded}
             />
           )}           
         </Grid>

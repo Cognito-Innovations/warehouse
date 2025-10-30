@@ -40,6 +40,8 @@ import { EcommerceOrderItem } from 'src/ecommerce/entities/ecommerce-order-item.
 import { EcommerceMeasurement } from 'src/ecommerce/entities/measurement.entity';
 import { Shipment } from 'src/shipments/shipment.entity';
 import { InvoiceCharge } from 'src/invoice/entities/invoice-charge.entity';
+import { EcommerceCart } from 'src/ecommerce/entities/ecommerce-cart.entity';
+import { EcommerceCartItem } from 'src/ecommerce/entities/ecommerce-cart-item.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -86,6 +88,8 @@ export const databaseConfig: TypeOrmModuleOptions = {
     EcommerceOrder,
     EcommerceOrderItem,
     EcommerceMeasurement,
+    EcommerceCart,
+    EcommerceCartItem,
     ShoppingRequestProduct,
     Shipment,
     InvoiceCharge,

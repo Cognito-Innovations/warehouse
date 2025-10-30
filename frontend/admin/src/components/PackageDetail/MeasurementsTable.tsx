@@ -9,6 +9,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import { formatDateTime } from '../../utils/formatDateTime';
 
 interface Measurement {
   piece_number: number;
@@ -114,7 +115,10 @@ const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ measurements, cre
       )}
       
       <Typography variant="caption" sx={{ mt: 2, display: 'block', color: '#64748b', maxWidth: "250px" }}>
-        Created By {createdBy} on {createdAt}
+        {createdBy
+          ? `Created By ${createdBy} on ${formatDateTime(createdAt)}`
+          : `Created On ${formatDateTime(createdAt)}`
+        }
       </Typography>
     </Box>
   );

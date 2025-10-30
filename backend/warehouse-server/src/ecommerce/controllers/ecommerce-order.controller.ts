@@ -33,6 +33,11 @@ export class OrderController {
     return this.orderService.findOne(id);
   }
 
+  @Get('user/:userId')
+  async getOrdersByUser(@Param('userId') userId: string) {
+    return this.orderService.getOrdersByUser(userId);
+  }
+
   @Get('order-number/:orderNumber')
   async findByOrderNumber(@Param('orderNumber') orderNumber: string) {
     return this.orderService.findByOrderNumber(orderNumber);

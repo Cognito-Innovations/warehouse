@@ -5,7 +5,6 @@ import {
   TableRow,
   Collapse,
   IconButton,
-  Checkbox,
   Typography,
   Chip,
   Table,
@@ -18,7 +17,7 @@ import {
   VisibilityOutlined as ViewIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { MoreVerticalIcon } from 'lucide-react';
+// import { MoreVerticalIcon } from 'lucide-react';
 import { getStatusAndInvoiceColor } from '../../data/shipments';
 import PackageRow from './PackageRow';
 import { formatDateTime } from '../../utils/formatDateTime';
@@ -27,7 +26,7 @@ const ShipmentRow = ({ row }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const statusColors = getStatusAndInvoiceColor(row.status);
-  const invoiceColors = getStatusAndInvoiceColor(row.invoice?.status || "INVOICE NOT GENERATED");
+  const invoiceColors = getStatusAndInvoiceColor(row.invoice?.status);
 
   const handleViewShipment = (shipmentNo: string) => {
     navigate(`/shipments/${shipmentNo}`);
@@ -36,30 +35,59 @@ const ShipmentRow = ({ row }) => {
   return (
     <>
       <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
-        <TableCell padding="checkbox"><Checkbox color="primary" /></TableCell>
         <TableCell>
           <IconButton size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell><Typography>{row.shipment_no}</Typography></TableCell>
         <TableCell>
-          <Typography>{row.tracking_no}</Typography>
-          <Typography variant="caption" color="text.secondary">{row.courier}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {row.shipment_no}
+          </Typography>
         </TableCell>
         <TableCell>
-          <Typography>{row.user.name}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {row.tracking_no}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {row.courier}
+          </Typography>
+        </TableCell>
+        <TableCell>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {row.user.name}
+          </Typography>
           <Typography variant="caption" color="text.secondary">{row.user.suite_no}</Typography>
         </TableCell>
         <TableCell>
-          <Typography>{formatDateTime(row.created_at)}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {formatDateTime(row.created_at)}
+          </Typography>
         </TableCell>
         <TableCell>
-          <Chip label={row.status} size="small" sx={{ color: statusColors.color, bgcolor: statusColors.bgColor }} />
+          <Chip
+            label={row.status}
+            size="small"
+            sx={{
+              color: statusColors.color,
+              bgcolor: statusColors.bgColor,
+              fontWeight: 500,
+              fontSize: '0.75rem',
+            }}
+          />
         </TableCell>
         <TableCell align="center">{row.packages ? row.packages.length : 0}</TableCell>
         <TableCell>
-          <Chip label={row.invoice?.status || "INVOICE NOT GENERATED"} size="small" sx={{ color: invoiceColors.color, bgcolor: invoiceColors.bgColor }} />
+          <Chip 
+            label={row.invoice?.status || "PENDING"}
+            size="small"
+            sx={{
+              color: invoiceColors.color,
+              bgcolor: invoiceColors.bgColor,
+              fontWeight: 500,
+              fontSize: '0.75rem',
+            }}
+          />
         </TableCell>
 
         <TableCell>
@@ -71,11 +99,12 @@ const ShipmentRow = ({ row }) => {
               <ViewIcon fontSize="small" />
             </IconButton>
             
-            {row.invoice === 'PENDING' && (
-                <IconButton size="small" sx={{ bgcolor: '#0b84e3', color: '#f8f8f8', '&:hover': { backgroundColor: '#0969b8' }}}>
-                  <MoreVerticalIcon fontSize="small" />
-                </IconButton>
-            )}
+            {/* TODO: uncomment when functionality implemented */}
+            {/* {!row.invoice && (
+              <IconButton size="small" sx={{ bgcolor: '#0b84e3', color: '#f8f8f8', '&:hover': { backgroundColor: '#0969b8' }}}>
+                <MoreVerticalIcon fontSize="small" />
+              </IconButton>
+            )} */}
           </Box>
         </TableCell>
       </TableRow>
@@ -129,8 +158,7 @@ const ShipmentRow = ({ row }) => {
                       '& > *': { 
                         border: 'none',
                         fontWeight: 600,
-                        color: "#6b7280",
-                        fontSize: '0.875rem',
+                        color: "#374151",
                         py: 1.5
                       } 
                     }}>

@@ -5,15 +5,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Button,
   Typography,
   Chip,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
 import { FilterList as FilterIcon } from '@mui/icons-material';
 import { statusMap, statusOptions } from '../../data/shipments';
 import ShipReportButton from './ShipReportButton';
-import { useNavigate } from 'react-router-dom';
 
 interface SearchFiltersProps {
   status: string;
@@ -22,7 +19,7 @@ interface SearchFiltersProps {
 }
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus, shipments }) => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus);
@@ -32,9 +29,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus, shipme
     setStatus('All');
   };
 
-  const handleCreateShipment = () => {
-    navigate("/shipments/create");
-  };
+  // TODO: Uncomment when functionality implemented
+  // const handleCreateShipment = () => {
+  //   navigate("/shipments/create");
+  // };
 
   return (
     <Box sx={{ 
@@ -105,7 +103,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus, shipme
       <Box sx={{ display: 'flex', gap: 2 }}>
         <ShipReportButton shipments={shipments} />
 
-        <Button
+        {/* TODO: Uncomment when functionality implemented */}
+        {/* <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleCreateShipment}
@@ -120,7 +119,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus, shipme
           }}
         >
           Create Shipment
-        </Button>
+        </Button> */}
       </Box>
     </Box>
   );

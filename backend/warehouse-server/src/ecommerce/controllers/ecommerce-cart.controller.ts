@@ -9,17 +9,16 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { Public } from 'src/auth/decorators/public.decorator';
 import { CartService } from '../services/ecommerce-cart.service';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('ecommerce-cart')
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
-  @Public()
   @Get()
   async getCart(@Request() req) {
     const userId = req.user?.id;
@@ -29,13 +28,11 @@ export class CartController {
     return this.cartService.getCart(userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('add')
   async addToCart(@Request() req, @Body() addToCartDto: AddToCartDto) {
     return this.cartService.addToCart(req.user.id, addToCartDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put('items/:itemId')
   async updateCartItem(
     @Request() req,
@@ -49,13 +46,11 @@ export class CartController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete('items/:itemId')
   async removeFromCart(@Request() req, @Param('itemId') itemId: string) {
     return this.cartService.removeFromCart(req.user.id, itemId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete('clear')
   async clearCart(@Request() req) {
     await this.cartService.clearCart(req.user.id);

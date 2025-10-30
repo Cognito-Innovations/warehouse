@@ -5,7 +5,6 @@ import {
   TableRow,
   IconButton,
   Typography,
-  Checkbox,
   Collapse,
   CircularProgress,
 } from '@mui/material';
@@ -70,10 +69,9 @@ const PackageRow: React.FC<PackageRowProps> = ({
   return (
     <>
       <TableRow sx={{ 
-        '& > *': { 
-          border: 'none',
-          borderBottom: 'none',
-          borderTop: 'none', 
+        '& > *': {
+          borderBottom: 'none !important',
+          borderTop: 'none !important', 
         },
         '&:hover': {
           bgcolor: '#f8fafc'
@@ -93,29 +91,37 @@ const PackageRow: React.FC<PackageRowProps> = ({
             {open ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
           </IconButton>
 
-          <Checkbox color="primary" size="small" sx={{ p: 0, mr: 0.5 }}/>
-          
-          <Typography variant="body2"> {index + 1}. </Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {index + 1}.
+          </Typography>
 
-          <Typography variant="body2" sx={{ ml: 0.5 }}>{item.package_id}</Typography>
+          <Typography variant="body2" sx={{ ml: 0.5, fontWeight: 500, color: '#1f2937' }}>
+            {item.package_id}
+          </Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
-          <Typography variant="body2">{item.rack_slot?.label}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {item.rack_slot?.label}
+          </Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
-          <Typography variant="body2">{item.tracking_no}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {item.tracking_no}
+          </Typography>
           <Typography variant="caption" color="text.secondary">{item.vendor?.supplier_name }</Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
-          <Typography variant="body2">{formatDateTime(item.created_at)}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {formatDateTime(item.created_at)}
+          </Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
-          <Typography variant="body2">
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
             {formatWeight(item.total_weight)}
           </Typography>
         </TableCell>
         <TableCell sx={{ py: 1.5 }}>
-          <Typography variant="body2">
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
             {formatWeight(item.total_volumetric_weight)}
           </Typography>
         </TableCell>

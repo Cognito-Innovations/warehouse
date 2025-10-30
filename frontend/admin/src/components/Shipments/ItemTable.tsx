@@ -78,7 +78,6 @@ const ItemTable: React.FC<{ items: ItemDetail[] }> = ({ items }) => {
                 border: 'none',
                 fontWeight: 600,
                 color: '#374151',
-                fontSize: '0.875rem',
                 py: 1.5
               }
             }}>
@@ -103,20 +102,22 @@ const ItemTable: React.FC<{ items: ItemDetail[] }> = ({ items }) => {
                 }}
               >
                 <TableCell sx={{ py: 1.5 }}>
-                  <Typography variant="body2">
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
                     {detail.name}
                   </Typography>
                 </TableCell>
                 <TableCell align="center" sx={{ py: 1.5 }}>
-                  <Typography variant="body2">{detail.quantity}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+                    {detail.quantity}
+                  </Typography>
                 </TableCell>
                 <TableCell align="right" sx={{ py: 1.5 }}>
-                  <Typography variant="body2">
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
                     {detail.unit_price}
                   </Typography>
                 </TableCell>
                 <TableCell align="right" sx={{ py: 1.5 }}>
-                  <Typography variant="body2">
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
                     {detail.total_price}
                   </Typography>
                 </TableCell>

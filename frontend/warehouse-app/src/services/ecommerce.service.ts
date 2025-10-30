@@ -9,6 +9,7 @@ import {
   UpdateCartItemRequest,
   CreateOrderRequest,
 } from "../types/ecommerce";
+import { getSession } from "next-auth/react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -20,12 +21,11 @@ const api = axios.create({
 });
 
 // Add auth token to requests
-api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("auth-token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+api.interceptors.request.use(async (config) => {
+  const session = await getSession();
+  const token = session?.access_token || localStorage.getItem("auth-token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });

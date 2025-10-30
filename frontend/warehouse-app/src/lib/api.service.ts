@@ -307,3 +307,8 @@ export const deletePreArrival = async (id: string) => {
   const res = await authenticatedApi.delete(`/pre-arrival/${id}`);
   return res.data;
 };
+
+export const getOrdersByUser = async (userId: string) => {
+  const res = await authenticatedApi.get(`/ecommerce-orders/user/${userId}`);
+  return res.data;
+};

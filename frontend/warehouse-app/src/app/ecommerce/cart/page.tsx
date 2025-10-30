@@ -54,12 +54,16 @@ export default function CartPage() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
   const { cart, itemCount, totalAmount } = useCart();
-  const { updateCartItem, removeFromCart } = useCartActions();
+  const { updateCartItem, removeFromCart, fetchCart } = useCartActions();
 
   const [loading, setLoading] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
   // Empty cart state
   if (!cart || cart.items.length === 0) {
@@ -359,14 +363,14 @@ export default function CartPage() {
                           
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                             <Typography variant="body2" fontWeight="bold" color="primary">
-                              ₹{discountPrice.toFixed(0)}
+                              ₹{Number(discountPrice).toFixed(0)}
                             </Typography>
                             <Typography
                               variant="caption"
                               color="text.secondary"
                               sx={{ textDecoration: "line-through" }}
                             >
-                              ₹{item.unit_price.toFixed(0)}
+                              ₹{Number(item.unit_price).toFixed(0)}
                             </Typography>
                             <Chip
                               label={`${item.product.discount_percentage}% off`}
@@ -493,7 +497,7 @@ export default function CartPage() {
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
                   <Typography variant="body2">Subtotal</Typography>
-                  <Typography variant="body2">₹{cart.total_amount.toFixed(0)}</Typography>
+                  <Typography variant="body2">₹{Number(cart.total_amount).toFixed(0)}</Typography>
                 </Box>
                 
                 {cart.discount_percentage > 0 && (
@@ -502,7 +506,7 @@ export default function CartPage() {
                       Discount
                     </Typography>
                     <Typography variant="body2" color="success.main">
-                      -₹{cart.discount_percentage.toFixed(0)}
+                      -₹{Number(cart.discount_percentage).toFixed(0)}
                     </Typography>
                   </Box>
                 )}
@@ -521,7 +525,7 @@ export default function CartPage() {
                     Total
                   </Typography>
                   <Typography variant="h6" color="primary" fontWeight="bold">
-                    ₹{cart.final_amount.toFixed(0)}
+                    ₹{Number(cart.final_amount).toFixed(0)}
                   </Typography>
                 </Box>
               </Box>
