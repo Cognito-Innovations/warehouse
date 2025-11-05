@@ -56,10 +56,8 @@ export default function CartPage() {
   const { cart, itemCount, totalAmount } = useCart();
   const { updateCartItem, removeFromCart, fetchCart } = useCartActions();
 
-  const [loading, setLoading] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
-  const [tabValue, setTabValue] = useState(0);
 
   useEffect(() => {
     fetchCart();
@@ -143,7 +141,7 @@ export default function CartPage() {
   };
 
   const getDiscountPrice = (item: any) => {
-    return item.unit_price - (item.unit_price * item.product.discount_percentage) / 100;
+    return item.unit_price;
   };
 
   return (
@@ -172,7 +170,7 @@ export default function CartPage() {
         </Toolbar>
       </AppBar>
 
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs
       <Box sx={{ bgcolor: "white", borderBottom: "1px solid #e0e0e0" }}>
         <Tabs
           value={tabValue}
@@ -209,7 +207,7 @@ export default function CartPage() {
             sx={{ color: "#1976d2" }}
           />
         </Tabs>
-      </Box>
+      </Box> */}
 
       {/* Delivery Banner */}
       <Box
@@ -355,7 +353,7 @@ export default function CartPage() {
                         {/* Product Details */}
                         <Box sx={{ flexGrow: 1 }}>
                           <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {item.product.quantity} {item.product.measurement}
+                            {item.product.unit_value} {item.product.measurement?.label || ''}
                           </Typography>
                           <Typography variant="body1" fontWeight="bold" gutterBottom>
                             {item.product.name}
@@ -370,21 +368,23 @@ export default function CartPage() {
                               color="text.secondary"
                               sx={{ textDecoration: "line-through" }}
                             >
-                              ₹{Number(item.unit_price).toFixed(0)}
+                              ₹{Number(item.product.price).toFixed(0)}
                             </Typography>
-                            <Chip
-                              label={`${item.product.discount_percentage}% off`}
-                              size="small"
-                              sx={{
-                                bgcolor: "#4caf50",
-                                color: "white",
-                                fontSize: "0.7rem",
-                              }}
-                            />
+                            {item.product.discount_percentage > 0 && (
+                              <Chip
+                                label={`${item.product.discount_percentage}% off`}
+                                size="small"
+                                sx={{
+                                  bgcolor: "#4caf50",
+                                  color: "white",
+                                  fontSize: "0.7rem",
+                                }}
+                              />
+                            )}
                           </Box>
 
                           <Typography variant="caption" color="text.secondary">
-                            Or Pay ₹{Math.round(discountPrice / 2)} + ⚡ {Math.round(discountPrice / 2)}
+                            Or Pay ₹{Math.round(item.total_price / 2)} + ⚡ {Math.round(item.total_price / 2)}
                           </Typography>
                         </Box>
 

@@ -30,12 +30,7 @@ export default function SignInForm({ callbackUrl }: SignInFormProps) {
   const buttonStyles = { py: 1.5, textTransform: "none", borderRadius: "6px" };
 
   const redirectTo = callbackUrl || ROUTES.DASHBOARD;
-  
-  useEffect(() => {
-    if (user) {
-      router.push(redirectTo);
-    }
-  }, [user, router, redirectTo]);
+
 
   const passwordValidation = useMemo(() => {
     const pass = password;

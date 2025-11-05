@@ -18,7 +18,9 @@ import {
   Paper,
   CircularProgress,
   TextField,
+  IconButton,
 } from '@mui/material';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { toast } from 'sonner';
 import { createShipmentInvoice } from '../../services/api.services';
 
@@ -67,23 +69,49 @@ const RaiseInvoiceModal: React.FC<{
   const [extraChargeAmount, setExtraChargeAmount] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const handleAddCharge = () => {
+  const hasAdditionalCharges = charges.some(charge => charge.category === 'Additional Services');
+
+  const isUpdating = !!selectedCharge && charges.some(charge => charge.description === selectedCharge);
+
+  const handleSelectChange = (e: any) => {
+    const value = e.target.value as string;
+    setSelectedCharge(value);
+    if (value) {
+      const existing = charges.find(
+        charge => charge.description === value && charge.category === 'Additional Services'
+      );
+      if (existing) {
+        setExtraChargeAmount(existing.amount.toFixed(2));
+      } else {
+        setExtraChargeAmount('');
+      }
+    } else {
+      setExtraChargeAmount('');
+    }
+  };
+
+  const handleToggleCharge = () => {
     const amountValue = parseFloat(extraChargeAmount);
     if (!selectedCharge || isNaN(amountValue) || amountValue <= 0) return;
 
-    if (!charges.some(charge => charge.description === selectedCharge)) {
-      setCharges(prev => [
-        ...prev,
-        {
-          category: 'Additional Services',
-          description: selectedCharge,
-          amount: amountValue,
-          total: amountValue,
-        },
-      ]);
-      setSelectedCharge('');
-      setExtraChargeAmount('');
+    if (isUpdating) {
+      setCharges(prev => prev.map(charge => 
+        charge.description === selectedCharge ? {...charge, amount: amountValue, total: amountValue} : charge
+      ));
+    } else {
+      setCharges(prev => [...prev, {
+        category: 'Additional Services',
+        description: selectedCharge,
+        amount: amountValue,
+        total: amountValue,
+      }]);
     }
+    setSelectedCharge('');
+    setExtraChargeAmount('');
+  };
+
+  const handleRemoveCharge = (description: string) => {
+    setCharges(prev => prev.filter(charge => charge.description !== description));
   };
 
   const calculateTotal = () => {
@@ -111,12 +139,13 @@ const RaiseInvoiceModal: React.FC<{
   return (
     <Box>
       <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e2e8f0', mb: 2 }}>
-        <Table sx={{ minWidth: 650 }} aria-label="charges table">
+        <Table sx={{ minWidth: hasAdditionalCharges ? 650 : 550 }} aria-label="charges table">
           <TableHead>
             <TableRow sx={{ '& .MuiTableCell-root': { fontWeight: 600, bgcolor: '#f8fafc', color: '#475569' } }}>
               <TableCell>#</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Description</TableCell>
+              {hasAdditionalCharges && <TableCell>Action</TableCell>}
               <TableCell align="right">Amount</TableCell>
               <TableCell align="right">Total</TableCell>
             </TableRow>
@@ -127,12 +156,21 @@ const RaiseInvoiceModal: React.FC<{
                 <TableCell component="th" scope="row">{index + 1}</TableCell>
                 <TableCell component="th" scope="row">{row.category}</TableCell>
                 <TableCell>{row.description}</TableCell>
+                {hasAdditionalCharges && (
+                  <TableCell>
+                    {row.category !== 'Freight Charge' && (
+                      <IconButton size="small" onClick={() => handleRemoveCharge(row.description)} sx={{ color: 'error.main' }}>
+                        <CancelIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell align="right">${row.amount.toFixed(2)}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 600 }}>${row.total.toFixed(2)}</TableCell>
               </TableRow>
             ))}
             <TableRow sx={{ bgcolor: '#f8fafc' }}>
-              <TableCell colSpan={4} align="right" sx={{ fontWeight: 600, fontSize: '1rem', border: 0 }}>TOTAL</TableCell>
+              <TableCell colSpan={hasAdditionalCharges ? 5 : 4} align="right" sx={{ fontWeight: 600, fontSize: '1rem', border: 0 }}>TOTAL</TableCell>
               <TableCell align="right" sx={{ fontWeight: 700, fontSize: '1.2rem', border: 0 }}>${calculateTotal()}</TableCell>
             </TableRow>
           </TableBody>
@@ -153,7 +191,7 @@ const RaiseInvoiceModal: React.FC<{
               id="select-charge"
               value={selectedCharge}
               label="Select Charge"
-              onChange={(e) => setSelectedCharge(e.target.value)}
+              onChange={handleSelectChange}
             >
               {availableCharges.map((charge) => (
                 <MenuItem key={charge.name} value={charge.name}>
@@ -177,11 +215,11 @@ const RaiseInvoiceModal: React.FC<{
 
               <Button
                 variant="contained"
-                onClick={handleAddCharge}
+                onClick={handleToggleCharge}
                 disabled={!selectedCharge || !extraChargeAmount || parseFloat(extraChargeAmount) <= 0}
                 sx={{ textTransform: 'none' }}
               >
-                Add
+                {isUpdating ? 'Update' : 'Add'}
               </Button>
             </>
           )}

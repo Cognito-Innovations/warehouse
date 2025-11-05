@@ -72,6 +72,7 @@ const PackageRow: React.FC<PackageRowProps> = ({
         '& > *': {
           borderBottom: 'none !important',
           borderTop: 'none !important', 
+          verticalAlign: 'top'
         },
         '&:hover': {
           bgcolor: '#f8fafc'

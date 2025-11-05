@@ -318,7 +318,7 @@ const TabsSection = () => {
             <button
               onClick={handleRequestShip}
               disabled={isRequestingShip}
-              className="inline-flex bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white items-center px-3 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none mr-2"
+              className="inline-flex bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white items-center px-3 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none mr-2"
             >
               {isRequestingShip ? (
                 <>

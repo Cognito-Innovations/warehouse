@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Container,
@@ -53,13 +53,21 @@ export default function Ecommerce() {
   
   const { itemCount, cart } = useCart();
   const { addToCart, updateCartItem, removeFromCart, fetchCart } = useCartActions();
-  const { setSearchQuery, setSelectedCategory, fetchCategories, fetchProducts } = useProductActions();
+  const { setSearchQuery, setSelectedCategory, fetchCategories, fetchProducts, setLoading } = useProductActions();
+
+  const initializeEcommerceData = useCallback(async () => {
+    await Promise.all([
+      fetchCategories().catch((err) => console.error("Categories fetch failed:", err)),
+      fetchProducts().catch((err) => console.error("Products fetch failed:", err)),
+      fetchCart().catch((err) => console.error("Cart fetch failed:", err)),
+    ]);
+  }, [fetchCategories, fetchProducts, fetchCart]);
 
   useEffect(() => {
-    fetchCategories();
-    fetchProducts();
-    fetchCart();
-  }, [fetchCategories, fetchProducts, fetchCart]);
+    initializeEcommerceData().finally(() => {
+      setLoading(false);
+    });
+  }, [initializeEcommerceData, setLoading]);
 
   const handleCategoryChange = (categoryId: string | null) => {
     setSelectedCategory(categoryId);
@@ -71,6 +79,10 @@ export default function Ecommerce() {
 
   const handleAddToCart = (e: React.MouseEvent, product: EcommerceProduct) => {
     e.stopPropagation();
+    const cartQuantity = getCartItemQuantity(product.id);
+    if (cartQuantity + 1 > product.stock_quantity) {
+      return;
+    }
     addToCart(product.id, 1);
   };
 
@@ -226,13 +238,13 @@ export default function Ecommerce() {
             <Typography variant="h6" fontWeight="bold">
               Suggested for You
             </Typography>
-            <Button
+            {/* <Button
               variant="text"
               endIcon={<Refresh />}
               sx={{ color: "#e91e63", textTransform: "none" }}
             >
               Refresh
-            </Button>
+            </Button> */}
           </Box>
 
           {/* Products Grid */}
@@ -240,6 +252,10 @@ export default function Ecommerce() {
             {filteredProducts.map((product) => {
               const discountPrice = product.price - (product.price * product.discount_percentage) / 100;
               const cartQuantity = getCartItemQuantity(product.id);
+              const unitValue = parseFloat(product.unit_value || '0');
+              const measurementLabel = product.measurement?.label || '';
+              const stockQuantity = product.stock_quantity;
+              const isOutOfStock = stockQuantity === 0;
 
               return (
                 <Grid key={product.id} xs={6} sm={4} md={3} lg={2.4}>
@@ -256,6 +272,7 @@ export default function Ecommerce() {
                       },
                       borderRadius: 2,
                       overflow: "hidden",
+                      opacity: isOutOfStock ? 0.6 : 1,
                     }}
                     onClick={() => handleProductClick(product)}
                   >
@@ -295,13 +312,15 @@ export default function Ecommerce() {
                     {/* Product Info */}
                     <CardContent sx={{ flexGrow: 1, p: 2, pb: 1 }}>
                       <Box>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ display: "block", mb: 1 }}
-                        >
-                          {product.quantity} {product.measurement?.label}
-                        </Typography>
+                        {unitValue > 0 && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: "block", mb: 1 }}
+                          >
+                            {unitValue} {measurementLabel}
+                          </Typography>
+                        )}
 
                         <Typography
                           variant="body2"
@@ -316,6 +335,15 @@ export default function Ecommerce() {
                         >
                           {product.name}
                         </Typography>
+
+                        {isOutOfStock && (
+                          <Chip
+                            label="Out of Stock"
+                            color="error"
+                            size="small"
+                            sx={{ mb: 1 }}
+                          />
+                        )}
 
                         {/* Price and Add Button */}
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
@@ -339,7 +367,9 @@ export default function Ecommerce() {
                           </Box>
 
                           {/* Add to Cart Button */}
-                          {cartQuantity > 0 ? (
+                          {isOutOfStock && cartQuantity === 0 ? (
+                            <Chip label="Out of Stock" size="small" color="error" variant="outlined" />
+                          ) : cartQuantity > 0 ? (
                             <Box
                               sx={{
                                 display: "flex",
@@ -361,6 +391,7 @@ export default function Ecommerce() {
                               <IconButton
                                 size="small"
                                 onClick={(e) => handleAddToCart(e, product)}
+                                disabled={cartQuantity >= stockQuantity}
                               >
                                 <Add sx={{ fontSize: 16 }} />
                               </IconButton>

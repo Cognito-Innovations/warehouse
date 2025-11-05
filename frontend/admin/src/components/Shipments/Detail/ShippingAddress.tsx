@@ -44,6 +44,7 @@ const ShippingAddress: React.FC<ShippingAddressProps> = ({ shipments }) => {
         <CardContent
           sx={{
             p: 2.5,
+            pr: 6,
             display: "flex",
             flexDirection: "column",
             gap: 0.8,
@@ -54,6 +55,8 @@ const ShippingAddress: React.FC<ShippingAddressProps> = ({ shipments }) => {
               position: "absolute",
               top: 12,
               right: 12,
+              width: 32,
+              height: 24,
             }}
           >
             {flagUrl ? (
@@ -62,8 +65,8 @@ const ShippingAddress: React.FC<ShippingAddressProps> = ({ shipments }) => {
                 src={flagUrl}
                 alt={country}
                 sx={{
-                  width: 32,
-                  height: 24,
+                  width: "100%",
+                  height: "100%",
                   borderRadius: "4px",
                   objectFit: "cover",
                   display: "block",

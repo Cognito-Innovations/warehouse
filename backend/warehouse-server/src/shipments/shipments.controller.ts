@@ -87,8 +87,12 @@ export class ShipmentsController {
   @Get('detail/by-shipmentNo/:shipmentNo')
   async findOneByShipmentNo(
     @Param('shipmentNo') shipmentNo: string,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ShipmentResponseDto> {
-    return this.shipmentsService.getShipmentByShipmentNo(shipmentNo);
+    return this.shipmentsService.getShipmentByShipmentNo(
+      shipmentNo,
+      req.user.id,
+    );
   }
 
   @Get(':userId')
@@ -102,8 +106,9 @@ export class ShipmentsController {
   async updateStatus(
     @Param('id') id: string,
     @Body() body: { status: ShipmentStatus },
+    @Req() req: AuthenticatedRequest,
   ): Promise<ShipmentResponseDto> {
-    return this.shipmentsService.updateStatus(id, body.status);
+    return this.shipmentsService.updateStatus(id, body.status, req.user.id);
   }
 
   @Patch(':id')

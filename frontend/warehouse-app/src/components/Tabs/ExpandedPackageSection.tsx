@@ -35,16 +35,16 @@ const ExpandedPackageSection: React.FC<ExpandedPackageSectionProps> = ({ documen
                 {isPdf ? (
                   <div
                     onClick={() => window.open(doc.document_url, "_blank")}
-                    className="w-20 h-15 flex items-center justify-center bg-gray-100 rounded border border-gray-200 cursor-pointer hover:bg-gray-200"
+                    className="w-20 h-15 flex items-center justify-center bg-white rounded shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                   >
-                    <PictureAsPdfIcon className="text-gray-600 text-3xl" />
+                    <PictureAsPdfIcon style={{ fontSize: '33px' }} className="text-red-500" />
                   </div>
                 ) : (
                   <img
                     src={doc.document_url}
                     alt={doc.document_name}
                     onClick={() => window.open(doc.document_url, "_blank")}
-                    className="w-20 h-15 object-cover rounded border border-gray-200 cursor-pointer"
+                    className="w-20 h-15 object-cover rounded cursor-pointer hover:shadow-md transition-shadow"
                   />
                 )}
                 <p className="block w-full truncate text-xs text-gray-500 mt-1">

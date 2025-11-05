@@ -59,6 +59,11 @@ export class CartService {
       throw new NotFoundException('Product not found');
     }
 
+    const price = parseFloat(product.price.toString());
+    const discPerc = parseFloat(product.discount_percentage.toString());
+    const discountAmountPerUnit = (price * discPerc) / 100;
+    const unitPrice = price - discountAmountPerUnit;
+
     // Check if product is already in cart
     const existingItem = await this.cartItemRepository.findOne({
       where: { cart_id: cart.id, product_id },
@@ -66,23 +71,26 @@ export class CartService {
 
     if (existingItem) {
       // Update quantity
+      const currentDiscount =
+        parseFloat(existingItem.discount_percentage.toString()) || 0;
       existingItem.quantity += quantity;
-      existingItem.total_price =
-        existingItem.quantity * existingItem.unit_price;
+      existingItem.unit_price = unitPrice;
+      existingItem.total_price = existingItem.quantity * unitPrice;
+      existingItem.discount_percentage =
+        currentDiscount+ (discountAmountPerUnit * quantity);
       await this.cartItemRepository.save(existingItem);
     } else {
       // Add new item
-      const discountPercentage =
-        (product.price * product.discount_percentage) / 100;
-      const finalPrice = product.price - discountPercentage;
+      const totalPrice = unitPrice * quantity;
+      const totalDiscount = discountAmountPerUnit * quantity;
 
       const cartItem = this.cartItemRepository.create({
         cart_id: cart.id,
         product_id,
         quantity,
-        unit_price: finalPrice,
-        total_price: finalPrice * quantity,
-        discount_percentage: discountPercentage * quantity,
+        unit_price: unitPrice,
+        total_price: totalPrice,
+        discount_percentage: totalDiscount,
       });
 
       await this.cartItemRepository.save(cartItem);
@@ -103,16 +111,25 @@ export class CartService {
 
     const cartItem = await this.cartItemRepository.findOne({
       where: { id: itemId, cart_id: cart.id },
+      relations: ['product'],
     });
 
     if (!cartItem) {
       throw new NotFoundException('Cart item not found');
     }
 
-    cartItem.quantity = updateCartItemDto.quantity;
-    cartItem.total_price = cartItem.quantity * cartItem.unit_price;
-    cartItem.discount_percentage =
-      (cartItem.product.price - cartItem.unit_price) * cartItem.quantity;
+    const newQuantity = updateCartItemDto.quantity;
+    const price = parseFloat(cartItem.product.price.toString());
+    const discPerc = parseFloat(
+      cartItem.product.discount_percentage.toString()
+    );
+    const discountAmountPerUnit = (price * discPerc) / 100;
+    const unitPrice = price - discountAmountPerUnit;
+
+    cartItem.quantity = newQuantity;
+    cartItem.unit_price = unitPrice;
+    cartItem.total_price = newQuantity * unitPrice;
+    cartItem.discount_percentage = discountAmountPerUnit * newQuantity;
 
     await this.cartItemRepository.save(cartItem);
     await this.recalculateCartTotals(cart.id);
@@ -158,15 +175,17 @@ export class CartService {
       where: { cart_id: cartId },
     });
 
-    const totalAmount = items.reduce((sum, item) => sum + item.total_price, 0);
-    const discountPercentage = items.reduce(
-      (sum, item) => sum + item.discount_percentage,
+    const totalAmount = items.reduce(
+      (sum, item) => sum + parseFloat(item.total_price.toString()),
+      0);
+    const totalDiscount = items.reduce(
+      (sum, item) => sum + parseFloat(item.discount_percentage.toString()),
       0,
     );
-    const finalAmount = totalAmount;
+    const finalAmount = totalAmount - totalDiscount;
 
     cart.total_amount = totalAmount;
-    cart.discount_percentage = discountPercentage;
+    cart.discount_percentage = totalDiscount;
     cart.final_amount = finalAmount;
 
     await this.cartRepository.save(cart);

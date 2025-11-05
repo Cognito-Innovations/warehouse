@@ -47,6 +47,37 @@ export class ShipmentsService {
     return `RB${randomDigits}`;
   }
 
+  private async formatInvoice(
+    invoice: Invoice | null,
+    shipmentUserId: string,
+    viewerId?: string,
+  ): Promise<any | null> {
+    if (!invoice) return null;
+
+    const isAdminView = viewerId && viewerId !== shipmentUserId;
+    let amountStr: string;
+    let totalStr: string;
+    if (isAdminView) {
+      amountStr = `${invoice.amount} USD`;
+      totalStr = `${invoice.total} USD`;
+    } else {
+      amountStr = await this.userPreferencesService.getFormattedConvertedPrice(
+        shipmentUserId,
+        invoice.amount,
+      );
+      totalStr = await this.userPreferencesService.getFormattedConvertedPrice(
+        shipmentUserId,
+        invoice.total,
+      );
+    }
+    return {
+      ...invoice,
+      products: undefined,
+      amount: amountStr,
+      total: totalStr,
+    };
+  }
+
   async createShipment(
     createShipmentDto: CreateShipmentDto,
     userId: string,
@@ -187,6 +218,7 @@ export class ShipmentsService {
 
   async getShipmentByShipmentNo(
     shipmentNo: string,
+    viewerId?: string,
   ): Promise<ShipmentResponseDto> {
     const shipment = await this.shipmentRepository.findOne({
       where: { shipment_no: shipmentNo },
@@ -234,26 +266,14 @@ export class ShipmentsService {
       (doc) => doc.category === 'SHIPMENT_PHOTO',
     );
 
+    const formattedInvoice = await this.formatInvoice(invoice, shipment.user.id, viewerId);
+
     return {
       ...shipment,
       tracking_requests: trackingRequests,
       payment_slips: paymentSlips,
       shipment_photos: shipmentPhotos,
-      invoice: invoice
-        ? {
-            ...invoice,
-            products: undefined,
-            amount:
-              await this.userPreferencesService.getFormattedConvertedPrice(
-                shipment.user.id,
-                invoice.amount,
-              ),
-            total: await this.userPreferencesService.getFormattedConvertedPrice(
-              shipment.user.id,
-              invoice.total,
-            ),
-          }
-        : undefined,
+      invoice: formattedInvoice,
     };
   }
 
@@ -301,6 +321,7 @@ export class ShipmentsService {
   async updateStatus(
     id: string,
     status: ShipmentStatus,
+    viewerId?: string,
   ): Promise<ShipmentResponseDto> {
     const shipment = await this.shipmentRepository.findOne({
       where: { id },
@@ -343,23 +364,11 @@ export class ShipmentsService {
       );
     }
 
+    const formattedInvoice = await this.formatInvoice(invoice, shipment.user.id, viewerId);
+
     return {
       ...updatedShipment,
-      invoice: invoice
-        ? {
-            ...invoice,
-            products: undefined,
-            amount:
-              await this.userPreferencesService.getFormattedConvertedPrice(
-                updatedShipment.user.id,
-                invoice.amount,
-              ),
-            total: await this.userPreferencesService.getFormattedConvertedPrice(
-              updatedShipment.user.id,
-              invoice.total,
-            ),
-          }
-        : undefined,
+      invoice: formattedInvoice,
     };
   }
 

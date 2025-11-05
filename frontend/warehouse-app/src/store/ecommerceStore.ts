@@ -77,7 +77,8 @@ interface EcommerceStore
 
 const computeCartFromLocal = (
   localItems: LocalCartItem[],
-  products: EcommerceProduct[]
+  products: EcommerceProduct[],
+  existingCart: Cart | null
 ): Cart | null => {
   if (!localItems.length) return null;
 
@@ -89,8 +90,14 @@ const computeCartFromLocal = (
       const unitPrice = product.price;
       const totalPrice = unitPrice * item.quantity;
 
+      const existingItem = existingCart?.items.find(
+        (i) => i.product.id === item.productId && !i.id.startsWith("local-")
+      );
+
+      const id = existingItem ? existingItem.id : `local-${product.id}`;
+
       return {
-        id: `local-${product.id}`,
+        id: id,
         product,
         quantity: item.quantity,
         unit_price: unitPrice,
@@ -112,7 +119,7 @@ const computeCartFromLocal = (
   const finalAmount = totalAmount - totalDiscount;
 
   return {
-    id: "local-cart-id",
+    id: existingCart?.id || "local-cart-id",
     items,
     total_amount: totalAmount,
     discount_percentage: totalDiscount,
@@ -129,7 +136,7 @@ export const useEcommerceStore = create<EcommerceStore>()(
       filteredProducts: [],
       searchQuery: "",
       selectedCategory: null,
-      loading: false,
+      loading: true,
       error: null,
 
       // Cart State
@@ -175,30 +182,28 @@ export const useEcommerceStore = create<EcommerceStore>()(
         set({ filteredProducts: filtered });
       },
       fetchCategories: async () => {
-        set({ loading: true, error: null });
         try {
           const categories = await ecommerceService.getCategories();
-          set({ categories, loading: false });
+          set({ categories });
         } catch (err: any) {
           console.error("Failed to fetch categories:", err);
           set({
             error: err.message || "Failed to fetch categories",
-            loading: false,
           });
         }
       },
       fetchProducts: async () => {
-        set({ loading: true, error: null });
         try {
           const products = await ecommerceService.getProducts();
-          set({ products, filteredProducts: products, loading: false });
+          set({ products, filteredProducts: products });
           const token = getAuthToken();
           if (!token) {
             const state = get();
             if (state.localCartItems.length > 0) {
               const computed = computeCartFromLocal(
                 state.localCartItems,
-                products
+                products,
+                state.cart
               );
               state.setCart(computed);
             }
@@ -207,16 +212,19 @@ export const useEcommerceStore = create<EcommerceStore>()(
           console.error("Failed to fetch products:", err);
           set({
             error: err.message || "Failed to fetch products",
-            loading: false,
           });
         }
       },
 
       // Cart Actions
       setCart: (cart) => {
-        if (!cart || !cart.items) {
+        if (cart && !cart.items) {
+          cart.items = [];
+        }
+       
+        if (!cart || !cart.items || cart.items.length === 0) {
           set({
-            cart: null,
+            cart: cart,
             itemCount: 0,
             totalAmount: 0,
           });
@@ -230,196 +238,244 @@ export const useEcommerceStore = create<EcommerceStore>()(
       },
       fetchCart: async () => {
         const token = getAuthToken();
-        set({ loading: true, error: null });
+        const { localCartItems, products } = get();
         if (!token) {
-          const { localCartItems, products } = get();
-          const computed = computeCartFromLocal(localCartItems, products);
+          const computed = computeCartFromLocal(localCartItems, products, get().cart);
           get().setCart(computed);
-          set({ loading: false });
           return;
         }
+        
         try {
-          const cart = await ecommerceService.getCart();
-          get().setCart(cart);
-          set({ loading: false });
+          const serverCart = await ecommerceService.getCart();
+          get().setCart(serverCart);
+
+          if (serverCart && Array.isArray(serverCart.items)) {
+            set({
+              localCartItems: serverCart.items.map((item: any) => ({
+                productId: item.product.id,
+                quantity: item.quantity,
+              })),
+            });
+          } else {
+            set({ localCartItems: [] });
+          }
         } catch (err: any) {
           console.error("Failed to fetch cart:", err);
           if (err.response && err.response.status === 404) {
             get().setCart(null);
-            set({ loading: false, error: null });
+            set({ localCartItems: [] });
           } else {
-            set({
-              error: err.message || "Failed to fetch cart",
-              loading: false,
-            });
+            set({ error: err.message || "Failed to fetch cart" });
+            return;
           }
         }
       },
       addToCart: async (productId: string, quantity = 1) => {
+        set((state) => {
+          const existingItemIndex = state.localCartItems.findIndex(
+            (item) => item.productId === productId
+          );
+          let updatedLocalItems: LocalCartItem[];
+          if (existingItemIndex > -1) {
+            const updated = [...state.localCartItems];
+            updated[existingItemIndex].quantity += quantity;
+            updatedLocalItems = updated;
+          } else {
+            updatedLocalItems = [
+              ...state.localCartItems,
+              { productId, quantity },
+            ];
+          }
+          const computed = computeCartFromLocal(
+            updatedLocalItems,
+            state.products,
+            state.cart
+          );
+          get().setCart(computed);
+          return { localCartItems: updatedLocalItems };
+        });
+
         const token = getAuthToken();
-        set({ loading: true, error: null });
-        if (!token) {
-          set((state) => {
-            const existingItemIndex = state.localCartItems.findIndex(
-              (item) => item.productId === productId
-            );
-            let updatedLocalItems: LocalCartItem[];
-            if (existingItemIndex > -1) {
-              const updated = [...state.localCartItems];
-              updated[existingItemIndex].quantity += quantity;
-              updatedLocalItems = updated;
-            } else {
-              updatedLocalItems = [
-                ...state.localCartItems,
-                { productId, quantity },
-              ];
-            }
-            const computed = computeCartFromLocal(
-              updatedLocalItems,
-              state.products
-            );
-            get().setCart(computed);
-            return { localCartItems: updatedLocalItems };
-          });
-          set({ loading: false });
-          return;
-        }
+        if (!token) return;
         try {
           const data: AddToCartRequest = { product_id: productId, quantity };
           const updatedCart = await ecommerceService.addToCart(data);
           get().setCart(updatedCart);
-          set({ loading: false });
+          if (updatedCart && Array.isArray(updatedCart.items)) {
+            set({
+              localCartItems: updatedCart.items.map((item: any) => ({
+                productId: item.product.id,
+                quantity: item.quantity,
+              })),
+            });
+          }
         } catch (err: any) {
           console.error("Failed to add to cart:", err);
-          set({
-            error: err.message || "Failed to add to cart",
-            loading: false,
-          });
+          get().set({ error: err.message || "Failed to add to cart" });
+          get().fetchCart();
         }
       },
       updateCartItem: async (itemId: string, quantity: number) => {
         const token = getAuthToken();
-        if (!token) {
-          if (quantity <= 0) {
-            get().removeFromCart(itemId);
-            return;
+        const { cart, products } = get();
+       
+        const itemToUpdate = cart?.items.find((item: any) => item.id === itemId);
+        if (!itemToUpdate) {
+          console.error("updateCartItem: Item not found in state.");
+          return;
+        }
+        const productId = itemToUpdate.product.id;
+        let serverIdForApi: string | null = null;
+        if (token) {
+          const serverItem = cart?.items.find(
+            (item: any) => item.product.id === productId && !item.id.startsWith("local-")
+          );
+          if (serverItem) {
+            serverIdForApi = serverItem.id;
           }
+        }
+        if (quantity <= 0) {
           set((state) => {
-            const productId = itemId.replace("local-", "");
-            const index = state.localCartItems.findIndex(
-              (i) => i.productId === productId
+            const updated = state.localCartItems.filter(
+              (i) => i.productId !== productId
             );
-            if (index === -1) return state;
-            const updated = [...state.localCartItems];
-            updated[index].quantity = quantity;
-            const computed = computeCartFromLocal(updated, state.products);
+            const computed = computeCartFromLocal(updated, state.products, state.cart);
             get().setCart(computed);
             return { localCartItems: updated };
           });
+          if (token && serverIdForApi) {
+            ecommerceService.removeFromCart(serverIdForApi)
+              .then(() => get().fetchCart())
+              .catch((err: any) => {
+                console.error("Failed to remove from cart:", err);
+                get().set({ error: err.message || "Failed to remove from cart" });
+                get().fetchCart();
+              });
+          } else if (token) {
+            console.warn("updateCartItem(remove): Item only existed locally. No API call needed.");
+          }
           return;
         }
-        if (quantity <= 0) {
-          get().removeFromCart(itemId);
-          return;
-        }
-        set({ loading: true, error: null });
-        try {
-          const data: UpdateCartItemRequest = { quantity };
-          const updatedCart = await ecommerceService.updateCartItem(itemId, data);
-          get().setCart(updatedCart);
-          set({ loading: false });
-        } catch (err: any) {
-          console.error("Failed to update cart item:", err);
-          set({
-            error: err.message || "Failed to update cart item",
-            loading: false,
-          });
+        set((state) => {
+          const index = state.localCartItems.findIndex(
+            (i) => i.productId === productId
+          );
+          if (index === -1) return state;
+          const updated = [...state.localCartItems];
+          updated[index].quantity = quantity;
+          const computed = computeCartFromLocal(updated, state.products, state.cart);
+          get().setCart(computed);
+          return { localCartItems: updated };
+        });
+        if (token) {
+          if (serverIdForApi) {
+            const data: UpdateCartItemRequest = { quantity };
+            ecommerceService.updateCartItem(serverIdForApi, data)
+              .then(() => get().fetchCart())
+              .catch((err: any) => {
+                console.error("Failed to update cart item:", err);
+                get().set({ error: err.message || "Failed to update cart item" });
+                get().fetchCart();
+              });
+          } else {
+            const data: AddToCartRequest = { product_id: productId, quantity };
+            ecommerceService.addToCart(data)
+              .then(() => get().fetchCart())
+              .catch((err: any) => {
+                console.error("Failed to add new item via update:", err);
+                get().set({ error: err.message || "Failed to add item" });
+                get().fetchCart();
+              });
+          }
         }
       },
       removeFromCart: async (itemId: string) => {
         const token = getAuthToken();
-        if (!token) {
-          set((state) => {
-            const productId = itemId.replace("local-", "");
-            const updated = state.localCartItems.filter(
-              (i) => i.productId !== productId
-            );
-            const computed = computeCartFromLocal(updated, state.products);
-            get().setCart(computed);
-            return { localCartItems: updated };
-          });
+        const { cart, products } = get();
+        const itemToRemove = cart?.items.find((item: any) => item.id === itemId);
+        if (!itemToRemove) {
+          console.error("removeFromCart: Item not found in state.");
           return;
         }
-        set({ loading: true, error: null });
-        try {
-          const updatedCart = await ecommerceService.removeFromCart(itemId);
-          get().setCart(updatedCart);
-          set({ loading: false });
-        } catch (err: any) {
-          console.error("Failed to remove item from cart:", err);
-          set({
-            error: err.message || "Failed to remove item from cart",
-            loading: false,
-          });
+        const productId = itemToRemove.product.id;
+        let serverIdForApi: string | null = null;
+        if (token) {
+          const serverItem = cart?.items.find(
+            (item: any) => item.product.id === productId && !item.id.startsWith("local-")
+          );
+          if (serverItem) {
+            serverIdForApi = serverItem.id;
+          }
+        }
+        set((state) => {
+          const updated = state.localCartItems.filter(
+            (i) => i.productId !== productId
+          );
+          const computed = computeCartFromLocal(updated, state.products, state.cart);
+          get().setCart(computed);
+          return { localCartItems: updated };
+        });
+        if (token && serverIdForApi) {
+          ecommerceService.removeFromCart(serverIdForApi)
+            .then(() => get().fetchCart())
+            .catch((err: any) => {
+              console.error("Failed to remove item from cart:", err);
+              get().set({ error: err.message || "Failed to remove item from cart" });
+              get().fetchCart();
+            });
+        } else if (token) {
+          console.warn("removeFromCart: Item only existed locally. No API call needed.");
         }
       },
       clearCart: async () => {
         const token = getAuthToken();
-        set({ loading: true, error: null });
+        set({ localCartItems: [] });
+        get().setCart(null);
         if (!token) {
-          set({ localCartItems: [] });
-          get().setCart(null);
-          set({ loading: false });
           return;
         }
-        try {
-          await ecommerceService.clearCart();
-          get().setCart(null);
-          set({ loading: false });
-        } catch (err: any) {
-          console.error("Failed to clear cart:", err);
-          set({
-            error: err.message || "Failed to clear cart",
-            loading: false,
+        ecommerceService.clearCart()
+          .then(() => get().fetchCart())
+          .catch((err: any) => {
+            console.error("Failed to clear cart:", err);
+            get().set({ error: err.message || "Failed to clear cart" });
           });
-        }
       },
       syncLocalCartToServer: async () => {
         const token = getAuthToken();
-        if (!token) return;
-        const { localCartItems } = get();
-        if (!localCartItems.length) return;
-        set({ loading: true, error: null });
+        const { localCartItems } = get();         
+        if (!token || !localCartItems.length) return;
+            
         try {
-          let updatedCart: Cart | null = null;
+          let updatedCart = await ecommerceService.getCart();
+          const serverItemMap = new Map(
+            (updatedCart?.items || []).map((item: any) => [
+              item.product.id,
+              item.id,
+            ])
+          );
+        
           for (const item of localCartItems) {
-            const data: AddToCartRequest = {
-              product_id: item.productId,
-              quantity: item.quantity,
-            };
-            updatedCart = await ecommerceService.addToCart(data);
+            if (!serverItemMap.has(item.productId)) {
+              const data: AddToCartRequest = {
+                product_id: item.productId,
+                quantity: item.quantity,
+              };
+              updatedCart = await ecommerceService.addToCart(data);
+            }
           }
-          if (updatedCart) {
-            get().setCart(updatedCart);
-          }
+          get().setCart(updatedCart || null);
           set({ localCartItems: [] });
-          set({ loading: false });
         } catch (err: any) {
           console.error("Failed to sync local cart:", err);
-          set({
-            error: err.message || "Failed to sync cart",
-            loading: false,
-          });
+          set({ error: err.message || "Failed to sync cart" });
         }
       },
     }),
     {
       name: "ecommerce-store",
       partialize: (state) => ({
-        cart: state.cart,
         localCartItems: state.localCartItems,
-        itemCount: state.itemCount,
-        totalAmount: state.totalAmount,
       }),
     }
   )
@@ -448,7 +504,7 @@ export const useCart = () => {
   const cart = useEcommerceStore((state) => state.cart);
   const itemCount = useEcommerceStore((state) => state.itemCount);
   const totalAmount = useEcommerceStore((state) => state.totalAmount);
-  const loading = useEcommerceStore((state) => state.loading);
+  const loading = false;
   const error = useEcommerceStore((state) => state.error);
   return { cart, itemCount, totalAmount, loading, error };
 };

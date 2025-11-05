@@ -38,6 +38,8 @@ export interface EcommerceProduct {
   price: number;
   discount_percentage: number;
   quantity: number;
+  stock_quantity: number;
+  unit_value: number;
   measurement?: {
     label: string;
   };

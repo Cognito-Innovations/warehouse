@@ -25,7 +25,7 @@ import {
   Star,
 } from "@mui/icons-material";
 import { useParams, useRouter } from "next/navigation";
-import { useProducts, useCart, useCartActions } from "../../../../store/ecommerceStore";
+import { useProducts, useCart, useCartActions, useProductActions } from "../../../../store/ecommerceStore";
 import { ROUTES } from "@/utils/constants";
 
 export default function ProductDetailPage() {
@@ -33,36 +33,63 @@ export default function ProductDetailPage() {
   const params = useParams();
   const { products } = useProducts();
   const { cart, itemCount } = useCart();
-  const { addToCart, updateCartItem } = useCartActions();
-
+  const { addToCart, updateCartItem, fetchCart } = useCartActions();
+  const { fetchProducts } = useProductActions();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(0);
+  const [currentProduct, setCurrentProduct] = useState<any>(null);
+  const [isCartActionLoading, setIsCartActionLoading] = useState(false);
 
   // Get product from store
-  const product = products.find(p => p.id === params.id);
+  const initialProduct = products.find((p: any) => p.id === params.id);
 
-  const productImages = [
-    product?.image_url || "https://images.unsplash.com/photo-1537640538966-79f369143b8f?w=800",
-    "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=800",
-    "https://images.unsplash.com/photo-1559181567-c3190ca9959b?w=800",
-  ];
+  useEffect(() => {
+    fetchProducts();
+    fetchCart();
+  }, [fetchProducts, fetchCart]);
 
-  const handleAddToCart = () => {
-    if (product) {
-      addToCart(product.id, quantity);
+  const getPreviewProducts = (product: any) => {
+    if (!product || !product.category) return [product];
+    const sameCategoryProducts = products.filter(
+      (p: any) => p.category.id === product.category.id && p.id !== product.id
+    );
+    const otherProducts = sameCategoryProducts.slice(0, 2);
+    return [product, ...otherProducts];
+  };
+
+  const previewProducts = getPreviewProducts(currentProduct || initialProduct);
+
+  const handleProductSelect = (selectedProduct: any) => {
+    setCurrentProduct(selectedProduct);
+    setQuantity(1);
+  };
+
+  const handleAddToCart = async () => {
+    if (currentProduct) {
+      const stockQuantity = currentProduct.stock_quantity;
+      const cartQuantity = getCartItemQuantity(currentProduct.id);
+      if (cartQuantity + quantity > stockQuantity) {
+        return;
+      }
+      setIsCartActionLoading(true);
+      try {
+        await addToCart(currentProduct.id, quantity);
+      } finally {
+        setIsCartActionLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    if (product) {
+    if (initialProduct) {
+      setCurrentProduct(initialProduct);
       setLoading(false);
     } else {
       setError("Product not found");
       setLoading(false);
     }
-  }, [product]);
+  }, [initialProduct]);
 
   if (loading) {
     return (
@@ -77,7 +104,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (error || !product) {
+  if (error || !currentProduct) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Alert severity="error">{error || "Product not found"}</Alert>
@@ -86,7 +113,7 @@ export default function ProductDetailPage() {
   }
 
   const getCartItemByProductId = (productId: string) => {
-    return cart?.items.find(item => item.product.id === productId);
+    return cart?.items.find((item: any) => item.product.id === productId);
   };
 
   const getCartItemQuantity = (productId: string) => {
@@ -94,22 +121,42 @@ export default function ProductDetailPage() {
     return cartItem?.quantity || 0;
   };
 
-  const handleIncrement = () => {
-    if (product) {
-      addToCart(product.id, 1);
+  const handleIncrement = async () => {
+    if (currentProduct) {
+      const stockQuantity = currentProduct.stock_quantity;
+      const cartQuantity = getCartItemQuantity(currentProduct.id);
+      if (cartQuantity + 1 > stockQuantity) {
+        return;
+      }
+      setIsCartActionLoading(true);
+      try {
+        await addToCart(currentProduct.id, 1);
+      } finally {
+        setIsCartActionLoading(false);
+      }
     }
   };
 
-  const handleDecrement = () => {
-    if (!product) return;
-    const cartItem = getCartItemByProductId(product.id);
+  const handleDecrement = async () => {
+    if (!currentProduct) return;
+    const cartItem = getCartItemByProductId(currentProduct.id);
     if (!cartItem) return;
-    updateCartItem(cartItem.id, cartItem.quantity - 1);
+    setIsCartActionLoading(true);
+    try {
+      await updateCartItem(cartItem.id, cartItem.quantity - 1);
+    } finally {
+      setIsCartActionLoading(false);
+    }
   };
 
-  const discountPrice = product.price - (product.price * product.discount_percentage) / 100;
-  // TODO: We need to implement get cart item quantity
-  const cartQuantity = getCartItemQuantity(product.id);
+  const price = parseFloat(currentProduct.price || '0');
+  const discountPercentage = parseFloat(currentProduct.discount_percentage || '0');
+  const discountPrice = price - (price * discountPercentage) / 100;
+  const cartQuantity = getCartItemQuantity(currentProduct.id);
+  const unitValue = parseFloat(currentProduct.unit_value || '0');
+  const measurementLabel = currentProduct.measurement?.label || '';
+  const stockQuantity = currentProduct.stock_quantity;
+  const isOutOfStock = stockQuantity === 0;
 
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
@@ -156,8 +203,8 @@ export default function ProductDetailPage() {
                 <CardMedia
                   component="img"
                   height={400}
-                  image={productImages[selectedImage]}
-                  alt={product.name}
+                  image={currentProduct.image_url}
+                  alt={currentProduct.name}
                   sx={{
                     borderRadius: 2,
                     objectFit: "cover",
@@ -232,28 +279,43 @@ export default function ProductDetailPage() {
                 </Box>
               </Box>
 
-              {/* Image Thumbnails */}
               <Box sx={{ display: "flex", gap: 1, mt: 2, justifyContent: "center" }}>
-                {productImages.map((image, index) => (
+                {previewProducts.map((previewProduct) => (
                   <Box
-                    key={index}
+                    key={previewProduct.id}
                     sx={{
-                      width: 60,
-                      height: 60,
+                      width: 80,
+                      minHeight: 100,
                       borderRadius: 1,
                       overflow: "hidden",
                       cursor: "pointer",
-                      border: selectedImage === index ? "2px solid #e91e63" : "2px solid transparent",
+                      border: currentProduct.id === previewProduct.id ? "2px solid #e91e63" : "2px solid transparent",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      p: 0.5,
+                      bgcolor: currentProduct.id === previewProduct.id ? "#f5f5f5" : "transparent",
                     }}
-                    onClick={() => setSelectedImage(index)}
+                    onClick={() => handleProductSelect(previewProduct)}
                   >
                     <CardMedia
                       component="img"
-                      height="100%"
-                      image={image}
-                      alt={`${product.name} ${index + 1}`}
-                      sx={{ objectFit: "cover" }}
+                      height={50}
+                      image={previewProduct.image_url || "https://images.unsplash.com/photo-1537640538966-79f369143b8f?w=800"}
+                      alt={previewProduct.name}
+                      sx={{ objectFit: "cover", borderRadius: 1, mb: 0.5, width: "100%" }}
                     />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        textAlign: "center",
+                        lineHeight: 1.1,
+                        maxWidth: "100%",
+                        fontWeight: currentProduct.id === previewProduct.id ? "bold" : "normal"
+                      }}
+                    >
+                      {previewProduct.name}
+                    </Typography>
                   </Box>
                 ))}
               </Box>
@@ -265,13 +327,13 @@ export default function ProductDetailPage() {
             <Paper sx={{ p: 3, borderRadius: 3, height: "fit-content" }}>
               {/* Product Name */}
               <Typography variant="h4" fontWeight="bold" gutterBottom>
-                {product.name} ({product.quantity} {product.measurement})
+                {currentProduct.name} ({unitValue} {measurementLabel})
               </Typography>
 
               {/* Price and Discount */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
                 <Chip
-                  label={`${product.discount_percentage}% OFF`}
+                  label={`${discountPercentage}% OFF`}
                   sx={{
                     bgcolor: "#4caf50",
                     color: "white",
@@ -279,20 +341,28 @@ export default function ProductDetailPage() {
                   }}
                 />
                 <Typography variant="h5" fontWeight="bold" color="primary">
-                  ₹{discountPrice.toFixed(0)}
+                  ₹{discountPrice.toFixed(2)}
                 </Typography>
                 <Typography
                   variant="h6"
                   color="text.secondary"
                   sx={{ textDecoration: "line-through" }}
                 >
-                  ₹{Number(product.price).toFixed(0)}
+                  ₹{price.toFixed(2)}
                 </Typography>
               </Box>
 
+              {isOutOfStock && (
+                <Chip
+                  label="Out of Stock"
+                  color="error"
+                  size="small"
+                  sx={{ mb: 2 }}
+                />
+              )}
               {/* Selected Quantity */}
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Selected Quantity: {product.quantity} {product.measurement}
+                Selected Quantity: {unitValue} {measurementLabel}
               </Typography>
 
               {/* Quantity Selector */}
@@ -308,10 +378,10 @@ export default function ProductDetailPage() {
                     fontWeight: "bold",
                   }}
                 >
-                  {product.quantity} {product.measurement}
+                  {unitValue} {measurementLabel}
                 </Button>
                 <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
-                  (₹{Math.round(discountPrice / (product.quantity / 1000))}/kg)
+                  (₹{unitValue > 0 ? (discountPrice / (unitValue / 1000)).toFixed(2) : 0}/kg)
                 </Typography>
               </Box>
 
@@ -358,7 +428,7 @@ export default function ProductDetailPage() {
 
               {/* Product Description */}
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                {product.description}
+                {currentProduct.description}
               </Typography>
               
               {/* Delivery Info */}
@@ -382,6 +452,7 @@ export default function ProductDetailPage() {
                 variant="contained"
                 size="large"
                 onClick={handleAddToCart}
+                disabled={isCartActionLoading || (cartQuantity === 0 && isOutOfStock)}
                 sx={{
                   bgcolor: "linear-gradient(45deg, #ffeb3b 30%, #ff9800 90%)",
                   color: "black",
@@ -392,19 +463,46 @@ export default function ProductDetailPage() {
                   textTransform: "none"
                 }}
               >
-                Add to Cart
-                {cartQuantity > 0 && (
-                  <Box sx={{ display: "inline-flex", alignItems: "center", ml: 2, bgcolor: "white", borderRadius: 2, overflow: "hidden", backgroundColor:"primary"}}>
-                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleDecrement(); }} sx={{ px: 1, color: "black" }}>
-                      -
-                    </IconButton>
-                    <Typography variant="body2" sx={{ px: 1.5, fontWeight: "bold", color: "black" }}>
-                      {cartQuantity}
-                    </Typography>
-                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleIncrement(); }} sx={{ px: 1, color: "black" }}>
-                      +
-                    </IconButton>
-                  </Box>
+                {isCartActionLoading ? (
+                  <>
+                    <CircularProgress size={20} sx={{ mr: 1, color: 'black', opacity: 1 }} />
+                    Adding...
+                  </>
+                ) : cartQuantity === 0 && isOutOfStock ? (
+                  "Out of Stock"
+                ) : (
+                  <>
+                    Add to Cart
+                    {cartQuantity > 0 && (
+                      <Box sx={{ display: "inline-flex", alignItems: "center", ml: 2, bgcolor: "white", borderRadius: 2, overflow: "hidden", backgroundColor:"primary"}}>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDecrement();
+                          }}
+                          disabled={isCartActionLoading}
+                          sx={{ px: 1, color: "black" }}
+                        >
+                          -
+                        </IconButton>
+                        <Typography variant="body2" sx={{ px: 1.5, fontWeight: "bold", color: "black" }}>
+                          {cartQuantity}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleIncrement();
+                          }}
+                          disabled={isCartActionLoading || cartQuantity >= stockQuantity}
+                          sx={{ px: 1, color: "black" }}
+                        >
+                          +
+                        </IconButton>
+                      </Box>
+                    )}
+                  </>
                 )}
               </Button>
             </Paper>

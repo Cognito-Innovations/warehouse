@@ -40,7 +40,7 @@ const ShipmentsTable: React.FC<ShipmentsTableProps> = ({ shipments, status, load
                   <TableCell/>
                   <TableCell>Shipment No.</TableCell>
                   <TableCell>Tracking No.</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151', width: 140 }}>Customer</TableCell>
+                  <TableCell sx={{ width: 140 }}>Customer</TableCell>
                   <TableCell>Request At</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="center">Pkgs Count</TableCell>

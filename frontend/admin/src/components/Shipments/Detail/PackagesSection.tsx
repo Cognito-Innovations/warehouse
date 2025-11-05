@@ -61,12 +61,12 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
                       py: 1.5
                     } 
                   }}>
-                    <TableCell sx={{ width: 200, textAlign: "center" }}>Package No.</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: "#6b7280",width: 200, textAlign: "center" }}>Package No.</TableCell>
                     <TableCell>Rack</TableCell>
                     <TableCell>Tracking No.</TableCell>
                     <TableCell>Received At</TableCell>
                     <TableCell>Weight</TableCell>
-                    <TableCell sx={{ width: 100 }}>Vol. Weight</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: "#6b7280", width: 100 }}>Vol. Weight</TableCell>
                     <TableCell sx={{ width: 80 }} />
                   </TableRow>
                 </TableHead>

@@ -99,10 +99,20 @@ const PackageDetail: React.FC = () => {
 
     try {
       const data = await getPackageById(id) as any; //TODO: Remove any
+      const docs = await getPackageDocuments(data.id);
+      const shipmentDocs = await getShipmentDocuments(data.id);
+
+      const formattedDocuments = docs.map((doc: any) => ({
+        id: doc.id,
+        name: doc.document_name,
+        url: doc.document_url,
+        type: doc.document_type
+      }));
+
       setPackageData(data);
       setPackageItems(data.items || []);
-      await fetchDocuments(data.id);
-      await fetchShipmentDocuments(data.id);
+      setUploadedDocuments(formattedDocuments);
+      setShipmentDocuments(shipmentDocs);
     } catch (err) {
       console.error('Failed to refetch package data:', err);
       toast.error('Failed to refresh package details');
