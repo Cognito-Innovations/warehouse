@@ -214,6 +214,7 @@ export class ShoppingRequestsService {
             products: await Promise.all(
               (invoice.products ?? []).map(async (product) => ({
                 ...product,
+                invoice: undefined,
                 unit_price: (await formatPrice(product.unit_price)) ?? '',
                 currency: userCurrency,
               })),
@@ -301,6 +302,7 @@ export class ShoppingRequestsService {
             products: await Promise.all(
               (invoice.products ?? []).map(async (product) => ({
                 ...product,
+                invoice: undefined,
                 unit_price:
                   await this.userPreferencesService.getFormattedConvertedPrice(
                     updatedShoppingRequest.user_id,
