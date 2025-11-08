@@ -1,4 +1,13 @@
-import { IsBoolean, IsString, IsOptional, ValidateIf, IsNumber, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsString,
+  IsOptional,
+  ValidateIf,
+  IsNumber,
+  Min,
+  IsEnum,
+} from 'class-validator';
+import { CargoType } from 'src/ecommerce/entities/ecommerce-category.entity';
 
 export class UpdateCategoryDto {
   @IsString()
@@ -22,6 +31,10 @@ export class UpdateCategoryDto {
   @IsOptional()
   @Min(0)
   discount_percentage?: number;
+
+  @IsEnum(CargoType)
+  @IsOptional()
+  cargo_type?: CargoType;
 
   @IsString()
   @IsOptional()

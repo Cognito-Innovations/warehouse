@@ -11,6 +11,13 @@ import {
 import { EcommerceSubCategory } from './ecommerce-sub-category.entity';
 import { EcommerceProduct } from './ecommerce-product.entity';
 
+export enum CargoType {
+  PERISHABLE_GOODS = 'Perishable goods',
+  ANIMAL_CARGO = 'Animal cargo',
+  GENERAL_COURIER = 'General courier',
+  GENERAL_CARGO = 'General cargo',
+}
+
 @Entity('ecommerce_categories')
 export class EcommerceCategory extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -37,6 +44,9 @@ export class EcommerceCategory extends BaseTimestampEntity {
 
   @Column({ default: true })
   is_active: boolean;
+
+  @Column({ type: 'enum', enum: CargoType })
+  cargo_type: CargoType;
 
   @OneToMany(() => EcommerceSubCategory, (subCategory) => subCategory.category)
   sub_categories: EcommerceSubCategory[];
