@@ -33,12 +33,12 @@ $ pnpm install
 
 ## Compile and run the project
 
+# watch mode
+$ pnpm run start:dev
+
 ```bash
 # development
 $ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
 
 # production mode
 $ pnpm run start:prod
