@@ -28,6 +28,7 @@ import { PickupRequestsController } from './pickup-requests/pickup-requests.cont
 import { ShoppingRequestsController } from './shopping-requests/shopping-requests.controller';
 import { ShoppingRequestProductsController } from './products/shopping-request-products.controller';
 import { ShipmentsController } from './shipments/shipments.controller';
+import { HealthController } from './health.controller';
 import { CourierCompaniesModule } from './courier_companies/courier_companies.module';
 import { CountriesModule } from './Countries/countries.module';
 import { SupportedCountriesModule } from './supported-countries/supported-countries.module';
@@ -87,6 +88,7 @@ import { ShipmentsModule } from './shipments/shipments.module';
     ShipmentsModule,
   ],
   controllers: [
+    HealthController,
     PackageItemsController,
     PackageDocumentsController,
     PreArrivaController,
