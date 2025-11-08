@@ -144,7 +144,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
         <Grid container spacing={3}>
           {/* Order Summary */}
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Paper sx={{ p: 3, mb: 3 }}>
               <Box
                 sx={{
@@ -244,7 +244,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
               </Typography>
               
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Shipping Address
                   </Typography>
@@ -253,7 +253,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Billing Address
                   </Typography>
@@ -263,7 +263,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                 </Grid>
                 
                 {order.notes && (
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       Special Instructions
                     </Typography>
@@ -277,7 +277,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           </Grid>
 
           {/* Order Summary Sidebar */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, position: "sticky", top: 20 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Order Summary
