@@ -1,0 +1,93 @@
+name: Deploy Pipeline AWS EB
+
+on:
+  push:
+    branches:
+      - fix/bugs
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+    build:
+      runs-on: ubuntu-20.04
+      steps:
+          - uses: actions/checkout@v4
+            with:
+             fetch-depth: 0
+          - uses: actions/setup-node@v4
+            with:
+             cache: 'pnpm'
+             node-version: 23
+          - name: Install pnpm
+            run: npm install -g pnpm
+          - name: Install dependencies
+            run: pnpm install --frozen-lockfile
+          - name: Build NestJS application
+            run: pnpm --filter warehouse-server build
+          - uses: actions/upload-artifact@v4
+            with:
+              name: dist
+              path: backend/warehouse-server/dist
+          - uses: actions/upload-artifact@v4
+            with:
+              name: package-json
+              path: backend/warehouse-server/package.json
+
+
+    deploy:
+      needs: build
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout Source
+          uses: actions/checkout@v4
+        - name: Setup Node
+          uses: actions/setup-node@v4
+          with:
+            cache: 'pnpm'
+            node-version: 23
+        - name: Install pnpm
+          run: npm install -g pnpm
+        - name: Install production dependencies
+          working-directory: backend/warehouse-server
+          run: pnpm install --frozen-lockfile --prod
+        - name: Download artifact dist
+          uses: actions/download-artifact@v4
+          with:
+            name: dist
+            path: backend/warehouse-server/dist
+        - name: Download artifact package.json
+          uses: actions/download-artifact@v4
+          with:
+            name: package-json
+            path: backend/warehouse-server
+
+        - name: Create deployment package
+          working-directory: backend/warehouse-server
+          run: |
+            # Include only necessary files for deployment
+            zip -r ../../nodejs-app-build.zip \
+              dist \
+              node_modules \
+              package.json \
+              .platform \
+              .elasticbeanstalk \
+              -x "*.git*" \
+              -x "*node_modules/.cache*" \
+              -x "*.map"
+
+        - name: Deploy to Elastic Beanstalk
+          uses: einaregilsson/beanstalk-deploy@v21
+          with:
+            aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+            aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            application_name: 'palakart-api'
+            environment_name: 'Palakart-api-env'
+            region: ap-south-1
+            version_label: "deploy-${{ github.run_id }}"
+            deployment_package: nodejs-app-build.zip
+            use_existing_version_if_available: true
+      
