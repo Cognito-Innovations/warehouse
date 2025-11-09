@@ -71,8 +71,9 @@ jobs:
             # Install production dependencies directly in deploy package
             # Using npm for better EB compatibility (EB runs npm install by default)
             # This ensures a clean, standalone package without workspace complexity
+            # Note: --no-optional is removed to ensure native bindings (like @css-inline/css-inline-linux-x64-gnu) are installed
             cd deploy-package
-            npm install --production --no-optional
+            npm install --production
             cd ..
         
         - name: Zip application
