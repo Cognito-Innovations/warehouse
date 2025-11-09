@@ -1,2 +1,2 @@
-web: pnpm start
+web: source ~/.nvm/nvm.sh && nvm use 23 && pnpm start
 
