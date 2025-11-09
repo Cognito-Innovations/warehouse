@@ -24,11 +24,12 @@ jobs:
           - name: Install dependencies
             run: pnpm install --frozen-lockfile
           - name: Build
+            working-directory: backend/warehouse-server
             run: pnpm run build
           - uses: actions/upload-artifact@v4
             with:
               name: dist
-              path: dist
+              path: backend/warehouse-server/dist
 
 
     deploy:
@@ -49,8 +50,10 @@ jobs:
           uses: actions/download-artifact@v4
           with:
             name: dist
+            path: backend/warehouse-server/dist
 
         - name: Zip application
+          working-directory: backend/warehouse-server
           run: zip -r nodejs-app-build.zip .
 
         - name: Deploy to Elastic Beanstalk
@@ -62,5 +65,5 @@ jobs:
             environment_name: 'Nestjs-mono-app-env'
             region: ap-south-1
             version_label: "deploy-${{ github.run_id }}"
-            deployment_package: nodejs-app-build.zip
+            deployment_package: backend/warehouse-server/nodejs-app-build.zip
             use_existing_version_if_available: true
