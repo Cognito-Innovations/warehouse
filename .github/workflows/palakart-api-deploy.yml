@@ -50,16 +50,43 @@ jobs:
           with:
             cache: 'pnpm'
             node-version: 22
-        - name: Install dependencies
-          run: pnpm install --frozen-lockfile
+        
         - name: Download artifact dist
           uses: actions/download-artifact@v4
           with:
             name: dist
-
+            path: backend/warehouse-server/dist
+        
+        - name: Prepare deployment package
+          working-directory: backend/warehouse-server
+          run: |
+            # Create deployment directory
+            mkdir -p deploy-package
+            
+            # Copy necessary files for deployment
+            cp -r dist deploy-package/
+            cp package.json deploy-package/
+            cp Procfile deploy-package/
+            
+            # Install production dependencies directly in deploy package
+            # Using npm for better EB compatibility (EB runs npm install by default)
+            # This ensures a clean, standalone package without workspace complexity
+            cd deploy-package
+            npm install --production --no-optional
+            cd ..
+        
         - name: Zip application
-          run: zip -r nodejs-app-build.zip .
-
+          working-directory: backend/warehouse-server
+          run: |
+            cd deploy-package
+            zip -r ../nodejs-app-build.zip . -x "*.git*" "*.DS_Store" "*.log" "*.map"
+        
+        - name: Check zip size
+          working-directory: backend/warehouse-server
+          run: |
+            ls -lh nodejs-app-build.zip
+            echo "Zip file size check complete"
+        
         - name: Deploy to Elastic Beanstalk
           uses: einaregilsson/beanstalk-deploy@v21
           with:
@@ -69,5 +96,5 @@ jobs:
             environment_name: 'Palakart-api-env'
             region: ap-south-1
             version_label: "deploy-${{ github.run_id }}"
-            deployment_package: nodejs-app-build.zip
+            deployment_package: backend/warehouse-server/nodejs-app-build.zip
             use_existing_version_if_available: true
