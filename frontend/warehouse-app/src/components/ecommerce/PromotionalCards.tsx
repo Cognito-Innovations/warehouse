@@ -1,133 +1,160 @@
 "use client";
 
 import React from "react";
-import { Box, Card, CardContent, Typography, Button, CardMedia } from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
-import { PromotionalCardsProps, EcommerceCategory } from "@/types/ecommerce";
+import { Box, Typography } from "@mui/material";
+import { ShoppingCart, LocalDining, Percent } from "@mui/icons-material";
+import { PromotionalCardsProps } from "@/types/ecommerce";
+import { ecommerceData } from "@/data/ecommerceData";
 
 export default function PromotionalCards({
   categories,
   onCategoryFilter,
+  selectedCategory,
 }: PromotionalCardsProps) {
-  // Get first 3 categories for promotional cards
-  const promotionalCategories = categories.slice(0, 3);
+  // Define promotional card data with icons and labels
+  const promotionalData = [
+    {
+      id: "grocery-deals",
+      label: "Grocery Deals",
+      icon: ShoppingCart,
+      iconBgColor: "#7c3aed", // Dark pink/magenta (matches image)
+      defaultCategoryId: categories[0]?.id || null,
+    },
+    {
+      id: "dairy-bakery",
+      label: "Dairy and Bakery",
+      icon: LocalDining,
+      iconBgColor: "#7c3aed", // Very light pink
+      defaultCategoryId: categories[1]?.id || null,
+    },
+    {
+      id: "mega-saving",
+      label: "Mega Saving Zone",
+      icon: Percent,
+      iconBgColor: "#7c3aed", // Very light pink
+      defaultCategoryId: categories[2]?.id || null,
+    },
+  ];
 
-  const getCardStyles = (index: number) => {
-    const styles = [
-      {
-        bgcolor: "#f5e6d3", // Light beige/cream
-        imageUrl: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400",
-        title: "Everyday Fresh & Clean with Our Products",
-      },
-      {
-        bgcolor: "#ffe5e5", // Light pink
-        imageUrl: "https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400",
-        title: "Make your Breakfast Healthy and Easy",
-      },
-      {
-        bgcolor: "#e3f2fd", // Light blue-gray
-        imageUrl: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400",
-        title: "The best Organic Products Online",
-      },
-    ];
-    return styles[index] || styles[0];
+  const handleCardClick = (categoryId: string | null) => {
+    if (categoryId) {
+      onCategoryFilter(categoryId);
+    }
   };
-
-  if (promotionalCategories.length === 0) {
-    return null;
-  }
 
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: {
-          xs: "1fr",
-          sm: "repeat(2, 1fr)",
-          md: "repeat(3, 1fr)",
-        },
-        gap: 2,
-        px: 2,
-        py: 2,
-        bgcolor: "white",
+        display: "flex",
+        gap: { xs: 4, sm: 6, md: 8 },
+        flexWrap: "wrap",
+        borderBottom: "1px solid #d3d2d2",
+        pb: { xs: -2, sm: -2.5, md: -3 },
       }}
     >
-      {promotionalCategories.map((category, index) => {
-        const cardStyle = getCardStyles(index);
+      {promotionalData.map((card, index) => {
+        const isActive = selectedCategory === card.defaultCategoryId || 
+                        (index === 0 && !selectedCategory); // First card active by default
+        
         return (
-          <Card
-            key={category.id}
+          <Box
+            key={card.id}
+            onClick={() => handleCardClick(card.defaultCategoryId)}
             sx={{
-              position: "relative",
-              borderRadius: 2,
-              overflow: "hidden",
-              bgcolor: cardStyle.bgcolor,
-              minHeight: 200,
               display: "flex",
               flexDirection: "column",
+              alignItems: "center",
+              cursor: "pointer",
+              transition: "transform 0.2s ease-in-out",
+              "&:hover": {
+                transform: "translateY(-2px)",
+              },
+              minWidth: { xs: "80px", sm: "100px", md: "120px" },
             }}
           >
-            <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column", p: 3 }}>
-              <Typography
-                variant="h6"
-                fontWeight="bold"
-                sx={{
-                  mb: 2,
-                  color: "text.primary",
-                  fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
-                }}
-              >
-                {cardStyle.title}
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => onCategoryFilter(category.id)}
-                endIcon={<ArrowForward sx={{ fontSize: 14, fontWeight: 300 }} />}
-                sx={{
-                  alignSelf: "flex-start",
-                  bgcolor: "#ff6b35",
-                  color: "white",
-                  textTransform: "none",
-                  fontWeight: 600,
-                  px: 2,
-                  py: 1,
-                  borderRadius: 1,
-                  "&:hover": {
-                    bgcolor: "#e55a2b",
-                  },
-                  "& .MuiButton-endIcon": {
-                    marginLeft: 0.5,
-                  },
-                }}
-              >
-                Shop Now
-              </Button>
-            </CardContent>
+            {/* Icon with rounded background */}
             <Box
               sx={{
-                position: "absolute",
-                bottom: 0,
-                right: 0,
-                width: { xs: "40%", sm: "45%", md: "50%" },
-                height: { xs: "60%", sm: "65%", md: "70%" },
+                width: { xs: 44, sm: 52, md: 60 },
+                height: { xs: 44, sm: 52, md: 60 },
+                borderRadius: 2.5,
+                bgcolor: isActive ? card.iconBgColor : "#ede9fe",
                 display: "flex",
-                alignItems: "flex-end",
-                justifyContent: "flex-end",
-                overflow: "hidden",
+                alignItems: "center",
+                justifyContent: "center",
+                mb: 2.5,
+                boxShadow: isActive ? "0 2px 12px rgba(0,0,0,0.12)" : "none",
+                transition: "all 0.2s ease-in-out",
               }}
             >
-              <CardMedia
-                component="img"
-                image={category.image_url || cardStyle.imageUrl}
-                alt={category.name}
+              {/* TODO: Pickup images from backend url */}
+              {index === 0 ? (
+                <img
+                  src="https://rukminim2.flixcart.com/fk-p-flap/108/108/image/dd3b92bbefa3870d.png?q=60"
+                  alt="Promotional"
+                  style={{
+                    width: "70%",
+                    height: "70%",
+                    objectFit: "contain",
+                    borderRadius: 8,
+                    background: "transparent",
+                  }}
+                />
+              ) : index === 1 ? (
+                <img
+                  src="https://rukminim2.flixcart.com/fk-p-flap/108/108/image/3e83480a9b183ed7.png?q=60"
+                  alt="Promotional"
+                  style={{
+                    width: "70%",
+                    height: "70%",
+                    objectFit: "contain",
+                    borderRadius: 8,
+                    background: "transparent",
+                  }}
+                />
+              ) : index === 2 ? (
+                <img
+                  src="https://rukminim2.flixcart.com/fk-p-flap/108/108/image/eb75e5d9571bde1a.png?q=60"
+                  alt="Promotional"
+                  style={{
+                    width: "70%",
+                    height: "70%",
+                    objectFit: "contain",
+                    borderRadius: 8,
+                    background: "transparent",
+                  }}
+                />
+              ) : null}
+            </Box>
+            
+            {/* Label */}
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: isActive ? 700 : 500,
+                color: "#333",
+                fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
+                textAlign: "center",
+                mb: 0.5,
+                letterSpacing: "0.01em",
+              }}
+            >
+              {card.label}
+            </Typography>
+            
+            {/* Active state indicator */}
+            {isActive && (
+              <Box
                 sx={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
+                  width: "110%",
+                  height: 4,
+                  bgcolor: card.iconBgColor,
+                  borderRadius: 2,
+                  mt: 0.5,
                 }}
               />
-            </Box>
-          </Card>
+            )}
+          </Box>
         );
       })}
     </Box>

@@ -295,6 +295,7 @@ export interface PromotionalCardProps {
 export interface PromotionalCardsProps {
   categories: EcommerceCategory[];
   onCategoryFilter: (categoryId: string) => void;
+  selectedCategory?: string | null;
 }
 
 // Cart Page Interfaces

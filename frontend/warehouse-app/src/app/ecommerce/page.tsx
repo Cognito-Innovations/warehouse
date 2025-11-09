@@ -88,7 +88,7 @@ export default function Ecommerce() {
       [product.id]: {
         ...prev[product.id],
         isAddLoading: !isIncrement,
-        isIncrementLoading: isIncrement,
+        isIncrementLoading: isIncrement || false,
         isDecrementLoading: false,
       },
     }));
@@ -273,13 +273,27 @@ export default function Ecommerce() {
           cartItemCount={itemCount}
           onCartClick={() => router.push(ROUTES.CART)}
         />
-        <PromotionalCards
-          categories={categories}
-          onCategoryFilter={handleCategoryChange}
-        />
+        
+        {/* Today's Deals Section with Promotional Cards */}
+        <Box 
+          sx={{ 
+            bgcolor: "white",
+            pt: { xs: 2.5, sm: 3, md: 3.5 },
+            pb: { xs: 2, sm: 2.5, md: 3 },
+            px: { xs: 2, sm: 3, md: 4 },
+          }}
+        >
+         
+          <PromotionalCards
+            categories={categories}
+            onCategoryFilter={handleCategoryChange}
+            selectedCategory={selectedCategory}
+          />
+        </Box>
 
+        {/* TODO: Add Category Selection - At the top for different UI */}
         {/* Category Selection - At the top */}
-        <EcommerceCategorySection
+        {/* <EcommerceCategorySection
           title=""
           categories={categories}
           selectedCategory={selectedCategory}
@@ -287,15 +301,13 @@ export default function Ecommerce() {
           cartItemCount={itemCount}
           onCartClick={() => router.push(ROUTES.CART)}
           forYouLabel="All"
-        />
+        /> */}
 
         {/* Section 1: Today's Deal */}
         {todaysDealProducts.length > 0 && (
-          <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
+          <Box sx={{ bgcolor: "white", px: 2 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="h6" fontWeight="bold">
-                {ecommerceData.sections.todaysDeals}
-              </Typography>
+            
             </Box>
             <EcommerceProductsGrid
               products={todaysDealProducts}
@@ -318,7 +330,15 @@ export default function Ecommerce() {
         {suggestedProducts.length > 0 && (
           <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="h6" fontWeight="bold">
+              <Typography 
+                variant="h6" 
+                fontWeight={600}
+                sx={{ 
+                  fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.375rem" },
+                  color: "#1a1a1a",
+                  letterSpacing: "0.01em",
+                }}
+              >
                 {ecommerceData.sections.suggestedForYou}
               </Typography>
             </Box>
