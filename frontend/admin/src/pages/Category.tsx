@@ -19,7 +19,10 @@ interface CategoryRow {
   slug: string;
   discount_percentage: number,
   country_id: string,
+  cargo_type: string;
   products: number;
+  image_url: string;
+  description: string;
   status: string;
 }
 
@@ -43,7 +46,10 @@ const Category: React.FC = () => {
         discount_percentage: parseFloat(item.discount_percentage),
         country_id: item.country.id,
         products: item.products_count ?? 0,
+        image_url: item.image_url || "",
+        description: item.description || "",
         status: item.is_active ? "Active" : "Inactive",
+        cargo_type: item.cargo_type,
       }));
       setCategories(mappedData);
     } catch (error) {
@@ -68,6 +74,9 @@ const Category: React.FC = () => {
       discount_percentage: category.discount_percentage,
       country_id: category.country_id,
       is_active: category.status === "Active",
+      image_url: category.image_url || "",
+      cargo_type: category.cargo_type,
+      description: category.description || "",
     };
     
     setEditingCategory(payload);
@@ -96,6 +105,18 @@ const Category: React.FC = () => {
 
   const columns: ColumnDefinition<CategoryRow>[] = [
     {
+      header: "Image URL",
+      cell: (row) =><img
+        src={row.image_url || "https://placehold.co/100x100?text=No+Image"}
+        alt={row.name}
+        width={100}
+        height={100}
+        style={{ objectFit: "cover" }}
+        onError={(e) => (e.currentTarget.src = "https://placehold.co/100x100?text=No+Image")}
+    />,
+      width: "15%",
+    },
+    {
       header: "Category ID",
       cell: (row) => <Typography variant="body2" fontWeight={500}>{row.id}</Typography>,
       width: "25%",
@@ -106,6 +127,19 @@ const Category: React.FC = () => {
       width: "25%",
     },
     {
+      header: "Description",
+      cell: (row) => (
+        <Typography variant="body2">
+          {row?.description
+            ? row.description.length > 100
+              ? `${row.description.slice(0, 100)}...`
+              : row.description
+            : "N/A"}
+        </Typography>
+      ),      
+      width: "15%",
+    },
+    {
       header: "Slug",
       cell: (row) => <Typography variant="body2">{row.slug}</Typography>,
       width: "15%",
@@ -113,7 +147,12 @@ const Category: React.FC = () => {
     {
       header: "Products",
       cell: (row) => <Typography variant="body2">{row.products}</Typography>,
-      width: "20%",
+      width: "15%",
+    },
+    {
+      header: "Cargo Type",
+      cell: (row) => <Typography variant="body2">{row.cargo_type}</Typography>,
+      width: "15%",
     },
     {
       header: "Status",

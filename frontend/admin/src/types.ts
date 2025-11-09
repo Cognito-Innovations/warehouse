@@ -190,6 +190,9 @@ export interface CategoryPayload {
   discount_percentage: number,
   country_id: string,
   is_active: boolean;
+  image_url: string;
+  cargo_type: string;
+  description: string;
 };
 
 export interface SubCategoryPayload {

@@ -15,6 +15,13 @@ const statusOptions = [
   { label: "Inactive", value: false },
 ];
 
+const cargoTypeOptions = [
+  { label: "Perishable goods", value: "Perishable goods" },
+  { label: "Animal cargo", value: "Animal cargo" },
+  { label: "General courier", value: "General courier" },
+  { label: "General cargo", value: "General cargo" },
+];
+
 const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -22,6 +29,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
     discount_percentage: 0,
     country_id: "",
     is_active: true,
+    image_url: "",
+    cargo_type: "",
+    description: "",
   });
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,15 +60,18 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
       discount_percentage: initialData?.discount_percentage || 0,
       country_id: initialData?.country_id || "",
       is_active: initialData?.is_active ?? true,
+      image_url: initialData?.image_url || "",
+      cargo_type: initialData?.cargo_type || "",
+      description: initialData?.description || "",
     });
   }, [initialData]);
 
-  const handleChange = (key: string, value: any) => {
+  const handleChange = (key: keyof typeof formData, value: typeof formData[keyof typeof formData]) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSubmit = async () => {
-    const { name, slug, is_active } = formData;
+    const { name, slug, is_active, cargo_type, image_url, description } = formData;
     if (!name || !slug) return;
 
     if (initialData) {
@@ -67,7 +80,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
         initialData.slug !== slug ||
         initialData.discount_percentage ||
         initialData.country_id ||
-        initialData.is_active !== is_active;
+        initialData.is_active !== is_active ||
+        initialData.cargo_type !== cargo_type ||
+        initialData.image_url !== image_url ||
+        initialData.description !== description;
 
       if (!hasChanged) {
         onClose();
@@ -98,6 +114,13 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
           label="Category Name"
           value={formData.name}
           onChange={(e) => handleChange("name", e.target.value)}
+          required
+          fullWidth
+        />
+        <TextField
+          label="Image URL"
+          value={formData.image_url}
+          onChange={(e) => handleChange("image_url", e.target.value)}
           required
           fullWidth
         />
@@ -135,14 +158,28 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
           ))}
         </TextField>
         <TextField
+          label="Cargo Type"
+          select
+          value={formData.cargo_type}
+          onChange={(e) => handleChange("cargo_type", e.target.value)}
+          required
+          fullWidth
+        >
+          {cargoTypeOptions.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
           label="Status"
           select
           value={formData.is_active}
-          onChange={(e) => handleChange("is_active", e.target.value === "true")}
+          onChange={(e) => handleChange("is_active", e.target.value === "true" ? true : false)}
           fullWidth
         >
           {statusOptions.map((option) => (
-            <MenuItem key={option.label} value={option.value}>
+            <MenuItem key={option.label} value={String(option.value)}>
               {option.label}
             </MenuItem>
           ))}
