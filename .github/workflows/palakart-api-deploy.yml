@@ -67,6 +67,23 @@ jobs:
             name: package-json
             path: backend/warehouse-server
 
+        - name: Verify working directory and files
+          working-directory: backend/warehouse-server
+          run: |
+            echo "Current working directory: $(pwd)"
+            echo "Expected: backend/warehouse-server"
+            echo ""
+            echo "Checking required files exist:"
+            ls -la dist/ | head -5 || echo "❌ dist/ not found"
+            ls -la node_modules/ | head -5 || echo "❌ node_modules/ not found"
+            test -f package.json && echo "✅ package.json exists" || echo "❌ package.json not found"
+            test -f Procfile && echo "✅ Procfile exists" || echo "❌ Procfile not found"
+            test -d .platform && echo "✅ .platform/ exists" || echo "❌ .platform/ not found"
+            test -d .elasticbeanstalk && echo "✅ .elasticbeanstalk/ exists" || echo "❌ .elasticbeanstalk/ not found"
+            echo ""
+            echo "Directory structure:"
+            ls -la
+
         - name: Create deployment package
           working-directory: backend/warehouse-server
           run: |
@@ -75,11 +92,23 @@ jobs:
               dist \
               node_modules \
               package.json \
+              Procfile \
               .platform \
               .elasticbeanstalk \
               -x "*.git*" \
               -x "*node_modules/.cache*" \
               -x "*.map"
+
+        - name: Verify zip contents
+          run: |
+            echo "Zip file location: $(pwd)/nodejs-app-build.zip"
+            echo "Zip file size: $(du -h nodejs-app-build.zip | cut -f1)"
+            echo ""
+            echo "Contents of zip file:"
+            unzip -l nodejs-app-build.zip | head -30
+            echo ""
+            echo "Checking for key files in zip:"
+            unzip -l nodejs-app-build.zip | grep -E "(package.json|Procfile|dist/main.js|\.platform)" || echo "⚠️  Some expected files not found"
 
         - name: Deploy to Elastic Beanstalk
           uses: einaregilsson/beanstalk-deploy@v21
