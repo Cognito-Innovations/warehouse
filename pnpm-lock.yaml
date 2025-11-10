@@ -146,6 +146,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.1
+      sha.js:
+        specifier: ^2.4.12
+        version: 2.4.12
       sql-highlight:
         specifier: ^6.1.0
         version: 6.1.0
