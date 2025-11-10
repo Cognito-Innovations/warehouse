@@ -23,6 +23,8 @@ import {
 import { ProductDetailInfoSectionProps } from "@/types/ecommerce";
 import { ecommerceData } from "@/data/ecommerceData";
 import { formatDiscountPercentage } from "@/lib/utils";
+import ProductDetailTabs from "./ProductDetailTabs";
+import OfferCard from "./OfferCard";
 
 export default function ProductDetailInfoSection({
   product,
@@ -59,6 +61,11 @@ export default function ProductDetailInfoSection({
   const savingsAmount = originalPrice - discountPrice;
   const stockQuantity = product.stock_quantity || 0;
   const stockStatus = isOutOfStock ? "Out of Stock" : stockQuantity < 10 ? `Only ${stockQuantity} left!` : "In Stock";
+  
+  const offers = [];
+  if (offerTitle && offerBuyAt) {
+    offers.push({ title: offerTitle, description: offerBuyAt });
+  }
 
   return (
     <Box sx={{ flex: { xs: "1 1 100%", lg: "1 1 50%" } }}>
@@ -211,35 +218,8 @@ export default function ProductDetailInfoSection({
           )}
         </Box>
 
-        {/* Product Description */}
-        {product.description && (
-          <Box sx={{ mb: 3 }}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                lineHeight: 1.2,
-                fontSize: "0.98rem",
-                fontWeight: 600,
-                mb: 1,
-              }}
-            >
-              Description
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                lineHeight: 1.7,
-                fontSize: "0.92rem",
-                fontWeight: 400,
-              }}
-            >
-              {product.description}
-            </Typography>
-          </Box>
-        )}
-
+        <ProductDetailTabs product={product} />
+        
         <Divider sx={{ my: 3 }} />
 
         {/* Selected Quantity */}
@@ -392,85 +372,51 @@ export default function ProductDetailInfoSection({
 
         {/* Offers Section */}
         <Box sx={{ mb: 2 }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            onClick={() => setOffersExpanded(!offersExpanded)}
-            endIcon={offersExpanded ? <ExpandLess /> : <ExpandMore />}
-            sx={{
-              justifyContent: "space-between",
-              textTransform: "none",
-              py: 1.5,
-              borderRadius: 2,
-              borderColor: "divider",
-              color: "text.primary",
-              fontWeight: 500,
-              "&:hover": {
-                borderColor: "primary.main",
-                bgcolor: "action.hover",
-              },
-            }}
-          >
-            <Typography variant="body1" fontWeight={600}>
-              {applyOffersText}
-            </Typography>
-          </Button>
-          <Collapse in={offersExpanded}>
-            <Box
-              sx={{
-                mt: 2,
-                p: 2,
-                borderRadius: 2,
-                bgcolor: offerBackgroundColor || "action.hover",
-                border: "1px solid",
-                borderColor: "divider",
-              }}
-            >
-              <Box
+          {offers.length > 0 && (
+            <OfferCard
+              offer={offers[0]}
+              backgroundColor={offerBackgroundColor}
+            />
+          )}
+
+          {offers.length > 1 && (
+            <>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => setOffersExpanded(!offersExpanded)}
+                endIcon={offersExpanded ? <ExpandLess /> : <ExpandMore />}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
                   justifyContent: "space-between",
-                  mb: 1.5,
+                  textTransform: "none",
+                  py: 1.5,
+                  borderRadius: 2,
+                  borderColor: "divider",
+                  color: "text.primary",
+                  fontWeight: 500,
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    bgcolor: "action.hover",
+                  },
                 }}
               >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    fontWeight={700}
-                    sx={{
-                      color: "error.main",
-                      fontSize: "0.875rem",
-                      mb: 0.5,
-                    }}
-                  >
-                    {offerTitle}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ fontSize: "0.75rem" }}
-                  >
-                    {offerBuyAt}
-                  </Typography>
-                </Box>
-                <Button
-                  size="small"
-                  variant="contained"
-                  color="primary"
-                  sx={{
-                    textTransform: "none",
-                    fontWeight: 600,
-                    px: 2,
-                    py: 0.5,
-                    fontSize: "0.75rem",
-                  }}
-                >
-                  Apply
-                </Button>
-              </Box>
-            </Box>
-          </Collapse>
+                <Typography variant="body1" fontWeight={600}>
+                  {applyOffersText}
+                </Typography>
+              </Button>
+              <Collapse in={offersExpanded}>
+                <Stack spacing={2} sx={{ mt: 2 }}>
+                  {offers.map((offer, index) => (
+                    <OfferCard
+                      key={index}
+                      offer={offer as { title: string, description: string }}
+                      backgroundColor={offerBackgroundColor}
+                    />
+                  ))}
+                </Stack>
+              </Collapse>
+            </>
+          )}
         </Box>
 
         {/* Add to Cart / Go to Cart Button */}

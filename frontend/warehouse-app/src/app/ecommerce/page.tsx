@@ -6,8 +6,9 @@ import { Box, Container, Alert, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/utils/constants";
 import { ecommerceData } from "@/data/ecommerceData";
-import { EcommerceProduct } from "@/types/ecommerce";
+import { EcommerceProduct, UserAddress } from "@/types/ecommerce";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useAuth } from "@/contexts/AuthContext";
 import EcommerceHeader from "@/components/ecommerce/EcommerceHeader";
 import PromotionalCards from "@/components/ecommerce/PromotionalCards";
 import EcommerceProductsGrid from "@/components/ecommerce/EcommerceProductsGrid";
@@ -16,9 +17,12 @@ import EcommerceCategorySection from "@/components/ecommerce/EcommerceCategorySe
 import EcommerceBottomNavigation from "@/components/ecommerce/EcommerceBottomNavigation";
 import CategoryProductsByCategory from "@/components/ecommerce/CategoryProductsByCategory";
 import { useProducts, useCart, useCartActions, useProductActions } from "../../store/ecommerceStore";
+import { createUserAddress, fetchUserAddresses } from "@/lib/api.service";
+import AddAddressModal from "@/components/ecommerce/cart/AddAddressModal";
 
 export default function Ecommerce() {
   const router = useRouter();
+  const { user } = useAuth();
   const {
     products,
     categories,
@@ -38,12 +42,38 @@ export default function Ecommerce() {
     isDecrementLoading: boolean;
   }>>({});
 
-  // Get user location using geolocation API
-  const { location: userLocation } = useUserLocation({
-    defaultCity: ecommerceData.location.city,
-    defaultPincode: ecommerceData.location.pincode,
-    enableGeolocation: true,
-  });
+  const [address, setAddress] = useState<UserAddress | null>(null);
+  const [showAddAddressModal, setShowAddAddressModal] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserAddresses(user.id)
+        .then(setAddress)
+        .catch((err) => {
+          console.error("Failed to fetch addresses:", err);
+          setAddress(null);
+        });
+    } else {
+      setAddress(null);
+    }
+  }, [user?.id]);
+
+  const handleSaveAddress = async (addressData: any) => {
+    if (!user?.id) return;
+    try {
+      const apiData = {
+        user_id: user.id,
+        ...addressData,
+      }
+      await createUserAddress(apiData);
+      const updatedAddresses = await fetchUserAddresses(user.id);
+      setAddress(updatedAddresses);
+    } catch (err) {
+      console.error("Failed to save address:", err);
+    } finally {
+      setShowAddAddressModal(false);
+    }
+  };
 
   const initializeEcommerceData = useCallback(async () => {
     await Promise.all([
@@ -58,6 +88,34 @@ export default function Ecommerce() {
       setLoading(false);
     });
   }, [initializeEcommerceData, setLoading]);
+
+  let locationText: string | null = null;
+  let onLocationClick: (() => void) | null = null;
+  let locationButtonText: string | null = null;
+
+  if (!user) {  
+    // Not logged in: Show Login button
+    locationButtonText = "Login";
+    onLocationClick = () => {
+      const returnTo = `${window.location.pathname}${window.location.search}`;
+      const callback = encodeURIComponent(returnTo);
+      router.push(`/sign-in?callbackUrl=${callback}`);
+    };
+  } else {
+  // Logged in: (has city & zip_code)
+  const validDefaultAddress = (address && address.city && address.zip_code)
+    ? address
+    : null; 
+
+  if (validDefaultAddress) {
+    // Has valid address: Show default
+    locationText = `${validDefaultAddress.city}, ${validDefaultAddress.zip_code}`;
+  } else {
+    // No valid address found: Show Add Address
+    locationButtonText = "Add Address";
+    onLocationClick = () => setShowAddAddressModal(true);
+  }
+}
 
   const handleCategoryChange = (categoryId: string | null) => {
     setSelectedCategory(categoryId);
@@ -265,8 +323,9 @@ export default function Ecommerce() {
         <EcommerceHeader
           brandName={ecommerceData.brand.name}
           locationLabel={ecommerceData.location.label}
-          city={userLocation.city}
-          pincode={userLocation.pincode}
+          locationText={locationText}
+          locationButtonText={locationButtonText}
+          onLocationClick={onLocationClick}
           searchQuery={searchQuery}
           searchPlaceholder={ecommerceData.search.placeholder}
           onSearchChange={setSearchQuery}
@@ -403,6 +462,14 @@ export default function Ecommerce() {
           onCartClick={() => router.push(ROUTES.CART)}
         />
       </Container>
+      <AddAddressModal
+        open={showAddAddressModal}
+        onClose={() => setShowAddAddressModal(false)}
+        onSave={handleSaveAddress}
+        title="Add Address"
+        saveLabel="Save"
+        cancelLabel="Cancel"
+      />
     </Box>
   );
 }

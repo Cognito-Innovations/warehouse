@@ -129,9 +129,10 @@ export interface CreateOrderRequest {
 // Component Props Interfaces
 export interface EcommerceHeaderProps {
   brandName: string;
-  locationLabel: string;
-  city: string;
-  pincode: string;
+  locationLabel?: string;
+  locationText?: string | null,
+  locationButtonText?: string | null,
+  onLocationClick?: (() => void) | null,
   searchQuery: string;
   searchPlaceholder: string;
   onSearchChange: (value: string) => void;
@@ -423,4 +424,10 @@ export interface CartAddressData {
   country: string;
   phone_number?: string;
   email?: string;
+}
+
+export interface UserAddress {
+  id: string;
+  city: string;
+  zip_code: string;
 }

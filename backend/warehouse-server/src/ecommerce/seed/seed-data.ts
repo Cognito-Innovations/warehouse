@@ -5,10 +5,10 @@ import { CargoType } from '../entities/ecommerce-category.entity';
 
 /**
  * Seed data for Categories
- * Note: Replace COUNTRY_ID_PLACEHOLDER with an actual country UUID from your database
+ * Note: Replace COUNTRY_IDS_PLACEHOLDER with an actual country UUID from your database
  */
 
-export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
+export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
   {
     name: 'Fruits & Vegetables',
     slug: 'fruits-vegetables',
@@ -113,13 +113,13 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
 
 /**
  * Seed data for Sub Categories
- * Note: Replace CATEGORY_ID_PLACEHOLDER and COUNTRY_ID_PLACEHOLDER with actual UUIDs
+ * Note: Replace CATEGORY_ID_PLACEHOLDER and COUNTRY_IDS_PLACEHOLDER with actual UUIDs
  * The category_id should match the index from categorySeedData array
  * Each category has 2 sub-categories
  */
 export const subCategorySeedData: Omit<
   CreateEcommerceSubCategoryDto,
-  'category_id' | 'country_id'
+  'category_id' | 'country_ids'
 >[] = [
   // Fruits & Vegetables sub-categories (category index 0)
   {
@@ -276,13 +276,13 @@ export const subCategorySeedData: Omit<
 /**
  * Seed data for Products
  * Note: Replace CATEGORY_ID_PLACEHOLDER, SUB_CATEGORY_ID_PLACEHOLDER,
- * COUNTRY_ID_PLACEHOLDER, and MEASUREMENT_ID_PLACEHOLDER with actual UUIDs
+ * COUNTRY_IDS_PLACEHOLDER, and MEASUREMENT_ID_PLACEHOLDER with actual UUIDs
  * Each category has 3 products distributed across 2 sub-categories
  * Some products are randomly set to out of stock (stock_quantity: 0)
  */
 export const productSeedData: Omit<
   CreateEcommerceProductDto,
-  'category_id' | 'sub_category_id' | 'country_id' | 'measurement_id'
+  'category_id' | 'sub_category_id' | 'country_ids' | 'measurement_id'
 >[] = [
   // Category 0: Fruits & Vegetables
   // Sub-category 0: Fresh Fruits

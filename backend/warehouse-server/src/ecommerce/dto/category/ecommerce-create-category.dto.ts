@@ -1,4 +1,6 @@
 import {
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
@@ -23,9 +25,10 @@ export class CreateCategoryDto {
   @Min(0)
   discount_percentage: number;
 
-  @IsUUID()
-  @IsNotEmpty()
-  country_id: string;
+  @IsArray()
+  @IsUUID('all', { each: true })
+  @ArrayMinSize(1)
+  country_ids: string[];
 
   @IsString()
   @IsNotEmpty()

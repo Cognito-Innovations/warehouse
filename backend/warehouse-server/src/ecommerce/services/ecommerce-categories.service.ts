@@ -16,11 +16,11 @@ export class CategoriesService {
   async create(
     createCategoryDto: CreateCategoryDto,
   ): Promise<EcommerceCategory> {
-    const { country_id, ...rest } = createCategoryDto;
+    const { country_ids, ...rest } = createCategoryDto;
 
     const categoryPayload: Partial<EcommerceCategory> = {
       ...rest,
-      country: { id: country_id } as Country,
+      countries: country_ids.map((id) => ({ id }) as Country),
     };
 
     const category = this.categoryRepository.create(categoryPayload);
@@ -30,21 +30,24 @@ export class CategoriesService {
   findAll() {
     return this.categoryRepository
       .createQueryBuilder('category')
-      .leftJoinAndSelect('category.country', 'country')
+      .leftJoinAndSelect('category.countries', 'countries')
       .loadRelationCountAndMap('category.products_count', 'category.products')
       .orderBy('category.name', 'ASC')
       .getMany();
   }
 
   findOne(id: string) {
-    return this.categoryRepository.findOne({ where: { id } });
+    return this.categoryRepository.findOne({
+      where: { id },
+      relations: ['countries'],
+    });
   }
 
   async update(
     id: string,
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<EcommerceCategory> {
-    const { country_id, ...rest } = updateCategoryDto;
+    const { country_ids, ...rest } = updateCategoryDto;
 
     const category = await this.categoryRepository.findOne({
       where: {
@@ -54,7 +57,9 @@ export class CategoriesService {
     if (!category) throw new NotFoundException('Category not found');
     this.categoryRepository.merge(category, rest);
 
-    category.country = { id: country_id } as Country;
+    if (country_ids) {
+      category.countries = country_ids.map((id) => ({ id }) as Country);
+    }
 
     return await this.categoryRepository.save(category);
   }

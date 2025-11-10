@@ -69,7 +69,7 @@ export default function ProductDetailTabs({ product }: ProductDetailTabsProps) {
           variant="scrollable"
           scrollButtons="auto"
         >
-          <Tab label="Detail" />
+          <Tab label="Description" />
           <Tab label="Specifications" />
           <Tab label="Care Guide" />
           <Tab label="Reviews" />

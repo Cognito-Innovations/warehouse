@@ -17,12 +17,12 @@ export class SubCategoriesService {
   async create(
     createSubCategoryDto: CreateEcommerceSubCategoryDto,
   ): Promise<EcommerceSubCategory> {
-    const { country_id, category_id, ...rest } = createSubCategoryDto;
+    const { country_ids, category_id, ...rest } = createSubCategoryDto;
 
     const subCategoryPayload: Partial<EcommerceSubCategory> = {
       ...rest,
       category: { id: category_id } as EcommerceCategory,
-      country: { id: country_id } as Country,
+      countries: country_ids.map((id) => ({ id }) as Country),
     };
 
     const subCategory = this.subCategoryRepository.create(subCategoryPayload);
@@ -32,7 +32,7 @@ export class SubCategoriesService {
   findAll() {
     return this.subCategoryRepository
       .createQueryBuilder('subCategory')
-      .leftJoinAndSelect('subCategory.country', 'country')
+      .leftJoinAndSelect('subCategory.countries', 'countries')
       .leftJoinAndSelect('subCategory.category', 'category')
       .loadRelationCountAndMap(
         'subCategory.products_count',
@@ -42,14 +42,17 @@ export class SubCategoriesService {
   }
 
   findOne(id: string) {
-    return this.subCategoryRepository.findOne({ where: { id } });
+    return this.subCategoryRepository.findOne({
+      where: { id },
+      relations: ['countries'],
+    });
   }
 
   async update(
     id: string,
     updateSubCategoryDto: UpdateEcommerceSubCategoryDto,
   ): Promise<EcommerceSubCategory> {
-    const { country_id, category_id, ...rest } = updateSubCategoryDto;
+    const { country_ids, category_id, ...rest } = updateSubCategoryDto;
 
     const subCategory = await this.subCategoryRepository.findOne({
       where: {
@@ -60,7 +63,10 @@ export class SubCategoriesService {
     this.subCategoryRepository.merge(subCategory, rest);
 
     subCategory.category = { id: category_id } as EcommerceCategory;
-    subCategory.country = { id: country_id } as Country;
+
+    if (country_ids) {
+      subCategory.countries = country_ids.map((id) => ({ id }) as Country);
+    }
 
     return await this.subCategoryRepository.save(subCategory);
   }

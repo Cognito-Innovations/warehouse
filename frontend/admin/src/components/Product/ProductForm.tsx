@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, MenuItem, Stack, Button, CircularProgress } from "@mui/material";
+import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
 
 import { createProduct, getCategories, getCountries, getMeasurements, getSubCategories } from "../../services/api.services";
 import type { Country, ProductPayload } from "../../types";
@@ -30,7 +30,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
     discount_percentage: "",
     unit_value: "",
     measurement_id: "",
-    country_id: "",
+    country_ids: [] as string[],
     stock_quantity: "",
     is_active: true,
   });
@@ -119,7 +119,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
     Number(formData.discount_percentage) > 0 &&
     Number(formData.unit_value) > 0 &&
     formData.measurement_id &&
-    formData.country_id &&
+    formData.country_ids &&
     Number(formData.stock_quantity) > 0;
 
   return (
@@ -238,13 +238,24 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
 
       <Box sx={{ display: 'flex', gap: 2.5, mb: 2.5, flexDirection: { xs: 'column', sm: 'row' } }}>
         <TextField
-          label="Country"
+          label="Countries"
           select
-          value={formData.country_id}
-          onChange={(e) => handleChange("country_id", e.target.value)}
+          value={formData.country_ids}
+          onChange={(e) => handleChange("country_ids", e.target.value)}
           fullWidth
           required
           disabled={fetching}
+          SelectProps={{
+            multiple: true,
+            renderValue: (selected) => (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {(selected as string[]).map((value) => {
+                  const countryName = countries.find(c => c.id === value)?.name || value;
+                  return <Chip key={value} label={countryName} />;
+                })}
+              </Box>
+            ),
+          }}
         >
           {countries.map((c) => (
             <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>

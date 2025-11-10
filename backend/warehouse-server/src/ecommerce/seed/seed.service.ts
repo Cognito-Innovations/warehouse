@@ -142,7 +142,7 @@ export class SeedService {
 
       const category = this.categoryRepository.create({
         ...categoryData,
-        country: { id: countryId } as Country,
+        countries: [{ id: countryId } as Country],
       });
 
       const saved = await this.categoryRepository.save(category);
@@ -200,7 +200,7 @@ export class SeedService {
       const subCategory = this.subCategoryRepository.create({
         ...subCategoryData,
         category: category,
-        country: { id: countryId } as Country,
+        countries: [{ id: countryId } as Country],
       });
 
       const saved = await this.subCategoryRepository.save(subCategory);
@@ -286,7 +286,7 @@ export class SeedService {
           ...productData,
           category: category,
           sub_category: subCategory,
-          country: { id: countryId } as Country,
+          countries: [{ id: countryId } as Country],
           measurement: { id: measurementId } as EcommerceMeasurement,
         });
 

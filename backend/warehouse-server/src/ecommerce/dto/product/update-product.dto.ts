@@ -1,4 +1,4 @@
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsArray, IsOptional, IsUUID } from 'class-validator';
 
 export class UpdateEcommerceProductDto {
   @IsUUID()
@@ -9,7 +9,8 @@ export class UpdateEcommerceProductDto {
   @IsOptional()
   sub_category_id?: string;
 
-  @IsUUID()
+  @IsArray()
+  @IsUUID('all', { each: true })
   @IsOptional()
-  country_id?: string;
+  country_ids?: string[];
 }

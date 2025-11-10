@@ -6,6 +6,8 @@ import {
   IsNumber,
   Min,
   IsEnum,
+  IsArray,
+  IsUUID,
 } from 'class-validator';
 import { CargoType } from 'src/ecommerce/entities/ecommerce-category.entity';
 
@@ -23,9 +25,10 @@ export class UpdateCategoryDto {
   image_url?: string;
 
   @ValidateIf((o, v) => v !== null)
-  @IsString()
+  @IsArray()
+  @IsUUID('all', { each: true })
   @IsOptional()
-  country_id?: string;
+  country_ids?: string[];
 
   @IsNumber()
   @IsOptional()

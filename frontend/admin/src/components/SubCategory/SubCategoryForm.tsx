@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, MenuItem, Stack, Button, CircularProgress } from "@mui/material";
+import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
 
 import { createSubCategory, getCategories, getCountries, updateSubCategory } from "../../services/api.services";
 import type { Country, SubCategoryPayload } from "../../types";
 import type { Category } from "../Product/ProductForm";
+import { arraysEqual } from "../../utils/arrayEqual";
 
 interface SubCategoryFormProps {
   onClose: () => void;
@@ -24,7 +25,7 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
     name: "",
     slug: "",
     discount_percentage: 0,
-    country_id: "",
+    country_ids: [] as string[],
     is_active: true,
   });
   const [loading, setLoading] = useState(false);
@@ -56,7 +57,7 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
       name: initialData?.name || "",
       slug: initialData?.slug || "",
       discount_percentage: initialData?.discount_percentage || 0,
-      country_id: initialData?.country_id || "",
+      country_ids: initialData?.country_ids || [],
       is_active: initialData?.is_active ?? true,
     });
   }, [initialData]);
@@ -75,7 +76,7 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
         initialData.name !== name ||
         initialData.slug !== slug ||
         initialData.discount_percentage ||
-        initialData.country_id ||
+        !arraysEqual(initialData.country_ids || [], formData.country_ids) ||
         initialData.is_active !== is_active;
 
       if (!hasChanged) {
@@ -155,13 +156,24 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
         />
 
         <TextField
-          label="Country"
+          label="Countries"
           select
-          value={formData.country_id}
-          onChange={(e) => handleChange("country_id", e.target.value)}
+          value={formData.country_ids}
+          onChange={(e) => handleChange("country_ids", e.target.value)}
           fullWidth
           required
           disabled={fetching}
+          SelectProps={{
+            multiple: true,
+            renderValue: (selected) => (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {(selected as string[]).map((value) => {
+                  const countryName = countries.find(c => c.id === value)?.name || value;
+                  return <Chip key={value} label={countryName} />;
+                })}
+              </Box>
+            ),
+          }}
         >
           {countries.map((c) => (
             <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>

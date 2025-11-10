@@ -188,7 +188,7 @@ export interface CategoryPayload {
   name: string;
   slug: string;
   discount_percentage: number,
-  country_id: string,
+  country_ids: string[],
   is_active: boolean;
   image_url: string;
   cargo_type: string;
@@ -201,7 +201,7 @@ export interface SubCategoryPayload {
   name: string;
   slug: string;
   discount_percentage: number,
-  country_id: string,
+  country_ids: string[],
   is_active: boolean;
 };
 
@@ -216,7 +216,7 @@ export interface ProductPayload {
   discount_percentage: number;
   unit_value: number;
   measurement_id: string;
-  country_id: string;
+  country_ids: string[],
   stock_quantity: number;
   is_active: boolean;
 };

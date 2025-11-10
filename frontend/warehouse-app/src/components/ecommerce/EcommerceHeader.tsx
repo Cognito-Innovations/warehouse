@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge } from "@mui/material";
+import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge, Button } from "@mui/material";
 import { LocationOn, Search, ShoppingCart } from "@mui/icons-material";
 import { EcommerceHeaderProps } from "@/types/ecommerce";
 import { ecommerceData } from "@/data/ecommerceData";
@@ -9,14 +9,19 @@ import { ecommerceData } from "@/data/ecommerceData";
 export default function EcommerceHeader({
   brandName,
   locationLabel,
-  city,
-  pincode,
+  locationText,
+  locationButtonText,
+  onLocationClick,
   searchQuery,
   searchPlaceholder,
   onSearchChange,
   cartItemCount,
   onCartClick,
-}: EcommerceHeaderProps) {
+}: EcommerceHeaderProps & {
+  locationText?: string | null;
+  locationButtonText?: string | null;
+  onLocationClick?: (() => void) | null;
+}) {
   return (
     <AppBar position="sticky" elevation={0} sx={{ bgcolor: "white", color: "text.primary" }}>
       <Toolbar 
@@ -87,26 +92,54 @@ export default function EcommerceHeader({
             flexShrink: 0,
           }}
         >
-          <IconButton 
-            color="inherit" 
-            size="small"
-            sx={{ 
-              display: { xs: "none", sm: "flex" },
-              color: "text.secondary",
-            }}
-          >
-            <LocationOn fontSize="small" />
-          </IconButton>
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            sx={{ 
-              display: { xs: "none", md: "block" },
-              fontSize: "0.875rem",
-            }}
-          >
-            {city}, {pincode}
-          </Typography>
+          {locationText ? (
+            <>
+              <IconButton 
+                color="inherit" 
+                size="small"
+                sx={{ 
+                  display: { xs: "none", sm: "flex" },
+                  color: "text.secondary",
+                }}
+              >
+                <LocationOn fontSize="small" />
+              </IconButton>
+
+              <Typography 
+                variant="body2" 
+                color="text.secondary" 
+                sx={{ 
+                  display: { xs: "none", md: "block" },
+                  fontSize: "0.875rem",
+                }}
+              >
+                {locationText}
+              </Typography>
+            </>
+          ) : (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={onLocationClick}
+              sx={{
+                display: { xs: "none", md: "block" },
+                textTransform: "none",
+                fontSize: "0.875rem",
+                color: "#6D28D9",
+                borderColor: "#6D28D9",
+                p: 0.5,
+                minWidth: "auto",
+                borderRadius: 1,
+                "&:hover": {
+                  borderColor: "#5B21B6",
+                  color: "#5B21B6",
+                  bgcolor: "rgba(109, 40, 217, 0.04)",
+                },
+              }}
+            >
+              {locationButtonText}
+            </Button>
+          )}
           <IconButton 
             color="inherit" 
             onClick={onCartClick}
@@ -124,4 +157,3 @@ export default function EcommerceHeader({
     </AppBar>
   );
 }
-

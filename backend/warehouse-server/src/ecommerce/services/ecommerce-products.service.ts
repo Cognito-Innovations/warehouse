@@ -20,7 +20,7 @@ export class ProductsService {
     const {
       category_id,
       sub_category_id,
-      country_id,
+      country_ids,
       measurement_id,
       ...rest
     } = createProductDto;
@@ -29,7 +29,7 @@ export class ProductsService {
       ...rest,
       category: { id: category_id },
       sub_category: { id: sub_category_id },
-      country: { id: country_id },
+      countries: country_ids.map((id) => ({ id }) as Country),
       measurement: { id: measurement_id },
     });
     return await this.productRepository.save(product);
@@ -40,7 +40,10 @@ export class ProductsService {
   }
 
   findOne(id: string) {
-    return this.productRepository.findOne({ where: { id } });
+    return this.productRepository.findOne({
+      where: { id },
+      relations: ['countries'],
+    });
   }
 
   async update(
@@ -59,10 +62,10 @@ export class ProductsService {
         id: updateEcommerceProductDto.sub_category_id,
       } as EcommerceSubCategory;
     }
-    if (updateEcommerceProductDto.country_id) {
-      product.country = {
-        id: updateEcommerceProductDto.country_id,
-      } as Country;
+    if (updateEcommerceProductDto.country_ids) {
+      product.countries = updateEcommerceProductDto.country_ids.map(
+        (id) => ({ id }) as Country
+      );
     }
 
     return await this.productRepository.save(product);

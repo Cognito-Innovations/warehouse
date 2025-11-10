@@ -3,8 +3,8 @@ import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import {
   Column,
   Entity,
-  JoinColumn,
-  ManyToOne,
+  JoinTable,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -35,9 +35,19 @@ export class EcommerceCategory extends BaseTimestampEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   discount_percentage: number;
 
-  @ManyToOne(() => Country, { eager: true })
-  @JoinColumn({ name: 'country_id' })
-  country: Country;
+  @ManyToMany(() => Country, { eager: true })
+  @JoinTable({
+    name: 'ecommerce_category_countries',
+    joinColumn: {
+      name: 'category_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'country_id',
+      referencedColumnName: 'id',
+    },
+  })
+  countries: Country[]
 
   @Column({ type: 'text', nullable: true })
   description: string;
