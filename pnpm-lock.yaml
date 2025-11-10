@@ -101,6 +101,9 @@ importers:
       dotenv:
         specifier: ^17.2.1
         version: 17.2.2
+      es-errors:
+        specifier: ^1.3.0
+        version: 1.3.0
       express:
         specifier: ^5.1.0
         version: 5.1.0
