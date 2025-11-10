@@ -56,6 +56,7 @@ jobs:
           uses: actions/download-artifact@v4
           with:
             name: dist
+            path: backend/warehouse-server/dist
 
         - name: Zip application
           working-directory: backend/warehouse-server
