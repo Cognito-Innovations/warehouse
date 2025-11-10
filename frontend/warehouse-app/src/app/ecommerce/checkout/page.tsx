@@ -290,10 +290,10 @@ export default function CheckoutPage() {
         </Card>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={8}>
+          <Grid size={{ xs: 12, lg: 8 }}>
             <Grid container spacing={3}>
               {/* Delivery Address Card */}
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Card 
                   variant="outlined" 
                   sx={{ 
@@ -367,7 +367,7 @@ export default function CheckoutPage() {
               </Grid>
 
               {/* Delivery Details Card */}
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Card 
                   variant="outlined" 
                   sx={{ 
@@ -426,7 +426,7 @@ export default function CheckoutPage() {
             </Grid>
           </Grid>
 
-          <Grid item xs={12} lg={4}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             {/* Order Summary Card */}
             <Card 
               variant="outlined" 
@@ -494,7 +494,7 @@ export default function CheckoutPage() {
                   {cart.discount_percentage > 0 && (
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="body1" color="success.main" fontWeight={500}>
-                        Discount ({cart?.discount_percentage}%)
+                        Discount ({formatDiscountPercentage(cart?.discount_percentage)})
                       </Typography>
                       <Typography variant="body1" color="success.main" fontWeight={500}>
                         -₹{discountAmount?.toFixed(2)}

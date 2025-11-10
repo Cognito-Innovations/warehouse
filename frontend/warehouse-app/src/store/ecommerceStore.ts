@@ -9,6 +9,29 @@ import {
 } from "../types/ecommerce";
 import { ecommerceService } from "@/services/ecommerce.service";
 
+// Debounce utility for cart API calls
+const debounceMap = new Map<string, NodeJS.Timeout>();
+
+function debounceCartUpdate(
+  key: string,
+  fn: () => void | Promise<void>,
+  delay: number = 500
+) {
+  // Clear existing timeout for this key
+  const existingTimeout = debounceMap.get(key);
+  if (existingTimeout) {
+    clearTimeout(existingTimeout);
+  }
+
+  // Set new timeout
+  const timeout = setTimeout(() => {
+    fn();
+    debounceMap.delete(key);
+  }, delay);
+
+  debounceMap.set(key, timeout);
+}
+
 interface LocalCartItem {
   productId: string;
   quantity: number;
@@ -52,6 +75,7 @@ interface CartState {
   itemCount: number;
   totalAmount: number;
   loading: boolean;
+  cartLoading: boolean;
   error: string | null;
 }
 
@@ -144,6 +168,7 @@ export const useEcommerceStore = create<EcommerceStore>()(
       localCartItems: [],
       itemCount: 0,
       totalAmount: 0,
+      cartLoading: false,
 
       // Product Actions
       setCategories: (categories) => set({ categories }),
@@ -239,9 +264,12 @@ export const useEcommerceStore = create<EcommerceStore>()(
       fetchCart: async () => {
         const token = getAuthToken();
         const { localCartItems, products } = get();
+        set({ cartLoading: true });
+        
         if (!token) {
           const computed = computeCartFromLocal(localCartItems, products, get().cart);
           get().setCart(computed);
+          set({ cartLoading: false });
           return;
         }
         
@@ -266,8 +294,9 @@ export const useEcommerceStore = create<EcommerceStore>()(
             set({ localCartItems: [] });
           } else {
             set({ error: err.message || "Failed to fetch cart" });
-            return;
           }
+        } finally {
+          set({ cartLoading: false });
         }
       },
       addToCart: async (productId: string, quantity = 1) => {
@@ -356,6 +385,7 @@ export const useEcommerceStore = create<EcommerceStore>()(
           }
           return;
         }
+        // Optimistic update - update UI immediately
         set((state) => {
           const index = state.localCartItems.findIndex(
             (i) => i.productId === productId
@@ -367,26 +397,48 @@ export const useEcommerceStore = create<EcommerceStore>()(
           get().setCart(computed);
           return { localCartItems: updated };
         });
+
+        // Debounced API call - only sync to server after user stops clicking
         if (token) {
-          if (serverIdForApi) {
-            const data: UpdateCartItemRequest = { quantity };
-            ecommerceService.updateCartItem(serverIdForApi, data)
-              .then(() => get().fetchCart())
-              .catch((err: any) => {
+          const debounceKey = `update-${productId}`;
+          // Capture current values for the debounced function
+          const currentServerId = serverIdForApi;
+          const currentQuantity = quantity;
+          debounceCartUpdate(debounceKey, async () => {
+            // Get the latest quantity from local state (in case it changed during debounce)
+            const latestState = get();
+            const latestItem = latestState.localCartItems.find((i) => i.productId === productId);
+            const finalQuantity = latestItem?.quantity || currentQuantity;
+            
+            // Find the latest server ID (in case cart was synced)
+            const latestCart = latestState.cart;
+            const latestServerItem = latestCart?.items.find(
+              (item: any) => item.product.id === productId && !item.id.startsWith("local-")
+            );
+            const finalServerId = latestServerItem?.id || currentServerId;
+
+            if (finalServerId) {
+              const data: UpdateCartItemRequest = { quantity: finalQuantity };
+              try {
+                await ecommerceService.updateCartItem(finalServerId, data);
+                await get().fetchCart();
+              } catch (err: any) {
                 console.error("Failed to update cart item:", err);
                 get().set({ error: err.message || "Failed to update cart item" });
-                get().fetchCart();
-              });
-          } else {
-            const data: AddToCartRequest = { product_id: productId, quantity };
-            ecommerceService.addToCart(data)
-              .then(() => get().fetchCart())
-              .catch((err: any) => {
+                await get().fetchCart();
+              }
+            } else {
+              const data: AddToCartRequest = { product_id: productId, quantity: finalQuantity };
+              try {
+                await ecommerceService.addToCart(data);
+                await get().fetchCart();
+              } catch (err: any) {
                 console.error("Failed to add new item via update:", err);
                 get().set({ error: err.message || "Failed to add item" });
-                get().fetchCart();
-              });
-          }
+                await get().fetchCart();
+              }
+            }
+          }, 500);
         }
       },
       removeFromCart: async (itemId: string) => {
@@ -419,9 +471,15 @@ export const useEcommerceStore = create<EcommerceStore>()(
           ecommerceService.removeFromCart(serverIdForApi)
             .then(() => get().fetchCart())
             .catch((err: any) => {
-              console.error("Failed to remove item from cart:", err);
-              get().set({ error: err.message || "Failed to remove item from cart" });
-              get().fetchCart();
+              // If 404, item might already be deleted - just refresh cart to sync
+              if (err.response?.status === 404) {
+                console.warn("Item not found on server (may already be deleted), syncing cart...");
+                get().fetchCart();
+              } else {
+                console.error("Failed to remove item from cart:", err);
+                get().set({ error: err.message || "Failed to remove item from cart" });
+                get().fetchCart();
+              }
             });
         } else if (token) {
           console.warn("removeFromCart: Item only existed locally. No API call needed.");
@@ -504,7 +562,7 @@ export const useCart = () => {
   const cart = useEcommerceStore((state) => state.cart);
   const itemCount = useEcommerceStore((state) => state.itemCount);
   const totalAmount = useEcommerceStore((state) => state.totalAmount);
-  const loading = false;
+  const loading = useEcommerceStore((state) => state.cartLoading);
   const error = useEcommerceStore((state) => state.error);
   return { cart, itemCount, totalAmount, loading, error };
 };

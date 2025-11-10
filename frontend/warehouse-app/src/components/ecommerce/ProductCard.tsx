@@ -17,6 +17,7 @@ import {
 import { Add, Remove } from "@mui/icons-material";
 import { EcommerceProduct } from "../../types/ecommerce";
 import { useCart, useCartActions } from "../../store/ecommerceStore";
+import { formatDiscountPercentage } from "@/lib/utils";
 
 interface ProductCardProps {
   product: EcommerceProduct;
@@ -88,7 +89,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
         {/* Discount Badge */}
         {product.discount_percentage > 0 && (
           <Chip
-            label={`${product.discount_percentage}% OFF`}
+            label={formatDiscountPercentage(product.discount_percentage, "OFF")}
             color="error"
             size="small"
             sx={{

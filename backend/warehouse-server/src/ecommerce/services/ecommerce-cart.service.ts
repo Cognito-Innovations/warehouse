@@ -143,8 +143,11 @@ export class CartService {
       where: { id: itemId, cart_id: cart.id },
     });
 
+    // If item doesn't exist, it might have been already deleted (idempotent operation)
+    // Just recalculate totals and return cart to ensure consistency
     if (!cartItem) {
-      throw new NotFoundException('Cart item not found');
+      await this.recalculateCartTotals(cart.id);
+      return this.getOrCreateCart(userId);
     }
 
     await this.cartItemRepository.remove(cartItem);
@@ -166,7 +169,6 @@ export class CartService {
   private async recalculateCartTotals(cartId: string): Promise<void> {
     const cart = await this.cartRepository.findOne({
       where: { id: cartId },
-      relations: ['items'],
     });
 
     if (!cart) return;
@@ -184,10 +186,11 @@ export class CartService {
     );
     const finalAmount = totalAmount - totalDiscount;
 
-    cart.total_amount = totalAmount;
-    cart.discount_percentage = totalDiscount;
-    cart.final_amount = finalAmount;
-
-    await this.cartRepository.save(cart);
+    // Use update instead of save to avoid cascading issues with relations
+    await this.cartRepository.update(cartId, {
+      total_amount: totalAmount,
+      discount_percentage: totalDiscount,
+      final_amount: finalAmount,
+    });
   }
 }

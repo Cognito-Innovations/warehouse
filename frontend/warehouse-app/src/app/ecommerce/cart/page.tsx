@@ -1,230 +1,287 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  IconButton,
-  Chip,
-  Grid,
-  Divider,
-  CircularProgress,
-  Alert,
-  Card,
-  CardMedia,
-  CardContent,
-  CardActions,
-  Avatar,
-  Paper,
-  useTheme,
-  useMediaQuery,
-  Badge,
-  AppBar,
-  Toolbar,
-  TextField,
-  InputAdornment,
-  Tabs,
-  Tab,
-} from "@mui/material";
-import {
-  ArrowBack,
-  ShoppingCart,
-  Add,
-  Remove,
-  Delete,
-  LocalShipping,
-  Security,
-  Payment,
-  LocationOn,
-  Percent,
-  CheckCircle,
-  Star,
-  Home,
-  Store,
-  Schedule,
-} from "@mui/icons-material";
+import React, { useState, useEffect, useCallback } from "react";
+import { Box, Container } from "@mui/material";
+import { ShoppingCart } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useCart, useCartActions } from "../../../store/ecommerceStore";
 import { ROUTES } from "@/utils/constants";
+import { ecommerceData } from "@/data/ecommerceData";
+import { CartItemLoadingState, CartAddressData } from "@/types/ecommerce";
+import { fetchUserAddresses, createUserAddress } from "@/lib/api.service";
+import CartHeader from "@/components/ecommerce/cart/CartHeader";
+import AddressSelectionDropdown from "@/components/ecommerce/cart/AddressSelectionDropdown";
+import AddAddressModal from "@/components/ecommerce/cart/AddAddressModal";
+import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
+import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
+import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
+import CartSkeletonLoader from "@/components/ecommerce/cart/CartSkeletonLoader";
+import ContinueShoppingCard from "@/components/ecommerce/cart/ContinueShoppingCard";
+import { getCurrencyForCountry, getUserCountry, convertCurrency } from "@/utils/currency";
+import LocationSelector from "@/components/ecommerce/cart/LocationSelector";
 
 export default function CartPage() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
-  const { cart, itemCount, totalAmount } = useCart();
+  const { data: session } = useSession();
+  const { cart, itemCount, loading: cartLoading } = useCart();
   const { updateCartItem, removeFromCart, fetchCart } = useCartActions();
 
-  const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [loadingStates, setLoadingStates] = useState<Record<string, CartItemLoadingState>>({});
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [addresses, setAddresses] = useState<CartAddressData[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
+  const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string>(getUserCountry());
+
+  const userId = (session?.user as any)?.user_id;
 
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
 
-  // Empty cart state
+  useEffect(() => {
+    if (userId) {
+      loadAddresses();
+    }
+  }, [userId]);
+
+  const loadAddresses = async () => {
+    if (!userId) return;
+    setLoadingAddresses(true);
+    try {
+      const addressData = await fetchUserAddresses(userId);
+      if (addressData) {
+        const formattedAddresses: CartAddressData[] = Array.isArray(addressData)
+          ? addressData.map((addr: any) => ({
+              id: addr.id,
+              name: addr.name || "",
+              address: addr.address || "",
+              city: addr.city || "",
+              state: addr.state || "",
+              zip_code: addr.zip_code || "",
+              country: addr.country || "",
+              phone_number: addr.phone_number,
+              email: addr.email,
+            }))
+          : [
+              {
+                id: addressData.id,
+                name: addressData.name || "",
+                address: addressData.address || "",
+                city: addressData.city || "",
+                state: addressData.state || "",
+                zip_code: addressData.zip_code || "",
+                country: addressData.country || "",
+                phone_number: addressData.phone_number,
+                email: addressData.email,
+              },
+            ];
+        setAddresses(formattedAddresses);
+        if (formattedAddresses.length > 0 && !selectedAddress) {
+          setSelectedAddress(formattedAddresses[0]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load addresses:", err);
+    } finally {
+      setLoadingAddresses(false);
+    }
+  };
+
+  const handleSaveAddress = async (addressData: Omit<CartAddressData, "id">) => {
+    if (!userId) return;
+    try {
+      // Only send fields that the API expects
+      const apiData = {
+        user_id: userId,
+        name: addressData.name,
+        address: addressData.address,
+        country: addressData.country,
+        zip_code: addressData.zip_code,
+        state: addressData.state,
+        city: addressData.city,
+      };
+      const newAddress = await createUserAddress(apiData);
+      const formattedAddress: CartAddressData = {
+        id: newAddress.id,
+        ...addressData,
+      };
+      setAddresses((prev) => [...prev, formattedAddress]);
+      setSelectedAddress(formattedAddress);
+    } catch (err) {
+      console.error("Failed to save address:", err);
+      throw err;
+    }
+  };
+
+  const handleQuantityChange = useCallback(async (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      setLoadingStates((prev) => ({
+        ...prev,
+        [itemId]: { ...prev[itemId], isDecrementLoading: true },
+      }));
+      try {
+        await removeFromCart(itemId);
+      } catch (err) {
+        console.error("Failed to remove item:", err);
+      } finally {
+        setLoadingStates((prev) => {
+          const newState = { ...prev };
+          delete newState[itemId];
+          return newState;
+        });
+      }
+    } else {
+      const isIncrement = newQuantity > (cart?.items.find((item) => item.id === itemId)?.quantity || 0);
+      setLoadingStates((prev) => ({
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          isIncrementLoading: isIncrement,
+          isDecrementLoading: !isIncrement,
+        },
+      }));
+      try {
+        await updateCartItem(itemId, newQuantity);
+      } catch (err) {
+        console.error("Failed to update quantity:", err);
+      } finally {
+        setLoadingStates((prev) => ({
+          ...prev,
+          [itemId]: {
+            ...prev[itemId],
+            isIncrementLoading: false,
+            isDecrementLoading: false,
+          },
+        }));
+      }
+    }
+  }, [cart, updateCartItem, removeFromCart]);
+
+  const handleRemoveItem = useCallback(async (itemId: string) => {
+    setLoadingStates((prev) => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], isRemoveLoading: true },
+    }));
+    try {
+      await removeFromCart(itemId);
+    } catch (err) {
+      console.error("Failed to remove item:", err);
+    } finally {
+      setLoadingStates((prev) => {
+        const newState = { ...prev };
+        delete newState[itemId];
+        return newState;
+      });
+    }
+  }, [removeFromCart]);
+
+  const handleItemSelect = useCallback((itemId: string, selected: boolean) => {
+    setSelectedItems((prev) => {
+      const newSet = new Set(prev);
+      if (selected) {
+        newSet.add(itemId);
+      } else {
+        newSet.delete(itemId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback((selected: boolean) => {
+    if (selected) {
+      setSelectedItems(new Set(cart?.items.map((item) => item.id) || []));
+    } else {
+      setSelectedItems(new Set());
+    }
+  }, [cart]);
+
+  const handleCheckout = useCallback(() => {
+    router.push(ROUTES.CHECKOUT);
+  }, [router]);
+
+  const handleCountryChange = useCallback((country: string) => {
+    setSelectedCountry(country);
+  }, []);
+
+  const handleContinueShopping = useCallback(() => {
+    router.push(ROUTES.ECOMMERCE);
+  }, [router]);
+
+  // Calculate totals for all items in cart (in INR, will be converted later)
+  const calculateSelectedTotals = useCallback(() => {
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
+    }
+
+    // Calculate subtotal from ALL items in cart, ensuring all values are valid numbers
+    const subtotal = cart.items.reduce((sum, item) => {
+      const itemPrice = Number(item.total_price) || 0;
+      return sum + itemPrice;
+    }, 0);
+
+    // Ensure all calculations use valid numbers
+    const discountPercentage = Number(cart.discount_percentage) || 0;
+    const discountAmount = (subtotal * discountPercentage) / 100;
+    const deliveryFee = subtotal >= 299 ? 0 : 3.0;
+    const taxes = subtotal * 0.02; // 2% tax
+    const serviceCharge = 1.0;
+    const total = subtotal - discountAmount + deliveryFee + taxes + serviceCharge;
+
+    // Ensure no NaN values
+    return {
+      subtotal: isNaN(subtotal) ? 0 : subtotal,
+      discount: isNaN(discountAmount) ? 0 : discountAmount,
+      deliveryFee: isNaN(deliveryFee) ? 0 : deliveryFee,
+      taxes: isNaN(taxes) ? 0 : taxes,
+      serviceCharge: isNaN(serviceCharge) ? 0 : serviceCharge,
+      total: isNaN(total) ? 0 : total,
+    };
+  }, [cart]);
+
+  // Show skeleton loader while cart is loading
+  if (cartLoading) {
+    return <CartSkeletonLoader />;
+  }
+
+  // Show empty cart state
   if (!cart || cart.items.length === 0) {
     return (
-      <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
-        <AppBar position="sticky" elevation={0} sx={{ bgcolor: "white", color: "text.primary" }}>
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={() => router.back()}
-              sx={{ mr: 2 }}
-            >
-              <ArrowBack />
-            </IconButton>
-            <Typography variant="h6" fontWeight="bold" sx={{ flexGrow: 1 }} color="primary">
-              My Cart
-            </Typography>
-          </Toolbar>
-        </AppBar>
-        
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            minHeight="50vh"
-            textAlign="center"
-          >
-            <ShoppingCart sx={{ fontSize: 80, color: "text.secondary", mb: 2 }} />
-            <Typography variant="h5" color="text.secondary" gutterBottom>
-              Your cart is empty
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Add some items to get started
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={() => router.push(ROUTES.ECOMMERCE)}
-              sx={{
-                bgcolor: "#e91e63",
-                textTransform: "none",
-                px: 4,
-                py: 1.5,
-              }}
-            >
-              Start Shopping
-            </Button>
-          </Box>
-        </Container>
-      </Box>
+      <EmptyCartState
+        icon={<ShoppingCart sx={{ fontSize: 80, color: "text.secondary", mb: 2 }} />}
+        title={ecommerceData.cart.emptyCart.title}
+        description={ecommerceData.cart.emptyCart.description}
+        buttonLabel={ecommerceData.cart.emptyCart.buttonLabel}
+        onButtonClick={() => router.push(ROUTES.ECOMMERCE)}
+        buttonColor={ecommerceData.ui.colors.bottomNavCart}
+      />
     );
   }
 
-  const handleQuantityChange = (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(itemId);
-    } else {
-      updateCartItem(itemId, newQuantity);
-    }
-  };
-
-  const handleRemoveItem = (itemId: string) => {
-    removeFromCart(itemId);
-  };
-
-  const handleApplyCoupon = () => {
-    if (couponCode.trim()) {
-      setAppliedCoupon(couponCode);
-      setCouponCode("");
-    }
-  };
-
-  const handleProceedToCheckout = () => {
-    router.push(ROUTES.CHECKOUT);
-  };
-
-  const getDiscountPrice = (item: any) => {
-    return item.unit_price;
+  const totals = calculateSelectedTotals();
+  const currency = getCurrencyForCountry(selectedCountry);
+  
+  // Convert all totals to selected currency
+  const convertedTotals = {
+    subtotal: convertCurrency(totals.subtotal, selectedCountry),
+    discount: convertCurrency(totals.discount, selectedCountry),
+    deliveryFee: convertCurrency(totals.deliveryFee, selectedCountry),
+    taxes: convertCurrency(totals.taxes, selectedCountry),
+    serviceCharge: convertCurrency(totals.serviceCharge, selectedCountry),
+    total: convertCurrency(totals.total, selectedCountry),
   };
 
   return (
-    <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
-      {/* Top App Bar */}
-      <AppBar position="sticky" elevation={0} sx={{ bgcolor: "white", color: "text.primary" }}>
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={() => router.back()}
-            sx={{ mr: 2 }}
-          >
-            <ArrowBack />
-          </IconButton>
-          
-          <Typography variant="h6" fontWeight="bold" sx={{ flexGrow: 1 }} color="primary">
-            My Cart
-          </Typography>
-          
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              {itemCount} items
-            </Typography>
-          </Box>
-        </Toolbar>
-      </AppBar>
+    <Box sx={{ bgcolor: "grey.50", minHeight: "100vh" }}>
+      <CartHeader
+        title={ecommerceData.cart.title}
+        itemCount={itemCount}
+        onBackClick={() => router.back()}
+      />
 
-      {/* Navigation Tabs
-      <Box sx={{ bgcolor: "white", borderBottom: "1px solid #e0e0e0" }}>
-        <Tabs
-          value={tabValue}
-          onChange={(e, newValue) => setTabValue(newValue)}
-          variant="fullWidth"
-          sx={{
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-            },
-            "& .Mui-selected": {
-              color: "#1976d2",
-            },
-            "& .MuiTabs-indicator": {
-              backgroundColor: "#1976d2",
-            },
-          }}
-        >
-          <Tab 
-            label="Flipkart" 
-            icon={<Store />}
-            iconPosition="start"
-          />
-          <Tab 
-            label="Grocery" 
-            icon={<Home />}
-            iconPosition="start"
-          />
-          <Tab 
-            label={`Minutes (${itemCount})`} 
-            icon={<Schedule />}
-            iconPosition="start"
-            sx={{ color: "#1976d2" }}
-          />
-        </Tabs>
-      </Box> */}
-
-      {/* Delivery Banner */}
-      <Box
-        sx={{
-          bgcolor: "#d32f2f",
-          color: "white",
-          py: 1,
-          px: 2,
-          textAlign: "center",
-        }}
-      >
-        <Typography variant="body2" fontWeight="bold">
-          🚀 Quick delivery
-        </Typography>
-      </Box>
-
-      <Container maxWidth="lg" sx={{ py: 2 }}>
+      <Container maxWidth="lg" sx={{ py: 3, px: { xs: 2, sm: 3 } }}>
         <Box
           sx={{
             display: "flex",
@@ -232,333 +289,71 @@ export default function CartPage() {
             gap: 3,
           }}
         >
-          {/* Cart Items */}
+          {/* Cart Items Section */}
           <Box sx={{ flex: { md: "0 0 65%" }, width: { xs: "100%", md: "65%" } }}>
-            {/* Delivery Address */}
-            <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Deliver to: Ramu..., 600028
-                </Typography>
-                <Button size="small" variant="outlined" sx={{ textTransform: "none" }}>
-                  HOME
-                </Button>
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                kambar colony, anna nagar, chennai - 600028
-              </Typography>
-              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
-                <Button size="small" sx={{ color: "#1976d2", textTransform: "none" }}>
-                  Change
-                </Button>
-              </Box>
-            </Paper>
+            <LocationSelector 
+              borderColor={ecommerceData.ui.colors.borderColor}
+              onCountryChange={handleCountryChange}
+            />
 
-            {/* Coupons Section */}
-            {/*  <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-        
-              TODO: Uncomment this when we have coupons
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                <Typography variant="h6" fontWeight="bold">
-                  Save more with coupons
-                </Typography>
-                <Button size="small" color="primary" sx={{ textTransform: "none" }}>
-                  View all
-                </Button>
-              </Box> 
-              
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  p: 2,
-                  bgcolor: "#f5f5f5",
-                  borderRadius: 2,
-                  mb: 2,
-                }}
-              >
-                <Avatar sx={{ bgcolor: "#e91e63" }}>
-                  <Percent />
-                </Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="body2" fontWeight="bold">
-                    Flat ₹100 off
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Valid on orders above ₹349
-                  </Typography>
-                </Box>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={handleApplyCoupon}
-                  sx={{ textTransform: "none" }}
-                >
-                  Apply
-                </Button>
-              </Box>
-            </Paper>
-            */}
+            <AddressSelectionDropdown
+              addresses={addresses}
+              selectedAddress={selectedAddress}
+              onAddressSelect={setSelectedAddress}
+              onAddNewAddress={() => setAddAddressModalOpen(true)}
+              noAddressLabel={ecommerceData.cart.addressSelection.noAddressLabel}
+              addAddressLabel={ecommerceData.cart.addressSelection.addAddressLabel}
+              selectAddressLabel={ecommerceData.cart.addressSelection.selectAddressLabel}
+              borderColor={ecommerceData.ui.colors.borderColor}
+            />
 
-            {/* Cart Items */}
-            <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Cart Items ({cart.items.length})
-              </Typography>
-              
-              {cart.items.map((item) => {
-                const discountPrice = getDiscountPrice(item);
-                
-                return (
-                  <Card key={item.id} sx={{ mb: 2, borderRadius: 2 }}>
-                    <CardContent>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          gap: 2,
-                          flexDirection: { xs: "column", sm: "row" },
-                          alignItems: { xs: "flex-start", sm: "stretch" },
-                        }}
-                      >
-                        {/* Product Image */}
-                        <Box sx={{ position: "relative" }}>
-                          <CardMedia
-                            component="img"
-                            image={item.product.image_url}
-                            alt={item.product.name}
-                            sx={{
-                              borderRadius: 1,
-                              objectFit: "contain",
-                              width: { xs: 120, sm: 140, md: 160 },
-                              height: { xs: 120, sm: 140, md: 160 },
-                            }}
-                          />
-                          {item.product.discount_percentage > 0 && (
-                            <Chip
-                              label={`${item.product.discount_percentage}% off`}
-                              size="small"
-                              sx={{
-                                position: "absolute",
-                                top: -8,
-                                left: -8,
-                                bgcolor: "#4caf50",
-                                color: "white",
-                                fontSize: "0.7rem",
-                              }}
-                            />
-                          )}
-                        </Box>
+            <CartItemsList
+              items={cart.items}
+              loadingStates={loadingStates}
+              selectedItems={selectedItems}
+              onItemSelect={handleItemSelect}
+              onSelectAll={handleSelectAll}
+              onQuantityChange={handleQuantityChange}
+              onRemoveItem={handleRemoveItem}
+              title={ecommerceData.cart.cartItems.title}
+              discountBadgeColor={ecommerceData.ui.colors.discountBadge}
+              borderColor={ecommerceData.ui.colors.borderColor}
+              currencySymbol={currency.symbol}
+            />
 
-                        {/* Product Details */}
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {item.product.unit_value} {item.product.measurement?.label || ''}
-                          </Typography>
-                          <Typography variant="body1" fontWeight="bold" gutterBottom>
-                            {item.product.name}
-                          </Typography>
-                          
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                            <Typography variant="body2" fontWeight="bold" color="primary">
-                              ₹{Number(discountPrice).toFixed(0)}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ textDecoration: "line-through" }}
-                            >
-                              ₹{Number(item.product.price).toFixed(0)}
-                            </Typography>
-                            {item.product.discount_percentage > 0 && (
-                              <Chip
-                                label={`${item.product.discount_percentage}% off`}
-                                size="small"
-                                sx={{
-                                  bgcolor: "#4caf50",
-                                  color: "white",
-                                  fontSize: "0.7rem",
-                                }}
-                              />
-                            )}
-                          </Box>
-
-                          <Typography variant="caption" color="text.secondary">
-                            Or Pay ₹{Math.round(item.total_price / 2)} + ⚡ {Math.round(item.total_price / 2)}
-                          </Typography>
-                        </Box>
-
-                        {/* Quantity Controls */}
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: { xs: "row", sm: "column" },
-                            alignItems: "center",
-                            justifyContent: { xs: "space-between", sm: "flex-start" },
-                            gap: 1,
-                            width: { xs: "100%", sm: "auto" },
-                          }}
-                        >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                              sx={{ bgcolor: "#1976d2", color: "white" }}
-                            >
-                              <Remove sx={{ fontSize: 16 }} />
-                            </IconButton>
-                            <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 24, textAlign: "center" }}>
-                              {item.quantity}
-                            </Typography>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                              sx={{ bgcolor: "#1976d2", color: "white" }}
-                            >
-                              <Add sx={{ fontSize: 16 }} />
-                            </IconButton>
-                          </Box>
-                          
-                          <IconButton
-                            size="small"
-                            onClick={() => handleRemoveItem(item.id)}
-                            sx={{ color: "error.main" }}
-                          >
-                            <Delete sx={{ fontSize: 16 }} />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </Paper>
-
-            {/* Continue Shopping */}
-            <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography variant="body2" color="text.secondary">
-                  Continue Shopping
-                </Typography>
-                <IconButton onClick={() => router.push(ROUTES.ECOMMERCE)}>
-                  <Typography variant="h6">→</Typography>
-                </IconButton>
-              </Box>
-            </Paper>
-
-            {/* Payment Offers */}
-            <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Payment Offers
-              </Typography>
-              
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography variant="body2" fontWeight="bold">
-                    SBI Debit Card
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    10% Instant Discount*
-                  </Typography>
-                </Box>
-                <Typography variant="caption" color="text.secondary">
-                  Google Pay
-                </Typography>
-              </Box>
-              
-              <Typography variant="caption" color="text.secondary">
-                ₹30 Off on orders above ₹299
-              </Typography>
-            </Paper>
-
-            {/* Free Delivery Threshold */}
-            <Paper sx={{ p: 2, borderRadius: 2 }}>
-              <Typography variant="body2" color="text.secondary" textAlign="center">
-                Add items worth ₹{Math.max(0, 299 - cart.final_amount)} more for FREE delivery
-              </Typography>
-            </Paper>
+            <ContinueShoppingCard
+              label={ecommerceData.cart.continueShopping.label}
+              onClick={handleContinueShopping}
+              borderColor={ecommerceData.ui.colors.borderColor}
+            />
           </Box>
 
-          {/* Order Summary */}
+          {/* Order Summary Section */}
           <Box sx={{ flex: { md: "0 0 35%" }, width: { xs: "100%", md: "35%" } }}>
-            <Paper
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                position: { md: "sticky", xs: "static" },
-                top: { md: 20, xs: 0 },
-                minWidth: { md: 320, xs: "auto" },
-              }}
-            >
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Order Summary
-              </Typography>
-              
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="body2">Subtotal</Typography>
-                  <Typography variant="body2">₹{Number(cart.total_amount).toFixed(0)}</Typography>
-                </Box>
-                
-                {cart.discount_percentage > 0 && (
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                    <Typography variant="body2" color="success.main">
-                      Discount
-                    </Typography>
-                    <Typography variant="body2" color="success.main">
-                      -₹{Number(cart.discount_percentage).toFixed(0)}
-                    </Typography>
-                  </Box>
-                )}
-
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="body2">Delivery</Typography>
-                  <Typography variant="body2" color="success.main">
-                    FREE
-                  </Typography>
-                </Box>
-
-                <Divider sx={{ my: 1 }} />
-
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="h6" fontWeight="bold">
-                    Total
-                  </Typography>
-                  <Typography variant="h6" color="primary" fontWeight="bold">
-                    ₹{Number(cart.final_amount).toFixed(0)}
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Button
-                fullWidth
-                variant="contained"
-                size="large"
-                onClick={handleProceedToCheckout}
-                sx={{
-                  bgcolor: "linear-gradient(45deg, #ffeb3b 30%, #ff9800 90%)",
-                  color: "black",
-                  fontWeight: "bold",
-                  py: 2,
-                  borderRadius: 3,
-                  fontSize: "1.1rem",
-                  textTransform: "none",
-                  mb: 2,
-                  "&:hover": {
-                    bgcolor: "linear-gradient(45deg, #fdd835 30%, #f57c00 90%)",
-                  },
-                }}
-              >
-                Place Order
-              </Button>
-
-              <Typography variant="caption" color="text.secondary" textAlign="center" display="block">
-                View price details
-              </Typography>
-            </Paper>
+            <OrderSummaryCard
+              subtotal={convertedTotals.subtotal}
+              discount={convertedTotals.discount}
+              deliveryFee={convertedTotals.deliveryFee}
+              taxes={convertedTotals.taxes}
+              serviceCharge={convertedTotals.serviceCharge}
+              total={convertedTotals.total}
+              checkoutLabel={ecommerceData.cart.orderSummary.checkoutLabel}
+              onCheckout={handleCheckout}
+              borderColor={ecommerceData.ui.colors.borderColor}
+              currencySymbol={currency.symbol}
+            />
           </Box>
         </Box>
       </Container>
+
+      <AddAddressModal
+        open={addAddressModalOpen}
+        onClose={() => setAddAddressModalOpen(false)}
+        onSave={handleSaveAddress}
+        title="Add New Address"
+        saveLabel="Save Address"
+        cancelLabel="Cancel"
+      />
     </Box>
   );
 }

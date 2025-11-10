@@ -125,3 +125,302 @@ export interface CreateOrderRequest {
   billing_address?: string;
   notes?: string;
 }
+
+// Component Props Interfaces
+export interface EcommerceHeaderProps {
+  brandName: string;
+  locationLabel: string;
+  city: string;
+  pincode: string;
+  searchQuery: string;
+  searchPlaceholder: string;
+  onSearchChange: (value: string) => void;
+  cartItemCount: number;
+  onCartClick: () => void;
+}
+
+export interface EcommerceSearchBarProps {
+  searchQuery: string;
+  placeholder: string;
+  onSearchChange: (value: string) => void;
+}
+
+export interface EcommerceCategorySectionProps {
+  title: string;
+  categories: EcommerceCategory[];
+  selectedCategory: string | null;
+  onCategoryChange: (categoryId: string | null) => void;
+  cartItemCount: number;
+  onCartClick: () => void;
+  forYouLabel: string;
+}
+
+export interface EcommerceProductCardProps {
+  product: EcommerceProduct;
+  cartQuantity: number;
+  onProductClick: (product: EcommerceProduct) => void;
+  onAddToCart: (e: React.MouseEvent, product: EcommerceProduct) => void;
+  onDecreaseQuantity: (e: React.MouseEvent, product: EcommerceProduct) => void;
+  defaultRating: number;
+  defaultReviewCount: number;
+  outOfStockLabel: string;
+  addButtonLabel: string;
+  isAddLoading?: boolean;
+  isIncrementLoading?: boolean;
+  isDecrementLoading?: boolean;
+}
+
+export interface EcommerceProductsGridProps {
+  products: EcommerceProduct[];
+  cart: Cart | null;
+  onProductClick: (product: EcommerceProduct) => void;
+  onAddToCart: (e: React.MouseEvent, product: EcommerceProduct) => void;
+  onDecreaseQuantity: (e: React.MouseEvent, product: EcommerceProduct) => void;
+  getCartItemQuantity: (productId: string) => number;
+  getLoadingStates?: (productId: string) => { isAddLoading: boolean; isIncrementLoading: boolean; isDecrementLoading: boolean };
+  defaultRating: number;
+  defaultReviewCount: number;
+  outOfStockLabel: string;
+  addButtonLabel: string;
+}
+
+export interface TodaysDealCarouselProps {
+  products: EcommerceProduct[];
+  cart: Cart | null;
+  onProductClick: (product: EcommerceProduct) => void;
+  onAddToCart: (e: React.MouseEvent, product: EcommerceProduct) => void;
+  onDecreaseQuantity: (e: React.MouseEvent, product: EcommerceProduct) => void;
+  getCartItemQuantity: (productId: string) => number;
+  defaultRating: number;
+  defaultReviewCount: number;
+  outOfStockLabel: string;
+  addButtonLabel: string;
+}
+
+export interface EcommerceEmptyStateProps {
+  title: string;
+  description: string;
+}
+
+export interface EcommerceBottomNavigationProps {
+  cartItemCount: number;
+  cartLabel: string;
+  ordersLabel: string;
+  accountLabel: string;
+  onCartClick: () => void;
+}
+
+export interface EcommerceSkeletonLoaderProps {
+  networkError?: string;
+  refreshButtonLabel?: string;
+  onRefresh?: () => void;
+}
+
+export interface EcommerceLoadingStateProps {
+  loadingMessage: string;
+}
+
+export interface ProductDetailHeaderProps {
+  title: string;
+  cartItemCount: number;
+  onBackClick: () => void;
+  onCartClick: () => void;
+  onShareClick?: () => void;
+}
+
+export interface ProductDetailImageSectionProps {
+  product: EcommerceProduct;
+  previewProducts: EcommerceProduct[];
+  selectedProductId: string;
+  onProductSelect: (product: EcommerceProduct) => void;
+  defaultRating: number;
+  defaultReviewCount: number;
+  promotionalBannerText: string;
+  expiryLabel: string;
+  expiryDate: string;
+  starColor: string;
+  discountBadgeColor: string;
+  promotionalBannerColor: string;
+  expiryOverlayColor: string;
+  deliveryInformationLabel: string;
+  freeDeliveryText: string;
+  securePackagingText: string;
+  deliveryIconColor: string;
+}
+
+export interface ProductDetailInfoSectionProps {
+  product: EcommerceProduct;
+  cartQuantity: number;
+  isCartActionLoading: boolean;
+  isIncrementLoading?: boolean;
+  isDecrementLoading?: boolean;
+  isOutOfStock: boolean;
+  discountPrice: number;
+  originalPrice: number;
+  discountPercentage: number;
+  unitValue: number;
+  measurementLabel: string;
+  onAddToCart: () => void;
+  onGoToCart: () => void;
+  onIncrement: () => void;
+  onDecrement: () => void;
+  defaultRating: number;
+  defaultReviewCount: number;
+  selectedQuantityLabel: string;
+  deliveryInformationLabel: string;
+  freeDeliveryText: string;
+  securePackagingText: string;
+  offerTitle: string;
+  offerBuyAt: string;
+  applyOffersText: string;
+  addToCartLabel: string;
+  goToCartLabel: string;
+  addingLabel: string;
+  outOfStockLabel: string;
+  quantityButtonBorderColor: string;
+  deliveryIconColor: string;
+  discountBadgeColor: string;
+  offerBackgroundColor: string;
+  promotionalBannerColor: string;
+}
+
+export interface PromotionalCardProps {
+  title: string;
+  imageUrl: string;
+  backgroundColor: string;
+  categoryId: string;
+  onShopNow: (categoryId: string) => void;
+}
+
+export interface PromotionalCardsProps {
+  categories: EcommerceCategory[];
+  onCategoryFilter: (categoryId: string) => void;
+  selectedCategory?: string | null;
+}
+
+// Cart Page Interfaces
+export interface CartItemLoadingState {
+  isIncrementLoading: boolean;
+  isDecrementLoading: boolean;
+  isRemoveLoading: boolean;
+}
+
+export interface CartHeaderProps {
+  title: string;
+  itemCount: number;
+  onBackClick: () => void;
+}
+
+export interface DeliveryBannerProps {
+  text: string;
+  icon?: React.ReactNode;
+}
+
+export interface DeliveryAddressCardProps {
+  recipientName: string;
+  pincode: string;
+  address: string;
+  addressTypeLabel: string;
+  changeLabel: string;
+  onAddressTypeClick?: () => void;
+  onChangeClick?: () => void;
+}
+
+export interface CartItemCardProps {
+  item: CartItem;
+  loadingState: CartItemLoadingState;
+  isSelected: boolean;
+  onSelect: (itemId: string, selected: boolean) => void;
+  onQuantityChange: (itemId: string, newQuantity: number) => void;
+  onRemoveItem: (itemId: string) => void;
+  discountBadgeColor: string;
+  borderColor: string;
+  currencySymbol?: string;
+  selectedCountry?: string;
+}
+
+export interface CartItemsListProps {
+  items: CartItem[];
+  loadingStates: Record<string, CartItemLoadingState>;
+  selectedItems: Set<string>;
+  onItemSelect: (itemId: string, selected: boolean) => void;
+  onSelectAll: (selected: boolean) => void;
+  onQuantityChange: (itemId: string, newQuantity: number) => void;
+  onRemoveItem: (itemId: string) => void;
+  title: string;
+  discountBadgeColor: string;
+  borderColor: string;
+  currencySymbol?: string;
+  selectedCountry?: string;
+}
+
+export interface ContinueShoppingCardProps {
+  label: string;
+  onClick: () => void;
+  borderColor: string;
+}
+
+export interface PaymentOffer {
+  title: string;
+  description: string;
+  note?: string;
+}
+
+export interface PaymentOffersCardProps {
+  title: string;
+  offers: PaymentOffer[];
+  paymentMethod?: string;
+  borderColor: string;
+}
+
+export interface FreeDeliveryThresholdCardProps {
+  thresholdAmount: number;
+  currentAmount: number;
+  message: string;
+  borderColor: string;
+}
+
+export interface OrderSummaryCardProps {
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
+  taxes: number;
+  serviceCharge: number;
+  total: number;
+  checkoutLabel: string;
+  onCheckout: () => void;
+  borderColor: string;
+  currencySymbol?: string;
+}
+
+export interface EmptyCartStateProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  buttonLabel: string;
+  onButtonClick: () => void;
+  buttonColor: string;
+}
+
+export interface AddressSelectionProps {
+  addresses: CartAddressData[];
+  selectedAddress: CartAddressData | null;
+  onAddressSelect: (address: CartAddressData) => void;
+  onAddNewAddress: () => void;
+  noAddressLabel: string;
+  addAddressLabel: string;
+  selectAddressLabel: string;
+  borderColor: string;
+}
+
+export interface CartAddressData {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+  phone_number?: string;
+  email?: string;
+}
