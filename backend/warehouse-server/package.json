@@ -70,6 +70,7 @@
     "sql-highlight": "^6.1.0",
     "to-buffer": "^1.2.2",
     "tslib": "^2.8.1",
+    "typed-array-buffer": "^1.0.3",
     "typeorm": "^0.3.26",
     "uid": "^2.0.2"
   },
