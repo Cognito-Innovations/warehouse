@@ -1,4 +1,4 @@
-@"
 #!/bin/bash
+echo "Prebuild: Creating empty node_modules to skip npm install" >> /var/log/eb-hooks.log
 mkdir -p node_modules
-"@ | Out-File -FilePath ".platform\hooks\prebuild\prevent-npm.sh" -Encoding UTF8
+echo "Prebuild done: node_modules created (empty)" >> /var/log/eb-hooks.log
