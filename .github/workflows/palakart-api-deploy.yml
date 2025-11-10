@@ -51,17 +51,16 @@ jobs:
             cache: 'pnpm'
             node-version: 22
         - name: Install dependencies
-          run: pnpm install --frozen-lockfile
+          working-directory: backend/warehouse-server
+          run: pnpm install --prod --frozen-lockfile
         - name: Download artifact dist
           uses: actions/download-artifact@v4
           with:
             name: dist
             path: backend/warehouse-server/dist
-
         - name: Zip application
           working-directory: backend/warehouse-server
           run: zip -r ../../nodejs-app-build.zip dist package.json pnpm-lock.yaml node_modules
-
         - name: Deploy to Elastic Beanstalk
           uses: einaregilsson/beanstalk-deploy@v21
           with:
