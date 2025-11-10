@@ -52,7 +52,7 @@ jobs:
             node-version: 22
         - name: Install dependencies
           working-directory: backend/warehouse-server
-          run: pnpm install --prod --frozen-lockfile
+          run: pnpm install --frozen-lockfile
         - name: Download artifact dist
           uses: actions/download-artifact@v4
           with:
