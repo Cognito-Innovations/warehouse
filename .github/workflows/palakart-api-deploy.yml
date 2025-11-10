@@ -58,7 +58,8 @@ jobs:
             name: dist
 
         - name: Zip application
-          run: zip -r nodejs-app-build.zip .
+          working-directory: backend/warehouse-server
+          run: zip -r ../../nodejs-app-build.zip dist package.json pnpm-lock.yaml node_modules
 
         - name: Deploy to Elastic Beanstalk
           uses: einaregilsson/beanstalk-deploy@v21
