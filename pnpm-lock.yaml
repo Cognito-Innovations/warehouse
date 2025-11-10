@@ -113,6 +113,9 @@ importers:
       inherits:
         specifier: ^2.0.4
         version: 2.0.4
+      isarray:
+        specifier: ^2.0.5
+        version: 2.0.5
       iterare:
         specifier: ^1.2.1
         version: 1.2.1
