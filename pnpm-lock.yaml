@@ -89,6 +89,9 @@ importers:
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
+      call-bound:
+        specifier: ^1.0.4
+        version: 1.0.4
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
