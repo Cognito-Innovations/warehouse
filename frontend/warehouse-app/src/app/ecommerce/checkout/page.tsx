@@ -45,6 +45,7 @@ import { ecommerceService } from "../../../services/ecommerce.service";
 import { toast } from "sonner";
 import { ROUTES } from "@/utils/constants";
 import OrderSuccessPopup from "@/components/ecommerce/OrderSuccessPopup";
+import { formatDiscountPercentage } from "@/lib/utils";
 
 export default function CheckoutPage() {
   const theme = useTheme();
@@ -144,7 +145,7 @@ export default function CheckoutPage() {
       localStorage.setItem("shouldPlaceOrderAfterLogin", "true");
   
       toast.info("Please sign in to place your order");
-      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent('/ecommerce/checkout')}`);
+      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent("/ecommerce/checkout")}`);
       return;
     }
 
@@ -302,7 +303,7 @@ export default function CheckoutPage() {
                     boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                     transition: "box-shadow 0.2s ease",
                     "&:hover": { boxShadow: "0 4px 12px rgba(0,0,0,0.1)" },
-                    height: '100%'
+                    height: "100%"
                   }}
                 >
                   <CardContent sx={{ p: { xs: 2, md: 3 } }}>
@@ -351,7 +352,7 @@ export default function CheckoutPage() {
                       }}
                       helperText={
                         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ color: '#666' }}>This is where your order will be delivered</span>
+                          <span style={{ color: "#666" }}>This is where your order will be delivered</span>
                           <Chip 
                             label={`${formData.shippingAddress.length}/500`} 
                             size="small" 
@@ -374,7 +375,7 @@ export default function CheckoutPage() {
                     borderRadius: 3, 
                     border: "1px solid #e9ecef",
                     bgcolor: "grey.50",
-                    height: '100%'
+                    height: "100%"
                   }}
                 >
                   <CardContent sx={{ p: { xs: 2, md: 3 } }}>
@@ -392,9 +393,9 @@ export default function CheckoutPage() {
                         </ListItemIcon>
                         <ListItemText 
                           primary="Lightning Fast Delivery" 
-                          primaryTypographyProps={{ fontWeight: 500, color: 'text.primary' }}
+                          primaryTypographyProps={{ fontWeight: 500, color: "text.primary" }}
                           secondary="Typically within 1-2 hours in your city" 
-                          secondaryTypographyProps={{ color: 'text.secondary' }}
+                          secondaryTypographyProps={{ color: "text.secondary" }}
                         />
                       </ListItem>
                       <ListItem>
@@ -403,9 +404,9 @@ export default function CheckoutPage() {
                         </ListItemIcon>
                         <ListItemText 
                           primary="Fresh & Packed with Care" 
-                          primaryTypographyProps={{ fontWeight: 500, color: 'text.primary' }}
+                          primaryTypographyProps={{ fontWeight: 500, color: "text.primary" }}
                           secondary="All products carefully selected and packaged" 
-                          secondaryTypographyProps={{ color: 'text.secondary' }}
+                          secondaryTypographyProps={{ color: "text.secondary" }}
                         />
                       </ListItem>
                       <ListItem>
@@ -414,9 +415,9 @@ export default function CheckoutPage() {
                         </ListItemIcon>
                         <ListItemText 
                           primary="Secure Checkout" 
-                          primaryTypographyProps={{ fontWeight: 500, color: 'text.primary' }}
+                          primaryTypographyProps={{ fontWeight: 500, color: "text.primary" }}
                           secondary="Your data is protected with top encryption" 
-                          secondaryTypographyProps={{ color: 'text.secondary' }}
+                          secondaryTypographyProps={{ color: "text.secondary" }}
                         />
                       </ListItem>
                     </List>
@@ -445,7 +446,7 @@ export default function CheckoutPage() {
                   </Typography>
                 </Stack>
 
-                <Box sx={{ mb: 2, maxHeight: 300, overflow: 'auto' }}>
+                <Box sx={{ mb: 2, maxHeight: 300, overflow: "auto" }}>
                   {cart?.items.map((item) => (
                     <Box
                       key={item.id}
@@ -459,7 +460,7 @@ export default function CheckoutPage() {
                       }}
                     >
                       <Box sx={{ flex: 1, mr: 2 }}>
-                        <Typography variant="body1" fontWeight={500} sx={{ mb: 0.5, color: 'text.primary' }}>
+                        <Typography variant="body1" fontWeight={500} sx={{ mb: 0.5, color: "text.primary" }}>
                           {item.product.name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
@@ -491,10 +492,10 @@ export default function CheckoutPage() {
                     </Typography>
                   </Box>
                   
-                  {cart.discount_percentage > 0 && (
+                  {cart?.discount_percentage && cart?.discount_percentage > 0 && (
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="body1" color="success.main" fontWeight={500}>
-                        Discount ({formatDiscountPercentage(cart?.discount_percentage)})
+                        Discount ({formatDiscountPercentage(cart?.discount_percentage || 0)})
                       </Typography>
                       <Typography variant="body1" color="success.main" fontWeight={500}>
                         -₹{discountAmount?.toFixed(2)}
@@ -563,7 +564,7 @@ export default function CheckoutPage() {
                 },
                 "&:disabled": {
                   bgcolor: "grey.300",
-                  color: 'grey.500',
+                  color: "grey.500",
                   boxShadow: "none",
                   transform: "none"
                 }
