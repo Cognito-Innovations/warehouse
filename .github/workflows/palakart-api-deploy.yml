@@ -10,33 +10,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+
     build:
       runs-on: ubuntu-latest
       steps:
           - uses: actions/checkout@v4
             with:
              fetch-depth: 0
-
           - uses: pnpm/action-setup@v4
             with:
               version: 9
-
           - uses: actions/setup-node@v4
             with:
-              node-version: 22
-              cache: 'pnpm'
-
+             cache: 'pnpm'
+             node-version: 22
           - name: Install dependencies
             run: pnpm install --frozen-lockfile
-
           - name: Build
             working-directory: backend/warehouse-server
             run: pnpm run build
-
           - uses: actions/upload-artifact@v4
             with:
               name: dist
               path: backend/warehouse-server/dist
+
 
     deploy:
       needs: build
@@ -45,56 +42,23 @@ jobs:
       steps:
         - name: Checkout Source
           uses: actions/checkout@v4
-
         - uses: pnpm/action-setup@v4
           with:
             version: 9
-
         - name: Setup Node
           uses: actions/setup-node@v4
           with:
-            node-version: 22
             cache: 'pnpm'
-
+            node-version: 22
+        - name: Install dependencies
+          run: pnpm install --frozen-lockfile
         - name: Download artifact dist
           uses: actions/download-artifact@v4
           with:
             name: dist
-            path: backend/warehouse-server/dist
-
-        - name: Prepare deployment package
-          working-directory: backend/warehouse-server
-          run: |
-            mkdir -p deploy-package
-            cp -r dist deploy-package/
-            cp package.json deploy-package/
-            cp Procfile deploy-package/
-            cp ../../pnpm-lock.yaml deploy-package/ || echo "pnpm-lock.yaml not found"
-
-            cd deploy-package
-            pnpm install --prod --frozen-lockfile
-
-            # Ensure optional deps & native bindings like @css-inline are included
-            pnpm add @css-inline/css-inline-linux-x64-gnu --prod || true
-            echo "optional=true" > .npmrc
-
-            # Quick verification
-            echo "Checking native bindings..."
-            ls -la node_modules/@css-inline/ || echo "No css-inline folder found"
-
-            cd ..
 
         - name: Zip application
-          working-directory: backend/warehouse-server
-          run: |
-            cd deploy-package
-            zip -r ../nodejs-app-build.zip . -x "*.git*" "*.DS_Store" "*.log" "*.map"
-
-        - name: Check zip contents
-          working-directory: backend/warehouse-server
-          run: |
-            ls -lh nodejs-app-build.zip
-            unzip -l nodejs-app-build.zip | grep -i "css-inline" || echo "No css-inline in zip"
+          run: zip -r nodejs-app-build.zip .
 
         - name: Deploy to Elastic Beanstalk
           uses: einaregilsson/beanstalk-deploy@v21
@@ -105,5 +69,5 @@ jobs:
             environment_name: 'Palakart-api-env'
             region: ap-south-1
             version_label: "deploy-${{ github.run_id }}"
-            deployment_package: backend/warehouse-server/nodejs-app-build.zip
+            deployment_package: nodejs-app-build.zip
             use_existing_version_if_available: true
