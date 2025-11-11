@@ -50,18 +50,44 @@ jobs:
           with:
             cache: 'pnpm'
             node-version: 22
-        - name: Install dependencies
-          run: pnpm install --frozen-lockfile
+        
         - name: Download artifact dist
           uses: actions/download-artifact@v4
           with:
             name: dist
             path: backend/warehouse-server/dist
-
+        
+        - name: Prepare deployment package
+          working-directory: backend/warehouse-server
+          run: |
+            # Create deployment directory
+            mkdir -p deploy-package
+            
+            # Copy necessary files for deployment
+            cp -r dist deploy-package/
+            cp package.json deploy-package/
+            cp Procfile deploy-package/
+            
+            # Install production dependencies directly in deploy package
+            # Using npm for better EB compatibility (EB runs npm install by default)
+            # This ensures a clean, standalone package without workspace complexity
+            # Note: --no-optional is removed to ensure native bindings (like @css-inline/css-inline-linux-x64-gnu) are installed
+            cd deploy-package
+            pnpm install --production
+            cd ..
+        
         - name: Zip application
           working-directory: backend/warehouse-server
-          run: zip -r nodejs-app-build.zip .
-
+          run: |
+            cd deploy-package
+            zip -r ../nodejs-app-build.zip . -x "*.git*" "*.DS_Store" "*.log" "*.map"
+        
+        - name: Check zip size
+          working-directory: backend/warehouse-server
+          run: |
+            ls -lh nodejs-app-build.zip
+            echo "Zip file size check complete"
+        
         - name: Deploy to Elastic Beanstalk
           uses: einaregilsson/beanstalk-deploy@v21
           with:
