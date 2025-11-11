@@ -3,6 +3,7 @@ import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from 
 
 import { createProduct, getCategories, getCountries, getMeasurements, getSubCategories } from "../../services/api.services";
 import type { Country, ProductPayload } from "../../types";
+import { statusOptions } from "../../utils/constants";
 
 export interface Category { id: string; name: string; }
 interface SubCategoryItem { id: string; name: string; category: { id: string }; }
@@ -12,11 +13,6 @@ interface ProductFormProps {
   onClose: () => void;
   onSuccess?: () => void;
 }
-
-const statusOptions = [
-  { label: "Active", value: true },
-  { label: "Inactive", value: false },
-];
 
 const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -83,6 +79,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCountryDelete = (countryId: string) => {
+    handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
   };
 
   const handleSubmit = async () => {
@@ -247,20 +247,54 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
           disabled={fetching}
           SelectProps={{
             multiple: true,
-            renderValue: (selected) => (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {(selected as string[]).map((value) => {
-                  const countryName = countries.find(c => c.id === value)?.name || value;
-                  return <Chip key={value} label={countryName} />;
-                })}
-              </Box>
-            ),
+            renderValue: (selected) => {
+              const selectedIds = selected as string[];
+
+              if (fetching && selectedIds.length > 0) {
+                return (
+                  <Box sx={{ display: 'flex', alignItems: 'center', height: '24px', pl: 1 }}>
+                    <CircularProgress size={20} />
+                  </Box>
+                );
+              }
+
+              return (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selectedIds.map((value) => {
+                    const countryName = countries.find(c => c.id === value)?.name || value;
+                    return (
+                      <Chip
+                        key={value}
+                        label={countryName}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onDelete={(e) => {
+                         e.stopPropagation();
+                         handleCountryDelete(value);
+                        }}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    );
+                  })}
+                </Box>
+              );
+            },
           }}
         >
-          {countries.map((c) => (
-            <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-          ))}
+          {fetching ? (
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            countries.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+              </MenuItem>
+            ))
+          )}
         </TextField>
+        
         <TextField
           label="Stock Quantity"
           value={formData.stock_quantity}

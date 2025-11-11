@@ -2,7 +2,6 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -10,7 +9,6 @@ import {
   IsUUID,
   Min,
 } from 'class-validator';
-import { CargoType } from 'src/ecommerce/entities/ecommerce-category.entity';
 
 export class CreateCategoryDto {
   @IsString()
@@ -35,9 +33,9 @@ export class CreateCategoryDto {
   @IsOptional()
   image_url: string;
 
-  @IsEnum(CargoType)
+  @IsUUID()
   @IsNotEmpty()
-  cargo_type: CargoType;
+  cargo_option_id: string;
 
   @IsString()
   @IsOptional()

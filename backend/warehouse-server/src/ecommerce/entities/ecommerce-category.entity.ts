@@ -3,20 +3,16 @@ import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import {
   Column,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { EcommerceSubCategory } from './ecommerce-sub-category.entity';
 import { EcommerceProduct } from './ecommerce-product.entity';
-
-export enum CargoType {
-  PERISHABLE_GOODS = 'Perishable goods',
-  ANIMAL_CARGO = 'Animal cargo',
-  GENERAL_COURIER = 'General courier',
-  GENERAL_CARGO = 'General cargo',
-}
+import { EcommerceCargoOption } from './cargo-options.entity';
 
 @Entity('ecommerce_categories')
 export class EcommerceCategory extends BaseTimestampEntity {
@@ -55,8 +51,9 @@ export class EcommerceCategory extends BaseTimestampEntity {
   @Column({ default: true })
   is_active: boolean;
 
-  @Column({ type: 'enum', enum: CargoType })
-  cargo_type: CargoType;
+  @ManyToOne(() => EcommerceCargoOption, { eager: true, nullable: false })
+  @JoinColumn({ name: 'cargo_option_id' })
+  cargo_option: EcommerceCargoOption;
 
   @OneToMany(() => EcommerceSubCategory, (subCategory) => subCategory.category)
   sub_categories: EcommerceSubCategory[];

@@ -6,8 +6,7 @@ import { Box, Container, Alert, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/utils/constants";
 import { ecommerceData } from "@/data/ecommerceData";
-import { EcommerceProduct, UserAddress } from "@/types/ecommerce";
-import { useUserLocation } from "@/hooks/useUserLocation";
+import { EcommerceProduct } from "@/types/ecommerce";
 import { useAuth } from "@/contexts/AuthContext";
 import EcommerceHeader from "@/components/ecommerce/EcommerceHeader";
 import PromotionalCards from "@/components/ecommerce/PromotionalCards";
@@ -17,12 +16,18 @@ import EcommerceCategorySection from "@/components/ecommerce/EcommerceCategorySe
 import EcommerceBottomNavigation from "@/components/ecommerce/EcommerceBottomNavigation";
 import CategoryProductsByCategory from "@/components/ecommerce/CategoryProductsByCategory";
 import { useProducts, useCart, useCartActions, useProductActions } from "../../store/ecommerceStore";
-import { createUserAddress, fetchUserAddresses } from "@/lib/api.service";
+import { createUserAddress } from "@/lib/api.service";
 import AddAddressModal from "@/components/ecommerce/cart/AddAddressModal";
+import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 
 export default function Ecommerce() {
   const router = useRouter();
   const { user } = useAuth();
+  const locationData = useEffectiveUserLocation({
+    country: 'India',
+    city: 'Mumbai',
+    pincode: '400001',
+  });
   const {
     products,
     categories,
@@ -42,21 +47,9 @@ export default function Ecommerce() {
     isDecrementLoading: boolean;
   }>>({});
 
-  const [address, setAddress] = useState<UserAddress | null>(null);
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchUserAddresses(user.id)
-        .then(setAddress)
-        .catch((err) => {
-          console.error("Failed to fetch addresses:", err);
-          setAddress(null);
-        });
-    } else {
-      setAddress(null);
-    }
-  }, [user?.id]);
+  const hasInitialized = React.useRef(false);
+  const country = locationData.location.country;
 
   const handleSaveAddress = async (addressData: any) => {
     if (!user?.id) return;
@@ -66,8 +59,7 @@ export default function Ecommerce() {
         ...addressData,
       }
       await createUserAddress(apiData);
-      const updatedAddresses = await fetchUserAddresses(user.id);
-      setAddress(updatedAddresses);
+      await locationData.refreshAddresses();
     } catch (err) {
       console.error("Failed to save address:", err);
     } finally {
@@ -75,25 +67,33 @@ export default function Ecommerce() {
     }
   };
 
-  const initializeEcommerceData = useCallback(async () => {
+  const initializeEcommerceData = useCallback(async (country?: string) => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     await Promise.all([
       fetchCategories().catch((err) => console.error("Categories fetch failed:", err)),
-      fetchProducts().catch((err) => console.error("Products fetch failed:", err)),
+      fetchProducts(country).catch((err) => console.error("Products fetch failed:", err)),
       fetchCart().catch((err) => console.error("Cart fetch failed:", err)),
     ]);
-  }, [fetchCategories, fetchProducts, fetchCart]);
+
+    setLoading(false);
+  }, [fetchCategories, fetchProducts, fetchCart, setLoading]);
 
   useEffect(() => {
-    initializeEcommerceData().finally(() => {
-      setLoading(false);
-    });
-  }, [initializeEcommerceData, setLoading]);
+    if (country === undefined) {
+      return;
+    }
+
+    initializeEcommerceData(country);
+
+  }, [country, initializeEcommerceData]);
 
   let locationText: string | null = null;
   let onLocationClick: (() => void) | null = null;
   let locationButtonText: string | null = null;
 
-  if (!user) {  
+  if (!locationData.isLoggedIn) {  
     // Not logged in: Show Login button
     locationButtonText = "Login";
     onLocationClick = () => {
@@ -102,20 +102,20 @@ export default function Ecommerce() {
       router.push(`/sign-in?callbackUrl=${callback}`);
     };
   } else {
-  // Logged in: (has city & zip_code)
-  const validDefaultAddress = (address && address.city && address.zip_code)
-    ? address
-    : null; 
+    // Logged in: (has city & zip_code)
+    const validDefaultAddress = (locationData.address && locationData.address.city && locationData.address.zip_code)
+        ? locationData.address
+        : null;
 
-  if (validDefaultAddress) {
-    // Has valid address: Show default
-    locationText = `${validDefaultAddress.city}, ${validDefaultAddress.zip_code}`;
-  } else {
-    // No valid address found: Show Add Address
-    locationButtonText = "Add Address";
-    onLocationClick = () => setShowAddAddressModal(true);
+    if (validDefaultAddress) {
+      // Has valid address: Show default
+      locationText = `${validDefaultAddress.city}, ${validDefaultAddress.zip_code}`;
+    } else {
+      // No valid address found: Show Add Address
+      locationButtonText = "Add Address";
+      onLocationClick = () => setShowAddAddressModal(true);
+    }
   }
-}
 
   const handleCategoryChange = (categoryId: string | null) => {
     setSelectedCategory(categoryId);
@@ -276,11 +276,9 @@ export default function Ecommerce() {
   const suggestedProducts = selectedCategory ? inStockFilteredProducts.slice(5, 10) : getProductsFromDifferentCategories(inStockFilteredProducts, 5);
 
   const handleRefresh = () => {
-    setLoading(true);
     setError(null);
-    initializeEcommerceData().finally(() => {
-      setLoading(false);
-    });
+    hasInitialized.current = false;
+    initializeEcommerceData(locationData.location.country);
   };
 
   const isNetworkError = error && (error.includes("Network Error") || error.includes("Failed to fetch") || error.includes("ECONNREFUSED") || error.includes("timeout"));

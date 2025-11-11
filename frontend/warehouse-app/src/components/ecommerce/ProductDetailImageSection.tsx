@@ -32,7 +32,7 @@ export default function ProductDetailImageSection({
               key={previewProduct.id}
               sx={{
                 width: 80,
-                minHeight: 100,
+                height: 100, 
                 borderRadius: 1,
                 overflow: "hidden",
                 cursor: "pointer",
@@ -43,6 +43,7 @@ export default function ProductDetailImageSection({
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                justifyContent: "flex-start",
                 p: 0.5,
                 bgcolor:
                   selectedProductId === previewProduct.id
@@ -51,20 +52,44 @@ export default function ProductDetailImageSection({
               }}
               onClick={() => onProductSelect(previewProduct)}
             >
-              <CardMedia
-                component="img"
-                height={50}
-                image={previewProduct.image_url}
-                alt={previewProduct.name}
-                sx={{ objectFit: "cover", borderRadius: 1, mb: 0.5, width: "100%" }}
-              />
+              <Box
+                sx={{
+                  width: "100%",
+                  height: 50,
+                  borderRadius: 1,
+                  mb: 0.5,
+                  overflow: "hidden",
+                  bgcolor: "grey.100",
+                }}
+              >
+                {previewProduct.image_url && (
+                  <CardMedia
+                    component="img"
+                    image={previewProduct.image_url}
+                    alt={previewProduct.name}
+                    sx={{ 
+                      objectFit: "cover", 
+                      width: "100%", 
+                      height: "100%" 
+                    }}
+                    onError={(e: any) => { e.target.style.display = 'none'; }}
+                  />
+                )}
+              </Box>
+              
               <Typography
                 variant="caption"
                 sx={{
                   textAlign: "center",
-                  lineHeight: 1.1,
+                  lineHeight: 1.2,
                   maxWidth: "100%",
                   fontWeight: selectedProductId === previewProduct.id ? "bold" : "normal",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  minHeight: 28,
                 }}
               >
                 {previewProduct.name}

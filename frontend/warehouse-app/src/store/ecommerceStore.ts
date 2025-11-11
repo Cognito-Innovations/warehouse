@@ -65,7 +65,7 @@ interface ProductActions {
   setError: (error: string | null) => void;
   filterProducts: () => void;
   fetchCategories: () => Promise<void>;
-  fetchProducts: () => Promise<void>;
+  fetchProducts: (country?: string) => Promise<void>;
 }
 
 // Cart Store State
@@ -217,9 +217,9 @@ export const useEcommerceStore = create<EcommerceStore>()(
           });
         }
       },
-      fetchProducts: async () => {
+      fetchProducts: async (country?: string) => {
         try {
-          const products = await ecommerceService.getProducts();
+          const products = await ecommerceService.getProducts(country);
           set({ products, filteredProducts: products });
           const token = getAuthToken();
           if (!token) {

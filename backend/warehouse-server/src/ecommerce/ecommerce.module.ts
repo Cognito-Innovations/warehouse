@@ -23,6 +23,10 @@ import { MeasurementService } from './services/measurement.service';
 import { Country } from 'src/Countries/country.entity';
 import { SeedController } from './seed/seed.controller';
 import { SeedService } from './seed/seed.service';
+import { EcommerceCargoOption } from './entities/cargo-options.entity';
+import { CargoOptionsController } from './controllers/cargoOptions.controller';
+import { CargoOptionsService } from './services/cargo-options.service';
+import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 
 @Module({
   imports: [
@@ -37,7 +41,9 @@ import { SeedService } from './seed/seed.service';
       EcommerceMeasurement,
       EcommerceCartItem,
       Country,
+      EcommerceCargoOption,
     ]),
+    UserPreferencesModule,
   ],
   controllers: [
     CategoriesController,
@@ -47,6 +53,7 @@ import { SeedService } from './seed/seed.service';
     OrderController,
     MeasurementController,
     SeedController,
+    CargoOptionsController,
   ],
   providers: [
     CategoriesService,
@@ -56,6 +63,7 @@ import { SeedService } from './seed/seed.service';
     OrderService,
     MeasurementService,
     SeedService,
+    CargoOptionsService,
   ],
 })
 export class EcommerceModule {}

@@ -68,6 +68,7 @@ export default function ProductDetailTabs({ product }: ProductDetailTabsProps) {
           }}
           variant="scrollable"
           scrollButtons="auto"
+          allowScrollButtonsMobile
         >
           <Tab label="Description" />
           <Tab label="Specifications" />

@@ -430,4 +430,5 @@ export interface UserAddress {
   id: string;
   city: string;
   zip_code: string;
+  country: string;
 }

@@ -4,12 +4,15 @@ import { UserPreference } from './user-preference.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
+import { Currency } from '../currencies/currency.entity';
 
 @Injectable()
 export class UserPreferencesService {
   constructor(
     @InjectRepository(UserPreference)
     private readonly userPreferenceRepository: Repository<UserPreference>,
+    @InjectRepository(Currency)
+    private readonly currencyRepository: Repository<Currency>,
   ) {}
 
   async create(createUserPreferenceDto: CreateUserPreferenceDto) {
@@ -75,6 +78,28 @@ export class UserPreferencesService {
       return convertedPrice;
     }
     return price;
+  }
+
+  async getFormattedConvertedPriceByCountry(
+    countryName: string,
+    price: number,
+  ) {
+    if (!countryName || !price) return String(price);
+
+    const currency = await this.currencyRepository.findOne({
+      where: { country: { name: countryName } },
+      relations: ['country'],
+    });
+
+    if (!currency) return String(price);
+
+    const currency_symbol = currency.currency_symbol;
+    const rate = Number(currency.rate);
+
+    if (!rate || !currency_symbol) return String(price);
+
+    const convertedPrice = Number(price) * rate;
+    return `${convertedPrice.toFixed(2)} ${currency_symbol}`
   }
 
   async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {
