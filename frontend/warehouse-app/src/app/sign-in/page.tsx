@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Box, CircularProgress } from "@mui/material";
 import SignInForm from "../../components/SignIn/SignInForm";
 import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "@/utils/constants";
 
-export default function Page() {
+function SignInContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -78,5 +78,19 @@ export default function Page() {
         }}
       />
     </Box>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
+          <CircularProgress />
+        </Box>
+      }
+    >
+      <SignInContent />
+    </Suspense>
   );
 }
