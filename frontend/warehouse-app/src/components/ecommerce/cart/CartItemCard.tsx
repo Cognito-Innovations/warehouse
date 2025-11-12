@@ -5,7 +5,8 @@ import { Box, Typography, IconButton, CircularProgress, Checkbox, Chip, Stack, D
 import { Add, Remove, Delete, LocationOn, Inventory } from "@mui/icons-material";
 import { CartItemCardProps } from "@/types/ecommerce";
 import { formatDiscountPercentage } from "@/lib/utils";
-import { getUserCountry, getCurrencyForCountry, convertCurrency } from "@/utils/currency";
+import { getCurrencyForCountry } from "@/utils/currency";
+import { parsePrice, formatPrice } from "@/utils/priceUtils";
 
 export default function CartItemCard({
   item,
@@ -19,10 +20,10 @@ export default function CartItemCard({
   currencySymbol,
   selectedCountry,
 }: CartItemCardProps) {
-  const unitPrice = item.unit_price;
-  const originalPrice = item.product.price;
-  const totalPrice = unitPrice * item.quantity;
-  const originalTotalPrice = originalPrice * item.quantity;
+  const unitPrice = Number(item.unit_price) || 0;
+  const totalPrice = (item.quantity || 0) * unitPrice;
+  const parsedOriginal = parsePrice(item.product.price || '0');
+  const originalPrice = parsedOriginal.raw;
   const hasDiscount = item.product.discount_percentage > 0;
   const unitValue = item.product.unit_value || 0;
   const measurementLabel = item.product.measurement?.label || "";
@@ -32,26 +33,11 @@ export default function CartItemCard({
       ? `Only ${item.product.stock_quantity} left`
       : "In Stock"
     : "Out of Stock";
-  // Use selectedCountry if provided, otherwise fall back to getUserCountry()
-  const currentCountry = selectedCountry || getUserCountry();
+  const currentCountry = selectedCountry || 'United States of America';
   const currencyInfo = getCurrencyForCountry(currentCountry);
-  const currency = currencySymbol 
-    ? { symbol: currencySymbol, exchangeRate: currencyInfo.exchangeRate } 
-    : currencyInfo;
-  
-  // Convert prices from INR to selected currency
-  const convertedUnitPrice = convertCurrency(unitPrice, currentCountry);
-  const convertedOriginalPrice = convertCurrency(originalPrice, currentCountry);
-  const convertedTotalPrice = convertCurrency(totalPrice, currentCountry);
-  
-  // Format numbers based on exchange rate
-  const formatPrice = (price: number) => {
-    if (currency.exchangeRate > 10) {
-      return Math.round(price).toString();
-    }
-    return price.toFixed(2);
-  };
+  const currencyStr = currencySymbol || currencyInfo.symbol || parsedOriginal.currency;
 
+  const formatLocalPrice = (price: number) => formatPrice(price, currencyStr);
   return (
     <Box
       sx={{
@@ -351,7 +337,7 @@ export default function CartItemCard({
                   mb: 0.25,
                 }}
               >
-                {currency.symbol}{formatPrice(convertedOriginalPrice)}/unit
+                {formatLocalPrice(originalPrice)}/unit
               </Typography>
             )}
 
@@ -366,7 +352,7 @@ export default function CartItemCard({
                 mb: 0.5,
               }}
             >
-              {currency.symbol}{formatPrice(convertedUnitPrice)}/unit
+              {formatLocalPrice(unitPrice)}/unit
             </Typography>
 
             {/* Calculation: Quantity × Unit Price = Total */}
@@ -379,7 +365,7 @@ export default function CartItemCard({
                 display: "block",
               }}
             >
-              {item.quantity} × {currency.symbol}{formatPrice(convertedUnitPrice)} = <Box component="span" sx={{ color: "primary.main", fontWeight: 600 }}>{currency.symbol}{formatPrice(convertedTotalPrice)}</Box>
+              {item.quantity} × {formatLocalPrice(unitPrice)} = <Box component="span" sx={{ color: "primary.main", fontWeight: 600 }}>{formatLocalPrice(totalPrice)}</Box>
             </Typography>
           </Box>
         </Box>

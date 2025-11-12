@@ -1,71 +1,51 @@
 "use client";
 
 import React from "react";
-import {
-  Box,
-  Paper,
-  Typography,
-  Button,
-  IconButton,
-  CircularProgress,
-  Divider,
-  Stack,
-  Collapse,
-} from "@mui/material";
-import {
-  Add,
-  Remove,
-  Star,
-  StarBorder,
-  ExpandMore,
-  ExpandLess,
-} from "@mui/icons-material";
-import { ProductDetailInfoSectionProps } from "@/types/ecommerce";
-import { ecommerceData } from "@/data/ecommerceData";
-import { formatDiscountPercentage } from "@/lib/utils";
-import ProductDetailTabs from "./ProductDetailTabs";
+import { Box, Paper, Typography, Button, Divider, Stack, Collapse } from "@mui/material";
+import { Star, StarBorder, ExpandMore, ExpandLess } from "@mui/icons-material";
+
+import ProductCartActions from "./ProductCartActions";
+import ProductDetailTabs from "./ProductDetailTabs"; 
 import OfferCard from "./OfferCard";
+import { formatDiscountPercentage } from "@/lib/utils";
+import { calculateDiscountedPrice, formatPrice, parsePrice } from "@/utils/priceUtils";
+import { ecommerceData } from "@/data/ecommerceData";
+import { ProductDetailInfoSectionProps } from "@/types/ecommerce";
 
 export default function ProductDetailInfoSection({
   product,
-  cartQuantity,
-  isCartActionLoading,
-  isIncrementLoading = false,
-  isDecrementLoading = false,
-  isOutOfStock,
-  discountPrice,
-  originalPrice,
-  discountPercentage,
-  unitValue,
-  measurementLabel,
-  onAddToCart,
-  onGoToCart,
-  onIncrement,
-  onDecrement,
-  defaultRating,
-  defaultReviewCount,
-  selectedQuantityLabel,
-  addToCartLabel,
-  goToCartLabel,
-  addingLabel,
-  outOfStockLabel,
-  quantityButtonBorderColor,
-  offerTitle,
-  offerBuyAt,
-  applyOffersText,
-  offerBackgroundColor,
+  cart,
+  addToCart,
+  updateCartItem,
+  removeFromCart,
 }: ProductDetailInfoSectionProps) {
   const [offersExpanded, setOffersExpanded] = React.useState(false);
 
-  const pricePerUnit = unitValue > 0 ? discountPrice : "0.00";
-  const savingsAmount = originalPrice - discountPrice;
-  const stockQuantity = product.stock_quantity || 0;
+  const parsedOriginal = parsePrice(product.price);
+  const currency = parsedOriginal.currency;
+  const rawPrice = parsedOriginal.raw;
+  const discountPercentage = parseFloat(String(product.discount_percentage || "0"));
+  const discountPriceRaw = calculateDiscountedPrice(rawPrice, discountPercentage);
+  const formattedDiscountPrice = formatPrice(discountPriceRaw, currency);
+  const formattedOriginalPrice = parsedOriginal.formatted;
+  const savingsAmount = rawPrice - discountPriceRaw;
+  const formattedSavings = savingsAmount > 0 ? formatPrice(savingsAmount, currency) : '';
+
+  const unitValue = parseFloat(String(product.unit_value || "0"));
+  const pricePerUnitRaw = unitValue > 0 ? discountPriceRaw / unitValue : discountPriceRaw;
+  const formattedPricePerUnit = formatPrice(pricePerUnitRaw, currency);
+  const measurementLabel = product.measurement?.label || "";
+  const stockQuantity = product.stock_quantity;
+  const isOutOfStock = stockQuantity === 0;
+
   const stockStatus = isOutOfStock ? "Out of Stock" : stockQuantity < 10 ? `Only ${stockQuantity} left!` : "In Stock";
   
-  const offers = [];
-  if (offerTitle && offerBuyAt) {
-    offers.push({ title: offerTitle, description: offerBuyAt });
-  }
+  const offers = [
+    {
+      title: "WOW! DEAL",
+      description: "Buy at ₹18"
+    }
+  ];
 
   return (
     <Box sx={{ flex: { xs: "1 1 100%", lg: "1 1 50%" } }}>
@@ -134,7 +114,7 @@ export default function ProductDetailInfoSection({
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             {[...Array(5)].map((_, i) => {
               const starValue = i + 1;
-              const filled = starValue <= Math.floor(defaultRating);
+              const filled = starValue <= Math.floor(4.1);
 
               return filled ? (
                 <Star
@@ -156,10 +136,10 @@ export default function ProductDetailInfoSection({
             })}
           </Box>
           <Typography variant="body2" fontWeight={600} color="text.primary">
-            {defaultRating}
+            4.1
           </Typography>
           <Typography variant="body2" color="text.primary" fontWeight={400}>
-            ({defaultReviewCount} Reviews)
+            32 Reviews
           </Typography>
         </Box>
 
@@ -187,7 +167,7 @@ export default function ProductDetailInfoSection({
               mb: 1,
             }}
           >
-            ₹{discountPrice.toFixed(2)}
+            {formattedDiscountPrice}
           </Typography>
           {discountPercentage > 0 && (
             <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
@@ -200,9 +180,9 @@ export default function ProductDetailInfoSection({
                   fontWeight: 400,
                 }}
               >
-                ₹{originalPrice.toFixed(2)}
+                {formattedOriginalPrice}
               </Typography>
-              {savingsAmount > 0 && (
+              {formattedSavings && (
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -211,7 +191,7 @@ export default function ProductDetailInfoSection({
                     fontWeight: 400,
                   }}
                 >
-                  Save ₹{savingsAmount.toFixed(2)}
+                  Save {formattedSavings}
                 </Typography>
               )}
             </Stack>
@@ -231,7 +211,7 @@ export default function ProductDetailInfoSection({
             gutterBottom
             sx={{ mb: 1.5 }}
           >
-            {selectedQuantityLabel}
+            Selected Quantity:
           </Typography>
           <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
             <Button
@@ -241,141 +221,37 @@ export default function ProductDetailInfoSection({
                 px: 3,
                 py: 1,
                 borderWidth: 1,
-                borderColor: quantityButtonBorderColor,
-                color: quantityButtonBorderColor,
+                borderColor: "#e91e63",
+                color: "#e91e63",
                 fontWeight: 500,
                 fontSize: "0.9rem",
                 textTransform: "none",
                 bgcolor: "transparent",
                 "&:hover": {
                   borderWidth: 1,
-                  borderColor: quantityButtonBorderColor,
+                  borderColor: "#e91e63",
                   bgcolor: "transparent",
                 },
               }}
             >
-              {unitValue} {measurementLabel}
+              {product.unit_value} {measurementLabel}
             </Button>
             <Typography
               variant="body2"
               color="text.primary"
               sx={{ fontWeight: 400 }}
             >
-              (₹{pricePerUnit}/kg)
+              ({formattedPricePerUnit}/{measurementLabel})
             </Typography>
           </Stack>
         </Box>
-
-        {/* Quantity Controls - Show above Add to Cart when item is in cart */}
-        {cartQuantity > 0 && (
-          <Box sx={{ mb: 2 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                mb: 2,
-              }}
-            >
-              <IconButton
-                onClick={onDecrement}
-                disabled={cartQuantity <= 0 || isDecrementLoading}
-                sx={{
-                  border: "1px solid",
-                  borderColor: cartQuantity <= 0 || isDecrementLoading ? "action.disabled" : "primary.main",
-                  bgcolor: "action.hover",
-                  color: cartQuantity <= 0 || isDecrementLoading ? "action.disabled" : "primary.main",
-                  width: 40,
-                  height: 40,
-                  position: "relative",
-                  "&:hover:not(:disabled)": {
-                    bgcolor: "action.hover",
-                    borderColor: "primary.main",
-                  },
-                  "&:disabled": {
-                    borderColor: "action.disabled",
-                    color: "action.disabled",
-                    bgcolor: "action.hover",
-                    cursor: "not-allowed",
-                  },
-                }}
-              >
-                {isDecrementLoading ? (
-                  <CircularProgress 
-                    size={20} 
-                    sx={{ 
-                      color: "primary.main",
-                      position: "absolute",
-                    }} 
-                  />
-                ) : (
-                  <Remove />
-                )}
-              </IconButton>
-              <Typography
-                variant="h6"
-                fontWeight={700}
-                sx={{
-                  minWidth: 40,
-                  textAlign: "center",
-                  color: "text.primary"
-                }}
-              >
-                {cartQuantity}
-              </Typography>
-              <IconButton
-                onClick={onIncrement}
-                disabled={isOutOfStock || cartQuantity >= stockQuantity || isIncrementLoading}
-                sx={{
-                  border: "1px solid",
-                  borderColor: "action.disabled",
-                  bgcolor: "action.hover",
-                  color: cartQuantity >= stockQuantity || isIncrementLoading ? "action.disabled" : "primary.main",
-                  width: 40,
-                  height: 40,
-                  position: "relative",
-                  "&:hover:not(:disabled)": {
-                    bgcolor: "action.hover",
-                    borderColor: "action.disabled",
-                  },
-                  "&:disabled": {
-                    borderColor: "action.disabled",
-                    color: "action.disabled",
-                    bgcolor: "action.hover",
-                    cursor: "not-allowed",
-                  },
-                }}
-              >
-                {isIncrementLoading ? (
-                  <CircularProgress 
-                    size={20} 
-                    sx={{ 
-                      color: "primary.main",
-                      position: "absolute",
-                    }} 
-                  />
-                ) : (
-                  <Add />
-                )}
-              </IconButton>
-              <Box sx={{ ml: "auto", textAlign: "right" }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
-                  Subtotal
-                </Typography>
-                <Typography variant="h6" fontWeight={700} color="text.primary">
-                  ₹{(cartQuantity * discountPrice).toFixed(2)}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        )}
 
         {/* Offers Section */}
         <Box sx={{ mb: 2 }}>
           {offers.length > 0 && (
             <OfferCard
               offer={offers[0]}
-              backgroundColor={offerBackgroundColor}
+              backgroundColor="#ffebee"
             />
           )}
 
@@ -401,7 +277,7 @@ export default function ProductDetailInfoSection({
                 }}
               >
                 <Typography variant="body1" fontWeight={600}>
-                  {applyOffersText}
+                  Apply offers for maximum savings!
                 </Typography>
               </Button>
               <Collapse in={offersExpanded}>
@@ -410,7 +286,7 @@ export default function ProductDetailInfoSection({
                     <OfferCard
                       key={index}
                       offer={offer as { title: string, description: string }}
-                      backgroundColor={offerBackgroundColor}
+                      backgroundColor="#ffebee"
                     />
                   ))}
                 </Stack>
@@ -419,45 +295,15 @@ export default function ProductDetailInfoSection({
           )}
         </Box>
 
-        {/* Add to Cart / Go to Cart Button */}
-        <Box sx={{ mb: 3 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            size="large"
-            onClick={cartQuantity > 0 ? onGoToCart : onAddToCart}
-            disabled={isOutOfStock || isCartActionLoading || isIncrementLoading || isDecrementLoading}
-            startIcon={
-              isCartActionLoading ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : null
-            }
-            sx={{
-              py: 1.5,
-              borderRadius: 2,
-              fontWeight: 700,
-              fontSize: "0.95rem",
-              textTransform: "none",
-              boxShadow: 2,
-              "&:hover": {
-                boxShadow: 4,
-              },
-              "&:disabled": {
-                bgcolor: "action.disabledBackground",
-                color: "action.disabled",
-              },
-            }}
-          >
-            {isCartActionLoading
-              ? addingLabel
-              : isOutOfStock
-                ? outOfStockLabel
-                : cartQuantity > 0
-                  ? goToCartLabel
-                  : addToCartLabel}
-          </Button>
-        </Box>
+        <ProductCartActions
+          product={product}
+          cart={cart}
+          discountPriceRaw={discountPriceRaw}
+          currency={currency}
+          addToCart={addToCart}
+          updateCartItem={updateCartItem}
+          removeFromCart={removeFromCart}
+        />
       </Paper>
     </Box>
   );

@@ -454,6 +454,19 @@ export const getProducts = async () => {
   return response.data;
 };
 
+export const updateEcommerceProduct = async (
+  id: string,
+  data: Partial<ProductPayload>
+) => {
+  const response = await api.patch(`/ecommerce-products/${id}`, data);
+  return response.data;
+};
+
+export const deleteProduct = async (id: string) => {
+  const response = await api.delete(`/ecommerce-products/${id}`);
+  return response.data;
+};
+
 // Measurements
 export const getMeasurements = async () => {
   const response = await api.get("/ecommerce-measurements");

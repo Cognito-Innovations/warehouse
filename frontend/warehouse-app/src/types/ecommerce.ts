@@ -128,16 +128,8 @@ export interface CreateOrderRequest {
 
 // Component Props Interfaces
 export interface EcommerceHeaderProps {
-  brandName: string;
-  locationLabel?: string;
-  locationText?: string | null,
-  locationButtonText?: string | null,
-  onLocationClick?: (() => void) | null,
-  searchQuery: string;
-  searchPlaceholder: string;
-  onSearchChange: (value: string) => void;
   cartItemCount: number;
-  onCartClick: () => void;
+  locationData: any;
 }
 
 export interface EcommerceSearchBarProps {
@@ -158,31 +150,12 @@ export interface EcommerceCategorySectionProps {
 
 export interface EcommerceProductCardProps {
   product: EcommerceProduct;
-  cartQuantity: number;
   onProductClick: (product: EcommerceProduct) => void;
-  onAddToCart: (e: React.MouseEvent, product: EcommerceProduct) => void;
-  onDecreaseQuantity: (e: React.MouseEvent, product: EcommerceProduct) => void;
-  defaultRating: number;
-  defaultReviewCount: number;
-  outOfStockLabel: string;
-  addButtonLabel: string;
-  isAddLoading?: boolean;
-  isIncrementLoading?: boolean;
-  isDecrementLoading?: boolean;
 }
 
 export interface EcommerceProductsGridProps {
   products: EcommerceProduct[];
-  cart: Cart | null;
   onProductClick: (product: EcommerceProduct) => void;
-  onAddToCart: (e: React.MouseEvent, product: EcommerceProduct) => void;
-  onDecreaseQuantity: (e: React.MouseEvent, product: EcommerceProduct) => void;
-  getCartItemQuantity: (productId: string) => number;
-  getLoadingStates?: (productId: string) => { isAddLoading: boolean; isIncrementLoading: boolean; isDecrementLoading: boolean };
-  defaultRating: number;
-  defaultReviewCount: number;
-  outOfStockLabel: string;
-  addButtonLabel: string;
 }
 
 export interface TodaysDealCarouselProps {
@@ -205,10 +178,6 @@ export interface EcommerceEmptyStateProps {
 
 export interface EcommerceBottomNavigationProps {
   cartItemCount: number;
-  cartLabel: string;
-  ordersLabel: string;
-  accountLabel: string;
-  onCartClick: () => void;
 }
 
 export interface EcommerceSkeletonLoaderProps {
@@ -222,67 +191,38 @@ export interface EcommerceLoadingStateProps {
 }
 
 export interface ProductDetailHeaderProps {
-  title: string;
-  cartItemCount: number;
-  onBackClick: () => void;
-  onCartClick: () => void;
   onShareClick?: () => void;
 }
 
 export interface ProductDetailImageSectionProps {
   product: EcommerceProduct;
   previewProducts: EcommerceProduct[];
-  selectedProductId: string;
   onProductSelect: (product: EcommerceProduct) => void;
-  defaultRating: number;
-  defaultReviewCount: number;
-  promotionalBannerText: string;
-  expiryLabel: string;
-  expiryDate: string;
-  starColor: string;
-  discountBadgeColor: string;
-  promotionalBannerColor: string;
-  expiryOverlayColor: string;
-  deliveryInformationLabel: string;
-  freeDeliveryText: string;
-  securePackagingText: string;
-  deliveryIconColor: string;
 }
 
 export interface ProductDetailInfoSectionProps {
   product: EcommerceProduct;
-  cartQuantity: number;
-  isCartActionLoading: boolean;
-  isIncrementLoading?: boolean;
-  isDecrementLoading?: boolean;
-  isOutOfStock: boolean;
-  discountPrice: number;
-  originalPrice: number;
-  discountPercentage: number;
-  unitValue: number;
-  measurementLabel: string;
-  onAddToCart: () => void;
-  onGoToCart: () => void;
-  onIncrement: () => void;
-  onDecrement: () => void;
-  defaultRating: number;
-  defaultReviewCount: number;
-  selectedQuantityLabel: string;
-  deliveryInformationLabel: string;
-  freeDeliveryText: string;
-  securePackagingText: string;
-  offerTitle: string;
-  offerBuyAt: string;
-  applyOffersText: string;
-  addToCartLabel: string;
-  goToCartLabel: string;
-  addingLabel: string;
-  outOfStockLabel: string;
-  quantityButtonBorderColor: string;
-  deliveryIconColor: string;
-  discountBadgeColor: string;
-  offerBackgroundColor: string;
-  promotionalBannerColor: string;
+  cart: Cart | null;
+  addToCart: (productId: string, quantity: number) => Promise<void>;
+  updateCartItem: (itemId: string, newQuantity: number) => Promise<void>;
+  removeFromCart: (itemId: string) => Promise<void>;
+  // product: EcommerceProduct;
+  // cartQuantity: number;
+  // isCartActionLoading: boolean;
+  // isIncrementLoading?: boolean;
+  // isDecrementLoading?: boolean;
+  // isOutOfStock: boolean;
+  // formattedDiscountPrice: string;
+  // formattedOriginalPrice: string;
+  // discountPercentage: number;
+  // formattedSavings: string;
+  // formattedPricePerUnit: string;
+  // measurementLabel: string;
+  // formattedSubtotal: string;
+  // onAddToCart: () => void;
+  // onGoToCart: () => void;
+  // onIncrement: () => void;
+  // onDecrement: () => void;
 }
 
 export interface PromotionalCardProps {
@@ -295,8 +235,6 @@ export interface PromotionalCardProps {
 
 export interface PromotionalCardsProps {
   categories: EcommerceCategory[];
-  onCategoryFilter: (categoryId: string) => void;
-  selectedCategory?: string | null;
 }
 
 // Cart Page Interfaces
@@ -431,4 +369,14 @@ export interface UserAddress {
   city: string;
   zip_code: string;
   country: string;
+}
+
+export interface ProductCartActionsProps {
+  product: EcommerceProduct;
+  cart: Cart | null | undefined;
+  discountPriceRaw: number;
+  currency: string;
+  addToCart: (productId: string, quantity: number) => Promise<void>;
+  updateCartItem: (itemId: string, newQuantity: number) => Promise<void>;
+  removeFromCart: (itemId: string) => Promise<void>;
 }

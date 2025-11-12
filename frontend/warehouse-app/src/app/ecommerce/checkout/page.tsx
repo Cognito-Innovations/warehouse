@@ -45,12 +45,19 @@ import { ROUTES } from "@/utils/constants";
 import OrderSuccessPopup from "@/components/ecommerce/OrderSuccessPopup";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { fetchUserAddresses } from "@/lib/api.service";
+import { getCurrencyForCountry } from "@/utils/currency";
+import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { parsePrice, formatPrice } from "@/utils/priceUtils";
 
 interface UserAddress {
   address: string;
   city: string;
   country: string;
   zip_code: string;
+  state?: string;
+  name?: string;
+  phone_number?: string;
+  email?: string;
 }
 
 export default function CheckoutPage() {
@@ -72,30 +79,60 @@ export default function CheckoutPage() {
   const [fetchedAddress, setFetchedAddress] = useState<UserAddress | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
 
-  const DELIVERY_CHARGES = 50;
-  const FREE_DELIVERY_THRESHOLD = 100;
+  const locationData = useEffectiveUserLocation({
+    country: 'United States of America',
+    city: 'New York',
+    pincode: '10001',
+  });
+  const selectedCountry = locationData.location.country;
 
-  const calculateCartAmounts = () => {
-    if (!cart) return { subtotal: 0, discount: 0, delivery: 0, total: 0 };
+  const currency = getCurrencyForCountry(selectedCountry);
+  const currencyStr = currency.symbol;
 
-    const subtotal = Number(cart.total_amount) || 0;
-    const discountPercentage = Number(cart.discount_percentage) || 0;
-    
-    const discountAmount = (subtotal * discountPercentage) / 100;
-    
-    const deliveryCharges = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_CHARGES;
-    
-    const total = subtotal - discountAmount + deliveryCharges;
+  const getThresholdAndFees = (country: string) => {
+    if (country.includes('India')) {
+      return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
+    } else {
+      return { threshold: 20, deliveryFee: 5, serviceCharge: 1 };
+    }
+  };
+
+  const calculateSelectedTotals = () => {
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
+    }
+
+    const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(selectedCountry);
+
+    // Calculate subtotal from ALL items in cart, using Number for prices
+    const subtotal = cart.items.reduce((sum, item) => {
+      const itemUnitPrice = Number(item.unit_price) || 0;
+      const itemLineTotal = (item.quantity || 0) * itemUnitPrice;
+      return sum + itemLineTotal;
+    }, 0);
+
+    const discountAmount = Number(cart.discount_percentage) || 0;
+    const deliveryFee = subtotal >= threshold ? 0 : deliveryBase;
+    const taxes = subtotal * 0.02; // 2% tax
+    const serviceCharge = serviceBase;
+    const total = subtotal - discountAmount + deliveryFee + taxes + serviceCharge;
 
     return {
-      subtotal,
-      discountAmount,
-      deliveryCharges,
-      total
+      subtotal: isNaN(subtotal) ? 0 : subtotal,
+      discount: isNaN(discountAmount) ? 0 : discountAmount,
+      deliveryFee: isNaN(deliveryFee) ? 0 : deliveryFee,
+      taxes: isNaN(taxes) ? 0 : taxes,
+      serviceCharge: isNaN(serviceCharge) ? 0 : serviceCharge,
+      total: isNaN(total) ? 0 : total,
     };
   };
 
-  const { subtotal, discountAmount, deliveryCharges, total } = calculateCartAmounts();
+  const totals = calculateSelectedTotals();
+  const threshold = getThresholdAndFees(selectedCountry).threshold;
+  const currencyInfo = getCurrencyForCountry(selectedCountry);
+  const currencySymbol = cart?.items.length! > 0 ? parsePrice(cart?.items[0].product.price!).currency : currencyInfo.symbol;
+
+  const formatLocalPrice = (amount: number) => formatPrice(amount, currencySymbol);
 
   useEffect(() => {
     fetchCart();
@@ -112,16 +149,23 @@ export default function CheckoutPage() {
       setAddressLoading(true);
       setError(null);
 
-      const addressData: UserAddress = await fetchUserAddresses(user.id);
+      const addressData = await fetchUserAddresses(user.id);
 
-      if (addressData) {
-        setFetchedAddress(addressData);
+      let addresses: UserAddress[] = [];
+      if (Array.isArray(addressData)) {
+        addresses = addressData;
+      } else if (addressData) {
+        addresses = [addressData];
+      }
 
-        const fullAddress = `${addressData.address}, ${addressData.city}, ${addressData.country} - ${addressData.zip_code}`;
+      if (addresses.length > 0) {
+        const defaultAddress = addresses[0];
+        const fullAddress = `${defaultAddress.address}, ${defaultAddress.city}, ${defaultAddress.state || ''}, ${defaultAddress.zip_code}, ${defaultAddress.country}`;
         setFormData(prev => ({
           ...prev,
           shippingAddress: fullAddress,
         }));
+        setFetchedAddress(defaultAddress);
       } else {
         setFetchedAddress(null);
         setError("No saved address found. Please add an address in your profile.");
@@ -469,39 +513,45 @@ export default function CheckoutPage() {
                 </Stack>
 
                 <Box sx={{ mb: 2, maxHeight: 300, overflow: "auto" }}>
-                  {cart?.items.map((item) => (
-                    <Box
-                      key={item.id}
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        py: 1.5,
-                        borderBottom: "1px solid #f0f0f0",
-                        "&:last-child": { borderBottom: "none" }
-                      }}
-                    >
-                      <Box sx={{ flex: 1, mr: 2 }}>
-                        <Typography variant="body1" fontWeight={500} sx={{ mb: 0.5, color: "text.primary" }}>
-                          {item.product.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                          Qty: {item.quantity}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          ₹{Number(item.unit_price).toFixed(2)} each
+                  {cart?.items.map((item) => {
+                    const parsedUnit = parsePrice(item.unit_price || '0');
+                    const unitRaw = parsedUnit.raw;
+                    const parsedItemTotal = parsePrice(item.total_price || '0');
+                    const itemTotalRaw = parsedItemTotal.raw;
+                    return (
+                      <Box
+                        key={item.id}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          py: 1.5,
+                          borderBottom: "1px solid #f0f0f0",
+                          "&:last-child": { borderBottom: "none" }
+                        }}
+                      >
+                        <Box sx={{ flex: 1, mr: 2 }}>
+                          <Typography variant="body1" fontWeight={500} sx={{ mb: 0.5, color: "text.primary" }}>
+                            {item.product.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                            Qty: {item.quantity}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatLocalPrice(unitRaw)} each
+                          </Typography>
+                        </Box>
+                        <Typography 
+                          variant="h6" 
+                          fontWeight={600} 
+                          color="primary.main"
+                          sx={{ minWidth: 60, textAlign: "right" }}
+                        >
+                          {formatLocalPrice(itemTotalRaw)}
                         </Typography>
                       </Box>
-                      <Typography 
-                        variant="h6" 
-                        fontWeight={600} 
-                        color="primary.main"
-                        sx={{ minWidth: 60, textAlign: "right" }}
-                      >
-                        ₹{Number(item.total_price).toFixed(2)}
-                      </Typography>
-                    </Box>
-                  ))}
+                    );
+                  })}
                 </Box>
 
                 <Divider sx={{ my: 2 }} />
@@ -510,29 +560,43 @@ export default function CheckoutPage() {
                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography variant="body1" fontWeight={500} color="text.primary">Subtotal</Typography>
                     <Typography variant="body1" fontWeight={500} color="text.primary">
-                      ₹{subtotal.toFixed(2)}
+                      {formatLocalPrice(totals.subtotal)}
                     </Typography>
                   </Box>
                   
                   {cart?.discount_percentage && cart?.discount_percentage > 0 && (
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="body1" color="success.main" fontWeight={500}>
-                        Discount ({formatDiscountPercentage(cart?.discount_percentage || 0)})
+                        Item Discounts
                       </Typography>
                       <Typography variant="body1" color="success.main" fontWeight={500}>
-                        -₹{discountAmount?.toFixed(2)}
+                        -{formatLocalPrice(totals.discount)}
                       </Typography>
                     </Box>
                   )}
 
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography variant="body1" fontWeight={500} color="text.primary">Delivery</Typography>
-                    <Stack direction="row" alignItems="center" spacing={0.5} color={deliveryCharges === 0 ? "success.main" : "text.primary"}>
+                    <Stack direction="row" alignItems="center" spacing={0.5} color={totals.deliveryFee === 0 ? "success.main" : "text.primary"}>
                       <DeliveryDining sx={{ fontSize: 16 }} />
                       <Typography variant="body2" fontWeight={600}>
-                        {deliveryCharges === 0 ? "FREE" : `₹${deliveryCharges?.toFixed(2)}`}
+                        {totals.deliveryFee === 0 ? "FREE" : formatLocalPrice(totals.deliveryFee)}
                       </Typography>
                     </Stack>
+                  </Box>
+
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body1" fontWeight={500} color="text.primary">Taxes (2%)</Typography>
+                    <Typography variant="body1" fontWeight={500} color="text.primary">
+                      {formatLocalPrice(totals.taxes)}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body1" fontWeight={500} color="text.primary">Service Charge</Typography>
+                    <Typography variant="body1" fontWeight={500} color="text.primary">
+                      {formatLocalPrice(totals.serviceCharge)}
+                    </Typography>
                   </Box>
 
                   <Divider />
@@ -545,17 +609,17 @@ export default function CheckoutPage() {
                       color="primary.main"
                       sx={{ fontSize: { xs: "1.5rem", md: "1.75rem" } }}
                     >
-                      ₹{total.toFixed(2)}
+                      {formatLocalPrice(totals.total)}
                     </Typography>
                   </Box>
                 </Stack>
 
-                <Box sx={{ mt: 2, p: 2, bgcolor: subtotal >= FREE_DELIVERY_THRESHOLD ? "success.50" : "warning.50", borderRadius: 2 }}>
-                  <Typography variant="body2" color={subtotal >= FREE_DELIVERY_THRESHOLD ? "success.main" : "warning.main"} fontWeight={500}>
+                <Box sx={{ mt: 2, p: 2, bgcolor: totals.subtotal >= threshold ? "success.50" : "warning.50", borderRadius: 2 }}>
+                  <Typography variant="body2" color={totals.subtotal >= threshold ? "success.main" : "warning.main"} fontWeight={500}>
                     <CheckCircle sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.5 }} />
-                    {subtotal >= FREE_DELIVERY_THRESHOLD 
-                      ? "Free delivery on orders over ₹100. Yours qualifies!" 
-                      : `Add ₹${(FREE_DELIVERY_THRESHOLD - subtotal).toFixed(2)} more for free delivery!`
+                    {totals.subtotal >= threshold 
+                      ? `Free delivery on orders over ${formatLocalPrice(threshold)}. Yours qualifies!` 
+                      : `Add ${formatLocalPrice(threshold - totals.subtotal)} more for free delivery!`
                     }
                   </Typography>
                 </Box>
@@ -598,7 +662,7 @@ export default function CheckoutPage() {
                   <Typography>Placing Order...</Typography>
                 </Box>
               ) : (
-                `Place Order • ₹${total.toFixed(2)}`
+                `Place Order • ${formatLocalPrice(totals.total)}`
               )}
             </Button>
 

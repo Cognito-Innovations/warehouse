@@ -4,18 +4,19 @@ import React, { useRef } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import { PromotionalCardsProps } from "@/types/ecommerce";
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import GridViewIcon from '@mui/icons-material/GridView';
+
+import { useProductActions, useProducts } from "@/store/ecommerceStore";
 
 export default function PromotionalCards({
   categories,
-  onCategoryFilter,
-  selectedCategory,
 }: PromotionalCardsProps) {
+  const { selectedCategory } = useProducts();
+  const { setSelectedCategory } = useProductActions();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleCardClick = (categoryId: string | null) => {
-    if (categoryId) {
-      onCategoryFilter(categoryId);
-    }
+  const handleCardClick = (categoryId: string) => {
+    setSelectedCategory(categoryId);
   };
 
   const handleScroll = () => {
@@ -27,6 +28,9 @@ export default function PromotionalCards({
       });
     }
   };
+
+  const iconBgColor = "#7c3aed";
+  const isAllActive = !selectedCategory;
 
   return (
     <Box sx={{ position: 'relative' }}>
@@ -48,11 +52,74 @@ export default function PromotionalCards({
           scrollBehavior: 'smooth',
         }}
       >
+        <Box
+          onClick={() => handleCardClick('')}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            cursor: "pointer",
+            transition: "transform 0.2 ease-in-out",
+            "&:hover": {
+              transform: "translateY(-2px)",
+            },
+            minWidth: { xs: "80px", sm: "100px", md: "120px" },
+            flexShrink: 0,
+          }}
+        >
+          <Box
+            sx={{
+              width: { xs: 44, sm: 52, md: 60 },
+              height: { xs: 44, sm: 52, md: 60 },
+              borderRadius: 2.5,
+              bgcolor: isAllActive ? iconBgColor : "#ede9fe",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2.5,
+              boxShadow: isAllActive ? "0 2px 12px rgba(0,0,0,0.12)" : "none",
+              transition: "all 0.2s ease-in-out",
+              overflow: "hidden",
+            }}
+          >
+            <GridViewIcon
+              sx={{
+                fontSize: { xs: 24, sm: 28, md: 32 },
+                color: isAllActive ? "white" : iconBgColor,
+              }}
+            />
+          </Box>
+
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: isAllActive ? 700 : 500,
+              color: "#333",
+              fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
+              textAlign: "center",
+              mb: 0.5,
+              letterSpacing: "0.01em",
+              whiteSpace: "nowrap",
+            }}
+          >
+            All
+          </Typography>
+
+          {isAllActive && (
+            <Box
+              sx={{
+                width: "110%",
+                height: 4,
+                bgcolor: iconBgColor,
+                borderRadius: 2,
+                mt: 0.5,
+              }}
+            />
+          )}
+        </Box>
+
         {categories.map((category, index) => {
-          const isActive = selectedCategory === category.id || 
-                           (index === 0 && !selectedCategory);
-          const iconBgColor = "#7c3aed";
-          
+          const isActive = selectedCategory === category.id;
           return (
             <Box
               key={category.id}
@@ -137,13 +204,13 @@ export default function PromotionalCards({
         onClick={handleScroll}
         sx={{
           position: 'absolute',
-          right: { xs: -10, sm: 'auto' }, 
-          top: '6px', 
+          right: { xs: -10, md: -20 }, 
+          top: { xs: '6px', md: '15px' },
           zIndex: 2,
-          width: 32,
-          height: 32,
+          width: { xs: 32, md: 40 },
+          height: { xs: 32, md: 40 },
           borderRadius: '50%',
-          display: { xs: 'inline-flex', sm: 'none' },
+          display: 'inline-flex', 
           alignItems: 'center',
           justifyContent: 'center',
           bgcolor: 'rgba(255, 255, 255, 0.85)',
@@ -154,7 +221,13 @@ export default function PromotionalCards({
           },
         }}
       >
-        <ArrowForwardIosIcon sx={{ fontSize: '1rem', color: '#4B5563', ml: '2px' }} />
+        <ArrowForwardIosIcon
+          sx={{
+            fontSize: { xs: '1rem', md: '1.25rem' },
+            color: '#4B5563',
+            ml: { xs: '2px', md: '3px' }
+          }}
+        />
       </IconButton>
     </Box>
   );

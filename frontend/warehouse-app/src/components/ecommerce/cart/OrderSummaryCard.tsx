@@ -15,7 +15,7 @@ export default function OrderSummaryCard({
   checkoutLabel,
   onCheckout,
   borderColor,
-  currencySymbol = "₹",
+  currencySymbol = "$",
 }: OrderSummaryCardProps) {
   return (
     <Paper
@@ -38,7 +38,7 @@ export default function OrderSummaryCard({
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
           <Typography variant="body2" color="text.secondary">
-            Subtotal Product
+            Subtotal
           </Typography>
           <Typography variant="body2" fontWeight={500}>
             {currencySymbol}{(Number(subtotal) || 0).toFixed(2)}
@@ -47,7 +47,7 @@ export default function OrderSummaryCard({
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
           <Typography variant="body2" color="text.secondary">
-            Price Delivery
+            Delivery Fee
           </Typography>
           <Typography variant="body2" fontWeight={500}>
             {currencySymbol}{(Number(deliveryFee) || 0).toFixed(2)}
@@ -66,7 +66,7 @@ export default function OrderSummaryCard({
         {discount > 0 && (
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
             <Typography variant="body2" color="success.main">
-              Total Discount
+              Discount
             </Typography>
             <Typography variant="body2" color="success.main" fontWeight={500}>
               -{currencySymbol}{(Number(discount) || 0).toFixed(2)}

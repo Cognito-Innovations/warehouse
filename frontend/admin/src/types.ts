@@ -200,6 +200,7 @@ export interface SubCategoryPayload {
   category_id: string;
   name: string;
   slug: string;
+  image_url: string;
   discount_percentage: number,
   country_ids: string[],
   is_active: boolean;
@@ -214,6 +215,7 @@ export interface ProductPayload {
   description: string;
   price: number;
   discount_percentage: number;
+  image_url: string;
   unit_value: number;
   measurement_id: string;
   country_ids: string[],

@@ -18,8 +18,9 @@ import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
 import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
 import CartSkeletonLoader from "@/components/ecommerce/cart/CartSkeletonLoader";
 import ContinueShoppingCard from "@/components/ecommerce/cart/ContinueShoppingCard";
-import { getCurrencyForCountry, getUserCountry, convertCurrency } from "@/utils/currency";
-import LocationSelector from "@/components/ecommerce/cart/LocationSelector";
+import { getCurrencyForCountry, getUserCountry } from "@/utils/currency";
+import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { parsePrice, formatPrice, calculateDiscountedPrice } from "@/utils/priceUtils";
 
 export default function CartPage() {
   const router = useRouter();
@@ -33,13 +34,25 @@ export default function CartPage() {
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<string>(getUserCountry());
+
+  const locationData = useEffectiveUserLocation({
+    country: 'United States of America',
+    city: 'New York',
+    pincode: '10001',
+  });
+  const selectedCountry = locationData.location.country;
 
   const userId = (session?.user as any)?.user_id;
 
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
+
+  useEffect(() => {
+    if (cart && cart.items.length > 0) {
+      setSelectedItems(new Set(cart.items.map((item) => item.id)));
+    }
+  }, [cart])
 
   useEffect(() => {
     if (userId) {
@@ -202,44 +215,58 @@ export default function CartPage() {
     router.push(ROUTES.CHECKOUT);
   }, [router]);
 
-  const handleCountryChange = useCallback((country: string) => {
-    setSelectedCountry(country);
-  }, []);
-
   const handleContinueShopping = useCallback(() => {
     router.push(ROUTES.ECOMMERCE);
   }, [router]);
 
-  // Calculate totals for all items in cart (in INR, will be converted later)
-  const calculateSelectedTotals = useCallback(() => {
-    if (!cart || !cart.items || cart.items.length === 0) {
-      return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
+  const getThresholdAndFees = (country: string) => {
+    if (country.includes('India')) {
+      return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
+    } else {
+      return { threshold: 20, deliveryFee: 5, serviceCharge: 1 };
     }
+  };
 
-    // Calculate subtotal from ALL items in cart, ensuring all values are valid numbers
-    const subtotal = cart.items.reduce((sum, item) => {
-      const itemPrice = Number(item.total_price) || 0;
-      return sum + itemPrice;
-    }, 0);
+  // Calculate totals for all items in cart (in local currency)
+  const calculateSelectedTotals = useCallback(() => {
+  if (!cart || !cart.items || cart.items.length === 0) {
+    return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
+  }
 
-    // Ensure all calculations use valid numbers
-    const discountPercentage = Number(cart.discount_percentage) || 0;
-    const discountAmount = (subtotal * discountPercentage) / 100;
-    const deliveryFee = subtotal >= 299 ? 0 : 3.0;
-    const taxes = subtotal * 0.02; // 2% tax
-    const serviceCharge = 1.0;
-    const total = subtotal - discountAmount + deliveryFee + taxes + serviceCharge;
+  const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(selectedCountry);
 
-    // Ensure no NaN values
-    return {
-      subtotal: isNaN(subtotal) ? 0 : subtotal,
-      discount: isNaN(discountAmount) ? 0 : discountAmount,
-      deliveryFee: isNaN(deliveryFee) ? 0 : deliveryFee,
-      taxes: isNaN(taxes) ? 0 : taxes,
-      serviceCharge: isNaN(serviceCharge) ? 0 : serviceCharge,
-      total: isNaN(total) ? 0 : total,
-    };
-  }, [cart]);
+  // Filter to selected items only
+  const selectedCartItems = cart.items.filter((item) => selectedItems.has(item.id));
+
+  if (selectedCartItems.length === 0) {
+    // No items selected: all zeros (including no delivery/service)
+    return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
+  }
+
+  // Calculate subtotal from SELECTED items: quantity × unit_price
+  const subtotal = selectedCartItems.reduce((sum, item) => {
+    const itemUnitPrice = Number(item.unit_price) || 0;
+    const itemLineTotal = (item.quantity || 0) * itemUnitPrice;
+    return sum + itemLineTotal;
+  }, 0);
+
+  // Ensure all calculations use valid numbers
+  const discountAmount = Number(cart.discount_percentage) || 0;
+  const deliveryFee = subtotal >= threshold ? 0 : deliveryBase;
+  const taxes = subtotal * 0.02; // 2% tax
+  const serviceCharge = serviceBase;
+  const total = subtotal - discountAmount + deliveryFee + taxes + serviceCharge;
+
+  // Ensure no NaN values
+  return {
+    subtotal: isNaN(subtotal) ? 0 : subtotal,
+    discount: isNaN(discountAmount) ? 0 : discountAmount,
+    deliveryFee: isNaN(deliveryFee) ? 0 : deliveryFee,
+    taxes: isNaN(taxes) ? 0 : taxes,
+    serviceCharge: isNaN(serviceCharge) ? 0 : serviceCharge,
+    total: isNaN(total) ? 0 : total,
+  };
+}, [cart, selectedItems, selectedCountry]);
 
   // Show skeleton loader while cart is loading
   if (cartLoading) {
@@ -261,17 +288,8 @@ export default function CartPage() {
   }
 
   const totals = calculateSelectedTotals();
-  const currency = getCurrencyForCountry(selectedCountry);
-  
-  // Convert all totals to selected currency
-  const convertedTotals = {
-    subtotal: convertCurrency(totals.subtotal, selectedCountry),
-    discount: convertCurrency(totals.discount, selectedCountry),
-    deliveryFee: convertCurrency(totals.deliveryFee, selectedCountry),
-    taxes: convertCurrency(totals.taxes, selectedCountry),
-    serviceCharge: convertCurrency(totals.serviceCharge, selectedCountry),
-    total: convertCurrency(totals.total, selectedCountry),
-  };
+  const currencyInfo = getCurrencyForCountry(selectedCountry);
+  const currencySymbol = cart.items.length > 0 ? parsePrice(cart.items[0].product.price).currency : currencyInfo.symbol;
 
   return (
     <Box sx={{ bgcolor: "grey.50", minHeight: "100vh" }}>
@@ -291,11 +309,6 @@ export default function CartPage() {
         >
           {/* Cart Items Section */}
           <Box sx={{ flex: { md: "0 0 65%" }, width: { xs: "100%", md: "65%" } }}>
-            <LocationSelector 
-              borderColor={ecommerceData.ui.colors.borderColor}
-              onCountryChange={handleCountryChange}
-            />
-
             <AddressSelectionDropdown
               addresses={addresses}
               selectedAddress={selectedAddress}
@@ -318,7 +331,8 @@ export default function CartPage() {
               title={ecommerceData.cart.cartItems.title}
               discountBadgeColor={ecommerceData.ui.colors.discountBadge}
               borderColor={ecommerceData.ui.colors.borderColor}
-              currencySymbol={currency.symbol}
+              currencySymbol={currencySymbol}
+              selectedCountry={selectedCountry}
             />
 
             <ContinueShoppingCard
@@ -331,16 +345,16 @@ export default function CartPage() {
           {/* Order Summary Section */}
           <Box sx={{ flex: { md: "0 0 35%" }, width: { xs: "100%", md: "35%" } }}>
             <OrderSummaryCard
-              subtotal={convertedTotals.subtotal}
-              discount={convertedTotals.discount}
-              deliveryFee={convertedTotals.deliveryFee}
-              taxes={convertedTotals.taxes}
-              serviceCharge={convertedTotals.serviceCharge}
-              total={convertedTotals.total}
+              subtotal={totals.subtotal}
+              discount={totals.discount}
+              deliveryFee={totals.deliveryFee}
+              taxes={totals.taxes}
+              serviceCharge={totals.serviceCharge}
+              total={totals.total}
               checkoutLabel={ecommerceData.cart.orderSummary.checkoutLabel}
               onCheckout={handleCheckout}
               borderColor={ecommerceData.ui.colors.borderColor}
-              currencySymbol={currency.symbol}
+              currencySymbol={currencySymbol}
             />
           </Box>
         </Box>

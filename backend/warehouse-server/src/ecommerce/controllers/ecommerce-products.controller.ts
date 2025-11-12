@@ -24,8 +24,11 @@ export class ProductsController {
 
   @Public()
   @Get()
-  findAll(@Query('country') country?: string) {
-    return this.productsService.findAll(country);
+  findAll(
+    @Query('country') country?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.productsService.findAll(country, search);
   }
 
   @Public()

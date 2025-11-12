@@ -54,10 +54,15 @@ export const ecommerceService = {
   },
 
   // Products
-  async getProducts(country?: string): Promise<EcommerceProduct[]> {
-    const response = await api.get("/ecommerce-products", {
-      params: country ? { country } : {}
-    });
+  async getProducts(searchTerm?: string, country?: string): Promise<EcommerceProduct[]> {
+    const params: any = {};
+    if (searchTerm) {
+      params.search = searchTerm;
+    }
+    if (country) {
+      params.country = country;
+    }
+    const response = await api.get("/ecommerce-products", { params });
     return response.data;
   },
 

@@ -8,6 +8,7 @@ import {
   UpdateCartItemRequest,
 } from "../types/ecommerce";
 import { ecommerceService } from "@/services/ecommerce.service";
+import { calculateDiscountedPrice, parsePrice } from "@/utils/priceUtils";
 
 // Debounce utility for cart API calls
 const debounceMap = new Map<string, NodeJS.Timeout>();
@@ -65,7 +66,7 @@ interface ProductActions {
   setError: (error: string | null) => void;
   filterProducts: () => void;
   fetchCategories: () => Promise<void>;
-  fetchProducts: (country?: string) => Promise<void>;
+  fetchProducts: (country?: string, searchTerm?: string) => Promise<void>;
 }
 
 // Cart Store State
@@ -111,7 +112,9 @@ const computeCartFromLocal = (
       const product = products.find((p) => p.id === item.productId);
       if (!product) return null;
 
-      const unitPrice = product.price;
+      const originalPrice = parsePrice(product.price || '0').raw;
+      const discountPercent = Number(product.discount_percentage) || 0;
+      const unitPrice = calculateDiscountedPrice(originalPrice, discountPercent);
       const totalPrice = unitPrice * item.quantity;
 
       const existingItem = existingCart?.items.find(
@@ -217,9 +220,9 @@ export const useEcommerceStore = create<EcommerceStore>()(
           });
         }
       },
-      fetchProducts: async (country?: string) => {
+      fetchProducts: async (country?: string, searchTerm?: string) => {
         try {
-          const products = await ecommerceService.getProducts(country);
+          const products = await ecommerceService.getProducts(searchTerm, country);
           set({ products, filteredProducts: products });
           const token = getAuthToken();
           if (!token) {
