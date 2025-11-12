@@ -1,6 +1,7 @@
 import {
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -8,7 +9,6 @@ import {
   IsUUID,
   Min,
 } from 'class-validator';
-import { CargoType } from 'src/ecommerce/entities/ecommerce-category.entity';
 
 export class CreateCategoryDto {
   @IsString()
@@ -23,18 +23,19 @@ export class CreateCategoryDto {
   @Min(0)
   discount_percentage: number;
 
-  @IsUUID()
-  @IsNotEmpty()
-  country_id: string;
+  @IsArray()
+  @IsUUID('all', { each: true })
+  @ArrayMinSize(1)
+  country_ids: string[];
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   image_url: string;
 
-  @IsEnum(CargoType)
+  @IsUUID()
   @IsNotEmpty()
-  cargo_type: CargoType;
+  cargo_option_id: string;
 
   @IsString()
   @IsOptional()

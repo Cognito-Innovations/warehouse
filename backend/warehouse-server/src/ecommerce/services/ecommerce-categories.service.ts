@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Country } from 'src/Countries/country.entity.js';
 import { CreateCategoryDto } from '../dto/category/ecommerce-create-category.dto.js';
 import { UpdateCategoryDto } from '../dto/category/ecommerce-update-category.dto.js';
+import { EcommerceCargoOption } from '../entities/cargo-options.entity.js';
 
 @Injectable()
 export class CategoriesService {
@@ -16,11 +17,12 @@ export class CategoriesService {
   async create(
     createCategoryDto: CreateCategoryDto,
   ): Promise<EcommerceCategory> {
-    const { country_id, ...rest } = createCategoryDto;
+    const { country_ids, cargo_option_id, ...rest } = createCategoryDto;
 
     const categoryPayload: Partial<EcommerceCategory> = {
       ...rest,
-      country: { id: country_id } as Country,
+      cargo_option: { id: cargo_option_id } as EcommerceCargoOption,
+      countries: country_ids.map((id) => ({ id }) as Country),
     };
 
     const category = this.categoryRepository.create(categoryPayload);
@@ -30,21 +32,25 @@ export class CategoriesService {
   findAll() {
     return this.categoryRepository
       .createQueryBuilder('category')
-      .leftJoinAndSelect('category.country', 'country')
+      .leftJoinAndSelect('category.countries', 'countries')
+      .leftJoinAndSelect('category.cargo_option', 'cargo_option')
       .loadRelationCountAndMap('category.products_count', 'category.products')
       .orderBy('category.name', 'ASC')
       .getMany();
   }
 
   findOne(id: string) {
-    return this.categoryRepository.findOne({ where: { id } });
+    return this.categoryRepository.findOne({
+      where: { id },
+      relations: ['countries', 'cargo_option'],
+    });
   }
 
   async update(
     id: string,
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<EcommerceCategory> {
-    const { country_id, ...rest } = updateCategoryDto;
+    const { country_ids, cargo_option_id, ...rest } = updateCategoryDto;
 
     const category = await this.categoryRepository.findOne({
       where: {
@@ -54,7 +60,13 @@ export class CategoriesService {
     if (!category) throw new NotFoundException('Category not found');
     this.categoryRepository.merge(category, rest);
 
-    category.country = { id: country_id } as Country;
+    if (cargo_option_id) {
+      category.cargo_option = { id: cargo_option_id } as EcommerceCargoOption;
+    }
+
+    if (country_ids) {
+      category.countries = country_ids.map((id) => ({ id }) as Country);
+    }
 
     return await this.categoryRepository.save(category);
   }

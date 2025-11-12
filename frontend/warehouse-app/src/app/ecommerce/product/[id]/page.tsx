@@ -342,11 +342,6 @@ export default function ProductDetailPage() {
             promotionalBannerColor={ecommerceData.ui.colors.promotionalBanner}
           />
         </Box>
-
-        {/* Product Detail Tabs */}
-        <Container maxWidth="lg" sx={{ mt: 4, px: "-24px" }}>
-          <ProductDetailTabs product={currentProduct} />
-        </Container>
       </Container>
 
       {/* Related Products Section */}

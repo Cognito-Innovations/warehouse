@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, MenuItem, Stack, Button, CircularProgress } from "@mui/material";
+import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
 
-import { createCategory, getCountries, updateCategory } from "../../services/api.services";
-import type { CategoryPayload, Country } from "../../types";
+import { createCategory, getCargoOptions, getCountries, updateCategory } from "../../services/api.services";
+import type { CargoOption, CategoryPayload, Country } from "../../types";
+import { arraysEqual } from "../../utils/arrayEqual";
+import { statusOptions } from "../../utils/constants";
 
 interface CategoryFormProps {
   onClose: () => void;
@@ -10,80 +12,84 @@ interface CategoryFormProps {
   initialData?: CategoryPayload;
 }
 
-const statusOptions = [
-  { label: "Active", value: true },
-  { label: "Inactive", value: false },
-];
-
-const cargoTypeOptions = [
-  { label: "Perishable goods", value: "Perishable goods" },
-  { label: "Animal cargo", value: "Animal cargo" },
-  { label: "General courier", value: "General courier" },
-  { label: "General cargo", value: "General cargo" },
-];
+const defaultFormData: CategoryPayload = {
+  id: undefined,
+  name: "",
+  slug: "",
+  discount_percentage: 0,
+  country_ids: [],
+  is_active: true,
+  image_url: "",
+  cargo_option_id: "",
+  description: "",
+};
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    slug: "",
-    discount_percentage: 0,
-    country_id: "",
-    is_active: true,
-    image_url: "",
-    cargo_type: "",
-    description: "",
-  });
+  const [formData, setFormData] = useState<CategoryPayload>(defaultFormData);
   const [countries, setCountries] = useState<Country[]>([]);
+  const [cargoOptions, setCargoOptions] = useState<CargoOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [fetchingCargo, setFetchingCargo] = useState(true);
 
   const fetchCountries = async () => {
     try {
       setFetching(true);
       const countries = await getCountries();
-      setCountries(countries)
+      setCountries(countries);
     } catch (error) {
       console.error("Failed to fetch countries:", error);
     } finally {
       setFetching(false);
     }
-  }
+  };
+
+  const fetchCargoOptions = async () => {
+    try {
+      setFetchingCargo(true);
+      const cargoOptions = await getCargoOptions();
+      setCargoOptions(cargoOptions);
+    } catch (err) {
+      console.error("Failed to fetch cargo options:", err);
+    } finally {
+      setFetchingCargo(false);
+    }
+  };
 
   useEffect(() => {
     fetchCountries();
+    fetchCargoOptions();
   }, []);
 
   useEffect(() => {
-    setFormData({
-      name: initialData?.name || "",
-      slug: initialData?.slug || "",
-      discount_percentage: initialData?.discount_percentage || 0,
-      country_id: initialData?.country_id || "",
-      is_active: initialData?.is_active ?? true,
-      image_url: initialData?.image_url || "",
-      cargo_type: initialData?.cargo_type || "",
-      description: initialData?.description || "",
-    });
+    if (initialData) {
+      setFormData({ ...defaultFormData, ...initialData });
+    } else {
+      setFormData(defaultFormData);
+    }
   }, [initialData]);
 
-  const handleChange = (key: keyof typeof formData, value: typeof formData[keyof typeof formData]) => {
+  const handleChange = (key: keyof CategoryPayload, value: any) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleCountryDelete = (countryId: string) => {
+    handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
+  };
+
   const handleSubmit = async () => {
-    const { name, slug, is_active, cargo_type, image_url, description } = formData;
-    if (!name || !slug) return;
+    if (!formData.name || !formData.slug) return;
 
     if (initialData) {
-      const hasChanged =
-        initialData.name !== name ||
-        initialData.slug !== slug ||
-        initialData.discount_percentage ||
-        initialData.country_id ||
-        initialData.is_active !== is_active ||
-        initialData.cargo_type !== cargo_type ||
-        initialData.image_url !== image_url ||
-        initialData.description !== description;
+      const hasChanged = Object.keys(defaultFormData).some((key) => {
+        const k = key as keyof CategoryPayload;
+
+        if (k === "country_ids") {
+          return !arraysEqual(initialData.country_ids || [], formData.country_ids);
+        }
+
+        return initialData[k] !== formData[k];
+      });
 
       if (!hasChanged) {
         onClose();
@@ -101,7 +107,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
       onSuccess?.();
       onClose();
     } catch (err) {
-      console.error("Failed to create category:", err);
+      console.error("Failed to save category:", err);
     } finally {
       setLoading(false);
     }
@@ -136,8 +142,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
           label="Discount (%)"
           value={formData.discount_percentage}
           onChange={(e) => {
-            const value = e.target.value;
-            const numValue = parseFloat(value);
+            const numValue = parseFloat(e.target.value);
             handleChange("discount_percentage", isNaN(numValue) ? 0 : numValue);
           }}
           fullWidth
@@ -145,37 +150,100 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
           type="number"
         />
         <TextField
-          label="Country"
+          label="Countries"
           select
-          value={formData.country_id}
-          onChange={(e) => handleChange("country_id", e.target.value)}
+          value={formData.country_ids}
+          onChange={(e) => handleChange("country_ids", e.target.value)}
           fullWidth
           required
           disabled={fetching}
+          SelectProps={{
+            multiple: true,
+            renderValue: (selected) => {
+              const selectedIds = selected as string[];
+
+              if (fetching && selectedIds.length > 0) {
+                return (
+                  <Box sx={{ display: "flex", alignItems: "center", height: "24px", pl: 1 }}>
+                    <CircularProgress size={20} />
+                  </Box>
+                );
+              }
+
+              return (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  {selectedIds.map((value) => {
+                    const countryName = countries.find(c => c.id === value)?.name || value;
+                    return (
+                      <Chip
+                        key={value}
+                        label={countryName}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onDelete={(e) => {
+                          e.stopPropagation();
+                          handleCountryDelete(value);
+                        }}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    );
+                  })}
+                </Box>
+              );
+            },
+          }}
         >
-          {countries.map((c) => (
-            <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-          ))}
+          {fetching ? (
+            <Box sx={{ p: 2, display: "flex", justifyContent: "center", alignItems: "center" }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            countries.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+              </MenuItem>
+            ))
+          )}
         </TextField>
+
         <TextField
           label="Cargo Type"
           select
-          value={formData.cargo_type}
-          onChange={(e) => handleChange("cargo_type", e.target.value)}
+          value={formData.cargo_option_id}
+          onChange={(e) => handleChange("cargo_option_id", e.target.value)}
           required
           fullWidth
+          disabled={fetchingCargo}
+          SelectProps={{
+            renderValue: (selected) =>
+              fetchingCargo ? (
+                <Box sx={{ display: "flex", alignItems: "center", pl: 1 }}>
+                  <CircularProgress size={20} />
+                </Box>
+              ) : (
+                cargoOptions.find((c) => c.id === selected)?.label || ""
+              ),
+          }}
         >
-          {cargoTypeOptions.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
+          {fetchingCargo ? (
+            <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            cargoOptions.map((option) => (
+              <MenuItem key={option.id} value={option.id}>
+                {option.label}
+              </MenuItem>
+            ))
+          )}
         </TextField>
+
         <TextField
           label="Status"
           select
-          value={formData.is_active}
-          onChange={(e) => handleChange("is_active", e.target.value === "true" ? true : false)}
+          value={String(formData.is_active)}
+          onChange={(e) => handleChange("is_active", e.target.value === "true")}
           fullWidth
         >
           {statusOptions.map((option) => (

@@ -6,12 +6,14 @@ import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.
 import { Country } from 'src/Countries/country.entity.js';
 import { CreateEcommerceProductDto } from '../dto/product/create-product.dto.js';
 import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto.js';
+import { UserPreferencesService } from '../../user-preferences/user-preferences.service.js';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(EcommerceProduct)
     private readonly productRepository: Repository<EcommerceProduct>,
+    private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
   async create(
@@ -20,7 +22,7 @@ export class ProductsService {
     const {
       category_id,
       sub_category_id,
-      country_id,
+      country_ids,
       measurement_id,
       ...rest
     } = createProductDto;
@@ -29,18 +31,48 @@ export class ProductsService {
       ...rest,
       category: { id: category_id },
       sub_category: { id: sub_category_id },
-      country: { id: country_id },
+      countries: country_ids.map((id) => ({ id }) as Country),
       measurement: { id: measurement_id },
     });
     return await this.productRepository.save(product);
   }
 
-  findAll() {
-    return this.productRepository.find();
+  async findAll(country?: string) {
+    const products = await this.productRepository.find();
+    const selectedCountry = country || 'US';
+
+    return Promise.all(
+      products.map(async (product) => ({
+        ...product,
+        price:
+          await this.userPreferencesService.getFormattedConvertedPriceByCountry(
+            selectedCountry,
+            Number(product.price)
+          ),
+      })),
+    );
   }
 
-  findOne(id: string) {
-    return this.productRepository.findOne({ where: { id } });
+  async findOne(id: string, country?: string) {
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: ['countries'],
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    const selectedCountry = country || 'US';
+
+    return {
+      ...product,
+      price:
+        await this.userPreferencesService.getFormattedConvertedPriceByCountry(
+          selectedCountry,
+          Number(product.price),
+        ),
+    };
   }
 
   async update(
@@ -59,10 +91,10 @@ export class ProductsService {
         id: updateEcommerceProductDto.sub_category_id,
       } as EcommerceSubCategory;
     }
-    if (updateEcommerceProductDto.country_id) {
-      product.country = {
-        id: updateEcommerceProductDto.country_id,
-      } as Country;
+    if (updateEcommerceProductDto.country_ids) {
+      product.countries = updateEcommerceProductDto.country_ids.map(
+        (id) => ({ id }) as Country
+      );
     }
 
     return await this.productRepository.save(product);

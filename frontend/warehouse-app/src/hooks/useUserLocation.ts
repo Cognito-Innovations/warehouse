@@ -5,22 +5,26 @@ import { useState, useEffect } from "react";
 interface UserLocation {
   city: string;
   pincode: string;
+  country: string;
 }
 
 interface UseUserLocationOptions {
   defaultCity: string;
   defaultPincode: string;
+  defaultCountry?: string;
   enableGeolocation?: boolean;
 }
 
 export function useUserLocation({
   defaultCity,
   defaultPincode,
+  defaultCountry = 'IN',
   enableGeolocation = true,
 }: UseUserLocationOptions) {
   const [location, setLocation] = useState<UserLocation>({
     city: defaultCity,
     pincode: defaultPincode,
+    country: defaultCountry,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,14 +35,19 @@ export function useUserLocation({
     const storedLocation = localStorage.getItem("userLocation");
     if (storedLocation) {
       try {
-        const parsed = JSON.parse(storedLocation);
-        setLocation(parsed);
+        const parsed = JSON.parse(storedLocation) as UserLocation;
+        const validParsed = {
+          city: parsed.city || defaultCity,
+          pincode: parsed.pincode || defaultPincode,
+          country: parsed.country || defaultCountry,
+        };
+        setLocation(validParsed);
       } catch (e) {
         // Invalid stored data, use defaults
         localStorage.removeItem("userLocation");
       }
     }
-  }, [defaultCity, defaultPincode]);
+  }, [defaultCity, defaultPincode, defaultCountry]);
 
   // Function to request location (must be called in response to user gesture)
   const requestLocation = () => {
@@ -90,8 +99,9 @@ export function useUserLocation({
             defaultCity;
 
           const pincode = address.postcode || defaultPincode;
+          const country = address.country || defaultCountry;
 
-          const userLocation: UserLocation = { city, pincode };
+          const userLocation: UserLocation = { city, pincode, country };
 
           // Store in localStorage for future use
           localStorage.setItem("userLocation", JSON.stringify(userLocation));
@@ -101,7 +111,7 @@ export function useUserLocation({
           console.error("Reverse geocoding failed:", err);
           setError(err.message || "Failed to get location details");
           // Use default location on error
-          setLocation({ city: defaultCity, pincode: defaultPincode });
+          setLocation({ city: defaultCity, pincode: defaultPincode, country: defaultCountry });
         } finally {
           setIsLoading(false);
         }
@@ -123,7 +133,7 @@ export function useUserLocation({
         setError(getGeolocationErrorMessage(errorCode));
         setIsLoading(false);
         // Use default location on error
-        setLocation({ city: defaultCity, pincode: defaultPincode });
+        setLocation({ city: defaultCity, pincode: defaultPincode, country: defaultCountry });
       },
       {
         timeout: 10000,
@@ -142,7 +152,7 @@ export function useUserLocation({
   // Function to clear stored location and use defaults
   const clearLocation = () => {
     localStorage.removeItem("userLocation");
-    setLocation({ city: defaultCity, pincode: defaultPincode });
+    setLocation({ city: defaultCity, pincode: defaultPincode, country: defaultCountry });
   };
 
   return {

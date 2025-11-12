@@ -166,11 +166,6 @@ const handler = NextAuth({
       if (url.startsWith(baseUrl)) {
         return url;
       }
-
-      // Always redirect to dashboard after successful authentication
-      if (url === baseUrl || url === `${baseUrl}/`) {
-        return `${baseUrl}/dashboard`;
-      }
       
       // If url is relative, make it absolute
       if (url.startsWith("/")) {

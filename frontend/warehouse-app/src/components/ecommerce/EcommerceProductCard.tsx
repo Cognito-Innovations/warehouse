@@ -17,6 +17,7 @@ import { Star, Image as ImageIcon, Add, Remove } from "@mui/icons-material";
 import { EcommerceProductCardProps } from "@/types/ecommerce";
 import { ecommerceData } from "@/data/ecommerceData";
 import { formatDiscountPercentage } from "@/lib/utils";
+import { calculateDiscountedPrice, formatPrice, parsePrice } from "@/utils/priceUtils";
 
 export default function EcommerceProductCard({
   product,
@@ -33,7 +34,12 @@ export default function EcommerceProductCard({
   isDecrementLoading = false,
 }: EcommerceProductCardProps) {
   const theme = useTheme();
-  const discountPrice = product.price - (product.price * product.discount_percentage) / 100;
+  const { raw: rawPrice, formatted: formattedOriginal } = parsePrice(product.price);
+  
+  const discountPercent = parseFloat(String(product.discount_percentage || 0)) || 0;
+  const discountedRaw = calculateDiscountedPrice(rawPrice, discountPercent);
+  const formattedDiscounted = formatPrice(discountedRaw, parsePrice(product.price).currency);
+
   const unitValue = parseFloat(String(product.unit_value || "0"));
   const measurementLabel = product.measurement?.label || "";
   const stockQuantity = product.stock_quantity;
@@ -180,11 +186,20 @@ export default function EcommerceProductCard({
         </Typography>
 
         {/* Price and Add Button - matches skeleton: flex space-between, mb: 1 */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-          {/* Price - Discounted price first, then original price with strikethrough */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ 
+          display: { xs: 'block', sm: 'flex' }, 
+          alignItems: { sm: 'center' }, 
+          justifyContent: { sm: 'space-between' }, 
+          mb: 1 
+        }}>
+          <Box sx={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: 1,
+            mb: { xs: 1.5, sm: 0 }
+          }}>
             <Typography variant="body1" fontWeight="bold" color="primary" sx={{ fontSize: "1rem" }}>
-              ₹{discountPrice}
+              {formattedDiscounted}
             </Typography>
             {product.discount_percentage > 0 && (
               <Typography
@@ -195,7 +210,7 @@ export default function EcommerceProductCard({
                   fontSize: "0.875rem",
                 }}
               >
-                ₹{product.price}
+                {formattedOriginal}
               </Typography>
             )}
           </Box>
@@ -211,7 +226,9 @@ export default function EcommerceProductCard({
                     gap: 0.5,
                     border: `1px solid ${ecommerceData.ui.colors.borderColor}`,
                     borderRadius: 1,
-                    height: 28,
+                    height: 32,
+                    width: { xs: '100%', sm: 'auto' },
+                    justifyContent: 'space-between',
                   }}
                 >
                   <IconButton
@@ -222,8 +239,8 @@ export default function EcommerceProductCard({
                     }}
                     disabled={isDecrementLoading}
                     sx={{
-                      width: 28,
-                      height: 28,
+                      width: 40,
+                      height: 32,
                       p: 0,
                       position: "relative",
                       color: isDecrementLoading ? "action.disabled" : "inherit",
@@ -248,8 +265,8 @@ export default function EcommerceProductCard({
                     }}
                     disabled={cartQuantity >= stockQuantity || isIncrementLoading}
                     sx={{
-                      width: 28,
-                      height: 28,
+                      width: 40,
+                      height: 32,
                       p: 0,
                       position: "relative",
                       color: isIncrementLoading ? "action.disabled" : "inherit",
@@ -273,9 +290,9 @@ export default function EcommerceProductCard({
                   }}
                   disabled={isAddLoading}
                   sx={{
-                    width: 80,
+                    width: { xs: '100%', sm: 80 },
                     height: 32,
-                    minWidth: 80,
+                    minWidth: { sm: 80 },
                     fontSize: "0.8rem",
                     position: "relative",
                   }}
@@ -296,9 +313,9 @@ export default function EcommerceProductCard({
               size="small"
               disabled
               sx={{
-                width: 80,
+                width: { xs: '100%', sm: 80 },
                 height: 32,
-                minWidth: 80,
+                minWidth: { sm: 80 },
                 fontSize: "0.8rem",
               }}
             >

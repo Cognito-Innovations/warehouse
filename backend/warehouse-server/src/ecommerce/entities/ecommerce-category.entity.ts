@@ -4,19 +4,15 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { EcommerceSubCategory } from './ecommerce-sub-category.entity';
 import { EcommerceProduct } from './ecommerce-product.entity';
-
-export enum CargoType {
-  PERISHABLE_GOODS = 'Perishable goods',
-  ANIMAL_CARGO = 'Animal cargo',
-  GENERAL_COURIER = 'General courier',
-  GENERAL_CARGO = 'General cargo',
-}
+import { EcommerceCargoOption } from './cargo-options.entity';
 
 @Entity('ecommerce_categories')
 export class EcommerceCategory extends BaseTimestampEntity {
@@ -35,9 +31,19 @@ export class EcommerceCategory extends BaseTimestampEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   discount_percentage: number;
 
-  @ManyToOne(() => Country, { eager: true })
-  @JoinColumn({ name: 'country_id' })
-  country: Country;
+  @ManyToMany(() => Country, { eager: true })
+  @JoinTable({
+    name: 'ecommerce_category_countries',
+    joinColumn: {
+      name: 'category_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'country_id',
+      referencedColumnName: 'id',
+    },
+  })
+  countries: Country[]
 
   @Column({ type: 'text', nullable: true })
   description: string;
@@ -45,8 +51,9 @@ export class EcommerceCategory extends BaseTimestampEntity {
   @Column({ default: true })
   is_active: boolean;
 
-  @Column({ type: 'enum', enum: CargoType })
-  cargo_type: CargoType;
+  @ManyToOne(() => EcommerceCargoOption, { eager: true, nullable: false })
+  @JoinColumn({ name: 'cargo_option_id' })
+  cargo_option: EcommerceCargoOption;
 
   @OneToMany(() => EcommerceSubCategory, (subCategory) => subCategory.category)
   sub_categories: EcommerceSubCategory[];

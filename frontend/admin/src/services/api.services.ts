@@ -1,5 +1,5 @@
 //TODO P0: Resolve these typescript errors
-import type { CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
+import type { CargoOption, CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
 import type { PreArrival } from '../types/PreArrival';
 import api from './axios';
 
@@ -543,3 +543,8 @@ export const createShipmentInvoice = async (
   const res = await api.post(`/shipments/${shipmentId}/invoice/`, payload);
   return res.data;
 }
+
+export const getCargoOptions = async (): Promise<CargoOption[]> => {
+  const response = await api.get<CargoOption[]>('/ecommerce-cargo-options');
+  return response.data;
+};

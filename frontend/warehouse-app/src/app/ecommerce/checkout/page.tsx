@@ -6,7 +6,6 @@ import {
   Container,
   Typography,
   Button,
-  TextField,
   Grid,
   Divider,
   Alert,
@@ -25,14 +24,13 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  InputAdornment,
 } from "@mui/material";
-import { 
-  ArrowBack, 
-  Payment, 
-  LocalShipping, 
-  Security, 
-  CheckCircle, 
+import {
+  ArrowBack,
+  Payment,
+  LocalShipping,
+  Security,
+  CheckCircle,
   Timer,
   Home,
   DeliveryDining,
@@ -46,6 +44,14 @@ import { toast } from "sonner";
 import { ROUTES } from "@/utils/constants";
 import OrderSuccessPopup from "@/components/ecommerce/OrderSuccessPopup";
 import { formatDiscountPercentage } from "@/lib/utils";
+import { fetchUserAddresses } from "@/lib/api.service";
+
+interface UserAddress {
+  address: string;
+  city: string;
+  country: string;
+  zip_code: string;
+}
 
 export default function CheckoutPage() {
   const theme = useTheme();
@@ -63,6 +69,8 @@ export default function CheckoutPage() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOrderSuccessModalOpen, setIsOrderSuccessModalOpen] = useState(false);
+  const [fetchedAddress, setFetchedAddress] = useState<UserAddress | null>(null);
+  const [addressLoading, setAddressLoading] = useState(false);
 
   const DELIVERY_CHARGES = 50;
   const FREE_DELIVERY_THRESHOLD = 100;
@@ -93,6 +101,44 @@ export default function CheckoutPage() {
     fetchCart();
   }, [fetchCart]);
 
+  const fetchUserAddress = async () => {
+    if (!user?.id) {
+      setFetchedAddress(null);
+      setAddressLoading(false);
+      return;
+    }
+
+    try {
+      setAddressLoading(true);
+      setError(null);
+
+      const addressData: UserAddress = await fetchUserAddresses(user.id);
+
+      if (addressData) {
+        setFetchedAddress(addressData);
+
+        const fullAddress = `${addressData.address}, ${addressData.city}, ${addressData.country} - ${addressData.zip_code}`;
+        setFormData(prev => ({
+          ...prev,
+          shippingAddress: fullAddress,
+        }));
+      } else {
+        setFetchedAddress(null);
+        setError("No saved address found. Please add an address in your profile.");
+      }
+    } catch (err) {
+      console.error("Failed to fetch addresses:", err);
+      setFetchedAddress(null);
+      setError("Failed to fetch your saved address. Please try again.");
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserAddress();
+  }, [user?.id]);
+
   useEffect(() => {
     if (!cart || authLoading) return;
 
@@ -115,23 +161,15 @@ export default function CheckoutPage() {
       localStorage.getItem("shouldPlaceOrderAfterLogin") === "true"
     ) {
       const savedData = JSON.parse(localStorage.getItem("pendingOrder") || "{}");
-    
-      if (savedData.shippingAddress) {
-        setFormData(savedData);
+      
+      if (formData.shippingAddress) { 
         handlePlaceOrder();
       }
     
       localStorage.removeItem("pendingOrder");
       localStorage.removeItem("shouldPlaceOrderAfterLogin");
     }
-  }, [user, cart]);
-
-  const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: event.target.value,
-    }));
-  };
+  }, [user, cart, formData.shippingAddress]);
 
   const handlePlaceOrder = async () => {
     if (!cart) return;
@@ -141,7 +179,7 @@ export default function CheckoutPage() {
     }
 
     if (!user) {
-      localStorage.setItem("pendingOrder", JSON.stringify(formData));
+      localStorage.setItem("pendingOrder", JSON.stringify({}));
       localStorage.setItem("shouldPlaceOrderAfterLogin", "true");
   
       toast.info("Please sign in to place your order");
@@ -149,6 +187,12 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!formData.shippingAddress) {
+      setError("Cannot place order without a shipping address.");
+      toast.error("No shipping address found.");
+      return;
+    }
+    
     try {
       setProcessing(true);
       setError(null);
@@ -259,18 +303,8 @@ export default function CheckoutPage() {
             borderRadius: 3, 
             overflow: "visible",
             position: "relative",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            bgcolor: "primary.main",
             color: "white",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              bgcolor: "rgba(255,255,255,0.1)",
-              borderRadius: 3,
-            }
           }}
         >
           <CardContent sx={{ p: 3, position: "relative", zIndex: 1 }}>
@@ -319,50 +353,38 @@ export default function CheckoutPage() {
                         {error}
                       </Alert>
                     )}
-
-                    <TextField
-                      fullWidth
-                      label="Enter your complete address"
-                      multiline
-                      rows={4}
-                      value={formData.shippingAddress}
-                      onChange={handleInputChange("shippingAddress")}
-                      placeholder="House number, street, locality, city, pincode, etc."
-                      required
-                      variant="outlined"
-                      sx={{ 
-                        mb: 1,
-                        "& .MuiOutlinedInput-root": {
+                    
+                    {addressLoading ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', p: 3, bgcolor: 'grey.50', borderRadius: 2, minHeight: '140px', justifyContent: 'center' }}>
+                        <CircularProgress size={24} sx={{ mr: 2 }} />
+                        <Typography color="text.secondary">Fetching your address...</Typography>
+                      </Box>
+                    ) : fetchedAddress ? (
+                      <Box
+                        sx={{
+                          p: { xs: 2, md: 2.5 },
+                          bgcolor: "grey.50",
                           borderRadius: 2,
-                          bgcolor: "white",
-                          "& fieldset": { borderColor: "#e9ecef" },
-                          "&:hover fieldset": { borderColor: "primary.main" },
-                          "&.Mui-focused fieldset": { borderColor: "primary.main", borderWidth: 2 },
-                        }
-                      }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <LocalShipping sx={{ color: "grey.400", fontSize: 20 }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      inputProps={{
-                        maxLength: 500,
-                      }}
-                      helperText={
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ color: "#666" }}>This is where your order will be delivered</span>
-                          <Chip 
-                            label={`${formData.shippingAddress.length}/500`} 
-                            size="small" 
-                            variant="outlined" 
-                            color={formData.shippingAddress.length > 0 ? "success" : "default"}
-                            sx={{ fontSize: "0.75rem"  }}
-                          />
-                        </Box>
-                      }
-                    />
+                          border: "1px solid #e9ecef",
+                        }}
+                      >
+                        <Typography variant="body1" fontWeight={500} color="text.primary" gutterBottom>
+                          {fetchedAddress.address}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {fetchedAddress.city}, {fetchedAddress.country}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {fetchedAddress.zip_code}
+                        </Typography>
+                      </Box>
+                    ) : (
+                       !error && !authLoading && (
+                        <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                          No saved address found. Please add an address to your profile to proceed.
+                        </Alert>
+                       )
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
@@ -547,7 +569,7 @@ export default function CheckoutPage() {
               size="large"
               startIcon={<Payment />}
               onClick={handlePlaceOrder}
-              disabled={processing || !formData.shippingAddress.trim() || authLoading}
+              disabled={processing || !formData.shippingAddress.trim() || authLoading || addressLoading}
               sx={{
                 borderRadius: 3,
                 py: 2,

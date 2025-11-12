@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, MenuItem, Stack, Button, CircularProgress } from "@mui/material";
+import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
 
 import { createSubCategory, getCategories, getCountries, updateSubCategory } from "../../services/api.services";
 import type { Country, SubCategoryPayload } from "../../types";
 import type { Category } from "../Product/ProductForm";
+import { arraysEqual } from "../../utils/arrayEqual";
+import { statusOptions } from "../../utils/constants";
 
 interface SubCategoryFormProps {
   onClose: () => void;
@@ -11,22 +13,20 @@ interface SubCategoryFormProps {
   initialData?: SubCategoryPayload;
 }
 
-const statusOptions = [
-  { label: "Active", value: true },
-  { label: "Inactive", value: false },
-];
+const defaultFormData: SubCategoryPayload = {
+  id: undefined,
+  category_id: "",
+  name: "",
+  slug: "",
+  discount_percentage: 0,
+  country_ids: [],
+  is_active: true,
+};
 
 const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
-  const [formData, setFormData] = useState({
-    category_id: "",
-    name: "",
-    slug: "",
-    discount_percentage: 0,
-    country_id: "",
-    is_active: true,
-  });
+  const [formData, setFormData] = useState<SubCategoryPayload>(defaultFormData);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -51,32 +51,34 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
   }, []);
 
   useEffect(() => {
-    setFormData({
-      category_id: initialData?.category_id || "",
-      name: initialData?.name || "",
-      slug: initialData?.slug || "",
-      discount_percentage: initialData?.discount_percentage || 0,
-      country_id: initialData?.country_id || "",
-      is_active: initialData?.is_active ?? true,
-    });
+    if (initialData) {
+      setFormData({ ...defaultFormData, ...initialData });
+    } else {
+      setFormData(defaultFormData)
+    }
   }, [initialData]);
 
   const handleChange = (key: string, value: any) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleCountryDelete = (countryId: string) => {
+    handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
+  };
+
   const handleSubmit = async () => {
-    const { category_id, name, slug, is_active } = formData;
-    if (!name || !slug) return;
+    if (!formData.name || !formData.slug) return;
 
     if (initialData) {
-      const hasChanged =
-        initialData.category_id !== category_id ||
-        initialData.name !== name ||
-        initialData.slug !== slug ||
-        initialData.discount_percentage ||
-        initialData.country_id ||
-        initialData.is_active !== is_active;
+      const hasChanged = Object.keys(defaultFormData).some((key) => {
+        const k = key as keyof SubCategoryPayload;
+
+        if (k === "country_ids") {
+          return !arraysEqual(initialData.country_ids || [], formData.country_ids);
+        }
+
+        return initialData[k] !== formData[k];
+      })
 
       if (!hasChanged) {
         onClose();
@@ -87,7 +89,8 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
     try {
       setLoading(true);
       if (initialData?.id) {
-        await updateSubCategory(initialData.id, formData);
+        const { id, ...updatePayload } = formData;
+        await updateSubCategory(initialData.id, updatePayload);
       } else {
         await createSubCategory(formData);
       }
@@ -155,17 +158,61 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
         />
 
         <TextField
-          label="Country"
+          label="Countries"
           select
-          value={formData.country_id}
-          onChange={(e) => handleChange("country_id", e.target.value)}
+          value={formData.country_ids}
+          onChange={(e) => handleChange("country_ids", e.target.value)}
           fullWidth
           required
           disabled={fetching}
+          SelectProps={{
+            multiple: true,
+            renderValue: (selected) => {
+              const selectedIds = selected as string[];
+
+              if (fetching && selectedIds.length > 0) {
+                return (
+                  <Box sx={{ display: 'flex', alignItems: 'center', height: '24px', pl: 1 }}>
+                    <CircularProgress size={20} />
+                  </Box>
+                );
+              }
+
+              return (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selectedIds.map((value) => {
+                    const countryName = countries.find(c => c.id === value)?.name || value;
+                    return (
+                      <Chip
+                        key={value}
+                        label={countryName}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onDelete={(e) => {
+                         e.stopPropagation();
+                         handleCountryDelete(value);
+                        }}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    );
+                  })}
+                </Box>
+              );
+            },
+          }}
         >
-          {countries.map((c) => (
-            <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-          ))}
+          {fetching ? (
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            countries.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+              </MenuItem>
+            ))
+          )}
         </TextField>
 
         <TextField

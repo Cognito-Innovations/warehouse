@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, MenuItem, Stack, Button, CircularProgress } from "@mui/material";
+import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
 
 import { createProduct, getCategories, getCountries, getMeasurements, getSubCategories } from "../../services/api.services";
 import type { Country, ProductPayload } from "../../types";
+import { statusOptions } from "../../utils/constants";
 
 export interface Category { id: string; name: string; }
 interface SubCategoryItem { id: string; name: string; category: { id: string }; }
@@ -12,11 +13,6 @@ interface ProductFormProps {
   onClose: () => void;
   onSuccess?: () => void;
 }
-
-const statusOptions = [
-  { label: "Active", value: true },
-  { label: "Inactive", value: false },
-];
 
 const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -30,7 +26,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
     discount_percentage: "",
     unit_value: "",
     measurement_id: "",
-    country_id: "",
+    country_ids: [] as string[],
     stock_quantity: "",
     is_active: true,
   });
@@ -85,6 +81,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleCountryDelete = (countryId: string) => {
+    handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
+  };
+
   const handleSubmit = async () => {
     const { price, discount_percentage, unit_value, stock_quantity } = formData;
 
@@ -119,7 +119,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
     Number(formData.discount_percentage) > 0 &&
     Number(formData.unit_value) > 0 &&
     formData.measurement_id &&
-    formData.country_id &&
+    formData.country_ids &&
     Number(formData.stock_quantity) > 0;
 
   return (
@@ -238,18 +238,63 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess }) => {
 
       <Box sx={{ display: 'flex', gap: 2.5, mb: 2.5, flexDirection: { xs: 'column', sm: 'row' } }}>
         <TextField
-          label="Country"
+          label="Countries"
           select
-          value={formData.country_id}
-          onChange={(e) => handleChange("country_id", e.target.value)}
+          value={formData.country_ids}
+          onChange={(e) => handleChange("country_ids", e.target.value)}
           fullWidth
           required
           disabled={fetching}
+          SelectProps={{
+            multiple: true,
+            renderValue: (selected) => {
+              const selectedIds = selected as string[];
+
+              if (fetching && selectedIds.length > 0) {
+                return (
+                  <Box sx={{ display: 'flex', alignItems: 'center', height: '24px', pl: 1 }}>
+                    <CircularProgress size={20} />
+                  </Box>
+                );
+              }
+
+              return (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selectedIds.map((value) => {
+                    const countryName = countries.find(c => c.id === value)?.name || value;
+                    return (
+                      <Chip
+                        key={value}
+                        label={countryName}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onDelete={(e) => {
+                         e.stopPropagation();
+                         handleCountryDelete(value);
+                        }}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    );
+                  })}
+                </Box>
+              );
+            },
+          }}
         >
-          {countries.map((c) => (
-            <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-          ))}
+          {fetching ? (
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            countries.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+              </MenuItem>
+            ))
+          )}
         </TextField>
+        
         <TextField
           label="Stock Quantity"
           value={formData.stock_quantity}

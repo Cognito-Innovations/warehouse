@@ -11,15 +11,16 @@ import Modal from "../components/common/Modal";
 import CategoryForm from "../components/Category/CategoryForm";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import type { ColumnDefinition } from "../types/table";
-import type { CategoryPayload } from "../types";
+import type { CategoryPayload, Country } from "../types";
 
 interface CategoryRow {
   id: string;
   name: string;
   slug: string;
   discount_percentage: number,
-  country_id: string,
-  cargo_type: string;
+  countries: Country[],
+  cargo_type_label: string;
+  cargo_option_id: string;
   products: number;
   image_url: string;
   description: string;
@@ -44,12 +45,13 @@ const Category: React.FC = () => {
         name: item.name,
         slug: item.slug,
         discount_percentage: parseFloat(item.discount_percentage),
-        country_id: item.country.id,
+        countries: item.countries || [],
         products: item.products_count ?? 0,
         image_url: item.image_url || "",
         description: item.description || "",
         status: item.is_active ? "Active" : "Inactive",
-        cargo_type: item.cargo_type,
+        cargo_option_id: item.cargo_option?.id,
+        cargo_type_label: item.cargo_option?.label,
       }));
       setCategories(mappedData);
     } catch (error) {
@@ -72,10 +74,10 @@ const Category: React.FC = () => {
       name: category.name,
       slug: category.slug,
       discount_percentage: category.discount_percentage,
-      country_id: category.country_id,
+      country_ids: category.countries.map((country: Country) => country.id),
       is_active: category.status === "Active",
       image_url: category.image_url || "",
-      cargo_type: category.cargo_type,
+      cargo_option_id: category.cargo_option_id,
       description: category.description || "",
     };
     
@@ -151,7 +153,7 @@ const Category: React.FC = () => {
     },
     {
       header: "Cargo Type",
-      cell: (row) => <Typography variant="body2">{row.cargo_type}</Typography>,
+      cell: (row) => <Typography variant="body2">{row.cargo_type_label}</Typography>,
       width: "15%",
     },
     {

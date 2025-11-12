@@ -11,14 +11,14 @@ import Modal from "../components/common/Modal";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import SubCategoryForm from "../components/SubCategory/SubCategoryForm";
 import type { ColumnDefinition } from "../types/table";
-import type { SubCategoryPayload } from "../types";
+import type { Country, SubCategoryPayload } from "../types";
 
 interface SubCategoryRow {
   id: string;
   name: string;
   slug: string;
   discount_percentage: number,
-  country_id: string,
+  countries: Country[],
   categoryName: string;
   categoryId: string | null;
   products: number;
@@ -43,7 +43,7 @@ const SubCategory: React.FC = () => {
         name: item.name,
         slug: item.slug,
         discount_percentage: item.discount_percentage,
-        country_id: item.country.id,
+        countries: item.countries || [],
         categoryName: item.category?.name || "N/A",
         categoryId: item.category?.id || null,
         products: item.products_count ?? 0,
@@ -71,7 +71,7 @@ const SubCategory: React.FC = () => {
       name: sub_category.name,
       slug: sub_category.slug,
       discount_percentage: sub_category.discount_percentage,
-      country_id: sub_category.country_id,
+      country_ids: sub_category.countries.map((country: Country) => country.id),
       is_active: sub_category.status === "Active",
     };
     setEditingSubCategory(payload);

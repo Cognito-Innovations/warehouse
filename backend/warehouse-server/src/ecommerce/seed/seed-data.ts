@@ -1,14 +1,13 @@
 import { CreateCategoryDto } from '../dto/category/ecommerce-create-category.dto';
 import { CreateEcommerceSubCategoryDto } from '../dto/sub_category/create-sub_category.dto';
 import { CreateEcommerceProductDto } from '../dto/product/create-product.dto';
-import { CargoType } from '../entities/ecommerce-category.entity';
 
 /**
  * Seed data for Categories
- * Note: Replace COUNTRY_ID_PLACEHOLDER with an actual country UUID from your database
+ * Note: Replace COUNTRY_IDS_PLACEHOLDER with an actual country UUID from your database
  */
 
-export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
+export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
   {
     name: 'Fruits & Vegetables',
     slug: 'fruits-vegetables',
@@ -17,7 +16,7 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
       'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400',
     description: 'Fresh fruits and vegetables delivered to your doorstep',
     is_active: true,
-    cargo_type: CargoType.GENERAL_CARGO,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Dairy & Eggs',
@@ -27,7 +26,7 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
       'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400',
     description: 'Fresh dairy products and farm eggs',
     is_active: true,
-    cargo_type: CargoType.GENERAL_CARGO,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Beverages',
@@ -37,7 +36,7 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
       'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400',
     description: 'Soft drinks, juices, and other beverages',
     is_active: true,
-    cargo_type: CargoType.GENERAL_CARGO,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Snacks & Sweets',
@@ -47,7 +46,7 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
       'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400',
     description: 'Chips, cookies, chocolates, and more',
     is_active: true,
-    cargo_type: CargoType.GENERAL_CARGO,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Bakery & Bread',
@@ -57,7 +56,7 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
       'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400',
     description: 'Fresh bread, cakes, and bakery items',
     is_active: true,
-    cargo_type: CargoType.GENERAL_CARGO,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Meat & Seafood',
@@ -67,7 +66,7 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
       'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400',
     description: 'Fresh meat and seafood products',
     is_active: true,
-    cargo_type: CargoType.GENERAL_CARGO,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Frozen Foods',
@@ -77,7 +76,7 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
       'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400',
     description: 'Frozen vegetables, ready meals, and ice cream',
     is_active: true,
-    cargo_type: CargoType.GENERAL_CARGO,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Personal Care',
@@ -87,7 +86,7 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
       'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400',
     description: 'Skincare, haircare, and personal hygiene products',
     is_active: true,
-    cargo_type: CargoType.GENERAL_CARGO,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Household Essentials',
@@ -97,7 +96,7 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
       'https://images.unsplash.com/photo-1586075010923-2dd2440d87b0?w=400',
     description: 'Cleaning supplies and household items',
     is_active: true,
-    cargo_type: CargoType.GENERAL_CARGO,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Baby Care',
@@ -107,19 +106,19 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_id'>[] = [
       'https://images.unsplash.com/photo-1604917019088-26b603e7b8b1?w=400',
     description: 'Baby food, diapers, and care products',
     is_active: true,
-    cargo_type: CargoType.GENERAL_CARGO,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 ];
 
 /**
  * Seed data for Sub Categories
- * Note: Replace CATEGORY_ID_PLACEHOLDER and COUNTRY_ID_PLACEHOLDER with actual UUIDs
+ * Note: Replace CATEGORY_ID_PLACEHOLDER and COUNTRY_IDS_PLACEHOLDER with actual UUIDs
  * The category_id should match the index from categorySeedData array
  * Each category has 2 sub-categories
  */
 export const subCategorySeedData: Omit<
   CreateEcommerceSubCategoryDto,
-  'category_id' | 'country_id'
+  'category_id' | 'country_ids'
 >[] = [
   // Fruits & Vegetables sub-categories (category index 0)
   {
@@ -276,13 +275,13 @@ export const subCategorySeedData: Omit<
 /**
  * Seed data for Products
  * Note: Replace CATEGORY_ID_PLACEHOLDER, SUB_CATEGORY_ID_PLACEHOLDER,
- * COUNTRY_ID_PLACEHOLDER, and MEASUREMENT_ID_PLACEHOLDER with actual UUIDs
+ * COUNTRY_IDS_PLACEHOLDER, and MEASUREMENT_ID_PLACEHOLDER with actual UUIDs
  * Each category has 3 products distributed across 2 sub-categories
  * Some products are randomly set to out of stock (stock_quantity: 0)
  */
 export const productSeedData: Omit<
   CreateEcommerceProductDto,
-  'category_id' | 'sub_category_id' | 'country_id' | 'measurement_id'
+  'category_id' | 'sub_category_id' | 'country_ids' | 'measurement_id'
 >[] = [
   // Category 0: Fruits & Vegetables
   // Sub-category 0: Fresh Fruits
@@ -292,7 +291,7 @@ export const productSeedData: Omit<
     slug: 'fresh-red-apples',
     image_url:
       'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400',
-    price: 150,
+    price: 2,
     discount_percentage: 10,
     unit_value: 1,
     stock_quantity: 50,
@@ -304,7 +303,7 @@ export const productSeedData: Omit<
     slug: 'bananas-premium',
     image_url:
       'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400',
-    price: 60,
+    price: 1,
     discount_percentage: 5,
     unit_value: 1,
     stock_quantity: 0, // Out of stock
@@ -317,7 +316,7 @@ export const productSeedData: Omit<
     slug: 'fresh-tomatoes',
     image_url:
       'https://images.unsplash.com/photo-1546470427-e26264be0b42?w=400',
-    price: 40,
+    price: 2,
     discount_percentage: 5,
     unit_value: 1,
     stock_quantity: 200,
@@ -332,7 +331,7 @@ export const productSeedData: Omit<
     slug: 'fresh-whole-milk',
     image_url:
       'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400',
-    price: 65,
+    price: 3,
     discount_percentage: 3,
     unit_value: 1,
     stock_quantity: 100,
@@ -345,7 +344,7 @@ export const productSeedData: Omit<
     slug: 'butter-premium',
     image_url:
       'https://images.unsplash.com/photo-1589985270826-4b7fe3a787fe?w=400',
-    price: 120,
+    price: 2,
     discount_percentage: 5,
     unit_value: 0.2,
     stock_quantity: 80,
@@ -357,7 +356,7 @@ export const productSeedData: Omit<
     slug: 'cheddar-cheese-block',
     image_url:
       'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400',
-    price: 180,
+    price: 2,
     discount_percentage: 8,
     unit_value: 0.2,
     stock_quantity: 0, // Out of stock
@@ -372,7 +371,7 @@ export const productSeedData: Omit<
     slug: 'cola-2l-bottle',
     image_url:
       'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400',
-    price: 90,
+    price: 1,
     discount_percentage: 12,
     unit_value: 2,
     stock_quantity: 150,
@@ -384,7 +383,7 @@ export const productSeedData: Omit<
     slug: 'lemon-soda-750ml',
     image_url:
       'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400',
-    price: 45,
+    price: 3,
     discount_percentage: 10,
     unit_value: 0.75,
     stock_quantity: 0, // Out of stock
@@ -397,7 +396,7 @@ export const productSeedData: Omit<
     slug: 'orange-juice-fresh',
     image_url:
       'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400',
-    price: 120,
+    price: 2,
     discount_percentage: 10,
     unit_value: 1,
     stock_quantity: 70,
@@ -412,7 +411,7 @@ export const productSeedData: Omit<
     slug: 'potato-chips-classic',
     image_url:
       'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400',
-    price: 30,
+    price: 3,
     discount_percentage: 15,
     unit_value: 0.1,
     stock_quantity: 300,
@@ -424,7 +423,7 @@ export const productSeedData: Omit<
     slug: 'nachos-cheese-flavor',
     image_url:
       'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400',
-    price: 50,
+    price: 5,
     discount_percentage: 12,
     unit_value: 0.15,
     stock_quantity: 150,
@@ -437,7 +436,7 @@ export const productSeedData: Omit<
     slug: 'dark-chocolate-bar',
     image_url:
       'https://images.unsplash.com/photo-1606312619070-d48b4cbc3e78?w=400',
-    price: 150,
+    price: 1,
     discount_percentage: 18,
     unit_value: 0.1,
     stock_quantity: 120,
@@ -452,7 +451,7 @@ export const productSeedData: Omit<
     slug: 'white-bread-sliced',
     image_url:
       'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400',
-    price: 40,
+    price: 4,
     discount_percentage: 5,
     unit_value: 0.4,
     stock_quantity: 100,
@@ -464,7 +463,7 @@ export const productSeedData: Omit<
     slug: 'brown-bread-multigrain',
     image_url:
       'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400',
-    price: 55,
+    price: 5,
     discount_percentage: 6,
     unit_value: 0.4,
     stock_quantity: 0, // Out of stock
@@ -477,7 +476,7 @@ export const productSeedData: Omit<
     slug: 'chocolate-cake',
     image_url:
       'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400',
-    price: 450,
+    price: 3,
     discount_percentage: 12,
     unit_value: 1,
     stock_quantity: 20,
@@ -492,7 +491,7 @@ export const productSeedData: Omit<
     slug: 'chicken-breast-boneless',
     image_url:
       'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400',
-    price: 350,
+    price: 3,
     discount_percentage: 8,
     unit_value: 0.5,
     stock_quantity: 50,
@@ -504,7 +503,7 @@ export const productSeedData: Omit<
     slug: 'chicken-thighs-pack',
     image_url:
       'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400',
-    price: 280,
+    price: 1,
     discount_percentage: 7,
     unit_value: 0.5,
     stock_quantity: 35,
@@ -517,7 +516,7 @@ export const productSeedData: Omit<
     slug: 'fresh-salmon-fillet',
     image_url:
       'https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=400',
-    price: 800,
+    price: 4,
     discount_percentage: 12,
     unit_value: 0.5,
     stock_quantity: 0, // Out of stock
@@ -532,7 +531,7 @@ export const productSeedData: Omit<
     slug: 'frozen-peas',
     image_url:
       'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400',
-    price: 80,
+    price: 5,
     discount_percentage: 8,
     unit_value: 0.5,
     stock_quantity: 100,
@@ -544,7 +543,7 @@ export const productSeedData: Omit<
     slug: 'frozen-corn',
     image_url:
       'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400',
-    price: 75,
+    price: 6,
     discount_percentage: 6,
     unit_value: 0.5,
     stock_quantity: 90,
@@ -557,7 +556,7 @@ export const productSeedData: Omit<
     slug: 'vanilla-ice-cream',
     image_url:
       'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400',
-    price: 180,
+    price: 2,
     discount_percentage: 15,
     unit_value: 1,
     stock_quantity: 60,
@@ -572,7 +571,7 @@ export const productSeedData: Omit<
     slug: 'face-wash-gentle',
     image_url:
       'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400',
-    price: 200,
+    price: 3,
     discount_percentage: 18,
     unit_value: 0.2,
     stock_quantity: 80,
@@ -584,7 +583,7 @@ export const productSeedData: Omit<
     slug: 'moisturizer-daily',
     image_url:
       'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400',
-    price: 250,
+    price: 2,
     discount_percentage: 15,
     unit_value: 0.1,
     stock_quantity: 0, // Out of stock
@@ -597,7 +596,7 @@ export const productSeedData: Omit<
     slug: 'shampoo-anti-dandruff',
     image_url:
       'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400',
-    price: 180,
+    price: 4,
     discount_percentage: 15,
     unit_value: 0.4,
     stock_quantity: 90,
@@ -612,7 +611,7 @@ export const productSeedData: Omit<
     slug: 'laundry-detergent',
     image_url:
       'https://images.unsplash.com/photo-1586075010923-2dd2440d87b0?w=400',
-    price: 350,
+    price: 3,
     discount_percentage: 6,
     unit_value: 2,
     stock_quantity: 70,
@@ -624,7 +623,7 @@ export const productSeedData: Omit<
     slug: 'dish-soap-lemon',
     image_url:
       'https://images.unsplash.com/photo-1586075010923-2dd2440d87b0?w=400',
-    price: 85,
+    price: 2,
     discount_percentage: 5,
     unit_value: 0.5,
     stock_quantity: 120,
@@ -637,7 +636,7 @@ export const productSeedData: Omit<
     slug: 'toilet-paper-soft',
     image_url:
       'https://images.unsplash.com/photo-1586075010923-2dd2440d87b0?w=400',
-    price: 250,
+    price: 2,
     discount_percentage: 5,
     unit_value: 12,
     stock_quantity: 100,
@@ -652,7 +651,7 @@ export const productSeedData: Omit<
     slug: 'baby-formula-stage-1',
     image_url:
       'https://images.unsplash.com/photo-1604917019088-26b603e7b8b1?w=400',
-    price: 450,
+    price: 4,
     discount_percentage: 20,
     unit_value: 0.4,
     stock_quantity: 60,
@@ -664,7 +663,7 @@ export const productSeedData: Omit<
     slug: 'baby-cereal-rice',
     image_url:
       'https://images.unsplash.com/photo-1604917019088-26b603e7b8b1?w=400',
-    price: 180,
+    price: 2,
     discount_percentage: 15,
     unit_value: 0.2,
     stock_quantity: 0, // Out of stock
@@ -677,7 +676,7 @@ export const productSeedData: Omit<
     slug: 'baby-diapers-size-m',
     image_url:
       'https://images.unsplash.com/photo-1604917019088-26b603e7b8b1?w=400',
-    price: 650,
+    price: 3,
     discount_percentage: 18,
     unit_value: 30,
     stock_quantity: 50,
