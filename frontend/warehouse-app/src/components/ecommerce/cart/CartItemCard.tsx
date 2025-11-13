@@ -6,7 +6,7 @@ import { Add, Remove, Delete, LocationOn, Inventory } from "@mui/icons-material"
 import { CartItemCardProps } from "@/types/ecommerce";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { getCurrencyForCountry } from "@/utils/currency";
-import { parsePrice, formatPrice } from "@/utils/priceUtils";
+import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 
 export default function CartItemCard({
   item,
@@ -20,11 +20,11 @@ export default function CartItemCard({
   currencySymbol,
   selectedCountry,
 }: CartItemCardProps) {
-  const unitPrice = Number(item.unit_price) || 0;
-  const totalPrice = (item.quantity || 0) * unitPrice;
-  const parsedOriginal = parsePrice(item.product.price || '0');
-  const originalPrice = parsedOriginal.raw;
-  const hasDiscount = item.product.discount_percentage > 0;
+  const pricing = getCartItemPricingSummary(item);
+  const unitPrice = pricing.discountedUnitPrice;
+  const totalPrice = pricing.lineTotal;
+  const originalPrice = pricing.originalUnitPrice;
+  const hasDiscount = pricing.discountPerUnit > 0;  
   const unitValue = item.product.unit_value || 0;
   const measurementLabel = item.product.measurement?.label || "";
   const placeholderImage = `https://placehold.co/160x160?text=${item.product.name}`;
@@ -35,7 +35,7 @@ export default function CartItemCard({
     : "Out of Stock";
   const currentCountry = selectedCountry || 'United States of America';
   const currencyInfo = getCurrencyForCountry(currentCountry);
-  const currencyStr = currencySymbol || currencyInfo.symbol || parsedOriginal.currency;
+  const currencyStr = currencySymbol || pricing.currency || currencyInfo.symbol;
 
   const formatLocalPrice = (price: number) => formatPrice(price, currencyStr);
   return (
@@ -211,7 +211,7 @@ export default function CartItemCard({
             )}
           </Stack>
 
-          {/* Quantity Selector (Unchanged from original) */}
+          {/* Quantity Selector */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
             <IconButton
               size="small"

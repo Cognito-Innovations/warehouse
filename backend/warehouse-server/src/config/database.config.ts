@@ -23,6 +23,7 @@ import {
   PreArrivalDocument,
   PickupRequestDocument,
   ShoppingRequestDocument,
+  ClientIdentifier,
 } from '../shared/entities';
 import { Country } from 'src/Countries/country.entity';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
@@ -79,6 +80,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     PreArrivalDocument,
     PickupRequestDocument,
     ShoppingRequestDocument,
+    ClientIdentifier,
     ShipmentExport,
     ShipmentExportBox,
     Document,

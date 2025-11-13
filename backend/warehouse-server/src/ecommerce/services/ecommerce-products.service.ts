@@ -37,7 +37,7 @@ export class ProductsService {
     return await this.productRepository.save(product);
   }
 
-  async findAll(country?: string, search?: string) {
+  async findAll(country?: string, search?: string, limit = 20, offset = 0) {
     const where: any = {};
     if (search?.trim()) {
       where.name = ILike(`%${search.trim()}%`);
@@ -45,12 +45,13 @@ export class ProductsService {
 
     const products = await this.productRepository.find({
       where,
-      relations: ['category', 'sub_category', 'countries', 'measurement']
+      relations: ['category', 'sub_category', 'countries', 'measurement'],
+      skip: offset,
+      take: limit,
     });
 
-    const selectedCountry = country || 'United States of America'; //TODO: Use the ISO code
+    const selectedCountry = country || 'USA';
 
-    //TODO: Only 20 products will go inside map and get the price according to the country
     return Promise.all(
       products.map(async (product) => ({
         ...product,
@@ -73,7 +74,7 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    const selectedCountry = country || 'US';
+    const selectedCountry = country || 'USA';
 
     return {
       ...product,

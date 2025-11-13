@@ -14,11 +14,13 @@ import {
 interface OrderSuccessPopupProps {
   open: boolean;
   onContinueShopping: () => void;
+  onViewOrderHistory: () => void;
 }
 
 export default function OrderSuccessPopup({
   open,
   onContinueShopping,
+  onViewOrderHistory,
 }: OrderSuccessPopupProps) {
   return (
     <Modal
@@ -42,7 +44,7 @@ export default function OrderSuccessPopup({
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: { xs: "90%", sm: 420 },
+          width: { xs: "90%", sm: 500 },
           bgcolor: "background.paper",
           borderRadius: 3,
           boxShadow: 30,
@@ -57,7 +59,7 @@ export default function OrderSuccessPopup({
             Thank you for shopping with us! Your items will be delivered soon.
           </Typography>
 
-          <Stack spacing={1.5}>
+          <Stack direction="row" spacing={2} justifyContent="center">
             <Button
               variant="contained"
               size="large"
@@ -70,6 +72,19 @@ export default function OrderSuccessPopup({
               }}
             >
               Continue Shopping
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              fullWidth
+              onClick={onViewOrderHistory}
+              sx={{
+                textTransform: "none",
+                fontWeight: "bold",
+                borderRadius: 2,
+              }}
+            >
+              View Order History
             </Button>
           </Stack>
         </Paper>

@@ -8,7 +8,7 @@ import {
   UpdateCartItemRequest,
 } from "../types/ecommerce";
 import { ecommerceService } from "@/services/ecommerce.service";
-import { calculateDiscountedPrice, parsePrice } from "@/utils/priceUtils";
+import { getCartItemPricingSummary } from "@/utils/priceUtils";
 
 // Debounce utility for cart API calls
 const debounceMap = new Map<string, NodeJS.Timeout>();
@@ -54,6 +54,9 @@ interface ProductState {
   selectedCategory: string | null;
   loading: boolean;
   error: string | null;
+  productsCount: number;
+  hasMoreProducts: boolean;
+  loadingNextPage: boolean;
 }
 
 // Product Store Actions
@@ -67,6 +70,9 @@ interface ProductActions {
   filterProducts: () => void;
   fetchCategories: () => Promise<void>;
   fetchProducts: (country?: string, searchTerm?: string) => Promise<void>;
+  fetchProductsPage: (country?: string, offset?: number, limit?: number, append?: boolean, searchTerm?: string) => Promise<void>;
+  resetProducts: () => void;
+  fetchMoreProducts: (country?: string, searchTerm?: string) => Promise<void>;
 }
 
 // Cart Store State
@@ -100,6 +106,67 @@ interface EcommerceStore
     CartState,
     CartActions {}
 
+interface NormalizedCartState {
+  cart: Cart | null;
+  itemCount: number;
+  subtotal: number;
+  discountTotal: number;
+}
+
+const normalizeCartState = (
+  cart: Cart | null,
+  products: EcommerceProduct[]
+): NormalizedCartState => {
+  if (!cart || !Array.isArray(cart.items) || cart.items.length === 0) {
+    return {
+      cart: cart ? { ...cart, items: cart.items || [] } : cart,
+      itemCount: 0,
+      subtotal: 0,
+      discountTotal: 0,
+    };
+  }
+
+  let discountTotal = 0;
+  let itemCount = 0;
+
+  const normalizedItems = cart.items.map((item) => {
+    const canonicalProduct =
+      products.find((p) => p.id === item.product.id) || item.product;
+    const enrichedItem = { ...item, product: canonicalProduct };
+    const pricing = getCartItemPricingSummary(enrichedItem);
+
+    discountTotal += pricing.discountTotal;
+    itemCount += enrichedItem.quantity || 0;
+
+    return {
+      ...enrichedItem,
+      unit_price: pricing.discountedUnitPrice,
+      total_price: pricing.lineTotal,
+      discount_percentage: pricing.discountPercent,
+    };
+  });
+
+  const subtotal = normalizedItems.reduce(
+    (sum, item) => sum + (Number(item.total_price) || 0),
+    0
+  );
+
+  const normalizedCart: Cart = {
+    ...cart,
+    items: normalizedItems,
+    total_amount: subtotal,
+    discount_percentage: discountTotal,
+    final_amount: subtotal,
+  };
+
+  return {
+    cart: normalizedCart,
+    itemCount,
+    subtotal,
+    discountTotal,
+  };
+};
+
 const computeCartFromLocal = (
   localItems: LocalCartItem[],
   products: EcommerceProduct[],
@@ -112,11 +179,6 @@ const computeCartFromLocal = (
       const product = products.find((p) => p.id === item.productId);
       if (!product) return null;
 
-      const originalPrice = parsePrice(product.price || '0').raw;
-      const discountPercent = Number(product.discount_percentage) || 0;
-      const unitPrice = calculateDiscountedPrice(originalPrice, discountPercent);
-      const totalPrice = unitPrice * item.quantity;
-
       const existingItem = existingCart?.items.find(
         (i) => i.product.id === item.productId && !i.id.startsWith("local-")
       );
@@ -124,34 +186,33 @@ const computeCartFromLocal = (
       const id = existingItem ? existingItem.id : `local-${product.id}`;
 
       return {
-        id: id,
+        id,
         product,
         quantity: item.quantity,
-        unit_price: unitPrice,
-        total_price: totalPrice,
+        unit_price: existingItem?.unit_price ?? 0,
+        total_price: existingItem?.total_price ?? 0,
+        discount_percentage: Number(product.discount_percentage) || 0,
+        created_at: existingItem?.created_at || new Date().toISOString(),
+        updated_at: existingItem?.updated_at || new Date().toISOString(),
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
 
   if (!items.length) return null;
 
-  const totalAmount = items.reduce((sum, item) => sum + item.total_price, 0);
-  let totalDiscount = 0;
-  items.forEach((item) => {
-    const disc =
-      item.total_price *
-      ((item.product.discount_percentage || 0) / 100);
-    totalDiscount += disc;
-  });
-  const finalAmount = totalAmount - totalDiscount;
-
-  return {
+  const baseCart: Cart = {
     id: existingCart?.id || "local-cart-id",
     items,
-    total_amount: totalAmount,
-    discount_percentage: totalDiscount,
-    final_amount: finalAmount,
-  } as Cart;
+    total_amount: existingCart?.total_amount || 0,
+    discount_percentage: existingCart?.discount_percentage || 0,
+    final_amount: existingCart?.final_amount || 0,
+    user_id: existingCart?.user_id || "",
+    status: existingCart?.status || "ACTIVE",
+    created_at: existingCart?.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  return normalizeCartState(baseCart, products).cart;
 };
 
 export const useEcommerceStore = create<EcommerceStore>()(
@@ -163,8 +224,11 @@ export const useEcommerceStore = create<EcommerceStore>()(
       filteredProducts: [],
       searchQuery: "",
       selectedCategory: null,
-      loading: true,
+      loading: false,
       error: null,
+      productsCount: 0,
+      hasMoreProducts: true,
+      loadingNextPage: false,
 
       // Cart State
       cart: null,
@@ -220,28 +284,46 @@ export const useEcommerceStore = create<EcommerceStore>()(
           });
         }
       },
-      fetchProducts: async (country?: string, searchTerm?: string) => {
+      fetchProductsPage: async (country, offset = 0, limit = 20, append = false, searchTerm) => {
+        set({ loadingNextPage: true });
         try {
-          const products = await ecommerceService.getProducts(searchTerm, country);
-          set({ products, filteredProducts: products });
-          const token = getAuthToken();
-          if (!token) {
-            const state = get();
-            if (state.localCartItems.length > 0) {
-              const computed = computeCartFromLocal(
-                state.localCartItems,
-                products,
-                state.cart
-              );
-              state.setCart(computed);
-            }
+          const products = await ecommerceService.getProducts(searchTerm, country, limit, offset);
+          const current = get().products;
+          const mergedProducts = append ? [...current, ...products] : products;
+          set({
+            products: mergedProducts,
+            filteredProducts: mergedProducts,
+            hasMoreProducts: products.length === limit,
+            productsCount: append ? (current.length + products.length) : products.length,
+          });
+          const localCartItems = get().localCartItems;
+          if (localCartItems && localCartItems.length > 0) {
+            const cart = computeCartFromLocal(localCartItems, mergedProducts, get().cart);
+            get().setCart(cart);
+          }
+
+          const existingCart = get().cart;
+          if (existingCart && existingCart.items && existingCart.items.length > 0) {
+            get().setCart({
+              ...existingCart,
+              items: [...existingCart.items],
+            });
           }
         } catch (err: any) {
-          console.error("Failed to fetch products:", err);
-          set({
-            error: err.message || "Failed to fetch products",
-          });
+          set({ error: err.message || "Failed to fetch products" });
+        } finally {
+          set({ loadingNextPage: false });
         }
+      },
+      fetchProducts: async (country, searchTerm) => {
+        await get().fetchProductsPage(country, 0, 20, false, searchTerm);
+      },
+      fetchMoreProducts: async (country, searchTerm) => {
+        const current = get().products;
+        await get().fetchProductsPage(country, current.length, 20, true, searchTerm);
+      },
+      resetProducts: () => {
+        set({ products: [], filteredProducts: [], productsCount: 0, hasMoreProducts: true });
       },
 
       // Cart Actions
@@ -249,19 +331,23 @@ export const useEcommerceStore = create<EcommerceStore>()(
         if (cart && !cart.items) {
           cart.items = [];
         }
-       
+        const products = get().products;
         if (!cart || !cart.items || cart.items.length === 0) {
           set({
-            cart: cart,
+            cart: cart ? { ...cart, items: cart.items || [] } : cart,
             itemCount: 0,
             totalAmount: 0,
           });
           return;
         }
-        set({
+        const { cart: normalizedCart, itemCount, subtotal } = normalizeCartState(
           cart,
-          itemCount: cart.items.reduce((sum, item) => sum + item.quantity, 0),
-          totalAmount: cart.final_amount,
+          products
+        );
+        set({
+          cart: normalizedCart,
+          itemCount,
+          totalAmount: subtotal,
         });
       },
       fetchCart: async () => {
@@ -550,6 +636,9 @@ export const useProducts = () => {
   const selectedCategory = useEcommerceStore((state) => state.selectedCategory);
   const loading = useEcommerceStore((state) => state.loading);
   const error = useEcommerceStore((state) => state.error);
+  const productsCount = useEcommerceStore((state) => state.productsCount);
+  const hasMoreProducts = useEcommerceStore((state) => state.hasMoreProducts);
+  const loadingNextPage = useEcommerceStore((state) => state.loadingNextPage);
   return {
     products,
     filteredProducts,
@@ -558,6 +647,9 @@ export const useProducts = () => {
     selectedCategory,
     loading,
     error,
+    productsCount,
+    hasMoreProducts,
+    loadingNextPage,
   };
 };
 
@@ -600,6 +692,8 @@ export const useProductActions = () => {
   const fetchProducts = useEcommerceStore((state) => state.fetchProducts);
   const setLoading = useEcommerceStore((state) => state.setLoading);
   const setError = useEcommerceStore((state) => state.setError);
+  const fetchMoreProducts = useEcommerceStore((state) => state.fetchMoreProducts);
+  const resetProducts = useEcommerceStore((state) => state.resetProducts);
   return {
     setSearchQuery,
     setSelectedCategory,
@@ -607,5 +701,7 @@ export const useProductActions = () => {
     fetchProducts,
     setLoading,
     setError,
+    fetchMoreProducts,
+    resetProducts,
   };
 };

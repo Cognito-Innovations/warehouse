@@ -43,11 +43,11 @@ import { ecommerceService } from "../../../services/ecommerce.service";
 import { toast } from "sonner";
 import { ROUTES } from "@/utils/constants";
 import OrderSuccessPopup from "@/components/ecommerce/OrderSuccessPopup";
-import { formatDiscountPercentage } from "@/lib/utils";
 import { fetchUserAddresses } from "@/lib/api.service";
 import { getCurrencyForCountry } from "@/utils/currency";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import { parsePrice, formatPrice } from "@/utils/priceUtils";
+import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
+import { CartItem } from "@/types/ecommerce";
 
 interface UserAddress {
   address: string;
@@ -78,19 +78,19 @@ export default function CheckoutPage() {
   const [isOrderSuccessModalOpen, setIsOrderSuccessModalOpen] = useState(false);
   const [fetchedAddress, setFetchedAddress] = useState<UserAddress | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
+  const [checkedOutItems, setCheckedOutItems] = useState<CartItem[]>([]);
 
   const locationData = useEffectiveUserLocation({
-    country: 'United States of America',
-    city: 'New York',
-    pincode: '10001',
+    countryCode: undefined,
+    countryName: undefined,
+    city: '',
+    pincode: '',
   });
-  const selectedCountry = locationData.location.country;
+  const selectedCountry = locationData.location.countryName;
 
-  const currency = getCurrencyForCountry(selectedCountry);
-  const currencyStr = currency.symbol;
-
-  const getThresholdAndFees = (country: string) => {
-    if (country.includes('India')) {
+  const countryName = selectedCountry || '';
+  const getThresholdAndFees = (country?: string) => {
+    if (country && country.includes('India')) {
       return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
     } else {
       return { threshold: 20, deliveryFee: 5, serviceCharge: 1 };
@@ -98,45 +98,65 @@ export default function CheckoutPage() {
   };
 
   const calculateSelectedTotals = () => {
-    if (!cart || !cart.items || cart.items.length === 0) {
+    if (!checkedOutItems || checkedOutItems.length === 0) {
       return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
     }
 
-    const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(selectedCountry);
+    const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } =
+      getThresholdAndFees(countryName);
 
-    // Calculate subtotal from ALL items in cart, using Number for prices
-    const subtotal = cart.items.reduce((sum, item) => {
-      const itemUnitPrice = Number(item.unit_price) || 0;
-      const itemLineTotal = (item.quantity || 0) * itemUnitPrice;
-      return sum + itemLineTotal;
-    }, 0);
+    let grossSubtotal = 0;
+    let discountAmount = 0;
 
-    const discountAmount = Number(cart.discount_percentage) || 0;
-    const deliveryFee = subtotal >= threshold ? 0 : deliveryBase;
-    const taxes = subtotal * 0.02; // 2% tax
+    checkedOutItems.forEach((item: CartItem) => {
+      const pricing = getCartItemPricingSummary(item);
+      grossSubtotal += pricing.originalUnitPrice * pricing.quantity;
+      discountAmount += pricing.discountTotal;
+    });
+
+    const discountedSubtotal = grossSubtotal - discountAmount;
+    const deliveryFee = discountedSubtotal >= threshold ? 0 : deliveryBase;
+    const taxes = discountedSubtotal * 0.02; // 2% tax
     const serviceCharge = serviceBase;
-    const total = subtotal - discountAmount + deliveryFee + taxes + serviceCharge;
+    const total = discountedSubtotal + deliveryFee + taxes + serviceCharge;
+    const asAmount = (value: number) => Number(value.toFixed(2));
 
     return {
-      subtotal: isNaN(subtotal) ? 0 : subtotal,
-      discount: isNaN(discountAmount) ? 0 : discountAmount,
-      deliveryFee: isNaN(deliveryFee) ? 0 : deliveryFee,
-      taxes: isNaN(taxes) ? 0 : taxes,
-      serviceCharge: isNaN(serviceCharge) ? 0 : serviceCharge,
-      total: isNaN(total) ? 0 : total,
+      subtotal: asAmount(grossSubtotal),
+      discount: asAmount(discountAmount),
+      deliveryFee: asAmount(deliveryFee),
+      taxes: asAmount(taxes),
+      serviceCharge: asAmount(serviceCharge),
+      total: asAmount(total),
     };
   };
 
   const totals = calculateSelectedTotals();
-  const threshold = getThresholdAndFees(selectedCountry).threshold;
-  const currencyInfo = getCurrencyForCountry(selectedCountry);
-  const currencySymbol = cart?.items.length! > 0 ? parsePrice(cart?.items[0].product.price!).currency : currencyInfo.symbol;
+  const currencyInfo = getCurrencyForCountry(countryName);
+  const currencySymbol =
+    (checkedOutItems?.length ?? 0) > 0
+      ? getCartItemPricingSummary(checkedOutItems[0]).currency || currencyInfo.symbol
+      : currencyInfo.symbol;
 
   const formatLocalPrice = (amount: number) => formatPrice(amount, currencySymbol);
 
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
+
+  useEffect(() => {
+    if (!cart?.items?.length) return;
+    const idsRaw = localStorage.getItem('checkoutCartItemIds');
+    let ids: string[] = [];
+    try {
+      ids = idsRaw ? JSON.parse(idsRaw) : [];
+    } catch {}
+    if (ids && ids.length) {
+      setCheckedOutItems(cart.items.filter(item => ids.includes(item.id)));
+    } else {
+      setCheckedOutItems(cart.items);
+    }
+  }, [cart]);
 
   const fetchUserAddress = async () => {
     if (!user?.id) {
@@ -182,20 +202,6 @@ export default function CheckoutPage() {
   useEffect(() => {
     fetchUserAddress();
   }, [user?.id]);
-
-  useEffect(() => {
-    if (!cart || authLoading) return;
-
-    const shouldAutoOrder = localStorage.getItem("shouldPlaceOrderAfterLogin") === "true";
-
-    if (!processing 
-      && !isOrderSuccessModalOpen 
-      && cart?.items?.length === 0 
-      && !shouldAutoOrder
-    ) {
-      router.push(ROUTES.ECOMMERCE);
-    }
-  }, [cart, authLoading, processing, isOrderSuccessModalOpen, router]);
 
   useEffect(() => {
     if (
@@ -263,6 +269,11 @@ export default function CheckoutPage() {
   const handleContinueShopping = () => {
     setIsOrderSuccessModalOpen(false);
     router.push(ROUTES.ECOMMERCE);
+  };
+
+  const handleViewOrderHistory = () => {
+    setIsOrderSuccessModalOpen(false);
+    router.push(ROUTES.ORDER_HISTORY);
   };
 
   if (authLoading) {
@@ -337,6 +348,7 @@ export default function CheckoutPage() {
       <OrderSuccessPopup
         open={isOrderSuccessModalOpen}
         onContinueShopping={handleContinueShopping}
+        onViewOrderHistory={handleViewOrderHistory}
       />
 
       <Container maxWidth="lg" sx={{ py: { xs: 1, md: 3 }, px: { xs: 1, sm: 2 } }}>
@@ -361,7 +373,7 @@ export default function CheckoutPage() {
                   Fast Delivery
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  Get it delivered in 1-2 hours*
+                  Get it delivered in 2-3 days*
                 </Typography>
               </Box>
             </Stack>
@@ -460,7 +472,7 @@ export default function CheckoutPage() {
                         <ListItemText 
                           primary="Lightning Fast Delivery" 
                           primaryTypographyProps={{ fontWeight: 500, color: "text.primary" }}
-                          secondary="Typically within 1-2 hours in your city" 
+                          secondary="Typically within 2-3 days" 
                           secondaryTypographyProps={{ color: "text.secondary" }}
                         />
                       </ListItem>
@@ -513,11 +525,8 @@ export default function CheckoutPage() {
                 </Stack>
 
                 <Box sx={{ mb: 2, maxHeight: 300, overflow: "auto" }}>
-                  {cart?.items.map((item) => {
-                    const parsedUnit = parsePrice(item.unit_price || '0');
-                    const unitRaw = parsedUnit.raw;
-                    const parsedItemTotal = parsePrice(item.total_price || '0');
-                    const itemTotalRaw = parsedItemTotal.raw;
+                  {checkedOutItems.map((item: CartItem) => {
+                    const pricing = getCartItemPricingSummary(item);
                     return (
                       <Box
                         key={item.id}
@@ -538,7 +547,7 @@ export default function CheckoutPage() {
                             Qty: {item.quantity}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {formatLocalPrice(unitRaw)} each
+                            {formatLocalPrice(pricing.discountedUnitPrice)} each
                           </Typography>
                         </Box>
                         <Typography 
@@ -547,7 +556,7 @@ export default function CheckoutPage() {
                           color="primary.main"
                           sx={{ minWidth: 60, textAlign: "right" }}
                         >
-                          {formatLocalPrice(itemTotalRaw)}
+                          {formatLocalPrice(pricing.lineTotal)}
                         </Typography>
                       </Box>
                     );
@@ -564,7 +573,7 @@ export default function CheckoutPage() {
                     </Typography>
                   </Box>
                   
-                  {cart?.discount_percentage && cart?.discount_percentage > 0 && (
+                  {totals.discount > 0 && (
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="body1" color="success.main" fontWeight={500}>
                         Item Discounts
@@ -580,7 +589,7 @@ export default function CheckoutPage() {
                     <Stack direction="row" alignItems="center" spacing={0.5} color={totals.deliveryFee === 0 ? "success.main" : "text.primary"}>
                       <DeliveryDining sx={{ fontSize: 16 }} />
                       <Typography variant="body2" fontWeight={600}>
-                        {totals.deliveryFee === 0 ? "FREE" : formatLocalPrice(totals.deliveryFee)}
+                        {formatLocalPrice(totals.deliveryFee)}
                       </Typography>
                     </Stack>
                   </Box>
@@ -613,16 +622,6 @@ export default function CheckoutPage() {
                     </Typography>
                   </Box>
                 </Stack>
-
-                <Box sx={{ mt: 2, p: 2, bgcolor: totals.subtotal >= threshold ? "success.50" : "warning.50", borderRadius: 2 }}>
-                  <Typography variant="body2" color={totals.subtotal >= threshold ? "success.main" : "warning.main"} fontWeight={500}>
-                    <CheckCircle sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.5 }} />
-                    {totals.subtotal >= threshold 
-                      ? `Free delivery on orders over ${formatLocalPrice(threshold)}. Yours qualifies!` 
-                      : `Add ${formatLocalPrice(threshold - totals.subtotal)} more for free delivery!`
-                    }
-                  </Typography>
-                </Box>
               </CardContent>
             </Card>
 

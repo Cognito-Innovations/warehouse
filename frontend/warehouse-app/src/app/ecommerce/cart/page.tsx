@@ -20,7 +20,7 @@ import CartSkeletonLoader from "@/components/ecommerce/cart/CartSkeletonLoader";
 import ContinueShoppingCard from "@/components/ecommerce/cart/ContinueShoppingCard";
 import { getCurrencyForCountry, getUserCountry } from "@/utils/currency";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import { parsePrice, formatPrice, calculateDiscountedPrice } from "@/utils/priceUtils";
+import { getCartItemPricingSummary } from "@/utils/priceUtils";
 
 export default function CartPage() {
   const router = useRouter();
@@ -36,11 +36,12 @@ export default function CartPage() {
   const [loadingAddresses, setLoadingAddresses] = useState(false);
 
   const locationData = useEffectiveUserLocation({
-    country: 'United States of America',
-    city: 'New York',
-    pincode: '10001',
+    countryCode: undefined,
+    countryName: undefined,
+    city: '',
+    pincode: '',
   });
-  const selectedCountry = locationData.location.country;
+  const selectedCountry = locationData.location.countryName;
 
   const userId = (session?.user as any)?.user_id;
 
@@ -212,15 +213,16 @@ export default function CartPage() {
   }, [cart]);
 
   const handleCheckout = useCallback(() => {
+    localStorage.setItem("checkoutCartItemIds", JSON.stringify(Array.from(selectedItems)));
     router.push(ROUTES.CHECKOUT);
-  }, [router]);
+  }, [router, selectedItems]);
 
   const handleContinueShopping = useCallback(() => {
     router.push(ROUTES.ECOMMERCE);
   }, [router]);
 
-  const getThresholdAndFees = (country: string) => {
-    if (country.includes('India')) {
+  const getThresholdAndFees = (country?: string) => {
+    if (country && country.includes('India')) {
       return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
     } else {
       return { threshold: 20, deliveryFee: 5, serviceCharge: 1 };
@@ -229,44 +231,46 @@ export default function CartPage() {
 
   // Calculate totals for all items in cart (in local currency)
   const calculateSelectedTotals = useCallback(() => {
-  if (!cart || !cart.items || cart.items.length === 0) {
-    return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
-  }
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
+    }
 
-  const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(selectedCountry);
+    const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } =
+      getThresholdAndFees(selectedCountry);
 
-  // Filter to selected items only
-  const selectedCartItems = cart.items.filter((item) => selectedItems.has(item.id));
+    const selectedCartItems =
+      cart.items.filter((item) => selectedItems.has(item.id)) ?? [];
 
-  if (selectedCartItems.length === 0) {
-    // No items selected: all zeros (including no delivery/service)
-    return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
-  }
+    if (selectedCartItems.length === 0) {
+      return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
+    }
 
-  // Calculate subtotal from SELECTED items: quantity × unit_price
-  const subtotal = selectedCartItems.reduce((sum, item) => {
-    const itemUnitPrice = Number(item.unit_price) || 0;
-    const itemLineTotal = (item.quantity || 0) * itemUnitPrice;
-    return sum + itemLineTotal;
-  }, 0);
+    let grossSubtotal = 0;
+    let discountAmount = 0;
 
-  // Ensure all calculations use valid numbers
-  const discountAmount = Number(cart.discount_percentage) || 0;
-  const deliveryFee = subtotal >= threshold ? 0 : deliveryBase;
-  const taxes = subtotal * 0.02; // 2% tax
-  const serviceCharge = serviceBase;
-  const total = subtotal - discountAmount + deliveryFee + taxes + serviceCharge;
+    selectedCartItems.forEach((item) => {
+      const pricing = getCartItemPricingSummary(item);
+      const lineOriginalTotal = pricing.originalUnitPrice * pricing.quantity;
+      grossSubtotal += lineOriginalTotal;
+      discountAmount += pricing.discountTotal;
+    });
 
-  // Ensure no NaN values
-  return {
-    subtotal: isNaN(subtotal) ? 0 : subtotal,
-    discount: isNaN(discountAmount) ? 0 : discountAmount,
-    deliveryFee: isNaN(deliveryFee) ? 0 : deliveryFee,
-    taxes: isNaN(taxes) ? 0 : taxes,
-    serviceCharge: isNaN(serviceCharge) ? 0 : serviceCharge,
-    total: isNaN(total) ? 0 : total,
-  };
-}, [cart, selectedItems, selectedCountry]);
+    const discountedSubtotal = grossSubtotal - discountAmount;
+    const deliveryFee = discountedSubtotal >= threshold ? 0 : deliveryBase;
+    const taxes = discountedSubtotal * 0.02; // 2% tax
+    const serviceCharge = serviceBase;
+    const total = discountedSubtotal + deliveryFee + taxes + serviceCharge;
+    const asAmount = (value: number) => Number(value.toFixed(2));
+
+    return {
+      subtotal: asAmount(grossSubtotal),
+      discount: asAmount(discountAmount),
+      deliveryFee: asAmount(deliveryFee),
+      taxes: asAmount(taxes),
+      serviceCharge: asAmount(serviceCharge),
+      total: asAmount(total),
+    };
+  }, [cart, selectedItems, selectedCountry]);
 
   // Show skeleton loader while cart is loading
   if (cartLoading) {
@@ -287,9 +291,20 @@ export default function CartPage() {
     );
   }
 
+  const getCurrencySymbol = () => {
+    if (cart && cart.items.length > 0) {
+      const firstSelected = cart.items.find((item) => selectedItems.has(item.id)) || cart.items[0];
+      const pricing = getCartItemPricingSummary(firstSelected);
+      if (pricing.currency) {
+        return pricing.currency;
+      }
+    }
+    return currencyInfo.symbol;
+  };
+
   const totals = calculateSelectedTotals();
-  const currencyInfo = getCurrencyForCountry(selectedCountry);
-  const currencySymbol = cart.items.length > 0 ? parsePrice(cart.items[0].product.price).currency : currencyInfo.symbol;
+  const currencyInfo = getCurrencyForCountry(selectedCountry!);
+  const currencySymbol = getCurrencySymbol();
 
   return (
     <Box sx={{ bgcolor: "grey.50", minHeight: "100vh" }}>

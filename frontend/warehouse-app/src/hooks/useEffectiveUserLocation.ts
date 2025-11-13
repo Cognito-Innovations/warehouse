@@ -7,7 +7,8 @@ import { useUserLocation } from "./useUserLocation";
 import { UserAddress } from "@/types/ecommerce";
 
 export interface EffectiveUserLocation {
-  country: string;
+  countryCode?: string;
+  countryName?: string;
   city?: string;
   pincode?: string;
 }
@@ -24,13 +25,12 @@ export interface UseEffectiveUserLocationReturn {
 }
 
 export function useEffectiveUserLocation(
-  defaults: { country: string; city: string; pincode: string }
+  defaults: { countryCode?: string; countryName?: string; city: string; pincode: string }
 ): UseEffectiveUserLocationReturn {
   const { user } = useAuth();
   const geoHook = useUserLocation({
     defaultCity: defaults.city,
     defaultPincode: defaults.pincode,
-    defaultCountry: defaults.country,
     enableGeolocation: true,
   });
 
@@ -42,10 +42,7 @@ export function useEffectiveUserLocation(
       setAddressLoading(true);
       fetchUserAddresses(user.id)
         .then(setAddress)
-        .catch((err) => {
-          console.error("Failed to fetch addresses:", err);
-          setAddress(null);
-        })
+        .catch(() => setAddress(null))
         .finally(() => setAddressLoading(false));
     } else {
       setAddress(null);
@@ -73,12 +70,14 @@ export function useEffectiveUserLocation(
 
   const location: EffectiveUserLocation = hasValidAddress
     ? {
-        country: address.country || defaults.country,
+        countryCode: undefined,
+        countryName: address.country,
         city: address.city,
         pincode: address.zip_code,
       }
     : {
-        country: geoHook.location.country,
+        countryCode: geoHook.location.countryCode,
+        countryName: geoHook.location.countryName,
         city: geoHook.location.city,
         pincode: geoHook.location.pincode,
       };

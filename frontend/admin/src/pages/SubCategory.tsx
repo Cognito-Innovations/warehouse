@@ -100,11 +100,6 @@ const SubCategory: React.FC = () => {
   
   const columns: ColumnDefinition<SubCategoryRow>[] = [
     {
-      header: "Sub Category ID",
-      cell: (row) => <Typography variant="body2" fontWeight={500}>{row.id}</Typography>,
-      width: "25%",
-    },
-    {
       header: "Sub Category Name",
       cell: (row) => <Typography variant="body2">{row.name}</Typography>,
       width: "25%",

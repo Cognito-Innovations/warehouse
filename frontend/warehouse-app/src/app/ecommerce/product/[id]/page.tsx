@@ -31,20 +31,20 @@ export default function ProductDetailPage() {
   const [currentProduct, setCurrentProduct] = useState<EcommerceProduct | null>(null);
  
   const locationData = useEffectiveUserLocation({
-    country: 'United States of America',
-    city: 'New York',
-    pincode: '10001',
+    countryCode: undefined,
+    countryName: undefined,
+    city: '',
+    pincode: '',
   });
-  const country = locationData.location.country;
+  const countryCode = locationData.location.countryCode;
 
-  const fetchProductById = useCallback(async (id: string, country?: string) => {
+  const fetchProductById = useCallback(async (id: string, code?: string) => {
     setLoading(true);
     setErrorState(null);
     try {
-      const product = await ecommerceService.getProduct(id, country);
+      const product = await ecommerceService.getProduct(id, code);
       setCurrentProduct(product);
     } catch (err: any) {
-      console.error("Failed to fetch product:", err);
       setErrorState(err.message || ecommerceData.productDetail.productNotFound);
     } finally {
       setLoading(false);
@@ -57,29 +57,17 @@ export default function ProductDetailPage() {
   }, []); // Only run once on mount
 
   useEffect(() => {
-    if (country !== undefined) {
-      fetchProducts(country).catch((err) => console.error("Products fetch failed:", err));
+    if (countryCode) {
+      fetchProducts(countryCode).catch((err) => {});
     }
-  }, [country, fetchProducts]);
+  }, [countryCode, fetchProducts]);
 
   // Handle product loading when params.id changes
   useEffect(() => {
-    if (params.id && typeof params.id === "string") {
-      if (country === undefined) {
-        return;
-      }
-      const initialProduct = products.find((p: EcommerceProduct) => p.id === params.id);
-      if (initialProduct) {
-        setCurrentProduct(initialProduct);
-        setLoading(false);
-      } else {
-        fetchProductById(params.id, country);
-      }
-    } else {
-      setErrorState(ecommerceData.productDetail.productNotFound);
-      setLoading(false);
+    if (params.id && typeof params.id === "string" && countryCode) {
+      fetchProductById(params.id, countryCode);
     }
-  }, [params.id, products, country, fetchProductById]);
+  }, [params.id, countryCode, fetchProductById]);
 
   const getPreviewProducts = useCallback((product: EcommerceProduct | null) => {
     if (!product || !product.category) return [];
@@ -149,8 +137,8 @@ export default function ProductDetailPage() {
   const handleRefresh = () => {
     setLoading(true);
     setErrorState(null);
-    if (params.id && typeof params.id === "string" && country !== undefined) {
-      fetchProductById(params.id, country);
+    if (params.id && typeof params.id === "string" && countryCode !== undefined) {
+      fetchProductById(params.id, countryCode);
     }
   };
 

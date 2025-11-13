@@ -1,68 +1,64 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getUserCountryByIP } from "@/utils/getUserCountry";
 
 interface UserLocation {
   city: string;
   pincode: string;
-  country: string;
+  countryCode?: string;
+  countryName?: string;
 }
 
 interface UseUserLocationOptions {
   defaultCity: string;
   defaultPincode: string;
-  defaultCountry?: string;
   enableGeolocation?: boolean;
 }
 
 export function useUserLocation({
   defaultCity,
   defaultPincode,
-  defaultCountry = 'IN',
   enableGeolocation = true,
 }: UseUserLocationOptions) {
   const [location, setLocation] = useState<UserLocation>({
     city: defaultCity,
     pincode: defaultPincode,
-    country: defaultCountry,
+    countryCode: undefined,
+    countryName: undefined,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if location is already stored in localStorage
-    // This is safe to do on mount as it doesn't require user permission
     const storedLocation = localStorage.getItem("userLocation");
     if (storedLocation) {
       try {
         const parsed = JSON.parse(storedLocation) as UserLocation;
-        const validParsed = {
+        setLocation({
           city: parsed.city || defaultCity,
           pincode: parsed.pincode || defaultPincode,
-          country: parsed.country || defaultCountry,
-        };
-        setLocation(validParsed);
+          countryCode: parsed.countryCode,
+          countryName: parsed.countryName,
+        });
+        return;
       } catch (e) {
-        // Invalid stored data, use defaults
         localStorage.removeItem("userLocation");
       }
     }
-  }, [defaultCity, defaultPincode, defaultCountry]);
+    getUserCountryByIP().then(({ countryCode, countryName }) => {
+      setLocation((prev) => ({ ...prev, countryCode, countryName }));
+    });
+  }, [defaultCity, defaultPincode]);
 
-  // Function to request location (must be called in response to user gesture)
   const requestLocation = () => {
-    // If geolocation is disabled, use defaults
     if (!enableGeolocation) {
       return;
     }
-
-    // Check if geolocation is available
     if (!navigator.geolocation) {
-      console.log("Geolocation is not supported by this browser");
       setError("Geolocation is not supported by this browser");
       return;
     }
-
     setIsLoading(true);
     setError(null);
 
@@ -99,19 +95,16 @@ export function useUserLocation({
             defaultCity;
 
           const pincode = address.postcode || defaultPincode;
-          const country = address.country || defaultCountry;
+          getUserCountryByIP().then((ipGeo) => {
+            const userLocation: UserLocation = { city, pincode, countryCode: ipGeo.countryCode, countryName: address.country || ipGeo.countryName };
 
-          const userLocation: UserLocation = { city, pincode, country };
-
-          // Store in localStorage for future use
-          localStorage.setItem("userLocation", JSON.stringify(userLocation));
-          setLocation(userLocation);
-          setError(null);
+            // Store in localStorage for future use
+            localStorage.setItem("userLocation", JSON.stringify(userLocation));
+            setLocation(userLocation);
+            setError(null);
+          });
         } catch (err: any) {
-          console.error("Reverse geocoding failed:", err);
           setError(err.message || "Failed to get location details");
-          // Use default location on error
-          setLocation({ city: defaultCity, pincode: defaultPincode, country: defaultCountry });
         } finally {
           setIsLoading(false);
         }
@@ -119,21 +112,8 @@ export function useUserLocation({
       (geolocationError) => {
         // Handle geolocation errors gracefully
         const errorCode = geolocationError?.code ?? 0;
-        const errorMessage = geolocationError?.message || "Unknown geolocation error";
-        
-        // Only log if it's not a permission denied error (common and expected)
-        if (errorCode !== 1) {
-          console.warn("Geolocation error:", {
-            code: errorCode,
-            message: errorMessage,
-            error: geolocationError,
-          });
-        }
-        
         setError(getGeolocationErrorMessage(errorCode));
         setIsLoading(false);
-        // Use default location on error
-        setLocation({ city: defaultCity, pincode: defaultPincode, country: defaultCountry });
       },
       {
         timeout: 10000,
@@ -152,7 +132,7 @@ export function useUserLocation({
   // Function to clear stored location and use defaults
   const clearLocation = () => {
     localStorage.removeItem("userLocation");
-    setLocation({ city: defaultCity, pincode: defaultPincode, country: defaultCountry });
+    setLocation({ city: defaultCity, pincode: defaultPincode, countryCode: undefined, countryName: undefined });
   };
 
   return {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useCallback, useMemo } from "react";
+import React, { useRef, useCallback, useEffect, useMemo } from "react";
 import { Box, Container, Alert, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 
@@ -23,58 +23,86 @@ export default function Ecommerce() {
   const router = useRouter();
 
   const locationData = useEffectiveUserLocation({
-    country: 'United States of America',
-    city: 'New York',
-    pincode: '10001',
+    countryCode: undefined,
+    countryName: undefined,
+    city: '',
+    pincode: '',
   });
 
-  const { products, categories, searchQuery, selectedCategory, loading, error } = useProducts();
+  const {
+    products = [],
+    categories,
+    searchQuery,
+    selectedCategory,
+    loading,
+    error,
+    hasMoreProducts,
+    loadingNextPage,
+  } = useProducts();
   const { fetchCart } = useCartActions();
-  const { fetchCategories, fetchProducts, setLoading, setError } = useProductActions();
+  const { fetchCategories, fetchProducts, fetchMoreProducts, setLoading, setError, resetProducts } = useProductActions();
 
-  const hasInitialized = React.useRef(false);
-  const country = locationData.location.country;
-
-  const initializeEcommerceData = useCallback(async (country?: string) => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
-    setLoading(true);
-
-    await Promise.all([
-      fetchCategories().catch((err) => console.error("Categories fetch failed:", err)),
-      fetchProducts(country).catch((err) => console.error("Products fetch failed:", err)),
-      fetchCart().catch((err) => console.error("Cart fetch failed:", err)),
-    ]);
-
-    setLoading(false);
-  }, [fetchCategories, fetchProducts, fetchCart, setLoading]);
-  
-  useEffect(() => {
-    if (country === undefined) {
-      return;
-    }
-    initializeEcommerceData(country);
-  }, [country, initializeEcommerceData]);
+  const hasFetched = React.useRef(false);
+  const countryCode = locationData.location.countryCode;
+  const observerRef = useRef<HTMLDivElement | null>(null);
+  const observer = useRef<IntersectionObserver | null>(null);
 
   const fetchProductsCallback = useCallback(async (searchTerm: string) => {
     setLoading(true);
     try {
-      await fetchProducts(country, searchTerm || undefined);
+      await fetchProducts(countryCode, searchTerm || undefined);
     } catch (error) {
       console.error("Search fetch failed:", error);
     } finally {
       setLoading(false);
     }
-  }, [setLoading, fetchProducts, country]);
+  }, [setLoading, fetchProducts, countryCode]);
 
   const debouncedFetchProducts = useMemo(() =>
     debounce(fetchProductsCallback, 500),
     [fetchProductsCallback]
   );
 
+  const initializeEcommerceData = useCallback(async (countryCode?: string) => {
+    if (hasFetched.current || !countryCode) return;
+    hasFetched.current = true;
+    setLoading(true);
+    await Promise.all([
+      fetchCategories().catch((err) => console.error("Categories fetch failed:", err)),
+      fetchProducts(countryCode).catch((err) => console.error("Products fetch failed:", err)),
+      fetchCart().catch((err) => console.error("Cart fetch failed:", err)),
+    ]);
+    setLoading(false);
+  }, [fetchCategories, fetchProducts, fetchCart, setLoading]);
+
   useEffect(() => {
-    debouncedFetchProducts(searchQuery);
-  }, [searchQuery, debouncedFetchProducts]);
+    if (countryCode && (products.length === 0 || categories.length === 0) && !loading) {
+      initializeEcommerceData(countryCode);
+    }
+  }, [countryCode, products.length, categories.length, initializeEcommerceData, loading]);
+
+  useEffect(() => {
+    if ((searchQuery || selectedCategory) && countryCode) {
+      resetProducts();
+      debouncedFetchProducts(searchQuery);
+    }
+  }, [searchQuery, selectedCategory, countryCode, debouncedFetchProducts, resetProducts]);
+
+  useEffect(() => {
+    if (!observerRef.current || !hasMoreProducts || loadingNextPage) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new window.IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMoreProducts && !loadingNextPage && !loading) {
+        fetchMoreProducts(countryCode, searchQuery || undefined);
+      }
+    }, {
+      rootMargin: "300px",
+    });
+    observer.current.observe(observerRef.current);
+    return () => {
+      observer.current?.disconnect();
+    };
+  }, [fetchMoreProducts, hasMoreProducts, loadingNextPage, products.length, loading, countryCode, searchQuery]);
 
   const handleProductClick = (product: EcommerceProduct) => {
     router.push(`${ROUTES.PRODUCT}/${product.id}`);
@@ -98,14 +126,13 @@ export default function Ecommerce() {
   
   const handleRefresh = () => {
     setError(null);
-    hasInitialized.current = false;
-    initializeEcommerceData(locationData.location.country);
+    hasFetched.current = false;
+    initializeEcommerceData(locationData.location.countryCode);
   };
 
   const isNetworkError = error && (error.includes("Network Error") || error.includes("Failed to fetch") || error.includes("ECONNREFUSED") || error.includes("timeout"));
-  const isInitialLoading = loading && categories.length === 0;
-  
-  if (isInitialLoading) {
+  const dataReady = products.length > 0 && categories.length > 0;
+  if (!dataReady) {
     return (
       <EcommerceSkeletonLoader
         {...(error && isNetworkError
@@ -240,6 +267,12 @@ export default function Ecommerce() {
           )}
         </>
       )}
+      {loadingNextPage && (
+        <Box sx={{ py: 2 }}>
+          <GridSkeleton count={5} />
+        </Box>
+      )}
+      <div ref={observerRef} />
     </EcommercePageLayout>
   );
 }

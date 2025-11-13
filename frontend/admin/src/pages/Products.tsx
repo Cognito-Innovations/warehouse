@@ -6,7 +6,6 @@ import { deleteProduct, getProducts, updateEcommerceProduct } from "../services/
 import type { Country, ProductPayload } from "../types";
 import TopNavbar from "../components/Layout/TopNavbar";
 import CommonTable from "../components/common/CommonTable";
-import StatusChip from "../components/common/StatusChip";
 import AddActionButton from "../components/common/AddActionButton";
 import ProductForm from "../components/Product/ProductForm";
 import Modal from "../components/common/Modal"; 
@@ -157,8 +156,15 @@ const Products: React.FC = () => {
 
   const columns: ColumnDefinition<ProductRow>[] = [
     {
-      header: "Product ID",
-      cell: (row) => <Typography variant="body2" fontWeight={500}>{row.id}</Typography>,
+      header: "Image URL",
+      cell: (row) =><img
+        src={row.image_url || "https://placehold.co/100x100?text=No+Image"}
+        alt={row.name}
+        width={100}
+        height={100}
+        style={{ objectFit: "cover" }}
+        onError={(e) => (e.currentTarget.src = "https://placehold.co/100x100?text=No+Image")}
+    />,
       width: "25%",
     },
     {
@@ -169,12 +175,12 @@ const Products: React.FC = () => {
     {
       header: "Category",
       cell: (row) => <Typography variant="body2">{row.category}</Typography>,
-      width: "15%",
+      width: "25%",
     },
     {
       header: "Sub Category",
       cell: (row) => <Typography variant="body2">{row.sub_category}</Typography>,
-      width: "20%",
+      width: "25%",
     },
     {
       header: "Unit",
@@ -195,11 +201,6 @@ const Products: React.FC = () => {
       header: "Stock",
       cell: (row) => <Typography variant="body2">{row.stock_quantity}</Typography>,
       width: "20%",
-    },
-    {
-      header: "Status",
-      cell: (row) => <StatusChip status={row.status} />,
-      width: "15%",
     },
   ];
 

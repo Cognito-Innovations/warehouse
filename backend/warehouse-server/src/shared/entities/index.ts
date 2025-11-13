@@ -4,3 +4,4 @@ export { SupplierDocument } from './supplier-document.entity';
 export { PreArrivalDocument } from './pre-arrival-document.entity';
 export { PickupRequestDocument } from './pickup-request-document.entity';
 export { ShoppingRequestDocument } from './shopping-request-document.entity';
+export { ClientIdentifier } from './client-identifier.entity';
