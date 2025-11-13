@@ -48,8 +48,9 @@ export class ProductsService {
       relations: ['category', 'sub_category', 'countries', 'measurement']
     });
 
-    const selectedCountry = country || 'United States of America';
+    const selectedCountry = country || 'United States of America'; //TODO: Use the ISO code
 
+    //TODO: Only 20 products will go inside map and get the price according to the country
     return Promise.all(
       products.map(async (product) => ({
         ...product,
