@@ -5,6 +5,7 @@ import { Box, Container } from "@mui/material";
 import { ShoppingCart } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 import { useCart, useCartActions } from "../../../store/ecommerceStore";
 import { ROUTES } from "@/utils/constants";
 import { ecommerceData } from "@/data/ecommerceData";
@@ -18,7 +19,7 @@ import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
 import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
 import CartSkeletonLoader from "@/components/ecommerce/cart/CartSkeletonLoader";
 import ContinueShoppingCard from "@/components/ecommerce/cart/ContinueShoppingCard";
-import { getCurrencyForCountry, getUserCountry } from "@/utils/currency";
+import { getCurrencyForCountry } from "@/utils/currency";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { getCartItemPricingSummary } from "@/utils/priceUtils";
 
@@ -213,9 +214,17 @@ export default function CartPage() {
   }, [cart]);
 
   const handleCheckout = useCallback(() => {
-    localStorage.setItem("checkoutCartItemIds", JSON.stringify(Array.from(selectedItems)));
-    router.push(ROUTES.CHECKOUT);
-  }, [router, selectedItems]);
+    const selectedCartItems = cart?.items.filter((item) => selectedItems.has(item.id)) || [];   
+
+    localStorage.setItem("checkoutSelectedItems", JSON.stringify(selectedCartItems));
+
+    if (userId) {
+      router.push(ROUTES.CHECKOUT);
+    } else {
+      toast.info("Please sign in to continue with checkout");
+      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(ROUTES.CHECKOUT)}`);
+    }
+  }, [router, selectedItems, cart, userId]);
 
   const handleContinueShopping = useCallback(() => {
     router.push(ROUTES.ECOMMERCE);
@@ -272,8 +281,8 @@ export default function CartPage() {
     };
   }, [cart, selectedItems, selectedCountry]);
 
-  // Show skeleton loader while cart is loading
-  if (cartLoading) {
+  // Show skeleton loader while cart is loading and no cart data exists
+  if (cartLoading && !cart) {
     return <CartSkeletonLoader />;
   }
 

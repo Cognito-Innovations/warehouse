@@ -48,6 +48,7 @@ import { getCurrencyForCountry } from "@/utils/currency";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { CartItem } from "@/types/ecommerce";
+import { launchCashfreePayment } from "../../../services/cashfree-payment.service";
 
 interface UserAddress {
   address: string;
@@ -79,6 +80,7 @@ export default function CheckoutPage() {
   const [fetchedAddress, setFetchedAddress] = useState<UserAddress | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
   const [checkedOutItems, setCheckedOutItems] = useState<CartItem[]>([]);
+  const [itemsLoaded, setItemsLoaded] = useState(false);
 
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
@@ -145,18 +147,38 @@ export default function CheckoutPage() {
   }, [fetchCart]);
 
   useEffect(() => {
-    if (!cart?.items?.length) return;
-    const idsRaw = localStorage.getItem('checkoutCartItemIds');
-    let ids: string[] = [];
-    try {
-      ids = idsRaw ? JSON.parse(idsRaw) : [];
-    } catch {}
-    if (ids && ids.length) {
-      setCheckedOutItems(cart.items.filter(item => ids.includes(item.id)));
-    } else {
-      setCheckedOutItems(cart.items);
+    const selectedItemsRaw = localStorage.getItem("checkoutSelectedItems");
+    if (selectedItemsRaw) {
+      try {
+        const selectedItems: CartItem[] = JSON.parse(selectedItemsRaw);
+        setCheckedOutItems(selectedItems);
+        localStorage.removeItem("checkoutSelectedItems");
+      } catch (err) {
+        setCheckedOutItems([]);
+      }
+    } else if (cart?.items?.length! > 0) {
+      setCheckedOutItems(cart?.items!);
     }
+    setItemsLoaded(true);
   }, [cart]);
+
+  useEffect(() => {
+    if (
+      itemsLoaded &&
+      (!checkedOutItems || checkedOutItems.length === 0) &&
+      !isOrderSuccessModalOpen
+    ) {
+      router.replace(ROUTES.CART);
+    }
+  }, [checkedOutItems, isOrderSuccessModalOpen, router, itemsLoaded]);
+
+  if (
+    itemsLoaded &&
+    (!checkedOutItems || checkedOutItems.length === 0) &&
+    !isOrderSuccessModalOpen
+  ) {
+    return null;
+  }
 
   const fetchUserAddress = async () => {
     if (!user?.id) {
@@ -200,71 +222,76 @@ export default function CheckoutPage() {
   };
 
   useEffect(() => {
-    fetchUserAddress();
+    if (user?.id) {
+      fetchUserAddress();
+    }
   }, [user?.id]);
 
-  useEffect(() => {
-    if (
-      user &&
-      cart &&
-      cart.items.length > 0 &&
-      localStorage.getItem("shouldPlaceOrderAfterLogin") === "true"
-    ) {
-      const savedData = JSON.parse(localStorage.getItem("pendingOrder") || "{}");
-      
-      if (formData.shippingAddress) { 
-        handlePlaceOrder();
-      }
-    
-      localStorage.removeItem("pendingOrder");
-      localStorage.removeItem("shouldPlaceOrderAfterLogin");
-    }
-  }, [user, cart, formData.shippingAddress]);
+  function generateTempOrderId(uid:string) {
+    return (
+      (cart?.id || "order") + "_" + Date.now() + (uid ? "_"+uid : "")
+    );
+  }
 
-  const handlePlaceOrder = async () => {
-    if (!cart) return;
-
-    if (authLoading) {
+  async function handlePaymentAndOrder() {
+    if (!checkedOutItems.length) {
+      setError("No items found for checkout.");
+      toast.error("No items to checkout.");
       return;
     }
-
-    if (!user) {
-      localStorage.setItem("pendingOrder", JSON.stringify({}));
-      localStorage.setItem("shouldPlaceOrderAfterLogin", "true");
-  
-      toast.info("Please sign in to place your order");
-      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent("/ecommerce/checkout")}`);
-      return;
-    }
-
+    if (authLoading) return;
     if (!formData.shippingAddress) {
       setError("Cannot place order without a shipping address.");
       toast.error("No shipping address found.");
       return;
     }
-    
+    setProcessing(true);
+    setError(null);
     try {
-      setProcessing(true);
-      setError(null);
-
-      const orderData = {
-        shipping_address: formData.shippingAddress,
-        billing_address: formData.billingAddress,
-        notes: formData.notes,
+      const orderId = generateTempOrderId(user?.id || "");
+      const paymentConfig = {
+        orderId,
+        orderAmount: totals.total,
+        orderCurrency: currencySymbol,
+        customerName: user?.name || fetchedAddress?.name || "Customer",
+        customerEmail: user?.email || "test@example.com",
+        customerPhone: fetchedAddress?.phone_number || "9999999999",
+        orderToken: "<CASHFREE_DEV_ORDER_TOKEN_HERE>",
       };
-
-      await ecommerceService.createOrder(orderData);
-
-      clearCart();
-      setIsOrderSuccessModalOpen(true);
+      await new Promise((r) => setTimeout(r, 1200));
+      await launchCashfreePayment(paymentConfig,
+        async (paymentResult: any) => {
+          try {
+            const lineItems = checkedOutItems.map((item) => ({
+              product_id: item.product.id,
+              quantity: item.quantity,
+            }));
+            const orderData = {
+              line_items: lineItems,
+              shipping_address: formData.shippingAddress,
+              billing_address: formData.billingAddress,
+              notes: formData.notes,
+            };
+            await ecommerceService.createOrder(orderData);
+            clearCart();
+            setIsOrderSuccessModalOpen(true);
+            toast.success("Order placed after payment!");
+          } catch (err) {
+            setError("Order create failed after payment. Contact support!");
+            toast.error("Order create error after payment");
+          }
+        },
+        (failData: any) => {
+          setError(failData?.reason || "Payment not completed. Please try again.");
+          toast.error(failData?.reason || "Payment cancelled");
+        });
     } catch (err) {
-      console.error("Error placing order:", err);
-      setError("Failed to place order. Please try again.");
-      toast.error("Failed to place order");
+      setError("Payment start failed. Please try again.");
+      toast.error("Unable to start payment session");
     } finally {
       setProcessing(false);
     }
-  };
+  }
 
   const handleContinueShopping = () => {
     setIsOrderSuccessModalOpen(false);
@@ -289,7 +316,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if ((!cart || cart.items.length === 0) && !isOrderSuccessModalOpen) {
+  if ((!checkedOutItems || checkedOutItems.length === 0) && !isOrderSuccessModalOpen) {
     return null;
   }
 
@@ -322,7 +349,7 @@ export default function CheckoutPage() {
                 Checkout
               </Typography>
               <Chip 
-                label={cart?.items?.length || 0} 
+                label={checkedOutItems.length} 
                 size="small" 
                 color="primary" 
                 sx={{ 
@@ -631,8 +658,8 @@ export default function CheckoutPage() {
               variant="contained"
               size="large"
               startIcon={<Payment />}
-              onClick={handlePlaceOrder}
-              disabled={processing || !formData.shippingAddress.trim() || authLoading || addressLoading}
+              onClick={handlePaymentAndOrder}
+              disabled={processing || !formData.shippingAddress.trim() || authLoading || addressLoading || checkedOutItems.length === 0}
               sx={{
                 borderRadius: 3,
                 py: 2,
@@ -658,10 +685,10 @@ export default function CheckoutPage() {
               {processing ? (
                 <Box display="flex" alignItems="center" gap={1}>
                   <CircularProgress size={24} color="inherit" />
-                  <Typography>Placing Order...</Typography>
+                  <Typography>Processing Payment...</Typography>
                 </Box>
               ) : (
-                `Place Order • ${formatLocalPrice(totals.total)}`
+                `Pay & Place Order • ${formatLocalPrice(totals.total)}`
               )}
             </Button>
 
