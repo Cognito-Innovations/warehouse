@@ -10,6 +10,7 @@ import {
     Typography,
 } from "@mui/material";
 import { Add, Remove } from "@mui/icons-material";
+import { useCartActions } from "@/store/ecommerceStore";
 import { ProductCartActionsProps } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";
@@ -24,6 +25,7 @@ export default function ProductCartActions({
     removeFromCart,
 }: ProductCartActionsProps) {
     const router = useRouter();
+    const { fetchCart } = useCartActions();
     const [isCartActionLoading, setIsCartActionLoading] = useState(false);
     const [isIncrementLoading, setIsIncrementLoading] = useState(false);
     const [isDecrementLoading, setIsDecrementLoading] = useState(false);
@@ -62,11 +64,12 @@ export default function ProductCartActions({
             setIsCartActionLoading(true);
             try {
                 await addToCart(product.id, 1);
+                await fetchCart();
             } finally {
                 setIsCartActionLoading(false);
             }
         }
-    }, [product, getCartItemQuantity, addToCart]);
+    }, [product, getCartItemQuantity, addToCart, fetchCart]);
 
     const handleIncrement = useCallback(async () => {
         if (product) {
@@ -80,6 +83,7 @@ export default function ProductCartActions({
             setIsIncrementLoading(true);
             try {
               await addToCart(product.id, 1);
+              await fetchCart();
               // After API succeeds, update displayed quantity optimistically
               setDisplayedQuantity(currentCartQuantity + 1);
             } catch (err) {
@@ -90,7 +94,7 @@ export default function ProductCartActions({
               setIsIncrementLoading(false);
             }
         }
-    }, [product, getCartItemQuantity, addToCart, displayedQuantity, isIncrementLoading]);
+    }, [product, getCartItemQuantity, addToCart, fetchCart, displayedQuantity, isIncrementLoading]);
 
     const handleDecrement = useCallback(async () => {
         if (!product || isDecrementLoading) return;
@@ -107,9 +111,11 @@ export default function ProductCartActions({
         try {
             if (newQuantity === 0) {
                 await removeFromCart(cartItem.id);
+                await fetchCart();
                 setDisplayedQuantity(0);
             } else {
                 await updateCartItem(cartItem.id, newQuantity);
+                await fetchCart();
                 setDisplayedQuantity(newQuantity);
             }
         } catch (err) {
@@ -119,7 +125,7 @@ export default function ProductCartActions({
         } finally {
           setIsDecrementLoading(false);
         }
-    }, [product, cart, updateCartItem, removeFromCart, displayedQuantity, isDecrementLoading, getCartItemQuantity]);
+    }, [product, cart, updateCartItem, removeFromCart, displayedQuantity, isDecrementLoading, getCartItemQuantity, fetchCart]);
 
     const handleGoToCart = useCallback(() => {
         router.push(ROUTES.CART);

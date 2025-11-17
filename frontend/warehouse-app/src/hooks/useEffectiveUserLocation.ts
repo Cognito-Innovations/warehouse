@@ -70,7 +70,7 @@ export function useEffectiveUserLocation(
 
   const location: EffectiveUserLocation = hasValidAddress
     ? {
-        countryCode: undefined,
+        countryCode: geoHook.location.countryCode,
         countryName: address.country,
         city: address.city,
         pincode: address.zip_code,

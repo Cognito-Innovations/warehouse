@@ -14,6 +14,7 @@ const CurrenciesList: React.FC<CurrenciesListProps> = ({ currencies, onEdit }) =
       <Table sx={{ minWidth: 650 }} aria-label="currencies table">
         <TableHead sx={{ bgcolor: '#f8fafc' }}>
           <TableRow>
+            <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Currency Code</TableCell>
             <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Currency Symbol</TableCell>
             <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Rate</TableCell>
             <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Country</TableCell>
@@ -23,6 +24,9 @@ const CurrenciesList: React.FC<CurrenciesListProps> = ({ currencies, onEdit }) =
         <TableBody>
           {currencies.map((row) => (
             <TableRow key={row.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+              <TableCell component="th" scope="row">
+                <Typography variant="body2">{row.currency_code}</Typography>
+              </TableCell>
               <TableCell component="th" scope="row">
                 <Typography variant="body2">{row.currency_symbol}</Typography>
               </TableCell>

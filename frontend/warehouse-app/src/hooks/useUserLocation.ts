@@ -30,25 +30,58 @@ export function useUserLocation({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const chcekAndSelectInitialLocation = async () => {
     const storedLocation = localStorage.getItem("userLocation");
-    if (storedLocation) {
-      try {
-        const parsed = JSON.parse(storedLocation) as UserLocation;
-        setLocation({
-          city: parsed.city || defaultCity,
-          pincode: parsed.pincode || defaultPincode,
-          countryCode: parsed.countryCode,
-          countryName: parsed.countryName,
-        });
-        return;
-      } catch (e) {
-        localStorage.removeItem("userLocation");
-      }
+    if (!storedLocation) return;
+
+    try {
+      const parsed = JSON.parse(storedLocation) as UserLocation;
+      setLocation({
+        city: parsed.city || defaultCity,
+        pincode: parsed.pincode || defaultPincode,
+        countryCode: parsed.countryCode,
+        countryName: parsed.countryName,
+      });
+
+      return true;
+    } catch (error) {
+      localStorage.removeItem("userLocation");
     }
-    getUserCountryByIP().then(({ countryCode, countryName }) => {
-      setLocation((prev) => ({ ...prev, countryCode, countryName }));
-    });
+  };
+
+  const fetchCountryFromIP = async () => {
+    try {
+      const { countryCode, countryName } = await getUserCountryByIP();
+
+      if (!countryCode) {
+        requestLocation();
+        return;
+      }
+
+      const userLocation: UserLocation = {
+        city: defaultCity,
+        pincode: defaultPincode,
+        countryCode,
+        countryName,
+      };
+
+      localStorage.setItem("userLocation", JSON.stringify(userLocation));
+      setLocation(userLocation);
+    } catch (error) {
+      requestLocation();
+    }
+  }
+
+  const initializeLocation = async () => {
+    const hasStored = await chcekAndSelectInitialLocation();
+
+    if (!hasStored) {
+      await fetchCountryFromIP();
+    }
+  }
+
+  useEffect(() => {
+    initializeLocation();
   }, [defaultCity, defaultPincode]);
 
   const requestLocation = () => {

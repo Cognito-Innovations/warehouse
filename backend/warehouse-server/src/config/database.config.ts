@@ -98,7 +98,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     InvoiceCharge,
     EcommerceCargoOption,
   ],
-  synchronize: true, // Disable schema synchronization to prevent modifying existing database
+  synchronize: false, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],
   migrationsRun: false,
   logging: process.env.NODE_ENV === 'development',
