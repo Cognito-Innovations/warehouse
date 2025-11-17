@@ -16,6 +16,7 @@ import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { User } from 'src/users/user.entity';
 import { Currency } from 'src/currencies/currency.entity';
 import { CountryCode } from 'src/Countries/country.entity';
+import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
 //TODO: Generated temprorarily need to look requirment and change
 @Injectable()
@@ -33,6 +34,7 @@ export class OrderService {
     private readonly cartItemRepository: Repository<EcommerceCartItem>,
     @InjectRepository(Currency)
     private readonly currencyRepository: Repository<Currency>,
+    private readonly userPreferenceService: UserPreferencesService
   ) {
     const appId = process.env.CASHFREE_APP_ID;
     const secretKey = process.env.CASHFREE_SECRET_KEY;
@@ -121,12 +123,23 @@ export class OrderService {
     await this.cartRepository.save(cart);
 
     try {
+      let amountNum = Number(savedOrder.total_amount);
+      if(isNaN(amountNum)) throw new BadRequestException('Invalid order amount')
+
+      const converted = await this.userPreferenceService.getConvertedPrice(
+        userId,
+        amountNum,
+      )
+
+      const finalAmount = Number(converted.toFixed(2));
+
       await this.createCashfreePaymentSession(
         savedOrder,
         user,
         orderNumber,
         createOrderDto,
         orderCurrency,
+        finalAmount,
       );
 
       return await this.findOne(savedOrder.id);
@@ -156,9 +169,10 @@ export class OrderService {
     orderNumber: string,
     createOrderDto: CreateOrderDto,
     orderCurrency: string,
+    finalAmount: number,
   ): Promise<void> {
     const cashfreeOrderRequest = {
-      order_amount: savedOrder.total_amount,
+      order_amount: finalAmount,
       order_currency: orderCurrency,
       order_id: orderNumber,
       customer_details: {
@@ -168,7 +182,7 @@ export class OrderService {
         customer_phone: user.phone_number, 
       },
       order_meta: {
-        return_url: `${process.env.FRONTEND_URL}/checkout/success?orderId=${orderNumber}`,
+        return_url: `${process.env.FRONTEND_URL}/order`,
       },
       order_note: createOrderDto.notes || '',
     };

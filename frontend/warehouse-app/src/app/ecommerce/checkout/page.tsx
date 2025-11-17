@@ -44,7 +44,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { ecommerceService } from "../../../services/ecommerce.service";
 import { launchCashfreePayment } from "../../../services/cashfree-payment.service";
-import OrderSuccessPopup from "@/components/ecommerce/OrderSuccessPopup";
 import { ROUTES } from "@/utils/constants";
 import { fetchUserAddresses } from "@/lib/api.service";
 import { getCurrencyForCountry } from "@/utils/currency";
@@ -77,7 +76,6 @@ export default function CheckoutPage() {
   });
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isOrderSuccessModalOpen, setIsOrderSuccessModalOpen] = useState(false);
   const [fetchedAddress, setFetchedAddress] = useState<UserAddress | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
   const [checkedOutItems, setCheckedOutItems] = useState<CartItem[]>([]);
@@ -165,14 +163,10 @@ export default function CheckoutPage() {
   }, [cart]);
 
   useEffect(() => {
-    if (
-      itemsLoaded &&
-      (!checkedOutItems || checkedOutItems.length === 0) &&
-      !isOrderSuccessModalOpen
-    ) {
+    if (itemsLoaded && (!checkedOutItems || checkedOutItems.length === 0)) {
       router.replace(ROUTES.CART);
     }
-  }, [checkedOutItems, isOrderSuccessModalOpen, router, itemsLoaded]);
+  }, [checkedOutItems, router, itemsLoaded]);
 
   useEffect(() => {
     const fetchUserAddress = async () => {
@@ -257,8 +251,8 @@ export default function CheckoutPage() {
           try {
             await ecommerceService.updatePaymentStatus(orderId, 'PAID');
             clearCart();
-            setIsOrderSuccessModalOpen(true);
             toast.success("Order placed successfully!");
+            router.push(ROUTES.ORDER_HISTORY);
           } catch (error) {
             setError("Payment succeeded but order update failed. Contact support.");
             toast.error("Order update error");
@@ -277,16 +271,6 @@ export default function CheckoutPage() {
     }
   }
 
-  const handleContinueShopping = () => {
-    setIsOrderSuccessModalOpen(false);
-    router.push(ROUTES.ECOMMERCE);
-  };
-
-  const handleViewOrderHistory = () => {
-    setIsOrderSuccessModalOpen(false);
-    router.push(ROUTES.ORDER_HISTORY);
-  };
-
   if (authLoading) {
     return (
       <Box
@@ -300,7 +284,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if ((!checkedOutItems || checkedOutItems.length === 0) && !isOrderSuccessModalOpen) {
+  if ((!checkedOutItems || checkedOutItems.length === 0)) {
     return null;
   }
 
@@ -355,12 +339,6 @@ export default function CheckoutPage() {
           </IconButton>
         </Toolbar>
       </AppBar>
-
-      <OrderSuccessPopup
-        open={isOrderSuccessModalOpen}
-        onContinueShopping={handleContinueShopping}
-        onViewOrderHistory={handleViewOrderHistory}
-      />
 
       <Container maxWidth="lg" sx={{ py: { xs: 1, md: 3 }, px: { xs: 1, sm: 2 } }}>
         {/* Fast Delivery Card */}
