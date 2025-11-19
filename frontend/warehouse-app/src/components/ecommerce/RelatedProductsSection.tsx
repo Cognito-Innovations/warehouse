@@ -7,32 +7,12 @@ import EcommerceProductsGrid from "./EcommerceProductsGrid";
 
 interface RelatedProductsSectionProps {
   products: EcommerceProduct[];
-  currentProductId: string;
-  cart: any;
   onProductClick: (product: EcommerceProduct) => void;
-  onAddToCart: (e: React.MouseEvent, product: EcommerceProduct) => void;
-  onDecreaseQuantity: (e: React.MouseEvent, product: EcommerceProduct) => void;
-  getCartItemQuantity: (productId: string) => number;
-  defaultRating: number;
-  defaultReviewCount: number;
-  outOfStockLabel: string;
-  addButtonLabel: string;
-  title: string;
 }
 
 export default function RelatedProductsSection({
   products,
-  currentProductId,
-  cart,
   onProductClick,
-  onAddToCart,
-  onDecreaseQuantity,
-  getCartItemQuantity,
-  defaultRating,
-  defaultReviewCount,
-  outOfStockLabel,
-  addButtonLabel,
-  title,
 }: RelatedProductsSectionProps) {
   if (products.length === 0) {
     return null;
@@ -51,19 +31,11 @@ export default function RelatedProductsSection({
             color: "text.primary"
           }}
         >
-          {title}
+          You May Also Like
         </Typography>
         <EcommerceProductsGrid
           products={products}
-          cart={cart}
           onProductClick={onProductClick}
-          onAddToCart={onAddToCart}
-          onDecreaseQuantity={onDecreaseQuantity}
-          getCartItemQuantity={getCartItemQuantity}
-          defaultRating={defaultRating}
-          defaultReviewCount={defaultReviewCount}
-          outOfStockLabel={outOfStockLabel}
-          addButtonLabel={addButtonLabel}
         />
       </Container>
     </Box>

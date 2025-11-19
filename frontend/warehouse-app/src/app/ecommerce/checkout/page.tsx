@@ -37,15 +37,16 @@ import {
   FormatListBulleted,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import { useCart, useCartActions } from "../../../store/ecommerceStore";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { ecommerceService } from "../../../services/ecommerce.service";
-import { toast } from "sonner";
+import { launchCashfreePayment } from "../../../services/cashfree-payment.service";
 import { ROUTES } from "@/utils/constants";
-import OrderSuccessPopup from "@/components/ecommerce/OrderSuccessPopup";
 import { fetchUserAddresses } from "@/lib/api.service";
 import { getCurrencyForCountry } from "@/utils/currency";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { CartItem } from "@/types/ecommerce";
 
@@ -75,10 +76,10 @@ export default function CheckoutPage() {
   });
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isOrderSuccessModalOpen, setIsOrderSuccessModalOpen] = useState(false);
   const [fetchedAddress, setFetchedAddress] = useState<UserAddress | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
   const [checkedOutItems, setCheckedOutItems] = useState<CartItem[]>([]);
+  const [itemsLoaded, setItemsLoaded] = useState(false);
 
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
@@ -87,6 +88,7 @@ export default function CheckoutPage() {
     pincode: '',
   });
   const selectedCountry = locationData.location.countryName;
+  const countryCode = locationData.location.countryCode;
 
   const countryName = selectedCountry || '';
   const getThresholdAndFees = (country?: string) => {
@@ -145,136 +147,129 @@ export default function CheckoutPage() {
   }, [fetchCart]);
 
   useEffect(() => {
-    if (!cart?.items?.length) return;
-    const idsRaw = localStorage.getItem('checkoutCartItemIds');
-    let ids: string[] = [];
-    try {
-      ids = idsRaw ? JSON.parse(idsRaw) : [];
-    } catch {}
-    if (ids && ids.length) {
-      setCheckedOutItems(cart.items.filter(item => ids.includes(item.id)));
-    } else {
-      setCheckedOutItems(cart.items);
+    const selectedItemsRaw = localStorage.getItem("checkoutSelectedItems");
+    if (selectedItemsRaw) {
+      try {
+        const selectedItems: CartItem[] = JSON.parse(selectedItemsRaw);
+        setCheckedOutItems(selectedItems);
+        localStorage.removeItem("checkoutSelectedItems");
+      } catch (err) {
+        setCheckedOutItems([]);
+      }
+    } else if (cart?.items?.length! > 0) {
+      setCheckedOutItems(cart?.items!);
     }
+    setItemsLoaded(true);
   }, [cart]);
 
-  const fetchUserAddress = async () => {
-    if (!user?.id) {
-      setFetchedAddress(null);
-      setAddressLoading(false);
-      return;
+  useEffect(() => {
+    if (itemsLoaded && (!checkedOutItems || checkedOutItems.length === 0)) {
+      router.replace(ROUTES.CART);
     }
-
-    try {
-      setAddressLoading(true);
-      setError(null);
-
-      const addressData = await fetchUserAddresses(user.id);
-
-      let addresses: UserAddress[] = [];
-      if (Array.isArray(addressData)) {
-        addresses = addressData;
-      } else if (addressData) {
-        addresses = [addressData];
-      }
-
-      if (addresses.length > 0) {
-        const defaultAddress = addresses[0];
-        const fullAddress = `${defaultAddress.address}, ${defaultAddress.city}, ${defaultAddress.state || ''}, ${defaultAddress.zip_code}, ${defaultAddress.country}`;
-        setFormData(prev => ({
-          ...prev,
-          shippingAddress: fullAddress,
-        }));
-        setFetchedAddress(defaultAddress);
-      } else {
-        setFetchedAddress(null);
-        setError("No saved address found. Please add an address in your profile.");
-      }
-    } catch (err) {
-      console.error("Failed to fetch addresses:", err);
-      setFetchedAddress(null);
-      setError("Failed to fetch your saved address. Please try again.");
-    } finally {
-      setAddressLoading(false);
-    }
-  };
+  }, [checkedOutItems, router, itemsLoaded]);
 
   useEffect(() => {
-    fetchUserAddress();
+    const fetchUserAddress = async () => {
+      if (!user?.id) {
+        setFetchedAddress(null);
+        setAddressLoading(false);
+        return;
+      }
+
+      try {
+        setAddressLoading(true);
+        setError(null);
+
+        const addressData = await fetchUserAddresses(user.id);
+
+        let addresses: UserAddress[] = [];
+        if (Array.isArray(addressData)) {
+          addresses = addressData;
+        } else if (addressData) {
+          addresses = [addressData];
+        }
+
+        if (addresses.length > 0) {
+          const defaultAddress = addresses[0];
+          const fullAddress = `${defaultAddress.address}, ${defaultAddress.city}, ${defaultAddress.state || ''}, ${defaultAddress.zip_code}, ${defaultAddress.country}`;
+          setFormData(prev => ({
+            ...prev,
+            shippingAddress: fullAddress,
+          }));
+          setFetchedAddress(defaultAddress);
+        } else {
+          setFetchedAddress(null);
+          setError("No saved address found. Please add an address in your profile.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch addresses:", err);
+        setFetchedAddress(null);
+        setError("Failed to fetch your saved address. Please try again.");
+      } finally {
+        setAddressLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchUserAddress();
+    }
   }, [user?.id]);
 
-  useEffect(() => {
-    if (
-      user &&
-      cart &&
-      cart.items.length > 0 &&
-      localStorage.getItem("shouldPlaceOrderAfterLogin") === "true"
-    ) {
-      const savedData = JSON.parse(localStorage.getItem("pendingOrder") || "{}");
-      
-      if (formData.shippingAddress) { 
-        handlePlaceOrder();
-      }
-    
-      localStorage.removeItem("pendingOrder");
-      localStorage.removeItem("shouldPlaceOrderAfterLogin");
-    }
-  }, [user, cart, formData.shippingAddress]);
-
-  const handlePlaceOrder = async () => {
-    if (!cart) return;
-
-    if (authLoading) {
+  async function handlePaymentAndOrder() {
+    if (!checkedOutItems.length || !formData.shippingAddress || authLoading) {
+      setError("No items found for checkout.");
+      toast.error("No items to checkout.");
       return;
     }
-
-    if (!user) {
-      localStorage.setItem("pendingOrder", JSON.stringify({}));
-      localStorage.setItem("shouldPlaceOrderAfterLogin", "true");
-  
-      toast.info("Please sign in to place your order");
-      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent("/ecommerce/checkout")}`);
-      return;
-    }
-
-    if (!formData.shippingAddress) {
-      setError("Cannot place order without a shipping address.");
-      toast.error("No shipping address found.");
-      return;
-    }
-    
+    setProcessing(true);
+    setError(null);
     try {
-      setProcessing(true);
-      setError(null);
-
       const orderData = {
         shipping_address: formData.shippingAddress,
-        billing_address: formData.billingAddress,
-        notes: formData.notes,
+        country_code: countryCode,
+      }
+      const initiateResponse = await ecommerceService.initiateOrder(orderData);
+      const { orderId, orderNumber, paymentSessionId, totalAmount } = initiateResponse;
+
+      if (!paymentSessionId) {
+        throw new Error('Failed to initiate payment');
+      }
+
+      const paymentConfig = {
+        orderId: orderNumber,
+        orderAmount: totalAmount,
+        orderCurrency: currencySymbol,
+        customerName: user?.name,
+        customerEmail: user?.email,
+        customerPhone: user?.phone,
+        orderToken: paymentSessionId,
       };
 
-      await ecommerceService.createOrder(orderData);
-
-      clearCart();
-      setIsOrderSuccessModalOpen(true);
+      await launchCashfreePayment(
+        paymentConfig,
+        async (paymentResult: any) => {
+          try {
+            await ecommerceService.updatePaymentStatus(orderId, 'PAID');
+            clearCart();
+            toast.success("Order placed successfully!");
+            router.push(ROUTES.ORDER_HISTORY);
+          } catch (error) {
+            setError("Payment succeeded but order update failed. Contact support.");
+            toast.error("Order update error");
+          }
+        },
+        (failData: any) => {
+          setError(failData?.reason || "Payment failed. Please try again.");
+          toast.error(failData?.reason || "Payment cancelled");
+        }
+      )
     } catch (err) {
-      console.error("Error placing order:", err);
-      setError("Failed to place order. Please try again.");
-      toast.error("Failed to place order");
+      setError(err.message || "Failed to initiate checkout.");
+      toast.error("Checkout initiation failed");
     } finally {
       setProcessing(false);
     }
-  };
-
-  const handleContinueShopping = () => {
-    setIsOrderSuccessModalOpen(false);
-    router.push(ROUTES.ECOMMERCE);
-  };
-
-  const handleViewOrderHistory = () => {
-    setIsOrderSuccessModalOpen(false);
-    router.push(ROUTES.ORDER_HISTORY);
-  };
+  }
 
   if (authLoading) {
     return (
@@ -289,7 +284,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if ((!cart || cart.items.length === 0) && !isOrderSuccessModalOpen) {
+  if ((!checkedOutItems || checkedOutItems.length === 0)) {
     return null;
   }
 
@@ -322,7 +317,7 @@ export default function CheckoutPage() {
                 Checkout
               </Typography>
               <Chip 
-                label={cart?.items?.length || 0} 
+                label={checkedOutItems.length} 
                 size="small" 
                 color="primary" 
                 sx={{ 
@@ -344,12 +339,6 @@ export default function CheckoutPage() {
           </IconButton>
         </Toolbar>
       </AppBar>
-
-      <OrderSuccessPopup
-        open={isOrderSuccessModalOpen}
-        onContinueShopping={handleContinueShopping}
-        onViewOrderHistory={handleViewOrderHistory}
-      />
 
       <Container maxWidth="lg" sx={{ py: { xs: 1, md: 3 }, px: { xs: 1, sm: 2 } }}>
         {/* Fast Delivery Card */}
@@ -631,8 +620,8 @@ export default function CheckoutPage() {
               variant="contained"
               size="large"
               startIcon={<Payment />}
-              onClick={handlePlaceOrder}
-              disabled={processing || !formData.shippingAddress.trim() || authLoading || addressLoading}
+              onClick={handlePaymentAndOrder}
+              disabled={processing || !formData.shippingAddress.trim() || authLoading || addressLoading || checkedOutItems.length === 0}
               sx={{
                 borderRadius: 3,
                 py: 2,
@@ -658,10 +647,10 @@ export default function CheckoutPage() {
               {processing ? (
                 <Box display="flex" alignItems="center" gap={1}>
                   <CircularProgress size={24} color="inherit" />
-                  <Typography>Placing Order...</Typography>
+                  <Typography>Processing Payment...</Typography>
                 </Box>
               ) : (
-                `Place Order • ${formatLocalPrice(totals.total)}`
+                `Pay & Place Order • ${formatLocalPrice(totals.total)}`
               )}
             </Button>
 

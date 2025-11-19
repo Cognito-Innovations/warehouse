@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Container } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import { ShoppingCart } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+
 import { useCart, useCartActions } from "../../../store/ecommerceStore";
-import { ROUTES } from "@/utils/constants";
-import { ecommerceData } from "@/data/ecommerceData";
-import { CartItemLoadingState, CartAddressData } from "@/types/ecommerce";
+import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { fetchUserAddresses, createUserAddress } from "@/lib/api.service";
 import CartHeader from "@/components/ecommerce/cart/CartHeader";
 import AddressSelectionDropdown from "@/components/ecommerce/cart/AddressSelectionDropdown";
@@ -18,9 +18,11 @@ import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
 import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
 import CartSkeletonLoader from "@/components/ecommerce/cart/CartSkeletonLoader";
 import ContinueShoppingCard from "@/components/ecommerce/cart/ContinueShoppingCard";
-import { getCurrencyForCountry, getUserCountry } from "@/utils/currency";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { ecommerceData } from "@/data/ecommerceData";
+import { ROUTES } from "@/utils/constants";
+import { getCurrencyForCountry } from "@/utils/currency";
 import { getCartItemPricingSummary } from "@/utils/priceUtils";
+import { CartItemLoadingState, CartAddressData } from "@/types/ecommerce";
 
 export default function CartPage() {
   const router = useRouter();
@@ -42,11 +44,14 @@ export default function CartPage() {
     pincode: '',
   });
   const selectedCountry = locationData.location.countryName;
+  const countryCode = locationData.location.countryCode;
 
   const userId = (session?.user as any)?.user_id;
 
   useEffect(() => {
-    fetchCart();
+    if (countryCode) {
+      fetchCart(countryCode);
+    }
   }, [fetchCart]);
 
   useEffect(() => {
@@ -137,7 +142,7 @@ export default function CartPage() {
         [itemId]: { ...prev[itemId], isDecrementLoading: true },
       }));
       try {
-        await removeFromCart(itemId);
+        await removeFromCart(itemId, countryCode);
       } catch (err) {
         console.error("Failed to remove item:", err);
       } finally {
@@ -158,7 +163,7 @@ export default function CartPage() {
         },
       }));
       try {
-        await updateCartItem(itemId, newQuantity);
+        await updateCartItem(itemId, newQuantity, countryCode);
       } catch (err) {
         console.error("Failed to update quantity:", err);
       } finally {
@@ -180,7 +185,7 @@ export default function CartPage() {
       [itemId]: { ...prev[itemId], isRemoveLoading: true },
     }));
     try {
-      await removeFromCart(itemId);
+      await removeFromCart(itemId, countryCode);
     } catch (err) {
       console.error("Failed to remove item:", err);
     } finally {
@@ -213,9 +218,17 @@ export default function CartPage() {
   }, [cart]);
 
   const handleCheckout = useCallback(() => {
-    localStorage.setItem("checkoutCartItemIds", JSON.stringify(Array.from(selectedItems)));
-    router.push(ROUTES.CHECKOUT);
-  }, [router, selectedItems]);
+    const selectedCartItems = cart?.items.filter((item) => selectedItems.has(item.id)) || [];   
+
+    localStorage.setItem("checkoutSelectedItems", JSON.stringify(selectedCartItems));
+
+    if (userId) {
+      router.push(ROUTES.CHECKOUT);
+    } else {
+      toast.info("Please sign in to continue with checkout");
+      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(ROUTES.CHECKOUT)}`);
+    }
+  }, [router, selectedItems, cart, userId]);
 
   const handleContinueShopping = useCallback(() => {
     router.push(ROUTES.ECOMMERCE);
@@ -272,8 +285,8 @@ export default function CartPage() {
     };
   }, [cart, selectedItems, selectedCountry]);
 
-  // Show skeleton loader while cart is loading
-  if (cartLoading) {
+  // Show skeleton loader while cart is loading and no cart data exists
+  if (cartLoading && !cart) {
     return <CartSkeletonLoader />;
   }
 
@@ -324,16 +337,39 @@ export default function CartPage() {
         >
           {/* Cart Items Section */}
           <Box sx={{ flex: { md: "0 0 65%" }, width: { xs: "100%", md: "65%" } }}>
-            <AddressSelectionDropdown
-              addresses={addresses}
-              selectedAddress={selectedAddress}
-              onAddressSelect={setSelectedAddress}
-              onAddNewAddress={() => setAddAddressModalOpen(true)}
-              noAddressLabel={ecommerceData.cart.addressSelection.noAddressLabel}
-              addAddressLabel={ecommerceData.cart.addressSelection.addAddressLabel}
-              selectAddressLabel={ecommerceData.cart.addressSelection.selectAddressLabel}
-              borderColor={ecommerceData.ui.colors.borderColor}
-            />
+            {!userId ? (
+              <Box sx={{ p: 2, border: "1px solid #ddd", borderRadius: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight={600}>Address</Typography>
+                <Typography variant="body2" color="text.secondary" mt={1}>
+                  To select or add an address, please login.
+                </Typography>
+              </Box>
+            ) : addresses.length === 0 ? (
+              <Box sx={{ p: 2, border: "1px solid #ddd", borderRadius: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight={600}>No Address Found</Typography>
+                <Typography variant="body2" color="text.secondary" mt={1}>
+                  Add your delivery address to continue.
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 2, color: "primary.main", cursor: "pointer", fontWeight: 600 }}
+                  onClick={() => setAddAddressModalOpen(true)}
+                >
+                  + Add Address
+                </Typography>
+              </Box>
+              ) : (
+                <AddressSelectionDropdown
+                  addresses={addresses}
+                  selectedAddress={selectedAddress}
+                  onAddressSelect={setSelectedAddress}
+                  onAddNewAddress={() => setAddAddressModalOpen(true)}
+                  noAddressLabel={ecommerceData.cart.addressSelection.noAddressLabel}
+                  addAddressLabel={ecommerceData.cart.addressSelection.addAddressLabel}
+                  selectAddressLabel={ecommerceData.cart.addressSelection.selectAddressLabel}
+                  borderColor={ecommerceData.ui.colors.borderColor}
+                />
+              )}
 
             <CartItemsList
               items={cart.items}

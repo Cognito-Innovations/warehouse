@@ -89,12 +89,12 @@ interface CartState {
 // Cart Store Actions
 interface CartActions {
   setCart: (cart: Cart | null) => void;
-  fetchCart: () => Promise<void>;
-  addToCart: (productId: string, quantity?: number) => Promise<void>;
-  updateCartItem: (itemId: string, quantity: number) => Promise<void>;
-  removeFromCart: (itemId: string) => Promise<void>;
-  clearCart: () => Promise<void>;
-  syncLocalCartToServer: () => Promise<void>;
+  fetchCart: (country?: string) => Promise<void>;
+  addToCart: (productId: string, quantity?: number, country?: string) => Promise<void>;
+  updateCartItem: (itemId: string, quantity: number, country?: string) => Promise<void>;
+  removeFromCart: (itemId: string, country?: string) => Promise<void>;
+  clearCart: (country?: string) => Promise<void>;
+  syncLocalCartToServer: (country?: string) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -176,12 +176,15 @@ const computeCartFromLocal = (
 
   const items = localItems
     .map((item) => {
-      const product = products.find((p) => p.id === item.productId);
-      if (!product) return null;
-
       const existingItem = existingCart?.items.find(
         (i) => i.product.id === item.productId && !i.id.startsWith("local-")
       );
+
+      let product = products.find((p) => p.id === item.productId);
+      if (!product && existingItem) {
+        product = existingItem.product;
+      }
+      if (!product) return null;
 
       const id = existingItem ? existingItem.id : `local-${product.id}`;
 
@@ -191,7 +194,7 @@ const computeCartFromLocal = (
         quantity: item.quantity,
         unit_price: existingItem?.unit_price ?? 0,
         total_price: existingItem?.total_price ?? 0,
-        discount_percentage: Number(product.discount_percentage) || 0,
+        discount_percentage: Number(existingItem?.discount_percentage ?? product.discount_percentage) || 0,
         created_at: existingItem?.created_at || new Date().toISOString(),
         updated_at: existingItem?.updated_at || new Date().toISOString(),
       };
@@ -350,7 +353,7 @@ export const useEcommerceStore = create<EcommerceStore>()(
           totalAmount: subtotal,
         });
       },
-      fetchCart: async () => {
+      fetchCart: async (country) => {
         const token = getAuthToken();
         const { localCartItems, products } = get();
         set({ cartLoading: true });
@@ -363,7 +366,7 @@ export const useEcommerceStore = create<EcommerceStore>()(
         }
         
         try {
-          const serverCart = await ecommerceService.getCart();
+          const serverCart = await ecommerceService.getCart(country);
           get().setCart(serverCart);
 
           if (serverCart && Array.isArray(serverCart.items)) {
@@ -388,7 +391,7 @@ export const useEcommerceStore = create<EcommerceStore>()(
           set({ cartLoading: false });
         }
       },
-      addToCart: async (productId: string, quantity = 1) => {
+      addToCart: async (productId: string, quantity = 1, country) => {
         set((state) => {
           const existingItemIndex = state.localCartItems.findIndex(
             (item) => item.productId === productId
@@ -416,24 +419,45 @@ export const useEcommerceStore = create<EcommerceStore>()(
         const token = getAuthToken();
         if (!token) return;
         try {
-          const data: AddToCartRequest = { product_id: productId, quantity };
+          const data: AddToCartRequest = { product_id: productId, quantity, country };
           const updatedCart = await ecommerceService.addToCart(data);
           get().setCart(updatedCart);
           if (updatedCart && Array.isArray(updatedCart.items)) {
-            set({
-              localCartItems: updatedCart.items.map((item: any) => ({
-                productId: item.product.id,
-                quantity: item.quantity,
-              })),
-            });
+            const localItems = get().localCartItems;
+            const localMap = new Map(localItems.map((item) => [item.productId, item.quantity]));
+            const serverMap = new Map(
+              updatedCart.items.map((item: any) => [item.product.id, item.quantity])
+            );
+            const allproductIds = new Set([
+              ...localMap.keys(),
+              ...Array.from(serverMap.keys()),
+            ]);
+
+            const mergedLocalItems: LocalCartItem[] = [];
+            for (const productId of allproductIds) {
+              const localQty = localMap.get(productId);
+              if (localQty !== undefined) {
+                mergedLocalItems.push({ productId, quantity: localQty });
+              } else {
+                const serverQty = serverMap.get(productId);
+                if (serverQty !== undefined) {
+                  mergedLocalItems.push({ productId, quantity: serverQty });
+                }
+              }
+            }
+            set({ localCartItems: mergedLocalItems });
+            const mergedCart = computeCartFromLocal(mergedLocalItems, get().products, updatedCart);
+            get().setCart(mergedCart);
+          } else {
+            get().setCart(updatedCart);
           }
         } catch (err: any) {
           console.error("Failed to add to cart:", err);
           get().set({ error: err.message || "Failed to add to cart" });
-          get().fetchCart();
+          get().fetchCart(country);
         }
       },
-      updateCartItem: async (itemId: string, quantity: number) => {
+      updateCartItem: async (itemId: string, quantity: number, country) => {
         const token = getAuthToken();
         const { cart, products } = get();
        
@@ -462,12 +486,12 @@ export const useEcommerceStore = create<EcommerceStore>()(
             return { localCartItems: updated };
           });
           if (token && serverIdForApi) {
-            ecommerceService.removeFromCart(serverIdForApi)
-              .then(() => get().fetchCart())
+            ecommerceService.removeFromCart(serverIdForApi, country)
+              .then(() => get().fetchCart(country))
               .catch((err: any) => {
                 console.error("Failed to remove from cart:", err);
                 get().set({ error: err.message || "Failed to remove from cart" });
-                get().fetchCart();
+                get().fetchCart(country);
               });
           } else if (token) {
             console.warn("updateCartItem(remove): Item only existed locally. No API call needed.");
@@ -509,28 +533,24 @@ export const useEcommerceStore = create<EcommerceStore>()(
             if (finalServerId) {
               const data: UpdateCartItemRequest = { quantity: finalQuantity };
               try {
-                await ecommerceService.updateCartItem(finalServerId, data);
-                await get().fetchCart();
+                await ecommerceService.updateCartItem(finalServerId, data, country);
               } catch (err: any) {
                 console.error("Failed to update cart item:", err);
                 get().set({ error: err.message || "Failed to update cart item" });
-                await get().fetchCart();
               }
             } else {
-              const data: AddToCartRequest = { product_id: productId, quantity: finalQuantity };
+              const data: AddToCartRequest = { product_id: productId, quantity: finalQuantity, country };
               try {
                 await ecommerceService.addToCart(data);
-                await get().fetchCart();
               } catch (err: any) {
                 console.error("Failed to add new item via update:", err);
                 get().set({ error: err.message || "Failed to add item" });
-                await get().fetchCart();
               }
             }
           }, 500);
         }
       },
-      removeFromCart: async (itemId: string) => {
+      removeFromCart: async (itemId: string, country) => {
         const token = getAuthToken();
         const { cart, products } = get();
         const itemToRemove = cart?.items.find((item: any) => item.id === itemId);
@@ -548,33 +568,32 @@ export const useEcommerceStore = create<EcommerceStore>()(
             serverIdForApi = serverItem.id;
           }
         }
-        set((state) => {
-          const updated = state.localCartItems.filter(
-            (i) => i.productId !== productId
-          );
-          const computed = computeCartFromLocal(updated, state.products, state.cart);
-          get().setCart(computed);
-          return { localCartItems: updated };
-        });
+        const oldLocalCartItems = get().localCartItems;
+        const oldCart = get().cart;
+        const updatedLocalCartItems = oldLocalCartItems.filter(
+          (i) => i.productId !== productId
+        );
+        const computedCart = computeCartFromLocal(updatedLocalCartItems, products, oldCart);
+        get().setCart(computedCart);
+        set({ localCartItems: updatedLocalCartItems });
         if (token && serverIdForApi) {
-          ecommerceService.removeFromCart(serverIdForApi)
-            .then(() => get().fetchCart())
+          ecommerceService.removeFromCart(serverIdForApi, country)
             .catch((err: any) => {
-              // If 404, item might already be deleted - just refresh cart to sync
               if (err.response?.status === 404) {
-                console.warn("Item not found on server (may already be deleted), syncing cart...");
-                get().fetchCart();
+                console.warn("Item not found on server (may already be deleted)");
               } else {
                 console.error("Failed to remove item from cart:", err);
                 get().set({ error: err.message || "Failed to remove item from cart" });
-                get().fetchCart();
+                set({ localCartItems: oldLocalCartItems });
+                const revertedCart = computeCartFromLocal(oldLocalCartItems, products, oldCart);
+                get().setCart(revertedCart);
               }
             });
         } else if (token) {
           console.warn("removeFromCart: Item only existed locally. No API call needed.");
         }
       },
-      clearCart: async () => {
+      clearCart: async (country) => {
         const token = getAuthToken();
         set({ localCartItems: [] });
         get().setCart(null);
@@ -582,19 +601,19 @@ export const useEcommerceStore = create<EcommerceStore>()(
           return;
         }
         ecommerceService.clearCart()
-          .then(() => get().fetchCart())
+          .then(() => get().fetchCart(country))
           .catch((err: any) => {
             console.error("Failed to clear cart:", err);
             get().set({ error: err.message || "Failed to clear cart" });
           });
       },
-      syncLocalCartToServer: async () => {
+      syncLocalCartToServer: async (country) => {
         const token = getAuthToken();
         const { localCartItems } = get();         
         if (!token || !localCartItems.length) return;
             
         try {
-          let updatedCart = await ecommerceService.getCart();
+          let updatedCart = await ecommerceService.getCart(country);
           const serverItemMap = new Map(
             (updatedCart?.items || []).map((item: any) => [
               item.product.id,
@@ -607,6 +626,7 @@ export const useEcommerceStore = create<EcommerceStore>()(
               const data: AddToCartRequest = {
                 product_id: item.productId,
                 quantity: item.quantity,
+                country
               };
               updatedCart = await ecommerceService.addToCart(data);
             }
