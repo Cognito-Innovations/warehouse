@@ -41,3 +41,8 @@ export const steps = [
       text: "When all of the items are received to your suite, create a shipping request to ship out your packages to final destination."
     }
   ];
+
+export const STORAGE_KEY = "warehouse:clientIdentifier";
+export const HEADER_KEY = "x-client-identifier";
+
+export const CF_SCRIPT_SRC = "https://sdk.cashfree.com/js/v3/cashfree.js";

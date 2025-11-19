@@ -1,5 +1,5 @@
 //TODO P0: Resolve these typescript errors
-import type { CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
+import type { CargoOption, CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
 import type { PreArrival } from '../types/PreArrival';
 import api from './axios';
 
@@ -256,7 +256,7 @@ export const updateProduct = async (
   available?: boolean,
   currency?: string,
 ) => {
-  const res = await api.patch(`/shopping-requests/${productId}`, {
+  const res = await api.patch(`/shopping-request-products/${productId}`, {
     ...(unitPrice !== undefined && { unit_price: unitPrice }),
     ...(available !== undefined && { available }),
     ...(currency !== undefined && { currency }),
@@ -454,6 +454,19 @@ export const getProducts = async () => {
   return response.data;
 };
 
+export const updateEcommerceProduct = async (
+  id: string,
+  data: Partial<ProductPayload>
+) => {
+  const response = await api.patch(`/ecommerce-products/${id}`, data);
+  return response.data;
+};
+
+export const deleteProduct = async (id: string) => {
+  const response = await api.delete(`/ecommerce-products/${id}`);
+  return response.data;
+};
+
 // Measurements
 export const getMeasurements = async () => {
   const response = await api.get("/ecommerce-measurements");
@@ -543,3 +556,8 @@ export const createShipmentInvoice = async (
   const res = await api.post(`/shipments/${shipmentId}/invoice/`, payload);
   return res.data;
 }
+
+export const getCargoOptions = async (): Promise<CargoOption[]> => {
+  const response = await api.get<CargoOption[]>('/ecommerce-cargo-options');
+  return response.data;
+};

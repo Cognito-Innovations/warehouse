@@ -23,6 +23,7 @@ import {
   PreArrivalDocument,
   PickupRequestDocument,
   ShoppingRequestDocument,
+  ClientIdentifier,
 } from '../shared/entities';
 import { Country } from 'src/Countries/country.entity';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
@@ -42,6 +43,7 @@ import { Shipment } from 'src/shipments/shipment.entity';
 import { InvoiceCharge } from 'src/invoice/entities/invoice-charge.entity';
 import { EcommerceCart } from 'src/ecommerce/entities/ecommerce-cart.entity';
 import { EcommerceCartItem } from 'src/ecommerce/entities/ecommerce-cart-item.entity';
+import { EcommerceCargoOption } from 'src/ecommerce/entities/cargo-options.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -78,6 +80,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     PreArrivalDocument,
     PickupRequestDocument,
     ShoppingRequestDocument,
+    ClientIdentifier,
     ShipmentExport,
     ShipmentExportBox,
     Document,
@@ -93,8 +96,9 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ShoppingRequestProduct,
     Shipment,
     InvoiceCharge,
+    EcommerceCargoOption,
   ],
-  synchronize: true, // Disable schema synchronization to prevent modifying existing database
+  synchronize: false, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],
   migrationsRun: false,
   logging: process.env.NODE_ENV === 'development',

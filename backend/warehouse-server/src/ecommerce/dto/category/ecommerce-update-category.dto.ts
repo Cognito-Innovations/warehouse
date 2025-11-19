@@ -1,4 +1,13 @@
-import { IsBoolean, IsString, IsOptional, ValidateIf, IsNumber, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsString,
+  IsOptional,
+  ValidateIf,
+  IsNumber,
+  Min,
+  IsArray,
+  IsUUID,
+} from 'class-validator';
 
 export class UpdateCategoryDto {
   @IsString()
@@ -14,14 +23,19 @@ export class UpdateCategoryDto {
   image_url?: string;
 
   @ValidateIf((o, v) => v !== null)
-  @IsString()
+  @IsArray()
+  @IsUUID('all', { each: true })
   @IsOptional()
-  country_id?: string;
+  country_ids?: string[];
 
   @IsNumber()
   @IsOptional()
   @Min(0)
   discount_percentage?: number;
+
+  @IsUUID()
+  @IsOptional()
+  cargo_option_id?: string;
 
   @IsString()
   @IsOptional()

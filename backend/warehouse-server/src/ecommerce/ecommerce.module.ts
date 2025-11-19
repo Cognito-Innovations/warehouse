@@ -20,6 +20,14 @@ import { EcommerceOrderItem } from './entities/ecommerce-order-item.entity';
 import { EcommerceMeasurement } from './entities/measurement.entity';
 import { MeasurementController } from './controllers/measurement.controller';
 import { MeasurementService } from './services/measurement.service';
+import { Country } from 'src/Countries/country.entity';
+import { SeedController } from './seed/seed.controller';
+import { SeedService } from './seed/seed.service';
+import { EcommerceCargoOption } from './entities/cargo-options.entity';
+import { CargoOptionsController } from './controllers/cargoOptions.controller';
+import { CargoOptionsService } from './services/cargo-options.service';
+import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
+import { Currency } from 'src/currencies/currency.entity';
 
 @Module({
   imports: [
@@ -32,7 +40,12 @@ import { MeasurementService } from './services/measurement.service';
       EcommerceOrder,
       EcommerceOrderItem,
       EcommerceMeasurement,
+      EcommerceCartItem,
+      Country,
+      EcommerceCargoOption,
+      Currency,
     ]),
+    UserPreferencesModule,
   ],
   controllers: [
     CategoriesController,
@@ -41,6 +54,8 @@ import { MeasurementService } from './services/measurement.service';
     CartController,
     OrderController,
     MeasurementController,
+    SeedController,
+    CargoOptionsController,
   ],
   providers: [
     CategoriesService,
@@ -48,7 +63,9 @@ import { MeasurementService } from './services/measurement.service';
     ProductsService,
     CartService,
     OrderService,
-    MeasurementService
+    MeasurementService,
+    SeedService,
+    CargoOptionsService,
   ],
 })
 export class EcommerceModule {}

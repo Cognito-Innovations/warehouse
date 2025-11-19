@@ -4,6 +4,8 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -29,9 +31,19 @@ export class EcommerceSubCategory extends BaseTimestampEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   discount_percentage: number;
 
-  @ManyToOne(() => Country, { eager: true })
-  @JoinColumn({ name: 'country_id' })
-  country: Country;
+  @ManyToMany(() => Country, { eager: true })
+  @JoinTable({
+    name: 'ecommerce_sub_category_countries',
+    joinColumn: {
+      name: 'sub_category_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'country_id',
+      referencedColumnName: 'id',
+    },
+  })
+  countries: Country[]
 
   @Column({ type: 'text', nullable: true })
   description: string;

@@ -156,7 +156,7 @@ export default function OrdersPage() {
         ) : (
           <Grid container spacing={3}>
             {orders.map((order) => (
-              <Grid item xs={12} key={order.id}>
+              <Grid size={{ xs: 12 }} key={order.id}>
                 <Card>
                   <CardContent>
                     <Box
@@ -186,7 +186,7 @@ export default function OrdersPage() {
                     <Divider sx={{ my: 2 }} />
 
                     <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Typography variant="body2" color="text.secondary">
                           Items
                         </Typography>
@@ -194,7 +194,7 @@ export default function OrdersPage() {
                           {order.items.length} item(s)
                         </Typography>
                       </Grid>
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Typography variant="body2" color="text.secondary">
                           Total Amount
                         </Typography>
@@ -202,7 +202,7 @@ export default function OrdersPage() {
                           ₹{order.total_amount.toFixed(0)}
                         </Typography>
                       </Grid>
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Typography variant="body2" color="text.secondary">
                           Payment Status
                         </Typography>
@@ -212,7 +212,7 @@ export default function OrdersPage() {
                           size="small"
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Typography variant="body2" color="text.secondary">
                           Order Status
                         </Typography>

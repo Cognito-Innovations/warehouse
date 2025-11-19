@@ -4,6 +4,8 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -33,9 +35,19 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @JoinColumn({ name: 'sub_category_id' })
   sub_category: EcommerceSubCategory;
 
-  @ManyToOne(() => Country, { eager: true })
-  @JoinColumn({ name: 'country_id' })
-  country: Country;
+  @ManyToMany(() => Country, { eager: true })
+  @JoinTable({
+    name: 'ecommerce_product_countries',
+    joinColumn: {
+      name: 'product_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'country_id',
+      referencedColumnName: 'id',
+    },
+  })
+  countries: Country[]
 
   @Column()
   image_url: string;

@@ -6,7 +6,6 @@ import {
   Container,
   Typography,
   Button,
-  TextField,
   Grid,
   Divider,
   Alert,
@@ -25,26 +24,42 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  InputAdornment,
 } from "@mui/material";
-import { 
-  ArrowBack, 
-  Payment, 
-  LocalShipping, 
-  Security, 
-  CheckCircle, 
+import {
+  ArrowBack,
+  Payment,
+  LocalShipping,
+  Security,
+  CheckCircle,
   Timer,
   Home,
   DeliveryDining,
   FormatListBulleted,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import { useCart, useCartActions } from "../../../store/ecommerceStore";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { ecommerceService } from "../../../services/ecommerce.service";
-import { toast } from "sonner";
+import { launchCashfreePayment } from "../../../services/cashfree-payment.service";
 import { ROUTES } from "@/utils/constants";
-import OrderSuccessPopup from "@/components/ecommerce/OrderSuccessPopup";
+import { fetchUserAddresses } from "@/lib/api.service";
+import { getCurrencyForCountry } from "@/utils/currency";
+import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
+import { CartItem } from "@/types/ecommerce";
+
+interface UserAddress {
+  address: string;
+  city: string;
+  country: string;
+  zip_code: string;
+  state?: string;
+  name?: string;
+  phone_number?: string;
+  email?: string;
+}
 
 export default function CheckoutPage() {
   const theme = useTheme();
@@ -61,120 +76,200 @@ export default function CheckoutPage() {
   });
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isOrderSuccessModalOpen, setIsOrderSuccessModalOpen] = useState(false);
+  const [fetchedAddress, setFetchedAddress] = useState<UserAddress | null>(null);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [checkedOutItems, setCheckedOutItems] = useState<CartItem[]>([]);
+  const [itemsLoaded, setItemsLoaded] = useState(false);
 
-  const DELIVERY_CHARGES = 50;
-  const FREE_DELIVERY_THRESHOLD = 100;
+  const locationData = useEffectiveUserLocation({
+    countryCode: undefined,
+    countryName: undefined,
+    city: '',
+    pincode: '',
+  });
+  const selectedCountry = locationData.location.countryName;
+  const countryCode = locationData.location.countryCode;
 
-  const calculateCartAmounts = () => {
-    if (!cart) return { subtotal: 0, discount: 0, delivery: 0, total: 0 };
+  const countryName = selectedCountry || '';
+  const getThresholdAndFees = (country?: string) => {
+    if (country && country.includes('India')) {
+      return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
+    } else {
+      return { threshold: 20, deliveryFee: 5, serviceCharge: 1 };
+    }
+  };
 
-    const subtotal = Number(cart.total_amount) || 0;
-    const discountPercentage = Number(cart.discount_percentage) || 0;
-    
-    const discountAmount = (subtotal * discountPercentage) / 100;
-    
-    const deliveryCharges = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_CHARGES;
-    
-    const total = subtotal - discountAmount + deliveryCharges;
+  const calculateSelectedTotals = () => {
+    if (!checkedOutItems || checkedOutItems.length === 0) {
+      return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
+    }
+
+    const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } =
+      getThresholdAndFees(countryName);
+
+    let grossSubtotal = 0;
+    let discountAmount = 0;
+
+    checkedOutItems.forEach((item: CartItem) => {
+      const pricing = getCartItemPricingSummary(item);
+      grossSubtotal += pricing.originalUnitPrice * pricing.quantity;
+      discountAmount += pricing.discountTotal;
+    });
+
+    const discountedSubtotal = grossSubtotal - discountAmount;
+    const deliveryFee = discountedSubtotal >= threshold ? 0 : deliveryBase;
+    const taxes = discountedSubtotal * 0.02; // 2% tax
+    const serviceCharge = serviceBase;
+    const total = discountedSubtotal + deliveryFee + taxes + serviceCharge;
+    const asAmount = (value: number) => Number(value.toFixed(2));
 
     return {
-      subtotal,
-      discountAmount,
-      deliveryCharges,
-      total
+      subtotal: asAmount(grossSubtotal),
+      discount: asAmount(discountAmount),
+      deliveryFee: asAmount(deliveryFee),
+      taxes: asAmount(taxes),
+      serviceCharge: asAmount(serviceCharge),
+      total: asAmount(total),
     };
   };
 
-  const { subtotal, discountAmount, deliveryCharges, total } = calculateCartAmounts();
+  const totals = calculateSelectedTotals();
+  const currencyInfo = getCurrencyForCountry(countryName);
+  const currencySymbol =
+    (checkedOutItems?.length ?? 0) > 0
+      ? getCartItemPricingSummary(checkedOutItems[0]).currency || currencyInfo.symbol
+      : currencyInfo.symbol;
+
+  const formatLocalPrice = (amount: number) => formatPrice(amount, currencySymbol);
 
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
 
   useEffect(() => {
-    if (!cart || authLoading) return;
-
-    const shouldAutoOrder = localStorage.getItem("shouldPlaceOrderAfterLogin") === "true";
-
-    if (!processing 
-      && !isOrderSuccessModalOpen 
-      && cart?.items?.length === 0 
-      && !shouldAutoOrder
-    ) {
-      router.push(ROUTES.ECOMMERCE);
+    const selectedItemsRaw = localStorage.getItem("checkoutSelectedItems");
+    if (selectedItemsRaw) {
+      try {
+        const selectedItems: CartItem[] = JSON.parse(selectedItemsRaw);
+        setCheckedOutItems(selectedItems);
+        localStorage.removeItem("checkoutSelectedItems");
+      } catch (err) {
+        setCheckedOutItems([]);
+      }
+    } else if (cart?.items?.length! > 0) {
+      setCheckedOutItems(cart?.items!);
     }
-  }, [cart, authLoading, processing, isOrderSuccessModalOpen, router]);
+    setItemsLoaded(true);
+  }, [cart]);
 
   useEffect(() => {
-    if (
-      user &&
-      cart &&
-      cart.items.length > 0 &&
-      localStorage.getItem("shouldPlaceOrderAfterLogin") === "true"
-    ) {
-      const savedData = JSON.parse(localStorage.getItem("pendingOrder") || "{}");
-    
-      if (savedData.shippingAddress) {
-        setFormData(savedData);
-        handlePlaceOrder();
+    if (itemsLoaded && (!checkedOutItems || checkedOutItems.length === 0)) {
+      router.replace(ROUTES.CART);
+    }
+  }, [checkedOutItems, router, itemsLoaded]);
+
+  useEffect(() => {
+    const fetchUserAddress = async () => {
+      if (!user?.id) {
+        setFetchedAddress(null);
+        setAddressLoading(false);
+        return;
       }
-    
-      localStorage.removeItem("pendingOrder");
-      localStorage.removeItem("shouldPlaceOrderAfterLogin");
+
+      try {
+        setAddressLoading(true);
+        setError(null);
+
+        const addressData = await fetchUserAddresses(user.id);
+
+        let addresses: UserAddress[] = [];
+        if (Array.isArray(addressData)) {
+          addresses = addressData;
+        } else if (addressData) {
+          addresses = [addressData];
+        }
+
+        if (addresses.length > 0) {
+          const defaultAddress = addresses[0];
+          const fullAddress = `${defaultAddress.address}, ${defaultAddress.city}, ${defaultAddress.state || ''}, ${defaultAddress.zip_code}, ${defaultAddress.country}`;
+          setFormData(prev => ({
+            ...prev,
+            shippingAddress: fullAddress,
+          }));
+          setFetchedAddress(defaultAddress);
+        } else {
+          setFetchedAddress(null);
+          setError("No saved address found. Please add an address in your profile.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch addresses:", err);
+        setFetchedAddress(null);
+        setError("Failed to fetch your saved address. Please try again.");
+      } finally {
+        setAddressLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchUserAddress();
     }
-  }, [user, cart]);
+  }, [user?.id]);
 
-  const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: event.target.value,
-    }));
-  };
-
-  const handlePlaceOrder = async () => {
-    if (!cart) return;
-
-    if (authLoading) {
+  async function handlePaymentAndOrder() {
+    if (!checkedOutItems.length || !formData.shippingAddress || authLoading) {
+      setError("No items found for checkout.");
+      toast.error("No items to checkout.");
       return;
     }
-
-    if (!user) {
-      localStorage.setItem("pendingOrder", JSON.stringify(formData));
-      localStorage.setItem("shouldPlaceOrderAfterLogin", "true");
-  
-      toast.info("Please sign in to place your order");
-      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent('/ecommerce/checkout')}`);
-      return;
-    }
-
+    setProcessing(true);
+    setError(null);
     try {
-      setProcessing(true);
-      setError(null);
-
       const orderData = {
         shipping_address: formData.shippingAddress,
-        billing_address: formData.billingAddress,
-        notes: formData.notes,
+        country_code: countryCode,
+      }
+      const initiateResponse = await ecommerceService.initiateOrder(orderData);
+      const { orderId, orderNumber, paymentSessionId, totalAmount } = initiateResponse;
+
+      if (!paymentSessionId) {
+        throw new Error('Failed to initiate payment');
+      }
+
+      const paymentConfig = {
+        orderId: orderNumber,
+        orderAmount: totalAmount,
+        orderCurrency: currencySymbol,
+        customerName: user?.name,
+        customerEmail: user?.email,
+        customerPhone: user?.phone,
+        orderToken: paymentSessionId,
       };
 
-      await ecommerceService.createOrder(orderData);
-
-      clearCart();
-      setIsOrderSuccessModalOpen(true);
+      await launchCashfreePayment(
+        paymentConfig,
+        async (paymentResult: any) => {
+          try {
+            await ecommerceService.updatePaymentStatus(orderId, 'PAID');
+            clearCart();
+            toast.success("Order placed successfully!");
+            router.push(ROUTES.ORDER_HISTORY);
+          } catch (error) {
+            setError("Payment succeeded but order update failed. Contact support.");
+            toast.error("Order update error");
+          }
+        },
+        (failData: any) => {
+          setError(failData?.reason || "Payment failed. Please try again.");
+          toast.error(failData?.reason || "Payment cancelled");
+        }
+      )
     } catch (err) {
-      console.error("Error placing order:", err);
-      setError("Failed to place order. Please try again.");
-      toast.error("Failed to place order");
+      setError(err.message || "Failed to initiate checkout.");
+      toast.error("Checkout initiation failed");
     } finally {
       setProcessing(false);
     }
-  };
-
-  const handleContinueShopping = () => {
-    setIsOrderSuccessModalOpen(false);
-    router.push(ROUTES.ECOMMERCE);
-  };
+  }
 
   if (authLoading) {
     return (
@@ -189,7 +284,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if ((!cart || cart.items.length === 0) && !isOrderSuccessModalOpen) {
+  if ((!checkedOutItems || checkedOutItems.length === 0)) {
     return null;
   }
 
@@ -222,7 +317,7 @@ export default function CheckoutPage() {
                 Checkout
               </Typography>
               <Chip 
-                label={cart?.items?.length || 0} 
+                label={checkedOutItems.length} 
                 size="small" 
                 color="primary" 
                 sx={{ 
@@ -245,11 +340,6 @@ export default function CheckoutPage() {
         </Toolbar>
       </AppBar>
 
-      <OrderSuccessPopup
-        open={isOrderSuccessModalOpen}
-        onContinueShopping={handleContinueShopping}
-      />
-
       <Container maxWidth="lg" sx={{ py: { xs: 1, md: 3 }, px: { xs: 1, sm: 2 } }}>
         {/* Fast Delivery Card */}
         <Card 
@@ -258,18 +348,8 @@ export default function CheckoutPage() {
             borderRadius: 3, 
             overflow: "visible",
             position: "relative",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            bgcolor: "primary.main",
             color: "white",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              bgcolor: "rgba(255,255,255,0.1)",
-              borderRadius: 3,
-            }
           }}
         >
           <CardContent sx={{ p: 3, position: "relative", zIndex: 1 }}>
@@ -282,7 +362,7 @@ export default function CheckoutPage() {
                   Fast Delivery
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  Get it delivered in 1-2 hours*
+                  Get it delivered in 2-3 days*
                 </Typography>
               </Box>
             </Stack>
@@ -290,10 +370,10 @@ export default function CheckoutPage() {
         </Card>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={8}>
+          <Grid size={{ xs: 12, lg: 8 }}>
             <Grid container spacing={3}>
               {/* Delivery Address Card */}
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Card 
                   variant="outlined" 
                   sx={{ 
@@ -302,7 +382,7 @@ export default function CheckoutPage() {
                     boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                     transition: "box-shadow 0.2s ease",
                     "&:hover": { boxShadow: "0 4px 12px rgba(0,0,0,0.1)" },
-                    height: '100%'
+                    height: "100%"
                   }}
                 >
                   <CardContent sx={{ p: { xs: 2, md: 3 } }}>
@@ -318,63 +398,51 @@ export default function CheckoutPage() {
                         {error}
                       </Alert>
                     )}
-
-                    <TextField
-                      fullWidth
-                      label="Enter your complete address"
-                      multiline
-                      rows={4}
-                      value={formData.shippingAddress}
-                      onChange={handleInputChange("shippingAddress")}
-                      placeholder="House number, street, locality, city, pincode, etc."
-                      required
-                      variant="outlined"
-                      sx={{ 
-                        mb: 1,
-                        "& .MuiOutlinedInput-root": {
+                    
+                    {addressLoading ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', p: 3, bgcolor: 'grey.50', borderRadius: 2, minHeight: '140px', justifyContent: 'center' }}>
+                        <CircularProgress size={24} sx={{ mr: 2 }} />
+                        <Typography color="text.secondary">Fetching your address...</Typography>
+                      </Box>
+                    ) : fetchedAddress ? (
+                      <Box
+                        sx={{
+                          p: { xs: 2, md: 2.5 },
+                          bgcolor: "grey.50",
                           borderRadius: 2,
-                          bgcolor: "white",
-                          "& fieldset": { borderColor: "#e9ecef" },
-                          "&:hover fieldset": { borderColor: "primary.main" },
-                          "&.Mui-focused fieldset": { borderColor: "primary.main", borderWidth: 2 },
-                        }
-                      }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <LocalShipping sx={{ color: "grey.400", fontSize: 20 }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      inputProps={{
-                        maxLength: 500,
-                      }}
-                      helperText={
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ color: '#666' }}>This is where your order will be delivered</span>
-                          <Chip 
-                            label={`${formData.shippingAddress.length}/500`} 
-                            size="small" 
-                            variant="outlined" 
-                            color={formData.shippingAddress.length > 0 ? "success" : "default"}
-                            sx={{ fontSize: "0.75rem"  }}
-                          />
-                        </Box>
-                      }
-                    />
+                          border: "1px solid #e9ecef",
+                        }}
+                      >
+                        <Typography variant="body1" fontWeight={500} color="text.primary" gutterBottom>
+                          {fetchedAddress.address}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {fetchedAddress.city}, {fetchedAddress.country}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {fetchedAddress.zip_code}
+                        </Typography>
+                      </Box>
+                    ) : (
+                       !error && !authLoading && (
+                        <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                          No saved address found. Please add an address to your profile to proceed.
+                        </Alert>
+                       )
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
 
               {/* Delivery Details Card */}
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Card 
                   variant="outlined" 
                   sx={{ 
                     borderRadius: 3, 
                     border: "1px solid #e9ecef",
                     bgcolor: "grey.50",
-                    height: '100%'
+                    height: "100%"
                   }}
                 >
                   <CardContent sx={{ p: { xs: 2, md: 3 } }}>
@@ -392,9 +460,9 @@ export default function CheckoutPage() {
                         </ListItemIcon>
                         <ListItemText 
                           primary="Lightning Fast Delivery" 
-                          primaryTypographyProps={{ fontWeight: 500, color: 'text.primary' }}
-                          secondary="Typically within 1-2 hours in your city" 
-                          secondaryTypographyProps={{ color: 'text.secondary' }}
+                          primaryTypographyProps={{ fontWeight: 500, color: "text.primary" }}
+                          secondary="Typically within 2-3 days" 
+                          secondaryTypographyProps={{ color: "text.secondary" }}
                         />
                       </ListItem>
                       <ListItem>
@@ -403,9 +471,9 @@ export default function CheckoutPage() {
                         </ListItemIcon>
                         <ListItemText 
                           primary="Fresh & Packed with Care" 
-                          primaryTypographyProps={{ fontWeight: 500, color: 'text.primary' }}
+                          primaryTypographyProps={{ fontWeight: 500, color: "text.primary" }}
                           secondary="All products carefully selected and packaged" 
-                          secondaryTypographyProps={{ color: 'text.secondary' }}
+                          secondaryTypographyProps={{ color: "text.secondary" }}
                         />
                       </ListItem>
                       <ListItem>
@@ -414,9 +482,9 @@ export default function CheckoutPage() {
                         </ListItemIcon>
                         <ListItemText 
                           primary="Secure Checkout" 
-                          primaryTypographyProps={{ fontWeight: 500, color: 'text.primary' }}
+                          primaryTypographyProps={{ fontWeight: 500, color: "text.primary" }}
                           secondary="Your data is protected with top encryption" 
-                          secondaryTypographyProps={{ color: 'text.secondary' }}
+                          secondaryTypographyProps={{ color: "text.secondary" }}
                         />
                       </ListItem>
                     </List>
@@ -426,7 +494,7 @@ export default function CheckoutPage() {
             </Grid>
           </Grid>
 
-          <Grid item xs={12} lg={4}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             {/* Order Summary Card */}
             <Card 
               variant="outlined" 
@@ -445,40 +513,43 @@ export default function CheckoutPage() {
                   </Typography>
                 </Stack>
 
-                <Box sx={{ mb: 2, maxHeight: 300, overflow: 'auto' }}>
-                  {cart?.items.map((item) => (
-                    <Box
-                      key={item.id}
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        py: 1.5,
-                        borderBottom: "1px solid #f0f0f0",
-                        "&:last-child": { borderBottom: "none" }
-                      }}
-                    >
-                      <Box sx={{ flex: 1, mr: 2 }}>
-                        <Typography variant="body1" fontWeight={500} sx={{ mb: 0.5, color: 'text.primary' }}>
-                          {item.product.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                          Qty: {item.quantity}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          ₹{Number(item.unit_price).toFixed(2)} each
+                <Box sx={{ mb: 2, maxHeight: 300, overflow: "auto" }}>
+                  {checkedOutItems.map((item: CartItem) => {
+                    const pricing = getCartItemPricingSummary(item);
+                    return (
+                      <Box
+                        key={item.id}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          py: 1.5,
+                          borderBottom: "1px solid #f0f0f0",
+                          "&:last-child": { borderBottom: "none" }
+                        }}
+                      >
+                        <Box sx={{ flex: 1, mr: 2 }}>
+                          <Typography variant="body1" fontWeight={500} sx={{ mb: 0.5, color: "text.primary" }}>
+                            {item.product.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                            Qty: {item.quantity}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatLocalPrice(pricing.discountedUnitPrice)} each
+                          </Typography>
+                        </Box>
+                        <Typography 
+                          variant="h6" 
+                          fontWeight={600} 
+                          color="primary.main"
+                          sx={{ minWidth: 60, textAlign: "right" }}
+                        >
+                          {formatLocalPrice(pricing.lineTotal)}
                         </Typography>
                       </Box>
-                      <Typography 
-                        variant="h6" 
-                        fontWeight={600} 
-                        color="primary.main"
-                        sx={{ minWidth: 60, textAlign: "right" }}
-                      >
-                        ₹{Number(item.total_price).toFixed(2)}
-                      </Typography>
-                    </Box>
-                  ))}
+                    );
+                  })}
                 </Box>
 
                 <Divider sx={{ my: 2 }} />
@@ -487,29 +558,43 @@ export default function CheckoutPage() {
                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography variant="body1" fontWeight={500} color="text.primary">Subtotal</Typography>
                     <Typography variant="body1" fontWeight={500} color="text.primary">
-                      ₹{subtotal.toFixed(2)}
+                      {formatLocalPrice(totals.subtotal)}
                     </Typography>
                   </Box>
                   
-                  {cart.discount_percentage > 0 && (
+                  {totals.discount > 0 && (
                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="body1" color="success.main" fontWeight={500}>
-                        Discount ({cart?.discount_percentage}%)
+                        Item Discounts
                       </Typography>
                       <Typography variant="body1" color="success.main" fontWeight={500}>
-                        -₹{discountAmount?.toFixed(2)}
+                        -{formatLocalPrice(totals.discount)}
                       </Typography>
                     </Box>
                   )}
 
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <Typography variant="body1" fontWeight={500} color="text.primary">Delivery</Typography>
-                    <Stack direction="row" alignItems="center" spacing={0.5} color={deliveryCharges === 0 ? "success.main" : "text.primary"}>
+                    <Stack direction="row" alignItems="center" spacing={0.5} color={totals.deliveryFee === 0 ? "success.main" : "text.primary"}>
                       <DeliveryDining sx={{ fontSize: 16 }} />
                       <Typography variant="body2" fontWeight={600}>
-                        {deliveryCharges === 0 ? "FREE" : `₹${deliveryCharges?.toFixed(2)}`}
+                        {formatLocalPrice(totals.deliveryFee)}
                       </Typography>
                     </Stack>
+                  </Box>
+
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body1" fontWeight={500} color="text.primary">Taxes (2%)</Typography>
+                    <Typography variant="body1" fontWeight={500} color="text.primary">
+                      {formatLocalPrice(totals.taxes)}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body1" fontWeight={500} color="text.primary">Service Charge</Typography>
+                    <Typography variant="body1" fontWeight={500} color="text.primary">
+                      {formatLocalPrice(totals.serviceCharge)}
+                    </Typography>
                   </Box>
 
                   <Divider />
@@ -522,20 +607,10 @@ export default function CheckoutPage() {
                       color="primary.main"
                       sx={{ fontSize: { xs: "1.5rem", md: "1.75rem" } }}
                     >
-                      ₹{total.toFixed(2)}
+                      {formatLocalPrice(totals.total)}
                     </Typography>
                   </Box>
                 </Stack>
-
-                <Box sx={{ mt: 2, p: 2, bgcolor: subtotal >= FREE_DELIVERY_THRESHOLD ? "success.50" : "warning.50", borderRadius: 2 }}>
-                  <Typography variant="body2" color={subtotal >= FREE_DELIVERY_THRESHOLD ? "success.main" : "warning.main"} fontWeight={500}>
-                    <CheckCircle sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.5 }} />
-                    {subtotal >= FREE_DELIVERY_THRESHOLD 
-                      ? "Free delivery on orders over ₹100. Yours qualifies!" 
-                      : `Add ₹${(FREE_DELIVERY_THRESHOLD - subtotal).toFixed(2)} more for free delivery!`
-                    }
-                  </Typography>
-                </Box>
               </CardContent>
             </Card>
 
@@ -545,8 +620,8 @@ export default function CheckoutPage() {
               variant="contained"
               size="large"
               startIcon={<Payment />}
-              onClick={handlePlaceOrder}
-              disabled={processing || !formData.shippingAddress.trim() || authLoading}
+              onClick={handlePaymentAndOrder}
+              disabled={processing || !formData.shippingAddress.trim() || authLoading || addressLoading || checkedOutItems.length === 0}
               sx={{
                 borderRadius: 3,
                 py: 2,
@@ -563,7 +638,7 @@ export default function CheckoutPage() {
                 },
                 "&:disabled": {
                   bgcolor: "grey.300",
-                  color: 'grey.500',
+                  color: "grey.500",
                   boxShadow: "none",
                   transform: "none"
                 }
@@ -572,10 +647,10 @@ export default function CheckoutPage() {
               {processing ? (
                 <Box display="flex" alignItems="center" gap={1}>
                   <CircularProgress size={24} color="inherit" />
-                  <Typography>Placing Order...</Typography>
+                  <Typography>Processing Payment...</Typography>
                 </Box>
               ) : (
-                `Place Order • ₹${total.toFixed(2)}`
+                `Pay & Place Order • ${formatLocalPrice(totals.total)}`
               )}
             </Button>
 

@@ -1,17 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EcommerceProduct } from '../entities/ecommerce-product.entity.js';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.js';
 import { Country } from 'src/Countries/country.entity.js';
 import { CreateEcommerceProductDto } from '../dto/product/create-product.dto.js';
 import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto.js';
+import { UserPreferencesService } from '../../user-preferences/user-preferences.service.js';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(EcommerceProduct)
     private readonly productRepository: Repository<EcommerceProduct>,
+    private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
   async create(
@@ -20,7 +22,7 @@ export class ProductsService {
     const {
       category_id,
       sub_category_id,
-      country_id,
+      country_ids,
       measurement_id,
       ...rest
     } = createProductDto;
@@ -29,18 +31,59 @@ export class ProductsService {
       ...rest,
       category: { id: category_id },
       sub_category: { id: sub_category_id },
-      country: { id: country_id },
+      countries: country_ids.map((id) => ({ id }) as Country),
       measurement: { id: measurement_id },
     });
     return await this.productRepository.save(product);
   }
 
-  findAll() {
-    return this.productRepository.find();
+  async findAll(country?: string, search?: string, limit = 20, offset = 0) {
+    const where: any = {};
+    if (search?.trim()) {
+      where.name = ILike(`%${search.trim()}%`);
+    }
+
+    const products = await this.productRepository.find({
+      where,
+      relations: ['category', 'sub_category', 'countries', 'measurement'],
+      skip: offset,
+      take: limit,
+    });
+
+    const selectedCountry = country || 'USA';
+
+    return Promise.all(
+      products.map(async (product) => ({
+        ...product,
+        price:
+          await this.userPreferencesService.getFormattedConvertedPriceByCountry(
+            selectedCountry,
+            Number(product.price)
+          ),
+      })),
+    );
   }
 
-  findOne(id: string) {
-    return this.productRepository.findOne({ where: { id } });
+  async findOne(id: string, country?: string) {
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: ['countries'],
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    const selectedCountry = country || 'USA';
+
+    return {
+      ...product,
+      price:
+        await this.userPreferencesService.getFormattedConvertedPriceByCountry(
+          selectedCountry,
+          Number(product.price),
+        ),
+    };
   }
 
   async update(
@@ -54,15 +97,27 @@ export class ProductsService {
     });
     if (!product) throw new NotFoundException('Product not found');
 
-    if (updateEcommerceProductDto.sub_category_id) {
-      product.sub_category = {
-        id: updateEcommerceProductDto.sub_category_id,
-      } as EcommerceSubCategory;
+    const {
+      category_id,
+      sub_category_id,
+      country_ids,
+      measurement_id,
+      ...rest
+    } = updateEcommerceProductDto;
+
+    Object.assign(product, rest);
+
+    if (category_id) {
+      product.category = { id: category_id } as any;
     }
-    if (updateEcommerceProductDto.country_id) {
-      product.country = {
-        id: updateEcommerceProductDto.country_id,
-      } as Country;
+    if (sub_category_id) {
+      product.sub_category = { id: sub_category_id } as EcommerceSubCategory;
+    }
+    if (country_ids) {
+      product.countries = country_ids.map((id) => ({ id }) as Country);
+    }
+    if (measurement_id) {
+      product.measurement = { id: measurement_id } as any;
     }
 
     return await this.productRepository.save(product);

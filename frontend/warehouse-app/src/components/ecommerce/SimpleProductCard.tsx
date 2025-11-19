@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { Add } from "@mui/icons-material";
 import { EcommerceProduct } from "../../types/ecommerce";
+import { formatDiscountPercentage } from "@/lib/utils";
 
 interface SimpleProductCardProps {
   product: EcommerceProduct;
@@ -66,7 +67,7 @@ export default function SimpleProductCard({ product, onClick, onAddToCart }: Sim
         {/* Discount Badge */}
         {product.discount_percentage > 0 && (
           <Chip
-            label={`${product.discount_percentage}% OFF`}
+            label={formatDiscountPercentage(product.discount_percentage, "OFF")}
             color="error"
             size="small"
             sx={{

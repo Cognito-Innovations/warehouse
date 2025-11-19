@@ -12,7 +12,9 @@ import {
   PreArrivalDocument,
   PickupRequestDocument,
   ShoppingRequestDocument,
+  ClientIdentifier,
 } from './entities';
+import { ClientIdentifierService } from './client-identifier.service';
 
 @Module({
   imports: [
@@ -25,10 +27,15 @@ import {
       PreArrivalDocument,
       PickupRequestDocument,
       ShoppingRequestDocument,
+      ClientIdentifier,
     ]),
   ],
   controllers: [DocumentUploadController],
-  providers: [DocumentUploadService, CloudinaryService],
-  exports: [DocumentUploadService, CloudinaryService],
+  providers: [
+    DocumentUploadService,
+    CloudinaryService,
+    ClientIdentifierService,
+  ],
+  exports: [DocumentUploadService, CloudinaryService, ClientIdentifierService],
 })
 export class SharedModule {}

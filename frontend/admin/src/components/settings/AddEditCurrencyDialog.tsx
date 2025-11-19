@@ -11,7 +11,7 @@ interface AddEditCurrencyDialogProps {
   initialData?: Currency | null;
 }
 
-const emptyForm = { country: '', currency_symbol: '', rate: '' };
+const emptyForm = { country: '', currency_symbol: '', currency_code: '', rate: '' };
 
 const AddEditCurrencyDialog: React.FC<AddEditCurrencyDialogProps> = ({ open, onClose, onSave, saving, initialData }) => {
   const [countries, setCountries] = useState<Pick<Country, 'id' | 'name'>[]>([]);
@@ -35,6 +35,7 @@ const AddEditCurrencyDialog: React.FC<AddEditCurrencyDialogProps> = ({ open, onC
       setForm({
         country: initialData?.country?.id || '',
         currency_symbol: initialData?.currency_symbol || '',
+        currency_code: initialData?.currency_code || '',
         rate: initialData?.rate?.toString() || '',
       });
     } else {
@@ -51,6 +52,7 @@ const AddEditCurrencyDialog: React.FC<AddEditCurrencyDialogProps> = ({ open, onC
     onSave({
       country: form.country,
       currency_symbol: form.currency_symbol,
+      currency_code: form.currency_code,
       rate: parseFloat(form.rate),
     });
   };
@@ -64,6 +66,15 @@ const AddEditCurrencyDialog: React.FC<AddEditCurrencyDialogProps> = ({ open, onC
             {countries.map((c) => (<MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>))}
           </TextField>
           <TextField required margin="dense" name="currency_symbol" label="Currency Symbol (e.g., $)" value={form.currency_symbol} onChange={handleChange} fullWidth />
+          <TextField 
+            required
+            margin="dense"
+            name="currency_code"
+            label="Currency Code (ISO 4217, e.g., INR)"
+            value={form.currency_code}
+            onChange={handleChange}
+            fullWidth
+            inputProps={{ maxLength: 3 }}/>
           <TextField required margin="dense" name="rate" label="Rate" type="number" inputProps={{ step: "0.0001" }} value={form.rate} onChange={handleChange} fullWidth />
         </DialogContent>
         <DialogActions sx={{ p: '0 24px 16px' }}>
