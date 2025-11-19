@@ -9,14 +9,6 @@ import EcommerceProductCard from "./EcommerceProductCard";
 export default function EcommerceProductsGrid({
   products,
   onProductClick,
-  onAddToCart,
-  onDecreaseQuantity,
-  getCartItemQuantity,
-  getLoadingStates,
-  defaultRating,
-  defaultReviewCount,
-  outOfStockLabel,
-  addButtonLabel,
 }: EcommerceProductsGridProps) {
   return (
     <Box
@@ -32,28 +24,11 @@ export default function EcommerceProductsGrid({
       }}
     >
       {products.map((product: EcommerceProduct) => {
-        const cartQuantity = getCartItemQuantity(product.id);
-        const loadingStates = getLoadingStates ? getLoadingStates(product.id) : {
-          isAddLoading: false,
-          isIncrementLoading: false,
-          isDecrementLoading: false,
-        };
-
         return (
           <EcommerceProductCard
             key={product.id}
             product={product}
-            cartQuantity={cartQuantity}
             onProductClick={onProductClick}
-            onAddToCart={onAddToCart}
-            onDecreaseQuantity={onDecreaseQuantity}
-            defaultRating={defaultRating}
-            defaultReviewCount={defaultReviewCount}
-            outOfStockLabel={outOfStockLabel}
-            addButtonLabel={addButtonLabel}
-            isAddLoading={loadingStates.isAddLoading}
-            isIncrementLoading={loadingStates.isIncrementLoading}
-            isDecrementLoading={loadingStates.isDecrementLoading}
           />
         );
       })}

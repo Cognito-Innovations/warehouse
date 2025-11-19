@@ -65,8 +65,6 @@ export default function AddAddressModal({
   useEffect(() => {
     if (open) {
       loadCountries();
-      // Try to detect user location
-      detectUserLocation();
     }
   }, [open]);
 
@@ -104,38 +102,6 @@ export default function AddAddressModal({
       console.error("Failed to load countries:", err);
     } finally {
       setLoadingCountries(false);
-    }
-  };
-
-  const detectUserLocation = async () => {
-    try {
-      // Try to get location from browser
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            try {
-              // Use a reverse geocoding service (free tier available)
-              const response = await fetch(
-                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`
-              );
-              const data = await response.json();
-              if (data.countryName) {
-                setFormData((prev) => ({
-                  ...prev,
-                  country: data.countryName,
-                }));
-              }
-            } catch (err) {
-              console.error("Failed to get location details:", err);
-            }
-          },
-          (err) => {
-            console.error("Geolocation error:", err);
-          }
-        );
-      }
-    } catch (err) {
-      console.error("Location detection failed:", err);
     }
   };
 

@@ -44,6 +44,11 @@ export default function Orders() {
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="bg-white border border-gray-200 rounded-lg min-h-[400px]">
+          <div style={{ padding: '32px 32px 0 32px' }}>
+            <h2 style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
+              Order History
+            </h2>
+          </div>
           <TabPanel value={value} index={0}>
             <div className="p-6">
               {isLoading ? (

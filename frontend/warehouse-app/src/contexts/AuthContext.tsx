@@ -14,6 +14,7 @@ interface User {
   is_logged_in: boolean;
   last_login?: string;
   verified: boolean;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -50,6 +51,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     email: session.user.email || "",
     name: session.user.name || "",
     verified: (session.user as any).verified ?? false, // Use actual verified status from backend, default to false
+    phone: (session.user as any).phone || "",
   } : null;
 
   const token = (session as any)?.access_token || null;

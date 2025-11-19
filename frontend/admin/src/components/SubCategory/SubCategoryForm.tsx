@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
 
 import { createSubCategory, getCategories, getCountries, updateSubCategory } from "../../services/api.services";
-import type { Country, SubCategoryPayload } from "../../types";
-import type { Category } from "../Product/ProductForm";
+import ImageUpload from "../common/ImageUpload";
 import { arraysEqual } from "../../utils/arrayEqual";
 import { statusOptions } from "../../utils/constants";
+import type { Category } from "../Product/ProductForm";
+import type { Country, SubCategoryPayload } from "../../types";
 
 interface SubCategoryFormProps {
   onClose: () => void;
@@ -21,6 +22,7 @@ const defaultFormData: SubCategoryPayload = {
   discount_percentage: 0,
   country_ids: [],
   is_active: true,
+  image_url: "",
 };
 
 const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
@@ -67,7 +69,7 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.slug) return;
+    if (!formData.name || !formData.slug || !formData.image_url) return;
 
     if (initialData) {
       const hasChanged = Object.keys(defaultFormData).some((key) => {
@@ -133,6 +135,12 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
           onChange={(e) => handleChange("name", e.target.value)}
           required
           fullWidth
+        />
+
+        <ImageUpload
+          value={formData.image_url}
+          onChange={(url) => handleChange("image_url", url)}
+          label="Sub Category Image"
         />
 
         <TextField
@@ -218,12 +226,12 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
         <TextField
           label="Status"
           select
-          value={formData.is_active}
+          value={String(formData.is_active)}
           onChange={(e) => handleChange("is_active", e.target.value === "true")}
           fullWidth
         >
           {statusOptions.map((option) => (
-            <MenuItem key={option.label} value={option.value}>
+            <MenuItem key={option.label} value={String(option.value)}>
               {option.label}
             </MenuItem>
           ))}
@@ -236,7 +244,7 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={loading || !formData.name || !formData.slug}
+            disabled={loading || !formData.name || !formData.slug || !formData.image_url}
           >
             {loading ? <CircularProgress size={20} color="inherit" /> : initialData ? "Update" : "Add"}
           </Button>

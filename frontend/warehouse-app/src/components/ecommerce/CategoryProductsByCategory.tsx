@@ -3,7 +3,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import { EcommerceCategory, EcommerceProduct } from "@/types/ecommerce";
-import { ecommerceData } from "@/data/ecommerceData";
 import EcommerceProductsGrid from "./EcommerceProductsGrid";
 import { EcommerceProductsGridProps } from "@/types/ecommerce";
 
@@ -16,15 +15,6 @@ export default function CategoryProductsByCategory({
   categories,
   products,
   onProductClick,
-  onAddToCart,
-  onDecreaseQuantity,
-  getCartItemQuantity,
-  getLoadingStates,
-  defaultRating,
-  defaultReviewCount,
-  outOfStockLabel,
-  addButtonLabel,
-  cart,
 }: CategoryProductsByCategoryProps) {
   // Group products by category
   const productsByCategory = categories.map((category) => ({
@@ -45,16 +35,7 @@ export default function CategoryProductsByCategory({
           </Typography>
           <EcommerceProductsGrid
             products={categoryProducts}
-            cart={cart}
             onProductClick={onProductClick}
-            onAddToCart={onAddToCart}
-            onDecreaseQuantity={onDecreaseQuantity}
-            getCartItemQuantity={getCartItemQuantity}
-            getLoadingStates={getLoadingStates}
-            defaultRating={defaultRating}
-            defaultReviewCount={defaultReviewCount}
-            outOfStockLabel={outOfStockLabel}
-            addButtonLabel={addButtonLabel}
           />
         </Box>
       ))}

@@ -24,8 +24,20 @@ export class ProductsController {
 
   @Public()
   @Get()
-  findAll(@Query('country') country?: string) {
-    return this.productsService.findAll(country);
+  findAll(
+    @Query('country') country?: string,
+    @Query('search') search?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : 20;
+    const parsedOffset = offset ? parseInt(offset, 10) : 0;
+    return this.productsService.findAll(
+      country,
+      search,
+      parsedLimit,
+      parsedOffset,
+    );
   }
 
   @Public()

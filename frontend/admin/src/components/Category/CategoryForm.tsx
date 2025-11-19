@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
 
 import { createCategory, getCargoOptions, getCountries, updateCategory } from "../../services/api.services";
-import type { CargoOption, CategoryPayload, Country } from "../../types";
+import ImageUpload from "../common/ImageUpload";
 import { arraysEqual } from "../../utils/arrayEqual";
 import { statusOptions } from "../../utils/constants";
+import type { CargoOption, CategoryPayload, Country } from "../../types";
 
 interface CategoryFormProps {
   onClose: () => void;
@@ -78,7 +79,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.slug) return;
+    if (!formData.name || !formData.slug || !formData.image_url) return;
 
     if (initialData) {
       const hasChanged = Object.keys(defaultFormData).some((key) => {
@@ -123,12 +124,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
           required
           fullWidth
         />
-        <TextField
-          label="Image URL"
+        <ImageUpload
           value={formData.image_url}
-          onChange={(e) => handleChange("image_url", e.target.value)}
-          required
-          fullWidth
+          onChange={(url) => handleChange("image_url", url)}
+          label="Category Image"
         />
         <TextField
           label="Slug"
@@ -260,7 +259,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={loading || !formData.name || !formData.slug}
+            disabled={loading || !formData.name || !formData.slug || !formData.image_url}
           >
             {loading ? <CircularProgress size={20} color="inherit" /> : (initialData ? "Update" : "Add")}
           </Button>

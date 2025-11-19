@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EcommerceProduct } from '../entities/ecommerce-product.entity.js';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.js';
 import { Country } from 'src/Countries/country.entity.js';
@@ -37,9 +37,20 @@ export class ProductsService {
     return await this.productRepository.save(product);
   }
 
-  async findAll(country?: string) {
-    const products = await this.productRepository.find();
-    const selectedCountry = country || 'US';
+  async findAll(country?: string, search?: string, limit = 20, offset = 0) {
+    const where: any = {};
+    if (search?.trim()) {
+      where.name = ILike(`%${search.trim()}%`);
+    }
+
+    const products = await this.productRepository.find({
+      where,
+      relations: ['category', 'sub_category', 'countries', 'measurement'],
+      skip: offset,
+      take: limit,
+    });
+
+    const selectedCountry = country || 'USA';
 
     return Promise.all(
       products.map(async (product) => ({
@@ -63,7 +74,7 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    const selectedCountry = country || 'US';
+    const selectedCountry = country || 'USA';
 
     return {
       ...product,
@@ -86,15 +97,27 @@ export class ProductsService {
     });
     if (!product) throw new NotFoundException('Product not found');
 
-    if (updateEcommerceProductDto.sub_category_id) {
-      product.sub_category = {
-        id: updateEcommerceProductDto.sub_category_id,
-      } as EcommerceSubCategory;
+    const {
+      category_id,
+      sub_category_id,
+      country_ids,
+      measurement_id,
+      ...rest
+    } = updateEcommerceProductDto;
+
+    Object.assign(product, rest);
+
+    if (category_id) {
+      product.category = { id: category_id } as any;
     }
-    if (updateEcommerceProductDto.country_ids) {
-      product.countries = updateEcommerceProductDto.country_ids.map(
-        (id) => ({ id }) as Country
-      );
+    if (sub_category_id) {
+      product.sub_category = { id: sub_category_id } as EcommerceSubCategory;
+    }
+    if (country_ids) {
+      product.countries = country_ids.map((id) => ({ id }) as Country);
+    }
+    if (measurement_id) {
+      product.measurement = { id: measurement_id } as any;
     }
 
     return await this.productRepository.save(product);

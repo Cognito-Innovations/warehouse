@@ -81,6 +81,12 @@ export class EcommerceOrder extends BaseTimestampEntity {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
+  @Column({ type: 'text', nullable: true })
+  cashfree_session_id: string;
+  
+  @Column({ type: 'text', nullable: true })
+  cashfree_payment_id: string;
+
   @OneToMany(
     () => EcommerceOrderItem,
     (item: EcommerceOrderItem) => item.order, {

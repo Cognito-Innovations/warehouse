@@ -1,6 +1,7 @@
 import { ProfileData } from "@/components/Modals/EditProfileModal";
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { getSession } from "next-auth/react";
+import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
 
 // Interface for the pickup request payload, combining the best types from both examples.
 export interface PickupRequestPayload {
@@ -29,6 +30,8 @@ const createAuthenticatedApi = (): AxiosInstance => {
       "Content-Type": "application/json",
     },
   });
+
+  attachClientIdentifierInterceptors(api);
 
   // Request interceptor to add the authorization token before each request.
   api.interceptors.request.use(

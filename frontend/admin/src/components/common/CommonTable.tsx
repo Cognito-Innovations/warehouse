@@ -27,6 +27,8 @@ interface CommonTableProps<T> {
   onViewDetails?: (id: string | number) => void;
   onEdit?: (id: string | number) => void;
   onDelete?: (id: string | number) => void;
+  onToggle?: (id: string | number, newActive: boolean) => Promise<void>;
+  isToggleLoading?: (id: string | number) => boolean;
   getIdentifier: (row: T) => string | number;
   getRowStatus: (row: T) => string;
 }
@@ -40,6 +42,8 @@ const CommonTable = <T,>({
   onViewDetails,
   onEdit,
   onDelete,
+  onToggle,
+  isToggleLoading,
   getIdentifier,
   getRowStatus,
 }: CommonTableProps<T>) => {
@@ -68,7 +72,7 @@ const CommonTable = <T,>({
     setPage(0);
   };
 
-  const hasActions = Boolean(onViewDetails || onEdit || onDelete);
+  const hasActions = Boolean(onViewDetails || onEdit || onDelete || onToggle);
 
   return (
     <>
@@ -128,12 +132,12 @@ const CommonTable = <T,>({
 
                   {hasActions && (
                     <TableCell
-                      align="right"
+                      align="center"
                       sx={{
                         py: 1.5,
                         px: 2,
                         fontWeight: 600,
-                        width: '100px'
+                        width: '150px'
                       }}
                     >
                       Actions
@@ -147,7 +151,10 @@ const CommonTable = <T,>({
                 onViewDetails={onViewDetails}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onToggle={onToggle}
+                isToggleLoading={isToggleLoading}
                 getIdentifier={getIdentifier}
+                getRowStatus={getRowStatus}
                 hasActions={hasActions}
               />
             </Table>

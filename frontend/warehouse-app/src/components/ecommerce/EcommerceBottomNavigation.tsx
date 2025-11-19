@@ -3,16 +3,15 @@
 import React from "react";
 import { BottomNavigation, BottomNavigationAction, Badge } from "@mui/material";
 import { ShoppingCart, Receipt, AccountCircle } from "@mui/icons-material";
+import { useRouter } from "next/navigation";
 import { EcommerceBottomNavigationProps } from "@/types/ecommerce";
 import { ecommerceData } from "@/data/ecommerceData";
+import { ROUTES } from "@/utils/constants";
 
 export default function EcommerceBottomNavigation({
   cartItemCount,
-  cartLabel,
-  ordersLabel,
-  accountLabel,
-  onCartClick,
 }: EcommerceBottomNavigationProps) {
+  const router = useRouter();
   return (
     <BottomNavigation
       showLabels
@@ -27,7 +26,7 @@ export default function EcommerceBottomNavigation({
       }}
     >
       <BottomNavigationAction
-        label={cartLabel}
+        label="Cart"
         icon={
           <Badge badgeContent={cartItemCount} color="error">
             <ShoppingCart
@@ -37,14 +36,14 @@ export default function EcommerceBottomNavigation({
             />
           </Badge>
         }
-        onClick={onCartClick}
+        onClick={() => router.push(ROUTES.CART)}
       />
       <BottomNavigationAction
-        label={ordersLabel}
+        label="Orders"
         icon={<Receipt sx={{ color: ecommerceData.ui.colors.bottomNavDefault }} />}
       />
       <BottomNavigationAction
-        label={accountLabel}
+        label="Account"
         icon={<AccountCircle sx={{ color: ecommerceData.ui.colors.bottomNavDefault }} />}
       />
     </BottomNavigation>

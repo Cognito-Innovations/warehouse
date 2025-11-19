@@ -20,6 +20,9 @@ export class Currency extends BaseTimestampEntity {
   @Column()
   currency_symbol: string;
 
+  @Column()
+  currency_code: string;
+
   @Column({ type: 'decimal', precision: 10, scale: 4 })
   rate: number;
 }

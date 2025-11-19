@@ -27,6 +27,7 @@ import { EcommerceCargoOption } from './entities/cargo-options.entity';
 import { CargoOptionsController } from './controllers/cargoOptions.controller';
 import { CargoOptionsService } from './services/cargo-options.service';
 import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
+import { Currency } from 'src/currencies/currency.entity';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { UserPreferencesModule } from 'src/user-preferences/user-preferences.mod
       EcommerceCartItem,
       Country,
       EcommerceCargoOption,
+      Currency,
     ]),
     UserPreferencesModule,
   ],

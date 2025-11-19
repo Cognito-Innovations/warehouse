@@ -61,9 +61,8 @@ export const formatCurrency = (amountInINR: number, country: string): string => 
 };
 
 // Get user's country from browser or localStorage
-export const getUserCountry = (): string => {
-  if (typeof window === "undefined") return "India";
-  
+export const getUserCountry = (): string | undefined => {
+  if (typeof window === "undefined") return undefined;
   // Check localStorage first (for testing)
   const savedCountry = localStorage.getItem("selectedCountry");
   if (savedCountry) return savedCountry;
@@ -71,16 +70,13 @@ export const getUserCountry = (): string => {
   // Try to detect from browser
   try {
     const locale = navigator.language || "en-IN";
-    // Simple mapping - can be enhanced
     if (locale.includes("en-US")) return "United States";
     if (locale.includes("en-GB")) return "United Kingdom";
     if (locale.includes("en-SG")) return "Singapore";
     if (locale.includes("en-IN") || locale.includes("hi")) return "India";
   } catch (err) {
-    console.error("Failed to detect country:", err);
   }
-
-  return "India"; // Default
+  return undefined;
 };
 
 export const setUserCountry = (country: string) => {
