@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -15,61 +15,126 @@ import {
   FormControl,
   InputLabel,
   Typography,
-} from '@mui/material';
+  CircularProgress,
+  FormHelperText,
+} from "@mui/material";
 import {
   Close,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
+import { createUserAddress, getCountries } from "@/lib/api.service";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 interface AddressData {
-  contactPerson: string;
-  contactNo: string;
-  addressLine1: string;
-  addressLine2: string;
-  zipCode: string;
+  name: string;
+  address: string;
+  zip_code: string;
   city: string;
   state: string;
   country: string;
 }
 
+interface Country {
+  id: string;
+  name: string;
+}
+
 interface AddAddressModalProps {
   open: boolean;
   onClose: () => void;
+  onAddressAdded: () => void;
 }
 
-const countries = [
-  'Indonesia',
-  'South Korea',
-  'United States',
-  'United Kingdom',
-  'Japan',
-  'Singapore',
-  'Malaysia',
-  'Thailand',
-];
+export default function AddAddressModal({ open, onClose, onAddressAdded }: AddAddressModalProps) {
+  const { data: session } = useSession();
+  const user_id = (session?.user as any)?.user_id;
 
-export default function AddAddressModal({ open, onClose }: AddAddressModalProps) {
-  const [formData, setFormData] = useState<AddressData>({
-    contactPerson: '',
-    contactNo: '',
-    addressLine1: '',
-    addressLine2: '',
-    zipCode: '',
-    city: '',
-    state: '',
-    country: 'Indonesia',
-  });
-
-  const handleChange = (field: keyof AddressData) => (event: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: event.target.value
-    }));
+  const initialFormData = {
+    name: "",
+    address: "",
+    zip_code: "",
+    city: "",
+    state: "",
+    country: "",
   };
 
-  const handleSave = () => {
-    // Handle save logic here
-    console.log('Saving address data:', formData);
-    onClose();
+  const [formData, setFormData] = useState<AddressData>(initialFormData);
+  const [countriesList, setCountriesList] = useState<Country[]>([]);
+  const [isLoadingCountries, setIsLoadingCountries] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof AddressData, string>>>({});
+  
+  const fetchCountries = async () => {
+    setIsLoadingCountries(true);
+    try {
+      const data = await getCountries();
+      setCountriesList(data);
+    } catch (error) {
+      console.error("Failed to fetch countries:", error);
+      toast.error("Could not load the list of countries.");
+    } finally {
+      setIsLoadingCountries(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && countriesList.length === 0) {
+      fetchCountries();
+    }
+  }, [open, countriesList.length]);
+
+  useEffect(() => {
+    if (!open) {
+      setFormData(initialFormData);
+      setErrors({});
+    }
+  }, [open]);
+
+  const handleChange = (field: keyof AddressData) => (event: any) => {
+    const { value } = event.target;
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<Record<keyof AddressData, string>> = {};
+    
+    if (!formData.name.trim()) newErrors.name = "Receiver name is required.";
+    if (!formData.address.trim()) newErrors.address = "Address is required.";
+    if (!formData.zip_code.trim()) newErrors.zip_code = "Zip code is required.";
+    if (!formData.city.trim()) newErrors.city = "City is required.";
+    if (!formData.state.trim()) newErrors.state = "State is required.";
+    if (!formData.country.trim()) newErrors.country = "Country is required.";
+    
+    setErrors(newErrors);
+    
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (isSaving || !validateForm()) return;
+
+    setIsSaving(true);
+    try {
+      await createUserAddress({ ...formData, user_id });
+      toast.success("Address added successfully");
+      onAddressAdded();
+    } catch (error) {
+      console.error("Error adding address:", error);
+      toast.error("Failed to add address");
+    } finally {
+      setIsSaving(false);
+    };
   };
 
   return (
@@ -78,90 +143,66 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '12px',
-          p: 1,
-        },
-      }}
+      PaperProps={{ sx: {borderRadius: "12px"} }}
     >
       <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
+        p: 3,
         pb: 2
       }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Add / Edit Address
+          Add Address
         </Typography>
         <IconButton onClick={onClose} size="small">
           <Close />
         </IconButton>
       </DialogTitle>
       
-      <DialogContent sx={{ pb: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <DialogContent>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
           <TextField
             label="Contact Person / Receiver Name / Business Name *"
-            value={formData.contactPerson}
-            onChange={handleChange('contactPerson')}
+            value={formData.name}
+            onChange={handleChange("name")}
             fullWidth
             size="medium"
+            error={!!errors.name}
+            helperText={errors.name}
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
           
           <TextField
-            label="Contact No *"
-            value={formData.contactNo}
-            onChange={handleChange('contactNo')}
+            label="Address"
+            value={formData.address}
+            onChange={handleChange("address")}
             fullWidth
             size="medium"
+            error={!!errors.address}
+            helperText={errors.address}
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
-          
-          <TextField
-            label="Address Line 1 *"
-            value={formData.addressLine1}
-            onChange={handleChange('addressLine1')}
-            fullWidth
-            size="medium"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
-            }}
-          />
-          
-          <TextField
-            label="Address Line 2"
-            value={formData.addressLine2}
-            onChange={handleChange('addressLine2')}
-            fullWidth
-            size="medium"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-              },
-            }}
-          />
-          
+      
           <TextField
             label="Zip Code"
-            value={formData.zipCode}
-            onChange={handleChange('zipCode')}
+            value={formData.zip_code}
+            onChange={handleChange("zip_code")}
             fullWidth
             size="medium"
+            error={!!errors.zip_code}
+            helperText={errors.zip_code}
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -169,12 +210,14 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           <TextField
             label="City"
             value={formData.city}
-            onChange={handleChange('city')}
+            onChange={handleChange("city")}
             fullWidth
             size="medium"
+            error={!!errors.city}
+            helperText={errors.city}
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
@@ -182,53 +225,75 @@ export default function AddAddressModal({ open, onClose }: AddAddressModalProps)
           <TextField
             label="State"
             value={formData.state}
-            onChange={handleChange('state')}
+            onChange={handleChange("state")}
             fullWidth
             size="medium"
+            error={!!errors.state}
+            helperText={errors.state}
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
               },
             }}
           />
           
-          <FormControl fullWidth size="medium">
+          <FormControl fullWidth size="medium" error={!!errors.country}>
             <InputLabel>Country *</InputLabel>
             <Select
               value={formData.country}
-              onChange={handleChange('country')}
+              onChange={handleChange("country")}
               label="Country *"
               sx={{
-                borderRadius: '8px',
+                borderRadius: "8px",
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxHeight: 100,
+                  },
+                },
               }}
             >
-              {countries.map((country) => (
-                <MenuItem key={country} value={country}>
-                  {country}
+              {isLoadingCountries && (
+                <MenuItem disabled value="">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <CircularProgress size={20} />
+                    <Typography>Loading countries...</Typography>
+                  </Box>
+                </MenuItem>
+              )}
+              
+              {!isLoadingCountries && countriesList.map((country) => (
+                <MenuItem key={country.id} value={country.name}>
+                  {country.name}
                 </MenuItem>
               ))}
             </Select>
+            {errors.country && <FormHelperText>{errors.country}</FormHelperText>}
           </FormControl>
         </Box>
       </DialogContent>
       
-      <DialogActions sx={{ p: 3, pt: 1 }}>
+      <DialogActions sx={{ p: 3 }}>
         <Button
           variant="contained"
           onClick={handleSave}
+          fullWidth
+          disabled={isSaving}
           sx={{
-            bgcolor: 'primary.main',
-            color: 'white',
-            textTransform: 'none',
-            borderRadius: '8px',
+            bgcolor: "primary.main",
+            color: "white",
+            textTransform: "none",
+            borderRadius: "8px",
             px: 4,
-            py: 1,
-            '&:hover': {
-              bgcolor: 'primary.dark',
+            py: 1.5,
+            "&:hover": {
+              bgcolor: "primary.dark",
             },
           }}
         >
-          Add Address
+          {isSaving && <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />}
+          {isSaving ? "Adding Address..." : "Add Address"}
         </Button>
       </DialogActions>
     </Dialog>

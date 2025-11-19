@@ -5,9 +5,10 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 interface DropdownMenuProps {
   options: { label: string; onClick: () => void }[];
   disabled?: boolean;
+  iconSx?: object;
 }
 
-const DropdownMenu: React.FC<DropdownMenuProps> = ({ options, disabled }) => {
+const DropdownMenu: React.FC<DropdownMenuProps> = ({ options, disabled, iconSx }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -21,7 +22,16 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ options, disabled }) => {
 
   return (
     <>
-      <IconButton size="small" onClick={handleOpen}>
+      <IconButton 
+        size="small"
+        onClick={handleOpen}
+        sx={{
+          backgroundColor: '#f0f0f0',
+          color: 'inherit',
+          '&:hover': { backgroundColor: '#e0e0e0' },
+          ...iconSx,
+        }}
+      >
         <MoreVertIcon />
       </IconButton>
       <Menu

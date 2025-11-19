@@ -1,61 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Grid, CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton, Typography } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Grid, CircularProgress, Alert } from '@mui/material';
+import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { getPackageById, getPackageDocuments, getShipmentDocuments } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
-import UploadModal from '../components/PackageDetail/UploadModal';
-import AddItemModal from '../components/PackageDetail/AddItemModal';
 import PackageHeader from '../components/PackageDetail/PackageHeader';
 import ActionLogsSection from '../components/PackageDetail/ActionLogsSection';
 import PackageItemsSection from '../components/PackageDetail/PackageItemsSection';
 import PackageDetailsSection from '../components/PackageDetail/PackageDetailsSection';
-import PackageChargesSection from '../components/PackageDetail/PackageChargesSection';
 import PhotosDocumentsSection from '../components/PackageDetail/PhotosDocumentsSection';
-import { getPackageById, updatePackageStatus, addPackageItem, updatePackageItem, deletePackageItem, bulkUploadPackageItems, uploadPackageDocuments, getPackageDocuments, deletePackageDocument, getPaymentSlips } from '../services/api.services';
 import { formatDateTime } from '../utils/formatDateTime';
-import Modal from '../components/common/Modal';
-import RaiseInvoiceModal from '../components/PackageDetail/RaiseInvoiceModal';
-import { toast } from 'sonner';
-import InvoiceTable from '../components/ShoppingRequests/Detail/InvoiceTable';
 
 const PackageDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
 
-  // State for package data
   const [packageData, setPackageData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // State for upload modal and documents
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ id: string, name: string, url: string, type: string }>>([]);
-  const [isUploading, setIsUploading] = useState(false);
-
-  // Action Log status management
-  const [actionLogStatus, setActionLogStatus] = useState<'Action Required' | 'In Review' | 'Ready To Send' | 'Request Ship' | 'Shipped' | 'Discarded' | 'Draft'>('Action Required');
-  const [isAdminChecked, setIsAdminChecked] = useState(false);
-
-  // State for Package Items
-  const [addItemModalOpen, setAddItemModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [shipmentDocuments, setShipmentDocuments] = useState<any[]>([]);
   const [packageItems, setPackageItems] = useState<any[]>([]);
-  const [newItem, setNewItem] = useState({
-    name: '',
-    quantity: 1,
-    amount: '',
-    total: ''
-  });
 
-  // State for discard confirmation
-  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
-
-  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-  const [isApprovingPayment, setIsApprovingPayment] = useState(false);
-  const [paymentSlips, setPaymentSlips] = useState<any[]>([]);
-
-  // Fetch documents
-  const fetchDocuments = async () => {
+  const fetchDocuments = async (id: string) => {
     if (!id) return;
     
     try {
@@ -72,342 +39,86 @@ const PackageDetail: React.FC = () => {
     }
   };
 
-  const fetchPaymentSlips = async (shipment_uuid: string) => {
-    try {
-      const slips = await getPaymentSlips(shipment_uuid);
-      setPaymentSlips(slips);
-    } catch (err) {
-      console.error('Failed to fetch payment slips:', err);
-      toast.error('Failed to load payment slips.');
+  const fetchShipmentDocuments = async (package_uuid: string) => {
+    if (!package_uuid) {
+      setShipmentDocuments([]);
+      return;
     }
+    try {
+     const docs = await getShipmentDocuments(package_uuid);
+     setShipmentDocuments(docs);
+    } catch (err) {
+      console.error('Failed to fetch shipment documents:', err);
+      toast.error('Failed to load shipment documents.');
+   }
   };
 
-  const fetchPackageData = async () => {
+  const fetchPackageData = async (initialLoad = false) => {
     if (!id) return;
-    
-    try {
+
+    if (initialLoad) {
       setLoading(true);
-      setError(null);
-      const data = await getPackageById(id);
+    } else {
+      setIsRefreshing(true);
+    }
+    
+    setError(null);
+
+    try {
+      const data = await getPackageById(id) as any; //TODO: Remove any
       setPackageData(data);
-      setActionLogStatus(data.status as any);
       setPackageItems(data.items || []);
-      
-      // Initialize admin check state based on status
-      // If status is "Ready to Send", checkbox should be checked
-      setIsAdminChecked(data.status === 'Ready To Send');
-      // Load documents separately
-      await fetchPaymentSlips(data.shipment_uuid);
-      await fetchDocuments();
+      await Promise.allSettled([
+        fetchDocuments(data.id),
+        fetchShipmentDocuments(data.id)
+      ]);
     } catch (err) {
       console.error('Failed to fetch package data:', err);
       setError('Failed to load package details');
     } finally {
-      setLoading(false);
+      if (initialLoad) {
+        setLoading(false);
+      } else {
+        setIsRefreshing(false);
+      }
     }
   };
 
-  // Fetch package data
-  useEffect(() => {
-    fetchPackageData();
+  const handleRefresh = useCallback(() => {
+    fetchPackageData(false);
   }, [id]);
 
-  // Handler functions
-  const handleOpenUploadModal = () => {
-    setUploadModalOpen(true);
-  };
-
-  const handleCloseUploadModal = () => {
-    setUploadModalOpen(false);
-    setSelectedFiles([]);
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files) {
-      setSelectedFiles(Array.from(files));
+  useEffect(() => {
+    if (id) {
+      fetchPackageData(true);
     }
-  };
+  }, [id]);
 
-  const handleDirectFileSelect = async (files: FileList) => {
-    if (!id || files.length === 0) return;
-    
-    setIsUploading(true);
+  const handleActionLogUpdate = async () => {
+    if (!id) return;
+
     try {
-      const fileArray = Array.from(files);
-      const response = await uploadPackageDocuments(id, fileArray);
-      
-      // Transform the response to match our UI format
-      const newDocuments = response.documents?.map((doc: any) => ({
+      const data = await getPackageById(id) as any; //TODO: Remove any
+      const docs = await getPackageDocuments(data.id);
+      const shipmentDocs = await getShipmentDocuments(data.id);
+
+      const formattedDocuments = docs.map((doc: any) => ({
         id: doc.id,
         name: doc.document_name,
         url: doc.document_url,
         type: doc.document_type
-      })) || [];
-      
-      setUploadedDocuments(prev => [...prev, ...newDocuments]);
-      
-      // Automatically change status to "In Review" when documents are uploaded
-      if (actionLogStatus === 'Action Required') {
-        await handleStatusChange('In Review');
-        // Reset admin check state since this is automatic, not manual
-        setIsAdminChecked(false);
-      }
-    } catch (err) {
-      console.error('Failed to upload documents:', err);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!id || selectedFiles.length === 0) return;
-    
-    setIsUploading(true);
-    try {
-      const response = await uploadPackageDocuments(id, selectedFiles);
-      
-      // Transform the response to match our UI format
-      const newDocuments = response.documents?.map((doc: any) => ({
-        id: doc.id,
-        name: doc.document_name,
-        url: doc.document_url,
-        type: doc.document_type
-      })) || [];
-      
-      setUploadedDocuments(prev => [...prev, ...newDocuments]);
-      setSelectedFiles([]);
-      setUploadModalOpen(false);
-      
-      // Automatically change status to "In Review" when documents are uploaded
-      if (actionLogStatus === 'Action Required') {
-        await handleStatusChange('In Review');
-        // Reset admin check state since this is automatic, not manual
-        setIsAdminChecked(false);
-      }
-    } catch (err) {
-      console.error('Failed to upload documents:', err);
-      setError('Failed to upload documents');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleRemoveFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleDiscard = () => {
-    setDiscardDialogOpen(true);
-  };
-
-  const handleConfirmDiscard = async () => {
-    if (!id) return;
-    
-    try {
-      await updatePackageStatus(id, 'Discarded');
-      setActionLogStatus('Discarded');
-      setDiscardDialogOpen(false);
-      // Navigate back to packages page after successful discard
-      navigate('/packages');
-    } catch (err) {
-      console.error('Failed to discard package:', err);
-      setError('Failed to discard package');
-    }
-  };
-
-  const handleCancelDiscard = () => {
-    setDiscardDialogOpen(false);
-  };
-
-  const handlePrintLabel = () => {
-    // TODO: Implement print label functionality
-    console.log('Print label functionality coming soon');
-  };
-
-  const handleRemoveDocument = async (documentId: string) => {
-    if (!id) return;
-    
-    try {
-      await deletePackageDocument(id, documentId);
-      setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
-    } catch (err) {
-      console.error('Failed to delete document:', err);
-      setError('Failed to delete document');
-    }
-  };
-
-  // Package Items handlers
-  const handleOpenAddItemModal = () => {
-    setNewItem({ name: '', quantity: 1, amount: '', total: '' });
-    setEditingItem(null);
-    setAddItemModalOpen(true);
-  };
-
-  const handleCloseAddItemModal = () => {
-    setAddItemModalOpen(false);
-    setEditingItem(null);
-    setNewItem({ name: '', quantity: 1, amount: '', total: '' });
-  };
-
-  const handleEditItem = (item: any) => {
-    setEditingItem(item);
-    setNewItem({ ...item });
-    setAddItemModalOpen(true);
-  };
-
-  const handleDeleteItem = async (itemId: string) => {
-    if (!id) return;
-    
-    try {
-      await deletePackageItem(id, itemId);
-      setPackageItems(prev => prev.filter(item => item.id !== itemId));
-    } catch (err) {
-      console.error('Failed to delete item:', err);
-      setError('Failed to delete item');
-    }
-  };
-
-  const handleSaveItem = async () => {
-    if (!id) return;
-    
-    try {
-      const itemData = {
-        name: newItem.name,
-        quantity: newItem.quantity,
-        unit_price: parseFloat(newItem.amount.replace('$', '')) || 0,
-        total_price: parseFloat(newItem.total.replace('$', '')) || 0
-      };
-
-      if (editingItem) {
-        // Update existing item
-        await updatePackageItem(id, editingItem.id, itemData);
-        setPackageItems(prev => prev.map(item =>
-          item.id === editingItem.id ? { ...newItem, id: editingItem.id } : item
-        ));
-      } else {
-        // Add new item
-        const response = await addPackageItem(id, itemData);
-        const newItemWithId = {
-          ...newItem,
-          id: response.id || Date.now().toString()
-        };
-        setPackageItems(prev => [...prev, newItemWithId]);
-      }
-      handleCloseAddItemModal();
-    } catch (err) {
-      console.error('Failed to save item:', err);
-      setError('Failed to save item');
-    }
-  };
-
-  const handleItemInputChange = (field: string, value: string | number) => {
-    setNewItem(prev => {
-      const updated = { ...prev, [field]: value };
-      // Auto-calculate total when quantity or amount changes
-      if (field === 'quantity' || field === 'amount') {
-        const quantity = field === 'quantity' ? Number(value) : prev.quantity;
-        const amount = field === 'amount' ? value : prev.amount;
-        const amountValue = parseFloat(amount.toString().replace('$', '')) || 0;
-        updated.total = `$${(quantity * amountValue).toFixed(2)}`;
-      }
-      return updated;
-    });
-  };
-
-  const handleDownloadFormat = () => {
-    // Create Excel-like CSV content
-    const csvContent = "Name,Quantity,Amount,Total";
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'package_items_template.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
-
-  // Fix this make it actual data 
-  const handleBulkUpload = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.csv,.xlsx,.xls';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file && id) {
-        try {
-          // For now, we'll use mock data. In production, you'd parse the CSV/Excel file
-          // using libraries like xlsx or papaparse
-          const mockBulkData = [
-            { name: 'Coffee Mug', quantity: 2, unit_price: 15.00, total_price: 30.00 },
-            { name: 'Water Bottle', quantity: 1, unit_price: 25.00, total_price: 25.00 }
-          ];
-          
-          const response = await bulkUploadPackageItems(id, mockBulkData);
-          
-          // Update local state with the new items
-          const newItems = response.items?.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            quantity: item.quantity,
-            amount: `$${item.unit_price.toFixed(2)}`,
-            total: `$${item.total_price.toFixed(2)}`
-          })) || [];
-          
-          setPackageItems(prev => [...prev, ...newItems]);
-        } catch (err) {
-          console.error('Failed to bulk upload items:', err);
-          setError('Failed to upload items');
-        }
-      }
-    };
-    input.click();
-  };
-
-  // Handle status change
-  const handleStatusChange = async (newStatus: string) => {
-    if (!id) return;
-    
-    try {
-      await updatePackageStatus(id, newStatus);
-      setActionLogStatus(newStatus as any);
-      // Update package data with new status
-      setPackageData((prev: any) => ({
-        ...prev,
-        status: newStatus
       }));
+
+      setPackageData(data);
+      setPackageItems(data.items || []);
+      setUploadedDocuments(formattedDocuments);
+      setShipmentDocuments(shipmentDocs);
     } catch (err) {
-      console.error('Failed to update package status:', err);
-      setError('Failed to update package status');
+      console.error('Failed to refetch package data:', err);
+      toast.error('Failed to refresh package details');
     }
   };
 
-  // Handle admin check toggle
-  const handleAdminCheck = (checked: boolean) => {
-    setIsAdminChecked(checked);
-  };
-
-  const handleOpenInvoiceModal = () => setIsInvoiceModalOpen(true);
-  const handleCloseInvoiceModal = () => setIsInvoiceModalOpen(false);
-
-  const handleApprovePayment = async () => {
-    if (!id) return;
-    setIsApprovingPayment(true);
-    try {
-      await updatePackageStatus(id, 'Payment Approved');
-      const updatedData = await getPackageById(id);
-      setPackageData(updatedData);
-      toast.success('Payment approved successfully!');
-    } catch (err) {
-      console.error('Failed to approve payment:', err);
-      toast.error('Failed to approve payment.');
-    } finally {
-      setIsApprovingPayment(false);
-    }
-  };
-
-  // Loading state
   if (loading) {
     return (
       <Box sx={{ p: 1 }}>
@@ -419,7 +130,6 @@ const PackageDetail: React.FC = () => {
     );
   }
 
-  // Error state
   if (error || !packageData) {
     return (
       <Box sx={{ p: 1 }}>
@@ -431,234 +141,70 @@ const PackageDetail: React.FC = () => {
     );
   }
 
-  // Transform package data for display
-  const displayPackageData = {
-    id: packageData.package_id || packageData.id,
-    actual_id: packageData.id,
-    shipment_id: packageData.shipment_id,
-    shipment_uuid: packageData.shipment_uuid,
-    status: packageData.status,
-    customer: packageData.customer?.name || 'Unknown',
-    suite: packageData.customer?.suite_no || 'N/A',
-    email: packageData.customer?.email || 'N/A',
-    phone: packageData.customer?.phone_number || 'N/A',
-    phone2: packageData.customer?.phone_number_2 || 'N/A',
-    trackingNo: packageData.tracking_no || 'N/A',
-    weight: `${packageData.total_weight || 0}Kg`,
-    volumetricWeight: packageData.total_volumetric_weight ? `${packageData.total_volumetric_weight}Kg` : '-',
-    dangerousGood: packageData.dangerous_good ? 'Yes' : 'No',
-    rack: packageData.rack_slot?.label ? `${packageData.rack_slot.label}` : 'N/A',
-    count: packageData.rack_slot?.count ? packageData.rack_slot.count : 0,
-    createdBy: packageData.created_by?.name || 'Unknown',
-    createdAt: formatDateTime(Number(packageData.created_at) * 1000),
-    vendor: packageData.vendor?.supplier_name || 'Unknown',
-    remarks: packageData.remarks || 'No remarks',
-    allowCustomerItems: packageData.allow_customer_items || false,
-    shopInvoiceReceived: packageData.shop_invoice_received || false,
-    items: packageItems,
-    // Transform measurements data for display
-    measurements: packageData.measurements?.map((measurement: any) => {
-      // Calculate volumetric weight if not provided
-      let volumetricWeight = '-';
-      if (measurement.volumetric_weight) {
-        volumetricWeight = `${measurement.volumetric_weight}Kg`;
-      } else if (measurement.has_measurements && measurement.length && measurement.width && measurement.height) {
-        // Calculate volumetric weight: (L × W × H) / 5000 (for cm to kg)
-        const calculatedVolWeight = (parseFloat(measurement.length) * parseFloat(measurement.width) * parseFloat(measurement.height)) / 5000;
-        volumetricWeight = `${calculatedVolWeight.toFixed(3)}Kg`;
-      }
-      
-      return {
-        pieceNumber: measurement.piece_number,
-        weight: `${measurement.weight || 0}Kg`,
-        volumetricWeight: volumetricWeight,
-        hasMeasurements: measurement.has_measurements || false,
-        length: measurement.length,
-        width: measurement.width,
-        height: measurement.height
-      };
-    }) || []
-  };
-
-  const showInvoiceTable = 
-    ['Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed']
-      .includes(packageData.status);
-
-  const hasPhotoDocuments = uploadedDocuments.length > 0;
-  const excludedStatuses = ['Payment Pending', 'Payment Approved', 'Ready To Ship', 'Departed'];
-  const showRaiseInvoiceButton = !excludedStatuses.includes(packageData.status) && hasPhotoDocuments;
-  const showApprovePaymentButton = packageData.status === 'Payment Pending';
-  const showPrintCarrierLabelButton = ['Payment Approved', 'Ready To Ship', 'Departed'].includes(packageData.status);
+  const isDiscarded = packageData.status.value === 'Discarded';
+  const showDiscardedMessage = isDiscarded && (
+    <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
+      This package has been discarded. No further actions can be taken.
+    </Alert>
+  );
 
   return (
     <Box sx={{ p: 1 }}>
       <TopNavbar 
         pageTitle="Packages"
-        pageSubtitle={packageData.id}
+        pageSubtitle={packageData.package_id}
       />
-      {/* Package Header - Full Width */}
+      {showDiscardedMessage}
+
         <PackageHeader 
-          packageData={displayPackageData} 
-          actionLogStatus={actionLogStatus}
-          onDiscard={handleDiscard}
-          onPrintLabel={handlePrintLabel}
-          onRaiseInvoice={handleOpenInvoiceModal}
-          onApprovePayment={handleApprovePayment}
-          showRaiseInvoiceButton={showRaiseInvoiceButton}
-          showApprovePaymentButton={showApprovePaymentButton}
-          showPrintCarrierLabelButton={showPrintCarrierLabelButton}
-          isApprovingPayment={isApprovingPayment}
+          packageData={packageData}
           onRefresh={async () => {
-            const updated = await getPackageById(displayPackageData.id);
+            const updated = await getPackageById(packageData.package_id);
             setPackageData(updated);
           }}
+          isDiscarded={isDiscarded}
         />
 
       <Grid container spacing={2}>
-        {/* Left Column - Main Content */}
         <Grid size={{ xs: 12, md: 8 }}>
-          {/* Package Details */}
           <PackageDetailsSection 
-            packageData={displayPackageData}
-            onRefresh={async () => {
-              const updated = await getPackageById(displayPackageData.id);
-              setPackageData(updated);
-            }}
+            packageData={packageData}
+            isRefreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            isDiscarded={isDiscarded}
           />
 
-          {/* Package Items */}
           <PackageItemsSection
+            id={packageData.id}
             packageItems={packageItems}
-            onDownloadFormat={handleDownloadFormat}
-            onBulkUpload={handleBulkUpload}
-            onOpenAddItemModal={handleOpenAddItemModal}
-            onEditItem={handleEditItem}
-            onDeleteItem={handleDeleteItem}
+            setPackageItems={setPackageItems}
+            isDiscarded={isDiscarded}
           />
 
-          {showInvoiceTable && (
-            <InvoiceTable 
-              id={displayPackageData.actual_id}
-              invoice={packageData.invoice || {id: "temp", invoice_no: "-", amount: 0, gst: 0, total: 0, status: "UNPAID"}}
-              payment_slips={paymentSlips}
-              status={packageData.status}
-              isApprovingPayment={isApprovingPayment}
-              onApprovePayment={handleApprovePayment}
-              onStatusUpdated={async () => {
-                const updated = await getPackageById(displayPackageData.id);
-                setPackageData(updated);
-                await fetchPaymentSlips(updated.shipment_uuid);
-              }} />
-            )}
         </Grid>
 
-        {/* Right Column - Sidebar */}
         <Grid size={{ xs: 12, md: 4 }}>
-          {/* Action Logs */}
           <ActionLogsSection
-            actionLogStatus={actionLogStatus}
-            uploadedDocuments={uploadedDocuments}
-            packageData={displayPackageData}
-            onStatusChange={handleStatusChange}
-            onOpenUploadModal={handleOpenUploadModal}
-            onRemoveDocument={handleRemoveDocument}
-            onFileSelect={handleDirectFileSelect}
-            isUploading={isUploading}
-            isAdminChecked={isAdminChecked}
-            onAdminCheck={handleAdminCheck}
+            packageId={packageData.id}
+            initialStatus={packageData.status}
+            initialDocuments={uploadedDocuments}
+            packageCreationData={{
+              createdBy: packageData.created_by?.name,
+              createdAt: formatDateTime(Number(packageData.created_at)),
+            }}
+            onActionLogUpdate={handleActionLogUpdate}
+            isDiscarded={isDiscarded}
           />
 
-          {/* Photos / Documents */}
           <PhotosDocumentsSection 
-            packageData={displayPackageData}
-            onUploadSuccess={fetchPackageData}
+            packageData={packageData}
+            documents={shipmentDocuments}
+            onUploadSuccess={handleActionLogUpdate}
+            isDiscarded={isDiscarded}
           />
 
-          {/* Package Charges */}
-          <PackageChargesSection />
         </Grid>
       </Grid>
-
-      {/* Upload Modal */}
-      <UploadModal
-        open={uploadModalOpen}
-        selectedFiles={selectedFiles}
-        onClose={handleCloseUploadModal}
-        onFileSelect={handleFileSelect}
-        onUpload={handleUpload}
-        onRemoveFile={handleRemoveFile}
-        isUploading={isUploading}
-      />
-
-      {/* Add Item Modal */}
-      <AddItemModal
-        open={addItemModalOpen}
-        editingItem={editingItem}
-        newItem={newItem}
-        onClose={handleCloseAddItemModal}
-        onSave={handleSaveItem}
-        onInputChange={handleItemInputChange}
-      />
-
-      <Modal
-        open={isInvoiceModalOpen}
-        onClose={handleCloseInvoiceModal}
-        title="Raise Invoice"
-        size="md"
-      >
-        <RaiseInvoiceModal 
-          packageData={displayPackageData} 
-          onClose={handleCloseInvoiceModal} 
-          onUpdated={async () => {
-            const updated = await getPackageById(displayPackageData.id);
-            setPackageData(updated);
-          }}
-        />
-      </Modal>
-
-      {/* Discard Confirmation Dialog */}
-      <Dialog
-        open={discardDialogOpen}
-        onClose={handleCancelDiscard}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: { borderRadius: 2 }
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 600, color: '#1e293b' }}>
-          Discard Package
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ color: '#64748b', mb: 2 }}>
-            Are you sure you want to discard this package? This action will change the package status to "Discarded" and cannot be undone.
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#ef4444', fontWeight: 500 }}>
-            Package ID: {packageData?.package_id || packageData?.id}
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, gap: 1 }}>
-          <MuiButton
-            variant="outlined"
-            onClick={handleCancelDiscard}
-            sx={{ textTransform: 'none', borderRadius: 1 }}
-          >
-            Cancel
-          </MuiButton>
-          <MuiButton
-            variant="contained"
-            onClick={handleConfirmDiscard}
-            sx={{
-              bgcolor: '#ef4444',
-              '&:hover': { bgcolor: '#dc2626' },
-              textTransform: 'none',
-              borderRadius: 1
-            }}
-          >
-            Discard Package
-          </MuiButton>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

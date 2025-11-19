@@ -5,10 +5,19 @@ import {
     Assignment as RequestsIcon,
     Business as SuiteIcon,
     People as CustomersIcon,
-    Assessment as ReportsIcon,
-    AdminPanelSettings as MasterIcon,
     FileDownload as ExportIcon,
-} from '@mui/icons-material';
+    Settings as SettingsIcon,
+    Flag as CountriesIcon,
+    AttachMoney as CurrenciesIcon,
+  } from '@mui/icons-material';
+import CouriersIcon from '@mui/icons-material/LocalShipping';
+import StoreIcon from '@mui/icons-material/Store';
+import CategoryIcon from '@mui/icons-material/Category';
+import TurnedInIcon from '@mui/icons-material/TurnedIn';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+
+export type UserRole = 'super_admin' | 'admin' | 'user';
 
 export interface MenuItem {
   text: string;
@@ -16,6 +25,7 @@ export interface MenuItem {
   defaultPath?: string;
   path?: string;
   subMenu?: MenuItem[];
+  roles?: UserRole[];
 }
 
 export const menuItems: MenuItem[] = [
@@ -47,8 +57,29 @@ export const menuItems: MenuItem[] = [
       { text: 'Pickup Requests', icon: ExportIcon, path: '/pickups' },
     ],
   },
+  
+  { 
+    text: 'Ecommerce', 
+    icon: StoreIcon, 
+    defaultPath: '/category' ,
+    subMenu: [
+      { text: 'Categories', icon: CategoryIcon, path: '/category' },
+      { text: 'Sub Categories', icon: TurnedInIcon, path: '/sub-category' },
+      { text: 'Products', icon: ViewListIcon, path: '/products' },
+      { text: 'Orders', icon: ShoppingCartIcon, path: '/orders' },
+    ],
+  },
   { text: 'My Suite', icon: SuiteIcon, path: '/suite' },
   { text: 'Customers', icon: CustomersIcon, path: '/customers' },
-  { text: 'Reports', icon: ReportsIcon, path: '/reports' },
-  { text: 'Master', icon: MasterIcon, path: '/master' },
+  {
+    text: 'Settings',
+    icon: SettingsIcon,
+    defaultPath: '/settings/countries',
+    roles: ['super_admin'],
+    subMenu: [
+        { text: 'Countries', icon: CountriesIcon, path: '/settings/countries' },
+        { text: 'Currencies', icon: CurrenciesIcon, path: '/settings/currencies' },
+        { text: 'Couriers', icon: CouriersIcon, path: '/settings/couriers' },
+    ],
+  },
 ];

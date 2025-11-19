@@ -1,11 +1,45 @@
-import { Box, Card, Typography, Button, Chip, Divider, Grid, Link, CircularProgress } from '@mui/material';
-import { LocalPhoneOutlined, MailOutline, PersonOutline } from '@mui/icons-material';
-import { getDisplayStatus, getRequestStatusColor } from '../../../data/shoppingRequests';
-import { updateShoppingRequestStatus } from '../../../services/api.services';
+import { Box, Button, CircularProgress } from '@mui/material';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
-const RequestDetailCard = ({ request, onStatusUpdated }: { request: any, onStatusUpdated: () => void }) => {
-  const [loading, setLoading] = useState(false);
+import { getDisplayStatus, } from '../../../data/shoppingRequests';
+import { updateShoppingRequestStatus } from '../../../services/api.services';
+import RequestHeader from '../../common/RequestHeader';
+import { getStatusColor } from '../../../utils/statusUtils';
+
+interface Product {
+  id: string;
+  name?: string;
+  quantity: number;
+  unit_price?: number | null;
+  currency?: string;
+  available?: boolean;
+  [key: string]: unknown;
+}
+
+interface Request {
+  id: string;
+  request_code: string;
+  status: string;
+  user?: {
+    name: string;
+    suite_no?: string;
+    email: string;
+    phone?: string | null;
+    alt_phone?: string | null;
+  };
+  [key: string]: unknown;
+}
+
+interface RequestDetailCardProps {
+  request: Request;
+  onStatusUpdated: () => void;
+  products: Product[];
+  selectedItemIds: Set<string>;
+}
+
+const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds }: RequestDetailCardProps) => {
+  const [activeAction, setActiveAction] = useState<string | null>(null);
 
   const normalizeStatus = (status: string) => {
     switch (status.toUpperCase()) {
@@ -17,155 +51,121 @@ const RequestDetailCard = ({ request, onStatusUpdated }: { request: any, onStatu
   };
 
   const latestStatus = normalizeStatus(request.status);
-  const status = getRequestStatusColor(latestStatus);
+  const statusStyles = getStatusColor(latestStatus);
 
-  const handleStatusChange = async (newStatus: string) => {
-    setLoading(true);
+  const handleStatusChange = async (newStatus: string, actionName: string) => {
+    setActiveAction(actionName);
     try {
       await updateShoppingRequestStatus(request.id, newStatus);
       onStatusUpdated();
+      toast.success("Status updated successfully!");
     } catch (err) {
       console.error("Failed to update status:", err);
+      toast.error("Failed to update status.");
     } finally {
-      setLoading(false);
+      setActiveAction(null);
     }
   };
+
+  const handleSendQuotation = () => {
+    if (selectedItemIds.size === 0) {
+      toast.error("You must select an item before sending a quotation.");
+      return;
+    }
+
+    const itemToQuote = products.filter(product => selectedItemIds.has(product.id));
+    const unpricedItems = itemToQuote.filter(product => !product.unit_price || product.unit_price <= 0);
+
+    if (unpricedItems.length > 0) {
+      toast.error("Please update the unit price for all selected items before sending the quotation.");
+      return;
+    }
+
+    handleStatusChange("QUOTATION_READY", "sending");
+  }
 
   const renderActionButton = () => {
-    if (latestStatus === "REQUESTED") {
-      return (
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{ mr: 1, textTransform: 'none' }}
-          onClick={() => handleStatusChange("QUOTATION_READY")}
-          disabled={loading}
-        >
-          {loading ? <CircularProgress size={20} color="inherit" /> : "Send Quotation"}
-        </Button>
-      );
-    }
+    const rejectableStatuses = [
+      "REQUESTED", 
+      "QUOTATION_READY", 
+      "QUOTATION_CONFIRMED", 
+      "INVOICED", 
+      "PAYMENT_PENDING"
+    ];
 
-    if (latestStatus === "QUOTATION_READY") {
-      return (
-        <Button
-          variant="contained"
-          sx={{
-            bgcolor: '#FEE2E2',
-            color: '#EF4444',
-            '&:hover': { bgcolor: '#FECACA' },
-            textTransform: 'none'
-          }}
-          onClick={() => handleStatusChange("REJECTED")}
-          disabled={loading}
-        >
-          {loading ? <CircularProgress size={20} color="inherit" /> : "Reject"}
-        </Button>
-      );
-    }
+    return (
+      <>
+        {latestStatus === "REQUESTED" && (
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ mr: 1, textTransform: 'none' }}
+            onClick={handleSendQuotation}
+            disabled={!!activeAction}
+          >
+            {activeAction === 'sending' ? (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CircularProgress size={20} color="inherit" />
+                Sending...
+              </Box>
+            ) : "Send Quotation"}
+          </Button>
+        )}
 
-    if (latestStatus === "PAYMENT_APPROVED") {
-      return (
-        <Button
-          variant="contained"
-          sx={{ textTransform: 'none' }}
-          onClick={() => handleStatusChange("ORDER_PLACED")}
-          disabled={loading}
-        >
-          {loading ? <CircularProgress size={20} color="inherit" /> : "Complete"}
-        </Button>
-      );
-    }
-
-    return null;
-  };
+        {rejectableStatuses.includes(latestStatus) && (
+          <Button
+            variant="contained"
+            sx={{
+              bgcolor: '#FEE2E2',
+              color: '#EF4444',
+              '&:hover': { bgcolor: '#FECACA' },
+              textTransform: 'none'
+            }}
+            onClick={() => handleStatusChange("REJECTED", 'reject')}
+            disabled={!!activeAction}
+          >
+            {activeAction === 'rejecting' ? (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CircularProgress size={20} color="inherit" />
+                Rejecting...
+              </Box>
+            ) : "Reject"}
+          </Button>
+        )}
+    
+    {latestStatus === "PAYMENT_APPROVED" && (
+      <Button
+        variant="contained"
+        sx={{ textTransform: 'none' }}
+        onClick={() => handleStatusChange("ORDER_PLACED", "approving")}
+        disabled={!!activeAction}
+      >
+        {activeAction === "approving" ?
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <CircularProgress size={20} color="inherit" />
+            Completing...
+          </Box>
+          : "Complete"}
+      </Button>
+      )}
+    </>
+  );
+};
 
   return (
-    <Card sx={{ p: 2, mb: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="h6" fontWeight={600}>
-            Shopping Request #: {request.request_code}
-          </Typography>
-          <Chip
-            label={getDisplayStatus(latestStatus)}
-            size="small"
-            sx={{ ml: 2, color: status.color, bgcolor: status.bgColor, fontWeight: 600 }}
-          />
-        </Box>
-
-        <Box>
-          {renderActionButton()}
-        </Box>
-      </Box>
-
-      <Box sx={{ mb: 1 }}>
-        <Grid container alignItems="flex-start" rowSpacing={1} columnSpacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <PersonOutline fontSize="small" color="action" />
-              <Typography variant="body2" sx={{ ml: 1 }}>
-                {request.user.name}({request.user.suite_no})
-              </Typography>
-            </Box>
-
-            {request.user.phone && (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <LocalPhoneOutlined fontSize="small" color="action" />
-              <Box sx={{ ml: 1 }}>
-                <Link href={`tel:${request.user.phone}`} variant="body2">
-                  {request.user.phone}
-                </Link>
-                {request.user.alt_phone && (
-                  <>
-                    <Typography variant="body2" component="span">, </Typography>
-                    <Link href={`tel:${request.user.alt_phone}`} variant="body2">
-                      {request.user.alt_phone}
-                    </Link>
-                  </>
-                )}
-              </Box>
-            </Box>
-            )}
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <MailOutline fontSize="small" color="action" />
-              <Link
-                href={`mailto:${request.user.email}`}
-                variant="body2"
-                sx={{
-                  ml: 1,
-                  wordBreak: "break-word",
-                  textDecoration: "none",
-                  color: "text.primary",
-                  fontWeight: 500,
-                  "&:hover": {
-                    color: "primary.main",
-                    textDecoration: "none",
-                  }
-                }}
-              >
-                {request.user.email}
-              </Link>
-            </Box>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {request.remarks && (
-        <>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-            Customer Remarks
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {request.remarks}
-          </Typography>
-        </>
-      )}
-    </Card>
+    <>
+      <RequestHeader
+        title="Shopping Request"
+        requestCode={request.request_code}
+        statusDisplay={getDisplayStatus(latestStatus)}
+        statusChipStyles={{
+          color: statusStyles.color,
+          bgColor: statusStyles.bgColor,
+        }}
+        user={request.user ?? { name: "Unknown", email: "unknown@example.com" }}
+        actionButtons={renderActionButton()}
+      />
+    </>
   );
 };
 

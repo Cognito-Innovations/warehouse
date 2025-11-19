@@ -1,6 +1,7 @@
-'use client';
-import React, { createContext, useContext, ReactNode } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+"use client";
+import React, { createContext, useContext, ReactNode, useRef, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { useEcommerceStore } from "@/store/ecommerceStore";
 
 interface User {
   id: string;
@@ -13,6 +14,7 @@ interface User {
   is_logged_in: boolean;
   last_login?: string;
   verified: boolean;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -27,7 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -39,19 +41,24 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { data: session, status } = useSession();
 
+  const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const syncLocalCartToServer = useEcommerceStore((state) => state.syncLocalCartToServer);
+
   // Get user data from NextAuth session
   const user = session?.user ? {
-    id: (session.user as any).user_id || session.user.email || '',
-    email: session.user.email || '',
-    name: session.user.name || '',
+    id: (session.user as any).user_id || session.user.email || "",
+    email: session.user.email || "",
+    name: session.user.name || "",
     verified: (session.user as any).verified ?? false, // Use actual verified status from backend, default to false
+    phone: (session.user as any).phone || "",
   } : null;
 
   const token = (session as any)?.access_token || null;
-  const loading = status === 'loading';
+  const loading = status === "loading";
 
   const logout = () => {
-    signOut({ callbackUrl: '/' });
+    signOut({ callbackUrl: "/sign-in" });
   };
 
   const value: AuthContextType = {
@@ -60,9 +67,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: (session?.user as any)?.role || '',
+          role: (session?.user as any)?.role || "",
           suite_no: (session?.user as any)?.suite_no,
-          country: (session?.user as any)?.country || '',
+          country: (session?.user as any)?.country || "",
           image: (session?.user as any)?.image,
           is_logged_in: (session?.user as any)?.is_logged_in ?? true,
           last_login: (session?.user as any)?.last_login,
@@ -73,6 +80,70 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     logout,
   };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (token) {
+        localStorage.setItem("auth-token", token);
+      } else {
+        localStorage.removeItem("auth-token");
+      }
+    }
+
+    if (token && status === 'authenticated') {
+      syncLocalCartToServer();
+    }
+  }, [token]);
+
+  // Auto-logout when JWT expires
+  useEffect(() => {
+    // Clear any existing timer
+    if (logoutTimerRef.current) {
+      clearTimeout(logoutTimerRef.current);
+      logoutTimerRef.current = null;
+    }
+
+    if (!token) {
+      return;
+    }
+
+    try {
+      // Decode JWT payload safely without extra deps
+      const parts = token.split(".");
+      if (parts.length !== 3) return;
+      const payloadJson = JSON.parse(typeof window !== "undefined"
+        ? atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+        : Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"));
+
+      const expSeconds = payloadJson?.exp;
+      if (!expSeconds || typeof expSeconds !== "number") return;
+
+      const expiryMs = expSeconds * 1000;
+      const nowMs = Date.now();
+      const deltaMs = expiryMs - nowMs;
+
+      if (deltaMs <= 0) {
+        // Already expired
+        signOut({ callbackUrl: "/sign-in" });
+        return;
+      }
+
+      // Schedule sign out slightly after expiry to avoid clock skews
+      logoutTimerRef.current = setTimeout(() => {
+        signOut({ callbackUrl: "/sign-in" });
+      }, Math.max(1000, deltaMs + 500));
+    } catch (_e) {
+      // If token cannot be decoded, do nothing
+    }
+
+    // Cleanup on unmount or token change
+    return () => {
+      if (logoutTimerRef.current) {
+        clearTimeout(logoutTimerRef.current);
+        logoutTimerRef.current = null;
+      }
+    };
+  }, [token]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

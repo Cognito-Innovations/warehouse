@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -156,5 +157,19 @@ export class PickupRequestsController {
     @Body() body: { status: string; price?: number },
   ): Promise<PickupRequestResponseDto> {
     return this.pickupRequestsService.updateStatus(id, body.status, body.price);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a pickup request by ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'Pickup request ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiOkResponse({ description: 'Pickup request deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Pickup request not found' })
+  async delete(@Param('id') id: string): Promise<{ message: string }> {
+    await this.pickupRequestsService.deletePickupRequest(id);
+    return { message: 'Pickup request deleted successfully' };
   }
 }

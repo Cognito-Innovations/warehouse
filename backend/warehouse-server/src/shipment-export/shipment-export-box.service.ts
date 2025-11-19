@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { ShipmentExportBox } from './shipment-export-box.entity';
 import { ShipmentExport } from './shipment-export.entity';
 import { CreateBoxDto } from './dto/create-box.dto';
-import { Package } from 'src/packages/entities';
+import { Shipment } from 'src/shipments/shipment.entity';
 
 @Injectable()
 export class ShipmentExportBoxesService {
@@ -13,8 +13,8 @@ export class ShipmentExportBoxesService {
     private readonly boxRepo: Repository<ShipmentExportBox>,
     @InjectRepository(ShipmentExport)
     private readonly exportRepo: Repository<ShipmentExport>,
-    @InjectRepository(Package)
-    private readonly packageRepo: Repository<Package>,
+    @InjectRepository(Shipment)
+    private readonly shipmentRepo: Repository<Shipment>,
   ) {}
 
   async createBox(
@@ -51,33 +51,37 @@ export class ShipmentExportBoxesService {
     }
   }
 
-  async getPackagesByBoxId(boxId: string): Promise<Package[]> {
+  async getShipmentsByBoxId(boxId: string): Promise<Shipment[]> {
     const box = await this.boxRepo.findOne({
       where: { id: boxId },
-      relations: ['packages'],
+      relations: ['shipments'],
     });
     if (!box) throw new NotFoundException(`Box with id ${boxId} not found`);
-    return box.packages;
+    return box.shipments;
   }
 
-  async addPackageToBox(boxId: string, packageId: string): Promise<Package> {
+  async addShipmentToBox(boxId: string, shipmentId: string): Promise<Shipment> {
     const box = await this.boxRepo.findOne({ where: { id: boxId } });
     if (!box) throw new NotFoundException(`Box with id ${boxId} not found`);
 
-    const pkg = await this.packageRepo.findOne({ where: { id: packageId } });
-    if (!pkg)
-      throw new NotFoundException(`Package with id ${packageId} not found`);
+    const shipment = await this.shipmentRepo.findOne({
+      where: { id: shipmentId },
+    });
+    if (!shipment)
+      throw new NotFoundException(`Shipment with id ${shipment} not found`);
 
-    pkg.shipmentExportBox = box;
-    return this.packageRepo.save(pkg);
+    shipment.shipmentExportBox = box;
+    return this.shipmentRepo.save(shipment);
   }
 
-  async removePackageFromBox(packageId: string): Promise<Package> {
-    const pkg = await this.packageRepo.findOne({ where: { id: packageId } });
-    if (!pkg)
-      throw new NotFoundException(`Package with id ${packageId} not found`);
+  async removeShipmentFromBox(shipmentId: string): Promise<Shipment> {
+    const shipment = await this.shipmentRepo.findOne({
+      where: { id: shipmentId },
+    });
+    if (!shipment)
+      throw new NotFoundException(`Shipment with id ${shipmentId} not found`);
 
-    pkg.shipmentExportBox = null;
-    return this.packageRepo.save(pkg);
+    shipment.shipmentExportBox = null;
+    return this.shipmentRepo.save(shipment);
   }
 }

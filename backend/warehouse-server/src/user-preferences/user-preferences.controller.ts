@@ -49,4 +49,9 @@ export class UserPreferencesController {
   delete(@Param('id') id: string) {
     return this.userPreferencesService.delete(id);
   }
+
+  @Get('by-user/:userId')
+  findByUserId(@Param('userId') userId: string) {
+    return this.userPreferencesService.findByUser(userId);
+  }
 }

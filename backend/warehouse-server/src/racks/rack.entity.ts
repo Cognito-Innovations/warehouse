@@ -5,7 +5,7 @@ export class Rack {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ unique: true })
   label: string;
 
   @Column()

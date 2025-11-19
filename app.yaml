@@ -1,0 +1,20 @@
+runtime: custom
+env: flex
+
+env_variables:
+  DB_HOST: "aws-1-us-east-2.pooler.supabase.com"
+  DB_PORT: 5432
+  DB_NAME: "postgres"
+  DB_USERNAME: "postgres.kvtavhfrvgidwvihkvvi"
+  DB_PASSWORD: "4XSgDrvmeSUDB4jw"
+  CLOUDINARY_CLOUD_NAME: "dcfbmupyd"
+  CLOUDINARY_API_KEY: "122294826625949"
+  CLOUDINARY_API_SECRET: "fScVO1lp4CDXgzkjyGXVdsK90HU"
+
+manual_scaling:
+  instances: 1
+
+resources:
+  cpu: 1
+  memory_gb: 0.5
+  disk_size_gb: 10

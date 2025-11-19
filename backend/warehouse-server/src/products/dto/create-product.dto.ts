@@ -17,7 +17,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
-  currency?: string; 
+  currency?: string;
 
   @IsOptional()
   @IsNumber()
@@ -25,7 +25,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsUrl()
-  url?: string;
+  url: string;
 
   @IsOptional()
   @IsString()

@@ -1,18 +1,19 @@
 "use client";
 
+import { ROUTES } from "@/utils/constants";
 import { useAuth } from "../contexts/AuthContext";
-import { AddressProvider } from "../contexts/AddressContext";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useEffect, ReactNode } from "react";
 
+//TODO P0: Need to wrap address layout only required routes not in root
 export default function AddressLayout({ children }: { children: ReactNode }) {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
         if (!authLoading && !user) {
-            router.replace("/");
+            router.push(ROUTES.SIGN_IN);
         }
     }, [user, authLoading, router]);
 
@@ -20,11 +21,11 @@ export default function AddressLayout({ children }: { children: ReactNode }) {
         return (
             <Box
                 sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '100vh',
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "100vh",
                     gap: 2,
                 }}
             >
@@ -34,9 +35,5 @@ export default function AddressLayout({ children }: { children: ReactNode }) {
         );
     }
 
-    return (
-        <AddressProvider>
-            {children}
-        </AddressProvider>
-    );
+    return <>{children}</>;
 }

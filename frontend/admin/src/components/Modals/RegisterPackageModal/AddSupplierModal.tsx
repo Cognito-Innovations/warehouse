@@ -152,14 +152,6 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ open, onClose, onSu
                 onChange={(e) => handleInputChange('country', e.target.value)}
                 label="Select Country *"
                 size="small"
-                sx={{
-                  "& .MuiSelect-select": {
-                    height: 32,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  },
-                }}
               >
                 {countries.map((country) => (
                   <MenuItem key={country.id} value={country.id}>

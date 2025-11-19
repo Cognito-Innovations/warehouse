@@ -1,18 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Close as CloseIcon } from '@mui/icons-material';
-import ReactCountryFlag from 'react-country-flag';
-
-interface AddressData {
-  id?: string;
-  name: string;
-  address: string;
-  country_name: string;
-  country_code: string;
-  country_phone_code: string;
-  phone_number: string;
-}
+import React from "react";
+import { Close as CloseIcon } from "@mui/icons-material";
+import ReactCountryFlag from "react-country-flag";
+import { AddressData } from "../../../contexts/AddressContext";
 
 interface SavedAddressesModalProps {
   isOpen: boolean;
@@ -75,9 +66,9 @@ const SavedAddressesModal: React.FC<SavedAddressesModalProps> = ({
                       countryCode={address.country_code}
                       svg
                       style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover"
                       }}
                       title={address.country_name}
                     />

@@ -82,4 +82,26 @@ export class ShipmentExportsService {
       throw new NotFoundException(`Export with id ${id} not found`);
     }
   }
+
+  async markAsDeparted(id: string): Promise<ShipmentExport> {
+    const exp = await this.exportRepo.findOne({
+      where: { id },
+      relations: ['boxes', 'boxes.shipments'],
+    });
+    if (!exp) throw new NotFoundException(`Export with id ${id} not found`);
+
+    exp.status = 'SHIPMENTS DEPARTED';
+    const saved = await this.exportRepo.save(exp);
+
+    const reloaded = await this.exportRepo.findOne({
+      where: { id: saved.id },
+      relations: ['boxes', 'boxes.shipments'],
+    });
+    if (!reloaded)
+      throw new NotFoundException(
+        `Export with id ${saved.id} not found after update`,
+      );
+
+    return reloaded;
+  }
 }

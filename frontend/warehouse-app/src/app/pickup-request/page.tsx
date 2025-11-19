@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Box,
   Typography,
@@ -10,15 +10,15 @@ import {
   Button,
   Paper,
   CircularProgress,
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import AddIcon from '@mui/icons-material/Add';
-import HistoryIcon from '@mui/icons-material/History';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import { getPickupRequestsByUser } from '@/lib/api.service';
-import { useSession } from 'next-auth/react';
-import { formatDateTime } from '@/lib/utils';
-import { statusConfig } from '@/lib/pickupStatus';
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import AddIcon from "@mui/icons-material/Add";
+import HistoryIcon from "@mui/icons-material/History";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import { getPickupRequestsByUser } from "@/lib/api.service";
+import { useSession } from "next-auth/react";
+import { formatDateTime } from "@/lib/utils";
+import { statusConfig } from "@/lib/pickupStatus";
 
 function TabPanel(props: { children?: React.ReactNode; index: number; value: number }) {
   const { children, value, index } = props;
@@ -33,6 +33,7 @@ export default function PickupRequestPage() {
   const { data: session, status } = useSession();  
   const [activeTab, setActiveTab] = useState(0);
   const [pickupRequests, setPickupRequests] = useState<any[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const user_id = (session?.user as any)?.user_id;
@@ -43,7 +44,7 @@ export default function PickupRequestPage() {
       const data = await getPickupRequestsByUser(user_id);
       setPickupRequests(data);
     } catch (err) {
-      console.error('Failed to fetch pickup requests:', err);
+      console.error("Failed to fetch pickup requests:", err);
     } finally {
       setLoading(false);
     }
@@ -60,12 +61,11 @@ export default function PickupRequestPage() {
   ];
   
   const renderEmptyState = (icon: React.ReactNode, message: string) => (
-    <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
-      <Box sx={{ fontSize: '4rem', mb: 2, color: 'grey.300' }}>{icon}</Box>
+    <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
+      <Box sx={{ fontSize: "4rem", mb: 2, color: "grey.300" }}>{icon}</Box>
       <Typography variant="h6">{message}</Typography>
     </Box>
   );
-
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -92,21 +92,21 @@ export default function PickupRequestPage() {
         </div>
 
         <TabPanel value={activeTab} index={0}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
             <TextField
               variant="outlined"
               placeholder="Search by pkg details"
               size="small"
               InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon color="action" /></InputAdornment> }}
-              sx={{ bgcolor: 'white', '.MuiOutlinedInput-root': { borderRadius: '8px' } }}
+              sx={{ bgcolor: "white", ".MuiOutlinedInput-root": { borderRadius: "8px" } }}
             />
             <Link href="/pickup-request/create-request">
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
                 sx={{
-                  bgcolor: '#6D28D9', textTransform: 'none', fontWeight: 'bold', borderRadius: '8px', px: 3,
-                  '&:hover': { bgcolor: '#5B21B6' },
+                  bgcolor: "#6D28D9", textTransform: "none", fontWeight: "bold", borderRadius: "8px", px: 3,
+                  "&:hover": { bgcolor: "#5B21B6" },
                 }}
               >
                 Pickup Request
@@ -114,7 +114,7 @@ export default function PickupRequestPage() {
             </Link>
           </Box>
 
-          {loading && <Box sx={{ textAlign: 'center', py: 6 }}><CircularProgress /></Box>}
+          {loading && <Box sx={{ textAlign: "center", py: 6 }}><CircularProgress /></Box>}
 
           {!loading && (pickupRequests.length > 0) ? (
             pickupRequests.map((req) => {
@@ -123,34 +123,47 @@ export default function PickupRequestPage() {
 
               return (
                 <Link key={req.id} href={`/pickup-request/${req.id}`} passHref>
-                  <Paper variant="outlined" sx={{ p: 2, borderRadius: '8px', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', width: '100%', gap: 3 }}>
+                  <Paper variant="outlined" sx={{ p: 2, borderRadius: "8px", mb: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "flex-start", width: "100%", gap: 3 }}>
 
-                      <Box sx={{ flexShrink: 0, width: '15%' }}>
-                        <Typography variant="body2" sx={{color: 'text.primary'}}>{req.request_no || "PR/IN/2025006"}</Typography>
+                      <Box sx={{ flexShrink: 0, width: "15%" }}>
+                        <Typography variant="body2" sx={{color: "text.primary"}}>{req.request_no || "PR/IN/2025006"}</Typography>
                         <Typography variant="caption" color="text.secondary">{formatDateTime(req.created_at)}</Typography>
                       </Box>
 
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Typography variant="caption" color="text.secondary">Pickup Location</Typography>
-                        <Typography variant="body2" sx={{color: 'text.primary' }}>{req.pickup_address}</Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "text.primary",
+                            wordBreak: "break-word",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical", 
+                          }}
+                        >
+                          {req.pickup_address}
+                        </Typography>
                       </Box>
 
-                      <Box sx={{ flexShrink: 0, width: '18%' }}>
+                      <Box sx={{ flexShrink: 0, width: "18%" }}>
                         <Typography variant="caption" color="text.secondary">Supplier</Typography>
-                        <Typography variant="body2" sx={{color: 'text.primary' }}>{req.supplier_name}</Typography>
+                        <Typography variant="body2" sx={{color: "text.primary" }}>{req.supplier_name}</Typography>
                       </Box>
 
                       <Box sx={{
                         flexShrink: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '8%'
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "8%"
                       }}>
                         {icon}
-                        <Typography variant="body2" sx={{ fontWeight: 'bold', color }}>
+                        <Typography variant="body2" sx={{ fontWeight: "bold", color }}>
                           {req.status?.toUpperCase()}
                         </Typography>
                       </Box>
@@ -161,23 +174,11 @@ export default function PickupRequestPage() {
               );
             })
           ) : (
-            !loading && renderEmptyState(<ReceiptLongIcon sx={{ fontSize: 'inherit' }} />, 'No Pickup Requests Found')
+            !loading && renderEmptyState(<ReceiptLongIcon sx={{ fontSize: "inherit" }} />, "No Pickup Requests Found")
           )}
           </TabPanel>
-
-          {/* TODO: Add uncomment this when pagination is implemented */}
-          {/* <Paper elevation={1} sx={{ p: 1.5, borderRadius: '8px' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="body2" color="text.secondary" sx={{ pl: 1 }}>Showing 1 to 1 of 1 Requests</Typography>
-              <Box>
-                <Button variant="outlined" size="small" sx={{ mr: 1, textTransform: 'none' }}>Previous</Button>
-                <Button variant="outlined" size="small" sx={{ textTransform: 'none' }}>Next</Button>
-              </Box>
-            </Box>
-          </Paper> */}
-
         <TabPanel value={activeTab} index={1}>
-          {renderEmptyState(<HistoryIcon sx={{ fontSize: 'inherit' }} />, 'No History Available')}
+          {renderEmptyState(<HistoryIcon sx={{ fontSize: "inherit" }} />, "No History Available")}
         </TabPanel>
       </div>
     </div>

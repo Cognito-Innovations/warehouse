@@ -14,12 +14,14 @@ const authApi = axios.create({
 
 export interface LoginResponse {
   access_token: string;
-  id: string;
-  email: string;
-  name?: string;
-  role: string;
-  suite_no?: string;
-  country?: string;
+  user: {
+    id: string;
+    email: string;
+    name?: string;
+    role: string;
+    suite_no?: string;
+    country?: string;
+  }
 }
 
 export interface RegisterResponse {
@@ -35,40 +37,32 @@ export interface RegisterResponse {
 }
 
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
-  try {
-    const response = await authApi.post('/login', {
-      email,
-      password,
-    });
+  const response = await authApi.post('/login', {
+    email,
+    password,
+  });
 
-    const user = response.data;
-    if (user.id && user.access_token) {
-      // Store user data in cookie (7 days expiration)
-      setCookie('user_data', JSON.stringify(user), {
-        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
-        secure: window.location.protocol === 'https:',
-        sameSite: 'lax'
-      });
-    }
-    
-    return user;
-  } catch (error: any) {
-    throw error;
+  const loginData = response.data;
+  if (loginData.user && loginData.access_token) {
+    // Store user data in cookie (7 days expiration)
+    setCookie('user_data', JSON.stringify(loginData), {
+      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      secure: window.location.protocol === 'https:',
+      sameSite: 'lax'
+    });
   }
+    
+    return loginData;
 };
 
 export const register = async (name: string, email: string, password: string): Promise<RegisterResponse> => {
-  try {
-    const response = await authApi.post('/register', {
-      name,
-      email,
-      password,
-    });
+  const response = await authApi.post('/register', {
+    name,
+    email,
+    password,
+  });
 
-    return response.data;
-  } catch (error: any) {
-    throw error;
-  }
+  return response.data;
 };
 
 export const logout = async (): Promise<void> => {

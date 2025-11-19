@@ -13,17 +13,18 @@ import {
   TrackingRequest,
   TrackingStatus,
 } from 'src/tracking-requests/tracking-request.entity';
-import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
+import { mapPickupToTrackingStatus } from './status-mapper';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class PickupRequestsService {
   constructor(
     @InjectRepository(PickupRequest)
     private readonly pickupRequestRepository: Repository<PickupRequest>,
-    @InjectRepository(TrackingRequest)
-    private readonly trackingRequestRepository: Repository<TrackingRequest>,
-    private readonly userPreferencesService: UserPreferencesService,
     private readonly dataSource: DataSource,
+    private readonly trackingRequestsService: TrackingRequestsService,
+    private readonly usersService: UsersService,
   ) {}
 
   async createPickupRequest(
@@ -46,15 +47,12 @@ export class PickupRequestsService {
         pickupRequest,
       );
 
-      const trackingRequest = queryRunner.manager.create(TrackingRequest, {
-        user: { id: createPickupRequestDto.user_id },
+      await this.trackingRequestsService.createTrackingRequest({
         feature_type: FeatureType.PickupRequest,
-        status: TrackingStatus.Requested,
         feature_fid: savedPickupRequest.id,
-        country: { id: createPickupRequestDto.country_id },
+        status: TrackingStatus.Requested,
+        user: createPickupRequestDto.user_id,
       });
-
-      await queryRunner.manager.save(TrackingRequest, trackingRequest);
 
       // Commit the transaction
       await queryRunner.commitTransaction();
@@ -72,21 +70,11 @@ export class PickupRequestsService {
         );
       }
 
+      const { country, ...rest } = pickupRequestWithRelations;
+
       return {
-        id: pickupRequestWithRelations.id,
-        country: pickupRequestWithRelations.country?.name,
-        status: pickupRequestWithRelations.status,
-        pickup_address: pickupRequestWithRelations.pickup_address,
-        supplier_name: pickupRequestWithRelations.supplier_name,
-        supplier_phone_number: pickupRequestWithRelations.supplier_phone_number,
-        alt_supplier_phone_number:
-          pickupRequestWithRelations.alt_supplier_phone_number,
-        pcs_box: pickupRequestWithRelations.pcs_box,
-        est_weight: pickupRequestWithRelations.est_weight,
-        pkg_details: pickupRequestWithRelations.pkg_details,
-        remarks: pickupRequestWithRelations.remarks,
-        created_at: pickupRequestWithRelations.created_at,
-        updated_at: pickupRequestWithRelations.updated_at,
+        ...rest,
+        country: country?.name,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -109,29 +97,17 @@ export class PickupRequestsService {
         relations: ['user', 'country'],
       });
 
-      return pickupRequests.map((request) => ({
-        id: request.id,
-        country: request.country?.name,
-        status: request.status,
-        pickup_address: request.pickup_address,
-        supplier_name: request.supplier_name,
-        supplier_phone_number: request.supplier_phone_number,
-        alt_supplier_phone_number: request.alt_supplier_phone_number,
-        pcs_box: request.pcs_box,
-        est_weight: request.est_weight,
-        pkg_details: request.pkg_details,
-        remarks: request.remarks,
-        created_at: request.created_at,
-        updated_at: request.updated_at,
-        user: request.user
-          ? {
-              email: request.user.email,
-              name: request.user.name,
-              phone_number: request.user.phone_number,
-              created_at: request.user.created_at,
-            }
-          : undefined,
-      }));
+      return pickupRequests.map((request) => {
+        const { country, user, ...rest } = request;
+
+        return {
+          ...rest,
+          country: country?.name,
+          user: user
+            ? this.usersService.mapToUserResponseDto(request.user)
+            : undefined,
+        }
+      });
     } catch (error) {
       throw new BadRequestException(
         `Failed to fetch pickup requests: ${(error as Error).message}`,
@@ -149,29 +125,14 @@ export class PickupRequestsService {
         relations: ['user', 'country'],
       });
 
-      return pickupRequests.map((request) => ({
-        id: request.id,
-        country: request.country?.name,
-        pickup_address: request.pickup_address,
-        supplier_name: request.supplier_name,
-        supplier_phone_number: request.supplier_phone_number,
-        alt_supplier_phone_number: request.alt_supplier_phone_number,
-        pcs_box: request.pcs_box,
-        est_weight: request.est_weight,
-        pkg_details: request.pkg_details,
-        remarks: request.remarks,
-        status: request.status,
-        created_at: request.created_at,
-        updated_at: request.updated_at,
-        user: request.user
-          ? {
-              email: request.user.email,
-              name: request.user.name,
-              phone_number: request.user.phone_number,
-              created_at: request.user.created_at,
-            }
-          : undefined,
-      }));
+      return pickupRequests.map((request) => {
+        const { country, ...rest } = request;
+
+        return {
+          ...rest,
+          country: country?.name,
+        };
+      });
     } catch (error) {
       throw new BadRequestException(
         `Failed to fetch pickup requests for user: ${(error as Error).message}`,
@@ -190,32 +151,21 @@ export class PickupRequestsService {
         throw new NotFoundException(`Pickup request with id ${id} not found`);
       }
 
+      const trackingRequests =
+        await this.trackingRequestsService.getTrackingRequestsByFeature(
+          FeatureType.PickupRequest,
+          pickupRequest.id,
+        );
+
+      const { country, user, ...rest } = pickupRequest;
+
       return {
-        id: pickupRequest.id,
-        country: pickupRequest.country?.name,
-        status: pickupRequest.status,
-        pickup_address: pickupRequest.pickup_address,
-        supplier_name: pickupRequest.supplier_name,
-        supplier_phone_number: pickupRequest.supplier_phone_number,
-        alt_supplier_phone_number: pickupRequest.alt_supplier_phone_number,
-        pcs_box: pickupRequest.pcs_box,
-        est_weight: pickupRequest.est_weight,
-        pkg_details: pickupRequest.pkg_details,
-        price: await this.userPreferencesService.getFormattedConvertedPrice(
-          pickupRequest.user.id,
-          Number(pickupRequest.price),
-        ),
-        remarks: pickupRequest.remarks,
-        created_at: pickupRequest.created_at,
-        updated_at: pickupRequest.updated_at,
-        user: pickupRequest.user
-          ? {
-              email: pickupRequest.user.email,
-              name: pickupRequest.user.name,
-              phone_number: pickupRequest.user.phone_number,
-              created_at: pickupRequest.user.created_at,
-            }
+        ...rest,
+        country: country?.name,
+        user: user
+          ? this.usersService.mapToUserResponseDto(pickupRequest.user)
           : undefined,
+        tracking_requests: trackingRequests,
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -247,7 +197,7 @@ export class PickupRequestsService {
       }
 
       if (price !== undefined) {
-        pickupRequest.price = price;
+        pickupRequest.price = Number(price.toFixed(2));
       }
 
       // Update the status of the pickup request
@@ -261,6 +211,9 @@ export class PickupRequestsService {
         case 'PICKED':
           pickupRequest.status = PickupRequestStatus.Picked;
           break;
+        case 'CANCELLED':
+          pickupRequest.status = PickupRequestStatus.Cancelled;
+          break;
         default:
           throw new BadRequestException(`Invalid status: ${status}`);
       }
@@ -269,6 +222,16 @@ export class PickupRequestsService {
         PickupRequest,
         pickupRequest,
       );
+
+      if (updatedPickupRequest.user) {
+        const trackingRequest = queryRunner.manager.create(TrackingRequest, {
+          feature_type: FeatureType.PickupRequest,
+          feature_fid: updatedPickupRequest.id,
+          status: mapPickupToTrackingStatus(updatedPickupRequest.status),
+          user: updatedPickupRequest.user.id as any,
+        });
+        await queryRunner.manager.save(trackingRequest);
+      }
 
       // Commit the transaction
       await queryRunner.commitTransaction();
@@ -286,33 +249,28 @@ export class PickupRequestsService {
         );
       }
 
+      const trackingRequests =
+        await this.trackingRequestsService.getTrackingRequestsByFeature(
+          FeatureType.PickupRequest,
+          pickupRequestWithRelations.id,
+        );
+
+      const { country, user, ...rest } = pickupRequestWithRelations;
+
       return {
-        id: pickupRequestWithRelations.id,
-        country: pickupRequestWithRelations.country?.name,
-        status: pickupRequestWithRelations.status,
-        pickup_address: pickupRequestWithRelations.pickup_address,
-        supplier_name: pickupRequestWithRelations.supplier_name,
-        supplier_phone_number: pickupRequestWithRelations.supplier_phone_number,
-        alt_supplier_phone_number:
-          pickupRequestWithRelations.alt_supplier_phone_number,
-        pcs_box: pickupRequestWithRelations.pcs_box,
-        est_weight: pickupRequestWithRelations.est_weight,
-        pkg_details: pickupRequestWithRelations.pkg_details,
-        remarks: pickupRequestWithRelations.remarks,
-        created_at: pickupRequestWithRelations.created_at,
-        updated_at: pickupRequestWithRelations.updated_at,
-        user: pickupRequestWithRelations.user
-          ? {
-              email: pickupRequestWithRelations.user.email,
-              name: pickupRequestWithRelations.user.name,
-              phone_number: pickupRequestWithRelations.user.phone_number,
-              created_at: pickupRequestWithRelations.user.created_at,
-            }
+        ...rest,
+        country: country?.name,
+        user: user
+          ? this.usersService.mapToUserResponseDto(
+              pickupRequestWithRelations.user
+            )
           : undefined,
+        tracking_requests: trackingRequests,
       };
     } catch (error) {
-      // Rollback the transaction on any error
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
 
       if (
         error instanceof NotFoundException ||
@@ -326,5 +284,16 @@ export class PickupRequestsService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async deletePickupRequest(id: string): Promise<void> {
+    const pickupRequest = await this.pickupRequestRepository.findOne({
+      where: { id },
+    });
+    if (!pickupRequest) {
+      throw new NotFoundException(`Pickup request with id ${id} not found`);
+    }
+
+    await this.pickupRequestRepository.remove(pickupRequest);
   }
 }

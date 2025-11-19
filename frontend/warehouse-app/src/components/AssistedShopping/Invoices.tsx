@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { uploadToCloudinary } from "@/lib/cloudinary.api";
 import { addPaymentSlip, updateShoppingRequestStatus } from "@/lib/api.service";
 import { Loader } from "./Loader";
-import { formatDateTime } from "@/lib/utils";
 import { generateInvoicePDF } from "./InvoicePDF";
+import { formatDateTime } from "@/lib/utils";
+import { IMAGE_FILE_REGEX } from "@/utils/constants";
 
 export default function Invoices({ request, onUpdate }: { request: any, onUpdate?: () => void; }) {
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
@@ -74,7 +75,7 @@ export default function Invoices({ request, onUpdate }: { request: any, onUpdate
         <div className="flex items-center justify-between">
           <div>
             <p className="font-semibold text-gray-900">{number}</p>
-            <p className="text-sm text-gray-500">USD {amount}</p>
+            <p className="text-sm text-gray-500"> {amount}</p> 
           </div>
           <p className="text-sm text-gray-500">{formatDateTime(date)}</p>
           <span
@@ -98,7 +99,7 @@ export default function Invoices({ request, onUpdate }: { request: any, onUpdate
 
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 flex gap-3 flex-wrap">
             {uploadedUrls.map((url, index) => {
-              const isImage = typeof url === "string" && url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
+              const isImage = typeof url === "string" && IMAGE_FILE_REGEX.test(url);
 
               return (
               <div
@@ -145,13 +146,20 @@ export default function Invoices({ request, onUpdate }: { request: any, onUpdate
               <button
                 onClick={handleConfirm}
                 disabled={uploadedUrls.length === 0 || uploading || confirming}
-                className={`px-4 py-2 rounded-md text-sm font-medium text-white ${
+                className={`px-4 py-2 rounded-md text-sm font-medium text-white flex items-center justify-center gap-2 ${
                   uploadedUrls.length === 0 || uploading || confirming
                     ? "bg-gray-300 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700"
                 }`}
               >
-                {confirming ? <Loader size={18} color="text-white" /> : "Confirm"}
+                {confirming ? (
+                  <>
+                    <Loader size={18} color="text-white" />
+                    <span>Confirming...</span>
+                  </>
+                ) : (
+                  "Confirm"
+                )}
               </button>
             </div>
           )}

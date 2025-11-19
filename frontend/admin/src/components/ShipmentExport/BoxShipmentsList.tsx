@@ -11,39 +11,67 @@ import {
   Typography,
 } from "@mui/material";
 import { Delete as DeleteIcon } from "@mui/icons-material";
+import { removeShipmentFromBox } from "../../services/api.services";
 import { formatDateTime } from "../../utils/formatDateTime";
 
-interface Package {
+export interface Shipment {
   id: string;
-  trackingNo: string;
+  tracking_no: string;
+  shipment_no: string;
   courier: string;
   customer: string;
   customerCode: string;
-  date: string;
+  updated_at: string;
   time: string;
+  user: {
+    name: string;
+  }
 }
 
 interface BoxShipmentsListProps {
-  boxId: number;
-  shipments: Package[];
+  boxId: number | null;
+  refreshShipments: () => void;
+  boxLabel?: string; 
+  boxIndex: number;
+  totalBoxes: number;
+  shipments: Shipment[];
   isLoading: boolean;
-  onDelete: (shipmentId: string) => void;
 }
 
 const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
   boxId,
+  refreshShipments,
+  boxIndex,
+  totalBoxes,
+  boxLabel,
   shipments,
   isLoading,
-  onDelete,
 }) => {
+
+  const handleDeleteShipment = async (shipmentId: string) => {
+    if (!boxId) return;
+    try {
+      await removeShipmentFromBox(boxId, shipmentId);
+      refreshShipments();
+    } catch (error) {
+      console.error("Failed to delete shipment from box:", error);
+    }
+  };
+
+  const displayLabel = boxLabel 
+    ? boxLabel 
+    : totalBoxes === 1 
+      ? "Box 1" 
+      : `Box ${boxIndex + 1}`;
+
   return (
-    <Box sx={{ width: "130vh" }}>
+    <Box sx={{ width: "100%" }}>
       <Typography
         variant="subtitle1"
         fontWeight={600}
         sx={{ mb: 1.5, color: "text.primary" }}
       >
-        Box {boxId} Shipments
+        {displayLabel} Shipments
       </Typography>
 
       <Box
@@ -52,9 +80,10 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
           borderRadius: 2,
           overflow: "hidden",
           bgcolor: "white",
+          width: "100%"
         }}
       >
-        <Table size="small" sx={{ width: "130vh" }}>
+        <Table size="small" sx={{ width: "100%" }}>
           <TableHead>
             <TableRow
               sx={{
@@ -80,7 +109,7 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
                 <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                   <CircularProgress size={24} />
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Loading packages...
+                    Loading shipments...
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -95,21 +124,18 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
             ) : (
               shipments.map((pkg) => (
                 <TableRow key={pkg.id}>
-                  <TableCell>{pkg.id}</TableCell>
+                  <TableCell>{pkg.shipment_no}</TableCell>
 
                   <TableCell>
-                    <Typography fontWeight={500}>{pkg.trackingNo}</Typography>
-                    <Typography variant="caption" color="text.secondary">{pkg.courier}</Typography>
+                    <Typography fontWeight={500}>{pkg.tracking_no}</Typography>
                   </TableCell>
 
                   <TableCell>
-                    <Typography fontWeight={500}>{pkg.customer}</Typography>
-                    <Typography variant="caption" color="text.secondary">{pkg.customerCode}</Typography>
+                    <Typography fontWeight={500}>{pkg.user.name}</Typography>
                   </TableCell>
 
                   <TableCell>
-                    <Typography fontWeight={500}>{formatDateTime(pkg.date)}</Typography>
-                    <Typography variant="caption" color="text.secondary">{pkg.time}</Typography>
+                    <Typography fontWeight={500}>{formatDateTime(pkg.updated_at)}</Typography>
                   </TableCell>
 
                   <TableCell align="center">
@@ -120,7 +146,7 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
                         "&:hover": { bgcolor: "#ef4444" },
                       }}
                       size="small"
-                      onClick={() => onDelete(pkg.id)}
+                      onClick={() => handleDeleteShipment(pkg.id)}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>

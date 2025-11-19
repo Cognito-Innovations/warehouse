@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
-
+import { getShipmentExportById, getShipmentsByBoxId } from "../services/api.services";
 import ShipmentHeader from "../components/ShipmentExport/ShipmentHeader";
 import ShipmentActionsBar from "../components/ShipmentExport/ShipmentActionsBar";
-import { useParams } from "react-router-dom";
 import BoxesSection from "../components/ShipmentExport/BoxesSection";
-import { getPackagesByBoxId, getShipmentExportById } from "../services/api.services";
 
 const ViewShipmentExportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [shipment, setShipment] = useState<any | null>(null);
   const [selectedBoxId, setSelectedBoxId] = useState<number | null>(null);
-  const [selectedBoxPackages, setSelectedBoxPackages] = useState<any[]>([]);
+  const [selectedBoxShipments, setSelectedBoxShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingPackages, setLoadingPackages] = useState(false);
+  const [loadingShipments, setLoadingShipments] = useState(false);
 
-  const fetchShipment = async (shipmentId: string) => {
+  const fetchShipment = useCallback(async (shipmentId: string) => {
+    setLoading(true);
     try {
       const data = await getShipmentExportById(shipmentId);
       setShipment(data);
@@ -24,18 +24,18 @@ const ViewShipmentExportPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchPackagesForBox = async (boxId: number) => {
-    setLoadingPackages(true);
+  const fetchShipmentsForBox = async (boxId: number) => {
+    setLoadingShipments(true);
     try {
-      const packages = await getPackagesByBoxId(boxId);
-      setSelectedBoxPackages(packages);
+      const shipments = await getShipmentsByBoxId(boxId);
+      setSelectedBoxShipments(shipments);
     } catch (error) {
-      console.error(`Error fetching packages for box ${boxId}:`, error);
-      setSelectedBoxPackages([]);
+      console.error(`Error fetching shipments for box ${boxId}:`, error);
+      setSelectedBoxShipments([]);
     } finally {
-      setLoadingPackages(false);
+      setLoadingShipments(false);
     }
   };
 
@@ -43,13 +43,13 @@ const ViewShipmentExportPage: React.FC = () => {
     if (id) {
       fetchShipment(id);
     }
-  }, [id]);
+  }, [id, fetchShipment]);
 
   useEffect(() => {
     if (selectedBoxId) {
-      fetchPackagesForBox(selectedBoxId);
+      fetchShipmentsForBox(selectedBoxId);
     } else {
-      setSelectedBoxPackages([]);
+      setSelectedBoxShipments([]);
     }
   }, [selectedBoxId]);
 
@@ -65,27 +65,40 @@ const ViewShipmentExportPage: React.FC = () => {
     return <div>Shipment not found</div>;
   }
 
+  const handleBoxAdded = () => {
+    if (id) {
+      fetchShipment(id);
+    }
+  };
+
   const handlePackageAdded = () => {
     if (selectedBoxId) {
-      fetchPackagesForBox(selectedBoxId);
+      fetchShipmentsForBox(selectedBoxId);
     }
   };
 
   return (
     <Box sx={{ bgcolor: "#f8fafc", minHeight: "100vh", p: 3 }}>
       <ShipmentHeader shipment={shipment} />
+      
       <ShipmentActionsBar 
         selectedBoxId={selectedBoxId}
         onPackageAdded={handlePackageAdded}
+        hasShipments={selectedBoxShipments.length > 0}
+        exportId={shipment.id}
+        status={shipment.status}
+        onStatusUpdated={(newStatus) => setShipment({ ...shipment, status: newStatus })}
       />
+      
       <BoxesSection 
         boxes={shipment.boxes || []} 
+        onBoxAdded={handleBoxAdded}
         selectedBoxId={selectedBoxId}
         setSelectedBoxId={setSelectedBoxId}
         shipmentId={shipment.id}
-        packagesInSelectedBox={selectedBoxPackages}
-        loadingPackages={loadingPackages}
-        refreshPackages={handlePackageAdded}
+        shipmentsInSelectedBox={selectedBoxShipments}
+        loadingShipments={loadingShipments}
+        refreshShipments={handlePackageAdded}
       />
     </Box>
   );

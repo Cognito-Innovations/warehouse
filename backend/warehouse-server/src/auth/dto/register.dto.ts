@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsBoolean,
   MinLength,
+  Matches,
 } from 'class-validator';
 import { Column } from 'typeorm';
 
@@ -21,7 +22,14 @@ export class RegisterDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(6)
+  @MinLength(6, { message: 'Password must be at least 6 characters long' })
+  @Matches(/[A-Z]/, {
+    message: 'Password must contain at least one uppercase letter',
+  })
+  @Matches(/[0-9]/, { message: 'Password must contain at least one number' })
+  @Matches(/[!@#$%^&*]/, {
+    message: 'Password must contain at least one special character',
+  })
   password?: string;
 
   @IsOptional()

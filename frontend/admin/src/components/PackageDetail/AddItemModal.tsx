@@ -1,6 +1,19 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, IconButton, Box } from '@mui/material';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+  Button,
+  IconButton,
+  Box,
+  CircularProgress,
+  TextField,
+  InputAdornment,
+} from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import { numberInputStyle } from '../../styles/numberInputStyle';
 
 interface PackageItem {
   id: string;
@@ -19,6 +32,7 @@ interface AddItemModalProps {
     amount: string;
     total: string;
   };
+  loading: boolean;
   onClose: () => void;
   onSave: () => void;
   onInputChange: (field: string, value: string | number) => void;
@@ -30,7 +44,8 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   newItem,
   onClose,
   onSave,
-  onInputChange
+  onInputChange,
+  loading
 }) => {
   return (
     <Dialog
@@ -62,20 +77,15 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
               Item Name
             </Typography>
-            <input
+            <TextField
+              fullWidth
+              size="small"
+              variant="outlined"
               type="text"
               value={newItem.name}
               onChange={(e) => onInputChange('name', e.target.value)}
               placeholder="Enter item name"
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '4px',
-                fontSize: '14px',
-                color: '#1e293b',
-                backgroundColor: '#ffffff'
-              }}
+              sx={{ backgroundColor: '#ffffff' }}
             />
           </Box>
 
@@ -84,19 +94,17 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
                 Quantity
               </Typography>
-              <input
+              <TextField
+                fullWidth
+                size="small"
+                variant="outlined"
                 type="number"
-                value={newItem.quantity}
-                onChange={(e) => onInputChange('quantity', parseInt(e.target.value) || 1)}
-                min="1"
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  color: '#1e293b',
-                  backgroundColor: '#ffffff'
+                value={newItem.quantity === 0 ? '' : newItem.quantity}
+                onChange={(e) => onInputChange('quantity', parseInt(e.target.value) || 0)}
+                inputProps={{ min: 0 }}
+                sx={{
+                  backgroundColor: '#ffffff',
+                  ...numberInputStyle
                 }}
               />
             </Box>
@@ -105,19 +113,22 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
                 Amount
               </Typography>
-              <input
-                type="text"
+              <TextField
+                fullWidth
+                size="small"
+                variant="outlined"
+                type="number"
                 value={newItem.amount}
                 onChange={(e) => onInputChange('amount', e.target.value)}
                 placeholder="$0.00"
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  color: '#1e293b',
-                  backgroundColor: '#ffffff'
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">$</InputAdornment>
+                  ),
+                }}
+                sx={{
+                  backgroundColor: '#ffffff',
+                  ...numberInputStyle
                 }}
               />
             </Box>
@@ -127,19 +138,16 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
               Total
             </Typography>
-            <input
+            <TextField
+              fullWidth
+              size="small"
+              variant="outlined"
               type="text"
               value={newItem.total}
-              readOnly
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '4px',
-                fontSize: '14px',
-                backgroundColor: '#f9fafb',
-                color: '#1e293b'
+              InputProps={{
+                readOnly: true,
               }}
+              sx={{ backgroundColor: '#f9fafb' }}
             />
           </Box>
         </Box>
@@ -156,7 +164,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
         <Button
           variant="contained"
           onClick={onSave}
-          disabled={!newItem.name || !newItem.amount}
+          disabled={!newItem.name || !newItem.amount || newItem.quantity < 1 || loading}
           sx={{
             bgcolor: '#3b82f6',
             '&:hover': { bgcolor: '#2563eb' },
@@ -165,7 +173,11 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             px: 3
           }}
         >
-          {editingItem ? 'Update' : 'Add'} Item
+          {loading ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            `${editingItem ? 'Update' : 'Add'} Item`
+          )}
         </Button>
       </DialogActions>
     </Dialog>

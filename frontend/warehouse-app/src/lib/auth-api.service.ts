@@ -1,24 +1,31 @@
-import axios from 'axios';
+import axios from "axios";
+import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001";
 
 // Create a base axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
+attachClientIdentifierInterceptors(api);
+
 // Helper function to get authenticated API instance
 export const getAuthenticatedApi = (token: string) => {
-  return axios.create({
+  const instance = axios.create({
     baseURL: API_BASE_URL,
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
     },
   });
+
+  attachClientIdentifierInterceptors(instance);
+
+  return instance;
 };
 
 export interface PickupRequestPayload {
@@ -35,7 +42,7 @@ export interface PickupRequestPayload {
 
 export const createPickupRequest = async (payload: PickupRequestPayload, token: string) => {
   const authenticatedApi = getAuthenticatedApi(token);
-  const res = await authenticatedApi.post('/pickup-requests', payload);
+  const res = await authenticatedApi.post("/pickup-requests", payload);
   return res.data;
 };
 
@@ -65,7 +72,7 @@ export const createShoppingRequest = async (request: any, token: string) => {
 
 export const createShoppingRequestProduct = async (product: any, token: string) => {
   const authenticatedApi = getAuthenticatedApi(token);
-  const res = await authenticatedApi.post("/products", product);
+  const res = await authenticatedApi.post("/shopping-requests", product);
   return res.data;
 };
 

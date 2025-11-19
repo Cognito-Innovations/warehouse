@@ -7,13 +7,16 @@ import {
   Column,
   JoinColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
+import { TrackingRequest } from 'src/tracking-requests/tracking-request.entity';
 
 export enum PickupRequestStatus {
   Requested = 'requested',
   Quoted = 'quoted',
   Confirmed = 'confirmed',
   Picked = 'picked',
+  Cancelled = 'cancelled',
 }
 
 @Entity('pickup_requests')
@@ -28,10 +31,6 @@ export class PickupRequest extends BaseTimestampEntity {
   @ManyToOne(() => User, { eager: true, nullable: false })
   @JoinColumn({ name: 'user_id' })
   user: User;
-
-  @ManyToOne(() => User, { eager: true, nullable: true })
-  @JoinColumn({ name: 'admin_id' })
-  admin: User;
 
   @Column()
   pickup_address: string;
@@ -66,4 +65,10 @@ export class PickupRequest extends BaseTimestampEntity {
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   price: number;
+
+  @OneToMany(
+    () => TrackingRequest,
+    (trackingRequest) => trackingRequest.feature_fid,
+  )
+  trackingRequests: TrackingRequest[];
 }

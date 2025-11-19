@@ -4,12 +4,16 @@ import { UserPreference } from './user-preference.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
+import { Currency } from '../currencies/currency.entity';
+import { CountryCode } from 'src/Countries/country.entity';
 
 @Injectable()
 export class UserPreferencesService {
   constructor(
     @InjectRepository(UserPreference)
     private readonly userPreferenceRepository: Repository<UserPreference>,
+    @InjectRepository(Currency)
+    private readonly currencyRepository: Repository<Currency>,
   ) {}
 
   async create(createUserPreferenceDto: CreateUserPreferenceDto) {
@@ -40,6 +44,14 @@ export class UserPreferencesService {
     };
   }
 
+  async getUserCurrency(userId: string) {
+    const userPreference = await this.userPreferenceRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['currency'],
+    });
+    return userPreference?.currency.currency_symbol;
+  }
+
   async getFormattedConvertedPrice(userId: string, price: number) {
     const userPreference = await this.userPreferenceRepository.findOne({
       where: { user: { id: userId } },
@@ -56,25 +68,61 @@ export class UserPreferencesService {
     return String(price);
   }
 
-  async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {
-    const existing = await this.userPreferenceRepository.findOne({
-      where: { id },
+  async getConvertedPrice(userId: string, price: number) {
+    const userPreference = await this.userPreferenceRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['currency'],
     });
-    if (existing) {
-      return this.userPreferenceRepository.update(id, {
-        currency: { id: updateUserPreferenceDto.currency_id },
-        courier: { id: updateUserPreferenceDto.courier_id },
-        user: { id: updateUserPreferenceDto.user_id },
-      });
-    } else {
-      return this.create({
-        currency_id: updateUserPreferenceDto.currency_id || '',
-        courier_id: updateUserPreferenceDto.courier_id || '',
-        user_id: updateUserPreferenceDto.user_id || '',
-      });
+    const rate = userPreference?.currency.rate;
+    if (rate && price) {
+      const convertedPrice = price * (rate || 0);
+      return convertedPrice;
     }
+    return price;
   }
+
+  async getFormattedConvertedPriceByCountry(
+    countryCode: string,
+    price: number,
+  ) {
+    if (!countryCode || !price) return String(price);
+
+    const currency = await this.currencyRepository.findOne({
+      where: { country: { code: countryCode as CountryCode } },
+      relations: ['country'],
+    });
+
+    if (!currency) return String(price);
+
+    const currency_symbol = currency.currency_symbol;
+    const rate = Number(currency.rate);
+
+    if (!rate || !currency_symbol) return String(price);
+
+    const convertedPrice = Number(price) * rate;
+    return `${convertedPrice.toFixed(2)} ${currency_symbol}`
+  }
+
+  async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {
+    const userPreference = this.userPreferenceRepository.create({
+      id,
+      user: { id: updateUserPreferenceDto.user_id },
+      courier: { id: updateUserPreferenceDto.courier_id },
+      currency: { id: updateUserPreferenceDto.currency_id },
+    });
+
+    return this.userPreferenceRepository.save(userPreference);
+  }
+
   async delete(id: string) {
     return await this.userPreferenceRepository.delete(id);
+  }
+
+  async findByUser(userId: string): Promise<UserPreference | null> {
+    return this.userPreferenceRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['currency', 'courier', 'user'],
+      order: { updated_at: 'DESC' },
+    });
   }
 }

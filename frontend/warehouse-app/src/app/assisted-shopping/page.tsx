@@ -1,44 +1,41 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { ShoppingBag as ShoppingBagIcon, History as HistoryIcon, Search as SearchIcon, Add as AddIcon, Delete as DeleteIcon, HourglassEmpty as HourglassIcon } from '@mui/icons-material';
-import HowItWorksModal from '../../components/Modals/HowItWorksModal/HowItWorksModal';
-import { deleteShoppingRequest, getShoppingRequestsByUser } from '@/lib/api.service';
-import { useSession } from 'next-auth/react';
-import { formatDateTime } from '@/lib/utils';
-import Link from 'next/link';
-import { CircularProgress } from '@mui/material';
-import { toast } from 'sonner';
-import ConfirmDialog from '@/components/Modals/ConfirmDialog';
+import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { CircularProgress } from "@mui/material";
+import { toast } from "sonner";
+import {
+  ShoppingBag as ShoppingBagIcon,
+  History as HistoryIcon,
+  Add as AddIcon,
+} from "@mui/icons-material";
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div role="tabpanel" hidden={value !== index} id={`simple-tabpanel-${index}`} aria-labelledby={`simple-tab-${index}`} {...other}>
-      {value === index && <div className="p-6">{children}</div>}
-    </div>
-  );
-}
+import { deleteShoppingRequest, getShoppingRequestsByUser } from "@/lib/api.service";
+import TabPanel from "../../components/AssistedShopping/TabPanel";
+import SearchBar from "../../components/AssistedShopping/SearchBar";
+import EmptyState from "../../components/AssistedShopping/EmptyState";
+import ShoppingRequestList from "../../components/AssistedShopping/ShoppingRequestList";
+import RequestPagination from "../../components/AssistedShopping/RequestPagination";
+import HowItWorksModal from "../../components/Modals/HowItWorksModal/HowItWorksModal";
+import ConfirmDialog from "@/components/Modals/ConfirmDialog";
 
 export default function AssistedShopping() {
   const { data: session, status } = useSession();
+  
   const [value, setValue] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isHowItWorksModalOpen, setIsHowItWorksModalOpen] = useState(false);
   const [shoppingRequests, setShoppingRequests] = useState<any[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const user_id = (session?.user as any)?.user_id;
 
   const fetchRequests = async () => {
+    if (!user_id) return;
+
     setIsLoading(true);
     try {
       const data = await getShoppingRequestsByUser(user_id);
@@ -51,28 +48,35 @@ export default function AssistedShopping() {
   };
 
   useEffect(() => {
-    if (!user_id || status === "loading") return; 
-    fetchRequests();
-  }, []);
+    if (status === "authenticated" && user_id) {
+      fetchRequests();
+    }
+  }, [user_id, status]);
 
   const handleChange = (newValue: number) => {
     setValue(newValue);
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
   const handleNewShoppingRequest = () => {
     setIsHowItWorksModalOpen(true);
   };
 
-  const handleDeleteRequest = async (requestId: string) => {
+  const handleDeleteClick = (requestId: string) => {
+    setDeleteId(requestId);
+    setConfirmOpen(true);
+  };
+
+  const handleDeleteRequest = async () => {
     if (!deleteId) return;
+    setIsDeleting(true);
 
     try {
-      await deleteShoppingRequest(requestId);
-      setShoppingRequests((prev) => prev.filter((r) => r.id !== requestId));
+      await deleteShoppingRequest(deleteId);
+      setShoppingRequests((prev) => prev.filter((r) => r.id !== deleteId));
       toast.success("Shopping request deleted successfully!");
     } catch (error) {
-      console.error('Error deleting shopping request:', error);
+      console.error("Error deleting shopping request:", error);
       toast.error("Failed to delete request", {
         description:
           error instanceof Error ? error.message : "Please try again later.",
@@ -80,110 +84,22 @@ export default function AssistedShopping() {
     } finally {
       setConfirmOpen(false);
       setDeleteId(null);
+      setIsDeleting(false);
     }
   };
-
-  const tabs = [
-    { label: 'Shopping Requests', count: 1, icon: <ShoppingBagIcon /> },
-    { label: 'History', count: 0, icon: <HistoryIcon /> },
-  ];
-
-  const renderSearchBar = () => (
-    <div className="relative mb-4">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <SearchIcon className="h-5 w-5 text-gray-400" />
-      </div>
-      <input
-        type="text"
-        placeholder="Search by item name"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-      />
-    </div>
-  );
-
-  const renderShoppingRequests = () => (
-    <div className="space-y-4">
-      {shoppingRequests.map((request) => (
-        <Link 
-          href={`/assisted-shopping/${encodeURIComponent(request.request_code)}`} 
-          key={request.request_code}
-          className="block transition-all duration-200 hover:shadow-md hover:border-purple-200 rounded-lg"
-        >
-          <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div>
-                <p className="font-semibold text-gray-900">{request.request_code}</p>
-                <p className="text-sm text-gray-600">{formatDateTime(request.created_at)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">{request.items} Items</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <HourglassIcon className={`w-5 h-5 ${request.statusColor}`} />
-                <span className={`text-sm font-medium ${request.statusColor}`}>{request.status}</span>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.preventDefault(); 
-                  setDeleteId(request.id);
-                  setConfirmOpen(true);
-                }}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <DeleteIcon className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </Link>
-      ))}
-    </div>
-  );
-
-  const renderEmptyState = (icon: React.ReactNode, message: string) => (
-    <div className="flex flex-col items-center justify-center min-h-[300px] text-gray-500">
-      <div className="text-6xl text-gray-300 mb-4">
-        {icon}
-      </div>
-      <h3 className="text-lg font-medium text-gray-600">{message}</h3>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Navigation Tabs */}
-        <div className="bg-purple-700 rounded-lg p-1 mb-3">
-          <div className="flex">
-            {tabs.map((tab, index) => (
-              <button key={tab.label}
-                className={`flex items-center justify-center gap-2 py-1 text-sm font-bold transition-all duration-300 rounded-md flex-1 ${
-                  value === index
-                    ? 'bg-white text-purple-700 shadow-sm'
-                    : 'bg-transparent text-white hover:bg-purple-600'
-                }`}
-                onClick={() => handleChange(index)}
-              >
-                <span className={`text-lg ${value === index ? 'text-purple-700' : 'text-white'}`}>
-                  {tab.icon}
-                </span>
-                <span>{tab.label} ({tab.count})</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Content Area */}
         <div className="bg-white border border-gray-200 rounded-lg min-h-[400px]">
           <TabPanel value={value} index={0}>
             <div className="p-6">
-              {/* Search and Add Button Row */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex-1 max-w-md">
-                  {renderSearchBar()}
+                  <SearchBar
+                    searchTerm={searchTerm}
+                    onSearchTermChange={setSearchTerm}
+                  />
                 </div>
                 <button
                   onClick={handleNewShoppingRequest}
@@ -194,56 +110,57 @@ export default function AssistedShopping() {
                 </button>
               </div>
 
-              {/* Shopping Requests List */}
               {isLoading ? (
-                  <div className="flex justify-center items-center">
-                    <CircularProgress />
-                  </div>
-                ) : shoppingRequests.length > 0 ? (
-                  <>
-                    {renderShoppingRequests()}
-                    
-                    {/* Pagination */}
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-                      <p className="text-sm text-gray-600">
-                        Showing 1 to {shoppingRequests.length} of {shoppingRequests.length} Requests
-                      </p>
-                      <div className="flex space-x-2">
-                        <button className="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded disabled:opacity-50" disabled>
-                          Previous
-                        </button>
-                        <button className="px-3 py-1 text-sm text-gray-500 bg-gray-100 rounded disabled:opacity-50" disabled>
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  </>
+                <div className="flex justify-center items-center">
+                  <CircularProgress />
+                </div>
+              ) : shoppingRequests.length > 0 ? (
+                <>
+                  <ShoppingRequestList
+                    shoppingRequests={shoppingRequests}
+                    searchTerm={searchTerm}
+                    onDeleteClick={handleDeleteClick}
+                  />
+
+                  <RequestPagination count={shoppingRequests.length} />
+                </>
               ) : (
-                renderEmptyState(<ShoppingBagIcon />, 'No Shopping Requests Available')
+                <EmptyState
+                  icon={<ShoppingBagIcon />}
+                  message="No Shopping Requests Available"
+                />
               )}
             </div>
           </TabPanel>
 
           <TabPanel value={value} index={1}>
-            {renderSearchBar()}
-            {renderEmptyState(<HistoryIcon />, 'No History Available')}
+            <div className="p-6">
+              <SearchBar
+                searchTerm={searchTerm}
+                onSearchTermChange={setSearchTerm}
+              />
+              <EmptyState
+                icon={<HistoryIcon />}
+                message="No History Available"
+              />
+            </div>
           </TabPanel>
         </div>
 
-        {/* How It Works Modal */}
         <HowItWorksModal
           isOpen={isHowItWorksModalOpen}
           onClose={() => setIsHowItWorksModalOpen(false)}
         />
 
-        <ConfirmDialog 
+        <ConfirmDialog
           open={confirmOpen}
           title="Delete Request"
           message="Are you sure you want to delete this shopping request? This action cannot be undone."
           confirmText="Delete"
           cancelText="Cancel"
-          onConfirm={() => deleteId && handleDeleteRequest(deleteId)}
+          onConfirm={handleDeleteRequest}
           onClose={() => setConfirmOpen(false)}
+          isLoading={isDeleting}
         />
       </div>
     </div>

@@ -1,9 +1,17 @@
 import React from "react";
 import { Box, Card, Chip, Typography } from "@mui/material";
-import { getStatusColor } from "../../data/shipmentExports";
+import { formatDateTime } from "../../utils/formatDateTime";
+import { getStatusColor } from "../../utils/statusUtils";
+
+interface Shipment {
+  requestCode: string;
+  status: string;
+  boxes?: { id: string }[];
+  created_at: number | string;
+}
 
 interface ShipmentHeaderProps {
-  shipment: any;
+  shipment: Shipment;
 }
 
 const ShipmentHeader: React.FC<ShipmentHeaderProps> = ({ shipment }) => {
@@ -17,13 +25,13 @@ const ShipmentHeader: React.FC<ShipmentHeaderProps> = ({ shipment }) => {
             {shipment.requestCode}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            UFLASH INTERNATIONAL COURIER, India
+            PALAKART INTERNATIONAL COURIER
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             {shipment.boxes?.length || 0} Box / 0 Shipment
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Created at {new Date(shipment.created_at).toLocaleString()}
+            Created at {formatDateTime(shipment.created_at)}
           </Typography>
         </Box>
         <Chip

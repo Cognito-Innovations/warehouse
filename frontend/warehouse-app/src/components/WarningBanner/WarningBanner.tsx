@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { ArrowForward } from '@mui/icons-material';
+import React from "react";
+import Link from "next/link";
+import { ArrowForward } from "@mui/icons-material";
 
 
 export default function ProfileAlert() {

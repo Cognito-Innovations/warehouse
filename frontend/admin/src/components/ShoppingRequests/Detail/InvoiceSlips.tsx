@@ -7,11 +7,22 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { type InvoiceDetails } from "./InvoiceRow";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DownloadIcon from "@mui/icons-material/Download";
 
-export default function InvoiceSlips({ slips }: { slips?: any[] }) {
+interface Slip {
+  id?: string | number;
+  document_url?: string;
+  url?: string;
+  original_filename?: string;
+  name?: string;
+}
+
+interface InvoiceSlipsProps {
+  slips?: Slip[];
+}
+
+export default function InvoiceSlips({ slips }: InvoiceSlipsProps) {
   if (!slips?.length) {
     return (
       <Box>
@@ -44,14 +55,14 @@ export default function InvoiceSlips({ slips }: { slips?: any[] }) {
       </Box>
       
       <Box display="flex" gap={2} flexWrap="wrap">
-        {slips.map((slip, i) => {
-          const url = slip.document_url || slip.url || slip;
-          const filename = slip.original_filename || slip.name || `Slip ${i + 1}`;
+        {slips.map((slip, index) => {
+          const url = slip.document_url || slip.url || "";
+          const filename = slip.original_filename || slip.name || `Slip ${index + 1}`;
           const isImage = url.match(/\.(jpeg|jpg|png|gif|webp)$/i);
           
           return (
             <Card
-              key={slip.id || i}
+              key={slip.id || index}
               variant="outlined"
               sx={{
                 width: 120,

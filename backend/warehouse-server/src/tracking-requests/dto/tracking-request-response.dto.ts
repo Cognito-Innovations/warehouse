@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { FeatureType, TrackingStatus } from '../tracking-request.entity';
-import { User } from '../../users/user.entity';
+import { TrackingStatus } from '../tracking-request.entity';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
+import { UserResponseDto } from 'src/users/dto/user-response.dto';
 
 export class TrackingRequestResponseDto {
   @ApiProperty({
@@ -10,13 +10,6 @@ export class TrackingRequestResponseDto {
     additionalProperties: true,
   })
   id: string;
-
-  @ApiPropertyOptional({
-    description: 'Admin user managing the tracking request',
-    type: 'object',
-    additionalProperties: true,
-  })
-  admin?: User;
 
   @ApiPropertyOptional({
     description: 'Courier that is being tracked',
@@ -30,14 +23,14 @@ export class TrackingRequestResponseDto {
     type: 'object',
     additionalProperties: true,
   })
-  user?: User;
+  user?: UserResponseDto;
 
-  @ApiProperty({
-    description: 'Type of feature being tracked',
-    enum: FeatureType,
-    example: FeatureType.PickupRequest,
-  })
-  feature_type: FeatureType;
+  // @ApiProperty({
+  //   description: 'Type of feature being tracked',
+  //   enum: FeatureType,
+  //   example: FeatureType.PickupRequest,
+  // })
+  // feature_type: FeatureType;
 
   @ApiProperty({
     description: 'Current status of the tracking request',
@@ -46,11 +39,11 @@ export class TrackingRequestResponseDto {
   })
   status: TrackingStatus;
 
-  @ApiProperty({
-    description: 'Feature ID that is being tracked',
-    example: '123e4567-e89b-12d3-a456-426614174002',
-  })
-  feature_fid: string;
+  // @ApiProperty({
+  //   description: 'Feature ID that is being tracked',
+  //   example: '123e4567-e89b-12d3-a456-426614174002',
+  // })
+  // feature_fid: string;
 
   @ApiProperty({
     description: 'Creation timestamp',

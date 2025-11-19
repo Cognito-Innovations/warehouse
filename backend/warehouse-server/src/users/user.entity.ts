@@ -1,6 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  OneToMany,
+} from 'typeorm';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import { IsEmail, MinLength } from 'class-validator';
+import { UserPreference } from 'src/user-preferences/user-preference.entity';
+import { PreArrival } from 'src/pre-arrivals/pre-arrival.entity';
+import { UserAddress } from 'src/user_address/user_address.entity';
 
 export enum Gender {
   Male = 'male',
@@ -11,6 +20,7 @@ export enum Gender {
 export enum Role {
   Admin = 'admin',
   User = 'user',
+  SuperAdmin = 'super_admin',
 }
 
 export enum Identifier {
@@ -32,9 +42,12 @@ export class User extends BaseTimestampEntity {
   password: string;
 
   @Column({ nullable: true })
+  id_card_passport_no: string;
+
+  @Column({ nullable: true })
   name: string;
 
-  @Column()
+  @Column({ type: 'enum', enum: Role, default: Role.User })
   role: Role;
 
   @Column()
@@ -59,6 +72,24 @@ export class User extends BaseTimestampEntity {
   @Column({ default: false })
   verified: boolean;
 
+  @Column({ default: false })
+  email_verified: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  otp: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  otp_expires_at: Date | null;
+
   @Column({ nullable: true })
   last_logout: number;
+
+  @OneToOne(() => UserPreference, (preference) => preference.user)
+  preference: UserPreference;
+
+  @OneToMany(() => PreArrival, (preArrival) => preArrival.user)
+  preArrivals: PreArrival[];
+
+  @OneToMany(() => UserAddress, (address) => address.user)
+  address: UserAddress[];
 }

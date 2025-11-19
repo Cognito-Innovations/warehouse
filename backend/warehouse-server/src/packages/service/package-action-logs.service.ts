@@ -26,20 +26,7 @@ export class PackageActionLogsService {
 
     const savedActionLog = await this.actionLogRepository.save(actionLog);
 
-    return {
-      id: savedActionLog.id,
-      package_id: savedActionLog.package_id,
-      file_name: savedActionLog.file_name,
-      file_url: savedActionLog.file_url,
-      file_type: savedActionLog.file_type,
-      file_size: savedActionLog.file_size,
-      mime_type: savedActionLog.mime_type,
-      uploaded_by: savedActionLog.uploaded_by,
-      is_completed: savedActionLog.is_completed,
-      completed_at: savedActionLog.completed_at,
-      completed_by: savedActionLog.completed_by,
-      uploaded_at: savedActionLog.uploaded_at,
-    };
+    return savedActionLog;
   }
 
   async completeActionLog(
@@ -62,20 +49,7 @@ export class PackageActionLogsService {
 
     const updatedActionLog = await this.actionLogRepository.save(actionLog);
 
-    return {
-      id: updatedActionLog.id,
-      package_id: updatedActionLog.package_id,
-      file_name: updatedActionLog.file_name,
-      file_url: updatedActionLog.file_url,
-      file_type: updatedActionLog.file_type,
-      file_size: updatedActionLog.file_size,
-      mime_type: updatedActionLog.mime_type,
-      uploaded_by: updatedActionLog.uploaded_by,
-      is_completed: updatedActionLog.is_completed,
-      completed_at: updatedActionLog.completed_at,
-      completed_by: updatedActionLog.completed_by,
-      uploaded_at: updatedActionLog.uploaded_at,
-    };
+    return updatedActionLog;
   }
 
   async getActionLogs(
@@ -89,18 +63,7 @@ export class PackageActionLogsService {
     });
 
     return actionLogs.map((log) => ({
-      id: log.id,
-      package_id: log.package_id,
-      file_name: log.file_name,
-      file_url: log.file_url,
-      file_type: log.file_type,
-      file_size: log.file_size,
-      mime_type: log.mime_type,
-      uploaded_by: log.uploaded_by,
-      is_completed: log.is_completed,
-      completed_at: log.completed_at,
-      completed_by: log.completed_by,
-      uploaded_at: log.uploaded_at,
+      ...log
     }));
   }
 

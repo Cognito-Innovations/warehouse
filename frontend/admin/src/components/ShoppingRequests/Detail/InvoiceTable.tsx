@@ -10,8 +10,21 @@ import {
   TableRow,
   Typography,
   Chip,
+  CircularProgress,
 } from "@mui/material";
-import { InvoiceRow, type InvoiceDetails } from "./InvoiceRow";
+import { InvoiceRow } from "./InvoiceRow";
+import type { Invoice, PaymentSlip } from "./RequestDetailContent";
+
+interface InvoiceTableProps {
+  invoice: Invoice;
+  payment_slips: PaymentSlip[];
+  status: string;
+  isApprovingPayment?: boolean;
+  onApprovePayment?: () => void;
+  isDiscarded?: boolean;
+}
+
+type StatusColor = "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning";
 
 export default function InvoiceTable({
   invoice,
@@ -19,17 +32,10 @@ export default function InvoiceTable({
   status,
   isApprovingPayment,
   onApprovePayment,
-  onStatusUpdated,
-}: {
-  id: string;
-  invoice: InvoiceDetails;
-  payment_slips: string[];
-  status: string;
-  isApprovingPayment: boolean;
-  onApprovePayment: () => void;
-  onStatusUpdated: () => void;
-}) {
-  const getStatusColor = (status: string) => {
+  isDiscarded,
+}: InvoiceTableProps) {
+  
+  const getStatusColor = (status: string): StatusColor => {
     switch (status) {
       case "PAYMENT_PENDING":
         return "warning";
@@ -66,26 +72,32 @@ export default function InvoiceTable({
           </Typography>
           <Chip
             label={status.replace("_", " ")}
-            color={getStatusColor(status) as any}
+            color={getStatusColor(status)}
             size="small"
             variant="outlined"
           />
         </Box>
 
-        {/* TODO:P1: Uncomment when functionality is implemented */}
         {status === "PAYMENT_PENDING" && (
           <Button
             variant="contained"
             size="medium"
-            onClick={onApprovePayment}
-            disabled={isApprovingPayment}
+            onClick={isDiscarded ? undefined : onApprovePayment}
+            disabled={isDiscarded ||isApprovingPayment}
             sx={{
               textTransform: "none",
               fontWeight: 600,
               px: 3,
             }}
           >
-            {isApprovingPayment ? "Approving..." : "Approve Payment"}
+            {isApprovingPayment ? (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CircularProgress size={20} color="inherit" />
+                Approving...
+              </Box>
+            ) : (
+              "Approve Payment"
+            )}
           </Button>
         )}
       </Box>
@@ -105,9 +117,11 @@ export default function InvoiceTable({
               <TableCell sx={{ fontWeight: 600, width: 50 }}>Details</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Invoice No.</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">Amount</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">GST</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">Total</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="center">Status</TableCell>
+              {/* 
+              TODO: Add status column when functionality is implemented i.e for shipping its not working properly
+              <TableCell sx={{ fontWeight: 600 }} align="center">Status</TableCell> 
+              */}
               <TableCell sx={{ fontWeight: 600 }} align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -117,7 +131,7 @@ export default function InvoiceTable({
               invoice={invoice}
               payment_slips={payment_slips}
               status={status}
-              onStatusUpdated={onStatusUpdated}
+              isDiscarded={isDiscarded}
             />
           </TableBody>
         </Table>

@@ -1,6 +1,7 @@
 "use client";
-import { getCountries } from "@/lib/api.service";
+import { getCountries, getUserPreferences } from "@/lib/api.service";
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
+import { useAuth } from "./AuthContext";
 
 // Types
 export interface AddressData {
@@ -33,15 +34,16 @@ export interface AddressState {
 
 // Action Types
 export type AddressAction =
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SET_COUNTRIES'; payload: Country[] }
-  | { type: 'SET_ADDRESSES'; payload: AddressData[] }
-  | { type: 'SELECT_COUNTRY'; payload: string }
-  | { type: 'SELECT_ADDRESS'; payload: AddressData }
-  | { type: 'UPDATE_ADDRESS'; payload: AddressData }
-  | { type: 'ADD_ADDRESS'; payload: AddressData }
-  | { type: 'REMOVE_ADDRESS'; payload: string };
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_ERROR"; payload: string | null }
+  | { type: "SET_COUNTRIES"; payload: Country[] }
+  | { type: "SET_ADDRESSES"; payload: AddressData[] }
+  | { type: "SELECT_COUNTRY"; payload: string }
+  | { type: "SELECT_ADDRESS"; payload: AddressData }
+  | { type: "UPDATE_ADDRESS"; payload: AddressData }
+  | { type: "ADD_ADDRESS"; payload: AddressData }
+  | { type: "REMOVE_ADDRESS"; payload: string }
+  | { type: "LOAD_USER_PREFERENCES_SUCCESS"; payload: AddressData }
 
 const initialAddress: AddressData = {
   country_id: "",
@@ -67,6 +69,19 @@ const initialState: AddressState = {
   error: null,
 };
 
+const mapCourierToAddress = (courier: any): AddressData => {
+  return {
+    id: courier.id ?? "",
+    country_id: courier.country?.id ?? courier.country_id ?? "",
+    name: courier.name ?? (courier.company_name ?? ""),
+    address: courier.address ?? courier.location ?? "",
+    country_name: courier.country?.name ?? courier.country_name ?? courier.countryName ?? "",
+    country_code: courier.country?.code ?? courier.country_code ?? courier.countryCode ?? "",
+    country_phone_code: courier.country?.phone_code ?? courier.country_phone_code ?? courier.countryPhoneCode ?? "",
+    phone_number: courier.phone_number ?? courier.contact_number ?? courier.phone ?? "",
+  };
+};
+
 // Reducer
 function addressReducer(state: AddressState, action: AddressAction): AddressState {
 
@@ -85,7 +100,9 @@ function addressReducer(state: AddressState, action: AddressAction): AddressStat
       return { 
         ...state, 
         savedAddresses: action.payload,
-        selectedAddress: action.payload.length > 0 ? action.payload[0] : initialAddress,
+        selectedAddress: state.selectedAddress?.id
+          ? state.selectedAddress
+          : (action.payload.length > 0 ? action.payload[0] : initialAddress),
         isLoading: false 
       };
     
@@ -93,7 +110,6 @@ function addressReducer(state: AddressState, action: AddressAction): AddressStat
       return { 
         ...state, 
         selectedCountry: action.payload,
-        error: null 
       };
     
     case "SELECT_ADDRESS":
@@ -124,6 +140,14 @@ function addressReducer(state: AddressState, action: AddressAction): AddressStat
           ? initialAddress 
           : state.selectedAddress
       };
+
+    case "LOAD_USER_PREFERENCES_SUCCESS":
+      return { 
+        ...state, 
+        selectedAddress: action.payload, 
+        isLoading: false,
+        error: null 
+      };
     
     default:
       return state;
@@ -141,8 +165,29 @@ interface AddressProviderProps {
   children: ReactNode;
 }
 
+const loadUserPreferences = async (userId: string, dispatch: React.Dispatch<AddressAction>) => {
+  dispatch({ type: "SET_LOADING", payload: true });
+  try {
+    const prefs = await getUserPreferences(userId);
+    
+    if (prefs?.courier) {
+      const mappedAddress = {
+        ...mapCourierToAddress(prefs.courier),
+        suite_no: prefs?.user?.suite_no || "",
+      };
+      dispatch({ type: "LOAD_USER_PREFERENCES_SUCCESS", payload: mappedAddress });
+    } else {
+      dispatch({ type: "SET_LOADING", payload: false });
+    }
+  } catch (error) {
+    console.error("[ADDRESS_CONTEXT] Failed to load user preferences:", error);
+    dispatch({ type: "SET_ERROR", payload: "Failed to load address details. Please try again." });
+  }
+};
+
 export const AddressProvider: React.FC<AddressProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(addressReducer, initialState);
+  const { user } = useAuth();
 
   // Load saved country from localStorage on mount
   useEffect(() => {
@@ -174,6 +219,14 @@ export const AddressProvider: React.FC<AddressProviderProps> = ({ children }) =>
   useEffect(() => {
     fetchCountries();
   }, []);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadUserPreferences(user.id, dispatch);
+    } else {
+      dispatch({ type: "SELECT_ADDRESS", payload: initialAddress });
+    }
+  }, [user?.id]);
 
   return (
     <AddressContext.Provider value={{ state, dispatch }}>
@@ -212,9 +265,15 @@ export const useAvailableCountries = () => {
   return state.availableCountries;
 };
 
+export const useAddressLoading = () => {
+  const { state } = useAddress();
+  return state.isLoading;
+};
+
 // Action Creators
 export const useAddressActions = () => {
   const { dispatch } = useAddress();
+  const { user } = useAuth();
 
   return {
     setLoading: (loading: boolean) => 
@@ -243,5 +302,11 @@ export const useAddressActions = () => {
     
     removeAddress: (id: string) => 
       dispatch({ type: "REMOVE_ADDRESS", payload: id }),
+
+     refreshUserPreferences: async () => {
+      if (user?.id) {
+        await loadUserPreferences(user.id, dispatch);
+      }
+    }
   };
 };

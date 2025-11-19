@@ -2,10 +2,12 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PreArrival } from './pre-arrival.entity';
+import { User } from 'src/users/user.entity';
 import { CreatePreArrivalDto } from './dto/create-pre-arrival.dto';
 import { PreArrivalResponseDto } from './dto/pre-arrival-response.dto';
 
@@ -14,77 +16,74 @@ export class PreArrivalService {
   constructor(
     @InjectRepository(PreArrival)
     private readonly preArrivalRepository: Repository<PreArrival>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
+
+  private mapToResponseDto(preArrival: PreArrival): PreArrivalResponseDto {
+    const { user, ...rest } = preArrival;
+
+    if (!user) {
+      throw new InternalServerErrorException(
+        `User data not loaded for PreArrival ID: ${preArrival.id}`,
+      );
+    }
+
+    return {
+      ...rest,
+      user: user.name,
+      suite: user.suite_no,
+    };
+  }
 
   async createPrearrival(
     createPreArrivalDto: CreatePreArrivalDto,
   ): Promise<PreArrivalResponseDto> {
+    const { userId, ...restOfDto } = createPreArrivalDto;
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
     const preArrival = this.preArrivalRepository.create({
-      ...createPreArrivalDto,
+      ...restOfDto,
+      user,
       status: createPreArrivalDto.status || 'pending',
     });
 
     const savedPreArrival = await this.preArrivalRepository.save(preArrival);
+    savedPreArrival.user = user; 
 
-    return {
-      id: savedPreArrival.id,
-      customer: savedPreArrival.customer,
-      suite: savedPreArrival.suite,
-      otp: savedPreArrival.otp,
-      tracking_no: savedPreArrival.tracking_no,
-      estimate_arrival_time: savedPreArrival.estimate_arrival_time,
-      details: savedPreArrival.details,
-      status: savedPreArrival.status,
-      created_at: savedPreArrival.created_at,
-      updated_at: savedPreArrival.updated_at,
-    };
+    return this.mapToResponseDto(savedPreArrival);
   }
 
   async getAllPrearrival(): Promise<PreArrivalResponseDto[]> {
     const preArrivals = await this.preArrivalRepository.find({
+      relations: ['user'],
       order: { created_at: 'DESC' },
     });
 
-    return preArrivals.map((preArrival) => ({
-      id: preArrival.id,
-      customer: preArrival.customer,
-      suite: preArrival.suite,
-      otp: preArrival.otp,
-      tracking_no: preArrival.tracking_no,
-      estimate_arrival_time: preArrival.estimate_arrival_time,
-      details: preArrival.details,
-      status: preArrival.status,
-      created_at: preArrival.created_at,
-      updated_at: preArrival.updated_at,
-    }));
+    return preArrivals.map((preArrival) => this.mapToResponseDto(preArrival));
   }
 
-  async getOTPById(id: string): Promise<PreArrivalResponseDto> {
+  async getPreArrivalById(id: string): Promise<PreArrivalResponseDto> {
     const preArrival = await this.preArrivalRepository.findOne({
       where: { id },
+      relations: ['user'],
     });
 
     if (!preArrival) {
       throw new NotFoundException(`Pre-arrival with id ${id} not found`);
     }
 
-    return {
-      id: preArrival.id,
-      customer: preArrival.customer,
-      suite: preArrival.suite,
-      otp: preArrival.otp,
-      tracking_no: preArrival.tracking_no,
-      estimate_arrival_time: preArrival.estimate_arrival_time,
-      details: preArrival.details,
-      status: preArrival.status,
-      created_at: preArrival.created_at,
-      updated_at: preArrival.updated_at,
-    };
+    return this.mapToResponseDto(preArrival);
   }
 
   async updateStatusToReceived(id: string): Promise<PreArrivalResponseDto> {
     const preArrival = await this.preArrivalRepository.findOne({
       where: { id },
+      relations: ['user'],
     });
 
     if (!preArrival) {
@@ -100,17 +99,26 @@ export class PreArrivalService {
     preArrival.status = 'received';
     const updatedPreArrival = await this.preArrivalRepository.save(preArrival);
 
-    return {
-      id: updatedPreArrival.id,
-      customer: updatedPreArrival.customer,
-      suite: updatedPreArrival.suite,
-      otp: updatedPreArrival.otp,
-      tracking_no: updatedPreArrival.tracking_no,
-      estimate_arrival_time: updatedPreArrival.estimate_arrival_time,
-      details: updatedPreArrival.details,
-      status: updatedPreArrival.status,
-      created_at: updatedPreArrival.created_at,
-      updated_at: updatedPreArrival.updated_at,
-    };
+    return this.mapToResponseDto(updatedPreArrival);
+  }
+
+  async getPreArrivalsByUser(userId: string): Promise<PreArrivalResponseDto[]> {
+    const preArrivals = await this.preArrivalRepository.find({
+      where: { user: { id: userId } },
+      relations: ['user'],
+      order: { created_at: 'DESC' },
+    });
+
+    return preArrivals.map((preArrival) => this.mapToResponseDto(preArrival));
+  }
+
+  async deletePreArrival(id: string): Promise<void> {
+    const preArrival = await this.preArrivalRepository.findOne({
+      where: { id },
+    });
+    if (!preArrival) {
+      throw new NotFoundException(`Pre-arrival with id ${id} not found`);
+    }
+    await this.preArrivalRepository.remove(preArrival);
   }
 }

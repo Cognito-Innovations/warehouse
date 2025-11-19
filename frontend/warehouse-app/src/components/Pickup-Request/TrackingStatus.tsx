@@ -1,49 +1,29 @@
-'use client';
+"use client";
 
-import { Box, Typography } from '@mui/material';
-import { CheckCircle } from '@mui/icons-material';
-import { formatDateTime } from '@/lib/utils';
+import { Box, Typography } from "@mui/material";
+import { CheckCircle } from "@mui/icons-material";
+import { formatDateTime } from "@/lib/utils";
 
 interface TrackingStatusProps {
   details: any;
 }
 
 export default function TrackingStatus({ details }: TrackingStatusProps) {
-  const steps = [
-    {
-      key: 'REQUESTED',
-      label: 'REQUESTED',
-      description: formatDateTime(details.created_at),
-    },
-    {
-      key: 'QUOTED',
-      label: 'QUOTATION READY',
-      description: details.price
-        ? `Quotation: ${details.price}`
-        : 'Waiting for quotation',
-    },
-    {
-      key: 'CONFIRMED',
-      label: 'CONFIRMED',
-      description: details.confirmed_at
-        ? formatDateTime(details.confirmed_at)
-        : 'Waiting for confirmation',
-    },
-    {
-      key: 'PICKED',
-      label: 'PICKED',
-      description: details.picked_at
-        ? formatDateTime(details.picked_at)
-        : 'Waiting for pickup',
-    },
+  const TRACKING_STEPS = [
+    { label: "Requested", defaultDescription: "Awaiting confirmation" },
+    { label: "Quotation Ready", defaultDescription: "Quotation is not ready yet!" },
+    { label: "Confirmed", defaultDescription: "Waiting for user confirmation!" },
+    { label: "Picked", defaultDescription: "Package has not been picked up yet." },
   ];
 
-  const currentStatus =
-    details.status?.toUpperCase() === 'QUOTATION READY'
-      ? 'QUOTED'
-      : details.status?.toUpperCase();
-      
-  const activeIndex = steps.findIndex((s) => s.key === currentStatus);
+  const STATUS_MAPPING: Record<string, string> = {
+    REQUESTED: "Requested",
+    QUOTED: "Quotation Ready",
+    CONFIRMED: "Confirmed",
+    PICKED: "Picked",
+  };
+  
+  const trackingRequests = details?.tracking_requests || [];
 
   return (
     <Box sx={{ p: 1 }}>
@@ -51,54 +31,52 @@ export default function TrackingStatus({ details }: TrackingStatusProps) {
         Tracking
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {steps.map((step, index) => {
-          const isActive = activeIndex === index;
-          const isCompleted = activeIndex > index;
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {TRACKING_STEPS.map((step, index) => {
+          const historyItem = trackingRequests.find(
+            (track: any) =>
+              STATUS_MAPPING[track.status.toUpperCase()]?.toLowerCase() ===
+              step.label.toLowerCase()
+          );
+
+          const isCompleted = Boolean(historyItem);
+
+          const description = historyItem
+            ? formatDateTime(historyItem.created_at)
+            : step.defaultDescription;
 
           return (
-            <Box key={step.key} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <Box key={step.label} sx={{ display: "flex", alignItems: "flex-start" }}>
               <Box
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                   mr: 2,
                 }}
               >
-                {isActive ? (
-                  <CheckCircle sx={{ color: '#3B82F6', zIndex: 1 }} />
+                {isCompleted ? (
+                  <CheckCircle sx={{ color: "#3B82F6", zIndex: 1 }} />
                 ) : (
                   <Box
                     sx={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: '50%',
-                      border: '2px solid #BDBDBD',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      border: "2px solid #BDBDBD",
+                      backgroundColor: "background.paper",
                       zIndex: 1,
                     }}
-                  >
-                    <Box
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        backgroundColor: isCompleted ? '#3B82F6' : '#BDBDBD',
-                      }}
-                    />
-                  </Box>
+                  />
                 )}
 
-                {index < steps.length - 1 && (
+                {index < TRACKING_STEPS.length - 1 && (
                   <Box
                     sx={{
-                      flexGrow: 1,
-                      width: '2px',
-                      backgroundColor: isCompleted ? '#3B82F6' : '#E0E0E0',
-                      minHeight: 24,
+                      width: "2px",
+                      mt: "-4px",
+                      height: "32px",
+                      backgroundColor: isCompleted ? "#3B82F6" : "#E0E0E0",
                     }}
                   />
                 )}
@@ -109,7 +87,7 @@ export default function TrackingStatus({ details }: TrackingStatusProps) {
                   variant="body2"
                   sx={{
                     fontWeight: 600,
-                    color: isActive ? '#3B82F6' : '#424242',
+                    color: isCompleted ? "#3B82F6" : "text.primary",
                   }}
                 >
                   {step.label}
@@ -117,10 +95,10 @@ export default function TrackingStatus({ details }: TrackingStatusProps) {
                 <Typography
                   variant="caption"
                   sx={{
-                    color: isActive ? '#3B82F6' : 'text.secondary',
+                    color: isCompleted ? "#3B82F6" : "text.secondary",
                   }}
                 >
-                  {step.description}
+                  {description}
                 </Typography>
               </Box>
             </Box>

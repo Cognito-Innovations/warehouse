@@ -38,7 +38,7 @@ export default function FilterDropdown({ options, onSelect, buttonLabel = "Filte
         <div className="absolute z-50 right-0 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
           <div className="py-1">
             {options.map((opt) => (
-              <button key={opt.value} type="button" onClick={() => { onSelect?.(opt), setOpen(false) }}
+              <button key={opt.value} type="button" onClick={() => { onSelect?.(opt), setOpen(false); }}
                 className="text-gray-900 group flex w-full items-center rounded-md px-4 py-2 text-sm hover:bg-gray-100">
                 {opt.label}
               </button>

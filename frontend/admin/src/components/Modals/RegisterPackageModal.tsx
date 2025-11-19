@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PackageInfoModal from "./PackageInfoModal";
 import type { Rack, Supplier, User } from "../../types";
-import { createPackage, getRacks, getSuppliers, getUsers } from "../../services/api.services";
+import { createPackage, getRacks, getSuppliers, getUsers, type CreatePackageDto } from "../../services/api.services";
 import { toast } from "sonner";
 
 import { Close as CloseIcon } from "@mui/icons-material";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box, CircularProgress } from "@mui/material";
 import FormFields from "./RegisterPackageModal/FormFields";
 
 import WeightSection from "./RegisterPackageModal/WeightSection";
-import OptionsSection from "./RegisterPackageModal/OptionsSection";
 import AddSupplierModal from "./RegisterPackageModal/AddSupplierModal";
+import OptionsSection from "./RegisterPackageModal/OptionsSection";
 
 interface RegisterPackageModalProps {
   open: boolean;
@@ -20,7 +20,7 @@ interface RegisterPackageModalProps {
 
 const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClose, onPackageCreated }) => {
   const [formData, setFormData] = useState({
-    customer: "",
+    user: "",
     rackSlot: "",
     trackingNo: "",
     vendor: "",
@@ -29,7 +29,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     width: "",
     height: "",
     volumetricWeight: "",
-    allowCustomerItems: false,
+    allowUserItems: false,
     shopInvoiceReceived: false,
     remarks: "",
   });
@@ -46,11 +46,21 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
   const [packageInfoOpen, setPackageInfoOpen] = useState(false);
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [racksLoading, setRacksLoading] = useState(false);
+  const [suppliersLoading, setSuppliersLoading] = useState(false);
 
   const fetchUsers = async () => {
     try {
       const data = await getUsers();
-      setUsers(data);
+      const filteredUsers = data.filter(
+        (user: User) =>
+          user.name &&
+          user.name.trim() !== "" &&
+          user.suite_no &&
+          user.suite_no.trim() !== ""
+      );
+      setUsers(filteredUsers);
     } catch (err) {
       console.error("Failed to fetch users", err);
     }
@@ -74,20 +84,32 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     }
   };
 
+  const handleOpenUsers = useCallback(async () => {
+    if (users.length > 0 || usersLoading) return;
+    setUsersLoading(true);
+    await fetchUsers();
+    setUsersLoading(false);
+  }, [usersLoading]);
 
-  useEffect(() => {
-    if (open) {
-      fetchUsers();
-      fetchRacks();
-      fetchSuppliers();
-    }
-  }, [open]);
+  const handleOpenRacks = useCallback(async () => {
+    if (racks.length > 0 || racksLoading) return;
+    setRacksLoading(true);
+    await fetchRacks();
+    setRacksLoading(false);
+  }, [racksLoading]);
+
+  const handleOpenSuppliers = useCallback(async () => {
+    if (suppliers.length > 0 || suppliersLoading) return;
+    setSuppliersLoading(true);
+    await fetchSuppliers();
+    setSuppliersLoading(false);
+  }, [suppliersLoading]);
 
   // Reset form data when modal opens
   useEffect(() => {
     if (open) {
       setFormData({
-        customer: "",
+        user: "",
         rackSlot: "",
         trackingNo:"",
         vendor: "",
@@ -96,7 +118,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
         width: "",
         height: "",
         volumetricWeight: "",
-        allowCustomerItems: false,
+        allowUserItems: false,
         shopInvoiceReceived: false,
         remarks: "",
       });
@@ -111,8 +133,8 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     // Validate required fields
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.customer) {
-      newErrors.customer = "Select Customer is required";
+    if (!formData.user) {
+      newErrors.user = "Select Customer is required";
     }
     if (!formData.rackSlot) {
       newErrors.rackSlot = "Rack Slot is required";
@@ -120,12 +142,34 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     if (!formData.vendor) {
       newErrors.vendor = "Select Vendor is required";
     }
+    if (!formData.trackingNo) {
+      newErrors.trackingNo = "Reference Tracking is required";
+    }
+    if (formData.trackingNo.length < 5 || formData.trackingNo.length > 15) {
+      newErrors.trackingNo = "Tracking number must be between 5 and 15 characters.";
+    }
 
     // Check if at least one piece has weight
-    const hasWeight = pieces.some(piece => piece.weight && parseFloat(piece.weight) > 0);
-    if (!hasWeight) {
-      newErrors.weight = "Weight can't be empty";
-    }
+    pieces.forEach((piece, idx) => {
+      if (!piece.weight || parseFloat(piece.weight) <= 0) {
+        newErrors[`piece_${idx}_weight`] = "Weight is required";
+      }
+
+      const hasSomeDimension = piece.length || piece.width || piece.height;
+      const hasAllDimensions = piece.length && piece.width && piece.height;
+
+      if (hasSomeDimension && !hasAllDimensions) {
+        if (!piece.length) {
+          newErrors[`piece_${idx}_length`] = "Length is required.";
+        }
+        if (!piece.width) {
+          newErrors[`piece_${idx}_width`] = "Width is required.";
+        }
+        if (!piece.height) {
+          newErrors[`piece_${idx}_height`] = "Height is required.";
+        }
+      }
+    });
 
     setErrors(newErrors);
 
@@ -147,8 +191,8 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
         return sum + (parseFloat(volWeight) || 0);
       }, 0);
 
-      const payload = {
-        user: formData.customer,
+      const payload: CreatePackageDto = {
+        user: formData.user,
         rack_slot: formData.rackSlot,
         tracking_no: formData.trackingNo,
         vendor: formData.vendor,
@@ -157,7 +201,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
         width: pieces[0]?.width || "",
         height: pieces[0]?.height || "",
         volumetric_weight: totalVolWeight.toString(),
-        allow_user_items: formData.allowCustomerItems,
+        allow_user_items: formData.allowUserItems,
         shop_invoice_received: formData.shopInvoiceReceived,
         remarks: formData.remarks,
         pieces: pieces.map(piece => ({
@@ -173,9 +217,18 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       toast.success("Package registered successfully!");
       onPackageCreated?.(); // Refresh the data
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to register package", err);
-      toast.error("Failed to register package. Please try again.");
+
+      const errorMessage = err?.response?.data?.message;
+      if (errorMessage && errorMessage.toLowerCase().includes("tracking number") && errorMessage.toLowerCase().includes("already exists")) {
+        setErrors((prev) => ({
+          ...prev,
+          trackingNo: errorMessage,
+        }));
+      } else {
+        toast.error(errorMessage || "Failed to register package. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -183,9 +236,9 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
 
   const handleInputChange = (field: string, value: string | boolean) => {
     // Validate that the value exists in the available options for select fields
-    if (field === "customer" && typeof value === "string") {
+    if (field === "user" && typeof value === "string") {
       if (value && !users.some(user => user.id === value)) {
-        return; // Don't set invalid customer value
+        return; // Don't set invalid user value
       }
     }
     if (field === "rackSlot" && typeof value === "string") {
@@ -209,17 +262,34 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
   const handlePieceChange = (index: number, field: string, value: string) => {
     setPieces((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
+      const updatedPiece = { ...next[index], [field]: value };
+      next[index] = updatedPiece;
 
       // Auto-calculate volumetric weight when dimensions change
-      if (field === 'length' || field === 'width' || field === 'height') {
-        const piece = next[index];
-        const volWeight = calculateVolumetricWeight(piece.length, piece.width, piece.height);
-        next[index].volumetricWeight = volWeight;
+      if (['length', 'width', 'height'].includes(field)) {
+        const volWeight = calculateVolumetricWeight(updatedPiece.length, updatedPiece.width, updatedPiece.height);
+        updatedPiece.volumetricWeight = volWeight;
       }
-
       return next;
     });
+    const isVolumetricField = ['length', 'width', 'height'].includes(field);
+  
+    const changedPiece = { ...pieces[index], [field]: value };
+    const areAllVolumetricFieldsEmpty = !changedPiece.length && !changedPiece.width && !changedPiece.height;
+
+    if (isVolumetricField && areAllVolumetricFieldsEmpty) {
+      setErrors((prev) => ({
+        ...prev,
+        [`piece_${index}_length`]: "",
+        [`piece_${index}_width`]: "",
+        [`piece_${index}_height`]: "",
+      }));
+    } else {
+      const errorKey = `piece_${index}_${field}`;
+      if (errors[errorKey]) {
+        setErrors((prev) => ({ ...prev, [errorKey]: "" }));
+      }
+    }
   };
 
   const handleAddPiece = () => {
@@ -286,7 +356,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       >
       <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 2 }}>
         <Typography component="span" sx={{ fontWeight: 600, fontSize: "1.25rem" }}>
-          Register Package
+          Register Package  
         </Typography>
         <IconButton onClick={onClose} size="small" disabled={isSubmitting}>
           <CloseIcon />
@@ -295,7 +365,7 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
 
       <Divider />
 
-      <DialogContent sx={{ pt: 3 }}>
+      <DialogContent sx={{ pt: 3, minHeight: "400px" }}>
         <Grid container spacing={2}>
           <FormFields
             formData={formData}
@@ -305,6 +375,12 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
             suppliers={suppliers}
             onInputChange={handleInputChange}
             onAddSupplier={handleAddSupplier}
+            usersLoading={usersLoading}
+            racksLoading={racksLoading}
+            suppliersLoading={suppliersLoading}
+            onOpenUsers={handleOpenUsers}
+            onOpenRacks={handleOpenRacks}
+            onOpenSuppliers={handleOpenSuppliers}
           />
 
           <WeightSection
@@ -316,10 +392,10 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
             errors={errors}
           />
 
-          <OptionsSection
-            formData={formData}
-            onInputChange={handleInputChange}
-          />
+        <OptionsSection
+          formData={formData}
+          onInputChange={handleInputChange}
+        />
         </Grid>
       </DialogContent>
 

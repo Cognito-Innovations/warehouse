@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import React from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   Box,
   List,
@@ -11,28 +11,28 @@ import {
   ListItemIcon,
   ListItemText,
   Paper,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Person,
-  Lock,
   LocationOn,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 const menuItems = [
   {
-    label: 'Profile',
+    label: "Profile",
     icon: <Person />,
-    href: '/profile',
+    href: "/profile",
   },
+  //TODO: Password is misleading because google auth won't have password
+  // {
+  //   label: "Password",
+  //   icon: <Lock />,
+  //   href: "/profile/password",
+  // },
   {
-    label: 'Password',
-    icon: <Lock />,
-    href: '/profile/password',
-  },
-  {
-    label: 'Addresses',
+    label: "Addresses",
     icon: <LocationOn />,
-    href: '/profile/addresses',
+    href: "/profile/addresses",
   },
 ];
 
@@ -43,14 +43,14 @@ export default function ProfileSidebar() {
     <Paper
       sx={{
         width: 280,
-        height: '100%',
-        bgcolor: 'background.paper',
+        height: "100%",
+        bgcolor: "background.paper",
         borderRadius: 0,
-        boxShadow: 'none',
-        borderRight: '1px solid',
-        borderColor: 'grey.200',
-        display: 'flex',
-        flexDirection: 'column',
+        boxShadow: "none",
+        borderRight: "1px solid",
+        borderColor: "grey.200",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <List sx={{ p: 2, flex: 1 }}>
@@ -63,19 +63,19 @@ export default function ProfileSidebar() {
                 component={Link}
                 href={item.href}
                 sx={{
-                  borderRadius: '8px',
+                  borderRadius: "8px",
                   py: 1.5,
                   px: 2,
-                  bgcolor: isActive ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
-                  color: isActive ? 'primary.main' : 'grey.700',
-                  '&:hover': {
-                    bgcolor: isActive ? 'rgba(139, 92, 246, 0.15)' : 'grey.50',
+                  bgcolor: isActive ? "rgba(139, 92, 246, 0.1)" : "transparent",
+                  color: isActive ? "primary.main" : "grey.700",
+                  "&:hover": {
+                    bgcolor: isActive ? "rgba(139, 92, 246, 0.15)" : "grey.50",
                   },
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    color: isActive ? 'primary.main' : 'grey.500',
+                    color: isActive ? "primary.main" : "grey.500",
                     minWidth: 36,
                   }}
                 >
@@ -84,8 +84,8 @@ export default function ProfileSidebar() {
                 <ListItemText
                   primary={item.label}
                   sx={{
-                    '& .MuiListItemText-primary': {
-                      fontSize: '0.875rem',
+                    "& .MuiListItemText-primary": {
+                      fontSize: "0.875rem",
                       fontWeight: isActive ? 600 : 500,
                     },
                   }}

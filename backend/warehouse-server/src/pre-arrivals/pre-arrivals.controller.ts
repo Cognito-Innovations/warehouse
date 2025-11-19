@@ -1,5 +1,13 @@
 import { PreArrivalService } from './pre-arrivals.service';
-import { Body, Controller, Get, Post, Param, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -28,8 +36,7 @@ export class PreArrivaController {
       Example1: {
         summary: 'Pending Pre-Arrival',
         value: {
-          customer: 'John Doe',
-          suite: 'A101',
+          userId: '5aea64b1-3fbd-450d-9f76-2f29efee815f',
           otp: 123456,
           tracking_no: 'TRACK12345',
           estimate_arrival_time: '2025-09-08T12:00:00Z',
@@ -62,8 +69,10 @@ export class PreArrivaController {
     type: PreArrivalResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Pre-arrival not found' })
-  async getOtpById(@Param('id') id: string): Promise<PreArrivalResponseDto> {
-    return this.preArrivalService.getOTPById(id);
+  async getPreArrivalById(
+    @Param('id') id: string
+  ): Promise<PreArrivalResponseDto> {
+    return this.preArrivalService.getPreArrivalById(id);
   }
 
   @Patch(':id')
@@ -81,5 +90,28 @@ export class PreArrivaController {
     @Param('id') id: string,
   ): Promise<PreArrivalResponseDto> {
     return this.preArrivalService.updateStatusToReceived(id);
+  }
+
+  @Get('user/:userId')
+  @ApiOperation({ summary: 'Get all pre-arrival OTPs by user name' })
+  @ApiOkResponse({
+    description: 'List of OTPs for the user',
+    type: [PreArrivalResponseDto],
+  })
+  async getPreArrivalByUser(
+    @Param('userId') userId: string
+  ): Promise<PreArrivalResponseDto[]> {
+    return this.preArrivalService.getPreArrivalsByUser(userId);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a pre-arrival by ID' })
+  @ApiOkResponse({ description: 'Pre-arrival deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Pre-arrival not found' })
+  async deletePreArrival(
+    @Param('id') id: string
+  ): Promise<{ message: string }> {
+    await this.preArrivalService.deletePreArrival(id);
+    return { message: 'Pre-arrival deleted successfully' };
   }
 }

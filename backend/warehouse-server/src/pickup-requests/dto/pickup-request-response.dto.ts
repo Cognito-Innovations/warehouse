@@ -1,37 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PickupRequestStatus } from '../pickup-request.entity';
-
-class UserInfoDto {
-  @ApiProperty({
-    description: 'User email address',
-    example: 'john.doe@example.com',
-  })
-  email: string;
-
-  @ApiPropertyOptional({
-    description: 'User full name',
-    example: 'John Doe',
-  })
-  name?: string;
-
-  @ApiProperty({
-    description: 'User phone number',
-    example: '+1-555-123-4567',
-  })
-  phone_number: string;
-
-  @ApiPropertyOptional({
-    description: 'User country',
-    example: 'United States',
-  })
-  country?: string;
-
-  @ApiProperty({
-    description: 'User creation date',
-    example: '2024-01-15T10:30:00Z',
-  })
-  created_at: number;
-}
+import { TrackingRequestResponseDto } from 'src/tracking-requests/dto/tracking-request-response.dto';
+import { UserResponseDto } from 'src/users/dto/user-response.dto';
 
 export class PickupRequestResponseDto {
   @ApiProperty({
@@ -98,7 +68,7 @@ export class PickupRequestResponseDto {
     description: 'Price for the pickup service',
     example: '25.5 $',
   })
-  price?: string;
+  price?: number;
 
   @ApiPropertyOptional({
     description: 'Status of the pickup request',
@@ -126,7 +96,14 @@ export class PickupRequestResponseDto {
 
   @ApiPropertyOptional({
     description: 'User information who created the request',
-    type: UserInfoDto,
+    type: UserResponseDto,
   })
-  user?: UserInfoDto;
+  user?: UserResponseDto;
+
+  //TODO: Why does it optional ?
+  @ApiPropertyOptional({
+    description: 'History of tracking updates for the pickup request',
+    type: [TrackingRequestResponseDto],
+  })
+  tracking_requests?: TrackingRequestResponseDto[];
 }

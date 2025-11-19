@@ -18,10 +18,17 @@ export default [
   
   // Custom rules are defined here.
   {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: __dirname,
+      },
+    },
     rules: {
       semi: ["error", "always"],
-      quotes: ["error", "double"],
+      quotes: ["error", "double", { "avoidEscape": true }],
       "prefer-arrow-callback": ["error"],
+      "@next/next/no-img-element": "off",
       "prefer-template": ["error"],
     },
   },

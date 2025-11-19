@@ -1,18 +1,18 @@
-'use client';
-import React, { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+"use client";
+import React, { useState } from "react";
+import { Copy, Check } from "lucide-react";
 
 interface CopyButtonProps {
   text: string;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   showText?: boolean;
 }
 
 const CopyButton: React.FC<CopyButtonProps> = ({ 
   text, 
-  className = '', 
-  size = 'md',
+  className = "", 
+  size = "md",
   showText = false 
 }) => {
   const [copied, setCopied] = useState(false);
@@ -27,13 +27,13 @@ const CopyButton: React.FC<CopyButtonProps> = ({
         setCopied(false);
       }, 2000);
     } catch (err) {
-      console.error('Failed to copy text: ', err);
+      console.error("Failed to copy text: ", err);
       // Fallback for older browsers
-      const textArea = document.createElement('textarea');
+      const textArea = document.createElement("textarea");
       textArea.value = text;
       document.body.appendChild(textArea);
       textArea.select();
-      document.execCommand('copy');
+      document.execCommand("copy");
       document.body.removeChild(textArea);
       
       setCopied(true);
@@ -45,23 +45,23 @@ const CopyButton: React.FC<CopyButtonProps> = ({
 
   const getSizeClasses = () => {
     switch (size) {
-      case 'sm':
-        return 'p-1';
-      case 'lg':
-        return 'p-3';
+      case "sm":
+        return "p-1";
+      case "lg":
+        return "p-3";
       default:
-        return 'p-2';
+        return "p-2";
     }
   };
 
   const getIconSize = () => {
     switch (size) {
-      case 'sm':
-        return 'w-3 h-3';
-      case 'lg':
-        return 'w-6 h-6';
+      case "sm":
+        return "w-3 h-3";
+      case "lg":
+        return "w-6 h-6";
       default:
-        return 'w-4 h-4';
+        return "w-4 h-4";
     }
   };
 
@@ -72,13 +72,13 @@ const CopyButton: React.FC<CopyButtonProps> = ({
         className={`
           ${getSizeClasses()}
           ${copied 
-            ? 'text-green-600 hover:text-green-700 hover:bg-green-50' 
-            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+            ? "text-green-600 hover:text-green-700 hover:bg-green-50" 
+            : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
           }
           rounded transition-all duration-200 ease-in-out
           ${className}
         `}
-        title={copied ? 'Copied!' : 'Copy to clipboard'}
+        title={copied ? "Copied!" : "Copy to clipboard"}
         disabled={copied}
       >
         {copied ? (
@@ -98,7 +98,7 @@ const CopyButton: React.FC<CopyButtonProps> = ({
       {/* Optional text display */}
       {showText && (
         <span className="ml-2 text-xs text-gray-500">
-          {copied ? 'Copied!' : 'Copy'}
+          {copied ? "Copied!" : "Copy"}
         </span>
       )}
     </div>

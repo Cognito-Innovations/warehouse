@@ -29,7 +29,7 @@ export class ProductResponseDto {
     description: 'Unit price of the product',
     example: 999.99,
   })
-  unit_price?: number;
+  unit_price?: string;
 
   @ApiPropertyOptional({
     description: 'Currency code',

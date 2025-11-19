@@ -1,21 +1,44 @@
-import React, { useEffect, useState } from "react";
-import { Box, Button, Grid, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { Add as AddIcon } from "@mui/icons-material";
-
+import {
+  createShipmentExportBox,
+  deleteShipmentExportBox,
+  updateShipmentExportBox,
+} from "../../services/api.services";
 import BoxCard from "./BoxCard";
-import BoxShipmentsList from "./BoxShipmentsList";
+import BoxShipmentsList, { type Shipment } from "./BoxShipmentsList";
 import Modal from "../common/Modal";
 import BoxDetailsForm from "./BoxDetailsForm";
-import { createShipmentExportBox, deleteShipmentExportBox, removePackageFromBox, updateShipmentExportBox } from "../../services/api.services";
+
+interface BoxItem {
+  id: number;
+  label: string;
+  length_cm: number;
+  breadth_cm: number;
+  height_cm: number;
+  volumetric_weight?: number;
+  mass_weight?: number;
+}
+
+interface BoxFormValues {
+  label: string;
+  length: string;
+  breadth: string;
+  height: string;
+  volumetricWeight: string;
+  massWeight: string;
+}
 
 interface BoxesSectionProps {
-  boxes: any[];
+  boxes: BoxItem[];
   selectedBoxId: number | null;
   setSelectedBoxId: React.Dispatch<React.SetStateAction<number | null>>;
   shipmentId: string;
-  packagesInSelectedBox: any[];
-  loadingPackages: boolean;
-  refreshPackages: () => void;
+  shipmentsInSelectedBox: Shipment[];
+  loadingShipments: boolean;
+  refreshShipments: () => void;
+  onBoxAdded: () => void;
 }
 
 const BoxesSection: React.FC<BoxesSectionProps> = ({
@@ -23,126 +46,136 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
   selectedBoxId,
   setSelectedBoxId,
   shipmentId,
-  packagesInSelectedBox,
-  loadingPackages,
-  refreshPackages,
+  shipmentsInSelectedBox,
+  loadingShipments,
+  refreshShipments,
+  onBoxAdded,
 }) => {
   const [open, setOpen] = useState(false);
-  const [localBoxes, setLocalBoxes] = useState<any[]>([]);
+  const [isAddingBox, setIsAddingBox] = useState(false);
+  const [deletingBoxId, setDeletingBoxId] = useState<number | null>(null);
+  const [editingBoxLabel, setEditingBoxLabel] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLocalBoxes(boxes || []);
-  }, [boxes]);
+  const selectedBoxData = boxes.find((b) => b.id === selectedBoxId);
 
-  const handleEditClick = (boxId: number) => {
+  const handleEditClick = (boxId: number, displayLabel: string) => {
     setSelectedBoxId(boxId);
+    setEditingBoxLabel(displayLabel);
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
     setSelectedBoxId(null);
+    setEditingBoxLabel(null);
   };
 
-  const handleSave = async (values: any) => {
-    if (selectedBoxId) {
-      try {
-        const updatedBox = await updateShipmentExportBox(selectedBoxId, {
-          label: values.label, 
-          length: values.length,
-          breadth: values.breadth,
-          height: values.height,
-          grossWeight: values.volumetricWeight,
-          massWeight: values.massWeight,
-        });
+  const handleSave = async (values: BoxFormValues) => {
+    if (!selectedBoxId) return;
 
-        setLocalBoxes((prev) =>
-          prev.map((b) => (b.id === selectedBoxId ? updatedBox : b))
-        );
-        } catch (error) {
-        console.error("Failed to update box:", error);
-      }
+    try {
+      await updateShipmentExportBox(selectedBoxId, {
+        label: values.label,
+        length_cm: Number(values.length),
+        breadth_cm: Number(values.breadth),
+        height_cm: Number(values.height),
+        volumetric_weight: Number(values.volumetricWeight),
+        mass_weight: Number(values.massWeight),
+      });
+      
+      onBoxAdded();
+      setOpen(false);
+      setSelectedBoxId(null);
+      setEditingBoxLabel(null);
+    } catch (error) {
+      console.error("Failed to update box:", error);
     }
-    setOpen(false);
-    setSelectedBoxId(null);
   };
 
   const handleAddBox = async () => {
+    setIsAddingBox(true);
     try {
-      const newBox = await createShipmentExportBox(shipmentId, {
-        length: 0,
-        breadth: 0,
-        height: 0,
-        grossWeight: 0,
-        massWeight: 0,
+      await createShipmentExportBox(shipmentId, {
+        length_cm: 0,
+        breadth_cm: 0,
+        height_cm: 0,
+        volumetric_weight: 0,
+        mass_weight: 0,
       });
-      setLocalBoxes((prev) => [...prev, newBox]);
+      onBoxAdded();
     } catch (error) {
       console.error("Failed to create box:", error);
+    } finally {
+      setIsAddingBox(false);
     }
   };
 
   const handleDelete = async (boxId: number) => {
+    setDeletingBoxId(boxId);
     try {
       await deleteShipmentExportBox(boxId);
-      setLocalBoxes((prev) => prev.filter((b) => b.id !== boxId));
+      onBoxAdded();
       if (selectedBoxId === boxId) {
         setSelectedBoxId(null);
       }
     } catch (error) {
       console.error("Failed to delete box:", error);
+    } finally {
+      setDeletingBoxId(null);
     }
   };
 
-  const handleDeletePackage = async (packageId: string) => {
-    if (!selectedBoxId) return;
-    try {
-        await removePackageFromBox(selectedBoxId, packageId);
-        refreshPackages();
-    } catch (error) {
-        console.error("Failed to delete package from box:", error);
-    }
-  };
-
-  return (
+   return (
     <>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={7}>
-          {localBoxes.map((box, index) => (
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
+        <Box sx={{ width: 250, flexShrink: 0 }}>
+          {boxes.map((box, index) => (
             <BoxCard
               key={box.id}
               box={box}
               index={index}
-              total={localBoxes.length}
+              total={boxes.length}
               onEdit={handleEditClick}
               onDelete={handleDelete}
               onSelect={() => setSelectedBoxId(box.id)}
               selected={selectedBoxId === box.id}
+              isDeleting={deletingBoxId === box.id}
             />
           ))}
 
           <Button
             variant="contained"
-            startIcon={<AddIcon />}
+            disabled={isAddingBox}
+            startIcon={
+              isAddingBox ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <AddIcon />
+              )
+            }
             sx={{
               textTransform: "none",
               borderRadius: 2,
               boxShadow: "none",
               alignSelf: "flex-start",
+              mt: boxes.length > 0 ? 2 : 0, 
             }}
             onClick={handleAddBox}
           >
-            Add New Box
+            {isAddingBox ? "Adding..." : "Add New Box"}
           </Button>
-        </Grid>
+        </Box>
 
-        <Grid item xs={12} md={5}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
           {selectedBoxId ? (
             <BoxShipmentsList
               boxId={selectedBoxId}
-              shipments={packagesInSelectedBox}
-              isLoading={loadingPackages}
-              onDelete={handleDeletePackage}
+              refreshShipments={refreshShipments}
+              boxIndex={boxes.findIndex(b => b.id === selectedBoxId)}
+              boxLabel={boxes.find(b => b.id === selectedBoxId)?.label}
+              totalBoxes={boxes.length}
+              shipments={shipmentsInSelectedBox}
+              isLoading={loadingShipments}
             />
           ) : (
             <Box
@@ -150,19 +183,32 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                height: "100%",
+                height: "200px",
+                border: "1px dashed #e5e7eb",
+                borderRadius: 2,
                 color: "text.secondary",
-                p: 3,
               }}
             >
               <Typography>Please select a box</Typography>
             </Box>
           )}
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       <Modal open={open} onClose={handleClose} title="Update Box Details" size="sm">
-        <BoxDetailsForm onSave={handleSave} />
+        {selectedBoxData && (
+          <BoxDetailsForm
+            onSave={handleSave}
+            initialValues={{
+              label: editingBoxLabel ?? selectedBoxData.label,
+              length: String(selectedBoxData.length_cm),
+              breadth: String(selectedBoxData.breadth_cm),
+              height: String(selectedBoxData.height_cm),
+              volumetricWeight: String(selectedBoxData.volumetric_weight),
+              massWeight: String(selectedBoxData.mass_weight),
+            }}
+          />
+        )}
       </Modal>
     </>
   );

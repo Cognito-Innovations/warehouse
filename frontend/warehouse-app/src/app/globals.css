@@ -20,6 +20,28 @@ body {
   overflow-x: hidden;
 }
 
+html {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #d1d5db transparent; /* Firefox (thumb + track) */
+}
+
+html::-webkit-scrollbar {
+  width: 8px; /* scrollbar width */
+}
+
+html::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 4px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
@@ -72,4 +94,14 @@ a {
 
 .animate-slideIn {
   animation: slideIn 0.3s ease-out;
+}
+
+.hide-number-arrows::-webkit-outer-spin-button,
+.hide-number-arrows::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.hide-number-arrows {
+  -moz-appearance: textfield;
 }

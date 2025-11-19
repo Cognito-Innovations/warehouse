@@ -8,78 +8,94 @@ import {
   TableBody,
   TableCell,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material';
 import {
   DeleteOutlineOutlined as DeleteIcon,
   VisibilityOutlined as ViewIcon,
 } from '@mui/icons-material';
-import { getStatusColor } from '../../data/shipmentExports';
-import Modal from '../common/Modal';
 import { useNavigate } from 'react-router-dom';
-import { deleteShipmentExport, updateShipmentExport } from '../../services/api.services';
+import { deleteShipmentExport } from '../../services/api.services';
+import UpdateMawbModal from './UpdateMawbModal';
+import ConfirmDialog from '../common/ConfirmDialog';
+import { getStatusColor } from '../../utils/statusUtils';
+import { formatDateTime } from '../../utils/formatDateTime';
+
+export interface ShipmentExportRow {
+  id: string;
+  export_code: string;
+  created_at: number | string;
+  mawb?: string;
+  boxes_count: number;
+  created_by: string;
+  status: string;
+  [key: string]: unknown;
+}
 
 interface ShipmentExportTableBodyProps {
-  rows: any[];
+  rows: ShipmentExportRow[];
   loading: boolean;
   onUpdate: () => void;
 }
 
 const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows, loading, onUpdate }) => {
-  const [open, setOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<any | null>(null);
-  const [mawb, setMawb] = useState('');
+  const [mawbModalOpen, setMawbModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<ShipmentExportRow | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const navigate = useNavigate();
 
-  const handleOpen = (row: any) => {
+  const handleOpenMawbModal = (row: ShipmentExportRow) => {
     setSelectedRow(row);
-    setMawb(row.mawb || '');
-    setOpen(true);
+    setMawbModalOpen(true);
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const handleCloseMawbModal = () => {
+    setMawbModalOpen(false);
     setSelectedRow(null);
-    setMawb('');
   };
 
-  const handleSave = async () => {
-    if (selectedRow) {
-      try {
-        await updateShipmentExport(selectedRow.id, { mawb });
-        await onUpdate();
-      } catch (error) {
-        console.error("Failed to update MAWB:", error);
-      }
-    }
-    handleClose();
+  const handleConfirmDelete = (id: string) => {
+    setDeletingId(id);
+    setConfirmOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!deletingId) return;
     try {
-      await deleteShipmentExport(id);
+      setDeleting(true);
+      await deleteShipmentExport(deletingId);
       await onUpdate();
+      setConfirmOpen(false);
+      setDeletingId(null);
     } catch (error) {
       console.error("Failed to delete export:", error);
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const handleViewDetails = (row: any) => {
+  const handleViewDetails = (row: ShipmentExportRow) => {
     navigate(`/shipment/export/${row.id}`);
   };
 
-  return (
-    <>
-    <TableBody>
-      {loading ? (
+  if (loading) {
+    return (
+      <TableBody>
         <TableRow>
           <TableCell colSpan={7} align="center">
             <CircularProgress size={28} />
           </TableCell>
         </TableRow>
-      ) : rows.length === 0 ? (
+      </TableBody>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <TableBody>
         <TableRow>
           <TableCell colSpan={7} align="center">
             <Typography variant="body2" color="text.secondary">
@@ -87,89 +103,90 @@ const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows,
             </Typography>
           </TableCell>
         </TableRow>
-      ) : (
-        rows.map((row) => {
-          const status = getStatusColor(row.status);
-          return (
-            <TableRow key={row.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-              <TableCell>
-                <Typography variant="body2">{row.export_code}</Typography>
-              </TableCell>
-              <TableCell>{row.created_at}</TableCell>
-              <TableCell>
-                {row.mawb ? (
-                  <Typography variant="body2">{row.mawb}</Typography>
-                ) : (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    sx={{ textTransform: 'none', borderRadius: 1.5, boxShadow: 'none' }}
-                    onClick={() => handleOpen(row)}
-                  >
-                    Add MAWB
-                  </Button>
-                )}
-              </TableCell>
-              <TableCell>{row.boxes_count}</TableCell>
-              <TableCell>{row.created_by}</TableCell>
-              <TableCell>
-                <Chip
-                  label={row.status}
+      </TableBody>
+    );
+  }
+
+  return (
+    <>
+    <TableBody>
+      {rows.map((row) => {
+        const status = getStatusColor(row.status);
+        return (
+          <TableRow key={row.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+            <TableCell>
+              <Typography variant="body2">{row.export_code}</Typography>
+            </TableCell>
+            <TableCell>{formatDateTime(row.created_at)}</TableCell>
+            <TableCell>
+              {row.mawb ? (
+                <Typography variant="body2">{row.mawb}</Typography>
+              ) : (
+                <Button
+                  variant="contained"
                   size="small"
-                  sx={{
-                    color: status.color,
-                    bgcolor: status.bgColor,
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                  }}
-                />
-              </TableCell>
-              <TableCell align="right">
-                <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                  sx={{ textTransform: 'none', borderRadius: 1.5, boxShadow: 'none' }}
+                  onClick={() => handleOpenMawbModal(row)}
+                >
+                  Add MAWB
+                </Button>
+              )}
+            </TableCell>
+            <TableCell>{row.boxes_count}</TableCell>
+            <TableCell>{row.created_by}</TableCell>
+            <TableCell>
+              <Chip
+                label={row.status}
+                size="small"
+                sx={{
+                  color: status.color,
+                  bgcolor: status.bgColor,
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                }}
+              />
+            </TableCell>
+            <TableCell align="right">
+              <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                <IconButton 
+                  size="small" 
+                  sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' }}}
+                  onClick={() => handleViewDetails(row)}
+                >
+                  <ViewIcon fontSize="small" />
+                </IconButton>
+                {row.status === 'DRAFT' && (
                   <IconButton 
                     size="small" 
-                    sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' }}}
-                    onClick={() => handleViewDetails(row)}
+                    sx={{ bgcolor: '#e27055', color: '#f8f8f8', '&:hover': { backgroundColor: '#cc6046' }}}
+                     onClick={() => handleConfirmDelete(row.id)}
                   >
-                    <ViewIcon fontSize="small" />
+                    <DeleteIcon fontSize="small" />
                   </IconButton>
-
-                  {row.status === 'DRAFT' && (
-                    <IconButton 
-                      size="small" 
-                      sx={{ bgcolor: '#e27055', color: '#f8f8f8', '&:hover': { backgroundColor: '#cc6046' }}}
-                      onClick={() => handleDelete(row.id)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  )}
-                </Box>
-              </TableCell>
-            </TableRow>
-          );
-        })
-      )}
+                )}
+              </Box>
+            </TableCell>
+          </TableRow>
+        );
+      })}
     </TableBody>
 
-     <Modal open={open} onClose={handleClose} title="Update MAWB">
-       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField
-            label="MAWB *"
-            value={mawb}
-            onChange={(e) => setMawb(e.target.value)}
-            fullWidth
-          />
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="contained"
-              onClick={handleSave}
-              disabled={!mawb}
-            >
-              Save
-            </Button>
-          </Box>
-       </Box>
-     </Modal>
+     <UpdateMawbModal
+        open={mawbModalOpen}
+        onClose={handleCloseMawbModal}
+        onUpdate={onUpdate}
+        shipment={selectedRow}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Shipment Export"
+        message="Are you sure you want to delete this shipment export?"
+        confirmText="Delete"
+        onConfirm={handleDelete}
+        onClose={() => setConfirmOpen(false)}
+        isLoading={deleting}
+      />
   </>
   )
 };

@@ -1,14 +1,21 @@
 "use client";
 
-import { Box, Button, TextField, Typography, Link, Divider, Alert, Snackbar } from "@mui/material";
+import { Box, Button, TextField, Typography, Link, Divider, Alert, Snackbar, InputAdornment, IconButton, CircularProgress } from "@mui/material";
 import { signIn } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
-import { hashPassword, generateSequentialSuiteNumber } from "../../utils/auth.utils";
+import { generateSequentialSuiteNumber } from "../../utils/auth.utils";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import PasswordStrength from "./PasswordStrength";
+import { ROUTES } from "@/utils/constants";
 
-export default function SignInForm() {
+interface SignInFormProps {
+  callbackUrl?: string;
+}
+
+export default function SignInForm({ callbackUrl }: SignInFormProps) {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -16,57 +23,75 @@ export default function SignInForm() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  
   const { user, loading: authLoading } = useAuth();
   const buttonStyles = { py: 1.5, textTransform: "none", borderRadius: "6px" };
-  
-  useEffect(() => {
-    if (user) {
-      router.replace('/dashboard');
-    }
-  }, [user, router]);
+
+  const redirectTo = callbackUrl || ROUTES.DASHBOARD;
+
+
+  const passwordValidation = useMemo(() => {
+    const pass = password;
+    return {
+      length: pass.length >= 6,
+      uppercase: /[A-Z]/.test(pass),
+      lowercase: (pass.match(/[a-z]/g) || []).length >= 2,
+      number: /[0-9]/.test(pass),
+      special: /[!@#$%^&*]/.test(pass),
+    };
+  }, [password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!isLogin) {
+      const isPasswordValid = Object.values(passwordValidation).every(v => v);
+      if (!isPasswordValid) {
+        setError("Please meet all password requirements.");
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
       if (isLogin) {
         // Use NextAuth credentials provider for login
-        const hashedPasswordValue = hashPassword(password);
-        const result = await signIn('credentials', {
+        const result = await signIn("credentials", {
           email,
-          password: hashedPasswordValue,
+          password: password,
           redirect: false,
         });
 
         if (result?.ok) {
-          router.replace("/dashboard");
+          window.location.href = redirectTo;
         } else {
           setError("Invalid email or password. Please try again.");
         }
       } else {
         // For registration, call backend directly then sign in
-        const hashedPasswordValue = hashPassword(password);
         const suiteNumber = generateSequentialSuiteNumber();
         
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'}/auth/register`, {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001"}/auth/register`, {
           email,
-          password: hashedPasswordValue,
+          password: password,
           name,
           suite_no: suiteNumber,
         });
 
         if (response.data.access_token) {
           // After successful registration, sign in with credentials
-          const result = await signIn('credentials', {
+          const result = await signIn("credentials", {
             email,
-            password: hashedPasswordValue,
+            password: password,
             redirect: false,
           });
 
           if (result?.ok) {
-            router.replace("/dashboard");
+            window.location.href = redirectTo;
           } else {
             setError("Registration successful but login failed. Please try logging in.");
           }
@@ -75,33 +100,49 @@ export default function SignInForm() {
         }
       }
     } catch (err: any) {
-      console.error('Auth error:', err);
+      console.error("Auth error:", err);
       setError(err.response?.data?.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/dashboard" });
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signIn("google", {
+        callbackUrl: redirectTo,
+        redirect: false
+      });
+      
+      if (result?.url) {
+        // Force a page reload to ensure session is properly set
+        window.location.href = result.url;
+      } else if (result?.error) {
+        console.error("Google sign-in error:", result.error);
+        setError("Google sign-in failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setError("Google sign-in failed. Please try again.");
+    }
   };
 
   // Show loading while checking authentication status
   if (authLoading) {
     return (
       <Box sx={{ width: "100%", maxWidth: 380, textAlign: "center" }}>
-        <Typography variant="h6">Loading...</Typography>
+        <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 380 }}>
+    <Box sx={{ width: "100%", maxWidth: 380, overflow: "visible" }}>
       <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
         <img
-          src="/logo.png"
-          alt="Shopme Logo"
-          style={{ maxWidth: "200px", height: "auto" }}
+          src="/palakart-text-logo.png"
+          alt="Palakart Logo"
+          style={{ maxWidth: "200px", height: "auto", margin:10 }}
         />
       </Box>
 
@@ -135,18 +176,37 @@ export default function SignInForm() {
           disabled={loading}
         />
         
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          name="password"
-          label="Password"
-          type="password"
-          variant="outlined"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={loading}
-        />
+        <Box sx={{ position: "relative" }}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            variant="outlined"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onFocus={() => setIsPasswordFocused(true)}
+            onBlur={() => setIsPasswordFocused(false)}
+            disabled={loading}
+            InputProps={{
+              endAdornment: (
+              <InputAdornment position="end">
+                  <IconButton
+                  onClick={() => setShowPassword(!showPassword)}
+                  edge="end"
+                  >
+                  {showPassword ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+              </InputAdornment>
+              ),
+            }}
+          />
+          {isPasswordFocused && password && (
+            <PasswordStrength password_str={password} />
+          )}
+        </Box>
 
         {isLogin && (
           <Link
@@ -207,9 +267,9 @@ export default function SignInForm() {
         open={!!error}
         autoHideDuration={6000}
         onClose={() => setError("")}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={() => setError("")} severity="error" sx={{ width: '100%' }}>
+        <Alert onClose={() => setError("")} severity="error" sx={{ width: "100%" }}>
           {error}
         </Alert>
       </Snackbar>

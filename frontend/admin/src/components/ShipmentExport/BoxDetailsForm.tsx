@@ -1,5 +1,15 @@
-import React, { useState } from "react";
-import { Box, Button, TextField } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Box, Button, CircularProgress, TextField } from "@mui/material";
+import { numberInputStyle } from "../../styles/numberInputStyle";
+
+interface BoxDetailsValues {
+  label: string;
+  length: string;
+  breadth: string;
+  height: string;
+  volumetricWeight: string;
+  massWeight: string;
+}
 
 interface BoxDetailsFormProps {
   initialValues?: {
@@ -10,26 +20,44 @@ interface BoxDetailsFormProps {
     volumetricWeight: string;
     massWeight: string;
   };
-  onSave: (values: any) => void;
+  onSave: (values: BoxDetailsValues) => Promise<void>;
 }
 
 const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
   initialValues,
   onSave,
 }) => {
-  const [label, setLabel] = useState(initialValues?.label || "");
-  const [length, setLength] = useState(initialValues?.length || "");
-  const [breadth, setBreadth] = useState(initialValues?.breadth || "");
-  const [height, setHeight] = useState(initialValues?.height || "");
-  const [volumetricWeight, setVolumetricWeight] = useState(
-    initialValues?.volumetricWeight || ""
-  );
-  const [massWeight, setMassWeight] = useState(initialValues?.massWeight || "");
+  const [label, setLabel] = useState("");
+  const [length, setLength] = useState("");
+  const [breadth, setBreadth] = useState("");
+  const [height, setHeight] = useState("");
+  const [volumetricWeight, setVolumetricWeight] = useState("");
+  const [massWeight, setMassWeight] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  useEffect(() => {
+    if (initialValues) {
+      setLabel(initialValues.label || "");
+      setLength(initialValues.length || "");
+      setBreadth(initialValues.breadth || "");
+      setHeight(initialValues.height || "");
+      setVolumetricWeight(initialValues.volumetricWeight || "");
+      setMassWeight(initialValues.massWeight || "");
+    }
+  }, [initialValues]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!label || !length || !breadth || !height || !volumetricWeight || !massWeight) return;
-    onSave({ label, length, breadth, height, volumetricWeight, massWeight });
+
+    try {
+      setLoading(true);
+      await onSave({ label, length, breadth, height, volumetricWeight, massWeight });
+    } catch (err) {
+      console.error("Failed to save box:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,6 +86,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           type="number"
           fullWidth
           variant="outlined"
+          sx={numberInputStyle}
         />
         <TextField
           label="Breadth (CM)"
@@ -68,6 +97,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           type="number"
           fullWidth
           variant="outlined"
+          sx={numberInputStyle}
         />
         <TextField
           label="Height (CM)"
@@ -78,6 +108,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           type="number"
           fullWidth
           variant="outlined"
+          sx={numberInputStyle}
         />
       </Box>
 
@@ -92,6 +123,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           type="number"
           fullWidth
           variant="outlined"
+          sx={numberInputStyle}
         />
         <TextField
           label="Mass Weight (KG)"
@@ -102,6 +134,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           type="number"
           fullWidth
           variant="outlined"
+          sx={numberInputStyle}
         />
       </Box>
 
@@ -111,7 +144,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
           variant="contained"
           type="submit"
           disabled={
-            !label || !length || !breadth || !height || !volumetricWeight || !massWeight
+            loading || !label || !length || !breadth || !height || !volumetricWeight || !massWeight
           }
           sx={{
             textTransform: "none",
@@ -123,7 +156,7 @@ const BoxDetailsForm: React.FC<BoxDetailsFormProps> = ({
             fontWeight: 500,
           }}
         >
-          Save
+          {loading ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : "Save"}
         </Button>
       </Box>
     </Box>

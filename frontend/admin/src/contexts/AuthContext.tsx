@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { getStoredUser, isAuthenticated, logout as authLogout, login as authLogin } from '../services/auth.service';
-import type { User } from '../types';
+import type { UserData } from '../types';
 
 interface AuthContextType {
-  user: User | null;
+  user: UserData | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -25,7 +25,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -34,13 +34,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         if (isAuthenticated()) {
           const storedUser = getStoredUser();
-          if (storedUser && storedUser.access_token) {
+          if (storedUser && storedUser.user && storedUser.access_token) {
             // Convert stored user data to User type
-            const userData: User = {
+            const userData: UserData = {
               id: storedUser.user.id,
               email: storedUser.user.email,
               name: storedUser.user.name,
-              image: undefined,
             };
             setUser(userData);
           } else {
@@ -65,12 +64,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = useCallback(async (email: string, password: string) => {
     try {
       const loginResponse = await authLogin(email, password);
+
       // Convert LoginResponse to User type
-      const userData: User = {
-        id: loginResponse.id,
-        email: loginResponse.email,
-        name: loginResponse.name,
-        image: undefined, // Not provided in login response
+      const userData: UserData = {
+        id: loginResponse.user.id,
+        email: loginResponse.user.email,
+        name: loginResponse.user.name || '',
+        image: undefined,
       };
       setUser(userData);
     } catch (error) {

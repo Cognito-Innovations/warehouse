@@ -2,7 +2,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 import { Rack } from '../racks/rack.entity';
 import { User } from '../users/user.entity';
-import { Product } from '../products/product.entity';
+import { ShoppingRequestProduct } from '../products/shopping-request-product.entity';
 import { Supplier } from '../suppliers/supplier.entity';
 import { Package } from '../packages/entities/package.entity';
 import { PreArrival } from '../pre-arrivals/pre-arrival.entity';
@@ -23,14 +23,27 @@ import {
   PreArrivalDocument,
   PickupRequestDocument,
   ShoppingRequestDocument,
+  ClientIdentifier,
 } from '../shared/entities';
 import { Country } from 'src/Countries/country.entity';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { Document } from 'src/documents/documents.entity';
-import { Invoice } from 'src/invoice/invoice.entity';
+import { Invoice } from 'src/invoice/entities/invoice.entity';
 import { Currency } from 'src/currencies/currency.entity';
 import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { SupportedCountry } from 'src/supported-countries/supported-country.entity';
+import { UserAddress } from 'src/user_address/user_address.entity';
+import { EcommerceSubCategory } from 'src/ecommerce/entities/ecommerce-sub-category.entity';
+import { EcommerceCategory } from 'src/ecommerce/entities/ecommerce-category.entity';
+import { EcommerceProduct } from 'src/ecommerce/entities/ecommerce-product.entity';
+import { EcommerceOrder } from 'src/ecommerce/entities/ecommerce-order.entity';
+import { EcommerceOrderItem } from 'src/ecommerce/entities/ecommerce-order-item.entity';
+import { EcommerceMeasurement } from 'src/ecommerce/entities/measurement.entity';
+import { Shipment } from 'src/shipments/shipment.entity';
+import { InvoiceCharge } from 'src/invoice/entities/invoice-charge.entity';
+import { EcommerceCart } from 'src/ecommerce/entities/ecommerce-cart.entity';
+import { EcommerceCartItem } from 'src/ecommerce/entities/ecommerce-cart-item.entity';
+import { EcommerceCargoOption } from 'src/ecommerce/entities/cargo-options.entity';
 
 //TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
@@ -46,13 +59,14 @@ export const databaseConfig: TypeOrmModuleOptions = {
     SupportedCountry,
     UserPreference,
     CourierCompany,
+    UserAddress,
     Rack,
     Supplier,
     User,
     Package,
     PreArrival,
     ShoppingRequest,
-    Product,
+    ShoppingRequestProduct,
     PickupRequest,
     TrackingRequest,
     PackageActionLog,
@@ -66,12 +80,25 @@ export const databaseConfig: TypeOrmModuleOptions = {
     PreArrivalDocument,
     PickupRequestDocument,
     ShoppingRequestDocument,
+    ClientIdentifier,
     ShipmentExport,
     ShipmentExportBox,
     Document,
     Invoice,
+    EcommerceCategory,
+    EcommerceSubCategory,
+    EcommerceProduct,
+    EcommerceOrder,
+    EcommerceOrderItem,
+    EcommerceMeasurement,
+    EcommerceCart,
+    EcommerceCartItem,
+    ShoppingRequestProduct,
+    Shipment,
+    InvoiceCharge,
+    EcommerceCargoOption,
   ],
-  synchronize: true, // Disable schema synchronization to prevent modifying existing database
+  synchronize: false, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],
   migrationsRun: false,
   logging: process.env.NODE_ENV === 'development',

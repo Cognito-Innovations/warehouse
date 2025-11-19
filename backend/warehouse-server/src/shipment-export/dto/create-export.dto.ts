@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  ValidateNested,
+} from 'class-validator';
+import { CreateBoxDto } from './create-box.dto';
+import { Type } from 'class-transformer';
 
 export class CreateExportDto {
   @IsString()
@@ -13,4 +20,9 @@ export class CreateExportDto {
 
   @IsString()
   created_by: string;
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateBoxDto)
+  boxes?: CreateBoxDto[];
 }

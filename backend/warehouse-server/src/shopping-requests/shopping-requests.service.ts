@@ -7,27 +7,31 @@ import {
 } from './shopping-request.entity';
 import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
 import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
-import { Product } from 'src/products/product.entity';
+import { ShoppingRequestProduct } from 'src/products/shopping-request-product.entity';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
 import { DocumentsService } from 'src/documents/documents.service';
 import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
 import { mapToTrackingStatus } from './status-mapper';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { InvoicesService } from 'src/invoice/invoices.service';
-import { Invoice, InvoiceStatus } from 'src/invoice/invoice.entity';
+import { Invoice, InvoiceStatus } from 'src/invoice/entities/invoice.entity';
+import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ShoppingRequestsService {
   constructor(
     @InjectRepository(ShoppingRequest)
     private readonly shoppingRequestRepository: Repository<ShoppingRequest>,
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
+    @InjectRepository(ShoppingRequestProduct)
+    private readonly productRepository: Repository<ShoppingRequestProduct>,
     @InjectRepository(CourierCompany)
     private readonly courierRepository: Repository<CourierCompany>,
     private readonly documentsService: DocumentsService,
     private readonly trackingRequestsService: TrackingRequestsService,
     private readonly invoicesService: InvoicesService,
+    private readonly userPreferencesService: UserPreferencesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async createShoppingRequest(
@@ -36,13 +40,11 @@ export class ShoppingRequestsService {
     const courier = await this.courierRepository.findOne({
       where: { id: createShoppingRequestDto.courier_id },
     });
-
     if (!courier) {
       throw new NotFoundException(
         `Courier ${createShoppingRequestDto.courier_id} not found`,
       );
     }
-
     const shoppingRequest = this.shoppingRequestRepository.create({
       ...createShoppingRequestDto,
       courier,
@@ -50,10 +52,8 @@ export class ShoppingRequestsService {
         createShoppingRequestDto.status || ShoppingRequestStatus.REQUESTED,
       items_count: createShoppingRequestDto.items_count || 0,
     });
-
     const savedShoppingRequest =
       await this.shoppingRequestRepository.save(shoppingRequest);
-
     await this.trackingRequestsService.createTrackingRequest({
       feature_type: FeatureType.ShoppingRequest,
       feature_fid: savedShoppingRequest.id,
@@ -62,63 +62,22 @@ export class ShoppingRequestsService {
       courier_id: savedShoppingRequest.courier.id,
     });
 
+    const { courier: savedCourier, ...rest } = savedShoppingRequest;
     return {
-      id: savedShoppingRequest.id,
-      user_id: savedShoppingRequest.user_id,
-      request_code: savedShoppingRequest.request_code,
-      courier: savedShoppingRequest.courier.name,
-      items_count: savedShoppingRequest.items_count,
-      remarks: savedShoppingRequest.remarks,
+      ...rest,
+      courier: savedCourier.name,
       status: savedShoppingRequest.status,
       payment_slips: [],
-      created_at: savedShoppingRequest.created_at,
-      updated_at: savedShoppingRequest.updated_at,
     };
   }
 
-  async getAllShoppingRequests(): Promise<ShoppingRequestResponseDto[]> {
+  async getAllShoppingRequests() {
     const shoppingRequests = await this.shoppingRequestRepository.find({
       order: { created_at: 'DESC' },
-      relations: ['user'],
+      relations: ['user', 'courier'],
     });
 
-    return Promise.all(
-      shoppingRequests.map(async (request) => {
-        const slips = await this.documentsService.findByFeature(
-          FeatureType.ShoppingRequest,
-          request.id,
-        );
-
-        const trackingRequests =
-          await this.trackingRequestsService.getTrackingRequestsByFeature(
-            FeatureType.ShoppingRequest,
-            request.id,
-          );
-
-        return {
-          id: request.id,
-          user_id: request.user_id,
-          user: request.user
-            ? {
-                id: request.user.id,
-                email: request.user.email,
-                name: request.user.name,
-                suite_no: request.user.suite_no,
-                verified: request.user.verified,
-              }
-            : undefined,
-          request_code: request.request_code,
-          courier: request.courier.name,
-          items_count: request.items_count,
-          remarks: request.remarks,
-          status: request.status,
-          payment_slips: slips,
-          tracking_requests: trackingRequests,
-          created_at: request.created_at,
-          updated_at: request.updated_at,
-        };
-      }),
-    );
+    return shoppingRequests;
   }
 
   async getShoppingRequestsByUser(
@@ -127,6 +86,7 @@ export class ShoppingRequestsService {
     const shoppingRequests = await this.shoppingRequestRepository.find({
       where: { user_id: userId },
       order: { created_at: 'DESC' },
+      relations: ['courier'],
     });
 
     return Promise.all(
@@ -136,25 +96,27 @@ export class ShoppingRequestsService {
           request.id,
         );
 
-        const trackingRequests =
-          await this.trackingRequestsService.getTrackingRequestsByFeature(
-            FeatureType.ShoppingRequest,
-            request.id,
-          );
+        const rawProducts = await this.productRepository.find({
+          where: { shopping_request_id: request.id },
+        });
+
+        const shoppingRequestProducts = await Promise.all(
+          rawProducts.map(async (product) => ({
+            ...product,
+            unit_price: 
+              await this.userPreferencesService.getFormattedConvertedPrice(
+                request.user_id,
+                product.unit_price,
+              ),
+          }))
+        );
 
         return {
-          id: request.id,
-          user_id: request.user_id,
-          request_code: request.request_code,
-          courier: request.courier.name,
-          items_count: request.items_count,
-          remarks: request.remarks,
-          status: request.status,
+          ...request,
+          courier: request.courier?.name,
           payment_slips: slips,
-          tracking_requests: trackingRequests,
-          created_at: request.created_at,
-          updated_at: request.updated_at,
-        };
+          shopping_request_products: shoppingRequestProducts,
+        } as ShoppingRequestResponseDto;
       }),
     );
   }
@@ -164,7 +126,7 @@ export class ShoppingRequestsService {
   ): Promise<ShoppingRequestResponseDto> {
     const shoppingRequest = await this.shoppingRequestRepository.findOne({
       where: { request_code: requestCode },
-      relations: ['user'],
+      relations: ['user', 'courier'],
     });
 
     if (!shoppingRequest) {
@@ -173,78 +135,92 @@ export class ShoppingRequestsService {
       );
     }
 
-    const shoppingRequestProducts = await this.productRepository.find({
-      where: { shopping_request_id: shoppingRequest.id },
-    });
-
-    const slips = await this.documentsService.findByFeature(
-      FeatureType.ShoppingRequest,
-      shoppingRequest.id,
-    );
-
-    const trackingRequests =
-      await this.trackingRequestsService.getTrackingRequestsByFeature(
+    const [
+      shoppingRequestProductsResult,
+      slipsResult,
+      invoiceResult,
+      trackingRequestsResult,
+      userCurrencyResult,
+    ] = await Promise.allSettled([
+      this.productRepository.find({
+        where: { shopping_request_id: shoppingRequest.id },
+      }),
+      this.documentsService.findByFeature(
         FeatureType.ShoppingRequest,
         shoppingRequest.id,
-      );
+      ),
+      this.invoicesService.getInvoiceByShoppingRequestId(shoppingRequest.id),
+      this.trackingRequestsService.getTrackingRequestsByFeature(
+        FeatureType.ShoppingRequest,
+        shoppingRequest.id,
+      ),
+      this.userPreferencesService.getUserCurrency(shoppingRequest.user_id),
+    ]);
 
-    const invoice = await this.invoicesService.getInvoiceByShoppingRequestId(
-      shoppingRequest.id,
-    );
+    const shoppingRequestProducts =
+      shoppingRequestProductsResult.status === 'fulfilled'
+        ? shoppingRequestProductsResult.value
+        : [];
+    const slips = slipsResult.status === 'fulfilled' ? slipsResult.value : [];
+    const invoice =
+      invoiceResult.status === 'fulfilled' ? invoiceResult.value : null;
+    const trackingRequests =
+      trackingRequestsResult.status === 'fulfilled'
+        ? trackingRequestsResult.value
+        : [];
+    const userCurrency =
+      userCurrencyResult.status === 'fulfilled'
+        ? userCurrencyResult.value
+        : 'USD';
+
+    const convertPrice = async (price: number | null | undefined) => {
+      if (price === null || price === undefined) return price;
+      return this.userPreferencesService.getConvertedPrice(
+        shoppingRequest.user_id,
+        price,
+      );
+    };
+
+    const formatPrice = async (price: number | null | undefined) => {
+      if (price === null || price === undefined) return price;
+      return this.userPreferencesService.getFormattedConvertedPrice(
+        shoppingRequest.user_id,
+        price,
+      );
+    };
+
+    const { user, courier, ...rest } = shoppingRequest;
 
     return {
-      id: shoppingRequest.id,
-      user_id: shoppingRequest.user_id,
-      user: shoppingRequest.user
-        ? {
-            id: shoppingRequest.user.id,
-            email: shoppingRequest.user.email,
-            name: shoppingRequest.user.name,
-            suite_no: shoppingRequest.user.suite_no,
-            verified: shoppingRequest.user.verified,
-          }
+      ...rest,
+      user: user
+        ? this.usersService.mapToUserResponseDto(shoppingRequest.user)
         : undefined,
-      request_code: shoppingRequest.request_code,
-      courier: shoppingRequest.courier.name,
-      items_count: shoppingRequest.items_count,
-      shopping_request_products: shoppingRequestProducts,
-      remarks: shoppingRequest.remarks,
-      status: shoppingRequest.status,
+      courier: courier?.name,
+      shopping_request_products: await Promise.all(
+        shoppingRequestProducts.map(async (product) => ({
+          ...product,
+          unit_price: await convertPrice(product.unit_price),
+          currency: userCurrency,
+        })),
+      ),
       payment_slips: slips,
       tracking_requests: trackingRequests,
       invoice: invoice
         ? {
-            id: invoice.id,
-            invoice_no: invoice.invoice_no,
-            amount: invoice.amount,
-            gst: invoice.gst,
-            total: invoice.total,
-            status: invoice.status,
-            products:
-              invoice.products?.map((product) => ({
-                id: product.id,
-                shopping_request_id: product.shopping_request_id,
-                name: product.name,
-                description: product.description,
-                unit_price: product.unit_price,
-                currency: product.currency,
-                quantity: product.quantity,
-                url: product.url,
-                size: product.size,
-                color: product.color,
-                variants: product.variants,
-                if_not_available_quantity: product.if_not_available_quantity,
-                if_not_available_color: product.if_not_available_color,
-                available: product.available,
-                created_at: product.created_at,
-                updated_at: product.updated_at,
-              })) || [],
-            created_at: invoice.created_at,
-            updated_at: invoice.updated_at,
+            ...invoice,
+            amount: (await formatPrice(invoice.amount)) ?? '',
+            total: (await formatPrice(invoice.total)) ?? '',
+            products: await Promise.all(
+              (invoice.products ?? []).map(async (product) => ({
+                ...product,
+                invoice: undefined,
+                unit_price: (await formatPrice(product.unit_price)) ?? '',
+                currency: userCurrency,
+              })),
+            ),
           }
         : undefined,
-      created_at: shoppingRequest.created_at,
-      updated_at: shoppingRequest.updated_at,
     };
   }
 
@@ -298,61 +274,44 @@ export class ShoppingRequestsService {
       updatedShoppingRequest.id,
     );
 
-    const trackingRequests =
-      await this.trackingRequestsService.getTrackingRequestsByFeature(
-        FeatureType.ShoppingRequest,
-        updatedShoppingRequest.id,
-      );
-
     if (!invoice) {
       invoice = await this.invoicesService.getInvoiceByShoppingRequestId(
         updatedShoppingRequest.id,
       );
     }
 
+    const { user_id, courier, ...rest } = updatedShoppingRequest;
+
     return {
-      id: updatedShoppingRequest.id,
-      user_id: updatedShoppingRequest.user_id,
-      request_code: updatedShoppingRequest.request_code,
-      courier: updatedShoppingRequest.courier.name,
-      items_count: updatedShoppingRequest.items_count,
-      remarks: updatedShoppingRequest.remarks,
-      status: updatedShoppingRequest.status,
+      ...rest,
+      user_id,
+      courier: courier?.name,
       payment_slips: slips,
-      tracking_requests: trackingRequests,
       invoice: invoice
         ? {
-            id: invoice.id,
-            invoice_no: invoice.invoice_no,
-            amount: invoice.amount,
-            gst: invoice.gst,
-            total: invoice.total,
-            status: invoice.status,
-            products:
-              invoice.products?.map((product) => ({
-                id: product.id,
-                shopping_request_id: product.shopping_request_id,
-                name: product.name,
-                description: product.description,
-                unit_price: product.unit_price,
-                currency: product.currency,
-                quantity: product.quantity,
-                url: product.url,
-                size: product.size,
-                color: product.color,
-                variants: product.variants,
-                if_not_available_quantity: product.if_not_available_quantity,
-                if_not_available_color: product.if_not_available_color,
-                available: product.available,
-                created_at: product.created_at,
-                updated_at: product.updated_at,
-              })) || [],
-            created_at: invoice.created_at,
-            updated_at: invoice.updated_at,
+            ...invoice,
+            amount:
+              await this.userPreferencesService.getFormattedConvertedPrice(
+                updatedShoppingRequest.user_id,
+                invoice.amount,
+              ),
+            total: await this.userPreferencesService.getFormattedConvertedPrice(
+              updatedShoppingRequest.user_id,
+              invoice.total,
+            ),
+            products: await Promise.all(
+              (invoice.products ?? []).map(async (product) => ({
+                ...product,
+                invoice: undefined,
+                unit_price:
+                  await this.userPreferencesService.getFormattedConvertedPrice(
+                    updatedShoppingRequest.user_id,
+                    product.unit_price,
+                  ),
+              })),
+            ),
           }
         : undefined,
-      created_at: updatedShoppingRequest.created_at,
-      updated_at: updatedShoppingRequest.updated_at,
     };
   }
 

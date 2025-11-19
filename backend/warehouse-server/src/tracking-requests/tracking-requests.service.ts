@@ -6,19 +6,24 @@ import { FeatureType, TrackingRequest } from './tracking-request.entity';
 import { CreateTrackingRequestDto } from './dto/create-tracking-request.dto';
 import { UpdateTrackingRequestDto } from './dto/update-tracking-request.dto';
 import { TrackingRequestResponseDto } from './dto/tracking-request-response.dto';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class TrackingRequestsService {
   constructor(
     @InjectRepository(TrackingRequest)
     private readonly trackingRequestRepository: Repository<TrackingRequest>,
+    private readonly usersService: UsersService,
   ) {}
 
   async createTrackingRequest(
     createTrackingRequestDto: CreateTrackingRequestDto,
   ): Promise<TrackingRequestResponseDto> {
+    //TODO: Couldn't able to understand this logic
     const trackingRequest = this.trackingRequestRepository.create({
-      courier: { id: createTrackingRequestDto.courier_id } as any,
+      ...(createTrackingRequestDto.courier_id
+        ? { courier: { id: createTrackingRequestDto.courier_id } as any }
+        : {}),
       feature_type: createTrackingRequestDto.feature_type,
       status: createTrackingRequestDto.status,
       feature_fid: createTrackingRequestDto.feature_fid,
@@ -28,33 +33,23 @@ export class TrackingRequestsService {
     const savedTrackingRequest =
       await this.trackingRequestRepository.save(trackingRequest);
 
+    const { user, ...rest } = savedTrackingRequest;
+
     return {
-      id: savedTrackingRequest.id,
-      courier: savedTrackingRequest.courier,
-      user: savedTrackingRequest.user,
-      feature_type: savedTrackingRequest.feature_type,
-      status: savedTrackingRequest.status,
-      feature_fid: savedTrackingRequest.feature_fid,
-      created_at: savedTrackingRequest.created_at,
-      updated_at: savedTrackingRequest.updated_at,
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     };
   }
 
   async getAllTrackingRequests(): Promise<TrackingRequestResponseDto[]> {
     const trackingRequests = await this.trackingRequestRepository.find({
       order: { created_at: 'DESC' },
-      relations: ['admin', 'user'],
+      relations: ['user'],
     });
 
-    return trackingRequests.map((request) => ({
-      id: request.id,
-      courier: request.courier,
-      user: request.user,
-      feature_type: request.feature_type,
-      status: request.status,
-      feature_fid: request.feature_fid,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
+    return trackingRequests.map(({ user, ...rest }) => ({
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     }));
   }
 
@@ -63,22 +58,18 @@ export class TrackingRequestsService {
   ): Promise<TrackingRequestResponseDto> {
     const trackingRequest = await this.trackingRequestRepository.findOne({
       where: { id },
-      relations: ['admin', 'user'],
+      relations: ['user'],
     });
 
     if (!trackingRequest) {
       throw new NotFoundException(`Tracking request with id ${id} not found`);
     }
 
+    const { user, ...rest } = trackingRequest;
+
     return {
-      id: trackingRequest.id,
-      courier: trackingRequest.courier,
-      user: trackingRequest.user,
-      feature_type: trackingRequest.feature_type,
-      status: trackingRequest.status,
-      feature_fid: trackingRequest.feature_fid,
-      created_at: trackingRequest.created_at,
-      updated_at: trackingRequest.updated_at,
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     };
   }
 
@@ -88,18 +79,12 @@ export class TrackingRequestsService {
     const trackingRequests = await this.trackingRequestRepository.find({
       where: { user: { id: userId } },
       order: { created_at: 'DESC' },
-      relations: ['admin', 'user'],
+      relations: ['user'],
     });
 
-    return trackingRequests.map((request) => ({
-      id: request.id,
-      courier: request.courier,
-      user: request.user,
-      feature_type: request.feature_type,
-      status: request.status,
-      feature_fid: request.feature_fid,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
+    return trackingRequests.map(({ user, ...rest }) => ({
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     }));
   }
 
@@ -113,18 +98,12 @@ export class TrackingRequestsService {
         feature_fid: featureFid,
       },
       order: { created_at: 'DESC' },
-      relations: ['admin', 'user'],
+      relations: ['user'],
     });
 
-    return trackingRequests.map((request) => ({
-      id: request.id,
-      courier: request.courier,
-      user: request.user,
-      feature_type: request.feature_type,
-      status: request.status,
-      feature_fid: request.feature_fid,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
+    return trackingRequests.map(({ user, ...rest }) => ({
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     }));
   }
 
@@ -144,15 +123,11 @@ export class TrackingRequestsService {
     const updatedTrackingRequest =
       await this.trackingRequestRepository.save(trackingRequest);
 
+    const { user, ...rest } = updatedTrackingRequest;
+
     return {
-      id: updatedTrackingRequest.id,
-      courier: updatedTrackingRequest.courier,
-      user: updatedTrackingRequest.user,
-      feature_type: updatedTrackingRequest.feature_type,
-      status: updatedTrackingRequest.status,
-      feature_fid: updatedTrackingRequest.feature_fid,
-      created_at: updatedTrackingRequest.created_at,
-      updated_at: updatedTrackingRequest.updated_at,
+      ...rest,
+      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
     };
   }
 

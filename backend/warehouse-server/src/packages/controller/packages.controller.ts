@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   Request,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -26,6 +27,7 @@ import { CreatePackageDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
 import { UpdatePackageDto } from '../dto/update-package.dto';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
+import { CreatePackageChargeDto } from '../dto/create-package-charge.dto';
 
 interface AuthenticatedRequest extends ExpressRequest {
   user: {
@@ -97,7 +99,7 @@ export class PackagesController {
       id: pkg.id,
       tracking_no: pkg.tracking_no,
       status: pkg.status,
-      customer_id: pkg.customer?.id,
+      user_id: pkg.user?.id,
       created_at: pkg.created_at,
     }));
   }
@@ -108,6 +110,16 @@ export class PackagesController {
   @ApiOkResponse({ type: PackageResponseDto })
   async findOne(@Param('id') id: string): Promise<PackageResponseDto> {
     return this.packagesService.getPackageById(id);
+  }
+
+  @Get('user/:userId')
+  @ApiOperation({ summary: 'Get all packages for a user' })
+  @ApiParam({ name: 'userId', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOkResponse({ type: [PackageResponseDto] })
+  async findByUser(
+    @Param('userId') userId: string,
+  ): Promise<PackageResponseDto[]> {
+    return this.packagesService.getPackagesByUser(userId);
   }
 
   @Get('user/:userId/status/:status')
@@ -165,10 +177,10 @@ export class PackagesController {
     return this.packagesService.updatePackageInfo(id, dto, req.user.id);
   }
 
-  @Post('shipments/:shipment_uuid/documents')
+  @Post('shipments/:package_uuid/documents')
   @ApiOperation({ summary: 'Upload shipment document/photo' })
   async uploadShipmentDocument(
-    @Param('shipment_uuid') shipment_uuid: string,
+    @Param('package_uuid') package_uuid: string,
     @Body()
     body: {
       url: string;
@@ -180,19 +192,19 @@ export class PackagesController {
     @Request() req: AuthenticatedRequest,
   ) {
     return this.packagesService.addShipmentDocument(
-      shipment_uuid,
+      package_uuid,
       body,
       req.user.id,
     );
   }
 
-  @Get('shipments/:shipment_uuid/documents')
+  @Get('shipments/:package_uuid/documents')
   @ApiOperation({ summary: 'Get all documents/photos for a shipment' })
-  async getShipmentDocuments(@Param('shipment_uuid') shipment_uuid: string) {
+  async getShipmentDocuments(@Param('package_uuid') package_uuid: string) {
     return this.packagesService['documentsService'].findByFeature(
       FeatureType.Package,
-      shipment_uuid,
-      'SHIPMENT',
+      package_uuid,
+      'PACKAGE',
     );
   }
 
@@ -200,48 +212,6 @@ export class PackagesController {
   @ApiOperation({ summary: 'Get all packages by shipment_id' })
   async findByShipmentId(@Param('shipment_id') shipmentId: string) {
     return this.packagesService.getPackagesByShipmentId(shipmentId);
-  }
-
-  @Get('shipments/uuid/:shipment_uuid')
-  @ApiOperation({ summary: 'Get all packages by shipment_uuid' })
-  async findByShipmentUuid(@Param('shipment_uuid') shipmentUuid: string) {
-    return this.packagesService.getPackagesByShipmentUuid(shipmentUuid);
-  }
-
-  @Patch('shipments/:shipment_uuid/slips')
-  @ApiOperation({ summary: 'Add a payment slip to a shipment' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        url: {
-          type: 'string',
-          example: 'https://cdn.example.com/slips/payment-001.png',
-        },
-        original_filename: { type: 'string', example: 'payment-001.png' },
-        mime_type: { type: 'string', example: 'image/png' },
-        file_size: { type: 'number', example: 204800 },
-      },
-    },
-  })
-  async addPaymentSlip(
-    @Param('shipment_uuid') shipment_uuid: string,
-    @Body()
-    body: {
-      data: {
-        url: string;
-        original_filename: string;
-        mime_type?: string;
-        file_size?: number;
-      };
-    },
-    @Request() req: AuthenticatedRequest,
-  ): Promise<any> {
-    return this.packagesService.addPaymentSlip(
-      shipment_uuid,
-      body.data,
-      req.user.id,
-    );
   }
 
   @Get('shipments/:shipment_uuid/slips')
@@ -254,23 +224,20 @@ export class PackagesController {
     );
   }
 
-  @Get('shipments/search')
-  @ApiOperation({
-    summary: 'Search for a package by tracking number and status'
-  })
-  @ApiQuery({ name: 'trackingNumber', type: String, required: true })
-  @ApiQuery({
-    name: 'status',
-    type: String,
-    required: true,
-    example: 'Ready To Ship'
-  })
-  @ApiOkResponse({ description: 'Package found', type: PackageResponseDto })
-  async searchPackage(
-    @Query('trackingNumber') trackingNumber: string,
-    @Query('status') status: string,
-  ): Promise<PackageResponseDto> {
-    return this.packagesService.findByTrackingNumberAndStatus(trackingNumber, status);
+  @Post('shipments/charges')
+  @ApiOperation({ summary: 'Create a package shipment charge' })
+  @ApiBody({ type: CreatePackageChargeDto })
+  async createPackageCharge(
+    @Body() createPackageChargeDto: CreatePackageChargeDto,
+  ): Promise<any> {
+    return this.packagesService.createPackageCharges(createPackageChargeDto);
   }
 
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a package by ID' })
+  @ApiParam({ name: 'id', description: 'The UUID of the package' })
+  @ApiOkResponse({ description: 'Package deleted successfully' })
+  async delete(@Param('id') id: string): Promise<void> {
+    return this.packagesService.deletePackage(id);
+  }
 }

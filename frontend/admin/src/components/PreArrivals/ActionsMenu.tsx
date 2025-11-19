@@ -32,11 +32,24 @@ const ActionsMenu: React.FC<ActionsMenuProps> = ({
         horizontal: 'right',
       }}
     >
-      <MenuItem onClick={onMarkAsReceive} disabled={selectedRowItem?.status.toLowerCase() === 'received'}>
+      <MenuItem
+        onClick={() => {
+          onMarkAsReceive();
+          onClose();
+        }}
+        disabled={selectedRowItem?.status.toLowerCase() === 'received'}
+      >
         <EditIcon sx={{ mr: 1, fontSize: '1.2rem' }} />
         Mark as Receive
       </MenuItem>
-      <MenuItem onClick={onDelete} sx={{ color: 'error.main' }}>
+
+      <MenuItem
+        onClick={() => {
+          onDelete();
+          onClose();
+        }}
+        sx={{ color: 'error.main' }}
+      >
         <DeleteIcon sx={{ mr: 1, fontSize: '1.2rem' }} />
         Delete
       </MenuItem>

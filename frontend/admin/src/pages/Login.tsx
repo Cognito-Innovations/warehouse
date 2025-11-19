@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -9,10 +9,25 @@ import {
   InputAdornment,
   IconButton,
   CircularProgress,
+  type SxProps,
+  type Theme,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner'
+import PasswordStrength from '../components/common/PasswordStrength';
+
+const fullScreenStyle: SxProps<Theme> = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  height: '100vh',
+  width: '100vw',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+};
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +39,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   // TODO: Uncomment this when we have a way to check if the user is authenticated
   // Redirect if already authenticated
@@ -35,6 +51,17 @@ const Login: React.FC = () => {
   //     }
   //   }
   // }, [isLoading]);
+
+  const passwordValidation = useMemo(() => {
+    const pass = formData.password;
+    return {
+      length: pass.length >= 6,
+      uppercase: /[A-Z]/.test(pass),
+      lowercase: (pass.match(/[a-z]/g) || []).length >= 2,
+      number: /[0-9]/.test(pass),
+      special: /[!@#$%^&*]/.test(pass),
+    };
+  }, [formData.password]);
 
   const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [field]: event.target.value }));
@@ -55,8 +82,8 @@ const Login: React.FC = () => {
 
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else  if (Object.values(passwordValidation).some(v => !v)) {
+      newErrors.password = 'Please meet all password requirements.';
     }
 
     setErrors(newErrors);
@@ -69,7 +96,6 @@ const Login: React.FC = () => {
     if (!validateForm()) {
       return;
     }
-
 
     setLoading(true);
 
@@ -109,14 +135,7 @@ const Login: React.FC = () => {
 
   return (
     <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        padding: 2,
-      }}
+      sx={fullScreenStyle}
     >
       <Card
         sx={{
@@ -126,10 +145,12 @@ const Login: React.FC = () => {
           borderRadius: 3,
           boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
           background: 'white',
+          overflow: 'visible'
         }}
       >
         {/* Logo */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <img src="/palakart-text-logo.png" alt="Palakart" width={250} height={100}/>
           <Typography
             variant="h4"
             sx={{
@@ -139,7 +160,6 @@ const Login: React.FC = () => {
               letterSpacing: '-0.5px',
             }}
           >
-            shopme.mv
           </Typography>
         </Box>
 
@@ -174,45 +194,52 @@ const Login: React.FC = () => {
             }}
           />
 
-          <TextField
-            fullWidth
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            value={formData.password}
-            onChange={handleInputChange('password')}
-            error={!!errors.password}
-            helperText={errors.password}
-            margin="normal"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Lock sx={{ color: '#64748b' }} />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={handleTogglePasswordVisibility}
-                    edge="end"
-                    sx={{ color: '#64748b' }}
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover fieldset': {
-                  borderColor: '#8b5cf6',
+          <Box sx={{ position: 'relative' }}>  
+            <TextField
+              fullWidth
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              value={formData.password}
+              onChange={handleInputChange('password')}
+              onFocus={() => setIsPasswordFocused(true)}
+              onBlur={() => setIsPasswordFocused(false)} 
+              error={!!errors.password}
+              helperText={errors.password}
+              margin="normal"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Lock sx={{ color: '#64748b' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={handleTogglePasswordVisibility}
+                      edge="end"
+                      sx={{ color: '#64748b', marginRight: '1px' }}
+                    >
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '&:hover fieldset': {
+                    borderColor: '#8b5cf6',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#8b5cf6',
+                  },
                 },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#8b5cf6',
-                },
-              },
-            }}
-          />
+              }}
+            />
+            {isPasswordFocused && formData.password && (
+              <PasswordStrength password_str={formData.password} />
+            )}
+          </Box>
 
           <Button
             type="submit"

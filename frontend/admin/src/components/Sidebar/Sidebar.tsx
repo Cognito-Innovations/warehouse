@@ -6,7 +6,7 @@ import SubMenu from './SubMenu';
 import type { MenuItem } from '../../data/menuItems';
 
 export interface SidebarProps {
-  logo: string;
+  logo: string | React.ReactNode;
   menuItems: MenuItem[];
   onSubMenuToggle?: (isOpen: boolean) => void;
 }
@@ -61,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ logo, menuItems, onSubMenuToggle }) =
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Box sx={{ width: 32, height: 32, bgcolor: '#6366f1', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
-                {logo || "S"}
+                {logo || "P"}
               </Typography>
             </Box>
           </Box>

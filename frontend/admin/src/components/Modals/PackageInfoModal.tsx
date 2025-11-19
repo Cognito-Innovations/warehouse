@@ -17,7 +17,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Card,
   CardContent,
 } from '@mui/material';
@@ -37,7 +36,7 @@ interface PackageInfoModalProps {
   packageData?: {
     id: string;
     status: string;
-    customer: string;
+    user: string;
     email: string;
     phone: string;
     trackingNo: string;
@@ -56,11 +55,24 @@ interface PackageInfoModalProps {
   };
 }
 
+interface IncomingPackage {
+  id?: string;
+  packageNo?: string;
+  statusType?: string;
+  status?: string;
+  user?: string;
+  userCode?: string;
+  carrier?: string;
+  trackingNo?: string;
+  receivedAt?: string;
+  time?: string;
+}
+
 const PackageInfoModal: React.FC<PackageInfoModalProps> = ({ open, onClose, packageData }) => {
   const defaultPackageData = {
     id: 'IN2025638',
     status: 'READY TO SEND',
-    customer: 'Sahaaf (809-346)',
+    user: 'Sahaaf (809-346)',
     email: 'leosahaaf@gmail.com',
     phone: '9609670949',
     trackingNo: 'AMAZON INDIA Tracking No. 363058597466',
@@ -81,14 +93,14 @@ const PackageInfoModal: React.FC<PackageInfoModalProps> = ({ open, onClose, pack
   };
 
   // Map package data from packages table to modal format
-  const mapPackageData = (pkg: any) => {
+  const mapPackageData = (pkg?: IncomingPackage) => {
     if (!pkg) return defaultPackageData;
     
     return {
       id: pkg.packageNo || pkg.id,
       status: pkg.statusType || 'READY TO SEND',
-      customer: `${pkg.customer} (${pkg.customerCode})`,
-      email: 'customer@example.com', // Default since not in packages data
+      user: `${pkg.user} (${pkg.userCode})`,
+      email: 'user@example.com', // Default since not in packages data
       phone: '000-000-0000', // Default since not in packages data
       trackingNo: `${pkg.carrier} Tracking No. ${pkg.trackingNo}`,
       weight: '0.2Kg', // Default since not in packages data
@@ -180,7 +192,7 @@ const PackageInfoModal: React.FC<PackageInfoModalProps> = ({ open, onClose, pack
                 
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    {data.customer}
+                    {data.user}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {data.email}

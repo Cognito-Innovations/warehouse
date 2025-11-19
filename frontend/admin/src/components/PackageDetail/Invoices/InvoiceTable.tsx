@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Box,
   Paper,
@@ -12,13 +11,12 @@ import {
 } from "@mui/material";
 import InvoiceRow from "./InvoiceRow";
 
-const InvoiceTable: React.FC<{ packageData: any }> = ({ packageData }) => {
+const InvoiceTable = ({ packageData }) => {
   const invoice = {
     invoice_no: `INV/CN/${new Date().getFullYear()}/${packageData.id}`,
     amount: 36.50,
-    gst: 0.00,
     total: 36.50,
-    status: packageData.status === 'PAYMENT_PENDING' ? 'UNPAID' : 'PAID',
+    status: (packageData.status === 'PAYMENT_PENDING' ? 'UNPAID' : 'PAID') as 'UNPAID' | 'PAID',
     items: packageData.items,
   };
 
@@ -35,7 +33,6 @@ const InvoiceTable: React.FC<{ packageData: any }> = ({ packageData }) => {
               <TableCell />
               <TableCell>Invoice No.</TableCell>
               <TableCell align="right">Amount</TableCell>
-              <TableCell align="right">GST</TableCell>
               <TableCell align="right">Total</TableCell>
               <TableCell align="center">Status</TableCell>
               <TableCell align="right">Actions</TableCell>

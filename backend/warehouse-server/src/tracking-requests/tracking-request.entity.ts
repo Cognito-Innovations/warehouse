@@ -14,6 +14,7 @@ export enum FeatureType {
   ShoppingRequest = 'shopping-request',
   Package = 'package',
   PickupRequest = 'pickup-request',
+  Shipment = 'shipment',
   PreArrival = 'pre-arrival',
   Rack = 'rack',
   Supplier = 'supplier',
@@ -32,11 +33,15 @@ export enum TrackingStatus {
   OrderPlaced = 'order_placed',
   Paid = 'paid',
   QuotationConfirmed = 'quotation_confirmed',
+  Confirmed = 'confirmed',
   Quoted = 'quoted',
   ReadyToShip = 'ready_to_ship',
-  RequestShip = 'request_ship',
+  ShipRequest = 'ship_request',
   Requested = 'requested',
   Shipped = 'shipped',
+  Picked = 'picked',
+  Rejected = 'rejected',
+  Departed = 'departed',
 }
 
 @Entity('tracking_request')
@@ -44,17 +49,14 @@ export class TrackingRequest extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => CourierCompany, { eager: true })
+  //TODO: Why is it optional ?
+  @ManyToOne(() => CourierCompany, { eager: true, nullable: true })
   @JoinColumn({ name: 'courier_id' })
-  courier: CourierCompany;
+  courier?: CourierCompany;
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'user_id' })
   user: User;
-
-  @ManyToOne(() => User, { eager: true, nullable: true })
-  @JoinColumn({ name: 'admin_id' })
-  admin?: User;
 
   @Column({
     type: 'enum',
@@ -68,6 +70,7 @@ export class TrackingRequest extends BaseTimestampEntity {
   })
   status: TrackingStatus;
 
+  //later:todo: these roles should be foriegn key of roles foreign table
   @Column({ default: Role.User })
   role: Role;
 

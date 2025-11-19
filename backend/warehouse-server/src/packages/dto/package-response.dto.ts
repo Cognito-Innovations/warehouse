@@ -1,18 +1,29 @@
 import { Country } from 'src/Countries/country.entity';
 import { DocumentSummaryDto } from 'src/documents/dto/document-response.dto';
+import { UserPreference } from 'src/user-preferences/user-preference.entity';
+import { UserAddress } from 'src/user_address/user_address.entity';
+
+export class StatusDto {
+  label: string;
+  value: string;
+}
 
 export class PackageResponseDto {
   id: string;
   tracking_no: string;
-  status: string;
+  status: StatusDto;
   shipment_id?: string | null;
   shipment_uuid?: string | null;
-  customer?: {
+  user?: {
     id: string;
     email: string;
     name?: string;
     suite_no: string;
     country?: string;
+    phone_number: string;
+    phone_number_2: string;
+    preference?: UserPreference;
+    address?: UserAddress[];
   };
   vendor?: {
     id: string;
@@ -31,7 +42,7 @@ export class PackageResponseDto {
   total_weight?: number | null;
   total_volumetric_weight?: number | null;
   country: Country;
-  allow_customer_items: boolean;
+  allow_user_items: boolean;
   shop_invoice_received: boolean;
   remarks?: string | null;
   dangerous_good: boolean;
@@ -50,6 +61,7 @@ export class PackageResponseDto {
   updated_at?: number;
   measurements?: PackageMeasurementResponseDto[];
   items?: PackageItemResponseDto[];
+  charges?: PackageChargeResponseDto[];
 }
 
 export class PackageMeasurementResponseDto {
@@ -71,6 +83,13 @@ export class PackageItemResponseDto {
   quantity: number;
   unit_price: number;
   total_price: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export class PackageChargeResponseDto {
+  id: string;
+  amount: string;
   created_at: number;
   updated_at: number;
 }
