@@ -44,3 +44,5 @@ export const steps = [
 
 export const STORAGE_KEY = "warehouse:clientIdentifier";
 export const HEADER_KEY = "x-client-identifier";
+
+export const CF_SCRIPT_SRC = "https://sdk.cashfree.com/js/v3/cashfree.js";

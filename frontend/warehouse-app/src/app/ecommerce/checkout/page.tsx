@@ -37,18 +37,18 @@ import {
   FormatListBulleted,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import { useCart, useCartActions } from "../../../store/ecommerceStore";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { ecommerceService } from "../../../services/ecommerce.service";
-import { toast } from "sonner";
+import { launchCashfreePayment } from "../../../services/cashfree-payment.service";
 import { ROUTES } from "@/utils/constants";
-import OrderSuccessPopup from "@/components/ecommerce/OrderSuccessPopup";
 import { fetchUserAddresses } from "@/lib/api.service";
 import { getCurrencyForCountry } from "@/utils/currency";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { CartItem } from "@/types/ecommerce";
-import { launchCashfreePayment } from "../../../services/cashfree-payment.service";
 
 interface UserAddress {
   address: string;
@@ -76,7 +76,6 @@ export default function CheckoutPage() {
   });
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isOrderSuccessModalOpen, setIsOrderSuccessModalOpen] = useState(false);
   const [fetchedAddress, setFetchedAddress] = useState<UserAddress | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
   const [checkedOutItems, setCheckedOutItems] = useState<CartItem[]>([]);
@@ -89,6 +88,7 @@ export default function CheckoutPage() {
     pincode: '',
   });
   const selectedCountry = locationData.location.countryName;
+  const countryCode = locationData.location.countryCode;
 
   const countryName = selectedCountry || '';
   const getThresholdAndFees = (country?: string) => {
@@ -163,145 +163,113 @@ export default function CheckoutPage() {
   }, [cart]);
 
   useEffect(() => {
-    if (
-      itemsLoaded &&
-      (!checkedOutItems || checkedOutItems.length === 0) &&
-      !isOrderSuccessModalOpen
-    ) {
+    if (itemsLoaded && (!checkedOutItems || checkedOutItems.length === 0)) {
       router.replace(ROUTES.CART);
     }
-  }, [checkedOutItems, isOrderSuccessModalOpen, router, itemsLoaded]);
-
-  if (
-    itemsLoaded &&
-    (!checkedOutItems || checkedOutItems.length === 0) &&
-    !isOrderSuccessModalOpen
-  ) {
-    return null;
-  }
-
-  const fetchUserAddress = async () => {
-    if (!user?.id) {
-      setFetchedAddress(null);
-      setAddressLoading(false);
-      return;
-    }
-
-    try {
-      setAddressLoading(true);
-      setError(null);
-
-      const addressData = await fetchUserAddresses(user.id);
-
-      let addresses: UserAddress[] = [];
-      if (Array.isArray(addressData)) {
-        addresses = addressData;
-      } else if (addressData) {
-        addresses = [addressData];
-      }
-
-      if (addresses.length > 0) {
-        const defaultAddress = addresses[0];
-        const fullAddress = `${defaultAddress.address}, ${defaultAddress.city}, ${defaultAddress.state || ''}, ${defaultAddress.zip_code}, ${defaultAddress.country}`;
-        setFormData(prev => ({
-          ...prev,
-          shippingAddress: fullAddress,
-        }));
-        setFetchedAddress(defaultAddress);
-      } else {
-        setFetchedAddress(null);
-        setError("No saved address found. Please add an address in your profile.");
-      }
-    } catch (err) {
-      console.error("Failed to fetch addresses:", err);
-      setFetchedAddress(null);
-      setError("Failed to fetch your saved address. Please try again.");
-    } finally {
-      setAddressLoading(false);
-    }
-  };
+  }, [checkedOutItems, router, itemsLoaded]);
 
   useEffect(() => {
+    const fetchUserAddress = async () => {
+      if (!user?.id) {
+        setFetchedAddress(null);
+        setAddressLoading(false);
+        return;
+      }
+
+      try {
+        setAddressLoading(true);
+        setError(null);
+
+        const addressData = await fetchUserAddresses(user.id);
+
+        let addresses: UserAddress[] = [];
+        if (Array.isArray(addressData)) {
+          addresses = addressData;
+        } else if (addressData) {
+          addresses = [addressData];
+        }
+
+        if (addresses.length > 0) {
+          const defaultAddress = addresses[0];
+          const fullAddress = `${defaultAddress.address}, ${defaultAddress.city}, ${defaultAddress.state || ''}, ${defaultAddress.zip_code}, ${defaultAddress.country}`;
+          setFormData(prev => ({
+            ...prev,
+            shippingAddress: fullAddress,
+          }));
+          setFetchedAddress(defaultAddress);
+        } else {
+          setFetchedAddress(null);
+          setError("No saved address found. Please add an address in your profile.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch addresses:", err);
+        setFetchedAddress(null);
+        setError("Failed to fetch your saved address. Please try again.");
+      } finally {
+        setAddressLoading(false);
+      }
+    };
+
     if (user?.id) {
       fetchUserAddress();
     }
   }, [user?.id]);
 
-  function generateTempOrderId(uid:string) {
-    return (
-      (cart?.id || "order") + "_" + Date.now() + (uid ? "_"+uid : "")
-    );
-  }
-
   async function handlePaymentAndOrder() {
-    if (!checkedOutItems.length) {
+    if (!checkedOutItems.length || !formData.shippingAddress || authLoading) {
       setError("No items found for checkout.");
       toast.error("No items to checkout.");
-      return;
-    }
-    if (authLoading) return;
-    if (!formData.shippingAddress) {
-      setError("Cannot place order without a shipping address.");
-      toast.error("No shipping address found.");
       return;
     }
     setProcessing(true);
     setError(null);
     try {
-      const orderId = generateTempOrderId(user?.id || "");
+      const orderData = {
+        shipping_address: formData.shippingAddress,
+        country_code: countryCode,
+      }
+      const initiateResponse = await ecommerceService.initiateOrder(orderData);
+      const { orderId, orderNumber, paymentSessionId, totalAmount } = initiateResponse;
+
+      if (!paymentSessionId) {
+        throw new Error('Failed to initiate payment');
+      }
+
       const paymentConfig = {
-        orderId,
-        orderAmount: totals.total,
+        orderId: orderNumber,
+        orderAmount: totalAmount,
         orderCurrency: currencySymbol,
-        customerName: user?.name || fetchedAddress?.name || "Customer",
-        customerEmail: user?.email || "test@example.com",
-        customerPhone: fetchedAddress?.phone_number || "9999999999",
-        orderToken: "<CASHFREE_DEV_ORDER_TOKEN_HERE>",
+        customerName: user?.name,
+        customerEmail: user?.email,
+        customerPhone: user?.phone,
+        orderToken: paymentSessionId,
       };
-      await new Promise((r) => setTimeout(r, 1200));
-      await launchCashfreePayment(paymentConfig,
+
+      await launchCashfreePayment(
+        paymentConfig,
         async (paymentResult: any) => {
           try {
-            const lineItems = checkedOutItems.map((item) => ({
-              product_id: item.product.id,
-              quantity: item.quantity,
-            }));
-            const orderData = {
-              line_items: lineItems,
-              shipping_address: formData.shippingAddress,
-              billing_address: formData.billingAddress,
-              notes: formData.notes,
-            };
-            await ecommerceService.createOrder(orderData);
+            await ecommerceService.updatePaymentStatus(orderId, 'PAID');
             clearCart();
-            setIsOrderSuccessModalOpen(true);
-            toast.success("Order placed after payment!");
-          } catch (err) {
-            setError("Order create failed after payment. Contact support!");
-            toast.error("Order create error after payment");
+            toast.success("Order placed successfully!");
+            router.push(ROUTES.ORDER_HISTORY);
+          } catch (error) {
+            setError("Payment succeeded but order update failed. Contact support.");
+            toast.error("Order update error");
           }
         },
         (failData: any) => {
-          setError(failData?.reason || "Payment not completed. Please try again.");
+          setError(failData?.reason || "Payment failed. Please try again.");
           toast.error(failData?.reason || "Payment cancelled");
-        });
+        }
+      )
     } catch (err) {
-      setError("Payment start failed. Please try again.");
-      toast.error("Unable to start payment session");
+      setError(err.message || "Failed to initiate checkout.");
+      toast.error("Checkout initiation failed");
     } finally {
       setProcessing(false);
     }
   }
-
-  const handleContinueShopping = () => {
-    setIsOrderSuccessModalOpen(false);
-    router.push(ROUTES.ECOMMERCE);
-  };
-
-  const handleViewOrderHistory = () => {
-    setIsOrderSuccessModalOpen(false);
-    router.push(ROUTES.ORDER_HISTORY);
-  };
 
   if (authLoading) {
     return (
@@ -316,7 +284,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if ((!checkedOutItems || checkedOutItems.length === 0) && !isOrderSuccessModalOpen) {
+  if ((!checkedOutItems || checkedOutItems.length === 0)) {
     return null;
   }
 
@@ -371,12 +339,6 @@ export default function CheckoutPage() {
           </IconButton>
         </Toolbar>
       </AppBar>
-
-      <OrderSuccessPopup
-        open={isOrderSuccessModalOpen}
-        onContinueShopping={handleContinueShopping}
-        onViewOrderHistory={handleViewOrderHistory}
-      />
 
       <Container maxWidth="lg" sx={{ py: { xs: 1, md: 3 }, px: { xs: 1, sm: 2 } }}>
         {/* Fast Delivery Card */}

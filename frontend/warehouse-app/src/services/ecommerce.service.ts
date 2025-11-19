@@ -105,8 +105,12 @@ export const ecommerceService = {
   },
 
   // Cart
-  async getCart(): Promise<Cart> {
-    const response = await api.get("/ecommerce-cart");
+  async getCart(country?: string): Promise<Cart> {
+    let params: any = {};
+    if (country) {
+      params.country = country;
+    }
+    const response = await api.get("/ecommerce-cart", { params });
     return response.data;
   },
 
@@ -115,13 +119,21 @@ export const ecommerceService = {
     return response.data;
   },
 
-  async updateCartItem(itemId: string, data: UpdateCartItemRequest): Promise<Cart> {
-    const response = await api.put(`/ecommerce-cart/items/${itemId}`, data);
+  async updateCartItem(itemId: string, data: UpdateCartItemRequest, country?: string): Promise<Cart> {
+    let params: any = {};
+    if (country) {
+      params.country = country;
+    }
+    const response = await api.put(`/ecommerce-cart/items/${itemId}`, data, { params });
     return response.data;
   },
 
-  async removeFromCart(itemId: string): Promise<Cart> {
-    const response = await api.delete(`/ecommerce-cart/items/${itemId}`);
+  async removeFromCart(itemId: string, country?: string): Promise<Cart> {
+    let params: any = {};
+    if (country) {
+      params.country = country;
+    }
+    const response = await api.delete(`/ecommerce-cart/items/${itemId}`, {params});
     return response.data;
   },
 
@@ -130,6 +142,11 @@ export const ecommerceService = {
   },
 
   // Orders
+  async initiateOrder(orderData: any): Promise<any> {
+    const response = await api.post('/ecommerce-orders/initiate', orderData);
+    return response.data;
+  },
+  
   async createOrder(data: CreateOrderRequest): Promise<Order> {
     const response = await api.post("/ecommerce-orders", data);
     return response.data;

@@ -57,10 +57,10 @@ export default function ProductDetailPage() {
   }, []); // Only run once on mount
 
   useEffect(() => {
-    if (countryCode) {
+    if (countryCode && products.length === 0) {
       fetchProducts(countryCode).catch((err) => {});
     }
-  }, [countryCode, fetchProducts]);
+  }, [countryCode, fetchProducts, products.length]);
 
   // Handle product loading when params.id changes
   useEffect(() => {
@@ -108,31 +108,10 @@ export default function ProductDetailPage() {
     setCurrentProduct(selectedProduct);
   };
 
-  const getCartItemQuantity = useCallback((productId: string) => {
-    const cartItem = cart?.items.find((item) => item.product.id === productId);
-    return cartItem?.quantity || 0;
-  }, [cart]);
-
   const handleProductClick = useCallback((product: EcommerceProduct) => {
     router.push(`${ROUTES.PRODUCT}/${product.id}`);
   }, [router]);
 
-  const handleAddToCartClick = useCallback((e: React.MouseEvent, product: EcommerceProduct) => {
-    e.stopPropagation();
-    const stockQuantity = product.stock_quantity;
-    const currentCartQuantity = getCartItemQuantity(product.id);
-    if (currentCartQuantity + 1 <= stockQuantity) {
-      addToCart(product.id, 1);
-    }
-  }, [getCartItemQuantity, addToCart]);
-
-  const handleDecreaseQuantityClick = useCallback((e: React.MouseEvent, product: EcommerceProduct) => {
-    e.stopPropagation();
-    const cartItem = cart?.items.find((item) => item.product.id === product.id);
-    if (cartItem && cartItem.quantity > 1) {
-      updateCartItem(cartItem.id, cartItem.quantity - 1);
-    }
-  }, [cart, updateCartItem]);
 
   const handleRefresh = () => {
     setLoading(true);
@@ -199,17 +178,7 @@ export default function ProductDetailPage() {
       {relatedProducts.length > 0 && (
         <RelatedProductsSection
           products={relatedProducts}
-          currentProductId={currentProduct.id}
-          cart={cart}
           onProductClick={handleProductClick}
-          onAddToCart={handleAddToCartClick}
-          onDecreaseQuantity={handleDecreaseQuantityClick}
-          getCartItemQuantity={getCartItemQuantity}
-          defaultRating={ecommerceData.ratings.defaultRating}
-          defaultReviewCount={ecommerceData.ratings.defaultReviewCount}
-          outOfStockLabel={ecommerceData.buttons.outOfStock}
-          addButtonLabel={ecommerceData.buttons.add}
-          title={ecommerceData.sections.youMayAlsoLike}
         />
       )}
     </Box>

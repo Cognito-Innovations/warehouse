@@ -1,44 +1,50 @@
 import { toast } from "sonner";
-
-const CF_SCRIPT_SRC = "https://sdk.cashfree.com/js/v3/cashfree.prod.js";
+import { CF_SCRIPT_SRC } from "@/utils/constants";
 
 function loadCashfreeScript() {
   return new Promise((resolve, reject) => {
-    if (window?.Cashfree) {
+    if (window.Cashfree) {
       resolve(window.Cashfree);
       return;
     }
-    const existingScript = document.querySelector("script[src^='https://sdk.cashfree.com/js/v3/cashfree']");
+    const existingScript = document.querySelector("script[src*='cashfree.js']");
     if (existingScript) {
-      existingScript.addEventListener("load", () => resolve(window.Cashfree));
-      existingScript.addEventListener("error", () => reject("Cashfree SDK failed to load."));
+      const checkLoaded = () => window.Cashfree ? resolve(window.Cashfree) : setTimeout(checkLoaded, 100);
+      checkLoaded();
       return;
     }
     const script = document.createElement("script");
-    script.src = CF_SCRIPT_SRC.replace(".prod.js", ".test.js");
+    script.src = CF_SCRIPT_SRC;
     script.async = true;
     script.onload = () => resolve(window.Cashfree);
     script.onerror = () => reject("Cashfree SDK failed to load.");
-    document.body.appendChild(script);
+    document.head.appendChild(script);
   });
 }
 
-export async function launchCashfreePayment(paymentConfig, onSuccess, onFailure) {
+export async function launchCashfreePayment(paymentConfig: any, onSuccess: any, onFailure: any) {
   try {
     await loadCashfreeScript();
     if (!window.Cashfree) throw new Error("Cashfree SDK not found!");
-    window.Cashfree.init({ mode: "sandbox" });
-    window.Cashfree.startPayment({
-      ...paymentConfig,
-      onSuccess: (data) => {
-        toast.success("Payment successful");
-        if (onSuccess) onSuccess(data);
-      },
-      onFailure: (error) => {
-        toast.error(error?.reason || "Payment failed");
-        if (onFailure) onFailure(error);
-      },
-    });
+
+    const cashfree = window.Cashfree({ mode: "sandbox" });
+
+    const options = {
+      paymentSessionId: paymentConfig.orderToken,
+      redirectTarget: "_self",
+    }
+
+    const paymentPromise = cashfree.checkout(options);
+
+    paymentPromise
+      .then((result: any) => {
+        toast.success("Payment initiated");
+        onSuccess(result);
+      })
+      .catch((error: any) => {
+        toast.error(error.reason || "Payment failed");
+        onFailure(error);
+      });
   } catch (err) {
     toast.error("Failed to load payment SDK");
     if (onFailure) onFailure(err);

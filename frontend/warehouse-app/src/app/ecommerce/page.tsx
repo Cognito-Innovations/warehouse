@@ -11,7 +11,6 @@ import CategoryProductsByCategory from "@/components/ecommerce/CategoryProductsB
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout"; 
 import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
-import CategorySkeleton from "@/components/ecommerce/skeleton-loader/CategorySkeletonLoader";
 import GridSkeleton from "@/components/ecommerce/skeleton-loader/GridSkeletonLoader";
 import { debounce } from "@/utils/debounce";
 import { ROUTES } from "@/utils/constants";
@@ -40,12 +39,14 @@ export default function Ecommerce() {
     loadingNextPage,
   } = useProducts();
   const { fetchCart } = useCartActions();
-  const { fetchCategories, fetchProducts, fetchMoreProducts, setLoading, setError, resetProducts } = useProductActions();
+  const { fetchCategories, fetchProducts, fetchMoreProducts, setLoading, setError } = useProductActions();
 
   const hasFetched = React.useRef(false);
   const countryCode = locationData.location.countryCode;
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
+  const prevSearchQueryRef = useRef(searchQuery);
+  const prevCountryCodeRef = useRef(countryCode);
 
   const fetchProductsCallback = useCallback(async (searchTerm: string) => {
     setLoading(true);
@@ -67,26 +68,44 @@ export default function Ecommerce() {
     if (hasFetched.current || !countryCode) return;
     hasFetched.current = true;
     setLoading(true);
-    await Promise.all([
-      fetchCategories().catch((err) => console.error("Categories fetch failed:", err)),
-      fetchProducts(countryCode).catch((err) => console.error("Products fetch failed:", err)),
-      fetchCart().catch((err) => console.error("Cart fetch failed:", err)),
-    ]);
-    setLoading(false);
+    try {
+      await fetchCategories().catch((err) => console.error("Categories fetch failed:", err));
+      await Promise.all([
+        fetchProducts(countryCode).catch((err) => console.error("Products fetch failed:", err)),
+        fetchCart().catch((err) => console.error("Cart fetch failed:", err)),
+      ]);
+    } finally {
+      setLoading(false);
+    }
   }, [fetchCategories, fetchProducts, fetchCart, setLoading]);
 
   useEffect(() => {
-    if (countryCode && (products.length === 0 || categories.length === 0) && !loading) {
+    if (countryCode && products.length === 0 && categories.length === 0) {
       initializeEcommerceData(countryCode);
     }
-  }, [countryCode, products.length, categories.length, initializeEcommerceData, loading]);
+  }, [countryCode, products.length, categories.length, initializeEcommerceData]);
 
   useEffect(() => {
-    if ((searchQuery || selectedCategory) && countryCode) {
-      resetProducts();
-      debouncedFetchProducts(searchQuery);
+    if (!countryCode) return;
+
+    const prevSearchQuery = prevSearchQueryRef.current;
+    const prevCountryCode = prevCountryCodeRef.current;
+
+    const searchChanged = searchQuery !== prevSearchQuery;
+    const countryChanged = prevCountryCode !== undefined && countryCode !== prevCountryCode;
+
+    if (searchChanged || countryChanged) {
+      setLoading(true);
+      if (searchQuery) {
+        debouncedFetchProducts(searchQuery);
+      } else {
+        fetchProductsCallback("");
+      }
     }
-  }, [searchQuery, selectedCategory, countryCode, debouncedFetchProducts, resetProducts]);
+
+    prevSearchQueryRef.current = searchQuery;
+    prevCountryCodeRef.current = countryCode;
+  }, [searchQuery, countryCode, debouncedFetchProducts, setLoading, fetchProductsCallback]);
 
   useEffect(() => {
     if (!observerRef.current || !hasMoreProducts || loadingNextPage) return;
@@ -131,8 +150,19 @@ export default function Ecommerce() {
   };
 
   const isNetworkError = error && (error.includes("Network Error") || error.includes("Failed to fetch") || error.includes("ECONNREFUSED") || error.includes("timeout"));
-  const dataReady = products.length > 0 && categories.length > 0;
-  if (!dataReady) {
+  const layoutProps = {
+    locationData: locationData,
+    categories: categories,
+  };
+  if (error && !isNetworkError) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
+  }
+
+  if (categories.length === 0 || (error && isNetworkError)) {
     return (
       <EcommerceSkeletonLoader
         {...(error && isNetworkError
@@ -145,71 +175,14 @@ export default function Ecommerce() {
       />
     );
   }
-
-  if (error && isNetworkError && categories.length === 0) {
-    return (
-      <EcommerceSkeletonLoader
-        networkError={ecommerceData.messages.networkError}
-        refreshButtonLabel={ecommerceData.messages.refreshButton}
-        onRefresh={handleRefresh}
-      />
-    );
-  }
-
-  if (error && !isNetworkError) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
-    );
-  }
-
-  const layoutProps = {
-    locationData: locationData,
-    categories: categories,
-  };
-
-  if (loading && categories.length > 0) {
-    return (
-      <EcommercePageLayout {...layoutProps}>
-        {!selectedCategory && (
-          <Box sx={{ bgcolor: "white", px: 2 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }} />
-            <GridSkeleton count={5} />
-          </Box>
-        )}
-
-        {!selectedCategory && <Box sx={{ borderBottom: `1px solid ${ecommerceData.ui.colors.borderColor}`, my: 2 }} />}
-        
-        {!selectedCategory && (
-          <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
-            <GridSkeleton count={5} hasTitle={true} titleWidth={180} />
-          </Box>
-        )}
-
-        {!selectedCategory && <Box sx={{ borderBottom: `1px solid ${ecommerceData.ui.colors.borderColor}`, my: 2 }} />}
-        
-        {selectedCategory ? (
-          <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
-            <GridSkeleton count={10} />
-          </Box>
-        ) : (
-          <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
-            <CategorySkeleton numCategories={2} />
-          </Box>
-        )}
-      </EcommercePageLayout>
-    );
-  }
-
   return (
     <EcommercePageLayout {...layoutProps}>
-      {isSearchEmpty ? (
-        <SearchEmptyState />
+      { isSearchEmpty ? (
+        <SearchEmptyState />
       ) : (
         <>
           {/* Section 1: Today's Deal */}
-          {!selectedCategory && todaysDealProducts.length > 0 && (
+          {!loading && !selectedCategory && todaysDealProducts.length > 0 && (
             <Box sx={{ bgcolor: "white", px: 2 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
               </Box>
@@ -220,10 +193,10 @@ export default function Ecommerce() {
             </Box>
           )}
 
-          {!selectedCategory && todaysDealProducts.length > 0 && ( <Box sx={{ borderBottom: `1px solid ${ecommerceData.ui.colors.borderColor}`, my: 2 }} />)}
+          {!loading && !selectedCategory && todaysDealProducts.length > 0 && ( <Box sx={{ borderBottom: `1px solid ${ecommerceData.ui.colors.borderColor}`, my: 2 }} />)}
         
           {/* Section 2: Suggested for You */}
-          {!selectedCategory && suggestedProducts.length > 0 && (
+          {!loading && !selectedCategory && suggestedProducts.length > 0 && (
             <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                 <Typography
@@ -246,10 +219,14 @@ export default function Ecommerce() {
             </Box>
           )}
         
-          {!selectedCategory && suggestedProducts.length > 0 && ( <Box sx={{ borderBottom: `1px solid ${ecommerceData.ui.colors.borderColor}`, my: 2 }} />)}
+          {!loading && !selectedCategory && suggestedProducts.length > 0 && ( <Box sx={{ borderBottom: `1px solid ${ecommerceData.ui.colors.borderColor}`, my: 2 }} />)}
         
           {/* Section 3: All Products by Category */}
-          {selectedCategory ? (
+          {loading ? (
+            <Box sx={{ py: 2, px: 2, bgcolor: "white" }}>
+              <GridSkeleton count={10} />
+            </Box>
+          ) : selectedCategory ? (
             // Show only selected category products
             <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
               <EcommerceProductsGrid

@@ -114,6 +114,7 @@ export interface Order {
 export interface AddToCartRequest {
   product_id: string;
   quantity: number;
+  country?: string;
 }
 
 export interface UpdateCartItemRequest {
@@ -206,23 +207,6 @@ export interface ProductDetailInfoSectionProps {
   addToCart: (productId: string, quantity: number) => Promise<void>;
   updateCartItem: (itemId: string, newQuantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
-  // product: EcommerceProduct;
-  // cartQuantity: number;
-  // isCartActionLoading: boolean;
-  // isIncrementLoading?: boolean;
-  // isDecrementLoading?: boolean;
-  // isOutOfStock: boolean;
-  // formattedDiscountPrice: string;
-  // formattedOriginalPrice: string;
-  // discountPercentage: number;
-  // formattedSavings: string;
-  // formattedPricePerUnit: string;
-  // measurementLabel: string;
-  // formattedSubtotal: string;
-  // onAddToCart: () => void;
-  // onGoToCart: () => void;
-  // onIncrement: () => void;
-  // onDecrement: () => void;
 }
 
 export interface PromotionalCardProps {

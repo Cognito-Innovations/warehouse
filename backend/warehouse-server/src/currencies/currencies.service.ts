@@ -45,6 +45,10 @@ export class CurrenciesService {
       updateData.currency_symbol = updateCurrencyDto.currency_symbol;
     }
 
+    if (updateCurrencyDto.currency_code !== undefined) {
+      updateData.currency_code = updateCurrencyDto.currency_code;
+    }
+
     await this.currencyRepository.update(id, updateData);
     return await this.findOne(id);
   }
