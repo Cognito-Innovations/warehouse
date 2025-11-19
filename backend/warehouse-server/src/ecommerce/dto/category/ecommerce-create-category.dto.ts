@@ -1,4 +1,14 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class CreateCategoryDto {
   @IsString()
@@ -9,13 +19,23 @@ export class CreateCategoryDto {
   @IsNotEmpty()
   slug: string;
 
-  @IsString()
-  @IsNotEmpty()
-  image_url: string;
+  @IsNumber()
+  @Min(0)
+  discount_percentage: number;
+
+  @IsArray()
+  @IsUUID('all', { each: true })
+  @ArrayMinSize(1)
+  country_ids: string[];
 
   @IsString()
   @IsNotEmpty()
-  country_id: string;
+  @IsOptional()
+  image_url: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  cargo_option_id: string;
 
   @IsString()
   @IsOptional()

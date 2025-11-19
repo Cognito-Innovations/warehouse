@@ -33,12 +33,12 @@ $ pnpm install
 
 ## Compile and run the project
 
+# watch mode
+$ pnpm run start:dev
+
 ```bash
 # development
 $ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
 
 # production mode
 $ pnpm run start:prod
@@ -72,7 +72,7 @@ With Mau, you can deploy your application in just a few clicks, allowing you to 
 
 ## Resources
 
-Check out a few resources that may come in handy when working with NestJS:
+Check out resources that may come in handy when working with NestJS:
 
 - Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
 - For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).

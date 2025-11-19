@@ -29,16 +29,7 @@ export class PackageItemsService {
 
     const savedItem = await this.packageItemRepository.save(packageItem);
 
-    return {
-      id: savedItem.id,
-      package_id: savedItem.package_id,
-      name: savedItem.name,
-      quantity: savedItem.quantity,
-      unit_price: savedItem.unit_price,
-      total_price: savedItem.total_price,
-      created_at: savedItem.created_at,
-      updated_at: savedItem.updated_at,
-    };
+    return savedItem;
   }
 
   async updateItem(
@@ -61,16 +52,7 @@ export class PackageItemsService {
 
     const updatedItem = await this.packageItemRepository.save(packageItem);
 
-    return {
-      id: updatedItem.id,
-      package_id: updatedItem.package_id,
-      name: updatedItem.name,
-      quantity: updatedItem.quantity,
-      unit_price: updatedItem.unit_price,
-      total_price: updatedItem.total_price,
-      created_at: updatedItem.created_at,
-      updated_at: updatedItem.updated_at,
-    };
+    return updatedItem;
   }
 
   async deleteItem(
@@ -108,14 +90,7 @@ export class PackageItemsService {
 
     return {
       items: savedItems.map((item) => ({
-        id: item.id,
-        package_id: item.package_id,
-        name: item.name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        total_price: item.total_price,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
+        ...item
       })),
     };
   }
@@ -127,14 +102,7 @@ export class PackageItemsService {
     });
 
     return items.map((item) => ({
-      id: item.id,
-      package_id: item.package_id,
-      name: item.name,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      total_price: item.total_price,
-      created_at: item.created_at,
-      updated_at: item.updated_at,
+      ...item
     }));
   }
 }

@@ -14,9 +14,11 @@ interface Document {
 }
 
 interface PackageData {
-  actual_id?: string;
-  createdBy?: string;
-  createdAt?: string;
+  id?: string;
+  created_by?: {
+    name: string;
+  }
+  created_at?: string;
   [key: string]: unknown;
 }
 
@@ -37,7 +39,7 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const isUploadDisabled = !packageData.actual_id;
+  const isUploadDisabled = !packageData.id;
   const handleFileSelect = async (files: FileList | null) => {
     if (isUploadDisabled) {
       toast.error("You can't upload files until the package is created.");
@@ -52,7 +54,7 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({
       for (const file of filesArray) {
         const url = await uploadToCloudinary(file);
         if (url) {
-          await addShipmentDocument(packageData.actual_id!, {
+          await addShipmentDocument(packageData.id!, {
             url,
             original_filename: file.name,
             mime_type: file.type,
@@ -259,7 +261,7 @@ const PhotosDocumentsSection: React.FC<PhotosDocumentsSectionProps> = ({
             )}
             
             <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.75rem' }}>
-              {packageData.createdBy} {packageData.createdAt}
+              {packageData.created_by?.name} {packageData.created_at}
             </Typography>
           </Box>
         </Box>

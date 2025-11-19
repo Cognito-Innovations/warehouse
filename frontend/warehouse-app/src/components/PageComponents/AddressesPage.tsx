@@ -152,20 +152,20 @@ export default function AddressesPage() {
               {/* Left column */}
               <Box sx={{ flex: 1, minWidth: 220 }}>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}>Name</Typography>
-                  <Typography variant="body1" sx={{  color: 'grey.900', mb: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Name</Typography>
+                  <Typography variant="body1" sx={{  color: "grey.900", mb: 1 }}>
                     {address.name}
                   </Typography>
                 </Box>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}>Address</Typography>
-                  <Typography variant="body1" sx={{ color: 'grey.900', mb: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Address</Typography>
+                  <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
                     {address.address}
                   </Typography>
                 </Box>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}>City</Typography>
-                  <Typography variant="body1" sx={{ color: 'grey.900', mb: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>City</Typography>
+                  <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
                     {address.city}
                   </Typography>
                 </Box>
@@ -173,20 +173,20 @@ export default function AddressesPage() {
               {/* Right column */}
               <Box sx={{ flex: 1, minWidth: 220 }}>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}>State</Typography>
-                  <Typography variant="body1" sx={{ color: 'grey.900', mb: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>State</Typography>
+                  <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
                     {address.state}
                   </Typography>
                 </Box>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}>Zip Code</Typography>
-                  <Typography variant="body1" sx={{ color: 'grey.900', mb: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Zip Code</Typography>
+                  <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
                     {address.zip_code}
                   </Typography>
                 </Box>
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}>Country</Typography>
-                  <Typography variant="body1" sx={{ color: 'grey.900', mb: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Country</Typography>
+                  <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
                     {address.country}
                   </Typography>
                 </Box>

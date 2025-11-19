@@ -1,13 +1,16 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { databaseConfig } from './config/database.config';
 import { GlobalAuthGuard } from './auth/guards/global-auth.guard';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 import { SharedModule } from './shared/shared.module';
+import { ClientIdentifierMiddleware } from './shared/middleware/client-identifier.middleware';
+import { ClientIdentifierInterceptor } from './shared/interceptors/client-identifier.interceptor';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { RacksModule } from './racks/racks.module';
@@ -27,6 +30,8 @@ import { PreArrivaController } from './pre-arrivals/pre-arrivals.controller';
 import { PickupRequestsController } from './pickup-requests/pickup-requests.controller';
 import { ShoppingRequestsController } from './shopping-requests/shopping-requests.controller';
 import { ShoppingRequestProductsController } from './products/shopping-request-products.controller';
+import { ShipmentsController } from './shipments/shipments.controller';
+import { HealthController } from './health.controller';
 import { CourierCompaniesModule } from './courier_companies/courier_companies.module';
 import { CountriesModule } from './Countries/countries.module';
 import { SupportedCountriesModule } from './supported-countries/supported-countries.module';
@@ -36,9 +41,16 @@ import { UserPreferencesModule } from './user-preferences/user-preferences.modul
 import { CurrenciesModule } from './currencies/currencies.module';
 import { UserAddressModule } from './user_address/user_address.module';
 import { EcommerceModule } from './ecommerce/ecommerce.module';
+import { ShipmentsModule } from './shipments/shipments.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 1000, // 1 second
+        limit: 20, // 20 requests
+      },
+    ]),
     MailerModule.forRoot({
       transport: {
         host: 'smtp.gmail.com',
@@ -82,20 +94,36 @@ import { EcommerceModule } from './ecommerce/ecommerce.module';
     UserPreferencesModule,
     CurrenciesModule,
     EcommerceModule,
+    ShipmentsModule,
   ],
   controllers: [
+    HealthController,
     PackageItemsController,
     PackageDocumentsController,
     PreArrivaController,
     PickupRequestsController,
     ShoppingRequestsController,
     ShoppingRequestProductsController,
+    ShipmentsController,
   ],
   providers: [
     {
       provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
       useClass: GlobalAuthGuard,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClientIdentifierInterceptor,
+    },
+    ClientIdentifierMiddleware,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(ClientIdentifierMiddleware).forRoutes('*');
+  }
+}

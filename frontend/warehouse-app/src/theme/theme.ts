@@ -3,9 +3,9 @@ import { createTheme } from "@mui/material/styles";
 export const theme = createTheme({
   palette: {
     primary: {
-      main: "#7B1FA2", // Purple color matching the design
-      light: "#AE52D4",
-      dark: "#4A148C",
+      main: "#7c3aec", // Purple color matching the design
+      light: "#a78bfa",
+      dark: "#5b21b6",
     },
     secondary: {
       main: "#6b21a8",

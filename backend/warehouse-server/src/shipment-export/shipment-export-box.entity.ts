@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { ShipmentExport } from './shipment-export.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
-import { Package } from 'src/packages/entities';
+import { Shipment } from 'src/shipments/shipment.entity';
 
 @Entity('shipment_export_boxes')
 export class ShipmentExportBox extends BaseTimestampEntity {
@@ -19,10 +19,10 @@ export class ShipmentExportBox extends BaseTimestampEntity {
   })
   shipmentExport: ShipmentExport;
 
-  @OneToMany(() => Package, (pkg) => pkg.shipmentExportBox, {
+  @OneToMany(() => Shipment, (shipment) => shipment.shipmentExportBox, {
     cascade: false,
   })
-  packages: Package[];
+  shipments: Shipment[];
 
   @Column({ nullable: true })
   label: string;

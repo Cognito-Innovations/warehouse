@@ -5,20 +5,19 @@ import QRCode from 'qrcode';
 import JsBarcode from "jsbarcode";
 import { toast } from "sonner";
 
-interface Measurement {
-  length: number;
-  width: number;
-  height: number;
-}
-
 interface HoldLabelData {
-    shipment_id: string;
-    shipment_uuid?: string;
-    name: string;
-    suite_no?: string;
-    weight?: string;
-    measurements: Measurement[];
-    createdAt?: string;
+    id: string;
+    shipment_no: string;
+    packages?: any;
+    user?: {
+        name: string;
+        suite_no?: string;
+    }
+    total_weight?: string;
+    length: number;
+    width: number;
+    height: number;
+    created_at?: string;
 }
 
 interface PrintHoldLabelButtonProps {
@@ -31,7 +30,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
     const handlePrintHoldLabel = async () => {
         setIsPrintingHold(true);
         try {
-            if (!data || !data.shipment_id || !data.name || !data.measurements) {
+            if (!data || !data.id || !data.user?.name) {
                 toast.error("Required data for hold label is missing.");
                 console.error("Missing data for hold label:", data);
                 return;
@@ -62,14 +61,14 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text("SHIPMENT", 40, 12);
 
             // 2. QR Code (Top-Right)
-            const qrCodeUrl = data.shipment_uuid ? `${window.location.origin}/shipments/${data.shipment_uuid}` : 'No shipment UUID';
+            const qrCodeUrl = data.id ? `${window.location.origin}/shipments/${data.id}` : 'No shipment ID';
             const qrCodeDataURL = await QRCode.toDataURL(qrCodeUrl, { width: 100, margin: 1, errorCorrectionLevel: 'H' });
             doc.addImage(qrCodeDataURL, 'PNG', 125, 5, 20, 20);
 
             // 3. Barcode with "ONHOLD" overlay
             const canvas = document.createElement('canvas');
-            const shipmentId = data.shipment_id;
-            JsBarcode(canvas, shipmentId, {
+            const shipmentNo = data.shipment_no;
+            JsBarcode(canvas, shipmentNo, {
                 format: "CODE128",
                 displayValue: false,
                 height: 50,
@@ -85,7 +84,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text("ON HOLD", 50, 32, { align: 'center' });
             
             // Barcode Text (Below Barcode)
-            const barcodeText = shipmentId;
+            const barcodeText = shipmentNo;
             doc.setFont("helvetica", "normal");
             doc.setFontSize(12);
 
@@ -97,7 +96,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text(barcodeText, textX, textY, { align: 'center' });
 
             // 4. Suite Box (Right)
-            const suiteNo = data.suite_no || '';
+            const suiteNo = data.user?.suite_no || '';
             doc.setDrawColor(0, 0, 0);
             doc.setTextColor(0, 0, 0);
             doc.roundedRect(100, 28, 45, 15, 1.5, 1.5, 'S'); 
@@ -109,7 +108,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text(suiteNo, 122.5, 40, { align: 'center' });
 
             // 5. User Name (Right)
-            const userName = data.name|| '';
+            const userName = data.user?.name|| '';
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.text(`${userName} (${suiteNo})`, 98, 50);
@@ -120,15 +119,15 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.setLineDashPattern([], 0); // Reset dash pattern
 
             // 7. Weight / Pcs (Bottom-Left)
-            const weight = parseFloat(data.weight || '0').toFixed(2);
-            const pieces = data.measurements.length || 0;
+            const weight = parseFloat(data.total_weight || '0').toFixed(2);
+            const pieces = data?.packages?.length || 0;
             const weightText = `WEIGHT: ${weight} KG / ${pieces} PCS`;
             doc.setFontSize(9);
             doc.setFont("helvetica", "normal");
             doc.text(weightText, 5, 65);
 
             // 8. REG. DATE (Bottom-Right)
-            const regDateText = `REG. DATE: ${data.createdAt || ''}`;
+            const regDateText = `REG. DATE: ${data.created_at || ''}`;
             const pageWidth = 150;
             const margin = 5;
             const textWidth = doc.getTextWidth(regDateText);
@@ -148,7 +147,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.setFont("helvetica", "bold");
             doc.text("MV", 130, 85);
 
-            doc.save(`hold-label-${shipmentId}.pdf`);
+            doc.save(`hold-label-${shipmentNo}.pdf`);
             toast.success("Hold Label downloaded successfully!");
 
         } catch (error) {

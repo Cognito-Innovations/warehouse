@@ -4,8 +4,8 @@ import autoTable from "jspdf-autotable";
 const COMMISSION_RATE = 0.08;
 
 // Helper function to extract currency symbol and amount
-const parseCurrency = (currencyString: string, defaultCurrency: string = '₹') => {
-  if (!currencyString) return { symbol: defaultCurrency, amount: '0' };
+const parseCurrency = (currencyString: string, defaultCurrency: string = "₹") => {
+  if (!currencyString) return { symbol: defaultCurrency, amount: "0" };
   
   // Handle different currency formats
   // Format 1: "176.54 ₹" or "882.70 ₹"
@@ -37,7 +37,7 @@ const parseCurrency = (currencyString: string, defaultCurrency: string = '₹') 
   const symbol = symbolMatch ? symbolMatch[0] : defaultCurrency;
   
   const amountMatch = trimmed.match(/[\d,]+\.?\d*/);
-  const amount = amountMatch ? amountMatch[0] : '0';
+  const amount = amountMatch ? amountMatch[0] : "0";
   
   return { symbol, amount };
 };
@@ -51,30 +51,30 @@ export const generateInvoicePDF = (request: any) => {
   const secondaryColor = [96, 125, 139]; // #607D8B
 
   // Get currency from request.currency or default to ₹
-  const defaultCurrency = request.currency || '₹';
+  const defaultCurrency = request.currency || "₹";
 
   // Header Section
   // doc.setFillColor(...primaryColor);
-  doc.rect(0, 0, 210, 35, 'F');
+  doc.rect(0, 0, 210, 35, "F");
   
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
-  doc.setFont("", 'bold');
+  doc.setFont("", "bold");
   doc.text("Palakart International Courier", 14, 15);
   
   doc.setFontSize(10);
-  doc.setFont("", 'normal');
+  doc.setFont("", "normal");
   doc.text("654, Palakart Nagar, India 637502", 14, 22);
   
   doc.setFontSize(12);
-  doc.setFont("", 'bold');
+  doc.setFont("", "bold");
   doc.text(`Invoice No: ${request.invoice?.invoice_no || "-"}`, 150, 15);
   
   // Status with colored background
   const status = request.invoice?.status || "-";
-  const statusColor = status === 'PAID' ? [76, 175, 80] : [244, 67, 54]; // Green or Red
+  const statusColor = status === "PAID" ? [76, 175, 80] : [244, 67, 54]; // Green or Red
   doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
-  doc.rect(150, 20, 30, 8, 'F');
+  doc.rect(150, 20, 30, 8, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
   doc.text(status, 155, 25);
@@ -84,11 +84,11 @@ export const generateInvoicePDF = (request: any) => {
 
   // Customer Details Section
   doc.setFontSize(12);
-  doc.setFont("", 'bold');
+  doc.setFont("", "bold");
   doc.text("Customer Details:", 14, 45);
   
   doc.setFontSize(10);
-  doc.setFont("", 'normal');
+  doc.setFont("", "normal");
   doc.text(request.user?.name || "Unknown", 14, 52);
   doc.text(`Suite No: ${request.user?.suite_no || "-"}`, 14, 58);
   doc.text(request.user?.email || "-", 14, 64);
@@ -96,15 +96,15 @@ export const generateInvoicePDF = (request: any) => {
   // Prepare table data with proper currency formatting
   const tableData = request.invoice?.products?.map((item: any) => {
     const unitPriceInfo = parseCurrency(item.unit_price, defaultCurrency);
-    const unitPrice = parseFloat(unitPriceInfo.amount.replace(/,/g, '')) || 0; // Remove commas and handle NaN
+    const unitPrice = parseFloat(unitPriceInfo.amount.replace(/,/g, "")) || 0; // Remove commas and handle NaN
     const total = (item.quantity || 0) * unitPrice;
     
     // Capitalize item name
     const capitalizedName = item.name
       ?.toLowerCase()
-      ?.split(' ')
+      ?.split(" ")
       ?.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-      ?.join(' ') || 'Unknown Item';
+      ?.join(" ") || "Unknown Item";
     
     return [
       capitalizedName,
@@ -125,7 +125,7 @@ export const generateInvoicePDF = (request: any) => {
     headStyles: {
       fillColor: [primaryColor[0], primaryColor[1], primaryColor[2]],
       textColor: [255, 255, 255],
-      fontStyle: 'bold',
+      fontStyle: "bold",
       fontSize: 10,
     },
     bodyStyles: {
@@ -137,9 +137,9 @@ export const generateInvoicePDF = (request: any) => {
     },
     columnStyles: {
       0: { cellWidth: 80 }, // Description
-      1: { cellWidth: 20, halign: 'center' }, // Qty
-      2: { cellWidth: 30, halign: 'right' }, // Rate
-      3: { cellWidth: 30, halign: 'right' }, // Amount
+      1: { cellWidth: 20, halign: "center" }, // Qty
+      2: { cellWidth: 30, halign: "right" }, // Rate
+      3: { cellWidth: 30, halign: "right" }, // Amount
     },
     margin: { left: 14, right: 14 },
   });
@@ -148,12 +148,12 @@ export const generateInvoicePDF = (request: any) => {
   
   // Amount and Total Section
   doc.setFontSize(11);
-  doc.setFont("", 'bold');
+  doc.setFont("", "bold");
   
   // Parse amounts with currency
   const subTotal = request.invoice?.products?.reduce((sum: number, item: any) => {
     const unitPriceInfo = parseCurrency(item.unit_price, defaultCurrency);
-    const unitPrice = parseFloat(unitPriceInfo.amount.replace(/,/g, '')) || 0;
+    const unitPrice = parseFloat(unitPriceInfo.amount.replace(/,/g, "")) || 0;
     return sum + (item.quantity || 0) * unitPrice;
   }, 0) || 0;
 
@@ -168,7 +168,7 @@ export const generateInvoicePDF = (request: any) => {
 
   // Draw SubTotal
   doc.setFontSize(10);
-  doc.setFont("", 'normal');
+  doc.setFont("", "normal");
   doc.text("SubTotal:", summaryLabelX, finalY + 10);
   doc.text(subTotal.toFixed(2), summaryValueX, finalY + 10, { align: "right" });
 
@@ -182,7 +182,7 @@ export const generateInvoicePDF = (request: any) => {
 
   // Draw Total
   doc.setFontSize(11);
-  doc.setFont("", 'bold');
+  doc.setFont("", "bold");
   doc.text("Total:", summaryLabelX, finalY + 26);
   doc.text(total.toFixed(2), summaryValueX, finalY + 26, { align: "right" });
 
@@ -191,7 +191,7 @@ export const generateInvoicePDF = (request: any) => {
 
   // Account Details Section
   doc.setFontSize(11);
-  doc.setFont("", 'bold');
+  doc.setFont("", "bold");
 
   // Footer
   doc.setFontSize(8);

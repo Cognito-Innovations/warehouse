@@ -11,6 +11,7 @@ type QuotationItem = {
   currency?: string | null;
 };
 
+//TODO P0: These toggle code if we are not using it remove it if required then implement it
 export default function QuotationItems({
   items,
   onSelectionChange,
@@ -66,7 +67,7 @@ export default function QuotationItems({
                     // onChange={() => toggle(item.id)} //TODO: Uncomment this toggle when functionality is implemented
                   />
                   <div>
-                    <p className="font-semibold text-gray-900" style={{ textTransform: 'capitalize' }}>{item.name}</p>
+                    <p className="font-semibold text-gray-900" style={{ textTransform: "capitalize" }}>{item.name}</p>
                     <a
                       href={item.url}
                       target="_blank"
@@ -80,17 +81,17 @@ export default function QuotationItems({
 
                 <div className="text-right flex-shrink-0 ml-4">
                   <p className="text-sm text-gray-500">
-                    Color: <span className="font-medium text-gray-800" style={{ textTransform: 'capitalize' }}>{item.color || "-"}</span>
+                    Color: <span className="font-medium text-gray-800" style={{ textTransform: "capitalize" }}>{item.color || "-"}</span>
                   </p>
                   <p className="text-sm text-gray-500">
-                    Size: <span className="font-medium text-gray-800" style={{ textTransform: 'capitalize' }}>{item.size || "NIL"}</span>
+                    Size: <span className="font-medium text-gray-800" style={{ textTransform: "capitalize" }}>{item.size || "NIL"}</span>
                   </p>
 
                   <p className="text-sm text-gray-900 font-semibold mt-2">Item Total</p>
                   <p className="text-xs text-gray-500">
                      ({qty} x {price.toFixed(2)}) 
                   </p>
-                  <p className="text-sm font-bold text-gray-800">{itemTotal.toFixed(2)} <span style={{ fontWeight: 'bold' }}>{item.currency}</span> </p>
+                  <p className="text-sm font-bold text-gray-800">{itemTotal.toFixed(2)} <span style={{ fontWeight: "bold" }}>{item.currency}</span> </p>
                 </div>
               </div>
             </div>

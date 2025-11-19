@@ -5,21 +5,34 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Button,
   Typography,
   Chip,
 } from '@mui/material';
-import { Add as AddIcon, AssessmentOutlined } from '@mui/icons-material';
 import { FilterList as FilterIcon } from '@mui/icons-material';
-import { statusOptions } from '../../data/shipments';
+import { statusMap, statusOptions } from '../../data/shipments';
+import ShipReportButton from './ShipReportButton';
 
 interface SearchFiltersProps {
   status: string;
-  setStatus: (status: string) => void;
+  setStatus: (newStatus: string) => void;
+  shipments: any[];
 }
 
-const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus }) => {
-  const handleClearFilter = () => setStatus('All');
+const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus, shipments }) => {
+  // const navigate = useNavigate();
+
+  const handleStatusChange = (newStatus: string) => {
+    setStatus(newStatus);
+  };
+
+  const handleClearFilters = () => {
+    setStatus('All');
+  };
+
+  // TODO: Uncomment when functionality implemented
+  // const handleCreateShipment = () => {
+  //   navigate("/shipments/create");
+  // };
 
   return (
     <Box sx={{ 
@@ -48,7 +61,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus }) => {
           <InputLabel>Status</InputLabel>
           <Select
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value as string)}
             label="Status"
           >
             <MenuItem value="All">
@@ -56,14 +69,16 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus }) => {
                 <Typography variant="body2">All Statuses</Typography>
               </Box>
             </MenuItem>
-            {statusOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-                  <Typography variant="body2" sx={{ flex: 1 }}>
-                    {option}
-                  </Typography>
-                </Box>
-              </MenuItem>
+            {statusOptions
+              .filter((opt) => opt !== 'ALL')
+              .map((option) => (
+                <MenuItem key={option} value={option}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                    <Typography variant="body2" sx={{ flex: 1 }}>
+                      {statusMap[option] || option}
+                    </Typography>
+                  </Box>
+                </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -72,7 +87,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip
               label={status}
-              onDelete={handleClearFilter}
+              onDelete={handleClearFilters}
               sx={{
                 bgcolor: '#3b82f620',
                 color: '#3b82f6',
@@ -86,23 +101,13 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus }) => {
       </Box>
 
       <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<AssessmentOutlined />}
-          sx={{
-            textTransform: 'none',
-            borderRadius: 2,
-            backgroundColor: '#7360F2',
-            '&:hover': {
-              backgroundColor: '#5b48d8',
-            },
-          }}
-        >
-          Ship Requested Report
-        </Button>
-        <Button
+        <ShipReportButton shipments={shipments} />
+
+        {/* TODO: Uncomment when functionality implemented */}
+        {/* <Button
           variant="contained"
           startIcon={<AddIcon />}
+          onClick={handleCreateShipment}
           sx={{
             textTransform: 'none',
             borderRadius: 2,
@@ -114,7 +119,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus }) => {
           }}
         >
           Create Shipment
-        </Button>
+        </Button> */}
       </Box>
     </Box>
   );

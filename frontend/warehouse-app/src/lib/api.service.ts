@@ -1,6 +1,7 @@
 import { ProfileData } from "@/components/Modals/EditProfileModal";
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { getSession } from "next-auth/react";
+import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
 
 // Interface for the pickup request payload, combining the best types from both examples.
 export interface PickupRequestPayload {
@@ -29,6 +30,8 @@ const createAuthenticatedApi = (): AxiosInstance => {
       "Content-Type": "application/json",
     },
   });
+
+  attachClientIdentifierInterceptors(api);
 
   // Request interceptor to add the authorization token before each request.
   api.interceptors.request.use(
@@ -106,7 +109,7 @@ export const createShoppingRequest = async (request: any) => {
 };
 
 export const createShoppingRequestProduct = async (product: any) => {
-  const res = await authenticatedApi.post("/shopping-requests", product);
+  const res = await authenticatedApi.post("/shopping-request-products", product);
   return res.data;
 };
 
@@ -152,20 +155,50 @@ export const getPackagesByUser = async (userId: string) => {
   return res.data;
 };
 
-export const getPackagesByShipmentId = async (shipmentId: string) => {
-  const res = await authenticatedApi.get(`/packages/shipments/id/${shipmentId}`);
+export const createShipment = async (payload: any) => {
+  const res = await authenticatedApi.post(`/shipments`, payload);
+  return res.data;
+}
+
+export const getShipmentsByUser = async (userId: string) => {
+  const res = await authenticatedApi.get(`/shipments/${userId}`);
+  return res.data;
+}
+
+export const getPackagesByShipmentNo = async (shipmentNo: string) => {
+  const res = await authenticatedApi.get(`/shipments/detail/by-shipmentNo/${shipmentNo}`);
+  return res.data;
+}
+
+export const createShipmentPaymentSlip = async (
+  id: string,
+  data: {
+    url: string;
+    original_filename: string;
+    mime_type?: string;
+    file_size?: number;
+    category: 'PAYMENT' | 'SHIPMENT_PHOTO';
+  }
+) => {
+  const res = await authenticatedApi.post(`/shipments/${id}/documents`, { data });
+  return res.data;
+};
+
+
+export const deleteShipment = async (id: string) => {
+  const res = await authenticatedApi.delete(`/shipments/${id}`);
   return res.data;
 };
 
 export const uploadPackageDocuments = async (packageId: string, files: File[]): Promise<any> => {
   const formData = new FormData();
   files.forEach(file => {
-    formData.append('files', file);
+    formData.append("files", file);
   });
   
   const response = await authenticatedApi.post(`/packages/${packageId}/documents/upload`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
   return response.data;
@@ -184,24 +217,6 @@ export const updatePackageStatus = async (packageId: string, status: string) => 
     status: status,
     updated_by: userId
   });
-  return res.data;
-};
-
-export const getShipmentsByUser = async (userId: string) => {
-  const res = await authenticatedApi.get(`/packages/user/${userId}/status/Request Ship`);
-  return res.data;
-};
-
-export const addPackagePaymentSlip = async (
-  shipmentUuid: string,
-  data: {
-    url: string;
-    original_filename: string;
-    mime_type?: string;
-    file_size?: number;
-  }
-) => {
-  const res = await authenticatedApi.patch(`/packages/shipments/${shipmentUuid}/slips`, { data });
   return res.data;
 };
 
@@ -265,7 +280,7 @@ export const verifyEmailOtp = async (userId: string, otp: string) => {
 };
 
 export const createUserAddress = async (data: any) => {
-  const res = await authenticatedApi.post(`/user-address`, data);
+  const res = await authenticatedApi.post("/user-address", data);
   return res.data;
 };
 
@@ -293,5 +308,10 @@ export const getPreArrivalsByUser = async (userId: string) => {
 
 export const deletePreArrival = async (id: string) => {
   const res = await authenticatedApi.delete(`/pre-arrival/${id}`);
+  return res.data;
+};
+
+export const getOrdersByUser = async (userId: string) => {
+  const res = await authenticatedApi.get(`/ecommerce-orders/user/${userId}`);
   return res.data;
 };

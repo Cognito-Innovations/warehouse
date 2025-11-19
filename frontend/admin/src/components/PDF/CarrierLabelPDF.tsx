@@ -72,7 +72,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     const qrSize = 22;
     const qrX = pageW - margin - qrSize - 3;
     const qrY = y;
-    const qrCodeDataURL = await QRCode.toDataURL(data.createdAt!, { 
+    const qrCodeDataURL = await QRCode.toDataURL(data.created_at!, { 
         width: 150, 
         margin: 0,
         color: { dark: '#000000', light: '#FFFFFF' }
@@ -80,7 +80,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.addImage(qrCodeDataURL, 'PNG', qrX, qrY, qrSize, qrSize);
     
     // Rotated date text
-    const dateText = data.createdAt!;
+    const dateText = data.created_at!;
     const dateX = qrX + qrSize + 11;  // a little right of QR code
     const dateY = qrY + qrSize / 11;  // vertical center of QR code
 
@@ -125,7 +125,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setFontSize(8.5);
     doc.setTextColor(0, 0, 0);
     doc.text(data.origin_country || "INDIA", margin + tableOffsetX + 1, y + 8);
-    doc.text(data.weight!, margin + tableOffsetX + col1W + 1, y + 8);
+    doc.text(data.total_weight || "-", margin + tableOffsetX + col1W + 1, y + 8);
     doc.text(data.num_pieces || "1 PCS", margin + tableOffsetX + col1W + col2W + 1, y + 8);
 
     // Row 2
@@ -141,7 +141,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setFontSize(8.5);
     doc.setTextColor(0, 0, 0);
 
-    doc.text(data.address?.country || "MALDIVES", margin + tableOffsetX + 1, y + tableH + 8);
+    doc.text(data.user?.address?.country || "MALDIVES", margin + tableOffsetX + 1, y + tableH + 8);
 
     // Dimensions
     const length = data.length ? Math.floor(Number(data.length)) : null;
@@ -175,7 +175,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     
     // Barcode
     const barcodeCanvas = document.createElement('canvas');
-    JsBarcode(barcodeCanvas, data.trackingNo || 'RB3562366238', {
+    JsBarcode(barcodeCanvas, data.tracking_no || 'RB3562366238', {
         format: "CODE128",
         displayValue: false,
         height: 100,
@@ -190,7 +190,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
-    doc.text(data.trackingNo || 'RB3562366238', pageW / 2, y, { align: 'center' });
+    doc.text(data.tracking_no || 'RB3562366238', pageW / 2, y, { align: 'center' });
     
     y += 6;
 
@@ -220,9 +220,9 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setTextColor(0, 0, 0);
 
     // Split courier_address into lines of ~40 characters
-    const address = data.courier_address || "";
+    const address = data.user?.preference?.courier?.address || "";
     const addressLines = doc.splitTextToSize(address, contentW - 45); // leave space for logo
-    const fromLines = [...addressLines, data.courier_phone || "-"];
+    const fromLines = [...addressLines, data.user?.preference?.courier?.phone_number || "-"];
     
     let fromLineY = y + 4;
     for (let i = 0; i < fromLines.length; i++) {
@@ -263,10 +263,10 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(0, 0, 0);
-    doc.text(data.name!, margin + 22, y + 5);
+    doc.text(data.user?.name ?? "-", margin + 22, y + 5);
 
     // To Address
-    const toAddressObj = data.address?.[0];
+    const toAddressObj = data.user?.address?.[0];
     let toAddressLines: string[] = [];
     
     if(toAddressObj){
@@ -295,7 +295,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7.5);
 
-    const contactNumbers = [data.phone, data.phone2].filter(Boolean).join(", ");
+    const contactNumbers = [data.user?.phone_number, data.user?.phone_number_2].filter(Boolean).join(", ");
     doc.text(contactNumbers || "-", pageW - margin - 25, y + 16, { align: 'left' });
 
     y += toH + 1;
@@ -317,7 +317,7 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(0, 0, 0);
-    doc.text(data.shipment_id!, margin + 1, y + 8);
+    doc.text(data.shipment_no!, margin + 1, y + 8);
     
     // TODO: When we have Piece ID then uncomment
     // Piece ID
@@ -359,13 +359,10 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.setTextColor(0, 0, 0);
     let contents = "No items found";
 
-    if (Array.isArray(data.items) && data.items.length > 0) {
-      contents = data.items
-        .map((item) => {
-          const qty = item.quantity || 1;
-          const name = (item.name || "").trim().toUpperCase();
-          return `${qty}X ${name}`;
-        })
+    const items = data.packages?.flatMap((pkg) => pkg.items) || [];
+    if (items.length > 0) {
+      contents = items
+        .map((item) => `${item.quantity || 1}x ${(item.name || "").toUpperCase()}`)
         .join(", ");
     }
 
@@ -399,5 +396,5 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     doc.rect(wrapperX, wrapperY, wrapperW, wrapperHeight);
 
     // Save PDF
-    doc.save(`carrier-label-${data.trackingNo || 'RB3562366238'}.pdf`);
+    doc.save(`carrier-label-${data.tracking_no || 'RB3562366238'}.pdf`);
 };

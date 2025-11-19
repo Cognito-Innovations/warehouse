@@ -25,7 +25,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsUrl()
-  url?: string;
+  url: string;
 
   @IsOptional()
   @IsString()

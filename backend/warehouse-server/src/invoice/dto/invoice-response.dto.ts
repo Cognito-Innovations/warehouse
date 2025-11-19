@@ -6,7 +6,13 @@ export class InvoiceResponseDto {
   amount: string;
   total: string;
   status: string;
-  products: ProductResponseDto[];
+  products?: ProductResponseDto[];
+  charges?: {
+    category: string;
+    description: string;
+    amount: number;
+    total: number;
+  }[];
   created_at: number;
   updated_at: number;
 }

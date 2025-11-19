@@ -43,6 +43,7 @@ const PickupRequests: React.FC = () => {
     fetchRequests()
   }, []);
 
+  //TODO P0: Remove these mapping logic
   const mappedRows = useMemo(() => {
     const filteredRequests = selectedStatus
       ? requests.filter(req => {

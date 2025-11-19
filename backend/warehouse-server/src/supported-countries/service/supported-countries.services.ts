@@ -23,13 +23,7 @@ export class SupportedCountriesService {
 
     const savedCountry = await this.supportedCountryRepository.save(country);
 
-    return {
-      id: savedCountry.id,
-      country: savedCountry.country,
-      is_active: savedCountry.is_active,
-      created_at: savedCountry.created_at,
-      updated_at: savedCountry.updated_at,
-    };
+    return savedCountry;
   }
 
   async createSupportedCountriesBulk(
@@ -46,11 +40,7 @@ export class SupportedCountriesService {
       await this.supportedCountryRepository.save(countryEntities);
 
     return savedCountries.map((country) => ({
-      id: country.id,
-      country: country.country,
-      is_active: country.is_active,
-      created_at: country.created_at,
-      updated_at: country.updated_at,
+      ...country
     }));
   }
 
@@ -60,11 +50,7 @@ export class SupportedCountriesService {
     });
 
     return countries.map((country) => ({
-      id: country.id,
-      country: country.country,
-      is_active: country.is_active,
-      created_at: country.created_at,
-      updated_at: country.updated_at,
+      ...country
     }));
   }
 }

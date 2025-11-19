@@ -9,21 +9,21 @@ interface UpdateInfoModalProps {
   onClose: () => void;
   onRefresh: () => void;
   packageData: {
-    actual_id: string;
-    trackingNo: string;
-    weight: string;
-    volumetricWeight: string;
-    dangerousGood: string;
+    id: string;
+    tracking_no: string;
+    total_weight: string;
+    total_volumetric_weight: string;
+    dangerous_good: string;
   };
 }
 
 const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({ open, onClose, onRefresh, packageData }) => {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    trackingNo: packageData.trackingNo || "",
-    weight: packageData.weight || "",
-    volumetricWeight: packageData.volumetricWeight || "",
-    dangerousGood: packageData.dangerousGood === "Yes" ? "true" : "false",
+    trackingNo: packageData.tracking_no || "",
+    weight: packageData.total_weight || "",
+    volumetricWeight: packageData.total_volumetric_weight || "",
+    dangerousGood: packageData.dangerous_good === "Yes" ? "true" : "false",
   });
 
   const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,7 +42,7 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({ open, onClose, onRefr
         volumetric_weight: formData.volumetricWeight,
         dangerous_good: formData.dangerousGood === "true",
       };
-      await updatePackage(packageData.actual_id, payload);
+      await updatePackage(packageData.id, payload);
       onRefresh();
       onClose();
     } catch (err) {

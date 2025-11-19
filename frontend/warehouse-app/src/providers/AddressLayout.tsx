@@ -1,5 +1,6 @@
 "use client";
 
+import { ROUTES } from "@/utils/constants";
 import { useAuth } from "../contexts/AuthContext";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
@@ -12,7 +13,7 @@ export default function AddressLayout({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (!authLoading && !user) {
-            router.push("/sign-in");
+            router.push(ROUTES.SIGN_IN);
         }
     }, [user, authLoading, router]);
 

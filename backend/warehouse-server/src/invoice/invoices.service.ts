@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Invoice, InvoiceStatus } from './invoice.entity';
+import { Invoice, InvoiceStatus } from './entities/invoice.entity';
 import { ShoppingRequest } from 'src/shopping-requests/shopping-request.entity';
 import { ShoppingRequestProduct } from 'src/products/shopping-request-product.entity';
+import { Shipment } from 'src/shipments/shipment.entity';
+import { Package } from 'src/packages/entities';
+import { ChargeDto } from 'src/shipments/dto/create-shipment-invoice.dto';
+import { InvoiceCharge } from './entities/invoice-charge.entity';
 
 @Injectable()
 export class InvoicesService {
@@ -12,6 +16,10 @@ export class InvoicesService {
     private readonly invoiceRepository: Repository<Invoice>,
     @InjectRepository(ShoppingRequestProduct)
     private readonly productRepository: Repository<ShoppingRequestProduct>,
+    @InjectRepository(Package)
+    private readonly packageRepository: Repository<Package>,
+    @InjectRepository(InvoiceCharge)
+    private readonly invoiceChargeRepository: Repository<InvoiceCharge>,
   ) {}
 
   private generateInvoiceNo(
@@ -70,6 +78,48 @@ export class InvoicesService {
       where: { shopping_request: { id: requestId } },
       relations: ['products'],
     });
+  }
+
+  async createShipmentInvoice(payload: {
+    shipment: Shipment,
+    charges: ChargeDto[];
+    total: number;
+  }): Promise<Invoice> {
+    const { shipment, charges, total } = payload;
+
+    const counter = await this.invoiceRepository.count();
+    const invoiceNo = this.generateInvoiceNo(
+      shipment.country.code || 'XX',
+      new Date().getFullYear(),
+      counter + 1,
+    );
+
+    const invoice = this.invoiceRepository.create({
+      invoice_no: invoiceNo,
+      amount: total,
+      total,
+      status: InvoiceStatus.UNPAID,
+      shipment,
+    })
+    const savedInvoice = await this.invoiceRepository.save(invoice);
+
+    const chargeEntities = charges.map((charge) =>
+      this.invoiceChargeRepository.create({
+        ...charge,
+        invoice: savedInvoice,
+      })
+    );
+    const savedCharges =
+      await this.invoiceChargeRepository.save(chargeEntities);
+    savedInvoice.charges = savedCharges;
+
+    return savedInvoice;
+  }
+
+  async getInvoiceByShipmentId(shipmentId: string): Promise<Invoice | null> {
+    return this.invoiceRepository.findOne({
+      where: { shipment: { id: shipmentId } }
+    })
   }
 
   async updateInvoice(invoice: Invoice): Promise<Invoice> {

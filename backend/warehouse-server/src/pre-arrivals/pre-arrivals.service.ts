@@ -21,23 +21,18 @@ export class PreArrivalService {
   ) {}
 
   private mapToResponseDto(preArrival: PreArrival): PreArrivalResponseDto {
-    if (!preArrival.user) {
+    const { user, ...rest } = preArrival;
+
+    if (!user) {
       throw new InternalServerErrorException(
         `User data not loaded for PreArrival ID: ${preArrival.id}`,
       );
     }
 
     return {
-      id: preArrival.id,
-      user: preArrival.user.name,
-      suite: preArrival.user.suite_no,
-      otp: preArrival.otp,
-      tracking_no: preArrival.tracking_no,
-      estimate_arrival_time: preArrival.estimate_arrival_time,
-      details: preArrival.details,
-      status: preArrival.status,
-      created_at: preArrival.created_at,
-      updated_at: preArrival.updated_at,
+      ...rest,
+      user: user.name,
+      suite: user.suite_no,
     };
   }
 
@@ -53,7 +48,7 @@ export class PreArrivalService {
 
     const preArrival = this.preArrivalRepository.create({
       ...restOfDto,
-      user: user,
+      user,
       status: createPreArrivalDto.status || 'pending',
     });
 

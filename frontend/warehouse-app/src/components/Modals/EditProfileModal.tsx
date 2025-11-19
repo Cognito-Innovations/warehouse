@@ -115,7 +115,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
   const handleChange = (field: keyof ProfileData) => (event: any) => {
     let { value } = event.target;
 
-    if (field === 'phone_number' || field === 'alternate_phone_number') {
+    if (field === "phone_number" || field === "alternate_phone_number") {
       const NON_NUMERIC_CHARACTERS = /[^0-9]/g;
       value = value.replace(NON_NUMERIC_CHARACTERS, "").slice(0, 10);
     }

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001";
 
@@ -10,15 +11,21 @@ const api = axios.create({
   },
 });
 
+attachClientIdentifierInterceptors(api);
+
 // Helper function to get authenticated API instance
 export const getAuthenticatedApi = (token: string) => {
-  return axios.create({
+  const instance = axios.create({
     baseURL: API_BASE_URL,
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`,
     },
   });
+
+  attachClientIdentifierInterceptors(instance);
+
+  return instance;
 };
 
 export interface PickupRequestPayload {

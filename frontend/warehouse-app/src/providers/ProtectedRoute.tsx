@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
 import { Box, CircularProgress, Typography } from "@mui/material";
+import { ROUTES } from "@/utils/constants";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,7 +16,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/sign-in");
+      router.push(ROUTES.SIGN_IN);
     }
   }, [user, loading, router]);
 
