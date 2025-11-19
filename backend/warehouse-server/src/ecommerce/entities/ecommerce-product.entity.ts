@@ -4,11 +4,14 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { EcommerceCategory } from './ecommerce-category.entity';
 import { EcommerceSubCategory } from './ecommerce-sub-category.entity';
+import { EcommerceMeasurement } from './measurement.entity';
 
 @Entity('ecommerce_products')
 export class EcommerceProduct extends BaseTimestampEntity {
@@ -24,17 +27,27 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @Column()
   slug: string;
 
-  @ManyToOne(() => EcommerceCategory, { eager: true })
+  @ManyToOne(() => EcommerceCategory, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'category_id' })
   category: EcommerceCategory;
 
-  @ManyToOne(() => EcommerceSubCategory, { eager: true })
+  @ManyToOne(() => EcommerceSubCategory, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'sub_category_id' })
   sub_category: EcommerceSubCategory;
 
-  @ManyToOne(() => Country, { eager: true })
-  @JoinColumn({ name: 'country_id' })
-  country: Country;
+  @ManyToMany(() => Country, { eager: true })
+  @JoinTable({
+    name: 'ecommerce_product_countries',
+    joinColumn: {
+      name: 'product_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'country_id',
+      referencedColumnName: 'id',
+    },
+  })
+  countries: Country[]
 
   @Column()
   image_url: string;
@@ -42,12 +55,19 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   discount_percentage: number;
 
-  @Column()
-  quantity: number;
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  unit_value: number;
 
-  @Column({ type: 'text', nullable: true })
-  measurement: string;
+  @Column({ type: 'int', default: 0 })
+  stock_quantity: number;
+
+  @Column({ default: true })
+  is_active: boolean;
+
+  @ManyToOne(() => EcommerceMeasurement, { eager: true, nullable: true })
+  @JoinColumn({ name: 'measurement_id' })
+  measurement: EcommerceMeasurement;
 }

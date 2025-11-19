@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   TableCell,
   TableRow,
   Collapse,
   IconButton,
-  Checkbox,
   Typography,
   Chip,
   Table,
@@ -15,87 +14,99 @@ import {
 import {
   KeyboardArrowDown as KeyboardArrowDownIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
+  VisibilityOutlined as ViewIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+// import { MoreVerticalIcon } from 'lucide-react';
 import { getStatusAndInvoiceColor } from '../../data/shipments';
 import PackageRow from './PackageRow';
+import { formatDateTime } from '../../utils/formatDateTime';
 
-interface ItemDetail { 
-    name: string; 
-    quantity: number; 
-    amount: string; 
-    total: string; 
-}
-
-interface ExpandedItem {
-  id: number; 
-  packageNo: string; 
-  rack: string; 
-  trackingNo: string; 
-  courier: string;
-  receivedAt: string; 
-  receivedTime: string; 
-  weight: string; 
-  volWeight: string; 
-  items: ItemDetail[];
-}
-
-interface Shipment {
-  id: string; 
-  trackingNo: string; 
-  courier: string;
-  user: { name: string; suiteNo: string; };
-  requestAt: string; 
-  requestTime: string; 
-  status: string; 
-  pkgsCount: number; 
-  invoice: string;
-  items: ExpandedItem[];
-}
-
-const ShipmentRow: React.FC<{ row: Shipment }> = ({ row }) => {
+const ShipmentRow = ({ row }) => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const statusColors = getStatusAndInvoiceColor(row.status);
-  const invoiceColors = getStatusAndInvoiceColor(row.invoice);
+  const invoiceColors = getStatusAndInvoiceColor(row.invoice?.status);
+
+  const handleViewShipment = (shipmentNo: string) => {
+    navigate(`/shipments/${shipmentNo}`);
+  };
 
   return (
     <>
-      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
-        <TableCell padding="checkbox"><Checkbox color="primary" /></TableCell>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset', verticalAlign: 'top' } }}>
         <TableCell>
           <IconButton size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell><Typography>{row.id}</Typography></TableCell>
         <TableCell>
-          <Typography>{row.trackingNo}</Typography>
-          <Typography variant="caption" color="text.secondary">{row.courier}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {row.shipment_no}
+          </Typography>
         </TableCell>
         <TableCell>
-          <Typography>{row.user.name}</Typography>
-          <Typography variant="caption" color="text.secondary">{row.user.suiteNo}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {row.tracking_no}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {row.courier}
+          </Typography>
         </TableCell>
         <TableCell>
-          <Typography>{row.requestAt}</Typography>
-          <Typography variant="caption" color="text.secondary">{row.requestTime}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {row.user.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">{row.user.suite_no}</Typography>
         </TableCell>
         <TableCell>
-          <Chip label={row.status} size="small" sx={{ color: statusColors.color, bgcolor: statusColors.bgColor }} />
+          <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
+            {formatDateTime(row.created_at)}
+          </Typography>
         </TableCell>
-        <TableCell align="center">{row.pkgsCount}</TableCell>
         <TableCell>
-          <Chip label={row.invoice} size="small" sx={{ color: invoiceColors.color, bgcolor: invoiceColors.bgColor }} />
+          <Chip
+            label={row.status}
+            size="small"
+            sx={{
+              color: statusColors.color,
+              bgcolor: statusColors.bgColor,
+              fontWeight: 500,
+              fontSize: '0.75rem',
+            }}
+          />
         </TableCell>
-        {/* TODO: Add view icon when functionality is implemented*/}
-        {/* <TableCell>
+        <TableCell align="center">{row.packages ? row.packages.length : 0}</TableCell>
+        <TableCell>
+          <Chip 
+            label={row.invoice?.status || "PENDING"}
+            size="small"
+            sx={{
+              color: invoiceColors.color,
+              bgcolor: invoiceColors.bgColor,
+              fontWeight: 500,
+              fontSize: '0.75rem',
+            }}
+          />
+        </TableCell>
+
+        <TableCell>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton size="small" sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' }}}><ViewIcon fontSize="small" /></IconButton>
+            <IconButton
+              size="small"
+              onClick={() => handleViewShipment(row.shipment_no)}
+              sx={{ bgcolor: '#7360F2', color: '#f8f8f8', '&:hover': { backgroundColor: '#5b48d8' }}}>
+              <ViewIcon fontSize="small" />
+            </IconButton>
             
-            {row.invoice === 'PENDING' && (
-                <IconButton size="small" sx={{ bgcolor: '#0b84e3', color: '#f8f8f8', '&:hover': { backgroundColor: '#0969b8' }}}><MoreIcon fontSize="small" /></IconButton>
-            )}
+            {/* TODO: uncomment when functionality implemented */}
+            {/* {!row.invoice && (
+              <IconButton size="small" sx={{ bgcolor: '#0b84e3', color: '#f8f8f8', '&:hover': { backgroundColor: '#0969b8' }}}>
+                <MoreVerticalIcon fontSize="small" />
+              </IconButton>
+            )} */}
           </Box>
-        </TableCell> */}
+        </TableCell>
       </TableRow>
 
       <TableRow>
@@ -120,7 +131,7 @@ const ShipmentRow: React.FC<{ row: Shipment }> = ({ row }) => {
                 }}>
                   Package Details
                   <Chip 
-                    label={`${row.items.length} packages`} 
+                    label={`${row.packages.length} packages`} 
                     size="small" 
                     sx={{ 
                       bgcolor: '#e2e8f0', 
@@ -147,29 +158,25 @@ const ShipmentRow: React.FC<{ row: Shipment }> = ({ row }) => {
                       '& > *': { 
                         border: 'none',
                         fontWeight: 600,
-                        color: '#374151',
-                        fontSize: '0.875rem',
+                        color: "#374151",
                         py: 1.5
                       } 
                     }}>
-                      <TableCell sx={{ width: 40 }} />
-                      <TableCell sx={{ width: 40 }} />
-                      <TableCell>Package No.</TableCell>
+                      <TableCell sx={{ width: 220, textAlign: "center" }}>Package No.</TableCell>
                       <TableCell>Rack</TableCell>
                       <TableCell>Tracking No.</TableCell>
                       <TableCell>Received At</TableCell>
-                      <TableCell align="right">Weight</TableCell>
-                      <TableCell align="right">Vol. Weight</TableCell>
+                      <TableCell >Weight</TableCell>
+                      <TableCell >Vol. Weight</TableCell>
                       <TableCell sx={{ width: 80 }} />
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {row.items.map((pkg, i) => (
+                    {row.packages.map((pkg, i) => (
                       <PackageRow 
                         key={pkg.id} 
                         item={pkg} 
-                        index={i} 
-                        isLast={i === row.items.length - 1}
+                        index={i}
                       />
                     ))}
                   </TableBody>

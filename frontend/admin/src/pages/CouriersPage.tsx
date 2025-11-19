@@ -12,6 +12,7 @@ import {
   getCountries,
 } from '../services/api.services';
 import type { Country, Courier, CreateCourierPayload } from '../types';
+import { PromiseStatus } from '../utils/constants';
 
 const CouriersPage: React.FC = () => {
   const [couriers, setCouriers] = useState<Courier[]>([]);
@@ -28,13 +29,14 @@ const CouriersPage: React.FC = () => {
         getCouriers(),
         getCountries(),
       ]);
-      if (results[0].status === 'fulfilled') {
+      
+      if (results[0].status === PromiseStatus.Fulfilled) {
         setCouriers(results[0].value);
       } else {
         console.error(results[0].reason);
         toast.error('Failed to fetch couriers');
       }
-      if (results[1].status === 'fulfilled') {
+      if (results[1].status === PromiseStatus.Fulfilled) {
         setCountries(results[1].value);
       } else {
         console.error(results[1].reason);

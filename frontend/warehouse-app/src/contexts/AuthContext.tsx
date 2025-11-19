@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, ReactNode, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useEcommerceStore } from "@/store/ecommerceStore";
 
 interface User {
   id: string;
@@ -13,6 +14,7 @@ interface User {
   is_logged_in: boolean;
   last_login?: string;
   verified: boolean;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -41,12 +43,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const syncLocalCartToServer = useEcommerceStore((state) => state.syncLocalCartToServer);
+
   // Get user data from NextAuth session
   const user = session?.user ? {
     id: (session.user as any).user_id || session.user.email || "",
     email: session.user.email || "",
     name: session.user.name || "",
     verified: (session.user as any).verified ?? false, // Use actual verified status from backend, default to false
+    phone: (session.user as any).phone || "",
   } : null;
 
   const token = (session as any)?.access_token || null;
@@ -75,6 +80,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     logout,
   };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (token) {
+        localStorage.setItem("auth-token", token);
+      } else {
+        localStorage.removeItem("auth-token");
+      }
+    }
+
+    if (token && status === 'authenticated') {
+      syncLocalCartToServer();
+    }
+  }, [token]);
 
   // Auto-logout when JWT expires
   useEffect(() => {

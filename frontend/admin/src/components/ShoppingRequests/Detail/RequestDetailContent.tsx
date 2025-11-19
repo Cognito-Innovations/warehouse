@@ -4,6 +4,8 @@ import TrackingStatus, { type Status } from '../../../components/common/Tracking
 import InvoiceTable from './InvoiceTable';
 import CustomerRemarks from '../../common/CustomerRemarks';
 import { formatDateTime } from '../../../utils/formatDateTime';
+import { useState } from 'react';
+import { updateShoppingRequestStatus } from '../../../services/api.services';
 
 interface User {
   id: string;
@@ -118,9 +120,22 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
   onSelectionChange,
   selectedItemIds
 }) => {
+  const [isApprovingPayment, setIsApprovingPayment] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const showInvoiceTable = ["PAYMENT_PENDING", "PAYMENT_APPROVED", "ORDER_PLACED"];
+
+  const handleApprovePayment = async (id: string) => {
+    try {
+      setIsApprovingPayment(true);
+      await updateShoppingRequestStatus(id, "PAYMENT_APPROVED");
+      onStatusUpdated?.();
+    } catch (error) {
+      console.error("Failed to approve payment", error);
+    } finally {
+      setIsApprovingPayment(false);
+    }
+  };
 
   const prepareTrackingData = () => {
     const trackingHistory = request.tracking_requests || [];
@@ -228,12 +243,12 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
           />
 
           {showInvoiceTable.includes(request.status) && request.invoice && (
-            <InvoiceTable 
-              id={request.id}
+            <InvoiceTable
               invoice={request.invoice}
               payment_slips={request.payment_slips || []}
               status={request.status}
-              onStatusUpdated={onStatusUpdated || (() => {})} 
+              isApprovingPayment={isApprovingPayment}
+              onApprovePayment={() => handleApprovePayment(request.id)}
             />
           )}
         </Box>

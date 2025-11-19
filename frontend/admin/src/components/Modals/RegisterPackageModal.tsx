@@ -46,7 +46,9 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
   const [packageInfoOpen, setPackageInfoOpen] = useState(false);
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [racksLoading, setRacksLoading] = useState(false);
+  const [suppliersLoading, setSuppliersLoading] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -82,24 +84,26 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
     }
   };
 
-  const loadInitialData = useCallback(async () => {
-    setIsLoadingData(true);
-    try {
-      await Promise.allSettled([fetchUsers(), fetchRacks(), fetchSuppliers()]);
-    } catch (error) {
-      console.error("Failed to load initial data for modal", error);
-      toast.error("Could not load required data. Please try again.");
-      onClose();
-    } finally {
-      setIsLoadingData(false);
-    }
-  }, [onClose]);
+  const handleOpenUsers = useCallback(async () => {
+    if (users.length > 0 || usersLoading) return;
+    setUsersLoading(true);
+    await fetchUsers();
+    setUsersLoading(false);
+  }, [usersLoading]);
 
-  useEffect(() => {
-    if (open) {
-      loadInitialData();
-    }
-  }, [open, loadInitialData]);
+  const handleOpenRacks = useCallback(async () => {
+    if (racks.length > 0 || racksLoading) return;
+    setRacksLoading(true);
+    await fetchRacks();
+    setRacksLoading(false);
+  }, [racksLoading]);
+
+  const handleOpenSuppliers = useCallback(async () => {
+    if (suppliers.length > 0 || suppliersLoading) return;
+    setSuppliersLoading(true);
+    await fetchSuppliers();
+    setSuppliersLoading(false);
+  }, [suppliersLoading]);
 
   // Reset form data when modal opens
   useEffect(() => {
@@ -362,37 +366,37 @@ const RegisterPackageModal: React.FC<RegisterPackageModalProps> = ({ open, onClo
       <Divider />
 
       <DialogContent sx={{ pt: 3, minHeight: "400px" }}>
-        {isLoadingData ? (
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Grid container spacing={2}>
-              <FormFields
-                formData={formData}
-                errors={errors}
-                users={users}
-                racks={racks}
-                suppliers={suppliers}
-                onInputChange={handleInputChange}
-                onAddSupplier={handleAddSupplier}
-              />
+        <Grid container spacing={2}>
+          <FormFields
+            formData={formData}
+            errors={errors}
+            users={users}
+            racks={racks}
+            suppliers={suppliers}
+            onInputChange={handleInputChange}
+            onAddSupplier={handleAddSupplier}
+            usersLoading={usersLoading}
+            racksLoading={racksLoading}
+            suppliersLoading={suppliersLoading}
+            onOpenUsers={handleOpenUsers}
+            onOpenRacks={handleOpenRacks}
+            onOpenSuppliers={handleOpenSuppliers}
+          />
 
-              <WeightSection
-                pieces={pieces}
-                onPieceChange={handlePieceChange}
-                onAddPiece={handleAddPiece}
-                onRemovePiece={handleRemovePiece}
-                calculateTotals={calculateTotals}
-                errors={errors}
-              />
+          <WeightSection
+            pieces={pieces}
+            onPieceChange={handlePieceChange}
+            onAddPiece={handleAddPiece}
+            onRemovePiece={handleRemovePiece}
+            calculateTotals={calculateTotals}
+            errors={errors}
+          />
 
-            <OptionsSection
-              formData={formData}
-              onInputChange={handleInputChange}
-            />
-            </Grid>
-          )}
+        <OptionsSection
+          formData={formData}
+          onInputChange={handleInputChange}
+        />
+        </Grid>
       </DialogContent>
 
       <Divider />

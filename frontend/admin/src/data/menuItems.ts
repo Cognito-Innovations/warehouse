@@ -11,6 +11,11 @@ import {
     AttachMoney as CurrenciesIcon,
   } from '@mui/icons-material';
 import CouriersIcon from '@mui/icons-material/LocalShipping';
+import StoreIcon from '@mui/icons-material/Store';
+import CategoryIcon from '@mui/icons-material/Category';
+import TurnedInIcon from '@mui/icons-material/TurnedIn';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 export type UserRole = 'super_admin' | 'admin' | 'user';
 
@@ -35,10 +40,11 @@ export const menuItems: MenuItem[] = [
     ],
   },
   {
-    text: 'Shipments Export',
+    text: 'Shipments',
     icon: ShipmentsIcon,
-    defaultPath: '/shipments/export',
+    defaultPath: '/shipments',
     subMenu: [
+      { text: 'Shipments', icon: ExportIcon, path: '/shipments' },
       { text: 'Shipment Export', icon: ExportIcon, path: '/shipments/export' },
     ],
   },
@@ -49,6 +55,18 @@ export const menuItems: MenuItem[] = [
     subMenu: [
       { text: 'Shopping Requests', icon: ExportIcon, path: '/requests' },
       { text: 'Pickup Requests', icon: ExportIcon, path: '/pickups' },
+    ],
+  },
+  
+  { 
+    text: 'Ecommerce', 
+    icon: StoreIcon, 
+    defaultPath: '/category' ,
+    subMenu: [
+      { text: 'Categories', icon: CategoryIcon, path: '/category' },
+      { text: 'Sub Categories', icon: TurnedInIcon, path: '/sub-category' },
+      { text: 'Products', icon: ViewListIcon, path: '/products' },
+      { text: 'Orders', icon: ShoppingCartIcon, path: '/orders' },
     ],
   },
   { text: 'My Suite', icon: SuiteIcon, path: '/suite' },

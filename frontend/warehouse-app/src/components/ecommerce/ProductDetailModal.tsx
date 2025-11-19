@@ -18,6 +18,7 @@ import {
   useMediaQuery,
   Alert,
 } from "@mui/material";
+import { formatDiscountPercentage } from "@/lib/utils";
 import {
   Close,
   Add,
@@ -115,7 +116,7 @@ export default function ProductDetailModal({
             {/* Discount Badge */}
             {product.discount_percentage > 0 && (
               <Chip
-                label={`${product.discount_percentage}% OFF`}
+                label={formatDiscountPercentage(product.discount_percentage, "OFF")}
                 color="error"
                 size="medium"
                 sx={{

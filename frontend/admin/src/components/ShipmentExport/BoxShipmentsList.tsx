@@ -11,13 +11,13 @@ import {
   Typography,
 } from "@mui/material";
 import { Delete as DeleteIcon } from "@mui/icons-material";
+import { removeShipmentFromBox } from "../../services/api.services";
 import { formatDateTime } from "../../utils/formatDateTime";
-import { removePackageFromBox } from "../../services/api.services";
 
-export interface Package {
+export interface Shipment {
   id: string;
   tracking_no: string;
-  shipment_id: string;
+  shipment_no: string;
   courier: string;
   customer: string;
   customerCode: string;
@@ -30,17 +30,17 @@ export interface Package {
 
 interface BoxShipmentsListProps {
   boxId: number | null;
-  refreshPackages: () => void;
+  refreshShipments: () => void;
   boxLabel?: string; 
   boxIndex: number;
   totalBoxes: number;
-  shipments: Package[];
+  shipments: Shipment[];
   isLoading: boolean;
 }
 
 const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
   boxId,
-  refreshPackages,
+  refreshShipments,
   boxIndex,
   totalBoxes,
   boxLabel,
@@ -48,13 +48,13 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
   isLoading,
 }) => {
 
-  const handleDeletePackage = async (packageId: string) => {
+  const handleDeleteShipment = async (shipmentId: string) => {
     if (!boxId) return;
     try {
-      await removePackageFromBox(boxId, packageId);
-      refreshPackages();
+      await removeShipmentFromBox(boxId, shipmentId);
+      refreshShipments();
     } catch (error) {
-      console.error("Failed to delete package from box:", error);
+      console.error("Failed to delete shipment from box:", error);
     }
   };
 
@@ -109,7 +109,7 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
                 <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                   <CircularProgress size={24} />
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Loading packages...
+                    Loading shipments...
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -124,7 +124,7 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
             ) : (
               shipments.map((pkg) => (
                 <TableRow key={pkg.id}>
-                  <TableCell>{pkg.shipment_id}</TableCell>
+                  <TableCell>{pkg.shipment_no}</TableCell>
 
                   <TableCell>
                     <Typography fontWeight={500}>{pkg.tracking_no}</Typography>
@@ -146,7 +146,7 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
                         "&:hover": { bgcolor: "#ef4444" },
                       }}
                       size="small"
-                      onClick={() => handleDeletePackage(pkg.id)}
+                      onClick={() => handleDeleteShipment(pkg.id)}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>

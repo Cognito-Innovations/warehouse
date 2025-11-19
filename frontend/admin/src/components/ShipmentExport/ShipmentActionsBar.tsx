@@ -2,20 +2,20 @@ import React, { useState } from "react";
 import { Box, Button, CircularProgress, InputAdornment, TextField, Typography } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
 import { 
-  addPackageToBox,
+  addShipmentToBox,
   markShipmentExportDeparted,
-  searchReadyToShipPackage,
-  updatePackageStatus,
+  searchReadyToShipShipment,
+  updateShipmentStatus,
 } from "../../services/api.services";
 
-interface Package {
+interface Shipment {
   id: string;
   [key: string]: unknown;
 }
 
 interface BoxItem {
   id: string | number;
-  packages?: Package[];
+  shipments?: Shipment[];
 }
 
 interface ShipmentExport {
@@ -40,30 +40,30 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
   status,
   onStatusUpdated,
 }) => {
-  const [trackingNumber, setTrackingNumber] = useState("");
+  const [shipmentNumber, setShipmentNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearchAndAdd = async () => {
-    if (!selectedBoxId || !trackingNumber.trim()) return;
+    if (!selectedBoxId || !shipmentNumber.trim()) return;
     
     setIsSearching(true);
     setError(null);
 
     try {
-      const foundPackage = await searchReadyToShipPackage(trackingNumber.trim());
-      if (foundPackage) {
-        await addPackageToBox(selectedBoxId, foundPackage.id);
+      const foundShipment = await searchReadyToShipShipment(shipmentNumber.trim());
+      if (foundShipment) {
+        await addShipmentToBox(selectedBoxId, foundShipment.id);
         onPackageAdded();
-        setTrackingNumber("");
+        setShipmentNumber("");
       } else {
-        setError("Package not found.");
+        setError("Shipment not found.");
       }
     } catch (err) {
       const typedErr = err as { response?: { data?: { message?: string } } };
-      console.error("Failed to add package:", err);
-      setError(typedErr.response?.data?.message || "Package not found or could not be added.");
+      console.error("Failed to add shipment:", err);
+      setError(typedErr.response?.data?.message || "Shipment not found or could not be added.");
     } finally {
       setIsSearching(false);
     }
@@ -76,11 +76,11 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
       onStatusUpdated(updated.status);
 
       if (updated.boxes) {
-        const allPackages: Package[] = updated.boxes.flatMap((box) => box.packages ?? []);
-        if (allPackages.length > 0) {
+        const allShipments: Shipment[] = updated.boxes.flatMap((box) => box.shipments ?? []);
+        if (allShipments.length > 0) {
           await Promise.allSettled(
-            allPackages.map((pkg) =>
-              updatePackageStatus(pkg.id, "Departed")
+            allShipments.map((shipment) =>
+              updateShipmentStatus(shipment.id, "DEPARTED")
             )
           );
         }
@@ -93,7 +93,7 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
   };
 
   const handleTrackingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTrackingNumber(event.target.value);
+    setShipmentNumber(event.target.value);
     if (error) setError(null);
   };
   
@@ -109,9 +109,9 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
         <TextField
           variant="outlined"
           size="small"
-          placeholder="Search tracking number"
+          placeholder="Search shipment number"
           disabled={!selectedBoxId}
-          value={trackingNumber}
+          value={shipmentNumber}
           onChange={handleTrackingChange}
           onKeyDown={handleKeyDown}
           error={!!error}

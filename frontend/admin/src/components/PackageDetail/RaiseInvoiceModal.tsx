@@ -17,9 +17,12 @@ import {
   InputLabel,
   Paper,
   CircularProgress,
+  TextField,
+  IconButton,
 } from '@mui/material';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { toast } from 'sonner';
-import { createPackageCharge, updatePackageStatus } from '../../services/api.services';
+import { createShipmentInvoice } from '../../services/api.services';
 
 interface Charge {
   category: string;
@@ -28,51 +31,87 @@ interface Charge {
   total: number;
 }
 
-interface PackageData {
+interface Shipment {
   id: string;
-  actual_id?: string;
-  weight?: string | number;
+  total_weight?: string | number;
 }
 
 const availableCharges = [
-  { name: 'Dangerous Goods', amount: 5.00 },
-  { name: 'Pickup Charge', amount: 10.00 },
-  { name: 'DG Handling', amount: 15.00 },
-  { name: 'Special Brand Handling', amount: 20.00 },
-  { name: 'Repacking', amount: 8.00 },
-  { name: 'Cargo Handling', amount: 12.00 },
+  { name: 'Dangerous Goods', amount: 0.00 },
+  { name: 'Pickup Charge', amount: 0.00 },
+  { name: 'DG Handling', amount: 0.00 },
+  { name: 'Special Brand Handling', amount: 0.00 },
+  { name: 'Repacking', amount: 0.00 },
+  { name: 'Cargo Handling', amount: 0.00 },
 ];
 
 const RaiseInvoiceModal: React.FC<{ 
-    packageData: PackageData; 
-    onClose: () => void;
-    onUpdated?: () => void;
-}> = ({ packageData, onClose, onUpdated }) => {
+  shipment: Shipment; 
+  onClose: () => void;
+  onUpdated?: () => void;
+}> = ({ shipment, onClose, onUpdated }) => {
+  const FREIGHT_RATE_PER_KG = 8.50;
+  const weight = Number(shipment.total_weight) || 0;
+  const freightAmount = weight * FREIGHT_RATE_PER_KG;
+
   const initialCharges: Charge[] = [
-    { category: 'Packing Options', description: 'Remove unnecessary packaging and bulky boxes & repack it as single package', amount: 1.00, total: 1.00 },
-    { category: 'Other', description: 'Repacking charges from country of origin', amount: 2.00, total: 2.00 },
-    { category: 'Freight Charge', description: `REDBOX Chargeable Weight ${packageData.weight || '5 KG'}`, amount: 35.00, total: 35.00 },
+    {
+      category: 'Freight Charge',
+      description: `REDBOX Chargeable Weight ${weight} kg`,
+      amount: FREIGHT_RATE_PER_KG,
+      total: freightAmount,
+    },
   ];
 
   const [charges, setCharges] = useState<Charge[]>(initialCharges);
   const [showAddCharges, setShowAddCharges] = useState(false);
   const [selectedCharge, setSelectedCharge] = useState('');
+  const [extraChargeAmount, setExtraChargeAmount] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const handleAddCharge = () => {
-    const chargeToAdd = availableCharges.find(c => c.name === selectedCharge);
-    if (chargeToAdd && !charges.some(c => c.description === chargeToAdd.name)) {
-      setCharges(prev => [
-        ...prev,
-        {
-          category: 'Additional Services',
-          description: chargeToAdd.name,
-          amount: chargeToAdd.amount,
-          total: chargeToAdd.amount,
-        },
-      ]);
-      setSelectedCharge('');
+  const hasAdditionalCharges = charges.some(charge => charge.category === 'Additional Services');
+
+  const isUpdating = !!selectedCharge && charges.some(charge => charge.description === selectedCharge);
+
+  const handleSelectChange = (e: any) => {
+    const value = e.target.value as string;
+    setSelectedCharge(value);
+    if (value) {
+      const existing = charges.find(
+        charge => charge.description === value && charge.category === 'Additional Services'
+      );
+      if (existing) {
+        setExtraChargeAmount(existing.amount.toFixed(2));
+      } else {
+        setExtraChargeAmount('');
+      }
+    } else {
+      setExtraChargeAmount('');
     }
+  };
+
+  const handleToggleCharge = () => {
+    const amountValue = parseFloat(extraChargeAmount);
+    if (!selectedCharge || isNaN(amountValue) || amountValue <= 0) return;
+
+    if (isUpdating) {
+      setCharges(prev => prev.map(charge => 
+        charge.description === selectedCharge ? {...charge, amount: amountValue, total: amountValue} : charge
+      ));
+    } else {
+      setCharges(prev => [...prev, {
+        category: 'Additional Services',
+        description: selectedCharge,
+        amount: amountValue,
+        total: amountValue,
+      }]);
+    }
+    setSelectedCharge('');
+    setExtraChargeAmount('');
+  };
+
+  const handleRemoveCharge = (description: string) => {
+    setCharges(prev => prev.filter(charge => charge.description !== description));
   };
 
   const calculateTotal = () => {
@@ -82,9 +121,10 @@ const RaiseInvoiceModal: React.FC<{
   const handleRaiseInvoice = async () => {
     try {
       setLoading(true);  
-      //TODO: Combine both and move to in backend side with wrapping transaction
-      await updatePackageStatus(packageData.id, "Payment Pending");
-      await createPackageCharge({package_id: packageData.actual_id, amount: Number(calculateTotal())});
+      await createShipmentInvoice(shipment.id, {
+        charges,
+        total: Number(calculateTotal())
+      })
       onUpdated?.();
       toast.success("Invoice raised successfully! Status updated to Payment Pending.");
       onClose();
@@ -99,28 +139,38 @@ const RaiseInvoiceModal: React.FC<{
   return (
     <Box>
       <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e2e8f0', mb: 2 }}>
-        <Table sx={{ minWidth: 650 }} aria-label="charges table">
+        <Table sx={{ minWidth: hasAdditionalCharges ? 650 : 550 }} aria-label="charges table">
           <TableHead>
             <TableRow sx={{ '& .MuiTableCell-root': { fontWeight: 600, bgcolor: '#f8fafc', color: '#475569' } }}>
               <TableCell>#</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Description</TableCell>
+              {hasAdditionalCharges && <TableCell>Action</TableCell>}
               <TableCell align="right">Amount</TableCell>
               <TableCell align="right">Total</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {charges.map((row, index) => (
-              <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+              <TableRow key={index}>
                 <TableCell component="th" scope="row">{index + 1}</TableCell>
                 <TableCell component="th" scope="row">{row.category}</TableCell>
                 <TableCell>{row.description}</TableCell>
+                {hasAdditionalCharges && (
+                  <TableCell>
+                    {row.category !== 'Freight Charge' && (
+                      <IconButton size="small" onClick={() => handleRemoveCharge(row.description)} sx={{ color: 'error.main' }}>
+                        <CancelIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell align="right">${row.amount.toFixed(2)}</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 600 }}>${row.total.toFixed(2)}</TableCell>
               </TableRow>
             ))}
             <TableRow sx={{ bgcolor: '#f8fafc' }}>
-              <TableCell colSpan={4} align="right" sx={{ fontWeight: 600, fontSize: '1rem', border: 0 }}>TOTAL</TableCell>
+              <TableCell colSpan={hasAdditionalCharges ? 5 : 4} align="right" sx={{ fontWeight: 600, fontSize: '1rem', border: 0 }}>TOTAL</TableCell>
               <TableCell align="right" sx={{ fontWeight: 700, fontSize: '1.2rem', border: 0 }}>${calculateTotal()}</TableCell>
             </TableRow>
           </TableBody>
@@ -141,7 +191,7 @@ const RaiseInvoiceModal: React.FC<{
               id="select-charge"
               value={selectedCharge}
               label="Select Charge"
-              onChange={(e) => setSelectedCharge(e.target.value)}
+              onChange={handleSelectChange}
             >
               {availableCharges.map((charge) => (
                 <MenuItem key={charge.name} value={charge.name}>
@@ -150,14 +200,29 @@ const RaiseInvoiceModal: React.FC<{
               ))}
             </Select>
           </FormControl>
-          <Button
-            variant="contained"
-            onClick={handleAddCharge}
-            disabled={!selectedCharge}
-            sx={{ textTransform: 'none' }}
-          >
-            Add
-          </Button>
+
+          {selectedCharge && (
+            <>
+              <TextField
+                size="small"
+                type="number"
+                label="Amount"
+                value={extraChargeAmount}
+                onChange={(e) => setExtraChargeAmount(e.target.value)}
+                sx={{ width: 150 }}
+                inputProps={{ min: 0 }}
+              />
+
+              <Button
+                variant="contained"
+                onClick={handleToggleCharge}
+                disabled={!selectedCharge || !extraChargeAmount || parseFloat(extraChargeAmount) <= 0}
+                sx={{ textTransform: 'none' }}
+              >
+                {isUpdating ? 'Update' : 'Add'}
+              </Button>
+            </>
+          )}
         </Box>
       )}
 

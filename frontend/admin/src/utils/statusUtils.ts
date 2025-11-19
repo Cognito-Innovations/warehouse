@@ -5,6 +5,8 @@ export const getStatusColor = (status: string) => {
     case 'NO':
     case 'PAYMENT PENDING':
     case 'PAYMENT_PENDING':
+    case 'INACTIVE':
+    case 'PROCESSING':
       return { color: '#F59E0B', bgColor: '#FEF3C7' }; // Amber
     
     case 'QUOTATION_READY':
@@ -21,23 +23,30 @@ export const getStatusColor = (status: string) => {
     case 'QUOTED':
     case 'CONFIRMED':
     case 'PAID':
+    case 'ACTIVE':  
+    case 'DELIVERED':
       return { color: '#059669', bgColor: '#D1FAE5' }; // Green
     
     case 'ACCEPTED':
     case 'PICKED':
+    case 'SHIPPED':
       return { color: '#2563EB', bgColor: '#DBEAFE' }; // Blue
     
     case 'READY TO SEND':
+    case 'READY_TO_SHIP':
     case 'READY TO SHIP':
       return { color: '#22c55e', bgColor: '#dcfce7' };
     
     case 'ACTION REQUIRED':
+    case 'PENDING':
       return { color: '#ef4444', bgColor: '#fee2e2' };
     
     case 'IN REVIEW':
       return { color: '#3b82f6', bgColor: '#dbeafe' };
     
+    case 'REQUEST_SHIP':
     case 'REQUEST SHIP':
+    case 'SHIP_REQUEST':
       return { color: '#ff9800', bgColor: '#fff3e0' };
     
     case 'DEPARTED':

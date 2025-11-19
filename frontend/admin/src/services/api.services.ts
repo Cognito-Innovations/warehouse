@@ -1,4 +1,5 @@
-import type { Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, Rack, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
+//TODO P0: Resolve these typescript errors
+import type { CargoOption, CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
 import type { PreArrival } from '../types/PreArrival';
 import api from './axios';
 
@@ -183,11 +184,6 @@ export const addShipmentDocument = async (
   return response.data;
 };
 
-export const getPaymentSlips = async (shipmentUuid: string): Promise<any[]> => {
-  const response = await api.get(`/packages/shipments/${shipmentUuid}/slips`);
-  return response.data;
-};
-
 export const createRack = async (rack: Omit<Rack, 'id'>): Promise<Rack> => {
   const response = await api.post<Rack>('/racks', rack);
   return response.data;
@@ -260,7 +256,7 @@ export const updateProduct = async (
   available?: boolean,
   currency?: string,
 ) => {
-  const res = await api.patch(`/shopping-requests/${productId}`, {
+  const res = await api.patch(`/shopping-request-products/${productId}`, {
     ...(unitPrice !== undefined && { unit_price: unitPrice }),
     ...(available !== undefined && { available }),
     ...(currency !== undefined && { currency }),
@@ -316,28 +312,28 @@ export const deleteShipmentExport = async (id: string) => {
   await api.delete(`/shipment-exports/${id}`);
 };
 
-export const searchReadyToShipPackage = async (trackingNumber: string) => {
-  const response = await api.get('/packages/shipments/search', {
+export const searchReadyToShipShipment = async (shipmentNumber: string) => {
+  const response = await api.get('/shipments/search', {
     params: {
-      trackingNumber,
-      status: 'Ready To Ship',
+      shipmentNumber,
+      status: 'READY_TO_SHIP',
     },
   });
   return response.data;
 };
 
-export const addPackageToBox = async (boxId: number, packageId: string) => {
-  const response = await api.post(`/shipment-export-boxes/${boxId}/packages`, { packageId });
+export const addShipmentToBox = async (boxId: number, shipmentId: string) => {
+  const response = await api.post(`/shipment-export-boxes/${boxId}/shipments`, { shipmentId });
   return response.data;
 };
 
-export const getPackagesByBoxId = async (boxId: number) => {
-  const response = await api.get(`/shipment-export-boxes/${boxId}/packages`);
+export const getShipmentsByBoxId = async (boxId: number) => {
+  const response = await api.get(`/shipment-export-boxes/${boxId}/shipments`);
   return response.data;
 };
 
-export const removePackageFromBox = async (boxId: number, packageId: string) => {
-  const response = await api.delete(`/shipment-export-boxes/${boxId}/packages/${packageId}`);
+export const removeShipmentFromBox = async (boxId: number, shipmentId: string) => {
+  const response = await api.delete(`/shipment-export-boxes/${boxId}/shipments/${shipmentId}`);
   return response.data;
 };
 
@@ -397,4 +393,171 @@ export const updateCourier = async (id: string, data: UpdateCourierPayload): Pro
 export const deletePreArrival = async (id: string) => {
   const res = await api.delete(`/pre-arrival/${id}`);
   return res.data;
+};
+
+// Categories
+export const createCategory = async (
+  data: CategoryPayload
+) => {
+  const response = await api.post('/ecommerce-categories', data);
+  return response.data;
+};
+
+export const getCategories = async () => {
+  const response = await api.get("/ecommerce-categories");
+  return response.data;
+};
+
+export const updateCategory = async (id: string, data: CategoryPayload) => {
+  const response = await api.patch(`/ecommerce-categories/${id}`, data);
+  return response.data;
+};
+
+export const deleteCategory = async (id: string) => {
+  const response = await api.delete(`/ecommerce-categories/${id}`);
+  return response.data;
+};
+
+// Sub Categories
+export const createSubCategory = async (
+  data: SubCategoryPayload
+) => {
+  const response = await api.post('/ecommerce-sub-categories', data);
+  return response.data;
+};
+
+export const getSubCategories = async () => {
+  const response = await api.get("/ecommerce-sub-categories");
+  return response.data;
+};
+
+export const updateSubCategory = async (id: string, data: SubCategoryPayload) => {
+  const response = await api.patch(`/ecommerce-sub-categories/${id}`, data);
+  return response.data;
+};
+
+export const deleteSubCategory = async (id: string) => {
+  const response = await api.delete(`/ecommerce-sub-categories/${id}`);
+  return response.data;
+};
+
+// Products
+export const createProduct = async (
+  data: ProductPayload
+) => {
+  const response = await api.post('/ecommerce-products', data);
+  return response.data;
+};
+
+export const getProducts = async () => {
+  const response = await api.get("/ecommerce-products");
+  return response.data;
+};
+
+export const updateEcommerceProduct = async (
+  id: string,
+  data: Partial<ProductPayload>
+) => {
+  const response = await api.patch(`/ecommerce-products/${id}`, data);
+  return response.data;
+};
+
+export const deleteProduct = async (id: string) => {
+  const response = await api.delete(`/ecommerce-products/${id}`);
+  return response.data;
+};
+
+// Measurements
+export const getMeasurements = async () => {
+  const response = await api.get("/ecommerce-measurements");
+  return response.data;
+};
+
+// Orders
+export const getOrders = async () => {
+  const response = await api.get("/ecommerce-orders");
+  return response.data;
+};
+
+export const getOrderByOrderId = async (orderId: string | number) => {
+  const response = await api.get(`/ecommerce-orders/${orderId}`);
+  return response.data;
+};
+
+export const updateOrderStatus = async (id: string, status: string) => {
+  const response = await api.patch(`/ecommerce-orders/${id}/status`, status);
+  return response.data;
+};
+
+export const updatePaymentStatus = async (id: string, paymentStatus: string) => {
+  const response = await api.patch(`/ecommerce-orders/${id}/payment-status`, paymentStatus);
+  return response.data;
+};
+
+// Shipment
+export const getShipments = async () => {
+  const response = await api.get('/shipments');
+  return response.data;
+};
+
+export const getShipmentsByStatus = async (status: string) => {
+  const params = new URLSearchParams();
+  params.append('status', status);
+  const response = await api.get(`/shipments/by-status?${params.toString()}`);
+  return response.data;
+};
+
+export const getShipmentsByShipmentNo = async (shipmentNo: string) => {
+  const res = await api.get(`/shipments/detail/by-shipmentNo/${shipmentNo}`);
+  return res.data;
+}
+
+export const updateShipmentStatus = async (id: string, status: string) => {
+  const res = await api.patch(`/shipments/${id}/status`, {status});
+  return res.data;
+}
+
+export const updateShipment = async (id: string, payload: any) => {
+  const res = await api.patch(`/shipments/${id}`, payload);
+  return res.data;
+}
+
+export const createShipmentDocument = async (
+  id: string,
+  data: {
+    url: string;
+    original_filename: string;
+    mime_type?: string;
+    file_size?: number;
+    category: 'PAYMENT' | 'SHIPMENT_PHOTO';
+  }
+) => {
+  const res = await api.post(`/shipments/${id}/documents`, { data });
+  return res.data;
+}
+
+export const removePackageFromShipment = async (shipmentId, packageId) => {
+  const res = await api.patch(`/shipments/${shipmentId}/remove-package/${packageId}`);
+  return res.data;
+};
+
+export const createShipmentInvoice = async (
+  shipmentId: string,
+  payload: {
+    charges: {
+      category: string;
+      description: string;
+      amount: number;
+      total: number;
+    }[];
+    total: number;
+  }
+) => {
+  const res = await api.post(`/shipments/${shipmentId}/invoice/`, payload);
+  return res.data;
+}
+
+export const getCargoOptions = async (): Promise<CargoOption[]> => {
+  const response = await api.get<CargoOption[]>('/ecommerce-cargo-options');
+  return response.data;
 };

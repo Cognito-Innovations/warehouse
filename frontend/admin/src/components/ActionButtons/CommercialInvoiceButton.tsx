@@ -13,7 +13,11 @@ interface jsPDFWithAutoTable extends jsPDF {
     lastAutoTable?: AutoTableFinalY;
 }
 
-interface InvoiceItem {
+interface Packages {
+    items: Item[];
+}
+
+interface Item {
     name: string;
     quantity: number;
     unit_price: string;
@@ -22,15 +26,18 @@ interface InvoiceItem {
 
 interface InvoiceData {
     id: string;
-    name: string;
-    phone?: string;
-    suite?: string;
-    updatedAt?: string;
+    user?: {
+        name: string;
+        phone?: string;
+        suite_no?: string;
+        address?: string;
+    }
+    updated_at?: string;
     to_address?: {
         line1?: string;
         zip_code?: string;
     };
-    items: InvoiceItem[];
+    packages: Packages[];
 }
 
 interface CommercialInvoiceButtonProps {
@@ -43,10 +50,13 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
     const handleCommercialInvoiceButton = async () => {
         setIsPrinting(true);
         try {
-            if (!data || !data.id || !data.name || !data.items) {
+            if (!data || !data.id || !data.user?.name) {
                 toast.error("Required data for the invoice is missing.");
                 return;
             }
+
+            const allItems = data.packages
+              ?.flatMap((pkg) => pkg.items) ?? [];
 
             const doc = new jsPDF() as jsPDFWithAutoTable;
             const pageW = doc.internal.pageSize.getWidth();
@@ -111,41 +121,51 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
 
             // Ship To Box
             const shipToContent = [
-                data.name || 'Maryam Maana',
+                data.user?.name || 'Maryam Maana',
                 data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City Kaafu",
                 data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
-                data.phone || '9834396'
+                data.user?.phone || '9834396'
             ];
             drawInfoBox(margin, yPos, 'Ship To', shipToContent);
             
             // Bill To Box
             const billToContent = [
-                data.name || 'Maryam Maana',
+                data.user?.name || 'Maryam Maana',
                 data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City",
                 data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
-                data.phone || '9834396'
+                data.user?.phone || '9834396'
             ];
             drawInfoBox(margin + boxWidth + 6, yPos, 'Bill To', billToContent);
             
             // Invoice Details Box
             const invoiceDetailsContent = [
-                `Suite ID: ${data.suite || '714-881'}`,
+                `Suite ID: ${data.user?.suite_no || '714-881'}`,
                 `Invoice Number: ${data.id || 'S2025236IN'}`,
-                `Invoice Date: ${data.updatedAt || '2025-09-22'}`,
+                `Invoice Date: ${data.updated_at || '2025-09-22'}`,
                 'Currency: USD'
             ];
             drawInfoBox(margin + (boxWidth + 6) * 2, yPos, 'Invoice Details', invoiceDetailsContent);
 
             // --- 4. Items Table ---
             const tableColumns = ["Description", "Qty", "Amount", "Total"];
-            const tableRows = data.items.map((item: {name: string, quantity: number, unit_price: string, total_price: string}) => [
-                `${item.name || 'N/A'}`,
-                item.quantity,
-                parseFloat(item.unit_price).toFixed(2),
-                `USD ${parseFloat(item.total_price).toFixed(2)}`
-            ]);
+            let tableRows: any[] = []; 
+            let grandTotal = 0;
+
+            if (allItems.length === 0) {
+                tableRows = [["No items found", "", "", ""]]
+            } else {
+                tableRows = allItems.map(item => [
+                    item.name || 'N/A',
+                    item.quantity,
+                    parseFloat(item.unit_price).toFixed(2),
+                    `USD ${parseFloat(item.total_price).toFixed(2)}`
+                ]);
             
-            const grandTotal = data.items.reduce((sum: number, item: {total_price: string}) => sum + parseFloat(item.total_price), 0);
+                grandTotal = allItems.reduce(
+                    (sum, item) => sum + parseFloat(item.total_price), 
+                    0
+                );
+            }
             
             autoTable(doc, {
                 startY: yPos + boxHeaderH + boxBodyH + 10,
@@ -171,6 +191,9 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
                     1: { halign: 'center' },
                     2: { halign: 'right' },
                     3: { halign: 'right' },
+                },
+                bodyStyles: {
+                  textColor: allItems.length === 0 ? [120,120,120] : [0,0,0],
                 },
                 didDrawCell: (data) => {
                     // Custom draw the "Brand:, Model:" text in a smaller, grey font

@@ -11,7 +11,7 @@ import type { ColumnDefinition } from '../types/table';
 import { shoppingSummaryConfig } from '../utils/summaryConfig';
 
 const ShoppingRequests: React.FC = () => {
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]); //TODO P0: Resolve these typescript errors
   const [selectedStatus, setSelectedStatus] = useState<string | string[] | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();

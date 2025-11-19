@@ -70,21 +70,11 @@ export class PickupRequestsService {
         );
       }
 
+      const { country, ...rest } = pickupRequestWithRelations;
+
       return {
-        id: pickupRequestWithRelations.id,
-        country: pickupRequestWithRelations.country?.name,
-        status: pickupRequestWithRelations.status,
-        pickup_address: pickupRequestWithRelations.pickup_address,
-        supplier_name: pickupRequestWithRelations.supplier_name,
-        supplier_phone_number: pickupRequestWithRelations.supplier_phone_number,
-        alt_supplier_phone_number:
-          pickupRequestWithRelations.alt_supplier_phone_number,
-        pcs_box: pickupRequestWithRelations.pcs_box,
-        est_weight: pickupRequestWithRelations.est_weight,
-        pkg_details: pickupRequestWithRelations.pkg_details,
-        remarks: pickupRequestWithRelations.remarks,
-        created_at: pickupRequestWithRelations.created_at,
-        updated_at: pickupRequestWithRelations.updated_at,
+        ...rest,
+        country: country?.name,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -107,24 +97,17 @@ export class PickupRequestsService {
         relations: ['user', 'country'],
       });
 
-      return pickupRequests.map((request) => ({
-        id: request.id,
-        country: request.country?.name,
-        status: request.status,
-        pickup_address: request.pickup_address,
-        supplier_name: request.supplier_name,
-        supplier_phone_number: request.supplier_phone_number,
-        alt_supplier_phone_number: request.alt_supplier_phone_number,
-        pcs_box: request.pcs_box,
-        est_weight: request.est_weight,
-        pkg_details: request.pkg_details,
-        remarks: request.remarks,
-        created_at: request.created_at,
-        updated_at: request.updated_at,
-        user: request.user
-          ? this.usersService.mapToUserResponseDto(request.user)
-          : undefined,
-      }));
+      return pickupRequests.map((request) => {
+        const { country, user, ...rest } = request;
+
+        return {
+          ...rest,
+          country: country?.name,
+          user: user
+            ? this.usersService.mapToUserResponseDto(request.user)
+            : undefined,
+        }
+      });
     } catch (error) {
       throw new BadRequestException(
         `Failed to fetch pickup requests: ${(error as Error).message}`,
@@ -143,21 +126,11 @@ export class PickupRequestsService {
       });
 
       return pickupRequests.map((request) => {
+        const { country, ...rest } = request;
+
         return {
-          id: request.id,
-          country: request.country?.name,
-          pickup_address: request.pickup_address,
-          supplier_name: request.supplier_name,
-          supplier_phone_number: request.supplier_phone_number,
-          alt_supplier_phone_number: request.alt_supplier_phone_number,
-          pcs_box: request.pcs_box,
-          est_weight: request.est_weight,
-          pkg_details: request.pkg_details,
-          remarks: request.remarks,
-          status: request.status,
-          price: request.price,
-          created_at: request.created_at,
-          updated_at: request.updated_at,
+          ...rest,
+          country: country?.name,
         };
       });
     } catch (error) {
@@ -184,22 +157,12 @@ export class PickupRequestsService {
           pickupRequest.id,
         );
 
+      const { country, user, ...rest } = pickupRequest;
+
       return {
-        id: pickupRequest.id,
-        country: pickupRequest.country?.name,
-        status: pickupRequest.status,
-        pickup_address: pickupRequest.pickup_address,
-        supplier_name: pickupRequest.supplier_name,
-        supplier_phone_number: pickupRequest.supplier_phone_number,
-        alt_supplier_phone_number: pickupRequest.alt_supplier_phone_number,
-        pcs_box: pickupRequest.pcs_box,
-        est_weight: pickupRequest.est_weight,
-        pkg_details: pickupRequest.pkg_details,
-        price: pickupRequest.price,
-        remarks: pickupRequest.remarks,
-        created_at: pickupRequest.created_at,
-        updated_at: pickupRequest.updated_at,
-        user: pickupRequest.user
+        ...rest,
+        country: country?.name,
+        user: user
           ? this.usersService.mapToUserResponseDto(pickupRequest.user)
           : undefined,
         tracking_requests: trackingRequests,
@@ -292,22 +255,12 @@ export class PickupRequestsService {
           pickupRequestWithRelations.id,
         );
 
+      const { country, user, ...rest } = pickupRequestWithRelations;
+
       return {
-        id: pickupRequestWithRelations.id,
-        country: pickupRequestWithRelations.country?.name,
-        status: pickupRequestWithRelations.status,
-        pickup_address: pickupRequestWithRelations.pickup_address,
-        supplier_name: pickupRequestWithRelations.supplier_name,
-        supplier_phone_number: pickupRequestWithRelations.supplier_phone_number,
-        alt_supplier_phone_number:
-          pickupRequestWithRelations.alt_supplier_phone_number,
-        pcs_box: pickupRequestWithRelations.pcs_box,
-        est_weight: pickupRequestWithRelations.est_weight,
-        pkg_details: pickupRequestWithRelations.pkg_details,
-        remarks: pickupRequestWithRelations.remarks,
-        created_at: pickupRequestWithRelations.created_at,
-        updated_at: pickupRequestWithRelations.updated_at,
-        user: pickupRequestWithRelations.user
+        ...rest,
+        country: country?.name,
+        user: user
           ? this.usersService.mapToUserResponseDto(
               pickupRequestWithRelations.user
             )

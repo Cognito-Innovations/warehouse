@@ -1,37 +1,30 @@
 import React, { useEffect, useRef, useState } from "react";
 import { uploadToCloudinary } from "@/lib/cloudinary.api";
-import { addPackagePaymentSlip } from "@/lib/api.service";
+import { createShipmentPaymentSlip } from "@/lib/api.service";
 import { Loader } from "./Loader";
-import { formatDateTime } from "@/lib/utils";
 
 interface InvoiceRequest {
-  status: {
-    label: string;
-    value: string;
-  };
-  shipment_uuid: string;
+  id: string;
+  status: string;
   invoice?: {
     invoice_no?: string;
     total?: number;
+    amount?: number;
+    status?: string;
     created_at?: string;
   };
   documents?: {
     document_url: string;
   }[];
-  charges: {
-    amount: number;
-  }[];
 }
-
-const PAID_STATUSES = ["Payment Approved", "Ready To Ship", "Departed"];
 
 export default function Invoices({ request, payment_slips, onUpdate }: { request: InvoiceRequest, payment_slips: {document_url:string}[], onUpdate?: () => void; }) {
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const amount = request?.charges?.[0]?.amount || "No Amount";
-  const isPaid = PAID_STATUSES.includes(request.status.value);
+  const amount = request?.invoice?.amount || "No Amount";
+  const isPaid = request?.invoice?.status === "PAID";
 
   useEffect(() => {
     if (payment_slips?.length) {
@@ -55,12 +48,13 @@ export default function Invoices({ request, payment_slips, onUpdate }: { request
       for (const file of filesArray) {
         const url = await uploadToCloudinary(file);
         if (url) {
-          await addPackagePaymentSlip(request.shipment_uuid, {
+          await createShipmentPaymentSlip(request.id, {
             url,
             original_filename: file.name,
             mime_type: file.type,
             file_size: file.size,
-          });
+            category: 'PAYMENT'
+          })
           setUploadedUrls((prev) => [...prev, url]);
           onUpdate?.();
         }

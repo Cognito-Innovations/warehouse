@@ -7,6 +7,7 @@ import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
 import { useAddressAPI } from "@/hooks/useAddressAPI";
+import { ROUTES } from "@/utils/constants";
 
 interface ShoppingItem {
   id: string;
@@ -107,7 +108,7 @@ export default function ShoppingRequestForm() {
         )
       );
 
-      router.push("/assisted-shopping");
+      router.push(ROUTES.ASSISTED_SHOPPING);
     } catch (error) {
       console.error("Error creating shopping request:", error);
     } finally {

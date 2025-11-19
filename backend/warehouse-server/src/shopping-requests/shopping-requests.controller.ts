@@ -78,7 +78,7 @@ export class ShoppingRequestsController {
     description: 'List of all shopping requests',
     type: [ShoppingRequestResponseDto],
   })
-  async findAll(): Promise<ShoppingRequestResponseDto[]> {
+  async findAll() {
     return this.shoppingRequestsService.getAllShoppingRequests();
   }
 

@@ -20,7 +20,7 @@ interface ShoppingRequestProduct {
 
 const ShoppingRequestDetail: React.FC = () => {
   const { id } = useParams();
-  const [shoppingRequest, setShoppingRequest] = useState<any | null>(null);
+  const [shoppingRequest, setShoppingRequest] = useState<any | null>(null); //TODO P0: Resolve these typescript errors
   const [products, setProducts] = useState<ShoppingRequestProduct[]>([]);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);

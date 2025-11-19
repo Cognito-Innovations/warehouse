@@ -20,7 +20,6 @@ interface Props {
   invoice: Invoice;
   status: string;
   payment_slips: PaymentSlip[];
-  onStatusUpdated?: () => void;
   isDiscarded?: boolean;
 }
 

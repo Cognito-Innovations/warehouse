@@ -27,6 +27,7 @@ export enum PaymentStatus {
   REFUNDED = 'REFUNDED',
 }
 
+// TODO: Need to update the entity
 @Entity('ecommerce_orders')
 export class EcommerceOrder extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -60,7 +61,7 @@ export class EcommerceOrder extends BaseTimestampEntity {
   subtotal: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  discount_amount: number;
+  discount_percentage: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   shipping_amount: number;
@@ -80,8 +81,17 @@ export class EcommerceOrder extends BaseTimestampEntity {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
-  @OneToMany(() => EcommerceOrderItem, (item: EcommerceOrderItem) => item.order, {
-    cascade: true,
-  })
+  @Column({ type: 'text', nullable: true })
+  cashfree_session_id: string;
+  
+  @Column({ type: 'text', nullable: true })
+  cashfree_payment_id: string;
+
+  @OneToMany(
+    () => EcommerceOrderItem,
+    (item: EcommerceOrderItem) => item.order, {
+      cascade: true,
+    }
+  )
   items: EcommerceOrderItem[];
 }

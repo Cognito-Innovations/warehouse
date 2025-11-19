@@ -17,7 +17,7 @@ import { PackageDocument } from './package-document.entity';
 import { PackageActionLog } from './package-action-log.entity';
 import { PackageMeasurement } from './package-measurement.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
-import { ShipmentExportBox } from 'src/shipment-export/shipment-export-box.entity';
+import { Shipment } from 'src/shipments/shipment.entity';
 
 @Entity('packages')
 export class Package extends BaseTimestampEntity {
@@ -30,10 +30,7 @@ export class Package extends BaseTimestampEntity {
   @Column({ default: 'Action Required' })
   status: string;
 
-  @Column({ type: 'uuid', nullable: true, unique: true })
-  shipment_uuid: string | null;
-
-  @Column({ type: 'varchar', nullable: true, unique: true })
+  @Column({ type: 'varchar', nullable: true })
   shipment_id: string | null;
 
   @ManyToOne(() => User, { eager: true })
@@ -53,13 +50,6 @@ export class Package extends BaseTimestampEntity {
   @ManyToOne(() => Rack, { eager: true, nullable: true })
   @JoinColumn({ name: 'rack_slot_id' })
   rack_slot: Rack | null;
-
-  @ManyToOne(() => ShipmentExportBox, (box) => box.packages, {
-    nullable: true,
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn({ name: 'shipment_export_box_id' })
-  shipmentExportBox: ShipmentExportBox | null;
 
   @Column({ nullable: true })
   slot_info: string;
@@ -133,4 +123,11 @@ export class Package extends BaseTimestampEntity {
     onDelete: 'CASCADE',
   })
   action_logs: PackageActionLog[];
+
+  @ManyToOne(() => Shipment, (shipment) => shipment.packages,{
+    onDelete: 'SET NULL',
+    nullable: true 
+  })
+  @JoinColumn({ name: 'shipment_id' })
+  shipment: Shipment;
 }

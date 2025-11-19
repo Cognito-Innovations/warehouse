@@ -2,27 +2,42 @@
 import { toast } from "sonner";
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Delete as DeleteIcon, HourglassEmpty as HourglassIcon, Upload as UploadIcon } from "@mui/icons-material";
+import { useRouter, useSearchParams } from "next/navigation";
+import { CircularProgress } from "@mui/material";
+import {
+  Delete as DeleteIcon,
+  HourglassEmpty as HourglassIcon,
+  Upload as UploadIcon,
+  Inventory as PackageIcon,
+  LocalShipping as ShipmentIcon, 
+  ExpandMore,
+  ExpandLess,
+} from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import CheckIcon from "@mui/icons-material/Check";
-import { getPackagesByUserAndStatus, updatePackageStatus, getPackagesByUser, getPreArrivalsByUser, deletePreArrival, uploadPackageDocuments } from "../../lib/api.service";
 
+import {
+  updatePackageStatus,
+  getPackagesByUser,
+  getPreArrivalsByUser,
+  deletePreArrival,
+  uploadPackageDocuments,
+  createShipment,
+  getShipmentsByUser,
+} from "../../lib/api.service";
+import { useAuth } from "@/contexts/AuthContext";
 import usePreArrival from "../../hooks/usePreArrival";
-import PrePackageArrivalOTPModal from "../Modals/PrePackageArrivalOTPModal/PrePackageArrivalOTPModal";
-import { Inventory as PackageIcon, LocalShipping as ShipmentIcon } from "@mui/icons-material";
-
-// Import extracted components
 import TabPanel from "./TabPanel";
 import TabNavigation from "./TabNavigation";
 import SearchAndFilter from "./SearchAndFilter";
-import EmptyState from "./EmptyState";
-import { formatDateTime } from "@/lib/utils";
-import { useRouter, useSearchParams } from "next/navigation";
-import { CircularProgress } from "@mui/material";
-import { useAuth } from "@/contexts/AuthContext";
-import SearchBar from "./SearchBar";
+import PrePackageArrivalOTPModal from "../Modals/PrePackageArrivalOTPModal/PrePackageArrivalOTPModal";
 import PreArrivalPopup from "../Modals/PrePackageArrivalOTPModal/PreArrivalPopup";
+import SearchBar from "./SearchBar";
+import EmptyState from "./EmptyState";
+import ExpandedPackageSection from "./ExpandedPackageSection";
+import { formatDateTime } from "@/lib/utils";
 import { getStatusProps } from "@/lib/statusUtils";
+import { ROUTES } from "@/utils/constants";
 
 const TabsSection = () => {
   const { user } = useAuth();
@@ -35,7 +50,6 @@ const TabsSection = () => {
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [shipments, setShipments] = useState<any[]>([]);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
-  const [isRequestShipLoadingPackageId, setIsRequestShipLoadingPackageId] = useState<string | null>(null);
   const [preArrivalHistory, setPreArrivalHistory] = useState<any[]>([]);
   const [preArrivalLoading, setPreArrivalLoading] = useState(false);
   const [newPreArrival, setNewPreArrival] = useState<any | null>(null);
@@ -44,6 +58,9 @@ const TabsSection = () => {
   const [uploadedPackageIds, setUploadedPackageIds] = useState<string[]>([]);
   const [uploadingPackageId, setUploadingPackageId] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [selectedPackageIds, setSelectedPackageIds] = useState<string[]>([]);
+  const [isRequestingShip, setIsRequestingShip] = useState(false);
+  const [expandedPackages, setExpandedPackages] = useState<string[]>([]);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,14 +68,6 @@ const TabsSection = () => {
   const { submitPreArrival, loading: submitting } = usePreArrival({
     userId: user?.id,
   });
-
-  const SHIPMENT_STATUSES = [
-    "Request Ship",
-    "Payment Pending",
-    "Payment Approved",
-    "Ready To Ship",
-    "Departed",
-  ];
 
   const fetchPackages = async () => {
     const userId = (session?.user as any)?.user_id;
@@ -86,17 +95,8 @@ const TabsSection = () => {
 
     setShipmentsLoading(true);
     try {
-      const results = await Promise.allSettled(
-        SHIPMENT_STATUSES.map((status) => getPackagesByUserAndStatus(userId, status))
-      );
-      const fulfilledShipments = results
-        .filter((res) => res.status === "fulfilled")
-        .map((res: any) => res.value)
-        .flat();
-      setShipments(fulfilledShipments);
-      if (results.some((res) => res.status === "rejected")) {
-        toast.error("Some shipments could not be fetched");
-      }
+      const shipments = await getShipmentsByUser(userId);
+      setShipments(shipments);
     } catch (error) {
       toast.error("Failed to fetch shipments");
     } finally {
@@ -182,18 +182,31 @@ const TabsSection = () => {
     }
   };
 
-  const handleRequestShip = async (packageId: string) => {
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, packageId: string) => {
+    if (e.target.checked) {
+      setSelectedPackageIds((prev) => [...prev, packageId]);
+    } else {
+      setSelectedPackageIds((prev) => prev.filter((id) => id !== packageId));
+    }
+  };
+
+  const handleRequestShip = async () => {
+    const userId = (session?.user as any)?.user_id;
+    if (!userId || selectedPackageIds.length === 0) return;
+
+    setIsRequestingShip(true);
     try {
-      setIsRequestShipLoadingPackageId(packageId);
-      await updatePackageStatus(packageId, "Request Ship");
-      toast.success("Ship request submitted successfully!");
-      // Refresh packages and shipments after status change
+      const payload = { packageIds: selectedPackageIds }; 
+      await createShipment(payload); 
+      
+      toast.success("Shipment requested successfully!");
+      setSelectedPackageIds([]);
       fetchPackages();
       fetchShipments();
-    } catch (error) {
-      toast.error("Failed to request ship. Please try again.");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to request shipment. Please try again.");
     } finally {
-      setIsRequestShipLoadingPackageId(null);
+      setIsRequestingShip(false);
     }
   };
 
@@ -256,6 +269,16 @@ const TabsSection = () => {
     }
   };
 
+  const toggleExpand = (packageId: string) => {
+    setExpandedPackages((prev) => {
+      if (prev.includes(packageId)) {
+        return prev.filter((id) => id !== packageId);
+      } else {
+        return [...prev, packageId];
+      }
+    });
+  };
+
   const tabs = [
     { label: "Packages", count: packages.length, icon: <PackageIcon /> },
     { label: "Shipments", count: shipments.length, icon: <ShipmentIcon /> },
@@ -291,6 +314,23 @@ const TabsSection = () => {
       {/* Share OTP Button - Only show on Packages tab */}
       {value === 0 && (
         <div className="flex justify-end my-3">
+          {selectedPackageIds.length > 0 && (
+            <button
+              onClick={handleRequestShip}
+              disabled={isRequestingShip}
+              className="inline-flex bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white items-center px-3 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none mr-2"
+            >
+              {isRequestingShip ? (
+                <>
+                  <CircularProgress size={16} className="mr-2 text-white" />
+                  Requesting...
+                </>
+              ) : (
+                `Request Ship (${selectedPackageIds.length})`
+              )}
+            </button>
+          )}
+
           <button onClick={handleShareOTPClick} className="inline-flex bg-purple-600 hover:bg-purple-700 min-w-12 text-white items-center px-3 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none">
             Share OTP
           </button>
@@ -310,73 +350,99 @@ const TabsSection = () => {
             <div className="p-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Ready to Send Packages</h3>
               <div className="space-y-4">
-                {packages.map((pkg) => (
-                  <div key={pkg.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{pkg.tracking_no}</h4>
-                        <p className="text-sm text-gray-600">Package ID: {pkg.package_id}</p>
-                        <p className="text-sm text-gray-600">Status: <span className="text-green-600 font-medium">{pkg.status.value}</span></p>
-                        {pkg.user && (
-                          <p className="text-sm text-gray-600">Customer: <span className="font-medium">{pkg.user.name}</span></p>
-                        )}
-                        {pkg.total_weight && (
-                          <p className="text-sm text-gray-600">Weight: {pkg.total_weight} kg</p>
-                        )}
-                        {pkg.remarks && (
-                          <p className="text-sm text-gray-600">Remarks: {pkg.remarks}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end space-y-2">
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">Created: {formatDateTime(pkg.created_at)}</p>
-                          {pkg.country && (
-                            <p className="text-sm text-gray-500">Country: {pkg.country?.name}</p>
+                {packages.map((pkg) => {
+                  const isExpanded = expandedPackages.includes(pkg.id);
+                  return (
+                    <div key={pkg.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                          {isExpanded ? (
+                            <ExpandLess
+                              onClick={() => toggleExpand(pkg.id)}
+                              className="cursor-pointer text-gray-500 hover:text-gray-700"
+                            />
+                          ) : (
+                            <ExpandMore
+                              onClick={() => toggleExpand(pkg.id)}
+                              className="cursor-pointer text-gray-500 hover:text-gray-700"
+                            />
                           )}
                         </div>
-                        {pkg.status.value === "Ready To Send" ? (() => {
-                          const isRequestShipLoading = isRequestShipLoadingPackageId === pkg.id;
-                          return (
-                            <button
-                              disabled={isRequestShipLoading}
-                              onClick={() => handleRequestShip(pkg.id)}
-                              className="inline-flex bg-blue-600 hover:bg-blue-700 text-white items-center px-4 py-2 transition-all ease-in-out border border-transparent shadow-sm text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                            >
-                              {isRequestShipLoading ? "Requesting..." : "Request Ship"}
-                            </button>
-                          );
-                        })()
-                         : uploadedPackageIds.includes(pkg.id) ? (
-                            <p className="text-green-600 text-sm font-medium">
-                              Document uploaded successfully and under review.
-                            </p>
-                          ) : (
-                            <button
-                              disabled={uploadingPackageId === pkg.id}
-                              onClick={() => handleUploadDocument(pkg.id)}
-                              className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium border transition-all 
-                                ${uploadingPackageId === pkg.id 
-                                  ? "bg-gray-100 text-gray-500 border-gray-300 cursor-not-allowed" 
-                                  : "text-blue-600 border-blue-400 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                                }`}
-                            >
-                              {uploadingPackageId === pkg.id ? (
-                                <>
-                                  <CircularProgress size={16} className="mr-2 text-blue-500" />
-                                  Uploading...
-                                </>
-                              ) : (
-                                <>
-                                  <UploadIcon className="mr-2" fontSize="small" />
-                                  Upload File
-                                </>
-                              )}
-                            </button>
+                        
+                        {pkg.status.value === "Ready To Send" && (
+                          <div className="flex-shrink-0 self-center">
+                            <input
+                              type="checkbox"
+                              className="h-5 w-5 appearance-none border-2 border-gray-300 rounded bg-white grid place-content-center
+                                checked:bg-blue-600 checked:border-blue-600 cursor-pointer
+                                checked:after:content-['✔'] checked:after:text-white checked:after:text-xs checked:after:font-bold"
+                              checked={selectedPackageIds.includes(pkg.id)}
+                              onChange={(e) => handleCheckboxChange(e, pkg.id)}
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">{pkg.tracking_no}</h4>
+                          <p className="text-sm text-gray-600">Package ID: {pkg.package_id}</p>
+                          <p className="text-sm text-gray-600">Status: <span className="text-green-600 font-medium">{pkg.status.value}</span></p>
+                          {pkg.user && (
+                            <p className="text-sm text-gray-600">Customer: <span className="font-medium">{pkg.user.name}</span></p>
                           )}
-                      </div>
+                          {pkg.total_weight && (
+                            <p className="text-sm text-gray-600">Weight: {pkg.total_weight} kg</p>
+                          )}
+                          {pkg.remarks && (
+                            <p className="text-sm text-gray-600">Remarks: {pkg.remarks}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end space-y-2 flex-shrink-0">
+                          <div className="text-right">
+                            <p className="text-sm text-gray-500">Created: {formatDateTime(pkg.created_at)}</p>
+                            {pkg.country && (
+                              <p className="text-sm text-gray-500">Country: {pkg.country?.name}</p>
+                            )}
+                          </div>
+                          {pkg.status.value === "Action Required" ? (
+                            uploadedPackageIds.includes(pkg.id) ? (
+                              <p className="text-green-600 text-sm font-medium">
+                                Document uploaded successfully and under review.
+                              </p>
+                            ) : (
+                              <button
+                                disabled={uploadingPackageId === pkg.id}
+                                onClick={() => handleUploadDocument(pkg.id)}
+                                className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium border transition-all 
+                                  ${uploadingPackageId === pkg.id 
+                                    ? "bg-gray-100 text-gray-500 border-gray-300 cursor-not-allowed" 
+                                    : "text-blue-600 border-blue-400 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                                  }`}
+                              >
+                                {uploadingPackageId === pkg.id ? (
+                                  <>
+                                    <CircularProgress size={16} className="mr-2 text-blue-500" />
+                                    Uploading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <UploadIcon className="mr-2" fontSize="small" />
+                                    Upload File
+                                  </>
+                                )}
+                              </button>
+                            )
+                          ) : pkg.status.value === "In Review" ? (
+                            <p className="text-green-600 text-sm font-medium">Document uploaded successfully and under review.</p>
+                          ) : null}
+                        </div>
                     </div>
+                    {isExpanded &&
+                      <div className="mt-4">
+                        <ExpandedPackageSection documents={pkg.documents || []} />
+                      </div>
+                    }
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -394,16 +460,16 @@ const TabsSection = () => {
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Request Ship Packages</h3>
               <div className="space-y-4">
                 {shipments.map((shipment) => {
-                  const { IconComponent, colorClassName } = getStatusProps(shipment.status.value);
+                  const { IconComponent, colorClassName } = getStatusProps(shipment.status);
                   return (
                     <div
                       key={shipment.id}
-                      onClick={() => router.push(`/shipment/${shipment.shipment_id}`)}
+                      onClick={() => router.push(`${ROUTES.SHIPMENT}/${shipment.shipment_no}`)}
                       className="flex justify-between items-center border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                     >
                       <div>
                         <h4 className="font-semibold text-gray-900">
-                          {shipment.shipment_id}
+                          {shipment.shipment_no}
                         </h4>
                         <p className="text-sm text-gray-500">
                           {formatDateTime(shipment.created_at)}
@@ -413,19 +479,19 @@ const TabsSection = () => {
                       <div className="flex items-center gap-4">
                         <div className={`flex items-center gap-2 font-medium ${colorClassName}`}>
                           <IconComponent fontSize="small" />
-                          <span className="uppercase">{shipment.status.value}</span>
+                          <span className="uppercase">{shipment.status}</span>
                         </div>
-
-                        <button
+                        {/* Uncomment when backend is ready */}
+                        {/* <button
                           className="text-red-500 hover:text-red-700 transition"
                           onClick={() => console.log("delete", shipment.id)}
                         >
                           <DeleteIcon fontSize="small" />
-                        </button>
+                        </button> */}
                       </div>
                     </div>
-                );
-              })}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -441,45 +507,45 @@ const TabsSection = () => {
           ) : (
             <div className="p-4 space-y-4">
               {preArrivalHistory
-              .filter((preArrival) =>
-                !searchTerm || preArrival.tracking_no.toLowerCase().includes(searchTerm.toLowerCase())
-              )
-              .map((preArrival) => (
-                <div
-                  key={preArrival.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex justify-between items-center"
-                >
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-700 font-medium truncate">
-                      Tracking No: <span className="font-semibold">{preArrival.tracking_no}</span>
-                    </p>
+                .filter((preArrival) =>
+                  !searchTerm || preArrival.tracking_no.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((preArrival) => (
+                  <div
+                    key={preArrival.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex justify-between items-center"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-700 font-medium truncate">
+                        Tracking No: <span className="font-semibold">{preArrival.tracking_no}</span>
+                      </p>
+                    </div>
+                  
+                    <div className="flex-1 text-center">
+                      <p className="text-sm text-gray-700 font-medium truncate">
+                        OTP: <span className="font-semibold">{preArrival.otp}</span>
+                      </p>
+                    </div>
+                  
+                    <div className="flex items-center gap-2">
+                      {preArrival.status === "pending" ? (
+                        <>
+                          <HourglassIcon className="text-yellow-500" />
+                          <span className="text-yellow-600 font-semibold uppercase text-sm">
+                            Pending
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckIcon className="text-green-500" />
+                          <span className="text-green-600 font-semibold uppercase text-sm">
+                            Received
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-              
-                  <div className="flex-1 text-center">
-                    <p className="text-sm text-gray-700 font-medium truncate">
-                      OTP: <span className="font-semibold">{preArrival.otp}</span>
-                    </p>
-                  </div>
-              
-                  <div className="flex items-center gap-2">
-                    {preArrival.status === "pending" ? (
-                      <>
-                        <HourglassIcon className="text-yellow-500" />
-                        <span className="text-yellow-600 font-semibold uppercase text-sm">
-                          Pending
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckIcon className="text-green-500" />
-                        <span className="text-green-600 font-semibold uppercase text-sm">
-                          Received
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </TabPanel>

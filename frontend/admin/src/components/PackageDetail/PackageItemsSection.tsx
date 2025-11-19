@@ -32,15 +32,16 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
   const [editingItem, setEditingItem] = useState<PackageItem | null>(null);
   const [isSavingItem, setIsSavingItem] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
-  const [newItem, setNewItem] = useState({
+  const initialItem = {
     name: '',
-    quantity: 1,
+    quantity: 0,
     amount: '',
     total: ''
-  });
+  };
+  const [newItem, setNewItem] = useState(initialItem);
 
   const handleOpenAddItemModal = () => {
-    setNewItem({ name: '', quantity: 1, amount: '', total: '' });
+    setNewItem(initialItem);
     setEditingItem(null);
     setAddItemModalOpen(true);
   };
@@ -48,7 +49,7 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
   const handleCloseAddItemModal = () => {
     setAddItemModalOpen(false);
     setEditingItem(null);
-    setNewItem({ name: '', quantity: 1, amount: '', total: '' });
+    setNewItem(initialItem);
   };
 
   const handleEditItem = (item: PackageItem) => {

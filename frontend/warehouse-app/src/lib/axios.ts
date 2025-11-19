@@ -1,4 +1,5 @@
 import axios from "axios";
+import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_NEST_BACKEND_URL,
@@ -6,6 +7,8 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+attachClientIdentifierInterceptors(api);
 
 api.interceptors.response.use(
   (response) => response,

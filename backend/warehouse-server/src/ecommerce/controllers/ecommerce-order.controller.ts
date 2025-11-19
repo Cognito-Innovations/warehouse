@@ -10,13 +10,28 @@ import {
 } from '@nestjs/common';
 import { OrderService } from '../services/ecommerce-order.service';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
-import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
+import { OrderStatus } from '../entities/ecommerce-order.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('ecommerce-orders')
 @UseGuards(JwtAuthGuard)
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
+
+  @Post('initiate')
+  async initiateOrder(@Request() req, @Body() createOrderDto: CreateOrderDto) {
+    const order = await this.orderService.createOrder(
+      req.user.id,
+      createOrderDto,
+    );
+    return {
+      success: true,
+      orderId: order.id,
+      orderNumber: order.order_number,
+      paymentSessionId: order.cashfree_session_id,
+      totalAmount: order.total_amount,
+    };
+  }
 
   @Post()
   async createOrder(@Request() req, @Body() createOrderDto: CreateOrderDto) {
@@ -31,6 +46,11 @@ export class OrderController {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.orderService.findOne(id);
+  }
+
+  @Get('user/:userId')
+  async getOrdersByUser(@Param('userId') userId: string) {
+    return this.orderService.getOrdersByUser(userId);
   }
 
   @Get('order-number/:orderNumber')
@@ -49,9 +69,9 @@ export class OrderController {
   @Put(':id/payment-status')
   async updatePaymentStatus(
     @Param('id') id: string,
-    @Body('paymentStatus') paymentStatus: PaymentStatus,
+    @Body() cashfreeData: any,
   ) {
-    return this.orderService.updatePaymentStatus(id, paymentStatus);
+    return this.orderService.updatePaymentStatus(id, cashfreeData);
   }
 
   @Put(':id/cancel')

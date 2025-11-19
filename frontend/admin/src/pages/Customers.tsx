@@ -6,6 +6,7 @@ import CustomerFilters from '../components/Customers/CustomerFilters';
 import CustomerTable from '../components/Customers/CustomerTable';
 import type { User, Customer } from '../types';
 
+//TOD0 P0: Remove these mapping logic
 const mapApiUserToCustomer = (user: User): Customer => ({
   suite_no: user.suite_no,
   name: user.name,

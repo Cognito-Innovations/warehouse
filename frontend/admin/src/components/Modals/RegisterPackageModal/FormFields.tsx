@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, FormControl, InputLabel, Select, MenuItem, TextField, Box, Button, Typography } from '@mui/material';
+import { Grid, FormControl, InputLabel, Select, MenuItem, TextField, Box, Button, Typography, CircularProgress } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import type { User, Rack, Supplier } from '../../../types';
 
@@ -16,6 +16,12 @@ interface FormFieldsProps {
   suppliers: Supplier[];
   onInputChange: (field: string, value: string) => void;
   onAddSupplier: () => void;
+  usersLoading: boolean;
+  racksLoading: boolean;
+  suppliersLoading: boolean;
+  onOpenUsers: () => void;
+  onOpenRacks: () => void;
+  onOpenSuppliers: () => void;
 }
 
 const FormFields: React.FC<FormFieldsProps> = ({
@@ -26,6 +32,12 @@ const FormFields: React.FC<FormFieldsProps> = ({
   suppliers,
   onInputChange,
   onAddSupplier,
+  usersLoading,
+  racksLoading,
+  suppliersLoading,
+  onOpenUsers,
+  onOpenRacks,
+  onOpenSuppliers,
 }) => {
   // Helper function to validate select values
   const getValidSelectValue = <T extends { id: string }>(
@@ -44,6 +56,7 @@ const FormFields: React.FC<FormFieldsProps> = ({
             value={getValidSelectValue(formData.user, users)}
             label="Select Customer"
             onChange={(e) => onInputChange("user", e.target.value)}
+            onOpen={onOpenUsers}
           >
             {users
               .filter((user) => user.role === 'user')
@@ -52,6 +65,18 @@ const FormFields: React.FC<FormFieldsProps> = ({
                 {user.name} ({user.suite_no})
               </MenuItem>
             ))}
+            {usersLoading && (
+              <MenuItem 
+                disabled 
+                sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  py: 1 
+                }}
+              >
+                <CircularProgress size={20} />
+              </MenuItem>
+            )}
           </Select>
           {errors.user && (
             <Typography
@@ -73,12 +98,25 @@ const FormFields: React.FC<FormFieldsProps> = ({
             value={getValidSelectValue(formData.rackSlot, racks)}
             label="Rack Slot"
             onChange={(e) => onInputChange("rackSlot", e.target.value)}
+            onOpen={onOpenRacks}
           >
             {racks.map((rack) => (
               <MenuItem key={rack.id} value={rack.id}>
                 {rack.label.toLowerCase()}
               </MenuItem>
             ))}
+            {racksLoading && (
+              <MenuItem 
+                disabled 
+                sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  py: 1 
+                }}
+              >
+                <CircularProgress size={20} />
+              </MenuItem>
+            )}
           </Select>
           {errors.rackSlot && (
             <Typography
@@ -120,12 +158,25 @@ const FormFields: React.FC<FormFieldsProps> = ({
               value={getValidSelectValue(formData.vendor, suppliers)}
               label="Select Vendor / Supplier"
               onChange={(e) => onInputChange("vendor", e.target.value)}
+              onOpen={onOpenSuppliers}
             >
               {suppliers.map((supplier) => (
                 <MenuItem key={supplier.id} value={supplier.id}>
                   {supplier.supplier_name}, {supplier.country.name}
                 </MenuItem>
               ))}
+              {suppliersLoading && (
+                <MenuItem 
+                  disabled 
+                  sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    py: 1 
+                  }}
+                >
+                  <CircularProgress size={20} />
+                </MenuItem>
+              )}
             </Select>
             {errors.vendor && (
               <Typography

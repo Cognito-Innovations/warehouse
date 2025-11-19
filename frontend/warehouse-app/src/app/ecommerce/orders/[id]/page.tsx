@@ -32,6 +32,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Order } from "../../../../types/ecommerce";
 import { ecommerceService } from "../../../../services/ecommerce.service";
+import { ROUTES } from "@/utils/constants";
 
 interface OrderDetailPageProps {
   params: {
@@ -131,7 +132,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         <Box sx={{ mb: 3 }}>
           <Button
             startIcon={<ArrowBack />}
-            onClick={() => router.push("/ecommerce/orders")}
+            onClick={() => router.push(ROUTES.ORDER)}
             sx={{ mb: 2, textTransform: "none" }}
           >
             Back to Orders
@@ -143,7 +144,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
         <Grid container spacing={3}>
           {/* Order Summary */}
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Paper sx={{ p: 3, mb: 3 }}>
               <Box
                 sx={{
@@ -243,7 +244,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
               </Typography>
               
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Shipping Address
                   </Typography>
@@ -252,7 +253,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                   </Typography>
                 </Grid>
                 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Billing Address
                   </Typography>
@@ -262,7 +263,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                 </Grid>
                 
                 {order.notes && (
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       Special Instructions
                     </Typography>
@@ -276,7 +277,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           </Grid>
 
           {/* Order Summary Sidebar */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, position: "sticky", top: 20 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Order Summary
@@ -295,7 +296,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                   <Typography variant="body2">₹{order.subtotal.toFixed(0)}</Typography>
                 </Box>
                 
-                {order.discount_amount > 0 && (
+                {order.discount_percentage > 0 && (
                   <Box
                     sx={{
                       display: "flex",
@@ -308,7 +309,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                       Discount
                     </Typography>
                     <Typography variant="body2" color="success.main">
-                      -₹{order.discount_amount.toFixed(0)}
+                      -₹{order.discount_percentage.toFixed(0)}
                     </Typography>
                   </Box>
                 )}

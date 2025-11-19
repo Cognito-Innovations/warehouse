@@ -11,6 +11,7 @@ type QuotationItem = {
   currency?: string | null;
 };
 
+//TODO P0: These toggle code if we are not using it remove it if required then implement it
 export default function QuotationItems({
   items,
   onSelectionChange,
