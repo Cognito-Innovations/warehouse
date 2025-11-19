@@ -328,15 +328,6 @@ export default function CheckoutPage() {
               />
             </Stack>
           </Box>
-          <IconButton 
-            href={ROUTES.ECOMMERCE}
-            sx={{ 
-              color: "primary.main",
-              "&:hover": { bgcolor: "primary.50" }
-            }}
-          >
-            <FormatListBulleted />
-          </IconButton>
         </Toolbar>
       </AppBar>
 

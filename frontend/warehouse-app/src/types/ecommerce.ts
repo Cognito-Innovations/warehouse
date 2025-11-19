@@ -157,6 +157,7 @@ export interface EcommerceProductCardProps {
 export interface EcommerceProductsGridProps {
   products: EcommerceProduct[];
   onProductClick: (product: EcommerceProduct) => void;
+  loading?: boolean;
 }
 
 export interface TodaysDealCarouselProps {

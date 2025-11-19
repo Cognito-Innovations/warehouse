@@ -11,6 +11,9 @@ export default function ProductDetailImageSection({
   onProductSelect,
 
 }: ProductDetailImageSectionProps) {
+  const placeholderImage = `https://placehold.co/100x100?text=${product.name}`;
+  const imageUrl = product.image_url || placeholderImage;
+
   return (
     <Box sx={{ flex: { xs: "1 1 100%", lg: "1 1 50%" } }}>
       <Paper sx={{ p: 2, borderRadius: ecommerceData.ui.spacing.searchBorderRadius }}>
@@ -25,7 +28,7 @@ export default function ProductDetailImageSection({
           }}>
           <CardMedia
             component="img"
-            image={product.image_url || "https://placehold.co/100x100?text=No+Image"}
+            image={imageUrl}
             alt={product.name}
             sx={{
               position: "absolute",
@@ -35,7 +38,9 @@ export default function ProductDetailImageSection({
               height: "100%",
               objectFit: "cover",
             }}
-            onError={(e) => (e.currentTarget.src = "https://placehold.co/100x100?text=No+Image")}
+            onError={(e: any) => {
+              e.currentTarget.src = placeholderImage;
+            }}
           />
         </Box>
 

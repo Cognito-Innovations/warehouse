@@ -35,6 +35,7 @@ interface Country {
   id: string;
   name: string;
   code: string;
+  phone_code: string;
 }
 
 export default function AddAddressModal({
@@ -61,6 +62,12 @@ export default function AddAddressModal({
   const [loadingCountries, setLoadingCountries] = useState(false);
   const [availableStates, setAvailableStates] = useState<string[]>([]);
   const [availableCities, setAvailableCities] = useState<string[]>([]);
+
+  const PHONE_NUMBER_LENGTH = 10;
+
+  const getSelectedCountry = (countryName: string): Country | undefined => {
+    return countries.find((c) => c.name === countryName);
+  };
 
   useEffect(() => {
     if (open) {
@@ -106,20 +113,29 @@ export default function AddAddressModal({
   };
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | { value: unknown }>) => {
-    const value = (e.target as HTMLInputElement).value;
+    const value = (e.target as HTMLInputElement).value as string;
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
-      // Reset dependent fields
+      // Handle dependent fields
       if (field === "country") {
         newData.state = "";
         newData.city = "";
+
+        const selectedCountry = getSelectedCountry(value);
+        if (selectedCountry && selectedCountry.phone_code) {
+           newData.phone_number = selectedCountry.phone_code;
+        }
       } else if (field === "state") {
         newData.city = "";
       }
       return newData;
     });
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
@@ -131,6 +147,41 @@ export default function AddAddressModal({
     if (!formData.state.trim()) newErrors.state = "State is required";
     if (!formData.zip_code.trim()) newErrors.zip_code = "Zip code is required";
     if (!formData.country.trim()) newErrors.country = "Country is required";
+    if (!formData.phone_number.trim()) newErrors.phone_number = "Phone number is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+
+    if (formData.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = "Please enter a valid email address";
+      }
+    }
+
+    if (formData.phone_number) {
+      const selectedCountry = getSelectedCountry(formData.country);
+      
+      if (selectedCountry) {
+        const code = selectedCountry.phone_code;
+
+        if (!formData.phone_number.startsWith(code)) {
+          newErrors.phone_number = `Phone number must start with the country code (${code})`;
+        } 
+        else {
+            const numberPart = formData.phone_number.slice(code.length);
+
+            if (!/^[\d]+$/.test(numberPart)) {
+                newErrors.phone_number = "Phone number must contain only digits after the code";
+            }
+            else if (numberPart.length !== PHONE_NUMBER_LENGTH) {
+                newErrors.phone_number = `Phone number must be exactly ${PHONE_NUMBER_LENGTH} digits`;
+            }
+        }
+      } else {
+        if (!formData.country) {
+          newErrors.phone_number = "Please select a country first";
+        }
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -141,7 +192,7 @@ export default function AddAddressModal({
 
     setLoading(true);
     try {
-      // Only send required fields to API (exclude phone_number and email from API call)
+      // Only send required fields to API
       const addressData: Omit<CartAddressData, "id"> = {
         name: formData.name,
         address: formData.address,
@@ -334,14 +385,20 @@ export default function AddAddressModal({
             label="Phone Number"
             value={formData.phone_number}
             onChange={handleChange("phone_number")}
+            error={!!errors.phone_number}
+            helperText={errors.phone_number}
             fullWidth
+            required
           />
           <TextField
             label="Email"
             type="email"
             value={formData.email}
             onChange={handleChange("email")}
+            error={!!errors.email}
+            helperText={errors.email}
             fullWidth
+            required
           />
         </Box>
       </DialogContent>
@@ -355,7 +412,7 @@ export default function AddAddressModal({
           disabled={loading}
           sx={{ textTransform: "none" }}
         >
-          {saveLabel}
+          {loading ? <CircularProgress size={24} color="inherit" /> : saveLabel}
         </Button>
       </DialogActions>
     </Dialog>

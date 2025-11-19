@@ -5,10 +5,12 @@ import { Box } from "@mui/material";
 import { EcommerceProduct, EcommerceProductsGridProps } from "@/types/ecommerce";
 import { ecommerceData } from "@/data/ecommerceData";
 import EcommerceProductCard from "./EcommerceProductCard";
+import ProductCardSkeletonLoader from "./skeleton-loader/ProductCardSkeletonLoader";
 
 export default function EcommerceProductsGrid({
   products,
   onProductClick,
+  loading = false,
 }: EcommerceProductsGridProps) {
   return (
     <Box
@@ -32,6 +34,13 @@ export default function EcommerceProductsGrid({
           />
         );
       })}
+      {loading && (
+        <>
+          {[...Array(4)].map((_, index) => (
+            <ProductCardSkeletonLoader key={`skeleton-${index}`} />
+          ))}
+        </>
+      )}
     </Box>
   );
 }

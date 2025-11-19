@@ -3,10 +3,12 @@
 import React from "react";
 import { Box, Typography, IconButton, CircularProgress, Checkbox, Chip, Stack, Divider } from "@mui/material";
 import { Add, Remove, Delete, LocationOn, Inventory } from "@mui/icons-material";
-import { CartItemCardProps } from "@/types/ecommerce";
+import { CartItemCardProps, EcommerceProduct } from "@/types/ecommerce";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { getCurrencyForCountry } from "@/utils/currency";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/utils/constants";
 
 export default function CartItemCard({
   item,
@@ -20,6 +22,12 @@ export default function CartItemCard({
   currencySymbol,
   selectedCountry,
 }: CartItemCardProps) {
+  const router = useRouter();
+
+  const handleProductClick = (product: EcommerceProduct) => {
+    router.push(`${ROUTES.PRODUCT}/${product.id}`);
+  }
+
   const pricing = getCartItemPricingSummary(item);
   const unitPrice = pricing.discountedUnitPrice;
   const totalPrice = pricing.lineTotal;
@@ -28,6 +36,7 @@ export default function CartItemCard({
   const unitValue = item.product.unit_value || 0;
   const measurementLabel = item.product.measurement?.label || "";
   const placeholderImage = `https://placehold.co/160x160?text=${item.product.name}`;
+  const imageUrl = item.product.image_url || placeholderImage;
   const stockStatus = item.product.stock_quantity > 0
     ? item.product.stock_quantity < 10
       ? `Only ${item.product.stock_quantity} left`
@@ -89,18 +98,23 @@ export default function CartItemCard({
         >
           <Box
             component="img"
-            src={item.product.image_url || placeholderImage}
+            src={imageUrl}
             alt={item.product.name}
+            onClick={() => handleProductClick(item.product)}
             sx={{
               borderRadius: 2,
               objectFit: "cover",
               width: { xs: 100, sm: 120, md: 140 },
               height: { xs: 100, sm: 120, md: 140 },
               bgcolor: "grey.100",
+              cursor: "pointer",
               transition: "transform 0.3s ease",
               "&:hover": {
                 transform: "scale(1.05)",
               },
+            }}
+            onError={(e: any) => {
+              e.target.src = placeholderImage;
             }}
           />
         </Box>

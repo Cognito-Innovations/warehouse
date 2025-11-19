@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsEmail } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserAddressDto {
@@ -57,4 +57,20 @@ export class CreateUserAddressDto {
   @IsString()
   @IsNotEmpty()
   city: string;
+
+  @ApiProperty({
+    description: 'Phone Number',
+    example: '+919876543210',
+    required: false,
+  })
+  @IsString()
+  phone_number: string;
+
+  @ApiProperty({
+    description: 'Email',
+    example: 'user@example.com',
+    required: false,
+  })
+  @IsEmail()
+  email: string;
 }

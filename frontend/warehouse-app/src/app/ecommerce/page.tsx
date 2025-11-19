@@ -232,6 +232,7 @@ export default function Ecommerce() {
               <EcommerceProductsGrid
                 products={filteredProductsByCategory}
                 onProductClick={handleProductClick}
+                loading={loadingNextPage}
               />
             </Box>
           ) : (

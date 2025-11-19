@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Box, Container, Typography } from "@mui/material";
 import { ShoppingCart } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
-import { useCart, useCartActions } from "../../../store/ecommerceStore";
+import { useCart, useCartActions, useProductActions } from "../../../store/ecommerceStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { fetchUserAddresses, createUserAddress } from "@/lib/api.service";
 import CartHeader from "@/components/ecommerce/cart/CartHeader";
@@ -26,16 +26,21 @@ import { CartItemLoadingState, CartAddressData } from "@/types/ecommerce";
 
 export default function CartPage() {
   const router = useRouter();
-  const { data: session } = useSession();
-  const { cart, itemCount, loading: cartLoading } = useCart();
-  const { updateCartItem, removeFromCart, fetchCart } = useCartActions();
+  const pathname = usePathname();
+  const { data: session, status } = useSession();
+  const { cart, itemCount } = useCart();
+  const { updateCartItem, removeFromCart, fetchCart, syncLocalCartToServer } = useCartActions();
+  const { fetchProducts } = useProductActions();
 
   const [loadingStates, setLoadingStates] = useState<Record<string, CartItemLoadingState>>({});
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [addresses, setAddresses] = useState<CartAddressData[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
-  const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [highlightAddressError, setHighlightAddressError] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
@@ -49,28 +54,17 @@ export default function CartPage() {
   const userId = (session?.user as any)?.user_id;
 
   useEffect(() => {
-    if (countryCode) {
-      fetchCart(countryCode);
-    }
-  }, [fetchCart]);
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
 
-  useEffect(() => {
-    if (cart && cart.items.length > 0) {
-      setSelectedItems(new Set(cart.items.map((item) => item.id)));
-    }
-  }, [cart])
-
-  useEffect(() => {
-    if (userId) {
-      loadAddresses();
-    }
-  }, [userId]);
-
-  const loadAddresses = async () => {
-    if (!userId) return;
-    setLoadingAddresses(true);
+  const loadAddressesInternal = useCallback(async (uid: string) => {
     try {
-      const addressData = await fetchUserAddresses(userId);
+      const addressData = await fetchUserAddresses(uid);
       if (addressData) {
         const formattedAddresses: CartAddressData[] = Array.isArray(addressData)
           ? addressData.map((addr: any) => ({
@@ -98,16 +92,62 @@ export default function CartPage() {
               },
             ];
         setAddresses(formattedAddresses);
-        if (formattedAddresses.length > 0 && !selectedAddress) {
-          setSelectedAddress(formattedAddresses[0]);
+        if (formattedAddresses.length > 0) {
+          setSelectedAddress((prev) => prev || formattedAddresses[0]);
         }
       }
     } catch (err) {
       console.error("Failed to load addresses:", err);
-    } finally {
-      setLoadingAddresses(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    const init = async () => {
+      setIsPageLoading(true);
+      try {
+        const promises = [];
+
+        if (countryCode) {
+          promises.push(fetchProducts(countryCode));
+        }
+
+        const cartTask = async () => {
+            if (countryCode) {
+                if (userId) {
+                    await syncLocalCartToServer(countryCode);
+                }
+                await fetchCart(countryCode);
+            }
+        };
+        promises.push(cartTask());
+
+        if (userId) {
+            promises.push(loadAddressesInternal(userId));
+        }
+
+        await Promise.all(promises);
+
+      } catch (e) {
+        console.error("Initialization error:", e);
+      } finally {
+        setIsPageLoading(false);
+      }
+    };
+
+    init();
+  }, [countryCode, userId, status, fetchProducts, syncLocalCartToServer, fetchCart, loadAddressesInternal]);
+
+  useEffect(() => {
+    if (cart && cart.items.length > 0) {
+      setSelectedItems((prev) => {
+         if (prev.size === 0) return new Set(cart.items.map((item) => item.id));
+         return prev;
+      });
+    }
+  }, [cart]);
+
 
   const handleSaveAddress = async (addressData: Omit<CartAddressData, "id">) => {
     if (!userId) return;
@@ -177,7 +217,7 @@ export default function CartPage() {
         }));
       }
     }
-  }, [cart, updateCartItem, removeFromCart]);
+  }, [cart, updateCartItem, removeFromCart, countryCode]);
 
   const handleRemoveItem = useCallback(async (itemId: string) => {
     setLoadingStates((prev) => ({
@@ -195,7 +235,7 @@ export default function CartPage() {
         return newState;
       });
     }
-  }, [removeFromCart]);
+  }, [removeFromCart, countryCode]);
 
   const handleItemSelect = useCallback((itemId: string, selected: boolean) => {
     setSelectedItems((prev) => {
@@ -222,13 +262,23 @@ export default function CartPage() {
 
     localStorage.setItem("checkoutSelectedItems", JSON.stringify(selectedCartItems));
 
-    if (userId) {
-      router.push(ROUTES.CHECKOUT);
-    } else {
+    if (!userId) {
       toast.info("Please sign in to continue with checkout");
-      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(ROUTES.CHECKOUT)}`);
+      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`);
+    } else if (!selectedAddress) {
+      toast.error("Please add a delivery address to continue with checkout.");
+      setHighlightAddressError(true);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        setHighlightAddressError(false);
+        timeoutRef.current = null;
+      }, 3000);
+    } else {
+      router.push(ROUTES.CHECKOUT);
     }
-  }, [router, selectedItems, cart, userId]);
+  }, [router, selectedItems, cart, userId, selectedAddress, pathname]);
 
   const handleContinueShopping = useCallback(() => {
     router.push(ROUTES.ECOMMERCE);
@@ -286,7 +336,7 @@ export default function CartPage() {
   }, [cart, selectedItems, selectedCountry]);
 
   // Show skeleton loader while cart is loading and no cart data exists
-  if (cartLoading && !cart) {
+  if (isPageLoading || status === "loading") {
     return <CartSkeletonLoader />;
   }
 
@@ -341,11 +391,33 @@ export default function CartPage() {
               <Box sx={{ p: 2, border: "1px solid #ddd", borderRadius: 2, mb: 2 }}>
                 <Typography variant="subtitle1" fontWeight={600}>Address</Typography>
                 <Typography variant="body2" color="text.secondary" mt={1}>
-                  To select or add an address, please login.
+                  To select or add an address, please{' '}
+                  <Typography 
+                    component="span" 
+                    variant="body2"
+                    sx={{ 
+                      color: "primary.main", 
+                      cursor: "pointer", 
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                      '&:hover': {
+                        textDecoration: 'underline'
+                      }
+                    }}
+                    onClick={() => router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`)}
+                  >
+                    login
+                  </Typography>.
                 </Typography>
               </Box>
             ) : addresses.length === 0 ? (
-              <Box sx={{ p: 2, border: "1px solid #ddd", borderRadius: 2, mb: 2 }}>
+              <Box sx={{ 
+                p: 2, 
+                border: highlightAddressError ? "2px solid #f44336" : "1px solid #ddd", 
+                borderRadius: 2, 
+                mb: 2,
+                transition: 'border 0.3s ease'
+              }}>
                 <Typography variant="subtitle1" fontWeight={600}>No Address Found</Typography>
                 <Typography variant="body2" color="text.secondary" mt={1}>
                   Add your delivery address to continue.
