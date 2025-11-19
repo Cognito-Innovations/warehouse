@@ -14,7 +14,7 @@ import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests
 import { mapToTrackingStatus } from './status-mapper';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { InvoicesService } from 'src/invoice/invoices.service';
-import { Invoice, InvoiceStatus } from 'src/invoice/invoice.entity';
+import { Invoice, InvoiceStatus } from 'src/invoice/entities/invoice.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { UsersService } from 'src/users/users.service';
 
@@ -61,41 +61,23 @@ export class ShoppingRequestsService {
       user: savedShoppingRequest.user_id,
       courier_id: savedShoppingRequest.courier.id,
     });
-    //TODO P0: Needs to rewrite return logic code
+
+    const { courier: savedCourier, ...rest } = savedShoppingRequest;
     return {
-      id: savedShoppingRequest.id,
-      user_id: savedShoppingRequest.user_id,
-      request_code: savedShoppingRequest.request_code,
-      courier: savedShoppingRequest.courier.name,
-      items_count: savedShoppingRequest.items_count,
-      remarks: savedShoppingRequest.remarks,
+      ...rest,
+      courier: savedCourier.name,
       status: savedShoppingRequest.status,
       payment_slips: [],
-      created_at: savedShoppingRequest.created_at,
-      updated_at: savedShoppingRequest.updated_at,
     };
   }
 
-  async getAllShoppingRequests(): Promise<ShoppingRequestResponseDto[]> {
+  async getAllShoppingRequests() {
     const shoppingRequests = await this.shoppingRequestRepository.find({
       order: { created_at: 'DESC' },
       relations: ['user', 'courier'],
     });
 
-    return shoppingRequests.map((request) => ({
-      id: request.id,
-      user_id: request.user_id,
-      user: request.user
-        ? this.usersService.mapToUserResponseDto(request.user)
-        : undefined,
-      request_code: request.request_code,
-      courier: request.courier.name,
-      items_count: request.items_count,
-      remarks: request.remarks,
-      status: request.status,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
-    }));
+    return shoppingRequests;
   }
 
   async getShoppingRequestsByUser(
@@ -118,45 +100,23 @@ export class ShoppingRequestsService {
           where: { shopping_request_id: request.id },
         });
 
-        //TODO P0: Needs to rewrite return logic code
         const shoppingRequestProducts = await Promise.all(
           rawProducts.map(async (product) => ({
-            id: product.id,
-            shopping_request_id: product.shopping_request_id,
-            name: product.name,
-            description: product.description,
-            unit_price:
+            ...product,
+            unit_price: 
               await this.userPreferencesService.getFormattedConvertedPrice(
                 request.user_id,
                 product.unit_price,
               ),
-            currency: product.currency,
-            quantity: product.quantity,
-            url: product.url,
-            size: product.size,
-            color: product.color,
-            variants: product.variants,
-            if_not_available_quantity: product.if_not_available_quantity,
-            if_not_available_color: product.if_not_available_color,
-            available: product.available,
-            created_at: product.created_at,
-            updated_at: product.updated_at,
-          })),
+          }))
         );
 
         return {
-          id: request.id,
-          user_id: request.user_id,
-          request_code: request.request_code,
+          ...request,
           courier: request.courier?.name,
-          items_count: request.items_count,
-          remarks: request.remarks,
-          status: request.status,
           payment_slips: slips,
           shopping_request_products: shoppingRequestProducts,
-          created_at: request.created_at,
-          updated_at: request.updated_at,
-        };
+        } as ShoppingRequestResponseDto;
       }),
     );
   }
@@ -229,15 +189,14 @@ export class ShoppingRequestsService {
       );
     };
 
+    const { user, courier, ...rest } = shoppingRequest;
+
     return {
-      id: shoppingRequest.id,
-      user_id: shoppingRequest.user_id,
-      user: shoppingRequest.user
+      ...rest,
+      user: user
         ? this.usersService.mapToUserResponseDto(shoppingRequest.user)
         : undefined,
-      request_code: shoppingRequest.request_code,
-      courier: shoppingRequest.courier?.name,
-      items_count: shoppingRequest.items_count,
+      courier: courier?.name,
       shopping_request_products: await Promise.all(
         shoppingRequestProducts.map(async (product) => ({
           ...product,
@@ -245,30 +204,23 @@ export class ShoppingRequestsService {
           currency: userCurrency,
         })),
       ),
-      remarks: shoppingRequest.remarks,
-      status: shoppingRequest.status,
       payment_slips: slips,
       tracking_requests: trackingRequests,
       invoice: invoice
         ? {
-            id: invoice.id,
-            invoice_no: invoice.invoice_no,
+            ...invoice,
             amount: (await formatPrice(invoice.amount)) ?? '',
             total: (await formatPrice(invoice.total)) ?? '',
-            status: invoice.status,
             products: await Promise.all(
               (invoice.products ?? []).map(async (product) => ({
                 ...product,
+                invoice: undefined,
                 unit_price: (await formatPrice(product.unit_price)) ?? '',
                 currency: userCurrency,
               })),
             ),
-            created_at: invoice.created_at,
-            updated_at: invoice.updated_at,
           }
         : undefined,
-      created_at: shoppingRequest.created_at,
-      updated_at: shoppingRequest.updated_at,
     };
   }
 
@@ -328,20 +280,16 @@ export class ShoppingRequestsService {
       );
     }
 
+    const { user_id, courier, ...rest } = updatedShoppingRequest;
+
     return {
-      id: updatedShoppingRequest.id,
-      user_id: updatedShoppingRequest.user_id,
-      request_code: updatedShoppingRequest.request_code,
-      courier: updatedShoppingRequest.courier.name,
-      items_count: updatedShoppingRequest.items_count,
-      remarks: updatedShoppingRequest.remarks,
-      status: updatedShoppingRequest.status,
+      ...rest,
+      user_id,
+      courier: courier?.name,
       payment_slips: slips,
-      tracking_requests: updatedShoppingRequest.tracking_requests,
       invoice: invoice
         ? {
-            id: invoice.id,
-            invoice_no: invoice.invoice_no,
+            ...invoice,
             amount:
               await this.userPreferencesService.getFormattedConvertedPrice(
                 updatedShoppingRequest.user_id,
@@ -351,37 +299,19 @@ export class ShoppingRequestsService {
               updatedShoppingRequest.user_id,
               invoice.total,
             ),
-            status: invoice.status,
             products: await Promise.all(
               (invoice.products ?? []).map(async (product) => ({
-                id: product.id,
-                shopping_request_id: product.shopping_request_id,
-                name: product.name,
-                description: product.description,
+                ...product,
+                invoice: undefined,
                 unit_price:
                   await this.userPreferencesService.getFormattedConvertedPrice(
                     updatedShoppingRequest.user_id,
                     product.unit_price,
                   ),
-                currency: product.currency,
-                quantity: product.quantity,
-                url: product.url,
-                size: product.size,
-                color: product.color,
-                variants: product.variants,
-                if_not_available_quantity: product.if_not_available_quantity,
-                if_not_available_color: product.if_not_available_color,
-                available: product.available,
-                created_at: product.created_at,
-                updated_at: product.updated_at,
               })),
             ),
-            created_at: invoice.created_at,
-            updated_at: invoice.updated_at,
           }
         : undefined,
-      created_at: updatedShoppingRequest.created_at,
-      updated_at: updatedShoppingRequest.updated_at,
     };
   }
 

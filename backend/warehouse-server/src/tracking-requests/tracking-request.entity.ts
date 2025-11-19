@@ -14,6 +14,7 @@ export enum FeatureType {
   ShoppingRequest = 'shopping-request',
   Package = 'package',
   PickupRequest = 'pickup-request',
+  Shipment = 'shipment',
   PreArrival = 'pre-arrival',
   Rack = 'rack',
   Supplier = 'supplier',
@@ -35,11 +36,12 @@ export enum TrackingStatus {
   Confirmed = 'confirmed',
   Quoted = 'quoted',
   ReadyToShip = 'ready_to_ship',
-  RequestShip = 'request_ship',
+  ShipRequest = 'ship_request',
   Requested = 'requested',
   Shipped = 'shipped',
   Picked = 'picked',
   Rejected = 'rejected',
+  Departed = 'departed',
 }
 
 @Entity('tracking_request')

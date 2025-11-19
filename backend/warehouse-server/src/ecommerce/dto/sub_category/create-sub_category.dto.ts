@@ -1,9 +1,13 @@
 import {
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  Min,
 } from 'class-validator';
 
 export class CreateEcommerceSubCategoryDto {
@@ -15,23 +19,23 @@ export class CreateEcommerceSubCategoryDto {
   @IsNotEmpty()
   slug: string;
 
-  @IsString()
-  @IsNotEmpty()
-  image_url: string;
-
   @IsUUID()
   @IsNotEmpty()
   category_id: string;
 
-  @IsUUID()
-  @IsNotEmpty()
-  country_id: string;
+  @IsArray()
+  @IsUUID('all', { each: true })
+  @ArrayMinSize(1)
+  country_ids: string[];
+
+  @IsNumber()
+  @Min(0)
+  discount_percentage: number;
 
   @IsString()
   @IsOptional()
   description: string;
 
   @IsBoolean()
-  @IsOptional()
   is_active: boolean;
 }

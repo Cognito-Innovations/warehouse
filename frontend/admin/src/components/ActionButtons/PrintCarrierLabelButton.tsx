@@ -1,15 +1,24 @@
 import { useState } from "react";
 import { Button, CircularProgress } from "@mui/material";
 import { toast } from "sonner";
-import { updatePackageStatus } from "../../services/api.services";
+import { updateShipmentStatus } from "../../services/api.services";
 import { generateCarrierLabelPDF } from "../PDF/CarrierLabelPDF";
+
+interface Package {
+    items: Item[];
+}
+
+interface Item {
+    name: string,
+    quantity: string,
+}
 
 export interface CarrierLabelData {
     id: string;
-    trackingNo: string;
-    status?: { value: string };
-    createdAt?: string;
-    weight?: string;
+    tracking_no: string;
+    status?: string;
+    created_at?: string;
+    total_weight?: string;
     num_pieces?: string;
     origin_country?: string;
     destination_country?: string;
@@ -17,25 +26,26 @@ export interface CarrierLabelData {
     width?: string;
     height?: string;
     value_usd?: string;
-    shipment_id?: string;
+    shipment_no?: string;
     piece_id?: string;
-    name?: string;
-    courier_address?: string;
-    courier_phone?: string;
-    items?: [
-      {
-        name: string,
-        quantity: string,
-      }
-    ],
-    phone?: string;
-    phone2?: string;
-    address?: {
-        address?: string;
-        city?: string;
-        state?: string,
-        country?: string;
-    };
+    packages?: Package[],
+    user?: {
+        name?: string;
+        phone_number?: string;
+        phone_number_2?: string;
+        address?: {
+            address?: string;
+            city?: string;
+            state?: string,
+            country?: string;
+        };
+        preference?: {
+            courier?: {
+                address?: string;
+                phone_number?: string;
+            }
+        }
+    }
 }
 
 interface PrintCarrierLabelButtonProps {
@@ -60,9 +70,9 @@ const PrintCarrierLabelButton: React.FC<PrintCarrierLabelButtonProps> = ({ data,
             await generateCarrierLabelPDF(data);
             toast.success("Carrier Label downloaded successfully!");
 
-            // Update package status if needed
-            if (data.status?.value === "Payment Approved") {
-                await updatePackageStatus(data.id, "Ready To Ship");
+            // Update shipment status if needed
+            if (data.status === "PAYMENT_APPROVED") {
+                await updateShipmentStatus(data.id, "READY_TO_SHIP");
                 await onRefresh();
             }
 

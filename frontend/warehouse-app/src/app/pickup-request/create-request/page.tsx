@@ -15,6 +15,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useAddressAPI } from "@/hooks/useAddressAPI";
 import AddressLayout from "@/providers/AddressLayout";
+import { ROUTES } from "@/utils/constants";
 
 const FormLabel = ({ children, htmlFor }: { children: React.ReactNode; htmlFor: string }) => (
   <Typography
@@ -32,7 +33,6 @@ function CreatePickupRequestPageContent() {
   const {selectedAddress} =  useAddressAPI();
   const { data: session } = useSession();
   const router = useRouter();
-
 
   const [form, setForm] = useState({
     pickup_address: "",
@@ -84,8 +84,7 @@ function CreatePickupRequestPageContent() {
         pkg_details: "",
         remarks: "",
       });
-      //TODO P0: Needs to move all routes names to utils constants if possible use enums
-      router.push("/pickup-request");
+      router.push(ROUTES.PICKUP_REQUEST);
     } catch (err: any) {
       console.error(err);
     } finally {

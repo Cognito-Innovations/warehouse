@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
-import { getPackagesByBoxId, getShipmentExportById } from "../services/api.services";
+import { getShipmentExportById, getShipmentsByBoxId } from "../services/api.services";
 import ShipmentHeader from "../components/ShipmentExport/ShipmentHeader";
 import ShipmentActionsBar from "../components/ShipmentExport/ShipmentActionsBar";
 import BoxesSection from "../components/ShipmentExport/BoxesSection";
@@ -10,9 +10,9 @@ const ViewShipmentExportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [shipment, setShipment] = useState<any | null>(null);
   const [selectedBoxId, setSelectedBoxId] = useState<number | null>(null);
-  const [selectedBoxPackages, setSelectedBoxPackages] = useState<any[]>([]);
+  const [selectedBoxShipments, setSelectedBoxShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingPackages, setLoadingPackages] = useState(false);
+  const [loadingShipments, setLoadingShipments] = useState(false);
 
   const fetchShipment = useCallback(async (shipmentId: string) => {
     setLoading(true);
@@ -26,16 +26,16 @@ const ViewShipmentExportPage: React.FC = () => {
     }
   }, []);
 
-  const fetchPackagesForBox = async (boxId: number) => {
-    setLoadingPackages(true);
+  const fetchShipmentsForBox = async (boxId: number) => {
+    setLoadingShipments(true);
     try {
-      const packages = await getPackagesByBoxId(boxId);
-      setSelectedBoxPackages(packages);
+      const shipments = await getShipmentsByBoxId(boxId);
+      setSelectedBoxShipments(shipments);
     } catch (error) {
-      console.error(`Error fetching packages for box ${boxId}:`, error);
-      setSelectedBoxPackages([]);
+      console.error(`Error fetching shipments for box ${boxId}:`, error);
+      setSelectedBoxShipments([]);
     } finally {
-      setLoadingPackages(false);
+      setLoadingShipments(false);
     }
   };
 
@@ -47,9 +47,9 @@ const ViewShipmentExportPage: React.FC = () => {
 
   useEffect(() => {
     if (selectedBoxId) {
-      fetchPackagesForBox(selectedBoxId);
+      fetchShipmentsForBox(selectedBoxId);
     } else {
-      setSelectedBoxPackages([]);
+      setSelectedBoxShipments([]);
     }
   }, [selectedBoxId]);
 
@@ -73,7 +73,7 @@ const ViewShipmentExportPage: React.FC = () => {
 
   const handlePackageAdded = () => {
     if (selectedBoxId) {
-      fetchPackagesForBox(selectedBoxId);
+      fetchShipmentsForBox(selectedBoxId);
     }
   };
 
@@ -84,7 +84,7 @@ const ViewShipmentExportPage: React.FC = () => {
       <ShipmentActionsBar 
         selectedBoxId={selectedBoxId}
         onPackageAdded={handlePackageAdded}
-        hasShipments={selectedBoxPackages.length > 0}
+        hasShipments={selectedBoxShipments.length > 0}
         exportId={shipment.id}
         status={shipment.status}
         onStatusUpdated={(newStatus) => setShipment({ ...shipment, status: newStatus })}
@@ -96,9 +96,9 @@ const ViewShipmentExportPage: React.FC = () => {
         selectedBoxId={selectedBoxId}
         setSelectedBoxId={setSelectedBoxId}
         shipmentId={shipment.id}
-        packagesInSelectedBox={selectedBoxPackages}
-        loadingPackages={loadingPackages}
-        refreshPackages={handlePackageAdded}
+        shipmentsInSelectedBox={selectedBoxShipments}
+        loadingShipments={loadingShipments}
+        refreshShipments={handlePackageAdded}
       />
     </Box>
   );

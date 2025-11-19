@@ -1,4 +1,4 @@
-import { Invoice } from 'src/invoice/invoice.entity';
+import { Invoice } from 'src/invoice/entities/invoice.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import {
   Entity,

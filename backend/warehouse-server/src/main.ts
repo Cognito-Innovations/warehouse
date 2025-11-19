@@ -2,12 +2,11 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
-
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   // Enable CORS
   app.enableCors({
@@ -18,11 +17,20 @@ async function bootstrap() {
       'https://palakart.vercel.app',
       'https://palakart-admin.web.app',
       'https://nasa-believed-opponents-cakes.trycloudflare.com',
-    ], // Frontend URLs (warehouse-app, admin)
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'X-Requested-With',
+      'X-Client-Identifier',
+    ],
+    exposedHeaders: ['X-Client-Identifier'],
   });
+
+  // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Warehouse API')
     .setDescription('The warehouse API description')
@@ -32,10 +40,8 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
 
-  // Global exception filter
+  // Filters and pipes
   app.useGlobalFilters(new GlobalExceptionFilter());
-
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -44,7 +50,10 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(process.env.PORT ?? 3001);
+  // ✅ Use AWS elstaic beamstack assigned port (8080 by default)
+  const port = process.env.PORT || 8080;
+  await app.listen(port, '0.0.0.0');
+  console.log(`✅ Server running on port ${port}`);
 }
 
 bootstrap().catch((err) => {

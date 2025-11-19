@@ -28,6 +28,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Order } from "../../../types/ecommerce";
 import { ecommerceService } from "../../../services/ecommerce.service";
+import { ROUTES } from "@/utils/constants";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -94,7 +95,7 @@ export default function OrdersPage() {
   };
 
   const handleViewOrder = (orderId: string) => {
-    router.push(`/ecommerce/orders/${orderId}`);
+    router.push(`${ROUTES.ORDER}/${orderId}`);
   };
 
   if (loading) {
@@ -125,7 +126,7 @@ export default function OrdersPage() {
         <Box sx={{ mb: 3 }}>
           <Button
             startIcon={<ArrowBack />}
-            onClick={() => router.push("/ecommerce")}
+            onClick={() => router.push(ROUTES.ECOMMERCE)}
             sx={{ mb: 2, textTransform: "none" }}
           >
             Back to Shopping
@@ -146,7 +147,7 @@ export default function OrdersPage() {
             </Typography>
             <Button
               variant="contained"
-              onClick={() => router.push("/ecommerce")}
+              onClick={() => router.push(ROUTES.ECOMMERCE)}
               sx={{ textTransform: "none" }}
             >
               Start Shopping
@@ -155,7 +156,7 @@ export default function OrdersPage() {
         ) : (
           <Grid container spacing={3}>
             {orders.map((order) => (
-              <Grid item xs={12} key={order.id}>
+              <Grid size={{ xs: 12 }} key={order.id}>
                 <Card>
                   <CardContent>
                     <Box
@@ -185,7 +186,7 @@ export default function OrdersPage() {
                     <Divider sx={{ my: 2 }} />
 
                     <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Typography variant="body2" color="text.secondary">
                           Items
                         </Typography>
@@ -193,7 +194,7 @@ export default function OrdersPage() {
                           {order.items.length} item(s)
                         </Typography>
                       </Grid>
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Typography variant="body2" color="text.secondary">
                           Total Amount
                         </Typography>
@@ -201,7 +202,7 @@ export default function OrdersPage() {
                           ₹{order.total_amount.toFixed(0)}
                         </Typography>
                       </Grid>
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Typography variant="body2" color="text.secondary">
                           Payment Status
                         </Typography>
@@ -211,7 +212,7 @@ export default function OrdersPage() {
                           size="small"
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Typography variant="body2" color="text.secondary">
                           Order Status
                         </Typography>

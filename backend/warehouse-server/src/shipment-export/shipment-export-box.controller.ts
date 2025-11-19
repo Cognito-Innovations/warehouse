@@ -87,31 +87,31 @@ export class ShipmentExportBoxesController {
     return this.boxesService.deleteBox(id);
   }
 
-  @Get(':boxId/packages')
-  @ApiOperation({ summary: 'Get all packages in a specific box' })
-  @ApiOkResponse({ description: 'List of packages in the box.' })
-  async getPackagesInBox(@Param('boxId') boxId: string) {
-    return this.boxesService.getPackagesByBoxId(boxId);
+  @Get(':boxId/shipments')
+  @ApiOperation({ summary: 'Get all shipments in a specific box' })
+  @ApiOkResponse({ description: 'List of shipments in the box.' })
+  async getShipmentsInBox(@Param('boxId') boxId: string) {
+    return this.boxesService.getShipmentsByBoxId(boxId);
   }
 
-  @Post(':boxId/packages')
-  @ApiOperation({ summary: 'Add a package to a box' })
-  @ApiBody({ schema: { properties: { packageId: { type: 'string' } } } })
-  @ApiOkResponse({ description: 'Package added to the box successfully.' })
-  async addPackageToBox(
+  @Post(':boxId/shipments')
+  @ApiOperation({ summary: 'Add a shipment to a box' })
+  @ApiBody({ schema: { properties: { shipmentId: { type: 'string' } } } })
+  @ApiOkResponse({ description: 'Shipment added to the box successfully.' })
+  async addShipmentToBox(
     @Param('boxId') boxId: string,
-    @Body('packageId') packageId: string,
+    @Body('shipmentId') shipmentId: string,
   ) {
-    return this.boxesService.addPackageToBox(boxId, packageId);
+    return this.boxesService.addShipmentToBox(boxId, shipmentId);
   }
 
-  @Delete(':boxId/packages/:packageId')
-  @ApiOperation({ summary: 'Remove a package from a box' })
-  @ApiOkResponse({ description: 'Package removed from the box successfully.' })
-  async removePackageFromBox(
+  @Delete(':boxId/shipments/:shipmentId')
+  @ApiOperation({ summary: 'Remove a shipment from a box' })
+  @ApiOkResponse({ description: 'Shipment removed from the box successfully.' })
+  async removeShipmentFromBox(
     @Param('boxId') boxId: string,
-    @Param('packageId') packageId: string,
+    @Param('shipmentId') shipmentId: string,
   ) {
-    return this.boxesService.removePackageFromBox(packageId);
+    return this.boxesService.removeShipmentFromBox(shipmentId);
   }
 }

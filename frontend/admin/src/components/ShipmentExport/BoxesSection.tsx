@@ -7,7 +7,7 @@ import {
   updateShipmentExportBox,
 } from "../../services/api.services";
 import BoxCard from "./BoxCard";
-import BoxShipmentsList, { type Package } from "./BoxShipmentsList";
+import BoxShipmentsList, { type Shipment } from "./BoxShipmentsList";
 import Modal from "../common/Modal";
 import BoxDetailsForm from "./BoxDetailsForm";
 
@@ -35,9 +35,9 @@ interface BoxesSectionProps {
   selectedBoxId: number | null;
   setSelectedBoxId: React.Dispatch<React.SetStateAction<number | null>>;
   shipmentId: string;
-  packagesInSelectedBox: Package[];
-  loadingPackages: boolean;
-  refreshPackages: () => void;
+  shipmentsInSelectedBox: Shipment[];
+  loadingShipments: boolean;
+  refreshShipments: () => void;
   onBoxAdded: () => void;
 }
 
@@ -46,9 +46,9 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
   selectedBoxId,
   setSelectedBoxId,
   shipmentId,
-  packagesInSelectedBox,
-  loadingPackages,
-  refreshPackages,
+  shipmentsInSelectedBox,
+  loadingShipments,
+  refreshShipments,
   onBoxAdded,
 }) => {
   const [open, setOpen] = useState(false);
@@ -170,12 +170,12 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
           {selectedBoxId ? (
             <BoxShipmentsList
               boxId={selectedBoxId}
-              refreshPackages={refreshPackages}
+              refreshShipments={refreshShipments}
               boxIndex={boxes.findIndex(b => b.id === selectedBoxId)}
               boxLabel={boxes.find(b => b.id === selectedBoxId)?.label}
               totalBoxes={boxes.length}
-              shipments={packagesInSelectedBox}
-              isLoading={loadingPackages}
+              shipments={shipmentsInSelectedBox}
+              isLoading={loadingShipments}
             />
           ) : (
             <Box

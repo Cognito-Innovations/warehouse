@@ -1,22 +1,28 @@
 "use client";
 
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Box, CircularProgress } from "@mui/material";
 import SignInForm from "../../components/SignIn/SignInForm";
 import { useAuth } from "../../contexts/AuthContext";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ROUTES } from "@/utils/constants";
 
-export default function Page() {
+function SignInContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const callbackUrl = searchParams.get('callbackUrl') 
+    ? decodeURIComponent(searchParams.get('callbackUrl')!) 
+    : undefined;
 
   useEffect(() => {
     if (!loading && user && !isRedirecting) {
       setIsRedirecting(true);
-      router.replace("/dashboard");
+      router.replace(callbackUrl || ROUTES.DASHBOARD);
     }
-  }, [user, loading, router, isRedirecting]);
+  }, [user, loading, router, isRedirecting, callbackUrl]);
 
   if (loading || isRedirecting) {
     return (
@@ -24,7 +30,9 @@ export default function Page() {
         <Box sx={{ textAlign: "center" }}>
           <CircularProgress />
           <Box sx={{ mt: 2, color: "text.secondary" }}>
-            {isRedirecting ? "Redirecting to dashboard..." : "Loading..."}
+            {isRedirecting 
+              ? `Redirecting${callbackUrl ? ' back...' : ' to dashboard...'}`
+              : "Loading..."}
           </Box>
         </Box>
       </Box>
@@ -37,7 +45,7 @@ export default function Page() {
         <Box sx={{ textAlign: "center" }}>
           <CircularProgress />
           <Box sx={{ mt: 2, color: "text.secondary" }}>
-            Redirecting to dashboard...
+            {`Redirecting${callbackUrl ? ' back...' : ' to dashboard...'}`}
           </Box>
         </Box>
        </Box>
@@ -56,7 +64,7 @@ export default function Page() {
           overflow: "visible",
         }}
       >
-        <SignInForm />
+        <SignInForm callbackUrl={callbackUrl} />
       </Box>
 
       <Box
@@ -70,5 +78,19 @@ export default function Page() {
         }}
       />
     </Box>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
+          <CircularProgress />
+        </Box>
+      }
+    >
+      <SignInContent />
+    </Suspense>
   );
 }

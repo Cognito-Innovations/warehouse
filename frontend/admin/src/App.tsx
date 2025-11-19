@@ -33,6 +33,12 @@ import ViewShipmentExportPage from './pages/ViewShipmentExportPage';
 import CountriesPage from './pages/CountriesPage';
 import CurrenciesPage from './pages/CurrenciesPage';
 import CouriersPage from './pages/CouriersPage';
+import Category from './pages/Category';
+import SubCategory from './pages/SubCategory';
+import Products from './pages/Products';
+import Orders from './pages/Orders';
+import ShipmentDetail from './pages/ShipmentDetail';
+import CreateShipment from './pages/CreateShipment';
 
 function App() {
   const { user } = useAuth()
@@ -88,13 +94,20 @@ function App() {
                   {/* TODO: Move this prearrivals to a separate page */}
                   <Route path="/packages/pre-arrivals" element={<PreArrivals />} />
                   <Route path="/shipments" element={<Shipments />} />
-                  {/* <Route path="/shipments/:id" element={<ShipmentDetail />} /> */}
+                  <Route path="/shipments/:shipment_no" element={<ShipmentDetail />} />
+                  <Route path="/shipments/create" element={<CreateShipment />} />
                   <Route path="/shipments/export" element={<ShipmentExport />} />
                   <Route path="/shipment/export/:id" element={<ViewShipmentExportPage />} />
                   <Route path="/requests" element={<ShoppingRequests />} />
                   <Route path="/requests/:id" element={<ShoppingRequestDetail />} />
                   <Route path="/pickups" element={<PickupRequests />} />
                   <Route path="/pickups/:id" element={<PickupRequestDetail />} />
+
+                  <Route path="/category" element={<Category />} />
+                  <Route path="/sub-category" element={<SubCategory />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/orders" element={<Orders />} />
+
                   <Route path="/suite" element={<MySuiteContent />} />
                   <Route path="/customers" element={<Customers />} />
                   <Route path="/customers/:id" element={<CustomerDetailPage />} />

@@ -163,9 +163,8 @@ const handler = NextAuth({
     },
 
     async redirect({ url, baseUrl }) {
-      // Always redirect to dashboard after successful authentication
-      if (url === baseUrl || url === `${baseUrl}/`) {
-        return `${baseUrl}/dashboard`;
+      if (url.startsWith(baseUrl)) {
+        return url;
       }
       
       // If url is relative, make it absolute
@@ -188,7 +187,7 @@ const handler = NextAuth({
     },
   },
   pages: {
-    signIn: "/",
+    signIn: "/sign-in",
   },
 });
 

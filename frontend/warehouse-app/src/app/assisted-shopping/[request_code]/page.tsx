@@ -18,6 +18,7 @@ import { shoppingRequestMessages } from "@/lib/shoppingRequestStatus";
 import Invoices from "@/components/AssistedShopping/Invoices";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/Modals/ConfirmDialog";
+import { ROUTES } from "@/utils/constants";
 
 export default function ViewShoppingRequestPage() {
   const params = useParams();
@@ -74,7 +75,7 @@ export default function ViewShoppingRequestPage() {
     try {
       await deleteShoppingRequest(id);
       toast.success("Request deleted successfully!");
-      router.push("/assisted-shopping");
+      router.push(ROUTES.ASSISTED_SHOPPING);
     } catch (error) {
       console.error("Delete failed:", error);
       toast.error("Failed to delete request");
@@ -97,7 +98,7 @@ export default function ViewShoppingRequestPage() {
     return (
       <div className="text-center py-10 bg-gray-50 min-h-screen">
         <p className="text-lg text-gray-700">Request not found.</p>
-        <button onClick={() => router.push("/assisted-shopping")} className="mt-4 text-purple-600 hover:underline">
+        <button onClick={() => router.push(ROUTES.ASSISTED_SHOPPING)} className="mt-4 text-purple-600 hover:underline">
           Back to Shopping Requests
         </button>
       </div>

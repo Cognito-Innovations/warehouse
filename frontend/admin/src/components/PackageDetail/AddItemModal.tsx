@@ -1,5 +1,17 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, IconButton, Box, CircularProgress, TextField } from '@mui/material';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+  Button,
+  IconButton,
+  Box,
+  CircularProgress,
+  TextField,
+  InputAdornment,
+} from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { numberInputStyle } from '../../styles/numberInputStyle';
 
@@ -87,9 +99,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 size="small"
                 variant="outlined"
                 type="number"
-                value={newItem.quantity}
-                onChange={(e) => onInputChange('quantity', parseInt(e.target.value) || 1)}
-                inputProps={{ min: 1 }}
+                value={newItem.quantity === 0 ? '' : newItem.quantity}
+                onChange={(e) => onInputChange('quantity', parseInt(e.target.value) || 0)}
+                inputProps={{ min: 0 }}
                 sx={{
                   backgroundColor: '#ffffff',
                   ...numberInputStyle
@@ -109,6 +121,11 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 value={newItem.amount}
                 onChange={(e) => onInputChange('amount', e.target.value)}
                 placeholder="$0.00"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">$</InputAdornment>
+                  ),
+                }}
                 sx={{
                   backgroundColor: '#ffffff',
                   ...numberInputStyle
@@ -147,7 +164,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
         <Button
           variant="contained"
           onClick={onSave}
-          disabled={!newItem.name || !newItem.amount || loading}
+          disabled={!newItem.name || !newItem.amount || newItem.quantity < 1 || loading}
           sx={{
             bgcolor: '#3b82f6',
             '&:hover': { bgcolor: '#2563eb' },

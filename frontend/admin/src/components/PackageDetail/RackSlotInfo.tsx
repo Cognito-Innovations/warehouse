@@ -4,10 +4,17 @@ import UpdateRackSlotModal from './UpdateRackSlotModal';
 
 interface RackSlotInfoProps {
   packageData: {
-    actual_id: string;
-    trackingNo: string;
-    rack?: string;
-    count?: number;
+    id: string;
+    tracking_no: string;
+    rack_slot?: {
+      label: string;
+      color: string;
+      count?: number;
+    };
+    updated_by?: {
+      name: string;
+    }
+    updated_at: string;
     [key: string]: unknown; 
   };
   isDiscarded: boolean;
@@ -41,10 +48,10 @@ const RackSlotInfo: React.FC<RackSlotInfoProps> = ({ packageData, isDiscarded, o
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
-          {packageData.rack} →
+          {packageData.rack_slot?.label} →
         </Typography>
         <Typography variant="body2" sx={{ fontWeight: 500, color: '#166534' }}>
-          {`Slot has ${packageData.count} pkgs`}
+          {`Slot has ${packageData.rack_slot?.count} pkgs`}
         </Typography>
       </Box>
 
@@ -54,12 +61,10 @@ const RackSlotInfo: React.FC<RackSlotInfoProps> = ({ packageData, isDiscarded, o
           onClose={handleCloseRackModal}
           onRefresh={onRefresh}
           packageData={{
-            actual_id: packageData.actual_id,
-            rack: packageData.rack,
-            createdBy: (packageData.createdBy as string) || 'N/A',
-            createdAt: (packageData.createdAt as string) || 'N/A',
-            updatedBy: (packageData.updatedBy as string) || 'N/A',
-            updatedAt: (packageData.updatedAt as string) || 'N/A',
+            id: packageData.id,
+            rack_slot: packageData.rack_slot,
+            updated_by: packageData.updated_by,
+            updated_at: packageData.updated_at,
           }}
         />
       )}

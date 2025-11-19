@@ -1,10 +1,8 @@
+import { IsString, IsOptional, IsEnum } from 'class-validator';
 import {
-  IsNotEmpty,
-  IsString,
-  IsOptional,
-  IsEnum,
-} from 'class-validator';
-import { OrderStatus, PaymentStatus } from '../../entities/ecommerce-order.entity';
+  OrderStatus,
+  PaymentStatus,
+} from '../../entities/ecommerce-order.entity';
 
 export class CreateOrderDto {
   @IsString()
@@ -26,4 +24,8 @@ export class CreateOrderDto {
   @IsEnum(PaymentStatus)
   @IsOptional()
   payment_status?: PaymentStatus;
+
+  @IsString()
+  @IsOptional()
+  country_code?: string;
 }

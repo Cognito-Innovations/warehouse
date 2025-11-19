@@ -1,10 +1,13 @@
 import {
   IsNotEmpty,
-  IsOptional,
   IsString,
   IsUUID,
   IsNumber,
   IsPositive,
+  Min,
+  IsBoolean,
+  IsArray,
+  ArrayMinSize,
 } from 'class-validator';
 
 export class CreateEcommerceProductDto {
@@ -13,7 +16,7 @@ export class CreateEcommerceProductDto {
   name: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   description: string;
 
   @IsString()
@@ -28,12 +31,12 @@ export class CreateEcommerceProductDto {
   @IsNotEmpty()
   sub_category_id: string;
 
-  @IsUUID()
-  @IsNotEmpty()
-  country_id: string;
+  @IsArray()
+  @IsUUID('all', { each: true })
+  @ArrayMinSize(1)
+  country_ids: string[];
 
   @IsString()
-  @IsNotEmpty()
   image_url: string;
 
   @IsNumber()
@@ -41,14 +44,21 @@ export class CreateEcommerceProductDto {
   price: number;
 
   @IsNumber()
-  @IsPositive()
+  @Min(0)
   discount_percentage: number;
 
   @IsNumber()
   @IsPositive()
-  quantity: number;
+  unit_value: number;
 
-  @IsString()
-  @IsOptional()
-  measurement: string;
+  @IsNumber()
+  @Min(0)
+  stock_quantity: number;
+
+  @IsBoolean()
+  is_active: boolean;
+
+  @IsUUID()
+  @IsNotEmpty()
+  measurement_id: string;
 }

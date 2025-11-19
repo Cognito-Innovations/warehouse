@@ -4,30 +4,63 @@ import { Box, Typography } from "@mui/material";
 import { CheckCircle } from "@mui/icons-material";
 import { formatDateTime } from "@/lib/utils";
 
-interface TrackingStatusProps {
-  status: string;
-  createdAt: string;
-}
-
 const TRACKING_STEPS = [
-  { label: "Ship Request", defaultDescription: "Requested by User" },
-  { label: "Payment Pending", defaultDescription: "Waiting for confirmation!" },
-  { label: "Payment Approved", defaultDescription: "Waiting for payment approval" },
-  { label: "Ready To Ship", defaultDescription: "Waiting for ready to ship" },
+  { id: "ship_request", label: "Ship Request", defaultDescription: "Requested by User" },
+  { id: "payment_pending", label: "Payment Pending", defaultDescription: "Waiting for confirmation!" },
+  { id: "payment_approved", label: "Payment Approved", defaultDescription: "Payment approved" },
+  { id: "ready_to_ship", label: "Ready To Ship", defaultDescription: "Ready to ship" },
+  { id: "departed", label: "Departed", defaultDescription: "Departed from origin" },
 ];
 
-const STATUS_UI_MAP = new Map([
-  ["departed", "Ready To Ship"],
-  ["request ship", "Ship Request"]
-]);
+const STEP_ID_MAP: Record<string, string> = {
+  "ship_request": "ship_request",
+  "payment_pending": "payment_pending",
+  "payment_approved": "payment_approved",
+  "ready_to_ship": "ready_to_ship",
+  "departed": "departed",
+};
 
-const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) => {
-  const normalizedStatus = status.toLowerCase();
-  const effectiveStatus = STATUS_UI_MAP.get(normalizedStatus) || status;
+interface TrackingStatusProps {
+  trackingRequests?: any[];
+  status: string;
+}
 
-  const currentStepIndex = TRACKING_STEPS.findIndex(
-    (step) => step.label.toLowerCase() === effectiveStatus.toLowerCase()
-  );
+const TrackingStatus: React.FC<TrackingStatusProps> = ({ trackingRequests = [], status }) => {
+  const trackingHistory = trackingRequests;
+
+  const stepStatuses = TRACKING_STEPS.map((step) => {
+    const historyItem = trackingHistory.find(
+      (track: any) => track.status === step.id
+    );
+    const date = historyItem ? formatDateTime(historyItem.created_at) : undefined;
+    const description = date || step.defaultDescription;
+    const isComplete = !!historyItem;
+    return {
+      ...step,
+      description,
+      isComplete,
+    };
+  });
+
+  let currentStepIndex = -1;
+  const normalizedShipmentStatus = status.toLowerCase();
+  const mappedStepId = STEP_ID_MAP[normalizedShipmentStatus];
+  if (mappedStepId) {
+    currentStepIndex = TRACKING_STEPS.findIndex((step) => step.id === mappedStepId);
+  }
+  if (currentStepIndex === -1) {
+    const completedIndices = trackingHistory.map((track: any) => {
+      const idx = TRACKING_STEPS.findIndex((step) => step.id === track.status);
+      return idx >= 0 ? idx : -1;
+    }).filter((i) => i >= 0);
+    if (completedIndices.length > 0) {
+      currentStepIndex = Math.max(...completedIndices);
+    } else {
+      currentStepIndex = 0;
+    }
+  }
+
+  const currentId = stepStatuses[currentStepIndex]?.id;
 
   return (
     <Box sx={{ p: 1 }}>
@@ -36,16 +69,16 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) =>
       </Typography>
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        {TRACKING_STEPS.map((step, index) => {
-          const isCompleted = index <= currentStepIndex;
-          const isActive = index === currentStepIndex;
-
-          const description = isCompleted
-            ? formatDateTime(createdAt)
-            : step.defaultDescription;
+        {stepStatuses.map((step, index) => {
+          const isCompleted = step.isComplete;
+          const isActive = step.id === currentId;
+          const isPastOrCurrent = index <= currentStepIndex;
+          const textColor = isPastOrCurrent ? "#3B82F6" : "#424242";
+          const captionColor = isPastOrCurrent ? "#3B82F6" : "text.secondary";
+          const lineColor = index < currentStepIndex ? "#3B82F6" : "#E0E0E0";
 
           return (
-            <Box key={step.label} sx={{ display: "flex", alignItems: "flex-start" }}>
+            <Box key={step.id} sx={{ display: "flex", alignItems: "flex-start" }}>
               <Box
                 sx={{
                   display: "flex",
@@ -81,12 +114,12 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) =>
                   </Box>
                 )}
 
-                {index < TRACKING_STEPS.length - 1 && (
+                {index < stepStatuses.length - 1 && (
                   <Box
                     sx={{
                       flexGrow: 1,
                       width: "2px",
-                      backgroundColor: isCompleted && index < currentStepIndex ? "#3B82F6" : "#E0E0E0",
+                      backgroundColor: lineColor,
                       minHeight: 24,
                     }}
                   />
@@ -98,7 +131,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) =>
                   variant="body2"
                   sx={{
                     fontWeight: 600,
-                    color: isCompleted ? "#3B82F6" : "#424242",
+                    color: textColor,
                   }}
                 >
                   {step.label}
@@ -106,10 +139,10 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ status, createdAt }) =>
                 <Typography
                   variant="caption"
                   sx={{
-                    color: isCompleted ? "#3B82F6" : "text.secondary",
+                    color: captionColor,
                   }}
                 >
-                  {description}
+                  {step.description}
                 </Typography>
               </Box>
             </Box>

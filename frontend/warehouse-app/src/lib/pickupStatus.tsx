@@ -10,3 +10,12 @@ export const statusConfig: Record<string, { color: string; icon: ReactElement }>
   CONFIRMED: { color: "#10B981", icon: <CheckCircleIcon sx={{ color: "#10B981" }} /> }, // green
   CANCELLED: { color: "#EF4444", icon: <CancelIcon sx={{ color: "#EF4444" }} /> },      // red
 };
+
+export enum PICKUP_REQUEST_STATUS {
+  REQUESTED = "REQUESTED",
+  QUOTED = "QUOTED",
+  CONFIRMED = "CONFIRMED",
+  CANCELLED = "CANCELLED",
+  PICKED = "PICKED",
+  REJECTED = "REJECTED",
+}

@@ -10,6 +10,8 @@ import TrackingStatus from "@/components/Pickup-Request/TrackingStatus";
 import RequestDetails from "@/components/Pickup-Request/RequestDetails";
 import QuotedPriceCard from "@/components/Pickup-Request/QuotedPriceCard";
 import ConfirmDialog from "@/components/Modals/ConfirmDialog";
+import { ROUTES } from "@/utils/constants";
+import { PICKUP_REQUEST_STATUS } from "@/lib/pickupStatus";
 
 export default function ViewRequestPage() {
   const params = useParams();
@@ -21,7 +23,10 @@ export default function ViewRequestPage() {
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const NON_DELETABLE_STATUSES = ["CONFIRMED", "PICKED"];
+  const NON_DELETABLE_STATUSES = [
+    PICKUP_REQUEST_STATUS.CONFIRMED,
+    PICKUP_REQUEST_STATUS.PICKED,
+  ];
 
   const fetchData = async () => {
     try {
@@ -41,7 +46,7 @@ export default function ViewRequestPage() {
   const handleConfirm = async () => {
     try {
       setLoading(true);
-      await updatePickupRequestStatus(details.id, "CONFIRMED");
+      await updatePickupRequestStatus(details.id, PICKUP_REQUEST_STATUS.CONFIRMED);
       await fetchData();
     } catch (err) {
       console.error("Failed to confirm:", err);
@@ -56,7 +61,7 @@ export default function ViewRequestPage() {
       setConfirmOpen(false);
       setLoading(true);
       await deletePickupRequest(details.id);
-      router.push("/pickup-request");
+      router.push(ROUTES.PICKUP_REQUEST);
     } catch (err) {
       console.error("Failed to delete request:", err);
     } finally {
@@ -77,7 +82,7 @@ export default function ViewRequestPage() {
     return (
       <Box sx={{ textAlign: "center", py: 6 }}>
         <Typography variant="h6">Request not found</Typography>
-        <Button onClick={() => router.push("/pickup-request")} sx={{ mt: 2 }}>
+        <Button onClick={() => router.push(ROUTES.PICKUP_REQUEST)} sx={{ mt: 2 }}>
           Back to Requests
         </Button>
       </Box>
@@ -95,22 +100,21 @@ export default function ViewRequestPage() {
           / <strong>View Request</strong>
         </Typography>
 
-        {/* TODO P0: Move these cancelled and confirmed keywords to utils constants if possible use enums */}
         <Paper
           sx={{
             p: 2,
             mb: 2,
             borderRadius: 2,
             backgroundColor:
-              details.status.toUpperCase() === "CANCELLED" ? "#FEE2E2" : "#E8F0FE",
+              details.status.toUpperCase() === PICKUP_REQUEST_STATUS.CANCELLED ? "#FEE2E2" : "#E8F0FE",
           }}
           elevation={0}
         >
           <Typography
             variant="body2"
-            color={details.status.toUpperCase() === "CANCELLED" ? "error.main" : "text.primary"}
+            color={details.status.toUpperCase() === PICKUP_REQUEST_STATUS.CANCELLED ? "error.main" : "text.primary"}
           >
-            {details.status.toUpperCase() === "CANCELLED"
+            {details.status.toUpperCase() === PICKUP_REQUEST_STATUS.CANCELLED
               ? "Your request has been cancelled or rejected."
               : "Your request has been received. We will get back to you shortly."}
           </Typography>
@@ -120,7 +124,7 @@ export default function ViewRequestPage() {
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <RequestDetails details={details} />
 
-            {details.status.toUpperCase() === "QUOTED" && (
+            {details.status.toUpperCase() === PICKUP_REQUEST_STATUS.QUOTED && (
               <QuotedPriceCard price={details.price} />
             )}
 
@@ -137,7 +141,7 @@ export default function ViewRequestPage() {
                 </Button>
               )}
 
-              {details.status.toUpperCase() === "QUOTED" && (
+              {details.status.toUpperCase() === PICKUP_REQUEST_STATUS.QUOTED && (
                 <Button
                   variant="contained"
                   color="primary"

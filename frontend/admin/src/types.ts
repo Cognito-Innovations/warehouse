@@ -101,6 +101,9 @@ export interface Package {
   user?: {
     name?: string;
     suite_no?: string;
+    email?: string;
+    phone_number?: string;
+    phone_number_2?: string;
   };
   shipment_uuid: string;
   created_at?: string;
@@ -150,16 +153,23 @@ export interface Country {
 }
 
 export interface Currency {
-    id: string;
-    currency_symbol: string;
-    rate: number;
-    country: Pick<Country, 'id' | 'name'>
+  id: string;
+  currency_symbol: string;
+  rate: number;
+  currency_code: string;
+  country: Pick<Country, 'id' | 'name'>
 }
 
 export type CreateCountryPayload = Partial<Country>;
 export type UpdateCountryPayload = Partial<CreateCountryPayload>;
 
-export type CreateCurrencyPayload = { country: string; currency_symbol: string; rate: number };
+export type CreateCurrencyPayload = {
+  country: string;
+  currency_symbol: string;
+  currency_code: string;
+  rate: number;
+};
+
 export type UpdateCurrencyPayload = Partial<CreateCurrencyPayload>;
 
 export type CreateCourierPayload = Omit<Courier, 'id' | 'country_name'>;
@@ -171,9 +181,56 @@ export interface PackageItem {
 
 export interface PackageData {
   id: string;
-  name: string;
-  suite_no?: string;
-  weight?: string;
+  user?: {
+    name: string;
+    suite_no?: string;
+  }
+  total_weight?: string;
   items?: PackageItem[];
-  createdAt: string | Date;
+  created_at: string | Date;
+}
+
+export interface CategoryPayload {
+  id?: string;
+  name: string;
+  slug: string;
+  discount_percentage: number,
+  country_ids: string[],
+  is_active: boolean;
+  image_url: string;
+  cargo_option_id: string;
+  description: string;
+};
+
+export interface SubCategoryPayload {
+  id?: string;
+  category_id: string;
+  name: string;
+  slug: string;
+  image_url: string;
+  discount_percentage: number,
+  country_ids: string[],
+  is_active: boolean;
+};
+
+export interface ProductPayload {
+  id?: string;
+  category_id: string;
+  sub_category_id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  discount_percentage: number;
+  image_url: string;
+  unit_value: number;
+  measurement_id: string;
+  country_ids: string[],
+  stock_quantity: number;
+  is_active: boolean;
+};
+
+export interface CargoOption {
+  id: string;
+  label: string;
 }
