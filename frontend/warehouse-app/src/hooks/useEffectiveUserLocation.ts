@@ -24,6 +24,8 @@ export interface UseEffectiveUserLocationReturn {
   geoHook: ReturnType<typeof useUserLocation>;
 }
 
+const addressCache: Record<string, UserAddress | null> = {};
+
 export function useEffectiveUserLocation(
   defaults: { countryCode?: string; countryName?: string; city: string; pincode: string }
 ): UseEffectiveUserLocationReturn {
@@ -39,11 +41,22 @@ export function useEffectiveUserLocation(
 
   useEffect(() => {
     if (user?.id) {
-      setAddressLoading(true);
-      fetchUserAddresses(user.id)
-        .then(setAddress)
-        .catch(() => setAddress(null))
-        .finally(() => setAddressLoading(false));
+      if (addressCache[user.id] !== undefined) {
+        setAddress(addressCache[user.id]);
+        setAddressLoading(false);
+      } else {
+        setAddressLoading(true);
+        fetchUserAddresses(user.id)
+          .then((data) => {
+            setAddress(data);
+            addressCache[user.id] = data; 
+          })
+          .catch(() => {
+            setAddress(null);
+            addressCache[user.id] = null;
+          })
+          .finally(() => setAddressLoading(false));
+      }
     } else {
       setAddress(null);
       setAddressLoading(false);
@@ -56,9 +69,12 @@ export function useEffectiveUserLocation(
       try {
         const updatedAddress = await fetchUserAddresses(user.id);
         setAddress(updatedAddress);
+        
+        addressCache[user.id] = updatedAddress; 
       } catch (err) {
         console.error("Failed to refresh addresses:", err);
         setAddress(null);
+        addressCache[user.id] = null;
       } finally {
         setAddressLoading(false);
       }

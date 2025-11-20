@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserAddressDto } from './dto/create-user_address.dto';
 import { Repository } from 'typeorm';
 import { UserAddress } from './user_address.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/user.entity';
+import { UpdateUserAddressDto } from './dto/update-user_address.dto';
 
 @Injectable()
 export class UserAddressService {
@@ -27,19 +28,89 @@ export class UserAddressService {
 
     const savedAddress = await this.userAddressRepository.save(userAddress);
 
-    await this.userRepository.update(createUserAddressDto.user_id, {
-      phone_number: createUserAddressDto.phone_number,
-      email: createUserAddressDto.email,
-    });
+    if (
+      createUserAddressDto.phone_code ||
+      createUserAddressDto.phone_number ||
+      createUserAddressDto.email
+    ) {
+      const userUpdates: Partial<User> = {};
 
-    return savedAddress;
+      if (createUserAddressDto.phone_code) {
+        userUpdates.phone_code = createUserAddressDto.phone_code;
+      }
+
+      if (createUserAddressDto.phone_number) {
+        userUpdates.phone_number = createUserAddressDto.phone_number;
+      }
+
+      if (createUserAddressDto.email) {
+        userUpdates.email = createUserAddressDto.email;
+      }
+
+      await this.userRepository.update(
+        createUserAddressDto.user_id,
+        userUpdates
+      );
+    }
+
+    return this.userAddressRepository.findOne({
+      where: { id: savedAddress.id },
+      relations: ['user']
+    });
   }
 
   findAll() {
-    return this.userAddressRepository.find();
+    return this.userAddressRepository.find({ relations: ['user'] });
   }
 
   findByUserId(id: string) {
-    return this.userAddressRepository.findOne({ where: { user: { id } } });
+    return this.userAddressRepository.findOne({ 
+      where: { user: { id } },
+      relations: ['user']
+    });
+  }
+
+  async update(id: string, updateUserAddressDto: UpdateUserAddressDto) {
+    const existingAddress = await this.userAddressRepository.findOne({
+      where: { id },
+      relations: ['user']
+    });
+    if (!existingAddress) {
+      throw new NotFoundException(`User address with ID ${id} not found`);
+    }
+
+    const addressUpdates = {
+      name: updateUserAddressDto.name,
+      address: updateUserAddressDto.address,
+      country: updateUserAddressDto.country,
+      zip_code: updateUserAddressDto.zip_code,
+      state: updateUserAddressDto.state,
+      city: updateUserAddressDto.city,
+    };
+
+    await this.userAddressRepository.update(id, addressUpdates);
+
+    if (
+      updateUserAddressDto.phone_code ||
+      updateUserAddressDto.phone_number ||
+      updateUserAddressDto.email
+    ) {
+      const userUpdates: Partial<User> = {};
+      if (updateUserAddressDto.phone_code) {
+        userUpdates.phone_code = updateUserAddressDto.phone_code;
+      }
+      if (updateUserAddressDto.phone_number) {
+        userUpdates.phone_number = updateUserAddressDto.phone_number;
+      }
+      if (updateUserAddressDto.email) {
+        userUpdates.email = updateUserAddressDto.email;
+      }
+      await this.userRepository.update(existingAddress.user.id, userUpdates);
+    }
+
+    return this.userAddressRepository.findOne({ 
+      where: { id },
+      relations: ['user']
+    });
   }
 }

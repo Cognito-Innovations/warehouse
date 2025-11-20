@@ -6,7 +6,7 @@ export interface ParsedPrice {
   currency: string;
 }
 
-export function parsePrice(priceInput: number | string, defaultCurrency = '₹'): ParsedPrice {
+export function parsePrice(priceInput: number | string, defaultCurrency = '$'): ParsedPrice {
   let raw: number;
   let currency = defaultCurrency;
 
@@ -25,7 +25,7 @@ export function parsePrice(priceInput: number | string, defaultCurrency = '₹')
   return { raw, formatted, currency };
 }
 
-export function formatPrice(rawPrice: number, currency = '₹'): string {
+export function formatPrice(rawPrice: number, currency = '$'): string {
   return `${currency}${rawPrice.toFixed(2)}`;
 }
 

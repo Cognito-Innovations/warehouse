@@ -50,17 +50,23 @@ export class ProductsService {
       take: limit,
     });
 
-    const selectedCountry = country || 'USA';
+    const selectedCountry = country || 'United States of America';
 
     return Promise.all(
-      products.map(async (product) => ({
-        ...product,
-        price:
+      products.map(async (product) => {
+        const basePrice = Number(product.price);
+
+        const convertedPrice =
           await this.userPreferencesService.getFormattedConvertedPriceByCountry(
             selectedCountry,
-            Number(product.price)
-          ),
-      })),
+            basePrice
+          );
+
+        return {
+          ...product,
+          price: convertedPrice,
+        };
+      }),
     );
   }
 
@@ -74,7 +80,7 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    const selectedCountry = country || 'USA';
+    const selectedCountry = country || 'United States of America';
 
     return {
       ...product,

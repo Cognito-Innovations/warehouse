@@ -229,7 +229,7 @@ export default function ProductCartActions({
                             }} 
                           />
                         ) : (
-                          <Add />
+                          <Add  sx={{ marginLeft: "5px" }}/>
                         )}
                       </IconButton>
                       <Box sx={{ ml: "auto", textAlign: "right" }}>

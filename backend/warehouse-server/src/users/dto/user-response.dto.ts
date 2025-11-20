@@ -8,6 +8,7 @@ export class UserResponseDto {
   name: string;
   role: string;
   suite_no: string;
+  phone_code?: string;
   phone_number?: string;
   alternate_phone_number: string;
   gender?: string;

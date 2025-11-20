@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge, Button } from "@mui/material";
+import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge, Button, CircularProgress } from "@mui/material";
 import { LocationOn, Search, ShoppingCart } from "@mui/icons-material";
 import { EcommerceHeaderProps } from "@/types/ecommerce";
 import { ecommerceData } from "@/data/ecommerceData";
@@ -10,7 +10,7 @@ import { createUserAddress } from "@/lib/api.service";
 import AddAddressModal from "@/components/ecommerce/cart/AddAddressModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/utils/constants";
-import { useProductActions, useProducts } from "@/store/ecommerceStore";
+import { useProductActions, useProducts, useCart } from "@/store/ecommerceStore";
 
 export default function EcommerceHeader({
   locationData,
@@ -20,6 +20,7 @@ export default function EcommerceHeader({
   const router = useRouter();
   const { searchQuery } = useProducts();
   const { setSearchQuery } = useProductActions();
+  const { loading: cartLoading } = useCart();
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
 
   const handleSaveAddress = useCallback(async (addressData: any) => {
@@ -190,7 +191,16 @@ export default function EcommerceHeader({
                 ml: { xs: 0.5, sm: 1 },
               }}
             >
-              <Badge badgeContent={cartItemCount} color="error">
+              <Badge 
+                badgeContent={
+                  cartLoading ? (
+                    <CircularProgress size={10} sx={{ color: 'white' }} />
+                  ) : (
+                    cartItemCount
+                  )
+                } 
+                color="error"
+              >
                 <ShoppingCart />
               </Badge>
             </IconButton>

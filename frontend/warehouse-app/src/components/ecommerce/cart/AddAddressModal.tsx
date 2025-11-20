@@ -24,8 +24,9 @@ import { getStatesForCountry, getCitiesForState } from "@/data/countryStatesCiti
 
 export interface AddAddressModalProps {
   open: boolean;
+  initialData?: CartAddressData | null;
   onClose: () => void;
-  onSave: (address: Omit<CartAddressData, "id">) => Promise<void>;
+  onSave: (address: Omit<CartAddressData, "id"> & { phone_code?: string }) => Promise<void>;
   title: string;
   saveLabel: string;
   cancelLabel: string;
@@ -40,6 +41,7 @@ interface Country {
 
 export default function AddAddressModal({
   open,
+  initialData,
   onClose,
   onSave,
   title,
@@ -53,6 +55,7 @@ export default function AddAddressModal({
     state: "",
     zip_code: "",
     country: "",
+    phone_code: "",
     phone_number: "",
     email: "",
   });
@@ -74,6 +77,73 @@ export default function AddAddressModal({
       loadCountries();
     }
   }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setFormData((prev) => ({
+          ...prev,
+          name: initialData.name || "",
+          address: initialData.address || "",
+          city: initialData.city || "",
+          state: initialData.state || "",
+          zip_code: initialData.zip_code || "",
+          country: initialData.country || "",
+          phone_number: initialData.phone_number || "",
+          email: initialData.email || "",
+        }));
+
+        const states = getStatesForCountry(initialData.country);
+        setAvailableStates(states);
+        if (initialData.state && states.length > 0) {
+          const cities = getCitiesForState(initialData.country, initialData.state);
+          setAvailableCities(cities);
+        }
+      } else {
+        setFormData({
+          name: "",
+          address: "",
+          city: "",
+          state: "",
+          zip_code: "",
+          country: "",
+          phone_code: "",
+          phone_number: "",
+          email: "",
+        });
+        setAvailableStates([]);
+        setAvailableCities([]);
+      }
+      setErrors({});
+    }
+  }, [open, initialData]);
+
+  useEffect(() => {
+    if (formData.country && countries.length > 0) {
+      const selectedCountry = getSelectedCountry(formData.country);
+      if (selectedCountry && selectedCountry.phone_code && formData.phone_code !== selectedCountry.phone_code) {
+        setFormData((prev) => ({ ...prev, phone_code: selectedCountry.phone_code }));
+      }
+    }
+  }, [formData.country, countries]);
+
+  useEffect(() => {
+    if ((initialData) && open && formData.country && countries.length > 0 && formData.phone_number && !formData.phone_code) {
+      const selectedCountry = getSelectedCountry(formData.country);
+      if (selectedCountry && selectedCountry.phone_code) {
+        const fullPhone = formData.phone_number;
+        const codeLen = selectedCountry.phone_code.length;
+        const localPhone = fullPhone.startsWith(selectedCountry.phone_code) ? fullPhone.substring(codeLen) : fullPhone;
+        if (localPhone !== formData.phone_number) {
+          setFormData((prev) => ({
+            ...prev,
+            phone_code: selectedCountry.phone_code,
+            phone_number: localPhone,
+          }));
+        }
+      }
+    }
+  }, [open, initialData, formData.country, countries, formData.phone_number]);
 
   useEffect(() => {
     if (formData.country) {
@@ -123,7 +193,9 @@ export default function AddAddressModal({
 
         const selectedCountry = getSelectedCountry(value);
         if (selectedCountry && selectedCountry.phone_code) {
-           newData.phone_number = selectedCountry.phone_code;
+          newData.phone_code = selectedCountry.phone_code;
+        } else {
+          newData.phone_code = "";
         }
       } else if (field === "state") {
         newData.city = "";
@@ -134,6 +206,7 @@ export default function AddAddressModal({
       setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
+        if (field === "country") delete newErrors.phone_code;
         return newErrors;
       });
     }
@@ -147,39 +220,26 @@ export default function AddAddressModal({
     if (!formData.state.trim()) newErrors.state = "State is required";
     if (!formData.zip_code.trim()) newErrors.zip_code = "Zip code is required";
     if (!formData.country.trim()) newErrors.country = "Country is required";
-    if (!formData.phone_number.trim()) newErrors.phone_number = "Phone number is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
+
+    if (!formData.phone_code.trim()) {
+        newErrors.phone_code = "Required";
+    }
+
+    if (!formData.phone_number.trim()) {
+        newErrors.phone_number = "Phone number is required";
+    } else {
+        if (!/^[\d]+$/.test(formData.phone_number)) {
+            newErrors.phone_number = "Phone number must contain only digits";
+        } else if (formData.phone_number.length !== PHONE_NUMBER_LENGTH) {
+            newErrors.phone_number = `Must be ${PHONE_NUMBER_LENGTH} digits`;
+        }
+    }
 
     if (formData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         newErrors.email = "Please enter a valid email address";
-      }
-    }
-
-    if (formData.phone_number) {
-      const selectedCountry = getSelectedCountry(formData.country);
-      
-      if (selectedCountry) {
-        const code = selectedCountry.phone_code;
-
-        if (!formData.phone_number.startsWith(code)) {
-          newErrors.phone_number = `Phone number must start with the country code (${code})`;
-        } 
-        else {
-            const numberPart = formData.phone_number.slice(code.length);
-
-            if (!/^[\d]+$/.test(numberPart)) {
-                newErrors.phone_number = "Phone number must contain only digits after the code";
-            }
-            else if (numberPart.length !== PHONE_NUMBER_LENGTH) {
-                newErrors.phone_number = `Phone number must be exactly ${PHONE_NUMBER_LENGTH} digits`;
-            }
-        }
-      } else {
-        if (!formData.country) {
-          newErrors.phone_number = "Please select a country first";
-        }
       }
     }
 
@@ -200,6 +260,7 @@ export default function AddAddressModal({
         state: formData.state,
         zip_code: formData.zip_code,
         country: formData.country,
+        phone_code: formData.phone_code,
         phone_number: formData.phone_number || undefined,
         email: formData.email || undefined,
       };
@@ -211,6 +272,7 @@ export default function AddAddressModal({
         state: "",
         zip_code: "",
         country: "",
+        phone_code: "",
         phone_number: "",
         email: "",
       });
@@ -234,6 +296,7 @@ export default function AddAddressModal({
         state: "",
         zip_code: "",
         country: "",
+        phone_code: "",
         phone_number: "",
         email: "",
       });
@@ -284,7 +347,6 @@ export default function AddAddressModal({
               value={formData.country}
               onChange={handleChange("country")}
               label="Country"
-              disabled={loadingCountries}
             >
               {loadingCountries ? (
                 <MenuItem disabled>
@@ -381,15 +443,27 @@ export default function AddAddressModal({
             fullWidth
             required
           />
-          <TextField
-            label="Phone Number"
-            value={formData.phone_number}
-            onChange={handleChange("phone_number")}
-            error={!!errors.phone_number}
-            helperText={errors.phone_number}
-            fullWidth
-            required
-          />
+
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <TextField
+              label="Code"
+              value={formData.phone_code}
+              sx={{ width: "100px" }}
+              disabled={true}
+              error={!!errors.phone_code} 
+              helperText={errors.phone_code}
+            />
+            <TextField
+              label="Phone Number"
+              value={formData.phone_number}
+              onChange={handleChange("phone_number")}
+              error={!!errors.phone_number}
+              helperText={errors.phone_number}
+              fullWidth
+              required
+            />
+          </Box>
+          
           <TextField
             label="Email"
             type="email"

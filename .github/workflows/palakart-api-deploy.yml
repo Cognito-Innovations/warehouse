@@ -3,7 +3,8 @@ name: Deploy Pipeline AWS EB
 on:
   push:
     branches:
-      - main
+      - fix/bugs-pipeline
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

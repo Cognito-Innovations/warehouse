@@ -21,7 +21,7 @@ import {
 import {
   Close,
 } from "@mui/icons-material";
-import { createUserAddress, getCountries } from "@/lib/api.service";
+import { createUserAddress, getCountries, updateUserAddress } from "@/lib/api.service";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 
@@ -39,13 +39,30 @@ interface Country {
   name: string;
 }
 
-interface AddAddressModalProps {
+interface AddressModalProps {
   open: boolean;
   onClose: () => void;
   onAddressAdded: () => void;
+  initialAddress?: Address | null;
 }
 
-export default function AddAddressModal({ open, onClose, onAddressAdded }: AddAddressModalProps) {
+interface Address {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  zip_code: string;
+  created_at: string;
+  updated_at: string;
+  user: {
+    id: string;
+    email: string;
+  };
+}
+
+export default function AddEditAddressModal({ open, onClose, onAddressAdded, initialAddress }: AddressModalProps) {
   const { data: session } = useSession();
   const user_id = (session?.user as any)?.user_id;
 
@@ -90,6 +107,24 @@ export default function AddAddressModal({ open, onClose, onAddressAdded }: AddAd
     }
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      if (initialAddress) {
+        setFormData({
+          name: initialAddress.name || "",
+          address: initialAddress.address || "",
+          zip_code: initialAddress.zip_code || "",
+          city: initialAddress.city || "",
+          state: initialAddress.state || "",
+          country: initialAddress.country || "",
+        });
+      } else {
+        setFormData(initialFormData);
+      }
+      setErrors({});
+    }
+  }, [open, initialAddress]);
+
   const handleChange = (field: keyof AddressData) => (event: any) => {
     const { value } = event.target;
     setFormData(prev => ({
@@ -122,20 +157,55 @@ export default function AddAddressModal({ open, onClose, onAddressAdded }: AddAd
   };
 
   const handleSave = async () => {
-    if (isSaving || !validateForm()) return;
+    if (isSaving) return;
 
-    setIsSaving(true);
+    const isEdit = !!initialAddress?.id;
+
+    if (!isEdit) {
+      if (!validateForm()) return;
+      try {
+        setIsSaving(true);
+        await createUserAddress({ ...formData, user_id });
+        toast.success("Address added successfully");
+        onAddressAdded();
+      } catch (error) {
+        console.error("Error adding address:", error);
+        toast.error("Failed to add address");
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
+    let hasChanged = false;
+    const keys: (keyof AddressData)[] = ['name', 'address', 'zip_code', 'city', 'state', 'country'];
+    for (const key of keys) {
+      if (formData[key] !== initialAddress![key]) {
+        hasChanged = true;
+        break;
+      }
+    }
+
+    if (!hasChanged) {
+      onClose();
+      return;
+    }
+
     try {
-      await createUserAddress({ ...formData, user_id });
-      toast.success("Address added successfully");
+      setIsSaving(true);
+      await updateUserAddress(initialAddress.id, formData);
+      toast.success("Address updated successfully");
       onAddressAdded();
     } catch (error) {
-      console.error("Error adding address:", error);
-      toast.error("Failed to add address");
+      console.error("Error updating address:", error);
+      toast.error("Failed to update address");
     } finally {
       setIsSaving(false);
-    };
+    }
   };
+
+  const modalTitle = initialAddress ? "Edit Address" : "Add Address";
+  const buttonText = isSaving ? (initialAddress ? "Updating Address..." : "Adding Address...") : (initialAddress ? "Update Address" : "Add Address");
 
   return (
     <Dialog
@@ -153,7 +223,7 @@ export default function AddAddressModal({ open, onClose, onAddressAdded }: AddAd
         pb: 2
       }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Add Address
+          {modalTitle}
         </Typography>
         <IconButton onClick={onClose} size="small">
           <Close />
@@ -163,7 +233,7 @@ export default function AddAddressModal({ open, onClose, onAddressAdded }: AddAd
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
           <TextField
-            label="Contact Person / Receiver Name / Business Name *"
+            label="Contact Person / Receiver Name *"
             value={formData.name}
             onChange={handleChange("name")}
             fullWidth
@@ -254,20 +324,27 @@ export default function AddAddressModal({ open, onClose, onAddressAdded }: AddAd
                 },
               }}
             >
-              {isLoadingCountries && (
-                <MenuItem disabled value="">
+              {isLoadingCountries ? (
+                <MenuItem
+                  disabled
+                  value=""
+                  sx={{
+                    justifyContent: "center",
+                    minHeight: "auto",
+                  }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <CircularProgress size={20} />
-                    <Typography>Loading countries...</Typography>
+                    <Typography variant="body2">Loading countries...</Typography>
                   </Box>
                 </MenuItem>
+              ) : (
+                countriesList.map((country) => (
+                  <MenuItem key={country.id} value={country.name}>
+                    {country.name}
+                  </MenuItem>
+                ))
               )}
-              
-              {!isLoadingCountries && countriesList.map((country) => (
-                <MenuItem key={country.id} value={country.name}>
-                  {country.name}
-                </MenuItem>
-              ))}
             </Select>
             {errors.country && <FormHelperText>{errors.country}</FormHelperText>}
           </FormControl>
@@ -293,7 +370,7 @@ export default function AddAddressModal({ open, onClose, onAddressAdded }: AddAd
           }}
         >
           {isSaving && <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />}
-          {isSaving ? "Adding Address..." : "Add Address"}
+          {buttonText}
         </Button>
       </DialogActions>
     </Dialog>

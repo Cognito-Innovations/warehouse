@@ -289,6 +289,11 @@ export const fetchUserAddresses = async (userId: string) => {
   return res.data;
 };
 
+export const updateUserAddress = async (addressId: string, addressData: any) => {
+  const res = await authenticatedApi.patch(`/user-address/${addressId}`, addressData);
+  return res.data;
+};
+
 export const createPreArrival = async (body: {
   userId?: string;
   otp: number;

@@ -70,7 +70,8 @@ export class OrderService {
       throw new BadRequestException('User not found');
     }
 
-    const countryCode = createOrderDto.country_code || 'USA';
+    const countryCode =
+      createOrderDto.country_code || 'United States of America';
     const currencyResponse = await this.currencyRepository.findOne({
       where: { country: { code: countryCode as CountryCode } },
       relations: ['country'],
@@ -82,6 +83,52 @@ export class OrderService {
 
     const orderCurrency = currencyResponse.currency_code;
 
+    let convertedGrossSubtotal = 0;
+    let totalDiscountAmount = 0;
+
+    for (const item of cart.items) {
+      const itemPriceBase = Number(item.unit_price);
+      const itemQuantity = Number(item.quantity);
+
+      const convertedUnitPrice =
+        await this.userPreferenceService.getConvertedPriceByCountry(
+          countryCode,
+          itemPriceBase,
+        );
+
+      const lineTotal = convertedUnitPrice * itemQuantity;
+      const itemDiscountPercent = Number(item.discount_percentage) || 0;
+      const lineDiscount = lineTotal * (itemDiscountPercent / 100);
+
+      convertedGrossSubtotal += lineTotal;
+      totalDiscountAmount += lineDiscount;
+    };
+
+    const convertedProductSubtotal =
+      convertedGrossSubtotal - totalDiscountAmount;
+
+    if (isNaN(convertedProductSubtotal))
+      throw new BadRequestException('Invalid cart amount');
+
+    const isIndia = countryCode === 'IN';
+    const threshold = isIndia ? 299 : 20;
+    const deliveryFeeBase = isIndia ? 3 : 5;
+    const serviceChargeBase = 1;
+
+    const deliveryFee =
+      convertedProductSubtotal >= threshold ? 0 : deliveryFeeBase;
+
+    const taxAmount = convertedProductSubtotal * 0.02;
+    const serviceCharge = serviceChargeBase;
+
+    const finalTotal =
+      convertedProductSubtotal + deliveryFee + taxAmount + serviceCharge;
+
+    const roundedTotal = Number(finalTotal.toFixed(2));
+    const roundedSubtotal = Number(convertedProductSubtotal.toFixed(2));
+    const roundedShipping = Number(deliveryFee.toFixed(2));
+    const roundedTax = Number(taxAmount.toFixed(2));
+
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
@@ -91,11 +138,11 @@ export class OrderService {
       user_id: userId,
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
-      subtotal: cart.total_amount,
+      subtotal: roundedSubtotal, 
       discount_percentage: cart.discount_percentage,
-      shipping_amount: 0, // Can be calculated based on shipping rules
-      tax_amount: 0, // Can be calculated based on tax rules
-      total_amount: cart.final_amount,
+      shipping_amount: roundedShipping,
+      tax_amount: roundedTax,
+      total_amount: roundedTotal,
       shipping_address: createOrderDto.shipping_address,
       billing_address: createOrderDto.billing_address,
       notes: createOrderDto.notes,
@@ -117,37 +164,20 @@ export class OrderService {
 
     await this.orderItemRepository.save(orderItems);
 
-    // Mark cart as checked out
-    const originalCartStatus = cart.status;
-    cart.status = CartStatus.CHECKED_OUT;
-    await this.cartRepository.save(cart);
-
     try {
-      let amountNum = Number(savedOrder.total_amount);
-      if(isNaN(amountNum)) throw new BadRequestException('Invalid order amount')
-
-      const converted = await this.userPreferenceService.getConvertedPrice(
-        userId,
-        amountNum,
-      )
-
-      const finalAmount = Number(converted.toFixed(2));
-
       await this.createCashfreePaymentSession(
         savedOrder,
         user,
         orderNumber,
         createOrderDto,
         orderCurrency,
-        finalAmount,
+        roundedTotal,
       );
 
       return await this.findOne(savedOrder.id);
     } catch (cashfreeErr: any) {
       // Rollback on Cashfree failure
       await this.orderRepository.delete(savedOrder.id);
-      cart.status = originalCartStatus;
-      await this.cartRepository.save(cart);
 
       console.error(
         'Cashfree error:',
@@ -260,6 +290,19 @@ export class OrderService {
 
     order.payment_status = PaymentStatus.PAID;
     order.cashfree_payment_id = cashfreeData.cf_payment_id;
+
+    const cart = await this.cartRepository.findOne({
+      where: { 
+        user_id: order.user.id, 
+        status: CartStatus.ACTIVE,
+      },
+    });
+
+    if (cart) {
+      cart.status = CartStatus.CHECKED_OUT;
+      await this.cartRepository.save(cart);
+    }
+
     return this.orderRepository.save(order);
   }
 

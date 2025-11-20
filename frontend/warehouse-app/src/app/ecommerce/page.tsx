@@ -42,36 +42,36 @@ export default function Ecommerce() {
   const { fetchCategories, fetchProducts, fetchMoreProducts, setLoading, setError } = useProductActions();
 
   const hasFetched = React.useRef(false);
-  const countryCode = locationData.location.countryCode;
+  const countryName = locationData.location.countryName;
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
   const prevSearchQueryRef = useRef(searchQuery);
-  const prevCountryCodeRef = useRef(countryCode);
+  const prevcountryNameRef = useRef(countryName);
 
   const fetchProductsCallback = useCallback(async (searchTerm: string) => {
     setLoading(true);
     try {
-      await fetchProducts(countryCode, searchTerm || undefined);
+      await fetchProducts(countryName, searchTerm || undefined);
     } catch (error) {
       console.error("Search fetch failed:", error);
     } finally {
       setLoading(false);
     }
-  }, [setLoading, fetchProducts, countryCode]);
+  }, [setLoading, fetchProducts, countryName]);
 
   const debouncedFetchProducts = useMemo(() =>
     debounce(fetchProductsCallback, 500),
     [fetchProductsCallback]
   );
 
-  const initializeEcommerceData = useCallback(async (countryCode?: string) => {
-    if (hasFetched.current || !countryCode) return;
+  const initializeEcommerceData = useCallback(async (countryName?: string) => {
+    if (hasFetched.current || !countryName) return;
     hasFetched.current = true;
     setLoading(true);
     try {
       await fetchCategories().catch((err) => console.error("Categories fetch failed:", err));
       await Promise.all([
-        fetchProducts(countryCode).catch((err) => console.error("Products fetch failed:", err)),
+        fetchProducts(countryName).catch((err) => console.error("Products fetch failed:", err)),
         fetchCart().catch((err) => console.error("Cart fetch failed:", err)),
       ]);
     } finally {
@@ -80,19 +80,19 @@ export default function Ecommerce() {
   }, [fetchCategories, fetchProducts, fetchCart, setLoading]);
 
   useEffect(() => {
-    if (countryCode && products.length === 0 && categories.length === 0) {
-      initializeEcommerceData(countryCode);
+    if (countryName && products.length === 0 && categories.length === 0) {
+      initializeEcommerceData(countryName);
     }
-  }, [countryCode, products.length, categories.length, initializeEcommerceData]);
+  }, [countryName, products.length, categories.length, initializeEcommerceData]);
 
   useEffect(() => {
-    if (!countryCode) return;
+    if (!countryName) return;
 
     const prevSearchQuery = prevSearchQueryRef.current;
-    const prevCountryCode = prevCountryCodeRef.current;
+    const prevCountryCode = prevcountryNameRef.current;
 
     const searchChanged = searchQuery !== prevSearchQuery;
-    const countryChanged = prevCountryCode !== undefined && countryCode !== prevCountryCode;
+    const countryChanged = prevCountryCode !== undefined && countryName !== prevCountryCode;
 
     if (searchChanged || countryChanged) {
       setLoading(true);
@@ -104,15 +104,15 @@ export default function Ecommerce() {
     }
 
     prevSearchQueryRef.current = searchQuery;
-    prevCountryCodeRef.current = countryCode;
-  }, [searchQuery, countryCode, debouncedFetchProducts, setLoading, fetchProductsCallback]);
+    prevcountryNameRef.current = countryName;
+  }, [searchQuery, countryName, debouncedFetchProducts, setLoading, fetchProductsCallback]);
 
   useEffect(() => {
     if (!observerRef.current || !hasMoreProducts || loadingNextPage) return;
     if (observer.current) observer.current.disconnect();
     observer.current = new window.IntersectionObserver((entries) => {
       if (entries[0].isIntersecting && hasMoreProducts && !loadingNextPage && !loading) {
-        fetchMoreProducts(countryCode, searchQuery || undefined);
+        fetchMoreProducts(countryName, searchQuery || undefined);
       }
     }, {
       rootMargin: "300px",
@@ -121,7 +121,7 @@ export default function Ecommerce() {
     return () => {
       observer.current?.disconnect();
     };
-  }, [fetchMoreProducts, hasMoreProducts, loadingNextPage, products.length, loading, countryCode, searchQuery]);
+  }, [fetchMoreProducts, hasMoreProducts, loadingNextPage, products.length, loading, countryName, searchQuery]);
 
   const handleProductClick = (product: EcommerceProduct) => {
     router.push(`${ROUTES.PRODUCT}/${product.id}`);
@@ -146,7 +146,7 @@ export default function Ecommerce() {
   const handleRefresh = () => {
     setError(null);
     hasFetched.current = false;
-    initializeEcommerceData(locationData.location.countryCode);
+    initializeEcommerceData(locationData.location.countryName);
   };
 
   const isNetworkError = error && (error.includes("Network Error") || error.includes("Failed to fetch") || error.includes("ECONNREFUSED") || error.includes("timeout"));

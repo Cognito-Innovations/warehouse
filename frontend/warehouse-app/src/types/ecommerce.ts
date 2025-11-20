@@ -208,6 +208,7 @@ export interface ProductDetailInfoSectionProps {
   addToCart: (productId: string, quantity: number) => Promise<void>;
   updateCartItem: (itemId: string, newQuantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
+  isLoading?: boolean;
 }
 
 export interface PromotionalCardProps {
@@ -345,6 +346,7 @@ export interface CartAddressData {
   state: string;
   zip_code: string;
   country: string;
+  phone_code?: string;
   phone_number?: string;
   email?: string;
 }

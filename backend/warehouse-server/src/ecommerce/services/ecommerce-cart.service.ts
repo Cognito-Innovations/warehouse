@@ -172,7 +172,7 @@ export class CartService {
 
   async getCart(userId: string, country?: string): Promise<any> {
     const cart = await this.getOrCreateCart(userId);
-    const selectedCountry = country || 'USA';
+    const selectedCountry = country || 'United States of America';
     return this.applyCurrencyConversion(cart, selectedCountry);
   }
 

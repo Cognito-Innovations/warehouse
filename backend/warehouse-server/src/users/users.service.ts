@@ -29,6 +29,7 @@ export class UsersService {
       name: user.name,
       role: user.role,
       suite_no: user.suite_no,
+      phone_code: user.phone_code,
       phone_number: user.phone_number,
       alternate_phone_number: user.alternate_phone_number,
       gender: user.gender,

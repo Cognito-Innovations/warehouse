@@ -24,7 +24,10 @@ export default function CartItemCard({
 }: CartItemCardProps) {
   const router = useRouter();
 
-  const handleProductClick = (product: EcommerceProduct) => {
+  const handleProductClick = (e: React.MouseEvent, product: EcommerceProduct) => {
+    const blocked = ["BUTTON", "svg", "path", "INPUT"];
+    if (blocked.includes((e.target as HTMLElement).tagName)) return;
+
     router.push(`${ROUTES.PRODUCT}/${product.id}`);
   }
 
@@ -49,6 +52,7 @@ export default function CartItemCard({
   const formatLocalPrice = (price: number) => formatPrice(price, currencyStr);
   return (
     <Box
+      onClick={(e) => handleProductClick(e, item.product)}
       sx={{
         display: "flex",
         flexDirection: { xs: "column", sm: "row" },
@@ -61,6 +65,7 @@ export default function CartItemCard({
         boxShadow: isSelected
           ? "0 4px 12px rgba(76, 175, 80, 0.15)"
           : "0 2px 8px rgba(0, 0, 0, 0.08)",
+        cursor: "pointer",
         transition: "all 0.3s ease",
         "&:hover": {
           boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
@@ -100,7 +105,6 @@ export default function CartItemCard({
             component="img"
             src={imageUrl}
             alt={item.product.name}
-            onClick={() => handleProductClick(item.product)}
             sx={{
               borderRadius: 2,
               objectFit: "cover",

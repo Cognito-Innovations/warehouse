@@ -88,7 +88,6 @@ export default function CheckoutPage() {
     pincode: '',
   });
   const selectedCountry = locationData.location.countryName;
-  const countryCode = locationData.location.countryCode;
 
   const countryName = selectedCountry || '';
   const getThresholdAndFees = (country?: string) => {
@@ -226,7 +225,7 @@ export default function CheckoutPage() {
     try {
       const orderData = {
         shipping_address: formData.shippingAddress,
-        country_code: countryCode,
+        country_code: selectedCountry,
       }
       const initiateResponse = await ecommerceService.initiateOrder(orderData);
       const { orderId, orderNumber, paymentSessionId, totalAmount } = initiateResponse;
@@ -259,8 +258,9 @@ export default function CheckoutPage() {
           }
         },
         (failData: any) => {
-          setError(failData?.reason || "Payment failed. Please try again.");
+          console.error("Payment Failed:", failData);
           toast.error(failData?.reason || "Payment cancelled");
+          router.replace(ROUTES.CART);
         }
       )
     } catch (err) {
@@ -639,6 +639,11 @@ export default function CheckoutPage() {
                 <Box display="flex" alignItems="center" gap={1}>
                   <CircularProgress size={24} color="inherit" />
                   <Typography>Processing Payment...</Typography>
+                </Box>
+              ) : addressLoading ? (
+                <Box display="flex" alignItems="center" gap={1}>
+                  <CircularProgress size={24} color="inherit" />
+                  <Typography>Fetching Address...</Typography>
                 </Box>
               ) : (
                 `Pay & Place Order • ${formatLocalPrice(totals.total)}`

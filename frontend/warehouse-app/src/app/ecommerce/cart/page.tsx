@@ -9,15 +9,15 @@ import { toast } from "sonner";
 
 import { useCart, useCartActions, useProductActions } from "../../../store/ecommerceStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import { fetchUserAddresses, createUserAddress } from "@/lib/api.service";
+import { fetchUserAddresses, createUserAddress, updateUserAddress } from "@/lib/api.service";
 import CartHeader from "@/components/ecommerce/cart/CartHeader";
-import AddressSelectionDropdown from "@/components/ecommerce/cart/AddressSelectionDropdown";
 import AddAddressModal from "@/components/ecommerce/cart/AddAddressModal";
 import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
 import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
 import CartSkeletonLoader from "@/components/ecommerce/cart/CartSkeletonLoader";
 import ContinueShoppingCard from "@/components/ecommerce/cart/ContinueShoppingCard";
+import AddressSection from "@/components/ecommerce/cart/AddressSection";
 import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
 import { getCurrencyForCountry } from "@/utils/currency";
@@ -34,22 +34,22 @@ export default function CartPage() {
 
   const [loadingStates, setLoadingStates] = useState<Record<string, CartItemLoadingState>>({});
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [addresses, setAddresses] = useState<CartAddressData[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
+  const [editAddress, setEditAddress] = useState<CartAddressData | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [highlightAddressError, setHighlightAddressError] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const locationData = useEffectiveUserLocation({
+  const { location, refreshAddresses } = useEffectiveUserLocation({
     countryCode: undefined,
     countryName: undefined,
     city: '',
     pincode: '',
   });
-  const selectedCountry = locationData.location.countryName;
-  const countryCode = locationData.location.countryCode;
+  const selectedCountry = location.countryName;
 
   const userId = (session?.user as any)?.user_id;
 
@@ -65,37 +65,22 @@ export default function CartPage() {
   const loadAddressesInternal = useCallback(async (uid: string) => {
     try {
       const addressData = await fetchUserAddresses(uid);
+      let formattedAddress: CartAddressData | null = null;
       if (addressData) {
-        const formattedAddresses: CartAddressData[] = Array.isArray(addressData)
-          ? addressData.map((addr: any) => ({
-              id: addr.id,
-              name: addr.name || "",
-              address: addr.address || "",
-              city: addr.city || "",
-              state: addr.state || "",
-              zip_code: addr.zip_code || "",
-              country: addr.country || "",
-              phone_number: addr.phone_number,
-              email: addr.email,
-            }))
-          : [
-              {
-                id: addressData.id,
-                name: addressData.name || "",
-                address: addressData.address || "",
-                city: addressData.city || "",
-                state: addressData.state || "",
-                zip_code: addressData.zip_code || "",
-                country: addressData.country || "",
-                phone_number: addressData.phone_number,
-                email: addressData.email,
-              },
-            ];
-        setAddresses(formattedAddresses);
-        if (formattedAddresses.length > 0) {
-          setSelectedAddress((prev) => prev || formattedAddresses[0]);
-        }
+        formattedAddress = {
+          id: addressData.id,
+          name: addressData.name || "",
+          address: addressData.address || "",
+          city: addressData.city || "",
+          state: addressData.state || "",
+          zip_code: addressData.zip_code || "",
+          country: addressData.country || "",
+          phone_code: addressData.user.phone_code,
+          phone_number: addressData.user.phone_number,
+          email: addressData.user.email,
+        };
       }
+      setSelectedAddress(formattedAddress);
     } catch (err) {
       console.error("Failed to load addresses:", err);
     }
@@ -103,22 +88,23 @@ export default function CartPage() {
 
   useEffect(() => {
     if (status === "loading") return;
+    if (!selectedCountry) return;
 
     const init = async () => {
       setIsPageLoading(true);
       try {
         const promises = [];
 
-        if (countryCode) {
-          promises.push(fetchProducts(countryCode));
+        if (selectedCountry) {
+          promises.push(fetchProducts(selectedCountry));
         }
 
         const cartTask = async () => {
-            if (countryCode) {
+            if (selectedCountry) {
                 if (userId) {
-                    await syncLocalCartToServer(countryCode);
+                    await syncLocalCartToServer(selectedCountry);
                 }
-                await fetchCart(countryCode);
+                await fetchCart(selectedCountry);
             }
         };
         promises.push(cartTask());
@@ -137,7 +123,7 @@ export default function CartPage() {
     };
 
     init();
-  }, [countryCode, userId, status, fetchProducts, syncLocalCartToServer, fetchCart, loadAddressesInternal]);
+  }, [selectedCountry, userId, status, fetchProducts, syncLocalCartToServer, fetchCart, loadAddressesInternal]);
 
   useEffect(() => {
     if (cart && cart.items.length > 0) {
@@ -152,7 +138,6 @@ export default function CartPage() {
   const handleSaveAddress = async (addressData: Omit<CartAddressData, "id">) => {
     if (!userId) return;
     try {
-      // Only send fields that the API expects
       const apiData = {
         user_id: userId,
         name: addressData.name,
@@ -161,16 +146,46 @@ export default function CartPage() {
         zip_code: addressData.zip_code,
         state: addressData.state,
         city: addressData.city,
+        phone_number: `${addressData.phone_code || ''}${addressData.phone_number || ''}`,
+        email: addressData.email,
       };
       const newAddress = await createUserAddress(apiData);
       const formattedAddress: CartAddressData = {
         id: newAddress.id,
         ...addressData,
       };
-      setAddresses((prev) => [...prev, formattedAddress]);
       setSelectedAddress(formattedAddress);
+      await refreshAddresses();
     } catch (err) {
       console.error("Failed to save address:", err);
+      throw err;
+    }
+  };
+
+  const handleUpdateAddress = async (addressId: string, addressData: Omit<CartAddressData, "id">) => {
+    if (!userId) return;
+    try {
+      const apiData = {
+        user_id: userId,
+        name: addressData.name,
+        address: addressData.address,
+        country: addressData.country,
+        zip_code: addressData.zip_code,
+        state: addressData.state,
+        city: addressData.city,
+        phone_number: `${addressData.phone_code || ''}${addressData.phone_number || ''}`,
+        email: addressData.email,
+      };
+      const updatedAddress = await updateUserAddress(addressId, apiData);
+      const formattedAddress: CartAddressData = {
+        id: addressId,
+        ...addressData,
+      };
+      setSelectedAddress(formattedAddress);
+      setEditAddress(null);
+      await refreshAddresses();
+    } catch (err) {
+      console.error("Failed to update address:", err);
       throw err;
     }
   };
@@ -182,7 +197,7 @@ export default function CartPage() {
         [itemId]: { ...prev[itemId], isDecrementLoading: true },
       }));
       try {
-        await removeFromCart(itemId, countryCode);
+        await removeFromCart(itemId, selectedCountry);
       } catch (err) {
         console.error("Failed to remove item:", err);
       } finally {
@@ -203,7 +218,7 @@ export default function CartPage() {
         },
       }));
       try {
-        await updateCartItem(itemId, newQuantity, countryCode);
+        await updateCartItem(itemId, newQuantity, selectedCountry);
       } catch (err) {
         console.error("Failed to update quantity:", err);
       } finally {
@@ -217,7 +232,7 @@ export default function CartPage() {
         }));
       }
     }
-  }, [cart, updateCartItem, removeFromCart, countryCode]);
+  }, [cart, updateCartItem, removeFromCart, selectedCountry]);
 
   const handleRemoveItem = useCallback(async (itemId: string) => {
     setLoadingStates((prev) => ({
@@ -225,7 +240,7 @@ export default function CartPage() {
       [itemId]: { ...prev[itemId], isRemoveLoading: true },
     }));
     try {
-      await removeFromCart(itemId, countryCode);
+      await removeFromCart(itemId, selectedCountry);
     } catch (err) {
       console.error("Failed to remove item:", err);
     } finally {
@@ -235,7 +250,7 @@ export default function CartPage() {
         return newState;
       });
     }
-  }, [removeFromCart, countryCode]);
+  }, [removeFromCart, selectedCountry]);
 
   const handleItemSelect = useCallback((itemId: string, selected: boolean) => {
     setSelectedItems((prev) => {
@@ -336,7 +351,7 @@ export default function CartPage() {
   }, [cart, selectedItems, selectedCountry]);
 
   // Show skeleton loader while cart is loading and no cart data exists
-  if (isPageLoading || status === "loading") {
+  if (isPageLoading || status === "loading" || !selectedCountry || cart === undefined) {
     return <CartSkeletonLoader />;
   }
 
@@ -410,38 +425,20 @@ export default function CartPage() {
                   </Typography>.
                 </Typography>
               </Box>
-            ) : addresses.length === 0 ? (
-              <Box sx={{ 
-                p: 2, 
-                border: highlightAddressError ? "2px solid #f44336" : "1px solid #ddd", 
-                borderRadius: 2, 
-                mb: 2,
-                transition: 'border 0.3s ease'
-              }}>
-                <Typography variant="subtitle1" fontWeight={600}>No Address Found</Typography>
-                <Typography variant="body2" color="text.secondary" mt={1}>
-                  Add your delivery address to continue.
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ mt: 2, color: "primary.main", cursor: "pointer", fontWeight: 600 }}
-                  onClick={() => setAddAddressModalOpen(true)}
-                >
-                  + Add Address
-                </Typography>
-              </Box>
-              ) : (
-                <AddressSelectionDropdown
-                  addresses={addresses}
-                  selectedAddress={selectedAddress}
-                  onAddressSelect={setSelectedAddress}
-                  onAddNewAddress={() => setAddAddressModalOpen(true)}
-                  noAddressLabel={ecommerceData.cart.addressSelection.noAddressLabel}
-                  addAddressLabel={ecommerceData.cart.addressSelection.addAddressLabel}
-                  selectAddressLabel={ecommerceData.cart.addressSelection.selectAddressLabel}
-                  borderColor={ecommerceData.ui.colors.borderColor}
-                />
-              )}
+            ) : (
+              <AddressSection
+                selectedAddress={selectedAddress}
+                highlightAddressError={highlightAddressError}
+                onAddAddress={() => setAddAddressModalOpen(true)}
+                onEditAddress={() => {
+                  setEditAddress(selectedAddress);
+                  setEditModalOpen(true);
+                }}
+                noAddressLabel="No Address Found"
+                addAddressLabel="+ Add Address"
+                borderColor={ecommerceData.ui.colors.borderColor}
+              />
+            )}
 
             <CartItemsList
               items={cart.items}
@@ -485,10 +482,24 @@ export default function CartPage() {
 
       <AddAddressModal
         open={addAddressModalOpen}
+        initialData={null}
         onClose={() => setAddAddressModalOpen(false)}
         onSave={handleSaveAddress}
         title="Add New Address"
         saveLabel="Save Address"
+        cancelLabel="Cancel"
+      />
+
+      <AddAddressModal
+        open={editModalOpen}
+        initialData={editAddress}
+        onClose={() => {
+          setEditModalOpen(false);
+          setEditAddress(null);
+        }}
+        onSave={(data) => handleUpdateAddress(editAddress!.id, data)}
+        title="Edit Address"
+        saveLabel="Update Address"
         cancelLabel="Cancel"
       />
     </Box>

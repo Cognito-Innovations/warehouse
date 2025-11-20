@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import {Edit,} from "@mui/icons-material";
+import { Edit } from "@mui/icons-material";
 import EditProfileModal, { ProfileData } from "../Modals/EditProfileModal";
-import {Box, Typography, Button, Card, CardContent, Grid, CircularProgress, } from "@mui/material";
+import { Box, Typography, Button, Card, CardContent, Grid, CircularProgress } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUser } from "@/lib/api.service";
 
@@ -15,6 +15,7 @@ export default function ProfilePage() {
     id_card_passport_no: "",
     name: "",
     email: "",
+    phone_code: "",
     phone_number: "",
     alternate_phone_number: "",
     gender: "",
@@ -22,33 +23,32 @@ export default function ProfilePage() {
     email_verified: false,
   });
 
-    const fetchUserProfile = useCallback(async () => {
-        if (user?.id) {
-          try {
-            const userInfo = await getUser(user.id);
-            setProfileData({
-              id_card_passport_no: userInfo.id_card_passport_no || "",
-              name: userInfo.name || "",
-              email: userInfo.email || "",
-              phone_number: userInfo.phone_number || "",
-              alternate_phone_number: userInfo.alternate_phone_number || "",
-              gender: userInfo.gender || "",
-              dob: userInfo.dob?.split("T")[0] || "",
-              email_verified: userInfo.email_verified || false,
-            });
-          } catch (error) {
-            console.error("Failed to fetch user profile", error);
-          } finally {
-            setLoading(false);
-          }
-        } else {
-          setLoading(false);
-        }
-      }, [user?.id]);
-    
-      useEffect(() => {
-        fetchUserProfile();
-      }, [user?.id, fetchUserProfile]);
+  const fetchUserProfile = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      const userInfo = await getUser(user.id);
+      setProfileData({
+        id_card_passport_no: userInfo.id_card_passport_no || "",
+        name: userInfo.name || "",
+        email: userInfo.email || "",
+        phone_code: userInfo.phone_code || "",
+        phone_number: userInfo.phone_number || "",
+        alternate_phone_number: userInfo.alternate_phone_number || "",
+        gender: userInfo.gender || "",
+        dob: userInfo.dob?.split("T")[0] || "",
+        email_verified: userInfo.email_verified || false,
+      });
+    } catch (error) {
+      console.error("Failed to fetch user profile", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, [user?.id, fetchUserProfile]);
 
   const handleProfileUpdate = (updatedData: Partial<ProfileData>) => {
     setProfileData((prev) => ({
@@ -147,7 +147,10 @@ export default function ProfilePage() {
                   Contact
                 </Typography>
                 <Typography variant="body2" sx={{ color: "black.900", fontWeight: 500, mt: 0.5 }}>
-                  {profileData.phone_number || "-"}
+                  {profileData.phone_code && profileData.phone_number
+                    ? `${profileData.phone_code}${profileData.phone_number}`
+                    : "-"
+                  }
                 </Typography>
               </Box>
             </Grid>

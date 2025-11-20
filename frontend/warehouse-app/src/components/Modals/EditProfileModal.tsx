@@ -29,6 +29,7 @@ export interface ProfileData {
   id_card_passport_no: string;
   name: string;
   email: string;
+  phone_code: string;
   phone_number: string;
   alternate_phone_number: string;
   gender: string;
@@ -188,6 +189,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       const payload = {
         id_card_passport_no: formData.id_card_passport_no,
         name: formData.name,
+        phone_code: formData.phone_code,
         phone_number: formData.phone_number,
         alternate_phone_number: formData.alternate_phone_number,
         gender: formData.gender,
@@ -213,6 +215,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     if (!formData.id_card_passport_no || !formData.id_card_passport_no.trim()) newErrors.id_card_passport_no = "ID Card/Passport No. is required";
     if (!formData.name || !formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.dob || !formData.dob.trim()) newErrors.dob = "Date of birth is required";
+    if (!formData.phone_code || !formData.phone_code.trim()) newErrors.phone_code = "Required";
     if (!formData.phone_number || !formData.phone_number.trim()) newErrors.phone_number = "Contact number is required";
     if (!formData.gender) newErrors.gender = "Gender is required";
     if (!preferencesFormData.courier_id) newErrors.courier_id = "Courier is required";
@@ -226,6 +229,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     !formData.id_card_passport_no?.trim() ||
     !formData.name?.trim() ||
     !formData.dob?.trim() ||
+    !formData.phone_code?.trim() ||
     !formData.phone_number?.trim() ||
     !formData.gender ||
     !preferencesFormData.courier_id ||
@@ -259,25 +263,6 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       <Toaster />
       <DialogContent dividers>
         <>
-          {loadingPreferences && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                py: 2,
-                mb: 2,
-                bgcolor: "rgba(0, 0, 0, 0.02)",
-                borderRadius: 1,
-              }}
-            >
-              <CircularProgress size={24} />
-              <Box sx={{ ml: 2, color: "text.secondary" }}>
-                Loading preferences...
-              </Box>
-            </Box>
-          )}
-
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pb: 2 }}>
             <TextField
               label="ID Card / Passport No *"
@@ -333,24 +318,41 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
               }}
             />
 
-            <TextField
-              label="Contact No"
-              type="tel"
-              value={formData.phone_number}
-              onChange={handleChange("phone_number")}
-              error={!!errors.phone_number}
-              helperText={errors.phone_number}
-              fullWidth
-              size="medium"
-              inputProps={{
-                maxLength: 10
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                },
-              }}
-            />
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <TextField
+                label="Code"
+                value={formData.phone_code}
+                onChange={handleChange("phone_code")}
+                error={!!errors.phone_code}
+                sx={{
+                  width: "100px",
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                  },
+                }}
+                size="medium"
+                placeholder="+91"
+              />
+      
+              <TextField
+                label="Contact No"
+                type="tel"
+                value={formData.phone_number}
+                onChange={handleChange("phone_number")}
+                error={!!errors.phone_number}
+                helperText={errors.phone_number}
+                fullWidth
+                size="medium"
+                inputProps={{
+                  maxLength: 10
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                  },
+                }}
+              />
+            </Box>
 
             <TextField
               label="Alternative Contact No"
@@ -407,7 +409,6 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
                 value={preferencesFormData.courier_id}
                 onChange={handleChangePreferences("courier_id")}
                 label="Courier"
-                disabled={loadingPreferences}
                 sx={{
                   borderRadius: "8px",
                 }}
@@ -436,7 +437,6 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
                 value={preferencesFormData.currency_id}
                 onChange={handleChangePreferences("currency_id")}
                 label="Currency"
-                disabled={loadingPreferences}
                 sx={{
                   borderRadius: "8px",
                 }}

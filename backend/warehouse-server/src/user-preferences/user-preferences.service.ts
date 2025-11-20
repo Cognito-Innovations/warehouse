@@ -5,7 +5,6 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { Currency } from '../currencies/currency.entity';
-import { CountryCode } from 'src/Countries/country.entity';
 
 @Injectable()
 export class UserPreferencesService {
@@ -81,14 +80,36 @@ export class UserPreferencesService {
     return price;
   }
 
-  async getFormattedConvertedPriceByCountry(
-    countryCode: string,
+  async getConvertedPriceByCountry(
+    countryName: string,
     price: number,
-  ) {
-    if (!countryCode || !price) return String(price);
+  ): Promise<number> {
+    if (!countryName || !price) return price;
 
     const currency = await this.currencyRepository.findOne({
-      where: { country: { code: countryCode as CountryCode } },
+      where: {
+        country: {
+          name: countryName,
+        },
+      },
+      relations: ['country'], 
+    });
+
+    if (currency && currency.rate) {
+      return Number(price) * Number(currency.rate);
+    }
+
+    return price;
+  }
+
+  async getFormattedConvertedPriceByCountry(
+    countryName: string,
+    price: number,
+  ) {
+    if (!countryName || !price) return String(price);
+
+    const currency = await this.currencyRepository.findOne({
+      where: { country: { name: countryName } },
       relations: ['country'],
     });
 
