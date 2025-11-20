@@ -70,10 +70,10 @@ export class OrderService {
       throw new BadRequestException('User not found');
     }
 
-    const countryCode =
-      createOrderDto.country_code || 'United States of America';
+    const countryName =
+      createOrderDto.country_name || 'United States of America';
     const currencyResponse = await this.currencyRepository.findOne({
-      where: { country: { code: countryCode as CountryCode } },
+      where: { country: { name: countryName } },
       relations: ['country'],
     });
 
@@ -92,7 +92,7 @@ export class OrderService {
 
       const convertedUnitPrice =
         await this.userPreferenceService.getConvertedPriceByCountry(
-          countryCode,
+          countryName,
           itemPriceBase,
         );
 
@@ -110,7 +110,7 @@ export class OrderService {
     if (isNaN(convertedProductSubtotal))
       throw new BadRequestException('Invalid cart amount');
 
-    const isIndia = countryCode === 'IN';
+    const isIndia = countryName === 'India';
     const threshold = isIndia ? 299 : 20;
     const deliveryFeeBase = isIndia ? 3 : 5;
     const serviceChargeBase = 1;

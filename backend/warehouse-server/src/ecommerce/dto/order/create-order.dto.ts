@@ -27,5 +27,5 @@ export class CreateOrderDto {
 
   @IsString()
   @IsOptional()
-  country_code?: string;
+  country_name?: string;
 }

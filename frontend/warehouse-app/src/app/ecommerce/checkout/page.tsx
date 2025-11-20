@@ -225,7 +225,7 @@ export default function CheckoutPage() {
     try {
       const orderData = {
         shipping_address: formData.shippingAddress,
-        country_code: selectedCountry,
+        country_name: selectedCountry,
       }
       const initiateResponse = await ecommerceService.initiateOrder(orderData);
       const { orderId, orderNumber, paymentSessionId, totalAmount } = initiateResponse;
