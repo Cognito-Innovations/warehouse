@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Box, Container, Alert } from "@mui/material";
 import { useParams, useRouter } from "next/navigation";
 
-import { useProducts, useCart, useCartActions, useProductActions } from "../../../../store/ecommerceStore";
+import { useProducts, useProductActions } from "../../../../store/ecommerceStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { ecommerceService } from "@/services/ecommerce.service";
 import ProductDetailHeader from "@/components/ecommerce/ProductDetailHeader";
@@ -22,8 +22,6 @@ export default function ProductDetailPage() {
   const params = useParams();
   
   const { products } = useProducts();
-  const { cart } = useCart();
-  const { addToCart, updateCartItem, removeFromCart, fetchCart } = useCartActions();
   const { fetchProducts } = useProductActions();
 
   const [loading, setLoading] = useState(true);
@@ -50,11 +48,6 @@ export default function ProductDetailPage() {
       setLoading(false);
     }
   }, []);
-
-  // Fetch initial data only once on mount
-  useEffect(() => {
-    fetchCart().catch((err) => console.error("Cart fetch failed:", err));
-  }, []); // Only run once on mount
 
   useEffect(() => {
     if (countryName && products.length === 0) {
@@ -166,10 +159,6 @@ export default function ProductDetailPage() {
 
           <ProductDetailInfoSection
             product={currentProduct}
-            cart={cart}
-            addToCart={addToCart}
-            updateCartItem={updateCartItem}
-            removeFromCart={removeFromCart}
           />
         </Box>
       </Container>

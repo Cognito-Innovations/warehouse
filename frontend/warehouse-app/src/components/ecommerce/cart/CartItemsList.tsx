@@ -7,7 +7,6 @@ import CartItemCard from "./CartItemCard";
 
 export default function CartItemsList({
   items,
-  loadingStates,
   selectedItems,
   onItemSelect,
   onSelectAll,
@@ -19,8 +18,15 @@ export default function CartItemsList({
   currencySymbol,
   selectedCountry,
 }: CartItemsListProps) {
-  const allSelected = items.length > 0 && items.every((item) => selectedItems.has(item.id));
-  const someSelected = items.some((item) => selectedItems.has(item.id));
+
+  const isItemSelected = (item: any) => {
+    return selectedItems.has(item.id);
+  };
+
+  const allSelected = items.length > 0 && items.every(isItemSelected);
+  const someSelected = items.some(isItemSelected);
+
+  const getKey = (item: any) => item?.product_id || item?.id;
 
   return (
     <Paper 
@@ -51,18 +57,12 @@ export default function CartItemsList({
       </Box>
       
       {items.map((item) => {
-        const loadingState = loadingStates[item.id] || {
-          isIncrementLoading: false,
-          isDecrementLoading: false,
-          isRemoveLoading: false,
-        };
-
+        const key = getKey(item);
         return (
           <CartItemCard
-            key={item.id}
+            key={key}
             item={item}
-            loadingState={loadingState}
-            isSelected={selectedItems.has(item.id)}
+            isSelected={isItemSelected(item)}
             onSelect={onItemSelect}
             onQuantityChange={onQuantityChange}
             onRemoveItem={onRemoveItem}

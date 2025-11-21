@@ -10,14 +10,14 @@ import OfferCard from "./OfferCard";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { calculateDiscountedPrice, formatPrice, parsePrice } from "@/utils/priceUtils";
 import { ecommerceData } from "@/data/ecommerceData";
-import { ProductDetailInfoSectionProps } from "@/types/ecommerce";
+import { EcommerceProduct } from "@/types/ecommerce";
+
+interface ProductDetailInfoSectionProps {
+  product: EcommerceProduct;
+}
 
 export default function ProductDetailInfoSection({
   product,
-  cart,
-  addToCart,
-  updateCartItem,
-  removeFromCart,
 }: ProductDetailInfoSectionProps) {
   const [offersExpanded, setOffersExpanded] = React.useState(false);
 
@@ -297,12 +297,8 @@ export default function ProductDetailInfoSection({
 
         <ProductCartActions
           product={product}
-          cart={cart}
           discountPriceRaw={discountPriceRaw}
           currency={currency}
-          addToCart={addToCart}
-          updateCartItem={updateCartItem}
-          removeFromCart={removeFromCart}
         />
       </Paper>
     </Box>

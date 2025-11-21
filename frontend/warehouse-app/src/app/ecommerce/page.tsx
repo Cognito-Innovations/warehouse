@@ -4,7 +4,7 @@ import React, { useRef, useCallback, useEffect, useMemo } from "react";
 import { Box, Container, Alert } from "@mui/material";
 
 
-import { useProducts, useCartActions, useProductActions } from "../../store/ecommerceStore";
+import { useProducts, useProductActions } from "../../store/ecommerceStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout"; 
 import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
@@ -34,7 +34,6 @@ export default function Ecommerce() {
     hasMoreProducts,
     loadingNextPage,
   } = useProducts();
-  const { fetchCart } = useCartActions();
   const { fetchCategories, fetchProducts, fetchMoreProducts, setLoading, setError } = useProductActions();
 
   const hasFetched = React.useRef(false);
@@ -65,18 +64,19 @@ export default function Ecommerce() {
     hasFetched.current = true;
     setLoading(true);
     try {
-      await fetchCategories().catch((err) => console.error("Categories fetch failed:", err));
+      await fetchCategories().catch(err => console.error("Categories fetch failed:", err)),
       await Promise.all([
-        fetchProducts(countryName).catch((err) => console.error("Products fetch failed:", err)),
-        fetchCart().catch((err) => console.error("Cart fetch failed:", err)),
+        fetchProducts(countryName).catch(err =>
+          console.error("Products fetch failed:", err)
+        ),
       ]);
     } finally {
       setLoading(false);
     }
-  }, [fetchCategories, fetchProducts, fetchCart, setLoading]);
+  }, [fetchCategories, fetchProducts, setLoading]);
 
   useEffect(() => {
-    if (countryName && products.length === 0 && categories.length === 0) {
+    if (countryName && !hasFetched.current) {
       initializeEcommerceData(countryName);
     }
   }, [countryName, products.length, categories.length, initializeEcommerceData]);

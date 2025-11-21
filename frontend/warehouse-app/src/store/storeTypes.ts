@@ -1,4 +1,4 @@
-import { EcommerceCategory, EcommerceProduct } from "@/types/ecommerce";
+import { EcommerceCategory, EcommerceProduct, LocalCartItem } from "@/types/ecommerce";
 
 export type CategoryStore = {
   selectedCategory: string | null;
@@ -10,7 +10,7 @@ export type CategoryStore = {
 };
 
 export type ProductStore = {
-    selectedProduct: null,
+    selectedProduct: string | null,
     products: EcommerceProduct[];
     isLoading: boolean;
     //TODO: Instead of promise void define actual return typescript data
@@ -24,3 +24,18 @@ export type GetProductsParams = {
   limit?: number;
   offset?: number;
 };
+
+export type CartStore = {
+  cartProducts: LocalCartItem[];
+  cartProductQuantityCount: () => number;
+  loading: boolean;
+  checkoutProducts: string[];
+  toggleCartItemSelection: (productIds: string | string[]) => void;
+  clearCheckoutProducts: () => void;
+  setLoading: (value: boolean) => void;
+  getItemQuantity: (productId: string) => number;
+  syncCart: (country?: string) => Promise<void>;
+  getCart: (country?: string) => Promise<any[] | undefined>;
+  addProductToCart: (product: string | EcommerceProduct, quantity: number, country?: string) => Promise<void>;
+  removeProductFromCart: (productId: string, country?: string) => Promise<void>;
+}

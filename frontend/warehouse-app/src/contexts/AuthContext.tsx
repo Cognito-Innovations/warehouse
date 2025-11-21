@@ -1,7 +1,6 @@
 "use client";
 import React, { createContext, useContext, ReactNode, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { useEcommerceStore } from "@/store/ecommerceStore";
 
 interface User {
   id: string;
@@ -42,8 +41,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { data: session, status } = useSession();
 
   const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const syncLocalCartToServer = useEcommerceStore((state) => state.syncLocalCartToServer);
 
   // Get user data from NextAuth session
   const user = session?.user ? {
@@ -88,10 +85,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         localStorage.removeItem("auth-token");
       }
-    }
-
-    if (token && status === 'authenticated') {
-      syncLocalCartToServer();
     }
   }, [token]);
 

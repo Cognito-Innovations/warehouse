@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsArray } from 'class-validator';
 import {
   OrderStatus,
   PaymentStatus,
@@ -28,4 +28,9 @@ export class CreateOrderDto {
   @IsString()
   @IsOptional()
   country_name?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  product_ids?: string[];
 }
