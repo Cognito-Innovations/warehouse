@@ -9,7 +9,6 @@ import ProductCardSkeletonLoader from "./skeleton-loader/ProductCardSkeletonLoad
 
 export default function EcommerceProductsGrid({
   products,
-  onProductClick,
   loading = false,
 }: EcommerceProductsGridProps) {
   return (
@@ -17,7 +16,7 @@ export default function EcommerceProductsGrid({
       sx={{
         display: "grid",
         gridTemplateColumns: {
-          xs: '1fr',
+          xs: "1fr",
           sm: `repeat(${ecommerceData.ui.grid.columns.sm}, 1fr)`,
           md: `repeat(${ecommerceData.ui.grid.columns.md}, 1fr)`,
           lg: `repeat(${ecommerceData.ui.grid.columns.lg}, 1fr)`,
@@ -30,7 +29,6 @@ export default function EcommerceProductsGrid({
           <EcommerceProductCard
             key={product.id}
             product={product}
-            onProductClick={onProductClick}
           />
         );
       })}

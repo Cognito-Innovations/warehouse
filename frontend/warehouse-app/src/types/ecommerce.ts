@@ -11,7 +11,7 @@ export interface EcommerceCategory {
   };
   created_at: string;
   updated_at: string;
-}
+};
 
 export interface EcommerceSubCategory {
   id: string;
@@ -151,12 +151,10 @@ export interface EcommerceCategorySectionProps {
 
 export interface EcommerceProductCardProps {
   product: EcommerceProduct;
-  onProductClick: (product: EcommerceProduct) => void;
 }
 
 export interface EcommerceProductsGridProps {
   products: EcommerceProduct[];
-  onProductClick: (product: EcommerceProduct) => void;
   loading?: boolean;
 }
 
@@ -217,10 +215,6 @@ export interface PromotionalCardProps {
   backgroundColor: string;
   categoryId: string;
   onShopNow: (categoryId: string) => void;
-}
-
-export interface PromotionalCardsProps {
-  categories: EcommerceCategory[];
 }
 
 // Cart Page Interfaces

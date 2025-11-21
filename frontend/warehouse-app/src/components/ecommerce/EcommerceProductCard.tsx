@@ -19,14 +19,15 @@ import { ecommerceData } from "@/data/ecommerceData";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { calculateDiscountedPrice, formatPrice, parsePrice } from "@/utils/priceUtils";
 import { useCart, useCartActions } from "@/store/ecommerceStore";
+import useProductStore from "@/store/productStore";
 
 export default function EcommerceProductCard({
-  product,
-  onProductClick,
+  product
 }: EcommerceProductCardProps) {
   const theme = useTheme();
 
   const { cart } = useCart();
+  const {handleProductSelect} = useProductStore();
   const { addToCart, updateCartItem, removeFromCart } = useCartActions();
 
   const cartItem = useMemo(() =>
@@ -127,7 +128,8 @@ export default function EcommerceProductCard({
           boxShadow: theme.shadows[4],
         },
       }}
-      onClick={() => onProductClick(product)}
+      //TODO: Check is this type of product is correct ?
+      onClick={() => handleProductSelect(product)}
     >
       <Box sx={{ position: "relative", height: 180, width: "100%", overflow: "hidden" }}>
         {!product.image_url ? (
@@ -238,9 +240,9 @@ export default function EcommerceProductCard({
 
         {/* Price and Add Button */}
         <Box sx={{ 
-          display: { xs: 'block', sm: 'flex' }, 
-          alignItems: { sm: 'center' }, 
-          justifyContent: { sm: 'space-between' }, 
+          display: { xs: "block", sm: "flex" }, 
+          alignItems: { sm: "center" }, 
+          justifyContent: { sm: "space-between" }, 
           mb: 1 
         }}>
           <Box sx={{ 
@@ -278,8 +280,8 @@ export default function EcommerceProductCard({
                     border: `1px solid ${ecommerceData.ui.colors.borderColor}`,
                     borderRadius: 1,
                     height: 32,
-                    width: { xs: '100%', sm: 'auto' },
-                    justifyContent: 'space-between',
+                    width: { xs: "100%", sm: "auto" },
+                    justifyContent: "space-between",
                   }}
                 >
                   <IconButton
@@ -332,7 +334,7 @@ export default function EcommerceProductCard({
                   onClick={handleAddToCart} 
                   disabled={loadingStates.isAddLoading}
                   sx={{
-                    width: { xs: '100%', sm: 80 },
+                    width: { xs: "100%", sm: 80 },
                     height: 32,
                     minWidth: { sm: 80 },
                     fontSize: "0.8rem",
@@ -355,7 +357,7 @@ export default function EcommerceProductCard({
               size="small"
               disabled
               sx={{
-                width: { xs: '100%', sm: 80 },
+                width: { xs: "100%", sm: 80 },
                 height: 32,
                 minWidth: { sm: 80 },
                 fontSize: "0.8rem",

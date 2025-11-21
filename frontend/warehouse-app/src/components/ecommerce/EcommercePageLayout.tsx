@@ -5,7 +5,7 @@ import { Box, Container } from "@mui/material";
 
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import EcommerceHeader from "@/components/ecommerce/EcommerceHeader";
-import PromotionalCards from "@/components/ecommerce/PromotionalCards";
+import PromotionalCards from "@/components/ecommerce/category/CategorySection";
 import EcommerceBottomNavigation from "@/components/ecommerce/EcommerceBottomNavigation";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceCategory } from "@/types/ecommerce";
@@ -52,7 +52,6 @@ export default function EcommercePageLayout({
             px: { xs: 2, sm: 3, md: 4 },
           }}
         >
-          <PromotionalCards categories={categories} />
         </Box>
 
         {children}

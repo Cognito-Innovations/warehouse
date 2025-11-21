@@ -1,0 +1,82 @@
+import { useEffect } from "react";
+import { Box, Typography } from "@mui/material";
+import useCategoryStore from "@/store/categoryStore";
+
+//TODO: Loader is missing please add it, when loading the categories
+const CategoryItems = () => {
+  const { categories, getCategories, selectedCategory, handleCategorySelect } = useCategoryStore();
+
+  useEffect(() => {
+    getCategories();
+  }, []);
+
+
+  return (
+    <>
+      {categories?.map((category: any) => {
+        const isActive = selectedCategory === category.id;
+
+        return (
+          <Box
+            key={category.id}
+            onClick={() => handleCategorySelect(category.id)}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              cursor: "pointer",
+              transition: "0.2s",
+              "&:hover": { transform: "translateY(-2px)" },
+              minWidth: { xs: "80px", sm: "100px", md: "120px" },
+              flexShrink: 0,
+            }}
+          >
+            <Box
+              sx={{
+                width: { xs: 44, sm: 52, md: 60 },
+                height: { xs: 44, sm: 52, md: 60 },
+                borderRadius: 2.5,
+                bgcolor: isActive ? "#d5c4ff" : "#ede9fe",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mb: 2.5,
+                boxShadow: isActive ? "0 2px 12px rgba(0,0,0,0.12)" : "none",
+                transition: "0.2s",
+                overflow: "hidden",
+              }}
+            >
+              <img
+                src={category.image_url || DEFAULT_IMG}
+                onError={(e) => (e.currentTarget.src = DEFAULT_IMG)}
+                alt={category.name}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            </Box>
+
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: isActive ? 700 : 500,
+                color: "#333",
+                textAlign: "center",
+              }}
+            >
+              {category.name}
+            </Typography>
+
+            {isActive && (
+              <Box sx={{ width: "110%", height: 4, bgcolor: "#d5c4ff", borderRadius: 2, mt: 0.5 }} />
+            )}
+          </Box>
+        );
+      })}
+    </>
+  );
+};
+
+//TODO: Move this to default global constants
+const DEFAULT_IMG =
+  "https://rukminim2.flixcart.com/fk-p-flap/108/108/image/eb75e5d9571bde1a.png?q=60";
+
+export default CategoryItems;

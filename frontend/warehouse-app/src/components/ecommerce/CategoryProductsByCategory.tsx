@@ -1,28 +1,46 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Box, Typography } from "@mui/material";
-import { EcommerceCategory, EcommerceProduct } from "@/types/ecommerce";
 import EcommerceProductsGrid from "./EcommerceProductsGrid";
-import { EcommerceProductsGridProps } from "@/types/ecommerce";
+import useCategoryStore from "@/store/categoryStore";
+import useProductStore from "@/store/productStore";
 
-interface CategoryProductsByCategoryProps extends Omit<EcommerceProductsGridProps, "products"> {
-  categories: EcommerceCategory[];
-  products: EcommerceProduct[];
-}
+export default function CategoryProductsByCategory() {
+  const getProducts = useProductStore(state=>state.getProducts);
+  const products = useProductStore(state=>state.products);
+  const isLoading = useProductStore(state=>state.isLoading);
+  const getCategories = useCategoryStore(state=>state.getCategories);
+  const categories = useCategoryStore(state=>state.categories);
+  const hasInitiatedLoadRef = useRef(false);
 
-export default function CategoryProductsByCategory({
-  categories,
-  products,
-  onProductClick,
-}: CategoryProductsByCategoryProps) {
+  useEffect(()=>{
+    if (hasInitiatedLoadRef.current) return;
+    
+    const currentCategories = useCategoryStore.getState().categories;
+    const currentProducts = useProductStore.getState().products;
+    const currentIsLoading = useProductStore.getState().isLoading;
+    
+    if (currentCategories.length === 0) {
+      getCategories();
+    }
+    if (currentProducts.length === 0 && !currentIsLoading) {
+      getProducts();
+    }
+    
+    hasInitiatedLoadRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+
+
   // Group products by category
   const productsByCategory = categories.map((category) => ({
     category,
     products: products.filter((product) => product.category.id === category.id),
   })).filter((group) => group.products.length > 0);
 
-  if (productsByCategory.length === 0) {
+  // Show nothing while loading or if no data
+  if (isLoading || productsByCategory.length === 0) {
     return null;
   }
 
@@ -35,7 +53,6 @@ export default function CategoryProductsByCategory({
           </Typography>
           <EcommerceProductsGrid
             products={categoryProducts}
-            onProductClick={onProductClick}
           />
         </Box>
       ))}
