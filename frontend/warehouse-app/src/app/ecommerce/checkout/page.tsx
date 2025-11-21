@@ -39,7 +39,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { useCart, useCartActions } from "../../../store/ecommerceStore";
+import { useCart, useCartActions, useEcommerceStore } from "../../../store/ecommerceStore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { ecommerceService } from "../../../services/ecommerce.service";
@@ -65,8 +65,7 @@ export default function CheckoutPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
-  const { cart, loading: cartLoading } = useCart();
-  const { clearCart, fetchCart } = useCartActions();
+  const { clearCart, fetchCart, removeFromCart } = useCartActions();
   const { user, loading: authLoading } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -147,19 +146,24 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const selectedItemsRaw = localStorage.getItem("checkoutSelectedItems");
+    
     if (selectedItemsRaw) {
       try {
         const selectedItems: CartItem[] = JSON.parse(selectedItemsRaw);
-        setCheckedOutItems(selectedItems);
-        localStorage.removeItem("checkoutSelectedItems");
+        if (Array.isArray(selectedItems) && selectedItems.length > 0) {
+            setCheckedOutItems(selectedItems);
+        } else {
+            setCheckedOutItems([]);
+        }
       } catch (err) {
+        console.error("Failed to parse checkout items", err);
         setCheckedOutItems([]);
       }
-    } else if (cart?.items?.length! > 0) {
-      setCheckedOutItems(cart?.items!);
+    } else {
+      setCheckedOutItems([]);
     }
     setItemsLoaded(true);
-  }, [cart]);
+  }, []);
 
   useEffect(() => {
     if (itemsLoaded && (!checkedOutItems || checkedOutItems.length === 0)) {
@@ -223,9 +227,11 @@ export default function CheckoutPage() {
     setProcessing(true);
     setError(null);
     try {
+      const productIds = checkedOutItems.map((item) => item.product.id);
       const orderData = {
         shipping_address: formData.shippingAddress,
         country_name: selectedCountry,
+        product_ids: productIds,
       }
       const initiateResponse = await ecommerceService.initiateOrder(orderData);
       const { orderId, orderNumber, paymentSessionId, totalAmount } = initiateResponse;
@@ -248,13 +254,24 @@ export default function CheckoutPage() {
         paymentConfig,
         async (paymentResult: any) => {
           try {
-            await ecommerceService.updatePaymentStatus(orderId, 'PAID');
-            clearCart();
+            await ecommerceService.updatePaymentStatus(orderId, paymentResult);
+
+            const paidProductIds = checkedOutItems.map(item => item.product.id);
+            const currentLocalCartItems = useEcommerceStore.getState().localCartItems;
+            const updatedLocalItems = currentLocalCartItems.filter(
+              item => !paidProductIds.includes(item.productId)
+            );
+            useEcommerceStore.setState({ localCartItems: updatedLocalItems });
+
+            localStorage.removeItem("checkoutSelectedItems");
+            fetchCart();
+
             toast.success("Order placed successfully!");
-            router.push(ROUTES.ORDER_HISTORY);
+            router.push(`/ecommerce/checkout/success?orderNumber=${orderNumber}`);
           } catch (error) {
             setError("Payment succeeded but order update failed. Contact support.");
             toast.error("Order update error");
+            router.replace(ROUTES.CART);
           }
         },
         (failData: any) => {

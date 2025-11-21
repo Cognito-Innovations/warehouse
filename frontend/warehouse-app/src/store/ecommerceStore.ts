@@ -419,8 +419,8 @@ export const useEcommerceStore = create<EcommerceStore>()(
         const token = getAuthToken();
         if (!token) return;
         try {
-          const data: AddToCartRequest = { product_id: productId, quantity, country };
-          const updatedCart = await ecommerceService.addToCart(data);
+          const data: AddToCartRequest = { product_id: productId, quantity };
+          const updatedCart = await ecommerceService.addToCart(data, country);
           get().setCart(updatedCart);
           if (updatedCart && Array.isArray(updatedCart.items)) {
             const localItems = get().localCartItems;

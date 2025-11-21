@@ -114,8 +114,12 @@ export const ecommerceService = {
     return response.data;
   },
 
-  async addToCart(data: AddToCartRequest): Promise<Cart> {
-    const response = await api.post("/ecommerce-cart/add", data);
+  async addToCart(data: AddToCartRequest, country?: string): Promise<Cart> {
+    let params: any = {};
+    if (country) {
+      params.country = country;
+    }
+    const response = await api.post("/ecommerce-cart/add", data, params);
     return response.data;
   },
 
@@ -172,8 +176,8 @@ export const ecommerceService = {
     return response.data;
   },
 
-  async updatePaymentStatus(id: string, paymentStatus: string): Promise<Order> {
-    const response = await api.put(`/ecommerce-orders/${id}/payment-status`, { paymentStatus });
+  async updatePaymentStatus(id: string, paymentResult: any): Promise<Order> {
+    const response = await api.put(`/ecommerce-orders/${id}/payment-status`, { paymentResult });
     return response.data;
   },
 

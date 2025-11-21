@@ -65,6 +65,20 @@ export class OrderService {
       throw new BadRequestException('Cart is empty');
     }
 
+    let itemsToProcess = cart.items;
+
+    if (createOrderDto.product_ids && createOrderDto.product_ids.length > 0) {
+      itemsToProcess = cart.items.filter((item) => 
+        createOrderDto.product_ids!.includes(item.product_id)
+      );
+
+      if (itemsToProcess.length === 0) {
+        throw new BadRequestException(
+          'None of the selected products exist in your active cart'
+        );
+      }
+    }
+
     const user = cart.user;
     if (!user) {
       throw new BadRequestException('User not found');
@@ -86,7 +100,7 @@ export class OrderService {
     let convertedGrossSubtotal = 0;
     let totalDiscountAmount = 0;
 
-    for (const item of cart.items) {
+    for (const item of itemsToProcess) {
       const itemPriceBase = Number(item.unit_price);
       const itemQuantity = Number(item.quantity);
 
@@ -151,7 +165,7 @@ export class OrderService {
     const savedOrder = await this.orderRepository.save(order);
 
     // Create order items from cart items
-    const orderItems = cart.items.map((cartItem) =>
+    const orderItems = itemsToProcess.map((cartItem) =>
       this.orderItemRepository.create({
         order_id: savedOrder.id,
         product_id: cartItem.product_id,
@@ -212,7 +226,8 @@ export class OrderService {
         customer_phone: user.phone_number, 
       },
       order_meta: {
-        return_url: `${process.env.FRONTEND_URL}/order`,
+        return_url: `${process.env.FRONTEND_URL}/ecommerce/checkout/success?orderNumber=${orderNumber}`
+        // return_url: `${process.env.FRONTEND_URL}/order`,
       },
       order_note: createOrderDto.notes || '',
     };
@@ -291,16 +306,33 @@ export class OrderService {
     order.payment_status = PaymentStatus.PAID;
     order.cashfree_payment_id = cashfreeData.cf_payment_id;
 
+    const productIds = order.items.map((item) => item.product_id);
     const cart = await this.cartRepository.findOne({
       where: { 
         user_id: order.user.id, 
         status: CartStatus.ACTIVE,
       },
+      relations: ['items'],
     });
 
-    if (cart) {
-      cart.status = CartStatus.CHECKED_OUT;
-      await this.cartRepository.save(cart);
+    if (cart && cart.items.length > 0) {
+      const itemsToRemove = cart.items.filter((item) => 
+        productIds.includes(item.product_id)
+      );
+
+      if (itemsToRemove.length > 0) {
+        await this.cartItemRepository.delete(itemsToRemove.map((i) => i.id));
+
+        const updatedCart = await this.cartRepository.findOne({
+          where: { id: cart.id },
+          relations: ['items'],
+        });
+
+        if (updatedCart && updatedCart.items.length === 0) {
+          updatedCart.status = CartStatus.CHECKED_OUT;
+          await this.cartRepository.save(updatedCart);
+        }
+      }
     }
 
     return this.orderRepository.save(order);

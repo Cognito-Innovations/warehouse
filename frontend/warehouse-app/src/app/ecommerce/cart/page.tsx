@@ -273,8 +273,10 @@ export default function CartPage() {
   }, [cart]);
 
   const handleCheckout = useCallback(() => {
+    // FILTER: Only get items that are in the selectedItems Set
     const selectedCartItems = cart?.items.filter((item) => selectedItems.has(item.id)) || [];   
 
+    // SAVE: Store only these specific items to Local Storage
     localStorage.setItem("checkoutSelectedItems", JSON.stringify(selectedCartItems));
 
     if (!userId) {
