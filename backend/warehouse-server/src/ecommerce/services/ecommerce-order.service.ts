@@ -15,7 +15,6 @@ import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { User } from 'src/users/user.entity';
 import { Currency } from 'src/currencies/currency.entity';
-import { CountryCode } from 'src/Countries/country.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
 //TODO: Generated temprorarily need to look requirment and change
@@ -34,7 +33,7 @@ export class OrderService {
     private readonly cartItemRepository: Repository<EcommerceCartItem>,
     @InjectRepository(Currency)
     private readonly currencyRepository: Repository<Currency>,
-    private readonly userPreferenceService: UserPreferencesService
+    private readonly userPreferenceService: UserPreferencesService,
   ) {
     const appId = process.env.CASHFREE_APP_ID;
     const secretKey = process.env.CASHFREE_SECRET_KEY;
@@ -48,7 +47,7 @@ export class OrderService {
       mode === 'production' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
       appId,
       secretKey,
-    )
+    );
   }
 
   async createOrder(
@@ -68,13 +67,13 @@ export class OrderService {
     let itemsToProcess = cart.items;
 
     if (createOrderDto.product_ids && createOrderDto.product_ids.length > 0) {
-      itemsToProcess = cart.items.filter((item) => 
-        createOrderDto.product_ids!.includes(item.product_id)
+      itemsToProcess = cart.items.filter((item) =>
+        createOrderDto.product_ids!.includes(item.product_id),
       );
 
       if (itemsToProcess.length === 0) {
         throw new BadRequestException(
-          'None of the selected products exist in your active cart'
+          'None of the selected products exist in your active cart',
         );
       }
     }
@@ -116,7 +115,7 @@ export class OrderService {
 
       convertedGrossSubtotal += lineTotal;
       totalDiscountAmount += lineDiscount;
-    };
+    }
 
     const convertedProductSubtotal =
       convertedGrossSubtotal - totalDiscountAmount;
@@ -152,7 +151,7 @@ export class OrderService {
       user_id: userId,
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
-      subtotal: roundedSubtotal, 
+      subtotal: roundedSubtotal,
       discount_percentage: cart.discount_percentage,
       shipping_amount: roundedShipping,
       tax_amount: roundedTax,
@@ -195,14 +194,14 @@ export class OrderService {
 
       console.error(
         'Cashfree error:',
-        cashfreeErr.response?.data || cashfreeErr.message
+        cashfreeErr.response?.data || cashfreeErr.message,
       );
 
       throw new BadRequestException(
         'Failed to initialize payment session: ' +
           (cashfreeErr.response?.data?.message ||
             cashfreeErr.message ||
-            'Unknown error')
+            'Unknown error'),
       );
     }
   }
@@ -223,7 +222,7 @@ export class OrderService {
         customer_id: user.id,
         customer_name: user.name,
         customer_email: user.email,
-        customer_phone: user.phone_number, 
+        customer_phone: user.phone_number,
       },
       order_meta: {
         return_url: `${process.env.FRONTEND_URL}/order`,
@@ -232,7 +231,7 @@ export class OrderService {
     };
 
     const cashfreeResponse =
-      await this.cashfree.PGCreateOrder(cashfreeOrderRequest); 
+      await this.cashfree.PGCreateOrder(cashfreeOrderRequest);
 
     const { payment_session_id, cf_order_id } = cashfreeResponse.data || {};
     savedOrder.cashfree_session_id = payment_session_id!;
@@ -310,16 +309,16 @@ export class OrderService {
 
     const productIds = order.items.map((item) => item.product_id);
     const cart = await this.cartRepository.findOne({
-      where: { 
-        user_id: order.user.id, 
+      where: {
+        user_id: order.user.id,
         status: CartStatus.ACTIVE,
       },
       relations: ['items'],
     });
 
     if (cart && cart.items.length > 0) {
-      const itemsToRemove = cart.items.filter((item) => 
-        productIds.includes(item.product_id)
+      const itemsToRemove = cart.items.filter((item) =>
+        productIds.includes(item.product_id),
       );
 
       if (itemsToRemove.length > 0) {
