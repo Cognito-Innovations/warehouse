@@ -125,6 +125,10 @@ export const useCartStore = create<CartStore>()(
         ]);
       },
 
+      //TODO P0: We need to break this API into 4-5 parts
+      // addProduct fn with quantity -> does 2 jobs -> takes Id & quantity -> pass to api -> this api checks if product created then update quanity else create product with 1 quanity and whole update in db and if fail show reject message then add whole data to cart
+      // same for removeProduct fn with quanity
+
       addProductToCart: async (
         productOrId: string | EcommerceProduct,
         quantity: number,

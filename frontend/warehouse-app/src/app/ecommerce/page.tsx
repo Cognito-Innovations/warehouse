@@ -20,8 +20,8 @@ export default function Ecommerce() {
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
     countryName: undefined,
-    city: '',
-    pincode: '',
+    city: "",
+    pincode: "",
   });
 
   const {
@@ -157,6 +157,7 @@ export default function Ecommerce() {
       />
     );
   }
+  
   return (
     <EcommercePageLayout {...layoutProps}>
       <CategorySection />

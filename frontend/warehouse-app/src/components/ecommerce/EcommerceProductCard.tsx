@@ -37,10 +37,11 @@ export default function EcommerceProductCard({
   );
   const cartQuantity = cartItem?.quantity || 0;
 
+  //TODO P0: move these to redux store
   const handleAddToCart = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (cartQuantity + 1 > product.stock_quantity) {
-      return;
+      return;
     }
     addProductToCart(product, 1);
   }, [cartQuantity, product.stock_quantity, product, addProductToCart]);
@@ -52,7 +53,7 @@ export default function EcommerceProductCard({
   }, [cartQuantity, product, addProductToCart]);
 
   const { raw: rawPrice, formatted: formattedOriginal } = parsePrice(product.price);
-  
+
   const discountPercent = parseFloat(String(product.discount_percentage || 0)) || 0;
   const discountedRaw = calculateDiscountedPrice(rawPrice, discountPercent);
   const formattedDiscounted = formatPrice(discountedRaw, parsePrice(product.price).currency);
@@ -84,7 +85,7 @@ export default function EcommerceProductCard({
         router.push(`${ROUTES.PRODUCT}/${product.id}`);
       }}
     >
-      <Box sx={{ position: "relative", height: 180, width: "100%", overflow: "hidden" }}>
+     <Box sx={{ position: "relative", height: 180, width: "100%", overflow: "hidden" }}>
         {!product.image_url ? (
           <Box
             sx={{
@@ -144,7 +145,7 @@ export default function EcommerceProductCard({
             }}
           />
         )}
-      </Box>
+     </Box>
 
       <CardContent sx={{ p: 2, pb: 1 }}>
         <Box sx={{display: "flex", alignItems: "flex-start", gap: 0.5, justifyContent: "space-between"}}>
@@ -241,10 +242,10 @@ export default function EcommerceProductCard({
                     size="small"
                     onClick={handleDecreaseQuantity}
                     sx={{
-                      width: 40,
-                      height: 32,
-                      p: 0,
-                      position: "relative",
+                      width: 40,
+                      height: 32,
+                      p: 0,
+                      position: "relative",
                     }}
                   >
                     <Remove sx={{ fontSize: 16 }} />

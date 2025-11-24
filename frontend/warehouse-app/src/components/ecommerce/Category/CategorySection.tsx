@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useRef } from "react";
-
 import { Box, IconButton } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+
 
 import CategoryItems from "./CategoryItems";
 import CategoryStaticAllCard from "./CategoryStaticAllCard";

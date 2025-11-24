@@ -213,35 +213,13 @@ export default function ProductDetailInfoSection({
           >
             Selected Quantity:
           </Typography>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-            <Button
-              variant="outlined"
-              sx={{
-                borderRadius: 2,
-                px: 3,
-                py: 1,
-                borderWidth: 1,
-                borderColor: "#e91e63",
-                color: "#e91e63",
-                fontWeight: 500,
-                fontSize: "0.9rem",
-                textTransform: "none",
-                bgcolor: "transparent",
-                "&:hover": {
-                  borderWidth: 1,
-                  borderColor: "#e91e63",
-                  bgcolor: "transparent",
-                },
-              }}
-            >
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+            <Typography variant="subtitle1" fontWeight={600}>
               {product.unit_value} {measurementLabel}
-            </Button>
-            <Typography
-              variant="body2"
-              color="text.primary"
-              sx={{ fontWeight: 400 }}
-            >
-              ({formattedPricePerUnit}/{measurementLabel})
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary">
+              • {formattedPricePerUnit}/{measurementLabel}
             </Typography>
           </Stack>
         </Box>
