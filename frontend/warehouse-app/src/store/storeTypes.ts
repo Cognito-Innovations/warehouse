@@ -36,6 +36,6 @@ export type CartStore = {
   getItemQuantity: (productId: string) => number;
   syncCart: (country?: string) => Promise<void>;
   getCart: (country?: string) => Promise<any[] | undefined>;
-  addProductToCart: (product: string | EcommerceProduct, quantity: number, country?: string) => Promise<void>;
-  removeProductFromCart: (productId: string, country?: string) => Promise<void>;
+  addProductToCart: (product: EcommerceProduct, quantity: number, country?: string) => Promise<void>;
+  removeProductFromCart: (productId: string, quanity: number, country?: string) => Promise<void>;
 }

@@ -226,6 +226,7 @@ export default function EcommerceProductCard({
           {!isOutOfStock && (
             <>
               {cartQuantity > 0 ? (
+                // TODO P0: Move this below code to seperate component
                 <Box
                   sx={{
                     display: "flex",

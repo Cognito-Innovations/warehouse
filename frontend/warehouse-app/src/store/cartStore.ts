@@ -128,70 +128,50 @@ export const useCartStore = create<CartStore>()(
       //TODO P0: We need to break this API into 4-5 parts
       // addProduct fn with quantity -> does 2 jobs -> takes Id & quantity -> pass to api -> this api checks if product created then update quanity else create product with 1 quanity and whole update in db and if fail show reject message then add whole data to cart
       // same for removeProduct fn with quanity
-
       addProductToCart: async (
-        productOrId: string | EcommerceProduct,
+        product: EcommerceProduct,
         quantity: number,
-        country?: string
+        country?: string,
       ) => {
         const token = getAuthToken();
-        const state = get();
+        const { cartProducts } = get();
 
-        const isProductObject = typeof productOrId !== 'string';
-        const product_id = isProductObject ? productOrId.id : productOrId;
-        const productData = isProductObject ? productOrId : undefined;
-
-        const updatedCart = [...state.cartProducts];
-        const existing = updatedCart.find(
-          (item: LocalCartItem) => item.product_id === product_id
-        );
-
-        if (existing) {
-          existing.quantity += quantity;
-
-          if (productData) {
-            existing.product = productData;
-          }
-
-          if (existing.quantity <= 0) {
-            const index = updatedCart.indexOf(existing);
-            updatedCart.splice(index, 1);
-            set({ cartProducts: updatedCart });
-
-            if (token) {
-              ecommerceService
-                .removeFromCart(product_id, country)
-                .catch(() => get().syncCart(country));
-            }
-            return;
-          }
-        } else {
-          if (quantity > 0) {
-            updatedCart.push({
-              product_id,
-              quantity,
-              country,
-              product: productData
-            } as LocalCartItem);
-          }
+        if(quantity <= 0){
+          console.warn("Invalid quantity, unable perform add to cart");
+          return;
         }
 
-        set({ cartProducts: updatedCart });
+        if(!product?.id){
+          console.warn("Product doesnt have id, unable perform on add to cart");
+          return;
+        }
+
+        const existing = cartProducts.find(
+          (item: LocalCartItem) => item.product_id === product.id
+        );
+
+        let updatedCartProducts: LocalCartItem[];
+        if (existing) {
+          existing.quantity += quantity;
+          updatedCartProducts = [...cartProducts];
+        } else {
+          updatedCartProducts = [...cartProducts, {
+            product_id: product.id,
+            quantity,
+            product
+          } as any];
+        }
+
+        set({ cartProducts: updatedCartProducts });
 
         if (!token) return;
 
-        if (quantity > 0) {
-          ecommerceService
-            .addToCart({ product_id, quantity }, country)
-            .catch(() => get().syncCart(country));
-        } else {
-          ecommerceService
-            .removeFromCart(product_id, country)
-            .catch(() => get().syncCart(country));
-        }
+        ecommerceService
+          .addToCart({ product_id: product.id, quantity }, country)
+          .catch(() => get().syncCart(country));
       },
 
-      removeProductFromCart: async (product_id: string, country?: string) => {
+      removeProductFromCart: async (product_id: string, quantity: number, country?: string) => {
         const token = getAuthToken();
 
         const updatedCart = get().cartProducts.filter(
@@ -200,12 +180,27 @@ export const useCartStore = create<CartStore>()(
 
         set({ cartProducts: updatedCart });
 
+          if (token) {
+                ecommerceService
+                  .removeFromCart(product_id, country)
+                  .catch(() => get().syncCart(country));
+              }
+
         if (!token) return;
+
+         if (quantity <= 0) {
+              // const index = updatedCart.indexOf(quantity);
+              // updatedCart.splice(index, 1);
+              // set({ cartProducts: updatedCart });
+              // return;
+            }
 
         ecommerceService
           .removeFromCart(product_id, country)
           .catch(() => get().syncCart(country));
       },
+
+
     }),
     {
       name: "cart-storage",

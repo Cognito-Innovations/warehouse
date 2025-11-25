@@ -10,6 +10,8 @@ export const getAuthToken = (): string | null => {
   if (typeof window === "undefined") {
     return null;
   }
+
+  //TODO P0: move this from localStorage to Cookies
   return localStorage.getItem("auth-token");
 };
 
