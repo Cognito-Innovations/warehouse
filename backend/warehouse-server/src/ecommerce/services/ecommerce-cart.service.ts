@@ -10,7 +10,6 @@ import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
-//TODO: Generated temprorarily need to look requirment and change
 @Injectable()
 export class CartService {
   constructor(
@@ -23,24 +22,31 @@ export class CartService {
     private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
-  async getOrCreateCart(userId: string): Promise<EcommerceCart> {
-    let cart = await this.cartRepository.findOne({
+  private async findActiveCart(userId: string): Promise<EcommerceCart | null> {
+    return await this.cartRepository.findOne({
       where: { user_id: userId, status: CartStatus.ACTIVE },
-      relations: ['items', 'items.product'],
+      relations: ['items', 'items.product', 'user'],
+      select: {
+        user: {
+          id: true,
+          name: true,
+          email: true,
+          suite_no: true,
+        }
+      }
+    });
+  }
+
+  async createCart(userId: string): Promise<EcommerceCart> {
+    const cart = this.cartRepository.create({
+      user_id: userId,
+      status: CartStatus.ACTIVE,
+      total_amount: 0,
+      discount_percentage: 0,
+      final_amount: 0,
     });
 
-    if (!cart) {
-      cart = this.cartRepository.create({
-        user_id: userId,
-        status: CartStatus.ACTIVE,
-        total_amount: 0,
-        discount_percentage: 0,
-        final_amount: 0,
-      });
-      cart = await this.cartRepository.save(cart);
-    }
-
-    return cart;
+    return await this.cartRepository.save(cart);
   }
 
   async addToCart(
@@ -51,7 +57,10 @@ export class CartService {
     const { product_id, quantity } = addToCartDto;
 
     // Get or create cart
-    const cart = await this.getOrCreateCart(userId);
+    let cart = await this.findActiveCart(userId);
+    if (!cart) {
+      cart = await this.createCart(userId);
+    }
 
     // Check if product exists
     const product = await this.productRepository.findOne({
@@ -111,7 +120,10 @@ export class CartService {
     updateCartItemDto: UpdateCartItemDto,
     country?: string,
   ): Promise<any> {
-    const cart = await this.getOrCreateCart(userId);
+    let cart = await this.findActiveCart(userId);
+    if (!cart) {
+      cart = await this.createCart(userId);
+    }
 
     const cartItem = await this.cartItemRepository.findOne({
       where: { id: itemId, cart_id: cart.id },
@@ -146,7 +158,10 @@ export class CartService {
     itemId: string,
     country?: string,
   ): Promise<any> {
-    const cart = await this.getOrCreateCart(userId);
+    let cart = await this.findActiveCart(userId);
+    if (!cart) {
+      cart = await this.createCart(userId);
+    }
     const cartItem = await this.cartItemRepository.findOne({
       where: { id: itemId, cart_id: cart.id },
     });
@@ -165,13 +180,19 @@ export class CartService {
   }
 
   async clearCart(userId: string): Promise<void> {
-    const cart = await this.getOrCreateCart(userId);
+    let cart = await this.findActiveCart(userId);
+    if (!cart) {
+      cart = await this.createCart(userId);
+    }
     await this.cartItemRepository.delete({ cart_id: cart.id });
     await this.recalculateCartTotals(cart.id);
   }
 
   async getCart(userId: string, country?: string): Promise<any> {
-    const cart = await this.getOrCreateCart(userId);
+    let cart = await this.findActiveCart(userId);
+    if (!cart) {
+      cart = await this.createCart(userId);
+    }
     const selectedCountry = country || 'United States of America';
     return this.applyCurrencyConversion(cart, selectedCountry);
   }

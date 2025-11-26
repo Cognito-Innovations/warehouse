@@ -125,11 +125,14 @@ export const useCartStore = create<CartStore>()(
         ]);
       },
 
-      addProductToCart: async (
+      addOrIncreaseQty: async (
         productOrId: string | EcommerceProduct,
         quantity: number,
         country?: string
       ) => {
+        // Add or Increase the quantity of product to cart
+        if (quantity <= 0) return;
+
         const token = getAuthToken();
         const state = get();
 
@@ -142,52 +145,79 @@ export const useCartStore = create<CartStore>()(
           (item: LocalCartItem) => item.product_id === product_id
         );
 
+        let newQuantity: number;
         if (existing) {
           existing.quantity += quantity;
+          newQuantity = existing.quantity;
 
           if (productData) {
             existing.product = productData;
           }
-
-          if (existing.quantity <= 0) {
-            const index = updatedCart.indexOf(existing);
-            updatedCart.splice(index, 1);
-            set({ cartProducts: updatedCart });
-
-            if (token) {
-              ecommerceService
-                .removeFromCart(product_id, country)
-                .catch(() => get().syncCart(country));
-            }
-            return;
-          }
         } else {
-          if (quantity > 0) {
-            updatedCart.push({
-              product_id,
-              quantity,
-              country,
-              product: productData
-            } as LocalCartItem);
-          }
+          newQuantity = quantity;
+          updatedCart.push({
+            product_id,
+            quantity: newQuantity,
+            country,
+            product: productData
+          } as LocalCartItem);
         }
 
         set({ cartProducts: updatedCart });
 
         if (!token) return;
 
-        if (quantity > 0) {
-          ecommerceService
-            .addToCart({ product_id, quantity }, country)
-            .catch(() => get().syncCart(country));
-        } else {
-          ecommerceService
-            .removeFromCart(product_id, country)
-            .catch(() => get().syncCart(country));
+        ecommerceService
+          .addToCart({ product_id, quantity: newQuantity }, country)
+          .catch(() => get().syncCart(country));
+      },
+
+      decreaseProductQty: async (
+        productOrId: string | EcommerceProduct,
+        quantity: number,
+        country?: string
+      ) => {
+        // Decrease the quantity of the product from the cart
+        if (quantity <= 0) return;
+        
+        const token = getAuthToken();
+        const state = get();
+
+        const isProductObject = typeof productOrId !== 'string';
+        const product_id = isProductObject ? productOrId.id : productOrId;
+
+        const updatedCart = [...state.cartProducts];
+        const existingIndex = updatedCart.findIndex(item => item.product_id === product_id);
+
+        if (existingIndex === -1) return;
+
+        const existing = updatedCart[existingIndex];
+        const newQuantity = existing.quantity - quantity;
+
+        if (newQuantity <= 0) {
+          updatedCart.splice(existingIndex, 1);
+          set({ cartProducts: updatedCart });
+
+          if (token) {
+            ecommerceService
+              .removeFromCart(product_id, country)
+              .catch(() => get().syncCart(country));
+          }
+          return;
         }
+
+        existing.quantity = newQuantity;
+        set({ cartProducts: updatedCart });
+
+        if (!token) return;
+
+        ecommerceService
+          .addToCart({ product_id, quantity: newQuantity }, country)
+          .catch(() => get().syncCart(country));
       },
 
       removeProductFromCart: async (product_id: string, country?: string) => {
+        // Completely remove product from the cart
         const token = getAuthToken();
 
         const updatedCart = get().cartProducts.filter(

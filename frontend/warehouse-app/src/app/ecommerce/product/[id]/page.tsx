@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box, Container, Alert } from "@mui/material";
 import { useParams, useRouter } from "next/navigation";
 
@@ -24,7 +24,8 @@ export default function ProductDetailPage() {
   const { products } = useProducts();
   const { fetchProducts } = useProductActions();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(true);
   const [errorState, setErrorState] = useState<string | null>(null);
   const [currentProduct, setCurrentProduct] = useState<EcommerceProduct | null>(null);
  
@@ -36,18 +37,36 @@ export default function ProductDetailPage() {
   });
   const countryName = locationData.location.countryName;
 
-  const fetchProductById = useCallback(async (id: string, code?: string) => {
-    setLoading(true);
+  const fetchProduct = useCallback(async (id: string, code?: string, isFullPageLoad = false) => {
+    if (isFullPageLoad) setLoading(true);
     setErrorState(null);
     try {
       const product = await ecommerceService.getProduct(id, code);
       setCurrentProduct(product);
     } catch (err: any) {
-      setErrorState(err.message || ecommerceData.productDetail.productNotFound);
+      if (isFullPageLoad) {
+        setErrorState(err.message || ecommerceData.productDetail.productNotFound);
+      } else {
+        console.error("Failed to refresh product details:", err);
+      }
     } finally {
-      setLoading(false);
+      if (isFullPageLoad) setLoading(false);
+      setDetailsLoading(false);
     }
   }, []);
+
+  const productId = useMemo(() => {
+    return params.id && typeof params.id === "string" ? params.id : null;
+  }, [params.id]);
+
+  const initialProduct = useMemo(() => {
+    if (productId && products.length > 0) {
+      return products.find((p: EcommerceProduct) => p.id === productId) || null;
+    }
+    return null;
+  }, [productId, products]);
+
+  const displayProduct = useMemo(() => currentProduct || initialProduct, [currentProduct, initialProduct]);
 
   useEffect(() => {
     if (countryName && products.length === 0) {
@@ -57,10 +76,25 @@ export default function ProductDetailPage() {
 
   // Handle product loading when params.id changes
   useEffect(() => {
-    if (params.id && typeof params.id === "string" && countryName) {
-      fetchProductById(params.id, countryName);
+    if (!productId || !countryName) {
+      setDetailsLoading(false);
+      setLoading(false);
+      return;
     }
-  }, [params.id, countryName, fetchProductById]);
+
+    if (currentProduct && currentProduct.id === productId) {
+      setDetailsLoading(false);
+      return;
+    }
+
+    setDetailsLoading(true);
+
+    if (initialProduct) {
+      fetchProduct(productId, countryName, false);
+    } else {
+      fetchProduct(productId, countryName, true);
+    }
+  }, [productId, countryName, initialProduct, currentProduct, fetchProduct]);
 
   const getPreviewProducts = useCallback((product: EcommerceProduct | null) => {
     if (!product || !product.category) return [];
@@ -95,7 +129,7 @@ export default function ProductDetailPage() {
     return [];
   }, [products]);
 
-  const previewProducts = getPreviewProducts(currentProduct);
+  const previewProducts = getPreviewProducts(displayProduct);
 
   const handleProductSelect = (selectedProduct: EcommerceProduct) => {
     setCurrentProduct(selectedProduct);
@@ -107,10 +141,10 @@ export default function ProductDetailPage() {
 
 
   const handleRefresh = () => {
-    setLoading(true);
-    setErrorState(null);
-    if (params.id && typeof params.id === "string" && countryName !== undefined) {
-      fetchProductById(params.id, countryName);
+    setDetailsLoading(true);
+    if (productId && countryName !== undefined) {
+      const hasInitialData = products.some((p: EcommerceProduct) => p.id === productId);
+      fetchProduct(productId, countryName, !hasInitialData);
     }
   };
 
@@ -121,29 +155,29 @@ export default function ProductDetailPage() {
       errorState.includes("ECONNREFUSED") ||
       errorState.includes("timeout"));
 
-  if (loading) {
-    return <ProductDetailLoadingState />;
+  if (!displayProduct) {
+    if (errorState) {
+      if (isNetworkError) {
+        return (
+          <EcommerceSkeletonLoader
+            networkError={ecommerceData.messages.networkError}
+            refreshButtonLabel={ecommerceData.messages.refreshButton}
+            onRefresh={handleRefresh}
+          />
+        );
+      } else {
+        return (
+          <Container maxWidth="lg" sx={{ py: 4 }}>
+            <Alert severity="error">{errorState}</Alert>
+          </Container>
+        );
+      }
+    } else {
+      return <ProductDetailLoadingState />;
+    }
   }
 
-  if (errorState && isNetworkError) {
-    return (
-      <EcommerceSkeletonLoader
-        networkError={ecommerceData.messages.networkError}
-        refreshButtonLabel={ecommerceData.messages.refreshButton}
-        onRefresh={handleRefresh}
-      />
-    );
-  }
-
-  if (errorState || !currentProduct) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">{errorState || ecommerceData.productDetail.productNotFound}</Alert>
-      </Container>
-    );
-  }
-
- const relatedProducts = getRelatedProducts(currentProduct);
+  const relatedProducts = getRelatedProducts(displayProduct);
 
   return (
     <Box sx={{ bgcolor: ecommerceData.ui.colors.productDetailBackground, minHeight: "100vh" }}>
@@ -152,13 +186,14 @@ export default function ProductDetailPage() {
       <Container maxWidth="lg" sx={{ py: 2 }}>
         <Box sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, gap: 3 }}>
           <ProductDetailImageSection
-            product={currentProduct}
+            product={displayProduct}
             previewProducts={previewProducts}
             onProductSelect={handleProductSelect}
           />
 
           <ProductDetailInfoSection
-            product={currentProduct}
+            product={displayProduct}
+            detailsLoading={detailsLoading}
           />
         </Box>
       </Container>

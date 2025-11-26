@@ -33,10 +33,6 @@ export class UpdateCategoryDto {
   @Min(0)
   discount_percentage?: number;
 
-  @IsUUID()
-  @IsOptional()
-  cargo_option_id?: string;
-
   @IsString()
   @IsOptional()
   description?: string;

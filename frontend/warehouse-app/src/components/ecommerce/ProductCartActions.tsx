@@ -27,7 +27,7 @@ export default function ProductCartActions({
     currency,
 }: ProductCartActionsProps) {
     const router = useRouter();
-    const { addProductToCart } = useCartStore();
+    const { addOrIncreaseQty, decreaseProductQty } = useCartStore();
     const getItemQuantity = useCartStore(state => state.getItemQuantity);
     const locationData = useEffectiveUserLocation({
       countryCode: undefined,
@@ -48,9 +48,9 @@ export default function ProductCartActions({
             if (currentCartQuantity + 1 > stockQuantity) {
                 return;
             }
-            await addProductToCart(product, 1, selectedCountry);
+            await addOrIncreaseQty(product, 1, selectedCountry);
         }
-    }, [product, selectedCountry, getItemQuantity, stockQuantity, addProductToCart]);
+    }, [product, selectedCountry, getItemQuantity, stockQuantity, addOrIncreaseQty]);
 
     const handleIncrement = useCallback(async () => {
         if (product && selectedCountry) {
@@ -58,9 +58,9 @@ export default function ProductCartActions({
             if (currentCartQuantity + 1 > stockQuantity) {
                 return;
             }
-            await addProductToCart(product, 1, selectedCountry);
+            await addOrIncreaseQty(product, 1, selectedCountry);
         }
-    }, [product, selectedCountry, getItemQuantity, stockQuantity, addProductToCart]);
+    }, [product, selectedCountry, getItemQuantity, stockQuantity, addOrIncreaseQty]);
 
     const handleDecrement = useCallback(async () => {
         if (product && selectedCountry) {
@@ -68,9 +68,9 @@ export default function ProductCartActions({
             if (currentCartQuantity <= 0) {
                 return;
             }
-            await addProductToCart(product, -1, selectedCountry);
+            await decreaseProductQty(product, 1, selectedCountry);
         }
-    }, [product, selectedCountry, getItemQuantity, addProductToCart]);
+    }, [product, selectedCountry, getItemQuantity, decreaseProductQty]);
 
     const handleGoToCart = useCallback(() => {
         router.push(ROUTES.CART);

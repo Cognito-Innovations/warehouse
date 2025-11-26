@@ -144,7 +144,7 @@ export class OrderService {
     const roundedTax = Number(taxAmount.toFixed(2));
 
     // Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
 
     // Create order
     const order = this.orderRepository.create({
@@ -314,13 +314,14 @@ export class OrderService {
         user_id: order.user.id, 
         status: CartStatus.ACTIVE,
       },
-      relations: ['items'],
+      relations: ['items', 'items.product'],
     });
 
     if (cart && cart.items.length > 0) {
-      const itemsToRemove = cart.items.filter((item) => 
-        productIds.includes(item.product_id)
-      );
+      const itemsToRemove = cart.items.filter((item) => {
+        const itemId = item.product_id || item.product?.id;
+        return productIds.includes(itemId);
+      });
 
       if (itemsToRemove.length > 0) {
         await this.cartItemRepository.delete(itemsToRemove.map((i) => i.id));

@@ -14,10 +14,12 @@ import { EcommerceProduct } from "@/types/ecommerce";
 
 interface ProductDetailInfoSectionProps {
   product: EcommerceProduct;
+  detailsLoading?: boolean;
 }
 
 export default function ProductDetailInfoSection({
   product,
+  detailsLoading = false,
 }: ProductDetailInfoSectionProps) {
   const [offersExpanded, setOffersExpanded] = React.useState(false);
 
@@ -198,7 +200,7 @@ export default function ProductDetailInfoSection({
           )}
         </Box>
 
-        <ProductDetailTabs product={product} />
+        <ProductDetailTabs product={product} loading={detailsLoading} />
         
         <Divider sx={{ my: 3 }} />
 

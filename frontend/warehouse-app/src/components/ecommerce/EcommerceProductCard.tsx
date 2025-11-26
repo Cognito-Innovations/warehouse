@@ -29,7 +29,8 @@ export default function EcommerceProductCard({
   const theme = useTheme();
   const {handleProductSelect} = useProductStore();
   const cartItems = useCartStore((state) => state.cartProducts);
-  const addProductToCart = useCartStore((state) => state.addProductToCart);
+  const addOrIncreaseQty = useCartStore((state) => state.addOrIncreaseQty);
+  const decreaseProductQty = useCartStore((state) => state.decreaseProductQty);
 
   const cartItem = useMemo(() => 
     cartItems.find((item) => item.product_id === product.id),
@@ -42,14 +43,14 @@ export default function EcommerceProductCard({
     if (cartQuantity + 1 > product.stock_quantity) {
       return;
     }
-    addProductToCart(product, 1);
-  }, [cartQuantity, product.stock_quantity, product, addProductToCart]);
+    addOrIncreaseQty(product, 1);
+  }, [cartQuantity, product.stock_quantity, product, addOrIncreaseQty]);
 
   const handleDecreaseQuantity = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (cartQuantity <= 0) return;
-    addProductToCart(product, -1);
-  }, [cartQuantity, product, addProductToCart]);
+    decreaseProductQty(product, 1);
+  }, [cartQuantity, product, decreaseProductQty]);
 
   const { raw: rawPrice, formatted: formattedOriginal } = parsePrice(product.price);
   

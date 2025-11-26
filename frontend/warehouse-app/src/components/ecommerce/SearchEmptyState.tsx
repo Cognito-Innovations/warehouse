@@ -2,11 +2,10 @@
 import React from "react";
 import { Box, Alert, Button } from "@mui/material";
 
-import { useProductActions, useProducts } from "@/store/ecommerceStore";
+import useProductStore from "@/store/productStore";
 
 export default function SearchEmptyState() {
-  const { searchQuery } = useProducts();
-  const { setSearchQuery } = useProductActions();
+  const { searchQuery, setSearchQuery } = useProductStore();
 
   return (
     <Box sx={{ bgcolor: "white", px: 2, py: 4, textAlign: "center" }}>

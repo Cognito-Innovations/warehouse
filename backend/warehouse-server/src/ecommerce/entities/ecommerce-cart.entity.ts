@@ -24,7 +24,7 @@ export class EcommerceCart extends BaseTimestampEntity {
   @Column()
   user_id: string;
 
-  @ManyToOne(() => User, { eager: true })
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
 

@@ -34,7 +34,8 @@ export default function CartPage() {
   const {
     cartProducts,
     getCart,
-    addProductToCart,
+    addOrIncreaseQty,
+    decreaseProductQty,
     removeProductFromCart,
     checkoutProducts,
     toggleCartItemSelection,
@@ -186,11 +187,13 @@ export default function CartPage() {
     } else {
       const currentQty = currentItem.quantity;
       const delta = newQuantity - currentQty;
-      if (delta !== 0) {
-        await addProductToCart(currentItem.product || targetId!, delta, selectedCountry);
+      if (delta > 0) {
+        await addOrIncreaseQty(currentItem.product || targetId!, delta, selectedCountry);
+      } else if (delta < 0) {
+        await decreaseProductQty(currentItem.product || targetId!, -delta, selectedCountry);
       }
     }
-  }, [cartProducts, addProductToCart, removeProductFromCart, selectedCountry]);
+  }, [cartProducts, addOrIncreaseQty, decreaseProductQty, removeProductFromCart, selectedCountry]);
 
   const handleRemoveItem = useCallback(async (identifier: string) => {
       const item = cartProducts.find(i => i.id === identifier || i.product_id === identifier);
@@ -210,7 +213,7 @@ export default function CartPage() {
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const allIds = cartProducts
-        .map(i => i.id)
+        .map(i => i.product_id)
         .filter((id): id is string => !!id);
 
       const unselectedIds = allIds.filter(id => !checkoutProducts.includes(id));
@@ -279,7 +282,7 @@ export default function CartPage() {
   const getCurrencySymbol = () => {
     if (validItems.length > 0) {
       const firstSelected = validItems.find((item) =>
-        checkoutProducts.includes(item.product_id!) || checkoutProducts.includes(item.id!)
+        checkoutProducts.includes(item.product_id!)
       );
       
       if (firstSelected) {

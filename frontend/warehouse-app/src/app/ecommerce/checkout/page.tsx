@@ -93,7 +93,6 @@ export default function CheckoutPage() {
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        localStorage.removeItem("checkoutSelectedItems");
         let parsedItems: CartItem[] = [];
         if (Array.isArray(parsed) && parsed.length > 0) {
           if (typeof parsed[0] === 'string') {
@@ -134,7 +133,7 @@ export default function CheckoutPage() {
     }
   }, [checkedOutItems, router, itemsLoaded]);
 
-  const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.id!)), [checkedOutItems]);
+  const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
   const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, selectedCountry), [checkedOutItems, selectedIds, selectedCountry]);
   const countryName = selectedCountry || '';
   const currencyInfo = getCurrencyForCountry(countryName);
@@ -233,13 +232,12 @@ export default function CheckoutPage() {
           try {
             await ecommerceService.updatePaymentStatus(orderId, paymentResult);
 
-            const paidProductIds = checkedOutItems.map(item => item.product.id);
-            paidProductIds.forEach((pid) => {
-              const cartItem = cartProducts.find(cp => cp.product_id === pid);
-              if (cartItem) {
-                removeProductFromCart(pid, selectedCountry);
-              }
-            });
+            const paidProductIds = checkedOutItems.map(item => item.product_id);
+
+            const currentCart = useCartStore.getState().cartProducts;
+            const paidProductIdsSet = new Set(paidProductIds);
+            const updatedCart = currentCart.filter((item) => !paidProductIdsSet.has(item.product_id));
+            useCartStore.setState({ cartProducts: updatedCart });
 
             clearCheckoutProducts();
 
@@ -505,7 +503,7 @@ export default function CheckoutPage() {
                     const pricing = getCartItemPricingSummary(item);
                     return (
                       <Box
-                        key={item.id}
+                        key={item.product_id}
                         sx={{
                           display: "flex",
                           justifyContent: "space-between",
