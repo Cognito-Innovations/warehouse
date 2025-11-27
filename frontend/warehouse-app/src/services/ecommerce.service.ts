@@ -26,16 +26,9 @@ attachClientIdentifierInterceptors(api);
 // Add auth token to requests
 api.interceptors.request.use(async (config) => {
   const session = await getSession();
-  const token = session?.access_token || localStorage.getItem("auth-token");
+  const token = session?.access_token;
   if (token) {
-    if (config.headers && typeof (config.headers as any).set === "function") {
-      (config.headers as any).set("Authorization", `Bearer ${token}`);
-    } else {
-      config.headers = {
-        ...(config.headers || {}),
-        Authorization: `Bearer ${token}`,
-      };
-    }
+    config.headers.set("Authorization", `Bearer ${token}`);
   }
   return config;
 });

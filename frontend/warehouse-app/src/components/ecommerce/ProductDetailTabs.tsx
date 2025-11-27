@@ -81,7 +81,6 @@ export default function ProductDetailTabs({ product, loading = false }: ProductD
           <Tab label="Description" />
           <Tab label="Specifications" />
           <Tab label="Care Guide" />
-          <Tab label="Reviews" />
         </Tabs>
       </Box>
       <Box sx={{ px: { xs: 2, md: 4 }, py: 2 }}>

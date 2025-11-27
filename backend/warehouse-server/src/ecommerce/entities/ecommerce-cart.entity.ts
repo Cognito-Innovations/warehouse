@@ -35,15 +35,6 @@ export class EcommerceCart extends BaseTimestampEntity {
   })
   status: CartStatus;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  total_amount: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  discount_percentage: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  final_amount: number;
-
   @OneToMany(() => EcommerceCartItem, (item: EcommerceCartItem) => item.cart, {
     cascade: true,
   })

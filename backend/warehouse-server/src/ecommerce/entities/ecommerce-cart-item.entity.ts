@@ -31,13 +31,4 @@ export class EcommerceCartItem extends BaseTimestampEntity {
 
   @Column()
   quantity: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  unit_price: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  total_price: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  discount_percentage: number;
 }

@@ -74,7 +74,7 @@ export class ProductsService {
       products.map(async (product) => {
         const basePrice = Number(product.price);
 
-        const convertedPrice =
+        const convertedPriceObj =
           await this.userPreferencesService.getFormattedConvertedPriceByCountry(
             selectedCountry,
             basePrice
@@ -82,7 +82,7 @@ export class ProductsService {
 
         return {
           ...product,
-          price: convertedPrice,
+          price: convertedPriceObj,
         };
       }),
     );
@@ -100,13 +100,15 @@ export class ProductsService {
 
     const selectedCountry = country || 'United States of America';
 
+    const convertedPriceObj =
+      await this.userPreferencesService.getFormattedConvertedPriceByCountry(
+        selectedCountry,
+        Number(product.price),
+      );
+
     return {
       ...product,
-      price:
-        await this.userPreferencesService.getFormattedConvertedPriceByCountry(
-          selectedCountry,
-          Number(product.price),
-        ),
+      price: convertedPriceObj
     };
   }
 

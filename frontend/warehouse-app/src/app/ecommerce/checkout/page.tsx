@@ -61,7 +61,7 @@ interface UserAddress {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { checkoutProducts, cartProducts, removeProductFromCart, clearCheckoutProducts } = useCartStore();
+  const { checkoutProducts, cartProducts, clearCheckoutProducts } = useCartStore();
   const toggleCartItemSelection = useCartStore.getState().toggleCartItemSelection;
   const { user, loading: authLoading } = useAuth();
 
@@ -244,7 +244,6 @@ export default function CheckoutPage() {
             localStorage.removeItem("checkoutSelectedItems");
             
             toast.success("Order placed successfully!");
-            router.push(ROUTES.ORDER_HISTORY);
           } catch (error) {
             setError("Payment succeeded but order update failed. Contact support.");
             toast.error("Order update error");

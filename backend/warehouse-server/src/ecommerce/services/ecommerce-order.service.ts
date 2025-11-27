@@ -15,8 +15,10 @@ import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { User } from 'src/users/user.entity';
 import { Currency } from 'src/currencies/currency.entity';
-import { CountryCode } from 'src/Countries/country.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+
+const roundCurrency = (value: number): number => 
+  Math.round((value + Number.EPSILON) * 100) / 100;
 
 //TODO: Generated temprorarily need to look requirment and change
 @Injectable()
@@ -97,51 +99,50 @@ export class OrderService {
 
     const orderCurrency = currencyResponse.currency_code;
 
-    let convertedGrossSubtotal = 0;
-    let totalDiscountAmount = 0;
+    let subtotal = 0;
+    let totalBaseDiscount = 0;
 
     for (const item of itemsToProcess) {
-      const itemPriceBase = Number(item.unit_price);
-      const itemQuantity = Number(item.quantity);
+      const basePrice = Number(item.product.price);
+      const baseDiscPerc = Number(item.product.discount_percentage || 0);
+      const baseDiscountAmountPerUnit = (basePrice * baseDiscPerc) / 100;
+      const baseUnitPrice = basePrice - baseDiscountAmountPerUnit;
+      const baseDiscountAmount = baseDiscountAmountPerUnit * item.quantity;
 
-      const convertedUnitPrice =
+      const rawConvertedUnitPrice =
         await this.userPreferenceService.getConvertedPriceByCountry(
           countryName,
-          itemPriceBase,
+          baseUnitPrice,
         );
 
-      const lineTotal = convertedUnitPrice * itemQuantity;
-      const itemDiscountPercent = Number(item.discount_percentage) || 0;
-      const lineDiscount = lineTotal * (itemDiscountPercent / 100);
+      const convertedUnitPrice = roundCurrency(rawConvertedUnitPrice);
 
-      convertedGrossSubtotal += lineTotal;
-      totalDiscountAmount += lineDiscount;
+      subtotal += convertedUnitPrice * item.quantity;
+      totalBaseDiscount += baseDiscountAmount;
     };
 
-    const convertedProductSubtotal =
-      convertedGrossSubtotal - totalDiscountAmount;
+    const discountedSubTotal = subtotal;
 
-    if (isNaN(convertedProductSubtotal))
+    if (isNaN(discountedSubTotal))
       throw new BadRequestException('Invalid cart amount');
 
-    const isIndia = countryName === 'India';
+    const isIndia = countryName?.includes('India');
     const threshold = isIndia ? 299 : 20;
     const deliveryFeeBase = isIndia ? 3 : 5;
     const serviceChargeBase = 1;
 
-    const deliveryFee =
-      convertedProductSubtotal >= threshold ? 0 : deliveryFeeBase;
+    const deliveryFee = discountedSubTotal >= threshold ? 0 : deliveryFeeBase;
 
-    const taxAmount = convertedProductSubtotal * 0.02;
+    const taxAmount = discountedSubTotal * 0.02;
     const serviceCharge = serviceChargeBase;
 
     const finalTotal =
-      convertedProductSubtotal + deliveryFee + taxAmount + serviceCharge;
+      discountedSubTotal + deliveryFee + taxAmount + serviceCharge;
 
-    const roundedTotal = Number(finalTotal.toFixed(2));
-    const roundedSubtotal = Number(convertedProductSubtotal.toFixed(2));
-    const roundedShipping = Number(deliveryFee.toFixed(2));
-    const roundedTax = Number(taxAmount.toFixed(2));
+    const roundedTotal = roundCurrency(finalTotal);
+    const roundedSubtotal = roundCurrency(discountedSubTotal);
+    const roundedShipping = roundCurrency(deliveryFee);
+    const roundedTax = roundCurrency(taxAmount);
 
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
@@ -153,7 +154,7 @@ export class OrderService {
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
       subtotal: roundedSubtotal, 
-      discount_percentage: cart.discount_percentage,
+      discount_percentage: totalBaseDiscount,
       shipping_amount: roundedShipping,
       tax_amount: roundedTax,
       total_amount: roundedTotal,
@@ -165,16 +166,23 @@ export class OrderService {
     const savedOrder = await this.orderRepository.save(order);
 
     // Create order items from cart items
-    const orderItems = itemsToProcess.map((cartItem) =>
-      this.orderItemRepository.create({
+    const orderItems = itemsToProcess.map((cartItem) => {
+      const basePrice = Number(cartItem.product.price);
+      const baseDiscPerc = Number(cartItem.product.discount_percentage || 0);
+      const baseDiscountAmountPerUnit = (basePrice * baseDiscPerc) / 100;
+      const baseUnitPrice = basePrice - baseDiscountAmountPerUnit;
+      const totalPrice = baseUnitPrice * cartItem.quantity;
+      const totalDiscount = baseDiscountAmountPerUnit * cartItem.quantity;
+
+      return this.orderItemRepository.create({
         order_id: savedOrder.id,
         product_id: cartItem.product_id,
         quantity: cartItem.quantity,
-        unit_price: cartItem.unit_price,
-        total_price: cartItem.total_price,
-        discount_percentage: cartItem.discount_percentage,
-      }),
-    );
+        unit_price: baseUnitPrice,
+        total_price: totalPrice,
+        discount_percentage: totalDiscount,
+      });
+    });
 
     await this.orderItemRepository.save(orderItems);
 

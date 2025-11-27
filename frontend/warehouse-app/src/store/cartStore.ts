@@ -126,19 +126,25 @@ export const useCartStore = create<CartStore>()(
       },
 
       addOrIncreaseQty: async (
-        productOrId: string | EcommerceProduct,
+        product: EcommerceProduct,
         quantity: number,
         country?: string
       ) => {
         // Add or Increase the quantity of product to cart
-        if (quantity <= 0) return;
+        if (quantity <= 0) {
+          console.warn("Invalid quantity, unable perform add to cart");
+          return;
+        }
 
         const token = getAuthToken();
         const state = get();
 
-        const isProductObject = typeof productOrId !== 'string';
-        const product_id = isProductObject ? productOrId.id : productOrId;
-        const productData = isProductObject ? productOrId : undefined;
+        const product_id = product?.id;
+
+        if (!product_id) {
+          console.warn("Product doesnt have id, unable perform on add to cart");
+          return;
+        }
 
         const updatedCart = [...state.cartProducts];
         const existing = updatedCart.find(
@@ -150,8 +156,8 @@ export const useCartStore = create<CartStore>()(
           existing.quantity += quantity;
           newQuantity = existing.quantity;
 
-          if (productData) {
-            existing.product = productData;
+          if (product) {
+            existing.product = product;
           }
         } else {
           newQuantity = quantity;
@@ -159,7 +165,7 @@ export const useCartStore = create<CartStore>()(
             product_id,
             quantity: newQuantity,
             country,
-            product: productData
+            product: product
           } as LocalCartItem);
         }
 
@@ -173,7 +179,7 @@ export const useCartStore = create<CartStore>()(
       },
 
       decreaseProductQty: async (
-        productOrId: string | EcommerceProduct,
+        product: EcommerceProduct,
         quantity: number,
         country?: string
       ) => {
@@ -183,8 +189,7 @@ export const useCartStore = create<CartStore>()(
         const token = getAuthToken();
         const state = get();
 
-        const isProductObject = typeof productOrId !== 'string';
-        const product_id = isProductObject ? productOrId.id : productOrId;
+        const product_id = product?.id;
 
         const updatedCart = [...state.cartProducts];
         const existingIndex = updatedCart.findIndex(item => item.product_id === product_id);
@@ -231,6 +236,58 @@ export const useCartStore = create<CartStore>()(
         ecommerceService
           .removeFromCart(product_id, country)
           .catch(() => get().syncCart(country));
+      },
+
+      incrementCartQuantity: async (product: EcommerceProduct, country?: string) => {
+        // Increments the quantity of a product in the cart by 1 but only if the current quantity is below the available stock
+        const state = get();
+        const currentQuantity = state.getItemQuantity(product.id);
+        if (currentQuantity >= product.stock_quantity) {
+          return;
+        }
+        await state.addOrIncreaseQty(product, 1, country);
+      },
+
+      decrementCartQuantity: async (product: EcommerceProduct, country?: string) => {
+        // Decrements the quantity of a product in the cart by 1 but only if the current quantity is greater than 0
+        const state = get();
+        const currentQuantity = state.getItemQuantity(product.id);
+        if (currentQuantity <= 0) {
+          return;
+        }
+        await state.decreaseProductQty(product, 1, country);
+      },
+
+      setCartItemQuantity: async (productId: string, quantity: number, country?: string) => {
+        // Sets the exact quantity for a specific product in the cart to the provided value
+        // If the new quantity is <= 0 it removes the item entirely
+        // If the item isn't found in the cart, it logs warning
+        const state = get();
+        if (quantity <= 0) {
+          await state.removeProductFromCart(productId, country);
+          return;
+        }
+        const updatedCart = [...state.cartProducts];
+        const existingIndex = updatedCart.findIndex((item: LocalCartItem) => item.product_id === productId);
+        if (existingIndex === -1) {
+          console.warn(`Cart item with productId ${productId} not found.`);
+          return;
+        }
+        const existing = updatedCart[existingIndex];
+        if (existing.quantity === quantity) {
+          return;
+        }
+        updatedCart[existingIndex] = { ...existing, quantity };
+        set({ cartProducts: updatedCart });
+        const token = getAuthToken();
+        if (token) {
+          try {
+            await ecommerceService.addToCart({ product_id: productId, quantity }, country);
+          } catch (error) {
+            console.error("Failed to set cart quantity:", error);
+            await state.syncCart(country);
+          }
+        }
       },
     }),
     {
