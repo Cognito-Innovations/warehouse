@@ -203,11 +203,11 @@ export default function CheckoutPage() {
     setProcessing(true);
     setError(null);
     try {
-      const productIds = checkedOutItems.map((item) => item.product.id);
+      const orderedProductIds = checkedOutItems.map((item) => item.product.id);
       const orderData = {
         shipping_address: formData.shippingAddress,
         country_name: selectedCountry,
-        product_ids: productIds,
+        product_ids: orderedProductIds,
       }
       const initiateResponse = await ecommerceService.initiateOrder(orderData);
       const { orderId, orderNumber, paymentSessionId, totalAmount } = initiateResponse;
@@ -232,16 +232,20 @@ export default function CheckoutPage() {
           try {
             await ecommerceService.updatePaymentStatus(orderId, paymentResult);
 
-            const paidProductIds = checkedOutItems.map(item => item.product_id);
-
             const currentCart = useCartStore.getState().cartProducts;
-            const paidProductIdsSet = new Set(paidProductIds);
-            const updatedCart = currentCart.filter((item) => !paidProductIdsSet.has(item.product_id));
+            const orderedIdsSet = new Set(orderedProductIds);
+
+            const updatedCart = currentCart.filter((item) => {
+              const itemId = item.product?.id || item.product_id;
+              return !orderedIdsSet.has(itemId);
+            });
+
             useCartStore.setState({ cartProducts: updatedCart });
 
             clearCheckoutProducts();
-
             localStorage.removeItem("checkoutSelectedItems");
+
+            useCartStore.getState().getCart(selectedCountry);
             
             toast.success("Order placed successfully!");
           } catch (error) {

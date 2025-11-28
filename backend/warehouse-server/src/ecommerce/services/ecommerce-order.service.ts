@@ -316,7 +316,7 @@ export class OrderService {
     order.payment_status = PaymentStatus.PAID;
     order.cashfree_payment_id = cashfreeData.cf_payment_id;
 
-    const productIds = order.items.map((item) => item.product_id);
+    const orderProductIds = order.items.map((item) => item.product_id);
     const cart = await this.cartRepository.findOne({
       where: { 
         user_id: order.user.id, 
@@ -327,21 +327,19 @@ export class OrderService {
 
     if (cart && cart.items.length > 0) {
       const itemsToRemove = cart.items.filter((item) => {
-        const itemId = item.product_id || item.product?.id;
-        return productIds.includes(itemId);
+        const cartItemId = item.product_id || item.product?.id;
+        return orderProductIds.includes(cartItemId);
       });
 
       if (itemsToRemove.length > 0) {
         await this.cartItemRepository.delete(itemsToRemove.map((i) => i.id));
 
-        const updatedCart = await this.cartRepository.findOne({
-          where: { id: cart.id },
-          relations: ['items'],
-        });
+        const remainingItemsCount = cart.items.length - itemsToRemove.length;
 
-        if (updatedCart && updatedCart.items.length === 0) {
-          updatedCart.status = CartStatus.CHECKED_OUT;
-          await this.cartRepository.save(updatedCart);
+        if (remainingItemsCount <= 0) {
+          cart.status = CartStatus.CHECKED_OUT;
+          cart.items = [];
+          await this.cartRepository.save(cart);
         }
       }
     }

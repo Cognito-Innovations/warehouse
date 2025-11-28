@@ -2,6 +2,7 @@ import { ecommerceService } from "@/services/ecommerce.service";
 import { create } from "zustand";
 import { GetProductsParams, ProductCacheData, ProductStore } from "./storeTypes";
 import type { EcommerceProduct } from "@/types/ecommerce";
+import { ecommerceData } from "@/data/ecommerceData";
 
 const useProductStore = create<ProductStore>((set, get) => ({
   products: [],
@@ -14,9 +15,35 @@ const useProductStore = create<ProductStore>((set, get) => ({
   hasMore: true,
   cache: {},
 
+  currentDetailProduct: null,
+  detailPreviewProducts: [],
+  detailRelatedProducts: [],
+  detailCache: {},
+  isDetailLoading: true,
+  arePreviewsLoading: true,
+  detailError: null,
+
   handleProductSelect: (productId: string) => set({ selectedProduct: productId }),
   setSearchQuery: (query: string) => set({ searchQuery: query }),
   setError: (error: string | null) => set({ error }),
+
+  fetchProductById: async (id: string, country?: string) => {
+    try {
+      const product = await ecommerceService.getProduct(id, country);
+      return product;
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch product");
+    }
+  },
+
+  getCategoryProducts: async (categoryId: string, country?: string, limit = 5) => {
+    try {
+      const products = await ecommerceService.getProducts(undefined, country, categoryId, limit);
+      return products;
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch category products");
+    }
+  },
 
   getProducts: async ({ searchTerm, country, category, limit, offset }: GetProductsParams = {}) => {
     set({ isLoading: true, error: null });
@@ -93,23 +120,21 @@ const useProductStore = create<ProductStore>((set, get) => ({
           [cacheKey]: newCacheEntry
         };
 
-        if (reset) {
-          return {
+        return reset 
+          ? {
             products: newProducts,
             isLoading: false,
             hasMore: newHasMore,
             offset: newOffset,
             cache: updatedCache
-          };
-        } else {
-          return {
+          }
+          : {
             products: newProducts,
             loadingMore: false,
             hasMore: newHasMore,
             offset: newOffset,
             cache: updatedCache
           };
-        }
       });
     } catch (error: any) {
       console.error("Failed to fetch products:", error);
@@ -122,6 +147,107 @@ const useProductStore = create<ProductStore>((set, get) => ({
       }
     }
   },
+
+  setCurrentDetailProduct: (product: EcommerceProduct) => {
+    const state = get();
+    
+    set({ currentDetailProduct: product });
+    
+    const currentPreviews = state.detailPreviewProducts;
+    const others = currentPreviews.filter(p => p.id !== product.id);
+    set({ detailPreviewProducts: [product, ...others.slice(0, 2)] });
+  },
+
+  resetDetailState: () => {
+    set({ 
+      currentDetailProduct: null, 
+      detailPreviewProducts: [], 
+      detailRelatedProducts: [], 
+      isDetailLoading: true, 
+      detailError: null 
+    });
+  },
+
+  loadProductPageData: async (id: string, country: string) => {
+    const state = get();
+
+    if (state.detailCache[id]) {
+      const cached = state.detailCache[id];
+      set({
+        currentDetailProduct: cached.product,
+        detailPreviewProducts: cached.previews,
+        detailRelatedProducts: cached.related,
+        isDetailLoading: false,
+        arePreviewsLoading: false,
+        detailError: null
+      });
+      return;
+    }
+
+    set({ 
+      currentDetailProduct: null, 
+      isDetailLoading: true, 
+      arePreviewsLoading: true, 
+      detailError: null 
+    });
+
+    try {
+      const product = await ecommerceService.getProduct(id, country);
+      set({ currentDetailProduct: product, isDetailLoading: false });
+
+      // Fetch Preview Products
+      let previewProducts: EcommerceProduct[] = [product];
+      let relatedProducts: EcommerceProduct[] = [];
+
+      try {
+        if (product.category) {
+          const categoryProducts = await ecommerceService.getProducts(undefined, country, product.category.id, 3);
+          const sameCategory = categoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
+          previewProducts = [product, ...sameCategory.slice(0, 2)];
+        }
+
+        // Fetch Related Data
+        if (product.sub_category) {
+          const subcategoryProducts = await ecommerceService.getProducts(undefined, country, product.sub_category.id, 6);
+          const sameSubcategory = subcategoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
+          if (sameSubcategory.length > 0) relatedProducts = sameSubcategory.slice(0, 5);
+        }
+
+        if (relatedProducts.length === 0 && product.category) {
+          const categoryProducts = await ecommerceService.getProducts(undefined, country, product.category.id, 6);
+          const sameCategory = categoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
+          relatedProducts = sameCategory.slice(0, 5);
+        }
+      } catch (err) {
+        console.error("Failed to load preview products:", err);
+      }
+
+      set({
+        detailPreviewProducts: previewProducts,
+        detailRelatedProducts: relatedProducts,
+        arePreviewsLoading: false
+      });
+
+      set((prev) => ({
+        detailCache: {
+          ...prev.detailCache,
+          [id]: {
+            product: product,
+            previews: previewProducts,
+            related: relatedProducts,
+            timestamp: Date.now()
+          }
+        }
+      }));
+
+    } catch (error: any) {
+      set({ 
+        isDetailLoading: false, 
+        arePreviewsLoading: false,
+        detailError: error.message || ecommerceData.productDetail.productNotFound 
+      });
+    }
+  }
 }));
 
 export default useProductStore;

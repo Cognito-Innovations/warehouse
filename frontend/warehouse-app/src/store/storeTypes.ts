@@ -1,4 +1,4 @@
-import { EcommerceCategory, EcommerceProduct, LocalCartItem } from "@/types/ecommerce";
+import { EcommerceCategory, EcommerceProduct, LocalCartItem, UserAddress } from "@/types/ecommerce";
 
 export type CategoryStore = {
   selectedCategory: string | null;
@@ -9,7 +9,7 @@ export type CategoryStore = {
 };
 
 export type ProductStore = {
-  selectedProduct: string | null,
+  selectedProduct: string | null;
   searchQuery: string;
   products: EcommerceProduct[];
   isLoading: boolean;
@@ -18,14 +18,30 @@ export type ProductStore = {
   offset: number;
   hasMore: boolean;
   cache: Record<string, ProductCacheData>;
+
+  currentDetailProduct: EcommerceProduct | null;
+  detailPreviewProducts: EcommerceProduct[];
+  detailRelatedProducts: EcommerceProduct[];
+  detailCache: Record<string, ProductDetailCache>;
+
+  isDetailLoading: boolean;
+  arePreviewsLoading: boolean;
+  detailError: string | null;
+
   setError: (error: string | null) => void;
   setSearchQuery: (query: string) => void;
   getProducts: (params?: GetProductsParams) => Promise<EcommerceProduct[]>;
+  fetchProductById: (id: string, country?: string) => Promise<EcommerceProduct>;
+  getCategoryProducts: (categoryId: string, country?: string, limit?: number) => Promise<EcommerceProduct[]>;
   handleProductSelect: (productId: string) => void;
   fetchProducts: (
     params: { category?: string; searchTerm?: string; country?: string },
     reset?: boolean
   ) => Promise<void>;
+
+  loadProductPageData: (id: string, country: string) => Promise<void>;
+  setCurrentDetailProduct: (product: EcommerceProduct) => void;
+  resetDetailState: () => void;
 }
 
 export type ProductCacheData = {
@@ -33,6 +49,13 @@ export type ProductCacheData = {
   hasMore: boolean;
   offset: number;
 };
+
+export interface ProductDetailCache {
+  product: EcommerceProduct;
+  previews: EcommerceProduct[];
+  related: EcommerceProduct[];
+  timestamp: number;
+}
 
 export type GetProductsParams = {
   searchTerm?: string;
@@ -59,4 +82,48 @@ export type CartStore = {
   incrementCartQuantity: (product: EcommerceProduct, country?: string) => Promise<void>;
   decrementCartQuantity: (product: EcommerceProduct, country?: string) => Promise<void>;
   setCartItemQuantity: (productId: string, quantity: number, country?: string) => Promise<void>;
+}
+
+export interface UserLocation {
+  city: string;
+  pincode: string;
+  countryCode?: string;
+  countryName?: string;
+}
+
+export interface EffectiveUserLocation {
+  countryCode?: string;
+  countryName?: string;
+  city?: string;
+  pincode?: string;
+}
+
+export type LocationStore = {
+  userLocation: UserLocation;
+  userAddress: UserAddress | null;
+  addressCache: Record<string, UserAddress | null>;
+  isLoadingLocation: boolean;
+  isLoadingAddress: boolean;
+  error: string | null;
+
+  setUserLocation: (location: UserLocation) => void;
+  setUserAddress: (address: UserAddress | null) => void;
+  setLoadingLocation: (loading: boolean) => void;
+  setLoadingAddress: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  initializeLocation: (
+    defaultCity: string,
+    defaultPincode: string,
+    enableGeolocation?: boolean
+  ) => Promise<void>;
+  fetchCountryFromIP: (
+    defaultCity: string,
+    defaultPincode: string,
+    enableGeolocation?: boolean
+  ) => Promise<void>;
+  fetchUserAddress: (userId: string) => Promise<void>;
+  refreshUserAddress: (userId: string) => Promise<void>;
+  requestLocation: (enableGeolocation?: boolean) => void;
+  updateLocation: (newLocation: UserLocation) => void;
+  clearLocation: () => void;
 }

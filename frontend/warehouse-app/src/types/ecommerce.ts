@@ -210,6 +210,7 @@ export interface ProductDetailImageSectionProps {
   product: EcommerceProduct;
   previewProducts: EcommerceProduct[];
   onProductSelect: (product: EcommerceProduct) => void;
+  arePreviewsLoading?: boolean;
 }
 
 export interface ProductDetailInfoSectionProps {
