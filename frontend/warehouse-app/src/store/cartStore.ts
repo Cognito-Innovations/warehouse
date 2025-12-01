@@ -125,10 +125,13 @@ export const useCartStore = create<CartStore>()(
         ]);
       },
 
+      //TODO P0: We need to break this API into 4-5 parts
+      // addProduct fn with quantity -> does 2 jobs -> takes Id & quantity -> pass to api -> this api checks if product created then update quanity else create product with 1 quanity and whole update in db and if fail show reject message then add whole data to cart
+      // same for removeProduct fn with quanity
       addOrIncreaseQty: async (
         product: EcommerceProduct,
         quantity: number,
-        country?: string
+        country?: string,
       ) => {
         // Add or Increase the quantity of product to cart
         if (quantity <= 0) {
@@ -231,7 +234,20 @@ export const useCartStore = create<CartStore>()(
 
         set({ cartProducts: updatedCart });
 
+          if (token) {
+                ecommerceService
+                  .removeFromCart(product_id, country)
+                  .catch(() => get().syncCart(country));
+              }
+
         if (!token) return;
+
+         if (quantity <= 0) {
+              // const index = updatedCart.indexOf(quantity);
+              // updatedCart.splice(index, 1);
+              // set({ cartProducts: updatedCart });
+              // return;
+            }
 
         ecommerceService
           .removeFromCart(product_id, country)

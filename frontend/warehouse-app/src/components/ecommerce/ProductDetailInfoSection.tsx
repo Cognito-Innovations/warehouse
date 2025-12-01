@@ -214,10 +214,11 @@ export default function ProductDetailInfoSection({
           >
             Selected Quantity:
           </Typography>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
             <Typography variant="subtitle1" fontWeight={600}>
               {product.unit_value} {measurementLabel}
             </Typography>
+
             <Typography variant="body2" color="text.secondary">
               • {formattedPricePerUnit}/{measurementLabel}
             </Typography>

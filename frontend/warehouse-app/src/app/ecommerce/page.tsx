@@ -19,8 +19,8 @@ export default function Ecommerce() {
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
     countryName: undefined,
-    city: '',
-    pincode: '',
+    city: "",
+    pincode: "",
   });
   const countryName = locationData.location.countryName;
 

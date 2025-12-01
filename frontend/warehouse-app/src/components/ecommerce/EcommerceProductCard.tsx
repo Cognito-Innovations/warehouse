@@ -87,7 +87,7 @@ export default function EcommerceProductCard({
         router.push(`${ROUTES.PRODUCT}/${product.id}`);
       }}
     >
-      <Box sx={{ position: "relative", height: 180, width: "100%", overflow: "hidden" }}>
+     <Box sx={{ position: "relative", height: 180, width: "100%", overflow: "hidden" }}>
         {!product.image_url ? (
           <Box
             sx={{
@@ -147,7 +147,7 @@ export default function EcommerceProductCard({
             }}
           />
         )}
-      </Box>
+     </Box>
 
       <CardContent sx={{ p: 2, pb: 1 }}>
         <Box sx={{display: "flex", alignItems: "flex-start", gap: 0.5, justifyContent: "space-between"}}>
@@ -228,6 +228,7 @@ export default function EcommerceProductCard({
           {!isOutOfStock && (
             <>
               {cartQuantity > 0 ? (
+                // TODO P0: Move this below code to seperate component
                 <Box
                   sx={{
                     display: "flex",
@@ -244,10 +245,10 @@ export default function EcommerceProductCard({
                     size="small"
                     onClick={handleDecreaseClick}
                     sx={{
-                      width: 40,
-                      height: 32,
-                      p: 0,
-                      position: "relative",
+                      width: 40,
+                      height: 32,
+                      p: 0,
+                      position: "relative",
                     }}
                   >
                     <Remove sx={{ fontSize: 16 }} />
