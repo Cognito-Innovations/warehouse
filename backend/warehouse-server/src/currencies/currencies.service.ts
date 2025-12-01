@@ -30,6 +30,12 @@ export class CurrenciesService {
     return await this.currencyRepository.findOne({ where: { id } });
   }
 
+  async findByCountry(countryId: string): Promise<Currency | null> {
+    return await this.currencyRepository.findOne({
+      where: { country: { id: countryId } },
+    });
+  }
+
   async update(id: string, updateCurrencyDto: UpdateCurrencyDto) {
     const updateData: Partial<Currency> = {};
 

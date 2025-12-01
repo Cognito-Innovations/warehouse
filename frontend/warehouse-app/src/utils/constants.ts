@@ -46,3 +46,6 @@ export const STORAGE_KEY = "warehouse:clientIdentifier";
 export const HEADER_KEY = "x-client-identifier";
 
 export const CF_SCRIPT_SRC = "https://sdk.cashfree.com/js/v3/cashfree.js";
+
+export const DEFAULT_IMG =
+  "https://rukminim2.flixcart.com/fk-p-flap/108/108/image/eb75e5d9571bde1a.png?q=60";

@@ -66,4 +66,8 @@ export class UpdateEcommerceProductDto {
   @IsUUID()
   @IsOptional()
   measurement_id?: string;
+
+  @IsUUID()
+  @IsOptional()
+  cargo_option_id?: string;
 }

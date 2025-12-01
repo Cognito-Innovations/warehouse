@@ -3,13 +3,12 @@
 import React from "react";
 import { Box, Container } from "@mui/material";
 
+import { useCartStore } from "@/store/cartStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import EcommerceHeader from "@/components/ecommerce/EcommerceHeader";
-import PromotionalCards from "@/components/ecommerce/PromotionalCards";
 import EcommerceBottomNavigation from "@/components/ecommerce/EcommerceBottomNavigation";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceCategory } from "@/types/ecommerce";
-import { useCart } from "@/store/ecommerceStore";
 
 interface EcommercePageLayoutProps {
   locationData: ReturnType<typeof useEffectiveUserLocation>;
@@ -22,7 +21,7 @@ export default function EcommercePageLayout({
   categories,
   children,
 }: EcommercePageLayoutProps) {
-  const { itemCount } = useCart();
+  const { cartProductQuantityCount } = useCartStore();
   return (
     <Box sx={{ bgcolor: ecommerceData.ui.colors.background, minHeight: "100vh" }}>
       <Container
@@ -40,7 +39,7 @@ export default function EcommercePageLayout({
       >
         <EcommerceHeader
           locationData={locationData}
-          cartItemCount={itemCount}
+          cartItemCount={cartProductQuantityCount()}
         />
 
         {/* Today's Deals Section with Promotional Cards */}
@@ -52,12 +51,11 @@ export default function EcommercePageLayout({
             px: { xs: 2, sm: 3, md: 4 },
           }}
         >
-          <PromotionalCards categories={categories} />
         </Box>
 
         {children}
 
-        <EcommerceBottomNavigation cartItemCount={itemCount} />
+        <EcommerceBottomNavigation cartItemCount={cartProductQuantityCount()} />
       </Container>
     </Box>
   );

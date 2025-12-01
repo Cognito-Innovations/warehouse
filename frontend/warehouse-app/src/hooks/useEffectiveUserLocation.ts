@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchUserAddresses } from "@/lib/api.service";
 import { useUserLocation } from "./useUserLocation";
+import useLocationStore from "@/store/locationStore";
 import { UserAddress } from "@/types/ecommerce";
 
 export interface EffectiveUserLocation {
@@ -24,82 +24,78 @@ export interface UseEffectiveUserLocationReturn {
   geoHook: ReturnType<typeof useUserLocation>;
 }
 
-const addressCache: Record<string, UserAddress | null> = {};
-
 export function useEffectiveUserLocation(
   defaults: { countryCode?: string; countryName?: string; city: string; pincode: string }
 ): UseEffectiveUserLocationReturn {
   const { user } = useAuth();
+  const isLoggedIn = !!user;
+
   const geoHook = useUserLocation({
     defaultCity: defaults.city,
     defaultPincode: defaults.pincode,
     enableGeolocation: true,
+    skipInit: isLoggedIn,
   });
 
-  const [address, setAddress] = useState<UserAddress | null>(null);
-  const [addressLoading, setAddressLoading] = useState(false);
+  const userAddress = useLocationStore((state) => state.userAddress);
+  const isLoadingAddress = useLocationStore((state) => state.isLoadingAddress);
+  const { fetchUserAddress, refreshUserAddress, initializeLocation, updateLocation } = useLocationStore();
 
   useEffect(() => {
     if (user?.id) {
-      if (addressCache[user.id] !== undefined) {
-        setAddress(addressCache[user.id]);
-        setAddressLoading(false);
-      } else {
-        setAddressLoading(true);
-        fetchUserAddresses(user.id)
-          .then((data) => {
-            setAddress(data);
-            addressCache[user.id] = data; 
-          })
-          .catch(() => {
-            setAddress(null);
-            addressCache[user.id] = null;
-          })
-          .finally(() => setAddressLoading(false));
-      }
+      fetchUserAddress(user.id);
     } else {
-      setAddress(null);
-      setAddressLoading(false);
+      useLocationStore.getState().setUserAddress(null);
     }
-  }, [user?.id]);
+  }, [user?.id, fetchUserAddress]);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      return;
+    }
+
+    if (userAddress) {
+      const hasValid = !!userAddress.city && !!userAddress.zip_code;
+      if (hasValid) {
+        updateLocation({
+          city: userAddress.city,
+          pincode: userAddress.zip_code,
+          countryCode: undefined,
+          countryName: userAddress.country,
+        });
+      } else {
+        initializeLocation(defaults.city, defaults.pincode, true);
+      }
+    }
+  }, [userAddress, isLoggedIn, defaults.city, defaults.pincode, initializeLocation, updateLocation]);
 
   const refreshAddresses = useCallback(async () => {
     if (user?.id) {
-      setAddressLoading(true);
-      try {
-        const updatedAddress = await fetchUserAddresses(user.id);
-        setAddress(updatedAddress);
-        
-        addressCache[user.id] = updatedAddress; 
-      } catch (err) {
-        console.error("Failed to refresh addresses:", err);
-        setAddress(null);
-        addressCache[user.id] = null;
-      } finally {
-        setAddressLoading(false);
-      }
+      await refreshUserAddress(user.id);
     }
-  }, [user?.id]);
+  }, [user?.id, refreshUserAddress]);
 
-  const isLoggedIn = !!user;
-  const hasValidAddress = isLoggedIn && !!address && !!address.city && !!address.zip_code;
+  const hasValidAddress = isLoggedIn && !!userAddress && !!userAddress.city && !!userAddress.zip_code;
 
-  const location: EffectiveUserLocation = hasValidAddress
-    ? {
+  const location: EffectiveUserLocation = useMemo(() => {
+    if (hasValidAddress) {
+      return {
         countryCode: geoHook.location.countryCode,
-        countryName: address.country,
-        city: address.city,
-        pincode: address.zip_code,
-      }
-    : {
-        countryCode: geoHook.location.countryCode,
-        countryName: geoHook.location.countryName,
-        city: geoHook.location.city,
-        pincode: geoHook.location.pincode,
+        countryName: userAddress!.country,
+        city: userAddress!.city,
+        pincode: userAddress!.zip_code,
       };
+    }
+    return {
+      countryCode: geoHook.location.countryCode,
+      countryName: geoHook.location.countryName,
+      city: geoHook.location.city,
+      pincode: geoHook.location.pincode,
+    };
+  }, [hasValidAddress, geoHook.location, userAddress]);
 
-  const isLoading = geoHook.isLoading || addressLoading;
-  const error = geoHook.error;
+  const isLoading = geoHook.isLoading || isLoadingAddress;
+  const error = geoHook.error || useLocationStore((state) => state.error);
 
   return {
     location,
@@ -107,7 +103,7 @@ export function useEffectiveUserLocation(
     error,
     isLoggedIn,
     hasValidAddress,
-    address,
+    address: userAddress,
     refreshAddresses,
     geoHook,
   };

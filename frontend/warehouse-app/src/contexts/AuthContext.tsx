@@ -1,7 +1,6 @@
 "use client";
 import React, { createContext, useContext, ReactNode, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { useEcommerceStore } from "@/store/ecommerceStore";
 
 interface User {
   id: string;
@@ -43,8 +42,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const syncLocalCartToServer = useEcommerceStore((state) => state.syncLocalCartToServer);
-
   // Get user data from NextAuth session
   const user = session?.user ? {
     id: (session.user as any).user_id || session.user.email || "",
@@ -84,14 +81,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       if (token) {
-        localStorage.setItem("auth-token", token);
+        try {
+          // Decode JWT to get exp for max-age
+          const parts = token.split(".");
+          if (parts.length === 3) {
+            const payloadJson = JSON.parse(
+              atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+            );
+            const expSeconds = payloadJson?.exp;
+            if (expSeconds && typeof expSeconds === "number") {
+              const maxAge = Math.max(0, Math.floor((expSeconds * 1000 - Date.now()) / 1000));
+              if (maxAge > 0) {
+                // Set cookie with expiry matching token exp
+                document.cookie = `auth-token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          // Fallback to session cookie if decode fails
+        }
+        // Default to session cookie
+        document.cookie = `auth-token=${token}; path=/; SameSite=Lax`;
       } else {
-        localStorage.removeItem("auth-token");
+        // Expire cookie
+        document.cookie = "auth-token=; path=/; max-age=0; SameSite=Lax";
       }
-    }
-
-    if (token && status === 'authenticated') {
-      syncLocalCartToServer();
     }
   }, [token]);
 

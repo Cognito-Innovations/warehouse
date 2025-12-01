@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Box, Typography, IconButton, CircularProgress, Checkbox, Chip, Stack, Divider } from "@mui/material";
+import { Box, Typography, IconButton, Checkbox, Chip, Stack, Divider } from "@mui/material";
 import { Add, Remove, Delete, LocationOn, Inventory } from "@mui/icons-material";
 import { CartItemCardProps, EcommerceProduct } from "@/types/ecommerce";
 import { formatDiscountPercentage } from "@/lib/utils";
@@ -12,7 +12,6 @@ import { ROUTES } from "@/utils/constants";
 
 export default function CartItemCard({
   item,
-  loadingState,
   isSelected,
   onSelect,
   onQuantityChange,
@@ -30,6 +29,8 @@ export default function CartItemCard({
 
     router.push(`${ROUTES.PRODUCT}/${product.id}`);
   }
+
+  const effectiveId = item.product_id!;
 
   const pricing = getCartItemPricingSummary(item);
   const unitPrice = pricing.discountedUnitPrice;
@@ -81,7 +82,7 @@ export default function CartItemCard({
         <Box sx={{ display: "flex", alignItems: "flex-start", pt: 0.5 }}>
           <Checkbox
             checked={isSelected}
-            onChange={(e) => onSelect(item.id, e.target.checked)}
+            onChange={(e) => onSelect(effectiveId, e.target.checked)}
             sx={{
               color: "success.main",
               "&.Mui-checked": {
@@ -233,13 +234,11 @@ export default function CartItemCard({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
             <IconButton
               size="small"
-              onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-              disabled={loadingState.isDecrementLoading || item.quantity <= 1}
+              onClick={() => onQuantityChange(effectiveId, item.quantity - 1)}
+              disabled={item.quantity <= 1}
               sx={{
                 border: "1.5px solid",
-                borderColor: loadingState.isDecrementLoading || item.quantity <= 1
-                  ? "action.disabled"
-                  : "grey.300",
+                borderColor: item.quantity <= 1 ? "action.disabled" : "grey.300",
                 bgcolor: "white",
                 borderRadius: "50%",
                 width: 32,
@@ -252,11 +251,7 @@ export default function CartItemCard({
                 },
               }}
             >
-              {loadingState.isDecrementLoading ? (
-                <CircularProgress size={14} />
-              ) : (
-                <Remove sx={{ fontSize: 18 }} />
-              )}
+              <Remove sx={{ fontSize: 18 }} />
             </IconButton>
             <Typography
               variant="body1"
@@ -271,13 +266,11 @@ export default function CartItemCard({
             </Typography>
             <IconButton
               size="small"
-              onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-              disabled={loadingState.isIncrementLoading || item.quantity >= item.product.stock_quantity}
+              onClick={() => onQuantityChange(effectiveId, item.quantity + 1)}
+              disabled={item.quantity >= item.product.stock_quantity}
               sx={{
                 border: "1.5px solid",
-                borderColor: loadingState.isIncrementLoading || item.quantity >= item.product.stock_quantity
-                  ? "action.disabled"
-                  : "grey.300",
+                borderColor: item.quantity >= item.product.stock_quantity ? "action.disabled" : "grey.300",
                 bgcolor: "white",
                 borderRadius: "50%",
                 width: 32,
@@ -290,11 +283,7 @@ export default function CartItemCard({
                 },
               }}
             >
-              {loadingState.isIncrementLoading ? (
-                <CircularProgress size={14} />
-              ) : (
-                <Add sx={{ fontSize: 18 }} />
-              )}
+              <Add sx={{ fontSize: 18 }} />
             </IconButton>
           </Box>
         </Box>
@@ -313,8 +302,7 @@ export default function CartItemCard({
         >
           <IconButton
             size="small"
-            onClick={() => onRemoveItem(item.id)}
-            disabled={loadingState.isRemoveLoading}
+            onClick={() => onRemoveItem(effectiveId)}
             sx={{
               color: "text.secondary",
               width: 36,
@@ -330,20 +318,15 @@ export default function CartItemCard({
               mt: { xs: -5, sm: 0 },
             }}
           >
-            {loadingState.isRemoveLoading ? (
-              <CircularProgress size={16} />
-            ) : (
-              <Delete sx={{ fontSize: 20 }} />
-            )}
+            <Delete sx={{ fontSize: 20 }} />
           </IconButton>
-
 
           {/* Price Section */}
           <Box sx={{ 
             textAlign: { xs: "left", sm: "right" },
             width: '100%',
           }}>
-            {/* Original Unit Price (if discount) */}
+            {/* Original Unit Price */}
             {hasDiscount && (
               <Typography
                 variant="caption"

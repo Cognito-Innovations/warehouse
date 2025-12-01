@@ -1,109 +1,54 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React from "react";
 import {
-  Card,
-  CardMedia,
-  CardContent,
-  Typography,
-  Box,
-  Button,
-  Chip,
-  useTheme,
-  IconButton,
-  CircularProgress,
+  Card,
+  CardMedia,
+  CardContent,
+  Typography,
+  Box,
+  Button,
+  Chip,
+  useTheme,
+  IconButton,
 } from "@mui/material";
 import { Star, Image as ImageIcon, Add, Remove } from "@mui/icons-material";
-import { EcommerceProductCardProps } from "@/types/ecommerce";
+import { useRouter } from "next/navigation";
+
+import useProductStore from "@/store/productStore";
+import { useCartStore } from "@/store/cartStore";
+import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { ecommerceData } from "@/data/ecommerceData";
+import { ROUTES } from "@/utils/constants";
 import { formatDiscountPercentage } from "@/lib/utils";
-import { calculateDiscountedPrice, formatPrice, parsePrice } from "@/utils/priceUtils";
-import { useCart, useCartActions } from "@/store/ecommerceStore";
+import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils";
+import { EcommerceProductCardProps } from "@/types/ecommerce";
 
 export default function EcommerceProductCard({
-  product,
-  onProductClick,
+  product
 }: EcommerceProductCardProps) {
+  const router = useRouter();
   const theme = useTheme();
+  const {handleProductSelect} = useProductStore();
+  const incrementCartQuantity = useCartStore((state) => state.incrementCartQuantity);
+  const decrementCartQuantity = useCartStore((state) => state.decrementCartQuantity);
+  const cartQuantity = useCartStore((state) => state.cartProducts.find(item => item.product_id === product.id)?.quantity || 0);
 
-  const { cart } = useCart();
-  const { addToCart, updateCartItem, removeFromCart } = useCartActions();
-
-  const cartItem = useMemo(() =>
-    cart?.items.find((item) => item.product.id === product.id),
-    [cart, product.id]
-  );
-  const cartQuantity = cartItem?.quantity || 0;
-
-  const [loadingStates, setLoadingStates] = useState({
-    isAddLoading: false,
-    isIncrementLoading: false,
-    isDecrementLoading: false,
+  const locationData = useEffectiveUserLocation({
+    countryCode: undefined,
+    countryName: undefined,
+    city: '',
+    pincode: '',
   });
+  const selectedCountry = locationData.location.countryName;
 
-  const handleAddToCart = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (cartQuantity + 1 > product.stock_quantity) {
-      return;
-    }
-    const isIncrement = !!(cartItem && cartQuantity > 0);
-    
-    setLoadingStates((prev) => ({
-      ...prev,
-      isAddLoading: !isIncrement,
-      isIncrementLoading: isIncrement,
-      isDecrementLoading: false,
-    }));
-
-    try {
-      if (isIncrement) {
-        await updateCartItem(cartItem.id, cartQuantity + 1);
-      } else {
-        await addToCart(product.id, 1);
-      }
-    } catch (err) {
-      console.error("Failed to add to cart:", err);
-    } finally {
-      setLoadingStates({
-        isAddLoading: false,
-        isIncrementLoading: false,
-        isDecrementLoading: false,
-      });
-    }
-  }, [cartQuantity, product.id, product.stock_quantity, cartItem, addToCart, updateCartItem]);
-
-  const handleDecreaseQuantity = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!cartItem) return;
-
-    setLoadingStates((prev) => ({
-      ...prev,
-      isDecrementLoading: true,
-    }));
-
-    try {
-      const newQuantity = cartItem.quantity - 1;
-      if (newQuantity > 0) {
-        await updateCartItem(cartItem.id, newQuantity);
-      } else {
-        await removeFromCart(cartItem.id);
-      }
-    } catch (err) {
-      console.error("Failed to update cart:", err);
-    } finally {
-      setLoadingStates({
-        isAddLoading: false,
-        isIncrementLoading: false,
-        isDecrementLoading: false,
-      });
-    }
-  }, [cartItem, updateCartItem, removeFromCart]);
-
-  const { raw: rawPrice, formatted: formattedOriginal } = parsePrice(product.price);
-  
+  const rawPrice = product.price.price;
+  const currency = product.price.currency;
+  const formattedOriginal = formatPrice(rawPrice, currency);
+  
   const discountPercent = parseFloat(String(product.discount_percentage || 0)) || 0;
   const discountedRaw = calculateDiscountedPrice(rawPrice, discountPercent);
-  const formattedDiscounted = formatPrice(discountedRaw, parsePrice(product.price).currency);
+  const formattedDiscounted = formatPrice(discountedRaw, currency);
 
   const unitValue = parseFloat(String(product.unit_value || "0"));
   const measurementLabel = product.measurement?.label || "";
@@ -113,6 +58,16 @@ export default function EcommerceProductCard({
   // Placeholder image URL  Make we process the image in 300x180 only for best UI view
   const placeholderImage = `https://placehold.co/300x180?text=${product.name}`;
   const imageUrl = product.image_url || placeholderImage;
+
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    incrementCartQuantity(product, selectedCountry);
+  };
+
+  const handleDecreaseClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    decrementCartQuantity(product, selectedCountry);
+  };
 
   return (
     <Card
@@ -127,9 +82,12 @@ export default function EcommerceProductCard({
           boxShadow: theme.shadows[4],
         },
       }}
-      onClick={() => onProductClick(product)}
+      onClick={() => {
+        handleProductSelect(product.id);
+        router.push(`${ROUTES.PRODUCT}/${product.id}`);
+      }}
     >
-      <Box sx={{ position: "relative", height: 180, width: "100%", overflow: "hidden" }}>
+     <Box sx={{ position: "relative", height: 180, width: "100%", overflow: "hidden" }}>
         {!product.image_url ? (
           <Box
             sx={{
@@ -189,7 +147,7 @@ export default function EcommerceProductCard({
             }}
           />
         )}
-      </Box>
+     </Box>
 
       <CardContent sx={{ p: 2, pb: 1 }}>
         <Box sx={{display: "flex", alignItems: "flex-start", gap: 0.5, justifyContent: "space-between"}}>
@@ -238,9 +196,9 @@ export default function EcommerceProductCard({
 
         {/* Price and Add Button */}
         <Box sx={{ 
-          display: { xs: 'block', sm: 'flex' }, 
-          alignItems: { sm: 'center' }, 
-          justifyContent: { sm: 'space-between' }, 
+          display: { xs: "block", sm: "flex" }, 
+          alignItems: { sm: "center" }, 
+          justifyContent: { sm: "space-between" }, 
           mb: 1 
         }}>
           <Box sx={{ 
@@ -270,6 +228,7 @@ export default function EcommerceProductCard({
           {!isOutOfStock && (
             <>
               {cartQuantity > 0 ? (
+                // TODO P0: Move this below code to seperate component
                 <Box
                   sx={{
                     display: "flex",
@@ -278,50 +237,38 @@ export default function EcommerceProductCard({
                     border: `1px solid ${ecommerceData.ui.colors.borderColor}`,
                     borderRadius: 1,
                     height: 32,
-                    width: { xs: '100%', sm: 'auto' },
-                    justifyContent: 'space-between',
+                    width: { xs: "100%", sm: "auto" },
+                    justifyContent: "space-between",
                   }}
                 >
                   <IconButton
                     size="small"
-                    onClick={handleDecreaseQuantity} 
-                    disabled={loadingStates.isDecrementLoading} 
+                    onClick={handleDecreaseClick}
                     sx={{
-                      width: 40,
-                      height: 32,
-                      p: 0,
-                      position: "relative",
-                      color: loadingStates.isDecrementLoading ? "action.disabled" : "inherit", 
+                      width: 40,
+                      height: 32,
+                      p: 0,
+                      position: "relative",
                     }}
                   >
-                    {loadingStates.isDecrementLoading ? ( 
-                      <CircularProgress size={16} sx={{ color: "primary.main" }} />
-                    ) : (
-                      <Remove sx={{ fontSize: 16 }} />
-                    )}
+                    <Remove sx={{ fontSize: 16 }} />
                   </IconButton>
                   <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 20, textAlign: "center" }}>
                     {cartQuantity}
                   </Typography>
                   <IconButton
                     size="small"
-                    onClick={(e) => { 
-                      handleAddToCart(e);
-                    }}
-                    disabled={cartQuantity >= stockQuantity || loadingStates.isIncrementLoading}
+                    onClick={handleAddClick}
+                    disabled={cartQuantity >= stockQuantity}
                     sx={{
                       width: 40,
                       height: 32,
                       p: 0,
                       position: "relative",
-                      color: loadingStates.isIncrementLoading ? "action.disabled" : "inherit",
+                      color: cartQuantity >= stockQuantity ? "action.disabled" : "inherit",
                     }}
                   >
-                    {loadingStates.isIncrementLoading ? (
-                     <CircularProgress size={16} sx={{ color: "primary.main" }} />
-                      ) : (
-                        <Add sx={{ fontSize: 16 }} />
-                      )}
+                    <Add sx={{ fontSize: 16 }} />
                   </IconButton>
                 </Box>
               ) : (
@@ -329,21 +276,16 @@ export default function EcommerceProductCard({
                   variant="contained"
                   color="primary"
                   size="small"
-                  onClick={handleAddToCart} 
-                  disabled={loadingStates.isAddLoading}
+                  onClick={handleAddClick}
                   sx={{
-                    width: { xs: '100%', sm: 80 },
+                    width: { xs: "100%", sm: 80 },
                     height: 32,
                     minWidth: { sm: 80 },
                     fontSize: "0.8rem",
                     position: "relative",
                   }}
                 >
-                  {loadingStates.isAddLoading ? (
-                    <CircularProgress size={16} sx={{ color: "white" }} />
-                  ) : (
-                    "Add"
-                  )}
+                  Add
                 </Button>
               )}
             </>
@@ -355,7 +297,7 @@ export default function EcommerceProductCard({
               size="small"
               disabled
               sx={{
-                width: { xs: '100%', sm: 80 },
+                width: { xs: "100%", sm: 80 },
                 height: 32,
                 minWidth: { sm: 80 },
                 fontSize: "0.8rem",

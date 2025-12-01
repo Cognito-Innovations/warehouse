@@ -16,7 +16,6 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
       'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400',
     description: 'Fresh fruits and vegetables delivered to your doorstep',
     is_active: true,
-    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Dairy & Eggs',
@@ -26,7 +25,6 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
       'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400',
     description: 'Fresh dairy products and farm eggs',
     is_active: true,
-    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Beverages',
@@ -36,7 +34,6 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
       'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400',
     description: 'Soft drinks, juices, and other beverages',
     is_active: true,
-    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Snacks & Sweets',
@@ -46,7 +43,6 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
       'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400',
     description: 'Chips, cookies, chocolates, and more',
     is_active: true,
-    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Bakery & Bread',
@@ -56,7 +52,6 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
       'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400',
     description: 'Fresh bread, cakes, and bakery items',
     is_active: true,
-    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Meat & Seafood',
@@ -66,7 +61,6 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
       'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400',
     description: 'Fresh meat and seafood products',
     is_active: true,
-    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Frozen Foods',
@@ -76,7 +70,6 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
       'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400',
     description: 'Frozen vegetables, ready meals, and ice cream',
     is_active: true,
-    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Personal Care',
@@ -86,7 +79,6 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
       'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400',
     description: 'Skincare, haircare, and personal hygiene products',
     is_active: true,
-    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Household Essentials',
@@ -96,7 +88,6 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
       'https://images.unsplash.com/photo-1586075010923-2dd2440d87b0?w=400',
     description: 'Cleaning supplies and household items',
     is_active: true,
-    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Baby Care',
@@ -106,7 +97,6 @@ export const categorySeedData: Omit<CreateCategoryDto, 'country_ids'>[] = [
       'https://images.unsplash.com/photo-1604917019088-26b603e7b8b1?w=400',
     description: 'Baby food, diapers, and care products',
     is_active: true,
-    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 ];
 
@@ -296,6 +286,7 @@ export const productSeedData: Omit<
     unit_value: 1,
     stock_quantity: 50,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Bananas - Premium',
@@ -308,6 +299,7 @@ export const productSeedData: Omit<
     unit_value: 1,
     stock_quantity: 0, // Out of stock
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   // Sub-category 1: Fresh Vegetables
   {
@@ -321,6 +313,7 @@ export const productSeedData: Omit<
     unit_value: 1,
     stock_quantity: 200,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 
   // Category 1: Dairy & Eggs
@@ -336,6 +329,7 @@ export const productSeedData: Omit<
     unit_value: 1,
     stock_quantity: 100,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   // Sub-category 3: Cheese & Butter
   {
@@ -349,6 +343,7 @@ export const productSeedData: Omit<
     unit_value: 0.2,
     stock_quantity: 80,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Cheddar Cheese - Block',
@@ -361,6 +356,7 @@ export const productSeedData: Omit<
     unit_value: 0.2,
     stock_quantity: 0, // Out of stock
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 
   // Category 2: Beverages
@@ -376,6 +372,7 @@ export const productSeedData: Omit<
     unit_value: 2,
     stock_quantity: 150,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Lemon Soda - 750ml',
@@ -388,6 +385,7 @@ export const productSeedData: Omit<
     unit_value: 0.75,
     stock_quantity: 0, // Out of stock
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   // Sub-category 5: Juices
   {
@@ -401,6 +399,7 @@ export const productSeedData: Omit<
     unit_value: 1,
     stock_quantity: 70,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 
   // Category 3: Snacks & Sweets
@@ -416,6 +415,7 @@ export const productSeedData: Omit<
     unit_value: 0.1,
     stock_quantity: 300,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Nachos - Cheese Flavor',
@@ -428,6 +428,7 @@ export const productSeedData: Omit<
     unit_value: 0.15,
     stock_quantity: 150,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   // Sub-category 7: Chocolates
   {
@@ -441,6 +442,7 @@ export const productSeedData: Omit<
     unit_value: 0.1,
     stock_quantity: 120,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 
   // Category 4: Bakery & Bread
@@ -456,6 +458,7 @@ export const productSeedData: Omit<
     unit_value: 0.4,
     stock_quantity: 100,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Brown Bread - Multigrain',
@@ -468,6 +471,7 @@ export const productSeedData: Omit<
     unit_value: 0.4,
     stock_quantity: 0, // Out of stock
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   // Sub-category 9: Cakes & Pastries
   {
@@ -481,6 +485,7 @@ export const productSeedData: Omit<
     unit_value: 1,
     stock_quantity: 20,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 
   // Category 5: Meat & Seafood
@@ -496,6 +501,7 @@ export const productSeedData: Omit<
     unit_value: 0.5,
     stock_quantity: 50,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Chicken Thighs - Pack',
@@ -508,6 +514,7 @@ export const productSeedData: Omit<
     unit_value: 0.5,
     stock_quantity: 35,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   // Sub-category 11: Fish
   {
@@ -521,6 +528,7 @@ export const productSeedData: Omit<
     unit_value: 0.5,
     stock_quantity: 0, // Out of stock
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 
   // Category 6: Frozen Foods
@@ -536,6 +544,7 @@ export const productSeedData: Omit<
     unit_value: 0.5,
     stock_quantity: 100,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Frozen Corn',
@@ -548,6 +557,7 @@ export const productSeedData: Omit<
     unit_value: 0.5,
     stock_quantity: 90,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   // Sub-category 13: Ice Cream
   {
@@ -561,6 +571,7 @@ export const productSeedData: Omit<
     unit_value: 1,
     stock_quantity: 60,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 
   // Category 7: Personal Care
@@ -576,6 +587,7 @@ export const productSeedData: Omit<
     unit_value: 0.2,
     stock_quantity: 80,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Moisturizer - Daily',
@@ -588,6 +600,7 @@ export const productSeedData: Omit<
     unit_value: 0.1,
     stock_quantity: 0, // Out of stock
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   // Sub-category 15: Haircare
   {
@@ -601,6 +614,7 @@ export const productSeedData: Omit<
     unit_value: 0.4,
     stock_quantity: 90,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 
   // Category 8: Household Essentials
@@ -616,6 +630,7 @@ export const productSeedData: Omit<
     unit_value: 2,
     stock_quantity: 70,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Dish Soap - Lemon',
@@ -628,6 +643,7 @@ export const productSeedData: Omit<
     unit_value: 0.5,
     stock_quantity: 120,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   // Sub-category 17: Paper Products
   {
@@ -641,6 +657,7 @@ export const productSeedData: Omit<
     unit_value: 12,
     stock_quantity: 100,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 
   // Category 9: Baby Care
@@ -656,6 +673,7 @@ export const productSeedData: Omit<
     unit_value: 0.4,
     stock_quantity: 60,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   {
     name: 'Baby Cereal - Rice',
@@ -668,6 +686,7 @@ export const productSeedData: Omit<
     unit_value: 0.2,
     stock_quantity: 0, // Out of stock
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
   // Sub-category 19: Diapers & Wipes
   {
@@ -681,5 +700,6 @@ export const productSeedData: Omit<
     unit_value: 30,
     stock_quantity: 50,
     is_active: true,
+    cargo_option_id: '09b52fcb-f4e0-4070-bc72-4e70b021e009',
   },
 ];

@@ -15,8 +15,10 @@ import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { User } from 'src/users/user.entity';
 import { Currency } from 'src/currencies/currency.entity';
-import { CountryCode } from 'src/Countries/country.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+
+const roundCurrency = (value: number): number => 
+  Math.round((value + Number.EPSILON) * 100) / 100;
 
 //TODO: Generated temprorarily need to look requirment and change
 @Injectable()
@@ -34,7 +36,7 @@ export class OrderService {
     private readonly cartItemRepository: Repository<EcommerceCartItem>,
     @InjectRepository(Currency)
     private readonly currencyRepository: Repository<Currency>,
-    private readonly userPreferenceService: UserPreferencesService
+    private readonly userPreferenceService: UserPreferencesService,
   ) {
     const appId = process.env.CASHFREE_APP_ID;
     const secretKey = process.env.CASHFREE_SECRET_KEY;
@@ -48,7 +50,7 @@ export class OrderService {
       mode === 'production' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
       appId,
       secretKey,
-    )
+    );
   }
 
   async createOrder(
@@ -63,6 +65,20 @@ export class OrderService {
 
     if (!cart || cart.items.length === 0) {
       throw new BadRequestException('Cart is empty');
+    }
+
+    let itemsToProcess = cart.items;
+
+    if (createOrderDto.product_ids && createOrderDto.product_ids.length > 0) {
+      itemsToProcess = cart.items.filter((item) =>
+        createOrderDto.product_ids!.includes(item.product_id),
+      );
+
+      if (itemsToProcess.length === 0) {
+        throw new BadRequestException(
+          'None of the selected products exist in your active cart',
+        );
+      }
     }
 
     const user = cart.user;
@@ -83,54 +99,53 @@ export class OrderService {
 
     const orderCurrency = currencyResponse.currency_code;
 
-    let convertedGrossSubtotal = 0;
-    let totalDiscountAmount = 0;
+    let subtotal = 0;
+    let totalBaseDiscount = 0;
 
-    for (const item of cart.items) {
-      const itemPriceBase = Number(item.unit_price);
-      const itemQuantity = Number(item.quantity);
+    for (const item of itemsToProcess) {
+      const basePrice = Number(item.product.price);
+      const baseDiscPerc = Number(item.product.discount_percentage || 0);
+      const baseDiscountAmountPerUnit = (basePrice * baseDiscPerc) / 100;
+      const baseUnitPrice = basePrice - baseDiscountAmountPerUnit;
+      const baseDiscountAmount = baseDiscountAmountPerUnit * item.quantity;
 
-      const convertedUnitPrice =
+      const rawConvertedUnitPrice =
         await this.userPreferenceService.getConvertedPriceByCountry(
           countryName,
-          itemPriceBase,
+          baseUnitPrice,
         );
 
-      const lineTotal = convertedUnitPrice * itemQuantity;
-      const itemDiscountPercent = Number(item.discount_percentage) || 0;
-      const lineDiscount = lineTotal * (itemDiscountPercent / 100);
+      const convertedUnitPrice = roundCurrency(rawConvertedUnitPrice);
 
-      convertedGrossSubtotal += lineTotal;
-      totalDiscountAmount += lineDiscount;
+      subtotal += convertedUnitPrice * item.quantity;
+      totalBaseDiscount += baseDiscountAmount;
     };
 
-    const convertedProductSubtotal =
-      convertedGrossSubtotal - totalDiscountAmount;
+    const discountedSubTotal = subtotal;
 
-    if (isNaN(convertedProductSubtotal))
+    if (isNaN(discountedSubTotal))
       throw new BadRequestException('Invalid cart amount');
 
-    const isIndia = countryName === 'India';
+    const isIndia = countryName?.includes('India');
     const threshold = isIndia ? 299 : 20;
     const deliveryFeeBase = isIndia ? 3 : 5;
     const serviceChargeBase = 1;
 
-    const deliveryFee =
-      convertedProductSubtotal >= threshold ? 0 : deliveryFeeBase;
+    const deliveryFee = discountedSubTotal >= threshold ? 0 : deliveryFeeBase;
 
-    const taxAmount = convertedProductSubtotal * 0.02;
+    const taxAmount = discountedSubTotal * 0.02;
     const serviceCharge = serviceChargeBase;
 
     const finalTotal =
-      convertedProductSubtotal + deliveryFee + taxAmount + serviceCharge;
+      discountedSubTotal + deliveryFee + taxAmount + serviceCharge;
 
-    const roundedTotal = Number(finalTotal.toFixed(2));
-    const roundedSubtotal = Number(convertedProductSubtotal.toFixed(2));
-    const roundedShipping = Number(deliveryFee.toFixed(2));
-    const roundedTax = Number(taxAmount.toFixed(2));
+    const roundedTotal = roundCurrency(finalTotal);
+    const roundedSubtotal = roundCurrency(discountedSubTotal);
+    const roundedShipping = roundCurrency(deliveryFee);
+    const roundedTax = roundCurrency(taxAmount);
 
     // Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
 
     // Create order
     const order = this.orderRepository.create({
@@ -139,7 +154,7 @@ export class OrderService {
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
       subtotal: roundedSubtotal, 
-      discount_percentage: cart.discount_percentage,
+      discount_percentage: totalBaseDiscount,
       shipping_amount: roundedShipping,
       tax_amount: roundedTax,
       total_amount: roundedTotal,
@@ -151,16 +166,23 @@ export class OrderService {
     const savedOrder = await this.orderRepository.save(order);
 
     // Create order items from cart items
-    const orderItems = cart.items.map((cartItem) =>
-      this.orderItemRepository.create({
+    const orderItems = itemsToProcess.map((cartItem) => {
+      const basePrice = Number(cartItem.product.price);
+      const baseDiscPerc = Number(cartItem.product.discount_percentage || 0);
+      const baseDiscountAmountPerUnit = (basePrice * baseDiscPerc) / 100;
+      const baseUnitPrice = basePrice - baseDiscountAmountPerUnit;
+      const totalPrice = baseUnitPrice * cartItem.quantity;
+      const totalDiscount = baseDiscountAmountPerUnit * cartItem.quantity;
+
+      return this.orderItemRepository.create({
         order_id: savedOrder.id,
         product_id: cartItem.product_id,
         quantity: cartItem.quantity,
-        unit_price: cartItem.unit_price,
-        total_price: cartItem.total_price,
-        discount_percentage: cartItem.discount_percentage,
-      }),
-    );
+        unit_price: baseUnitPrice,
+        total_price: totalPrice,
+        discount_percentage: totalDiscount,
+      });
+    });
 
     await this.orderItemRepository.save(orderItems);
 
@@ -181,14 +203,14 @@ export class OrderService {
 
       console.error(
         'Cashfree error:',
-        cashfreeErr.response?.data || cashfreeErr.message
+        cashfreeErr.response?.data || cashfreeErr.message,
       );
 
       throw new BadRequestException(
         'Failed to initialize payment session: ' +
           (cashfreeErr.response?.data?.message ||
             cashfreeErr.message ||
-            'Unknown error')
+            'Unknown error'),
       );
     }
   }
@@ -209,7 +231,7 @@ export class OrderService {
         customer_id: user.id,
         customer_name: user.name,
         customer_email: user.email,
-        customer_phone: user.phone_number, 
+        customer_phone: user.phone_number,
       },
       order_meta: {
         return_url: `${process.env.FRONTEND_URL}/order`,
@@ -218,9 +240,12 @@ export class OrderService {
     };
 
     const cashfreeResponse =
-      await this.cashfree.PGCreateOrder(cashfreeOrderRequest); 
+      await this.cashfree.PGCreateOrder(cashfreeOrderRequest);
 
-    savedOrder.cashfree_session_id = cashfreeResponse.data.payment_session_id!;
+    const { payment_session_id, cf_order_id } = cashfreeResponse.data || {};
+    savedOrder.cashfree_session_id = payment_session_id!;
+    savedOrder.cfc_order_id = cf_order_id!;
+
     await this.orderRepository.save(savedOrder);
   }
 
@@ -291,16 +316,32 @@ export class OrderService {
     order.payment_status = PaymentStatus.PAID;
     order.cashfree_payment_id = cashfreeData.cf_payment_id;
 
+    const orderProductIds = order.items.map((item) => item.product_id);
     const cart = await this.cartRepository.findOne({
-      where: { 
-        user_id: order.user.id, 
+      where: {
+        user_id: order.user.id,
         status: CartStatus.ACTIVE,
       },
+      relations: ['items', 'items.product'],
     });
 
-    if (cart) {
-      cart.status = CartStatus.CHECKED_OUT;
-      await this.cartRepository.save(cart);
+    if (cart && cart.items.length > 0) {
+      const itemsToRemove = cart.items.filter((item) => {
+        const cartItemId = item.product_id || item.product?.id;
+        return orderProductIds.includes(cartItemId);
+      });
+
+      if (itemsToRemove.length > 0) {
+        await this.cartItemRepository.delete(itemsToRemove.map((i) => i.id));
+
+        const remainingItemsCount = cart.items.length - itemsToRemove.length;
+
+        if (remainingItemsCount <= 0) {
+          cart.status = CartStatus.CHECKED_OUT;
+          cart.items = [];
+          await this.cartRepository.save(cart);
+        }
+      }
     }
 
     return this.orderRepository.save(order);
