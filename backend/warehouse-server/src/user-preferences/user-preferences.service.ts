@@ -121,6 +121,18 @@ export class UserPreferencesService {
     }
   }
 
+  async getCurrencyRateInfo(
+    countryName: string
+  ): Promise<{ code: string; symbol: string; rate: number }> {
+    try {
+      const currencyInfo =
+        await this.externalCurrencyService.getCurrencyInfo(countryName);
+      return currencyInfo;
+    } catch (error) {
+      return { code: 'USD', symbol: '$', rate: 1 };
+    }
+  }
+
   async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {
     const userPreference = this.userPreferenceRepository.create({
       id,

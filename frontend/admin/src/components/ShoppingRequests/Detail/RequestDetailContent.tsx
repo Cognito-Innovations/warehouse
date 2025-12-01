@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
+
+import { updateShoppingRequestStatus } from '../../../services/api.services';
 import ItemsTable from './ItemsTable';
 import TrackingStatus, { type Status } from '../../../components/common/Tracking/TrackingStatus';
 import InvoiceTable from './InvoiceTable';
 import CustomerRemarks from '../../common/CustomerRemarks';
 import { formatDateTime } from '../../../utils/formatDateTime';
-import { useState } from 'react';
-import { updateShoppingRequestStatus } from '../../../services/api.services';
+import { formatWithPlaceholders } from '../../../utils/formatPlaceholder';
 
 interface User {
   id: string;
@@ -179,7 +181,7 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
       }
     
       if (isComplete) {
-        description = step.description.replace('{userName}', userName);
+        description = formatWithPlaceholders(step.description, { userName });
       }
 
       return {

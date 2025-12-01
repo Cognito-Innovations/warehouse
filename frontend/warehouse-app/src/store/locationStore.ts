@@ -137,12 +137,11 @@ const useLocationStore = create<LocationStore>((set, get) => ({
   },
 
   fetchUserAddress: async (userId: string) => {
-    const { addressCache, isLoadingAddress } = get();
-    if (isLoadingAddress) return;
+    const state = get();
+    if (state.isLoadingAddress) return;
 
-    if (addressCache[userId] !== undefined) {
-      get().setUserAddress(addressCache[userId]);
-      get().setLoadingAddress(false);
+    if (state.addressCache[userId] !== undefined) {
+      state.setUserAddress(state.addressCache[userId]);
       return;
     }
 

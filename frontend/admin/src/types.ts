@@ -234,3 +234,18 @@ export interface CargoOption {
   id: string;
   label: string;
 }
+
+export interface DashboardMetrics {
+  customers: number;
+  activePackages: number;
+  actionRequiredPackages: number;
+  shipRequestShipments: number;
+  paymentPendingShipments: number;
+  paymentApprovalShipments: number;
+  readyToShipShipments: number;
+  shippedShipments: number;
+  pickupRequested: number;
+  shoppingRequested: number;
+  quotationConfirm: number;
+  assistPaymentApproval: number;
+}

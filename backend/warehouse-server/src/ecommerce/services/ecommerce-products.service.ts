@@ -57,40 +57,37 @@ export class ProductsService {
 
     const products = await this.productRepository.find({
       where,
-      relations: [
-        'category',
-        'sub_category',
-        'countries',
-        'measurement',
-        'cargo_option'
-      ],
+      relations: ['category', 'sub_category', 'measurement'],
       skip: offset,
       take: limit,
     });
 
     const selectedCountry = country || 'United States of America';
 
-    return Promise.all(
-      products.map(async (product) => {
-        const basePrice = Number(product.price);
+    const currencyInfo =
+      await this.userPreferencesService.getCurrencyRateInfo(selectedCountry);
 
-        const convertedPriceObj =
-          await this.userPreferencesService.getFormattedConvertedPriceByCountry(
-            selectedCountry,
-            basePrice
-          );
+    const { code, symbol, rate } = currencyInfo;
 
-        return {
-          ...product,
-          price: convertedPriceObj,
-        };
-      }),
-    );
+    return products.map((product) => {
+      const basePrice = Number(product.price);
+
+      const convertedPrice = code === 'USD' ? basePrice : basePrice * rate;
+      const finalCurrencySymbol = code === 'USD' ? '$' : symbol;
+
+      return {
+        ...product,
+        price: {
+          price: convertedPrice,
+          currency: finalCurrencySymbol
+        },
+      };
+    });
   }
 
-  async findOne(id: string, country?: string) {
+  async findOne(slug: string, country?: string) {
     const product = await this.productRepository.findOne({
-      where: { id },
+      where: { slug: slug },
       relations: ['countries', 'cargo_option'],
     });
 

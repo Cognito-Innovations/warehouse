@@ -106,8 +106,8 @@ export default function CheckoutPage() {
           throw new Error('No valid items');
         }
         setCheckedOutItems(parsedItems);
-        const itemIds = parsedItems.map(item => item.id!);
-        toggleCartItemSelection(itemIds);
+        const itemProductIds = parsedItems.map(item => item.product_id!);
+        toggleCartItemSelection(itemProductIds);
       } catch (err) {
         console.error("Failed to parse cached items:", err);
         setCheckedOutItems([]);
@@ -118,11 +118,11 @@ export default function CheckoutPage() {
     }
 
     const selected = cartProducts.filter(i =>
-      checkoutProducts.includes(i.id!)
+      checkoutProducts.includes(i.product_id!)
     );
     setCheckedOutItems(selected);
-    const itemIds = selected.map(i => i.id!);
-    toggleCartItemSelection(itemIds);
+    const itemProductIds = selected.map(i => i.product_id!);
+    toggleCartItemSelection(itemProductIds);
     setHasInitialized(true);
     setItemsLoaded(true);
   }, [cartProducts, checkoutProducts, toggleCartItemSelection, hasInitialized]);
@@ -203,7 +203,7 @@ export default function CheckoutPage() {
     setProcessing(true);
     setError(null);
     try {
-      const orderedProductIds = checkedOutItems.map((item) => item.product.id);
+      const orderedProductIds = checkedOutItems.map((item) => item.product_id);
       const orderData = {
         shipping_address: formData.shippingAddress,
         country_name: selectedCountry,
@@ -231,23 +231,6 @@ export default function CheckoutPage() {
         async (paymentResult: any) => {
           try {
             await ecommerceService.updatePaymentStatus(orderId, paymentResult);
-
-            const currentCart = useCartStore.getState().cartProducts;
-            const orderedIdsSet = new Set(orderedProductIds);
-
-            const updatedCart = currentCart.filter((item) => {
-              const itemId = item.product?.id || item.product_id;
-              return !orderedIdsSet.has(itemId);
-            });
-
-            useCartStore.setState({ cartProducts: updatedCart });
-
-            clearCheckoutProducts();
-            localStorage.removeItem("checkoutSelectedItems");
-
-            useCartStore.getState().getCart(selectedCountry);
-            
-            toast.success("Order placed successfully!");
           } catch (error) {
             setError("Payment succeeded but order update failed. Contact support.");
             toast.error("Order update error");

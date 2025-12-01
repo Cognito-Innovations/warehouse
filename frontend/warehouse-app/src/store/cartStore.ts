@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { ecommerceService } from "@/services/ecommerce.service";
-import { getAuthToken } from "./ecommerceStore";
+import { getAuthToken } from "@/utils/getAuthToken";
 import { CartStore } from "./storeTypes";
 import { EcommerceProduct, LocalCartItem } from "@/types/ecommerce";
 
@@ -27,6 +27,8 @@ export const useCartStore = create<CartStore>()(
 
         set({ checkoutProducts: [...selected] });
       },
+
+      setCartProducts: (products: any[]) => set({ cartProducts: products }),
 
       // LEARN: clearing products in checkout section after successful payment
       clearCheckoutProducts: () => set({ checkoutProducts: [] }),
@@ -308,6 +310,11 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: "cart-storage",
+      version: 2,
+      partialize: (state) => ({
+        cartProducts: state.cartProducts,
+        checkoutProducts: state.checkoutProducts
+      }),
     }
   )
 );

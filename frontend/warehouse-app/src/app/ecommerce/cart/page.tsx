@@ -96,11 +96,14 @@ export default function CartPage() {
     }
   }, []);
 
-  const init = async () => {
+  useEffect(() => {
     if (userId) {
       setIsAddressLoading(true);
       loadAddressesInternal(userId).finally(() => setIsAddressLoading(false));
     }
+  }, [userId, loadAddressesInternal]);
+
+  const initCart = useCallback(async () => {
     try {
       if (cartProducts.length === 0) {
         setIsCartLoading(true);
@@ -111,13 +114,16 @@ export default function CartPage() {
     } finally {
       setIsCartLoading(false);
     }
-  };
+  }, [cartProducts.length, getCart, selectedCountry]);
 
   useEffect(() => {
     if (status === "loading") return;
     if (!selectedCountry) return;
-    init();
-  }, [selectedCountry, userId, status]);
+
+    useCartStore.persist.onFinishHydration(() => {
+      initCart();
+    });
+  }, [selectedCountry, status, initCart]);
 
   const handleSaveAddress = async (addressData: Omit<CartAddressData, "id">) => {
     if (!userId) return;
@@ -206,7 +212,7 @@ export default function CartPage() {
 
   const handleCheckout = useCallback(() => {
     const selected = cartProducts.filter(item =>
-      checkoutProducts.includes(item.product_id!) || checkoutProducts.includes(item.id!)
+      checkoutProducts.includes(item.product_id!)
     );
 
     if (selected?.length === 0) {

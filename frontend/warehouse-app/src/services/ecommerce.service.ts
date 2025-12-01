@@ -9,8 +9,8 @@ import {
   UpdateCartItemRequest,
   CreateOrderRequest,
 } from "../types/ecommerce";
-import { getSession } from "next-auth/react";
 import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
+import { getAuthTokenWithFallback } from "@/utils/getAuthToken";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001";
 
@@ -25,8 +25,7 @@ attachClientIdentifierInterceptors(api);
 
 // Add auth token to requests
 api.interceptors.request.use(async (config) => {
-  const session = await getSession();
-  const token = session?.access_token;
+  const token = await getAuthTokenWithFallback();
   if (token) {
     config.headers.set("Authorization", `Bearer ${token}`);
   }
@@ -84,8 +83,8 @@ export const ecommerceService = {
     return response.data;
   },
 
-  async getProduct(id: string, country?: string): Promise<EcommerceProduct> {
-    const response = await api.get(`/ecommerce-products/${id}`, {
+  async getProduct(slug: string, country?: string): Promise<EcommerceProduct> {
+    const response = await api.get(`/ecommerce-products/${slug}`, {
       params: country ? { country } : {}
     });
     return response.data;

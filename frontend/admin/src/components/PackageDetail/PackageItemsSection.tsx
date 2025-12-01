@@ -1,19 +1,12 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, CircularProgress } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { addPackageItem, deletePackageItem, updatePackageItem } from '../../services/api.services';
-import AddItemModal from './AddItemModal';
+import { Box, Typography, Button } from '@mui/material';
+import { Add as AddIcon } from '@mui/icons-material';
 
-interface PackageItem {
-  id: string;
-  name: string;
-  quantity: number;
-  amount: string;
-  total: string;
-  unit_price: number;
-  total_price: number;
-}
+import { addPackageItem, deletePackageItem, updatePackageItem } from '../../services/api.services';
+import PackageItemsTable, { type PackageItem } from './PackageItemsTable';
+import EmptyPackageItemsState from './EmptyPackageItemsState';
+import AddItemModal from './AddItemModal';
 
 interface PackageItemsSectionProps {
   id: string;
@@ -189,86 +182,15 @@ const PackageItemsSection: React.FC<PackageItemsSectionProps> = ({
         </Box>
 
         {packageItems && packageItems.length > 0 ? (
-          //TODO: Below code should be moved to a separate component
-          <TableContainer sx={{bgcolor: "#ffffff", borderRadius: 2}}>
-            <Table size="medium">
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Quantity</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Amount</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Total</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {packageItems.map((item) => {
-                  const isDeleting = deletingItemId === item.id;
-
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }} style={{ textTransform: 'capitalize' }}>{item.name}</TableCell>
-                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>{item.quantity}</TableCell>
-                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>${item.amount || item.unit_price}</TableCell>
-                      <TableCell sx={{ color: '#1e293b', fontSize: '0.875rem' }}>${item.total || item.total_price}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 0.5 }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditItem(item)}
-                            disabled={isDiscarded || isDeleting}
-                            sx={{
-                              bgcolor: '#3b82f6',
-                              color: 'white',
-                              width: 32,
-                              height: 32,
-                              '&:hover': { bgcolor: '#2563eb' }
-                            }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDeleteItem(item.id)}
-                            disabled={isDiscarded || isDeleting} 
-                            sx={{
-                              bgcolor: '#f97316',
-                              color: 'white',
-                              width: 32,
-                              height: 32,
-                              '&:hover': { bgcolor: '#ea580c' }
-                            }}
-                          >
-                            {isDeleting ? (
-                              <CircularProgress size={20} sx={{ color: 'inherit' }} />
-                            ) : (
-                              <DeleteIcon fontSize="small" />
-                            )}
-                          </IconButton>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <PackageItemsTable 
+            items={packageItems}
+            isDiscarded={isDiscarded}
+            deletingItemId={deletingItemId}
+            onEdit={handleEditItem}
+            onDelete={handleDeleteItem}
+          />
         ) : (
-          //TODO: Below code should be moved to a separate component
-          <Box sx={{ 
-            p: 4, 
-            textAlign: 'center', 
-            bgcolor: '#f8fafc', 
-            borderRadius: 2, 
-            border: '1px solid #e2e8f0' 
-          }}>
-            <Typography variant="body1" sx={{ color: '#64748b', mb: 2 }}>
-              No package items added yet
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-              Click "Add Item" to start adding products to this package
-            </Typography>
-          </Box>
+          <EmptyPackageItemsState />
         )}
       </Box>
 

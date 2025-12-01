@@ -27,7 +27,6 @@ export enum PaymentStatus {
   REFUNDED = 'REFUNDED',
 }
 
-// TODO: Need to update the entity
 @Entity('ecommerce_orders')
 export class EcommerceOrder extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -71,12 +70,6 @@ export class EcommerceOrder extends BaseTimestampEntity {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total_amount: number;
-
-  @Column({ type: 'text', nullable: true })
-  shipping_address: string;
-
-  @Column({ type: 'text', nullable: true })
-  billing_address: string;
 
   @Column({ type: 'text', nullable: true })
   notes: string;

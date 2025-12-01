@@ -45,7 +45,6 @@ import { EcommerceCart } from 'src/ecommerce/entities/ecommerce-cart.entity';
 import { EcommerceCartItem } from 'src/ecommerce/entities/ecommerce-cart-item.entity';
 import { EcommerceCargoOption } from 'src/ecommerce/entities/cargo-options.entity';
 
-//TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',

@@ -31,7 +31,7 @@ export type ProductStore = {
   setError: (error: string | null) => void;
   setSearchQuery: (query: string) => void;
   getProducts: (params?: GetProductsParams) => Promise<EcommerceProduct[]>;
-  fetchProductById: (id: string, country?: string) => Promise<EcommerceProduct>;
+  fetchProductBySlug: (slug: string, country?: string) => Promise<EcommerceProduct>;
   getCategoryProducts: (categoryId: string, country?: string, limit?: number) => Promise<EcommerceProduct[]>;
   handleProductSelect: (productId: string) => void;
   fetchProducts: (
@@ -39,7 +39,7 @@ export type ProductStore = {
     reset?: boolean
   ) => Promise<void>;
 
-  loadProductPageData: (id: string, country: string) => Promise<void>;
+  loadProductPageData: (slug: string, country: string) => Promise<void>;
   setCurrentDetailProduct: (product: EcommerceProduct) => void;
   resetDetailState: () => void;
 }
@@ -71,6 +71,7 @@ export type CartStore = {
   loading: boolean;
   checkoutProducts: string[];
   toggleCartItemSelection: (productIds: string | string[]) => void;
+  setCartProducts: (products: any[]) => void;
   clearCheckoutProducts: () => void;
   setLoading: (value: boolean) => void;
   getItemQuantity: (productId: string) => number;

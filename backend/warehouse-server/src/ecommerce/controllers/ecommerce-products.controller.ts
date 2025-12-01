@@ -43,9 +43,9 @@ export class ProductsController {
   }
 
   @Public()
-  @Get(':id')
-  findOne(@Param('id') id: string, @Query('country') country?: string) {
-    return this.productsService.findOne(id, country);
+  @Get(':slug')
+  findOne(@Param('slug') slug: string, @Query('country') country?: string) {
+    return this.productsService.findOne(slug, country);
   }
 
   @Patch(':id')

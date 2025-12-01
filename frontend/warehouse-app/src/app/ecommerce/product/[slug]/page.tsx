@@ -21,6 +21,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   
   const { 
+    products,
     currentDetailProduct,
     detailPreviewProducts,
     detailRelatedProducts,
@@ -39,27 +40,39 @@ export default function ProductDetailPage() {
   });
   const countryName = locationData.location.countryName;
 
-  const productId = useMemo(() => {
-    return params.id && typeof params.id === "string" ? params.id : null;
-  }, [params.id]);
+  const productSlug = useMemo(() => {
+    return params.slug && typeof params.slug === "string" ? params.slug : null;
+  }, [params.slug]);
+
+  const displayProduct = useMemo(() => {
+    if (currentDetailProduct && currentDetailProduct.id === productSlug) {
+      return currentDetailProduct;
+    }
+
+    if (productSlug && products.length > 0) {
+      return products.find((p) => p.slug === productSlug) || null;
+    }
+
+    return null;
+  }, [currentDetailProduct, products, productSlug]);
 
   useEffect(() => {
-    if (productId && countryName) {
-      loadProductPageData(productId, countryName);
+    if (productSlug && countryName) {
+      loadProductPageData(productSlug, countryName);
     }
-  }, [productId, countryName, loadProductPageData]);
+  }, [productSlug, countryName, loadProductPageData]);
 
   const handleProductSelect = useCallback((selectedProduct: EcommerceProduct) => {
     setCurrentDetailProduct(selectedProduct);
   }, [setCurrentDetailProduct]);
 
   const handleProductClick = useCallback((product: EcommerceProduct) => {
-    router.push(`${ROUTES.PRODUCT}/${product.id}`);
+    router.push(`${ROUTES.PRODUCT}/${product.slug}`);
   }, [router]);
 
   const handleRefresh = () => {
-    if (productId && countryName) {
-      loadProductPageData(productId, countryName);
+    if (productSlug && countryName) {
+      loadProductPageData(productSlug, countryName);
     }
   };
 
@@ -70,11 +83,11 @@ export default function ProductDetailPage() {
       detailError.includes("ECONNREFUSED") ||
       detailError.includes("timeout"));
 
-  if (!currentDetailProduct && isDetailLoading) {
+  if (!displayProduct && isDetailLoading) {
     return <ProductDetailLoadingState />;
   }
 
-  if (!currentDetailProduct && detailError) {
+  if (!displayProduct && detailError) {
     if (isNetworkError) {
       return (
         <EcommerceSkeletonLoader
@@ -92,7 +105,7 @@ export default function ProductDetailPage() {
     }
   }
 
-  if (!currentDetailProduct) return null;
+  if (!displayProduct) return null;
 
   return (
     <Box sx={{ bgcolor: ecommerceData.ui.colors.productDetailBackground, minHeight: "100vh" }}>
@@ -101,14 +114,14 @@ export default function ProductDetailPage() {
       <Container maxWidth="lg" sx={{ py: 2 }}>
         <Box sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, gap: 3 }}>
           <ProductDetailImageSection
-            product={currentDetailProduct}
+            product={displayProduct}
             previewProducts={detailPreviewProducts}
             onProductSelect={handleProductSelect}
             arePreviewsLoading={arePreviewsLoading}
           />
 
           <ProductDetailInfoSection
-            product={currentDetailProduct}
+            product={displayProduct}
             detailsLoading={isDetailLoading}
           />
         </Box>

@@ -20,7 +20,6 @@ import { UserPreferencesService } from 'src/user-preferences/user-preferences.se
 const roundCurrency = (value: number): number => 
   Math.round((value + Number.EPSILON) * 100) / 100;
 
-//TODO: Generated temprorarily need to look requirment and change
 @Injectable()
 export class OrderService {
   private cashfree: Cashfree;
@@ -158,8 +157,6 @@ export class OrderService {
       shipping_amount: roundedShipping,
       tax_amount: roundedTax,
       total_amount: roundedTotal,
-      shipping_address: createOrderDto.shipping_address,
-      billing_address: createOrderDto.billing_address,
       notes: createOrderDto.notes,
     });
 

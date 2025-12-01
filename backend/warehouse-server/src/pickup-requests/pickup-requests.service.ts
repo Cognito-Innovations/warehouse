@@ -201,21 +201,20 @@ export class PickupRequestsService {
       }
 
       // Update the status of the pickup request
-      switch (status.toUpperCase()) {
-        case 'QUOTED':
-          pickupRequest.status = PickupRequestStatus.Quoted;
-          break;
-        case 'CONFIRMED':
-          pickupRequest.status = PickupRequestStatus.Confirmed;
-          break;
-        case 'PICKED':
-          pickupRequest.status = PickupRequestStatus.Picked;
-          break;
-        case 'CANCELLED':
-          pickupRequest.status = PickupRequestStatus.Cancelled;
-          break;
-        default:
-          throw new BadRequestException(`Invalid status: ${status}`);
+      const STATUS_UPDATE_MAP: Record<string, PickupRequestStatus> = {
+        QUOTED: PickupRequestStatus.Quoted,
+        CONFIRMED: PickupRequestStatus.Confirmed,
+        PICKED: PickupRequestStatus.Picked,
+        CANCELLED: PickupRequestStatus.Cancelled,
+      };
+
+      const normalizedStatus = status.toUpperCase();
+      const mappedStatus = STATUS_UPDATE_MAP[normalizedStatus];
+
+      if (mappedStatus) {
+        pickupRequest.status = mappedStatus;
+      } else {
+        throw new BadRequestException(`Invalid status: ${status}`);
       }
 
       const updatedPickupRequest = await queryRunner.manager.save(

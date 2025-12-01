@@ -27,9 +27,9 @@ const useProductStore = create<ProductStore>((set, get) => ({
   setSearchQuery: (query: string) => set({ searchQuery: query }),
   setError: (error: string | null) => set({ error }),
 
-  fetchProductById: async (id: string, country?: string) => {
+  fetchProductBySlug: async (slug: string, country?: string) => {
     try {
-      const product = await ecommerceService.getProduct(id, country);
+      const product = await ecommerceService.getProduct(slug, country);
       return product;
     } catch (error: any) {
       throw new Error(error.message || "Failed to fetch product");
@@ -168,11 +168,11 @@ const useProductStore = create<ProductStore>((set, get) => ({
     });
   },
 
-  loadProductPageData: async (id: string, country: string) => {
+  loadProductPageData: async (slug: string, country: string) => {
     const state = get();
 
-    if (state.detailCache[id]) {
-      const cached = state.detailCache[id];
+    if (state.detailCache[slug]) {
+      const cached = state.detailCache[slug];
       set({
         currentDetailProduct: cached.product,
         detailPreviewProducts: cached.previews,
@@ -184,15 +184,18 @@ const useProductStore = create<ProductStore>((set, get) => ({
       return;
     }
 
+    const existingProductInList = state.products.find((p) => p.slug === slug);
+
     set({ 
-      currentDetailProduct: null, 
+      currentDetailProduct: existingProductInList || null, 
+      detailPreviewProducts: existingProductInList ? [existingProductInList] : [],
       isDetailLoading: true, 
       arePreviewsLoading: true, 
       detailError: null 
     });
 
     try {
-      const product = await ecommerceService.getProduct(id, country);
+      const product = await ecommerceService.getProduct(slug, country);
       set({ currentDetailProduct: product, isDetailLoading: false });
 
       // Fetch Preview Products
@@ -231,7 +234,7 @@ const useProductStore = create<ProductStore>((set, get) => ({
       set((prev) => ({
         detailCache: {
           ...prev.detailCache,
-          [id]: {
+          [slug]: {
             product: product,
             previews: previewProducts,
             related: relatedProducts,
@@ -242,6 +245,7 @@ const useProductStore = create<ProductStore>((set, get) => ({
 
     } catch (error: any) {
       set({ 
+        currentDetailProduct: existingProductInList || null,
         isDetailLoading: false, 
         arePreviewsLoading: false,
         detailError: error.message || ecommerceData.productDetail.productNotFound 

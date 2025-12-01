@@ -42,6 +42,8 @@ import { CurrenciesModule } from './currencies/currencies.module';
 import { UserAddressModule } from './user_address/user_address.module';
 import { EcommerceModule } from './ecommerce/ecommerce.module';
 import { ShipmentsModule } from './shipments/shipments.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { AnalyticsController } from './analytics/analytics.controller';
 
 @Module({
   imports: [
@@ -95,6 +97,7 @@ import { ShipmentsModule } from './shipments/shipments.module';
     CurrenciesModule,
     EcommerceModule,
     ShipmentsModule,
+    AnalyticsModule,
   ],
   controllers: [
     HealthController,
@@ -105,6 +108,7 @@ import { ShipmentsModule } from './shipments/shipments.module';
     ShoppingRequestsController,
     ShoppingRequestProductsController,
     ShipmentsController,
+    AnalyticsController,
   ],
   providers: [
     {

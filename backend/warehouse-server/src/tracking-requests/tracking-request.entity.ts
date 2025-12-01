@@ -49,7 +49,6 @@ export class TrackingRequest extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  //TODO: Why is it optional ?
   @ManyToOne(() => CourierCompany, { eager: true, nullable: true })
   @JoinColumn({ name: 'courier_id' })
   courier?: CourierCompany;

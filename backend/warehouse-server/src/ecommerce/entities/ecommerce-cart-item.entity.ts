@@ -9,7 +9,6 @@ import {
 import { EcommerceCart } from './ecommerce-cart.entity';
 import { EcommerceProduct } from './ecommerce-product.entity';
 
-//TODO: Generated temprorarily need to look requirment and change
 @Entity('ecommerce_cart_items')
 export class EcommerceCartItem extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')

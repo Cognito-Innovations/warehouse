@@ -1,8 +1,10 @@
 import React from 'react';
 import { Box } from '@mui/material';
+
 import RequestDetails, { type RequestDetailsData } from './RequestDetails';
 import TrackingStatus, { type Status } from '../../../components/common/Tracking/TrackingStatus';
 import { formatDateTime } from '../../../utils/formatDateTime';
+import { formatWithPlaceholders } from '../../../utils/formatPlaceholder';
 
 interface User {
   id: string;
@@ -60,8 +62,7 @@ const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) =
       }
       
       if (isComplete) {
-        //TODO: Its not correct way to replace the userName
-        description = step.description.replace('{userName}', userName);
+        description = formatWithPlaceholders(step.description, { userName });
       }
 
       return {

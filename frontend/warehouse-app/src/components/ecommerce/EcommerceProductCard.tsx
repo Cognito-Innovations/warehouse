@@ -10,14 +10,14 @@ import {
   Button,
   Chip,
   useTheme,
-  IconButton,
 } from "@mui/material";
-import { Star, Image as ImageIcon, Add, Remove } from "@mui/icons-material";
+import { Star, Image as ImageIcon } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
 import { useCartStore } from "@/store/cartStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import ProductQuantityControl from "./ProductQuantityControl";
 import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
 import { formatDiscountPercentage } from "@/lib/utils";
@@ -84,7 +84,7 @@ export default function EcommerceProductCard({
       }}
       onClick={() => {
         handleProductSelect(product.id);
-        router.push(`${ROUTES.PRODUCT}/${product.id}`);
+        router.push(`${ROUTES.PRODUCT}/${product.slug}`);
       }}
     >
      <Box sx={{ position: "relative", height: 180, width: "100%", overflow: "hidden" }}>
@@ -228,49 +228,12 @@ export default function EcommerceProductCard({
           {!isOutOfStock && (
             <>
               {cartQuantity > 0 ? (
-                // TODO P0: Move this below code to seperate component
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.5,
-                    border: `1px solid ${ecommerceData.ui.colors.borderColor}`,
-                    borderRadius: 1,
-                    height: 32,
-                    width: { xs: "100%", sm: "auto" },
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <IconButton
-                    size="small"
-                    onClick={handleDecreaseClick}
-                    sx={{
-                      width: 40,
-                      height: 32,
-                      p: 0,
-                      position: "relative",
-                    }}
-                  >
-                    <Remove sx={{ fontSize: 16 }} />
-                  </IconButton>
-                  <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 20, textAlign: "center" }}>
-                    {cartQuantity}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={handleAddClick}
-                    disabled={cartQuantity >= stockQuantity}
-                    sx={{
-                      width: 40,
-                      height: 32,
-                      p: 0,
-                      position: "relative",
-                      color: cartQuantity >= stockQuantity ? "action.disabled" : "inherit",
-                    }}
-                  >
-                    <Add sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </Box>
+                <ProductQuantityControl
+                  quantity={cartQuantity}
+                  stockQuantity={stockQuantity}
+                  onIncrement={handleAddClick}
+                  onDecrement={handleDecreaseClick}
+                />
               ) : (
                 <Button
                   variant="contained"
