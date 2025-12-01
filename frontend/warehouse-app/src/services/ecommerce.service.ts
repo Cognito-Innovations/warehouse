@@ -26,16 +26,9 @@ attachClientIdentifierInterceptors(api);
 // Add auth token to requests
 api.interceptors.request.use(async (config) => {
   const session = await getSession();
-  const token = session?.access_token || localStorage.getItem("auth-token");
+  const token = session?.access_token;
   if (token) {
-    if (config.headers && typeof (config.headers as any).set === "function") {
-      (config.headers as any).set("Authorization", `Bearer ${token}`);
-    } else {
-      config.headers = {
-        ...(config.headers || {}),
-        Authorization: `Bearer ${token}`,
-      };
-    }
+    config.headers.set("Authorization", `Bearer ${token}`);
   }
   return config;
 });
@@ -64,13 +57,22 @@ export const ecommerceService = {
   },
 
   // Products
-  async getProducts(searchTerm?: string, country?: string, limit?: number, offset?: number): Promise<EcommerceProduct[]> {
+  async getProducts(
+    searchTerm?: string,
+    country?: string,
+    category?: string,
+    limit?: number,
+    offset?: number
+  ): Promise<EcommerceProduct[]> {
     const params: any = {};
     if (searchTerm) {
       params.search = searchTerm;
     }
     if (country) {
       params.country = country;
+    }
+    if (category) {
+      params.category = category;
     }
     if (limit !== undefined) {
       params.limit = limit;
@@ -94,16 +96,6 @@ export const ecommerceService = {
     return response.data;
   },
 
-  async getProductsByCategory(categoryId: string): Promise<EcommerceProduct[]> {
-    const response = await api.get(`/ecommerce-products?category=${categoryId}`);
-    return response.data;
-  },
-
-  async getProductsBySubCategory(subCategoryId: string): Promise<EcommerceProduct[]> {
-    const response = await api.get(`/ecommerce-products?sub_category=${subCategoryId}`);
-    return response.data;
-  },
-
   // Cart
   async getCart(country?: string): Promise<Cart> {
     let params: any = {};
@@ -114,8 +106,12 @@ export const ecommerceService = {
     return response.data;
   },
 
-  async addToCart(data: AddToCartRequest): Promise<Cart> {
-    const response = await api.post("/ecommerce-cart/add", data);
+  async addToCart(data: AddToCartRequest, country?: string): Promise<Cart> {
+    let params: any = {};
+    if (country) {
+      params.country = country;
+    }
+    const response = await api.post("/ecommerce-cart/add", data, { params });
     return response.data;
   },
 
@@ -172,7 +168,7 @@ export const ecommerceService = {
     return response.data;
   },
 
-  async updatePaymentStatus(id: string, paymentStatus: string): Promise<Order> {
+  async updatePaymentStatus(id: string, paymentStatus: any): Promise<Order> {
     const response = await api.put(`/ecommerce-orders/${id}/payment-status`, { paymentStatus });
     return response.data;
   },

@@ -3,11 +3,13 @@
 import React from "react";
 import { Paper, Typography, IconButton } from "@mui/material";
 import { Edit } from "@mui/icons-material";
+import AddressSectionSkeletonLoader from "../skeleton-loader/AddressSectionSkeletonLoader";
 import { CartAddressData } from "@/types/ecommerce";
 
 interface AddressSectionProps {
   selectedAddress: CartAddressData | null;
   highlightAddressError: boolean;
+  isLoading?: boolean;
   onAddAddress: () => void;
   onEditAddress: () => void;
   noAddressLabel: string;
@@ -18,6 +20,7 @@ interface AddressSectionProps {
 export default function AddressSection({
   selectedAddress,
   highlightAddressError,
+  isLoading = false,
   onAddAddress,
   onEditAddress,
   noAddressLabel,
@@ -27,6 +30,10 @@ export default function AddressSection({
   const formatAddress = (address: CartAddressData) => {
     return `${address.address}, ${address.city}, ${address.state} ${address.zip_code}`;
   };
+
+  if (isLoading) {
+    return <AddressSectionSkeletonLoader borderColor={borderColor} />;
+  }
 
   if (!selectedAddress) {
     return (

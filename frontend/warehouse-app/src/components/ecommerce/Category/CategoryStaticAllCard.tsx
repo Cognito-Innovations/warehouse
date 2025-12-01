@@ -2,16 +2,16 @@ import { Box, Typography } from "@mui/material";
 
 import useCategoryStore from "@/store/categoryStore";
 import GridViewIcon from "@mui/icons-material/GridView";
+import { TW_COLORS } from "@/utils/colors";
 
 const CategoryStaticAllCard = () => {
-    //TODO: This iconbgcolor or this color code should move into tailwind css default primary color and here needs to difine something like tw.defaultcolor
-    //TODO: Or else move this to global constants and use these export color code and do the changes in rest of files
-    const iconBgColor = "#7c3aed";
-    const selectedCategory = useCategoryStore((state:any)=>state.selectedCategory);
+    const iconBgColor = TW_COLORS.primary;
+    const { selectedCategory, handleCategorySelect } = useCategoryStore();
     const isAllActive = !selectedCategory;
 
     return(
         <Box
+          onClick={() => handleCategorySelect(null)}
           sx={{
             display: "flex",
             flexDirection: "column",

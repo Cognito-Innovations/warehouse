@@ -1,15 +1,9 @@
-import { useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import useCategoryStore from "@/store/categoryStore";
+import { DEFAULT_IMG } from "@/utils/constants";
 
-//TODO: Loader is missing please add it, when loading the categories
 const CategoryItems = () => {
-  const { categories, getCategories, selectedCategory, handleCategorySelect } = useCategoryStore();
-
-  useEffect(() => {
-    getCategories();
-  }, []);
-
+  const { categories, selectedCategory, handleCategorySelect } = useCategoryStore();
 
   return (
     <>
@@ -74,9 +68,5 @@ const CategoryItems = () => {
     </>
   );
 };
-
-//TODO: Move this to default global constants
-const DEFAULT_IMG =
-  "https://rukminim2.flixcart.com/fk-p-flap/108/108/image/eb75e5d9571bde1a.png?q=60";
 
 export default CategoryItems;

@@ -1,15 +1,14 @@
 "use client";
 
 import React, { useRef, useCallback, useEffect, useMemo } from "react";
-import { Box, Container, Alert } from "@mui/material";
+import { Container, Alert } from "@mui/material";
 
-
-import { useProducts, useCartActions, useProductActions } from "../../store/ecommerceStore";
+import useProductStore from "@/store/productStore";
+import useCategoryStore from "@/store/categoryStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout"; 
 import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
-import GridSkeleton from "@/components/ecommerce/skeleton-loader/GridSkeletonLoader";
 import { debounce } from "@/utils/debounce";
 import { ecommerceData } from "@/data/ecommerceData";
 import CategorySection from "@/components/ecommerce/category/CategorySection";
@@ -20,95 +19,89 @@ export default function Ecommerce() {
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
     countryName: undefined,
-    city: '',
-    pincode: '',
+    city: "",
+    pincode: "",
   });
+  const countryName = locationData.location.countryName;
 
-  const {
-    products = [],
-    categories,
-    searchQuery,
-    selectedCategory,
-    loading,
+  const { categories, getCategories } = useCategoryStore();
+  const { 
+    products,
+    isLoading,
+    loadingMore,
+    hasMore,
     error,
-    hasMoreProducts,
-    loadingNextPage,
-  } = useProducts();
-  const { fetchCart } = useCartActions();
-  const { fetchCategories, fetchProducts, fetchMoreProducts, setLoading, setError } = useProductActions();
+    fetchProducts,
+    setError,
+    searchQuery,
+  } = useProductStore();
+
+  const { selectedCategory } = useCategoryStore();
 
   const hasFetched = React.useRef(false);
-  const countryName = locationData.location.countryName;
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
   const prevSearchQueryRef = useRef(searchQuery);
-  const prevcountryNameRef = useRef(countryName);
+  const prevCountryNameRef = useRef(countryName);
+  const prevCategoryRef = useRef(selectedCategory);
 
-  const fetchProductsCallback = useCallback(async (searchTerm: string) => {
-    setLoading(true);
-    try {
-      await fetchProducts(countryName, searchTerm || undefined);
-    } catch (error) {
-      console.error("Search fetch failed:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading, fetchProducts, countryName]);
-
-  const debouncedFetchProducts = useMemo(() =>
-    debounce(fetchProductsCallback, 500),
-    [fetchProductsCallback]
-  );
-
-  const initializeEcommerceData = useCallback(async (countryName?: string) => {
-    if (hasFetched.current || !countryName) return;
+  const initializeEcommerceData = useCallback(async (cName?: string) => {
+    if (hasFetched.current || !cName) return;
     hasFetched.current = true;
-    setLoading(true);
     try {
-      await fetchCategories().catch((err) => console.error("Categories fetch failed:", err));
-      await Promise.all([
-        fetchProducts(countryName).catch((err) => console.error("Products fetch failed:", err)),
-        fetchCart().catch((err) => console.error("Cart fetch failed:", err)),
-      ]);
-    } finally {
-      setLoading(false);
+      await getCategories();
+      await fetchProducts({ country: cName, searchTerm: searchQuery, category: selectedCategory || undefined }, true);
+    } catch (err) {
+      console.error("Init failed", err);
     }
-  }, [fetchCategories, fetchProducts, fetchCart, setLoading]);
+  }, [getCategories, fetchProducts, searchQuery, selectedCategory]);
 
   useEffect(() => {
-    if (countryName && products.length === 0 && categories.length === 0) {
+    if (countryName && !hasFetched.current) {
       initializeEcommerceData(countryName);
     }
-  }, [countryName, products.length, categories.length, initializeEcommerceData]);
+  }, [countryName, initializeEcommerceData]);
+
+  const performSearch = useCallback((query: string, category: string | null, country: string) => {
+    fetchProducts({ 
+        searchTerm: query, 
+        category: category || undefined, 
+        country: country 
+    }, true);
+  }, [fetchProducts]);
+
+  const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
 
   useEffect(() => {
     if (!countryName) return;
 
-    const prevSearchQuery = prevSearchQueryRef.current;
-    const prevCountryCode = prevcountryNameRef.current;
+    const searchChanged = searchQuery !== prevSearchQueryRef.current;
+    const categoryChanged = selectedCategory !== prevCategoryRef.current;
+    const countryChanged = countryName !== prevCountryNameRef.current;
 
-    const searchChanged = searchQuery !== prevSearchQuery;
-    const countryChanged = prevCountryCode !== undefined && countryName !== prevCountryCode;
-
-    if (searchChanged || countryChanged) {
-      setLoading(true);
-      if (searchQuery) {
-        debouncedFetchProducts(searchQuery);
+    if (searchChanged || categoryChanged || countryChanged) {
+      if (searchChanged && !categoryChanged && !countryChanged) {
+        debouncedSearch(searchQuery, selectedCategory, countryName);
       } else {
-        fetchProductsCallback("");
+        performSearch(searchQuery, selectedCategory, countryName);
       }
     }
 
     prevSearchQueryRef.current = searchQuery;
-    prevcountryNameRef.current = countryName;
-  }, [searchQuery, countryName, debouncedFetchProducts, setLoading, fetchProductsCallback]);
+    prevCategoryRef.current = selectedCategory;
+    prevCountryNameRef.current = countryName;
+  }, [searchQuery, selectedCategory, countryName, debouncedSearch, performSearch]);
 
   useEffect(() => {
-    if (!observerRef.current || !hasMoreProducts || loadingNextPage) return;
-    if (observer.current) observer.current.disconnect();
+    if (!selectedCategory || !observerRef.current || !hasMore || loadingMore || isLoading) return;
+    if (observer.current) observer.current.disconnect(); 
     observer.current = new window.IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasMoreProducts && !loadingNextPage && !loading) {
-        fetchMoreProducts(countryName, searchQuery || undefined);
+      if (entries[0].isIntersecting && hasMore && !loadingMore && !isLoading) {
+        fetchProducts({ 
+            category: selectedCategory, 
+            country: countryName, 
+            searchTerm: searchQuery 
+        }, false);
       }
     }, {
       rootMargin: "300px",
@@ -117,14 +110,7 @@ export default function Ecommerce() {
     return () => {
       observer.current?.disconnect();
     };
-  }, [fetchMoreProducts, hasMoreProducts, loadingNextPage, products.length, loading, countryName, searchQuery]);
-
- 
-  // Filter products based on selected category
-  const filteredProductsByCategory = selectedCategory ? products.filter((product) => product.category.id === selectedCategory) : products;
-  
-  const isSearchEmpty = !!searchQuery && filteredProductsByCategory.length === 0;
-  
+  }, [hasMore, loadingMore, isLoading, selectedCategory, countryName, searchQuery, fetchProducts]);
   const handleRefresh = () => {
     setError(null);
     hasFetched.current = false;
@@ -157,20 +143,19 @@ export default function Ecommerce() {
       />
     );
   }
+
+  const isSearchEmpty = !!searchQuery && products.length === 0 && !isLoading;
+
   return (
-    <EcommercePageLayout {...layoutProps}>
+    <EcommercePageLayout {...layoutProps} >
       <CategorySection />
-      { isSearchEmpty ? (
-       <SearchEmptyState />
+      {isSearchEmpty ? (
+        <SearchEmptyState />
       ) : (
-       <ProductsGridView />
+        <ProductsGridView />
       )}
-      {loadingNextPage && (
-        <Box sx={{ py: 2 }}>
-          <GridSkeleton count={5} />
-        </Box>
-      )}
-      <div ref={observerRef} />
+      {selectedCategory && <div ref={observerRef} style={{ height: 10, background: 'transparent' }} />}
+      
     </EcommercePageLayout>
   );
 }

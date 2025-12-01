@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Container,
@@ -10,8 +10,6 @@ import {
   Divider,
   Alert,
   CircularProgress,
-  useTheme,
-  useMediaQuery,
   AppBar,
   Toolbar,
   IconButton,
@@ -34,18 +32,18 @@ import {
   Timer,
   Home,
   DeliveryDining,
-  FormatListBulleted,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { useCart, useCartActions } from "../../../store/ecommerceStore";
+import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { ecommerceService } from "../../../services/ecommerce.service";
 import { launchCashfreePayment } from "../../../services/cashfree-payment.service";
 import { ROUTES } from "@/utils/constants";
 import { fetchUserAddresses } from "@/lib/api.service";
+import { calculateCartTotals } from "@/utils/cartCalculations";
 import { getCurrencyForCountry } from "@/utils/currency";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { CartItem } from "@/types/ecommerce";
@@ -62,11 +60,9 @@ interface UserAddress {
 }
 
 export default function CheckoutPage() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
-  const { cart, loading: cartLoading } = useCart();
-  const { clearCart, fetchCart } = useCartActions();
+  const { checkoutProducts, cartProducts, clearCheckoutProducts } = useCartStore();
+  const toggleCartItemSelection = useCartStore.getState().toggleCartItemSelection;
   const { user, loading: authLoading } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -80,7 +76,8 @@ export default function CheckoutPage() {
   const [addressLoading, setAddressLoading] = useState(false);
   const [checkedOutItems, setCheckedOutItems] = useState<CartItem[]>([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
-
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
     countryName: undefined,
@@ -89,77 +86,46 @@ export default function CheckoutPage() {
   });
   const selectedCountry = locationData.location.countryName;
 
-  const countryName = selectedCountry || '';
-  const getThresholdAndFees = (country?: string) => {
-    if (country && country.includes('India')) {
-      return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
-    } else {
-      return { threshold: 20, deliveryFee: 5, serviceCharge: 1 };
-    }
-  };
-
-  const calculateSelectedTotals = () => {
-    if (!checkedOutItems || checkedOutItems.length === 0) {
-      return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
-    }
-
-    const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } =
-      getThresholdAndFees(countryName);
-
-    let grossSubtotal = 0;
-    let discountAmount = 0;
-
-    checkedOutItems.forEach((item: CartItem) => {
-      const pricing = getCartItemPricingSummary(item);
-      grossSubtotal += pricing.originalUnitPrice * pricing.quantity;
-      discountAmount += pricing.discountTotal;
-    });
-
-    const discountedSubtotal = grossSubtotal - discountAmount;
-    const deliveryFee = discountedSubtotal >= threshold ? 0 : deliveryBase;
-    const taxes = discountedSubtotal * 0.02; // 2% tax
-    const serviceCharge = serviceBase;
-    const total = discountedSubtotal + deliveryFee + taxes + serviceCharge;
-    const asAmount = (value: number) => Number(value.toFixed(2));
-
-    return {
-      subtotal: asAmount(grossSubtotal),
-      discount: asAmount(discountAmount),
-      deliveryFee: asAmount(deliveryFee),
-      taxes: asAmount(taxes),
-      serviceCharge: asAmount(serviceCharge),
-      total: asAmount(total),
-    };
-  };
-
-  const totals = calculateSelectedTotals();
-  const currencyInfo = getCurrencyForCountry(countryName);
-  const currencySymbol =
-    (checkedOutItems?.length ?? 0) > 0
-      ? getCartItemPricingSummary(checkedOutItems[0]).currency || currencyInfo.symbol
-      : currencyInfo.symbol;
-
-  const formatLocalPrice = (amount: number) => formatPrice(amount, currencySymbol);
-
   useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+    if (hasInitialized) return;
 
-  useEffect(() => {
-    const selectedItemsRaw = localStorage.getItem("checkoutSelectedItems");
-    if (selectedItemsRaw) {
+    const cached = localStorage.getItem("checkoutSelectedItems");
+    if (cached) {
       try {
-        const selectedItems: CartItem[] = JSON.parse(selectedItemsRaw);
-        setCheckedOutItems(selectedItems);
-        localStorage.removeItem("checkoutSelectedItems");
+        const parsed = JSON.parse(cached);
+        let parsedItems: CartItem[] = [];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          if (typeof parsed[0] === 'string') {
+            const ids = parsed as string[];
+            parsedItems = cartProducts.filter((item) => ids.includes(item.id!));
+          } else {
+            parsedItems = parsed as CartItem[];
+          }
+        }
+        if (parsedItems.length === 0) {
+          throw new Error('No valid items');
+        }
+        setCheckedOutItems(parsedItems);
+        const itemIds = parsedItems.map(item => item.id!);
+        toggleCartItemSelection(itemIds);
       } catch (err) {
+        console.error("Failed to parse cached items:", err);
         setCheckedOutItems([]);
       }
-    } else if (cart?.items?.length! > 0) {
-      setCheckedOutItems(cart?.items!);
+      setHasInitialized(true);
+      setItemsLoaded(true);
+      return;
     }
+
+    const selected = cartProducts.filter(i =>
+      checkoutProducts.includes(i.id!)
+    );
+    setCheckedOutItems(selected);
+    const itemIds = selected.map(i => i.id!);
+    toggleCartItemSelection(itemIds);
+    setHasInitialized(true);
     setItemsLoaded(true);
-  }, [cart]);
+  }, [cartProducts, checkoutProducts, toggleCartItemSelection, hasInitialized]);
 
   useEffect(() => {
     if (itemsLoaded && (!checkedOutItems || checkedOutItems.length === 0)) {
@@ -167,6 +133,20 @@ export default function CheckoutPage() {
     }
   }, [checkedOutItems, router, itemsLoaded]);
 
+  const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
+  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, selectedCountry), [checkedOutItems, selectedIds, selectedCountry]);
+  const countryName = selectedCountry || '';
+  const currencyInfo = getCurrencyForCountry(countryName);
+  
+  const currencySymbol = useMemo(() => {
+    if (checkedOutItems?.length ?? 0 > 0) {
+      return getCartItemPricingSummary(checkedOutItems[0]).currency || currencyInfo.symbol;
+    }
+    return currencyInfo.symbol;
+  }, [checkedOutItems, currencyInfo.symbol]);
+  
+  const formatLocalPrice = (amount: number) => formatPrice(amount, currencySymbol);
+  
   useEffect(() => {
     const fetchUserAddress = async () => {
       if (!user?.id) {
@@ -223,9 +203,11 @@ export default function CheckoutPage() {
     setProcessing(true);
     setError(null);
     try {
+      const orderedProductIds = checkedOutItems.map((item) => item.product.id);
       const orderData = {
         shipping_address: formData.shippingAddress,
         country_name: selectedCountry,
+        product_ids: orderedProductIds,
       }
       const initiateResponse = await ecommerceService.initiateOrder(orderData);
       const { orderId, orderNumber, paymentSessionId, totalAmount } = initiateResponse;
@@ -248,10 +230,24 @@ export default function CheckoutPage() {
         paymentConfig,
         async (paymentResult: any) => {
           try {
-            await ecommerceService.updatePaymentStatus(orderId, 'PAID');
-            clearCart();
+            await ecommerceService.updatePaymentStatus(orderId, paymentResult);
+
+            const currentCart = useCartStore.getState().cartProducts;
+            const orderedIdsSet = new Set(orderedProductIds);
+
+            const updatedCart = currentCart.filter((item) => {
+              const itemId = item.product?.id || item.product_id;
+              return !orderedIdsSet.has(itemId);
+            });
+
+            useCartStore.setState({ cartProducts: updatedCart });
+
+            clearCheckoutProducts();
+            localStorage.removeItem("checkoutSelectedItems");
+
+            useCartStore.getState().getCart(selectedCountry);
+            
             toast.success("Order placed successfully!");
-            router.push(ROUTES.ORDER_HISTORY);
           } catch (error) {
             setError("Payment succeeded but order update failed. Contact support.");
             toast.error("Order update error");
@@ -264,7 +260,8 @@ export default function CheckoutPage() {
         }
       )
     } catch (err) {
-      setError(err.message || "Failed to initiate checkout.");
+      const errorMsg = err instanceof Error ? err.message : "Failed to initiate checkout.";
+      setError(errorMsg);
       toast.error("Checkout initiation failed");
     } finally {
       setProcessing(false);
@@ -284,7 +281,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if ((!checkedOutItems || checkedOutItems.length === 0)) {
+  if ((!checkedOutItems || checkedOutItems.length === 0) && itemsLoaded) {
     return null;
   }
 
@@ -509,7 +506,7 @@ export default function CheckoutPage() {
                     const pricing = getCartItemPricingSummary(item);
                     return (
                       <Box
-                        key={item.id}
+                        key={item.product_id}
                         sx={{
                           display: "flex",
                           justifyContent: "space-between",

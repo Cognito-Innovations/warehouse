@@ -35,7 +35,10 @@ export interface EcommerceProduct {
   description?: string;
   slug: string;
   image_url: string;
-  price: number;
+  price: {
+    price: number;
+    currency: string;
+  };
   discount_percentage: number;
   quantity: number;
   stock_quantity: number;
@@ -55,6 +58,7 @@ export interface EcommerceProduct {
 
 export interface CartItem {
   id: string;
+  product_id?: string;
   product: EcommerceProduct;
   quantity: number;
   unit_price: number;
@@ -62,6 +66,14 @@ export interface CartItem {
   discount_percentage: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface LocalCartItem {
+  id: string;
+  product_id: string;
+  quantity: number;
+  country?: string;
+  product?: EcommerceProduct;
 }
 
 export interface Cart {
@@ -198,6 +210,7 @@ export interface ProductDetailImageSectionProps {
   product: EcommerceProduct;
   previewProducts: EcommerceProduct[];
   onProductSelect: (product: EcommerceProduct) => void;
+  arePreviewsLoading?: boolean;
 }
 
 export interface ProductDetailInfoSectionProps {
@@ -247,7 +260,6 @@ export interface DeliveryAddressCardProps {
 
 export interface CartItemCardProps {
   item: CartItem;
-  loadingState: CartItemLoadingState;
   isSelected: boolean;
   onSelect: (itemId: string, selected: boolean) => void;
   onQuantityChange: (itemId: string, newQuantity: number) => void;

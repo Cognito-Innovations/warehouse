@@ -4,13 +4,15 @@ import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge, Button, CircularProgress } from "@mui/material";
 import { LocationOn, Search, ShoppingCart } from "@mui/icons-material";
-import { EcommerceHeaderProps } from "@/types/ecommerce";
-import { ecommerceData } from "@/data/ecommerceData";
-import { createUserAddress } from "@/lib/api.service";
-import AddAddressModal from "@/components/ecommerce/cart/AddAddressModal";
+
+import { useCartStore } from "@/store/cartStore";
+import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
+import AddAddressModal from "@/components/ecommerce/cart/AddAddressModal";
+import { createUserAddress } from "@/lib/api.service";
+import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
-import { useProductActions, useProducts, useCart } from "@/store/ecommerceStore";
+import { EcommerceHeaderProps } from "@/types/ecommerce";
 
 export default function EcommerceHeader({
   locationData,
@@ -18,9 +20,8 @@ export default function EcommerceHeader({
 }: EcommerceHeaderProps) {
   const { user } = useAuth();
   const router = useRouter();
-  const { searchQuery } = useProducts();
-  const { setSearchQuery } = useProductActions();
-  const { loading: cartLoading } = useCart();
+  const { searchQuery, setSearchQuery } = useProductStore();
+  const { loading: cartLoading } = useCartStore();
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
 
   const handleSaveAddress = useCallback(async (addressData: any) => {

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
 
-import { createCategory, getCargoOptions, getCountries, updateCategory } from "../../services/api.services";
+import { createCategory, getCountries, updateCategory } from "../../services/api.services";
 import ImageUpload from "../common/ImageUpload";
 import { arraysEqual } from "../../utils/arrayEqual";
 import { statusOptions } from "../../utils/constants";
-import type { CargoOption, CategoryPayload, Country } from "../../types";
+import type { CategoryPayload, Country } from "../../types";
 
 interface CategoryFormProps {
   onClose: () => void;
@@ -21,17 +21,14 @@ const defaultFormData: CategoryPayload = {
   country_ids: [],
   is_active: true,
   image_url: "",
-  cargo_option_id: "",
   description: "",
 };
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
   const [formData, setFormData] = useState<CategoryPayload>(defaultFormData);
   const [countries, setCountries] = useState<Country[]>([]);
-  const [cargoOptions, setCargoOptions] = useState<CargoOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [fetchingCargo, setFetchingCargo] = useState(true);
 
   const fetchCountries = async () => {
     try {
@@ -45,21 +42,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
     }
   };
 
-  const fetchCargoOptions = async () => {
-    try {
-      setFetchingCargo(true);
-      const cargoOptions = await getCargoOptions();
-      setCargoOptions(cargoOptions);
-    } catch (err) {
-      console.error("Failed to fetch cargo options:", err);
-    } finally {
-      setFetchingCargo(false);
-    }
-  };
-
   useEffect(() => {
     fetchCountries();
-    fetchCargoOptions();
   }, []);
 
   useEffect(() => {
@@ -201,38 +185,6 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
             countries.map((c) => (
               <MenuItem key={c.id} value={c.id}>
                 {c.name}
-              </MenuItem>
-            ))
-          )}
-        </TextField>
-
-        <TextField
-          label="Cargo Type"
-          select
-          value={formData.cargo_option_id}
-          onChange={(e) => handleChange("cargo_option_id", e.target.value)}
-          required
-          fullWidth
-          disabled={fetchingCargo}
-          SelectProps={{
-            renderValue: (selected) =>
-              fetchingCargo ? (
-                <Box sx={{ display: "flex", alignItems: "center", pl: 1 }}>
-                  <CircularProgress size={20} />
-                </Box>
-              ) : (
-                cargoOptions.find((c) => c.id === selected)?.label || ""
-              ),
-          }}
-        >
-          {fetchingCargo ? (
-            <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : (
-            cargoOptions.map((option) => (
-              <MenuItem key={option.id} value={option.id}>
-                {option.label}
               </MenuItem>
             ))
           )}

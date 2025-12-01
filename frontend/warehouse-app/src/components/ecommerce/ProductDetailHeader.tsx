@@ -5,13 +5,13 @@ import { AppBar, Toolbar, Typography, Box, IconButton, Badge } from "@mui/materi
 import { ArrowBack, ShoppingCart, Share } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 
-import { useCart } from "@/store/ecommerceStore";
+import { useCartStore } from "@/store/cartStore";
 import { ROUTES } from "@/utils/constants";
 import { ProductDetailHeaderProps } from "@/types/ecommerce";
 
 export default function ProductDetailHeader({ onShareClick }: ProductDetailHeaderProps) {
   const router = useRouter();
-  const { itemCount } = useCart();
+  const { cartProductQuantityCount } = useCartStore();
 
   return (
     <AppBar position="sticky" elevation={0} sx={{ bgcolor: "white", color: "text.primary" }}>
@@ -36,7 +36,7 @@ export default function ProductDetailHeader({ onShareClick }: ProductDetailHeade
             </IconButton>
           )}
           <IconButton color="inherit" onClick={() => router.push(ROUTES.CART)}>
-            <Badge badgeContent={itemCount} color="error">
+            <Badge badgeContent={cartProductQuantityCount()} color="error">
               <ShoppingCart />
             </Badge>
           </IconButton>
