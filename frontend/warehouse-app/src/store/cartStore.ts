@@ -125,69 +125,107 @@ export const useCartStore = create<CartStore>()(
         ]);
       },
 
-      addProductToCart: async (
-        productOrId: string | EcommerceProduct,
+      //TODO P0: We need to break this API into 4-5 parts
+      // addProduct fn with quantity -> does 2 jobs -> takes Id & quantity -> pass to api -> this api checks if product created then update quanity else create product with 1 quanity and whole update in db and if fail show reject message then add whole data to cart
+      // same for removeProduct fn with quanity
+      addOrIncreaseQty: async (
+        product: EcommerceProduct,
         quantity: number,
-        country?: string
+        country?: string,
       ) => {
+        // Add or Increase the quantity of product to cart
+        if (quantity <= 0) {
+          console.warn("Invalid quantity, unable perform add to cart");
+          return;
+        }
+
         const token = getAuthToken();
         const state = get();
 
-        const isProductObject = typeof productOrId !== 'string';
-        const product_id = isProductObject ? productOrId.id : productOrId;
-        const productData = isProductObject ? productOrId : undefined;
+        const product_id = product?.id;
+
+        if (!product_id) {
+          console.warn("Product doesnt have id, unable perform on add to cart");
+          return;
+        }
 
         const updatedCart = [...state.cartProducts];
         const existing = updatedCart.find(
           (item: LocalCartItem) => item.product_id === product_id
         );
 
+        let newQuantity: number;
         if (existing) {
           existing.quantity += quantity;
+          newQuantity = existing.quantity;
 
-          if (productData) {
-            existing.product = productData;
-          }
-
-          if (existing.quantity <= 0) {
-            const index = updatedCart.indexOf(existing);
-            updatedCart.splice(index, 1);
-            set({ cartProducts: updatedCart });
-
-            if (token) {
-              ecommerceService
-                .removeFromCart(product_id, country)
-                .catch(() => get().syncCart(country));
-            }
-            return;
+          if (product) {
+            existing.product = product;
           }
         } else {
-          if (quantity > 0) {
-            updatedCart.push({
-              product_id,
-              quantity,
-              country,
-              product: productData
-            } as LocalCartItem);
-          }
+          newQuantity = quantity;
+          updatedCart.push({
+            product_id,
+            quantity: newQuantity,
+            country,
+            product: product
+          } as LocalCartItem);
         }
 
         set({ cartProducts: updatedCart });
 
         if (!token) return;
 
-        if (quantity > 0) {
-          ecommerceService
-            .addToCart({ product_id, quantity }, country)
-            .catch(() => get().syncCart(country));
-        } else {
-          ecommerceService
-            .removeFromCart(product_id, country)
-            .catch(() => get().syncCart(country));
+        ecommerceService
+          .addToCart({ product_id, quantity: newQuantity }, country)
+          .catch(() => get().syncCart(country));
+      },
+
+      decreaseProductQty: async (
+        product: EcommerceProduct,
+        quantity: number,
+        country?: string
+      ) => {
+        // Decrease the quantity of the product from the cart
+        if (quantity <= 0) return;
+        
+        const token = getAuthToken();
+        const state = get();
+
+        const product_id = product?.id;
+
+        const updatedCart = [...state.cartProducts];
+        const existingIndex = updatedCart.findIndex(item => item.product_id === product_id);
+
+        if (existingIndex === -1) return;
+
+        const existing = updatedCart[existingIndex];
+        const newQuantity = existing.quantity - quantity;
+
+        if (newQuantity <= 0) {
+          updatedCart.splice(existingIndex, 1);
+          set({ cartProducts: updatedCart });
+
+          if (token) {
+            ecommerceService
+              .removeFromCart(product_id, country)
+              .catch(() => get().syncCart(country));
+          }
+          return;
         }
+
+        existing.quantity = newQuantity;
+        set({ cartProducts: updatedCart });
+
+        if (!token) return;
+
+        ecommerceService
+          .addToCart({ product_id, quantity: newQuantity }, country)
+          .catch(() => get().syncCart(country));
       },
 
       removeProductFromCart: async (product_id: string, country?: string) => {
+        // Completely remove product from the cart
         const token = getAuthToken();
 
         const updatedCart = get().cartProducts.filter(
@@ -196,11 +234,76 @@ export const useCartStore = create<CartStore>()(
 
         set({ cartProducts: updatedCart });
 
+          if (token) {
+                ecommerceService
+                  .removeFromCart(product_id, country)
+                  .catch(() => get().syncCart(country));
+              }
+
         if (!token) return;
+
+         if (quantity <= 0) {
+              // const index = updatedCart.indexOf(quantity);
+              // updatedCart.splice(index, 1);
+              // set({ cartProducts: updatedCart });
+              // return;
+            }
 
         ecommerceService
           .removeFromCart(product_id, country)
           .catch(() => get().syncCart(country));
+      },
+
+      incrementCartQuantity: async (product: EcommerceProduct, country?: string) => {
+        // Increments the quantity of a product in the cart by 1 but only if the current quantity is below the available stock
+        const state = get();
+        const currentQuantity = state.getItemQuantity(product.id);
+        if (currentQuantity >= product.stock_quantity) {
+          return;
+        }
+        await state.addOrIncreaseQty(product, 1, country);
+      },
+
+      decrementCartQuantity: async (product: EcommerceProduct, country?: string) => {
+        // Decrements the quantity of a product in the cart by 1 but only if the current quantity is greater than 0
+        const state = get();
+        const currentQuantity = state.getItemQuantity(product.id);
+        if (currentQuantity <= 0) {
+          return;
+        }
+        await state.decreaseProductQty(product, 1, country);
+      },
+
+      setCartItemQuantity: async (productId: string, quantity: number, country?: string) => {
+        // Sets the exact quantity for a specific product in the cart to the provided value
+        // If the new quantity is <= 0 it removes the item entirely
+        // If the item isn't found in the cart, it logs warning
+        const state = get();
+        if (quantity <= 0) {
+          await state.removeProductFromCart(productId, country);
+          return;
+        }
+        const updatedCart = [...state.cartProducts];
+        const existingIndex = updatedCart.findIndex((item: LocalCartItem) => item.product_id === productId);
+        if (existingIndex === -1) {
+          console.warn(`Cart item with productId ${productId} not found.`);
+          return;
+        }
+        const existing = updatedCart[existingIndex];
+        if (existing.quantity === quantity) {
+          return;
+        }
+        updatedCart[existingIndex] = { ...existing, quantity };
+        set({ cartProducts: updatedCart });
+        const token = getAuthToken();
+        if (token) {
+          try {
+            await ecommerceService.addToCart({ product_id: productId, quantity }, country);
+          } catch (error) {
+            console.error("Failed to set cart quantity:", error);
+            await state.syncCart(country);
+          }
+        }
       },
     }),
     {

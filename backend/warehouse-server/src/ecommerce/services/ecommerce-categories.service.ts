@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Country } from 'src/Countries/country.entity.js';
 import { CreateCategoryDto } from '../dto/category/ecommerce-create-category.dto.js';
 import { UpdateCategoryDto } from '../dto/category/ecommerce-update-category.dto.js';
-import { EcommerceCargoOption } from '../entities/cargo-options.entity.js';
 
 @Injectable()
 export class CategoriesService {
@@ -17,11 +16,10 @@ export class CategoriesService {
   async create(
     createCategoryDto: CreateCategoryDto,
   ): Promise<EcommerceCategory> {
-    const { country_ids, cargo_option_id, ...rest } = createCategoryDto;
+    const { country_ids, ...rest } = createCategoryDto;
 
     const categoryPayload: Partial<EcommerceCategory> = {
       ...rest,
-      cargo_option: { id: cargo_option_id } as EcommerceCargoOption,
       countries: country_ids.map((id) => ({ id }) as Country),
     };
 
@@ -33,7 +31,6 @@ export class CategoriesService {
     return this.categoryRepository
       .createQueryBuilder('category')
       .leftJoinAndSelect('category.countries', 'countries')
-      .leftJoinAndSelect('category.cargo_option', 'cargo_option')
       .loadRelationCountAndMap('category.products_count', 'category.products')
       .orderBy('category.name', 'ASC')
       .getMany();
@@ -42,7 +39,7 @@ export class CategoriesService {
   findOne(id: string) {
     return this.categoryRepository.findOne({
       where: { id },
-      relations: ['countries', 'cargo_option'],
+      relations: ['countries'],
     });
   }
 
@@ -50,7 +47,7 @@ export class CategoriesService {
     id: string,
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<EcommerceCategory> {
-    const { country_ids, cargo_option_id, ...rest } = updateCategoryDto;
+    const { country_ids, ...rest } = updateCategoryDto;
 
     const category = await this.categoryRepository.findOne({
       where: {
@@ -59,10 +56,6 @@ export class CategoriesService {
     });
     if (!category) throw new NotFoundException('Category not found');
     this.categoryRepository.merge(category, rest);
-
-    if (cargo_option_id) {
-      category.cargo_option = { id: cargo_option_id } as EcommerceCargoOption;
-    }
 
     if (country_ids) {
       category.countries = country_ids.map((id) => ({ id }) as Country);

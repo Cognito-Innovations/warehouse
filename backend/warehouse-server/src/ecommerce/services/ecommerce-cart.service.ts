@@ -10,7 +10,6 @@ import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
-//TODO: Generated temprorarily need to look requirment and change
 @Injectable()
 export class CartService {
   constructor(
@@ -23,24 +22,28 @@ export class CartService {
     private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
-  async getOrCreateCart(userId: string): Promise<EcommerceCart> {
-    let cart = await this.cartRepository.findOne({
+  private async findActiveCart(userId: string): Promise<EcommerceCart | null> {
+    return await this.cartRepository.findOne({
       where: { user_id: userId, status: CartStatus.ACTIVE },
-      relations: ['items', 'items.product'],
+      relations: ['items', 'items.product', 'user'],
+      select: {
+        user: {
+          id: true,
+          name: true,
+          email: true,
+          suite_no: true,
+        }
+      }
+    });
+  }
+
+  async createCart(userId: string): Promise<EcommerceCart> {
+    const cart = this.cartRepository.create({
+      user_id: userId,
+      status: CartStatus.ACTIVE,
     });
 
-    if (!cart) {
-      cart = this.cartRepository.create({
-        user_id: userId,
-        status: CartStatus.ACTIVE,
-        total_amount: 0,
-        discount_percentage: 0,
-        final_amount: 0,
-      });
-      cart = await this.cartRepository.save(cart);
-    }
-
-    return cart;
+    return await this.cartRepository.save(cart);
   }
 
   async addToCart(
@@ -51,7 +54,10 @@ export class CartService {
     const { product_id, quantity } = addToCartDto;
 
     // Get or create cart
-    const cart = await this.getOrCreateCart(userId);
+    let cart = await this.findActiveCart(userId);
+    if (!cart) {
+      cart = await this.createCart(userId);
+    }
 
     // Check if product exists
     const product = await this.productRepository.findOne({
@@ -62,11 +68,6 @@ export class CartService {
       throw new NotFoundException('Product not found');
     }
 
-    const price = parseFloat(product.price.toString());
-    const discPerc = parseFloat(product.discount_percentage.toString());
-    const discountAmountPerUnit = (price * discPerc) / 100;
-    const unitPrice = price - discountAmountPerUnit;
-
     // Check if product is already in cart
     const existingItem = await this.cartItemRepository.findOne({
       where: { cart_id: cart.id, product_id },
@@ -74,33 +75,18 @@ export class CartService {
 
     if (existingItem) {
       // Update quantity
-      const currentDiscount =
-        parseFloat(existingItem.discount_percentage.toString()) || 0;
       existingItem.quantity += quantity;
-      existingItem.unit_price = unitPrice;
-      existingItem.total_price = existingItem.quantity * unitPrice;
-      existingItem.discount_percentage =
-        currentDiscount + discountAmountPerUnit * quantity;
       await this.cartItemRepository.save(existingItem);
     } else {
       // Add new item
-      const totalPrice = unitPrice * quantity;
-      const totalDiscount = discountAmountPerUnit * quantity;
-
       const cartItem = this.cartItemRepository.create({
         cart_id: cart.id,
         product_id,
         quantity,
-        unit_price: unitPrice,
-        total_price: totalPrice,
-        discount_percentage: totalDiscount,
       });
 
       await this.cartItemRepository.save(cartItem);
     }
-
-    // Recalculate cart totals
-    await this.recalculateCartTotals(cart.id);
 
     return this.getCart(userId, country);
   }
@@ -111,32 +97,22 @@ export class CartService {
     updateCartItemDto: UpdateCartItemDto,
     country?: string,
   ): Promise<any> {
-    const cart = await this.getOrCreateCart(userId);
+    let cart = await this.findActiveCart(userId);
+    if (!cart) {
+      cart = await this.createCart(userId);
+    }
 
     const cartItem = await this.cartItemRepository.findOne({
       where: { id: itemId, cart_id: cart.id },
-      relations: ['product'],
     });
 
     if (!cartItem) {
       throw new NotFoundException('Cart item not found');
     }
 
-    const newQuantity = updateCartItemDto.quantity;
-    const price = parseFloat(cartItem.product.price.toString());
-    const discPerc = parseFloat(
-      cartItem.product.discount_percentage.toString()
-    );
-    const discountAmountPerUnit = (price * discPerc) / 100;
-    const unitPrice = price - discountAmountPerUnit;
-
-    cartItem.quantity = newQuantity;
-    cartItem.unit_price = unitPrice;
-    cartItem.total_price = newQuantity * unitPrice;
-    cartItem.discount_percentage = discountAmountPerUnit * newQuantity;
+    cartItem.quantity = updateCartItemDto.quantity;
 
     await this.cartItemRepository.save(cartItem);
-    await this.recalculateCartTotals(cart.id);
 
     return this.getCart(userId, country);
   }
@@ -146,66 +122,83 @@ export class CartService {
     itemId: string,
     country?: string,
   ): Promise<any> {
-    const cart = await this.getOrCreateCart(userId);
+    let cart = await this.findActiveCart(userId);
+    if (!cart) {
+      cart = await this.createCart(userId);
+    }
     const cartItem = await this.cartItemRepository.findOne({
       where: { id: itemId, cart_id: cart.id },
     });
 
     // If item doesn't exist, it might have been already deleted (idempotent operation)
-    // Just recalculate totals and return cart to ensure consistency
     if (!cartItem) {
-      await this.recalculateCartTotals(cart.id);
       return this.getCart(userId, country);
     }
 
     await this.cartItemRepository.remove(cartItem);
-    await this.recalculateCartTotals(cart.id);
 
     return this.getCart(userId, country);
   }
 
   async clearCart(userId: string): Promise<void> {
-    const cart = await this.getOrCreateCart(userId);
+    let cart = await this.findActiveCart(userId);
+    if (!cart) {
+      cart = await this.createCart(userId);
+    }
     await this.cartItemRepository.delete({ cart_id: cart.id });
-    await this.recalculateCartTotals(cart.id);
   }
 
   async getCart(userId: string, country?: string): Promise<any> {
-    const cart = await this.getOrCreateCart(userId);
-    const selectedCountry = country || 'United States of America';
-    return this.applyCurrencyConversion(cart, selectedCountry);
-  }
+    let cart = await this.findActiveCart(userId);
+    if (!cart) {
+      cart = await this.createCart(userId);
+    }
 
-  private async recalculateCartTotals(cartId: string): Promise<void> {
-    const cart = await this.cartRepository.findOne({
-      where: { id: cartId },
+    // Compute prices dynamically
+    const computedItems = (cart.items || []).map((item) => {
+      const price = Number(item.product?.price || 0);
+      const discPerc = Number(item.product?.discount_percentage || 0);
+      const discountAmountPerUnit = (price * discPerc) / 100;
+      const unitPrice = price - discountAmountPerUnit;
+      const totalPrice = unitPrice * item.quantity;
+      const discountAmount = discountAmountPerUnit * item.quantity;
+
+      return {
+        ...item,
+        unit_price: unitPrice,
+        total_price: totalPrice,
+        discount_percentage: discountAmount,
+        product: item.product,
+      };
     });
 
-    if (!cart) return;
-
-    const items = await this.cartItemRepository.find({
-      where: { cart_id: cartId },
-    });
-
-    const totalAmount = items.reduce(
-      (sum, item) => sum + parseFloat(item.total_price.toString()),
-      0);
-    const totalDiscount = items.reduce(
-      (sum, item) => sum + parseFloat(item.discount_percentage.toString()),
-      0,
+    const totalAmount = computedItems.reduce(
+      (sum, item) => sum + item.total_price,
+      0
+    );
+    const totalDiscount = computedItems.reduce(
+      (sum, item) => sum + item.discount_percentage,
+      0
     );
     const finalAmount = totalAmount - totalDiscount;
 
-    // Use update instead of save to avoid cascading issues with relations
-    await this.cartRepository.update(cartId, {
+    const cartWithComputedTotals = {
+      ...cart,
+      items: computedItems,
       total_amount: totalAmount,
       discount_percentage: totalDiscount,
       final_amount: finalAmount,
-    });
+    };
+
+    const selectedCountry = country || 'United States of America';
+    return this.applyCurrencyConversion(
+      cartWithComputedTotals,
+      selectedCountry
+    );
   }
 
   private async applyCurrencyConversion(
-    cart: EcommerceCart,
+    cart: any,
     country: string,
   ): Promise<any> {
     if (!cart) return cart;
@@ -217,7 +210,7 @@ export class CartService {
       );
 
     const convertedItems = await Promise.all(
-      (cart.items || []).map(async (item) => {
+      (cart.items || []).map(async (item: any) => {
         const convertedProduct = item.product
           ? {
               ...item.product,

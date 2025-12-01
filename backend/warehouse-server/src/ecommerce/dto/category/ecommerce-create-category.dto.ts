@@ -33,10 +33,6 @@ export class CreateCategoryDto {
   @IsOptional()
   image_url: string;
 
-  @IsUUID()
-  @IsNotEmpty()
-  cargo_option_id: string;
-
   @IsString()
   @IsOptional()
   description: string;

@@ -61,4 +61,8 @@ export class CreateEcommerceProductDto {
   @IsUUID()
   @IsNotEmpty()
   measurement_id: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  cargo_option_id: string;
 }

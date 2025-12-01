@@ -29,6 +29,8 @@ interface ProductRow {
   measurement_id: string;
   stock_quantity: number;
   countries: Country[];
+  cargo_type_label: string;
+  cargo_option_id: string;
   status: string;
 }
 
@@ -66,6 +68,8 @@ const Products: React.FC = () => {
           measurement_id: item.measurement?.id || "",
           stock_quantity: item.stock_quantity || 0,
           countries: item.countries || [],
+          cargo_option_id: item.cargo_option?.id,
+          cargo_type_label: item.cargo_option?.label,
           status: item.is_active ? "Active" : "Inactive",
         };
       });
@@ -126,6 +130,7 @@ const Products: React.FC = () => {
       unit_value: product.unit_value,
       measurement_id: product.measurement_id,
       country_ids: product.countries.map((country: Country) => country.id),
+      cargo_option_id: product.cargo_option_id,
       stock_quantity: product.stock_quantity,
       is_active: product.status === "Active",
     };
@@ -181,6 +186,11 @@ const Products: React.FC = () => {
       header: "Sub Category",
       cell: (row) => <Typography variant="body2">{row.sub_category}</Typography>,
       width: "25%",
+    },
+    {
+      header: "Cargo Type",
+      cell: (row) => <Typography variant="body2">{row.cargo_type_label}</Typography>,
+      width: "15%",
     },
     {
       header: "Unit",

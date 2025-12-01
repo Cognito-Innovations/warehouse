@@ -30,7 +30,7 @@ export default function CartItemCard({
     router.push(`${ROUTES.PRODUCT}/${product.id}`);
   }
 
-  const effectiveId = item.id!;
+  const effectiveId = item.product_id!;
 
   const pricing = getCartItemPricingSummary(item);
   const unitPrice = pricing.discountedUnitPrice;

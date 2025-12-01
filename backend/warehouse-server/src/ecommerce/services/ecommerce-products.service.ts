@@ -7,6 +7,7 @@ import { Country } from 'src/Countries/country.entity.js';
 import { CreateEcommerceProductDto } from '../dto/product/create-product.dto.js';
 import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto.js';
 import { UserPreferencesService } from '../../user-preferences/user-preferences.service.js';
+import { EcommerceCargoOption } from '../entities/cargo-options.entity.js';
 
 @Injectable()
 export class ProductsService {
@@ -24,6 +25,7 @@ export class ProductsService {
       sub_category_id,
       country_ids,
       measurement_id,
+      cargo_option_id,
       ...rest
     } = createProductDto;
 
@@ -33,19 +35,35 @@ export class ProductsService {
       sub_category: { id: sub_category_id },
       countries: country_ids.map((id) => ({ id }) as Country),
       measurement: { id: measurement_id },
+      cargo_option: { id: cargo_option_id } as EcommerceCargoOption,
     });
     return await this.productRepository.save(product);
   }
 
-  async findAll(country?: string, search?: string, limit = 20, offset = 0) {
+  async findAll(
+    country?: string,
+    search?: string,
+    category?: string,
+    limit = 20,
+    offset = 0,
+  ) {
     const where: any = {};
     if (search?.trim()) {
       where.name = ILike(`%${search.trim()}%`);
     }
+    if (category?.trim()) {
+      where.category = { id: category };
+    }
 
     const products = await this.productRepository.find({
       where,
-      relations: ['category', 'sub_category', 'countries', 'measurement'],
+      relations: [
+        'category',
+        'sub_category',
+        'countries',
+        'measurement',
+        'cargo_option'
+      ],
       skip: offset,
       take: limit,
     });
@@ -56,7 +74,7 @@ export class ProductsService {
       products.map(async (product) => {
         const basePrice = Number(product.price);
 
-        const convertedPrice =
+        const convertedPriceObj =
           await this.userPreferencesService.getFormattedConvertedPriceByCountry(
             selectedCountry,
             basePrice
@@ -64,7 +82,7 @@ export class ProductsService {
 
         return {
           ...product,
-          price: convertedPrice,
+          price: convertedPriceObj,
         };
       }),
     );
@@ -73,7 +91,7 @@ export class ProductsService {
   async findOne(id: string, country?: string) {
     const product = await this.productRepository.findOne({
       where: { id },
-      relations: ['countries'],
+      relations: ['countries', 'cargo_option'],
     });
 
     if (!product) {
@@ -82,13 +100,15 @@ export class ProductsService {
 
     const selectedCountry = country || 'United States of America';
 
+    const convertedPriceObj =
+      await this.userPreferencesService.getFormattedConvertedPriceByCountry(
+        selectedCountry,
+        Number(product.price),
+      );
+
     return {
       ...product,
-      price:
-        await this.userPreferencesService.getFormattedConvertedPriceByCountry(
-          selectedCountry,
-          Number(product.price),
-        ),
+      price: convertedPriceObj
     };
   }
 
@@ -108,6 +128,7 @@ export class ProductsService {
       sub_category_id,
       country_ids,
       measurement_id,
+      cargo_option_id,
       ...rest
     } = updateEcommerceProductDto;
 
@@ -124,6 +145,9 @@ export class ProductsService {
     }
     if (measurement_id) {
       product.measurement = { id: measurement_id } as any;
+    }
+    if (cargo_option_id) {
+      product.cargo_option = { id: cargo_option_id } as EcommerceCargoOption;
     }
 
     return await this.productRepository.save(product);

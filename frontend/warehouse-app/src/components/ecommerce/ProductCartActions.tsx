@@ -27,8 +27,7 @@ export default function ProductCartActions({
     currency,
 }: ProductCartActionsProps) {
     const router = useRouter();
-    const { addProductToCart } = useCartStore();
-    const getItemQuantity = useCartStore(state => state.getItemQuantity);
+    const { incrementCartQuantity, decrementCartQuantity, getItemQuantity } = useCartStore();
     const locationData = useEffectiveUserLocation({
       countryCode: undefined,
       countryName: undefined,
@@ -42,39 +41,13 @@ export default function ProductCartActions({
     const isOutOfStock = stockQuantity === 0;
     const formattedSubtotal = formatPrice(cartQuantity * discountPriceRaw, currency);
 
-    const handleAddToCart = useCallback(async () => {
-        if (product && selectedCountry) {
-            const currentCartQuantity = getItemQuantity(product.id);
-            if (currentCartQuantity + 1 > stockQuantity) {
-                return;
-            }
-            await addProductToCart(product, 1, selectedCountry);
-        }
-    }, [product, selectedCountry, getItemQuantity, stockQuantity, addProductToCart]);
-
-    const handleIncrement = useCallback(async () => {
-        if (product && selectedCountry) {
-            const currentCartQuantity = getItemQuantity(product.id);
-            if (currentCartQuantity + 1 > stockQuantity) {
-                return;
-            }
-            await addProductToCart(product, 1, selectedCountry);
-        }
-    }, [product, selectedCountry, getItemQuantity, stockQuantity, addProductToCart]);
-
-    const handleDecrement = useCallback(async () => {
-        if (product && selectedCountry) {
-            const currentCartQuantity = getItemQuantity(product.id);
-            if (currentCartQuantity <= 0) {
-                return;
-            }
-            await addProductToCart(product, -1, selectedCountry);
-        }
-    }, [product, selectedCountry, getItemQuantity, addProductToCart]);
-
     const handleGoToCart = useCallback(() => {
         router.push(ROUTES.CART);
     }, [router]);
+
+    const handleAddToCartClick = useCallback(() => {
+        incrementCartQuantity(product, selectedCountry);
+    }, [product, selectedCountry, incrementCartQuantity]);
 
     return (
         <React.Fragment>
@@ -90,7 +63,7 @@ export default function ProductCartActions({
                         }}
                     >
                         <IconButton
-                            onClick={handleDecrement}
+                            onClick={() => decrementCartQuantity(product, selectedCountry)}
                             disabled={cartQuantity <= 0}
                             sx={{
                                 border: "1px solid",
@@ -125,7 +98,7 @@ export default function ProductCartActions({
                             {cartQuantity}
                         </Typography>
                         <IconButton
-                            onClick={handleIncrement}
+                            onClick={() => incrementCartQuantity(product, selectedCountry)}
                             disabled={isOutOfStock || cartQuantity >= stockQuantity}
                             sx={{
                                 border: "1px solid",
@@ -167,7 +140,7 @@ export default function ProductCartActions({
                 color="primary"
                 fullWidth
                 size="large"
-                onClick={cartQuantity > 0 ? handleGoToCart : handleAddToCart}
+                onClick={cartQuantity > 0 ? handleGoToCart : handleAddToCartClick}
                 disabled={isOutOfStock}
                 sx={{
                     py: 1.5,
