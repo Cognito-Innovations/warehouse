@@ -61,7 +61,7 @@ interface UserAddress {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { checkoutProducts, cartProducts, removeProductFromCart, clearCheckoutProducts } = useCartStore();
+  const { checkoutProducts, cartProducts, clearCheckoutProducts } = useCartStore();
   const toggleCartItemSelection = useCartStore.getState().toggleCartItemSelection;
   const { user, loading: authLoading } = useAuth();
 
@@ -93,7 +93,6 @@ export default function CheckoutPage() {
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        localStorage.removeItem("checkoutSelectedItems");
         let parsedItems: CartItem[] = [];
         if (Array.isArray(parsed) && parsed.length > 0) {
           if (typeof parsed[0] === 'string') {
@@ -134,7 +133,7 @@ export default function CheckoutPage() {
     }
   }, [checkedOutItems, router, itemsLoaded]);
 
-  const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.id!)), [checkedOutItems]);
+  const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
   const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, selectedCountry), [checkedOutItems, selectedIds, selectedCountry]);
   const countryName = selectedCountry || '';
   const currencyInfo = getCurrencyForCountry(countryName);
@@ -204,11 +203,11 @@ export default function CheckoutPage() {
     setProcessing(true);
     setError(null);
     try {
-      const productIds = checkedOutItems.map((item) => item.product.id);
+      const orderedProductIds = checkedOutItems.map((item) => item.product.id);
       const orderData = {
         shipping_address: formData.shippingAddress,
         country_name: selectedCountry,
-        product_ids: productIds,
+        product_ids: orderedProductIds,
       }
       const initiateResponse = await ecommerceService.initiateOrder(orderData);
       const { orderId, orderNumber, paymentSessionId, totalAmount } = initiateResponse;
@@ -233,20 +232,22 @@ export default function CheckoutPage() {
           try {
             await ecommerceService.updatePaymentStatus(orderId, paymentResult);
 
-            const paidProductIds = checkedOutItems.map(item => item.product.id);
-            paidProductIds.forEach((pid) => {
-              const cartItem = cartProducts.find(cp => cp.product_id === pid);
-              if (cartItem) {
-                removeProductFromCart(pid, selectedCountry);
-              }
+            const currentCart = useCartStore.getState().cartProducts;
+            const orderedIdsSet = new Set(orderedProductIds);
+
+            const updatedCart = currentCart.filter((item) => {
+              const itemId = item.product?.id || item.product_id;
+              return !orderedIdsSet.has(itemId);
             });
 
-            clearCheckoutProducts();
+            useCartStore.setState({ cartProducts: updatedCart });
 
+            clearCheckoutProducts();
             localStorage.removeItem("checkoutSelectedItems");
+
+            useCartStore.getState().getCart(selectedCountry);
             
             toast.success("Order placed successfully!");
-            router.push(ROUTES.ORDER_HISTORY);
           } catch (error) {
             setError("Payment succeeded but order update failed. Contact support.");
             toast.error("Order update error");
@@ -505,7 +506,7 @@ export default function CheckoutPage() {
                     const pricing = getCartItemPricingSummary(item);
                     return (
                       <Box
-                        key={item.id}
+                        key={item.product_id}
                         sx={{
                           display: "flex",
                           justifyContent: "space-between",

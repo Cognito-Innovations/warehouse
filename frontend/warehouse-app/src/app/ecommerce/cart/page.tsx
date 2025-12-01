@@ -34,8 +34,8 @@ export default function CartPage() {
   const {
     cartProducts,
     getCart,
-    addProductToCart,
     removeProductFromCart,
+    setCartItemQuantity,
     checkoutProducts,
     toggleCartItemSelection,
     clearCheckoutProducts,
@@ -175,30 +175,12 @@ export default function CartPage() {
   };
 
   const handleQuantityChange = useCallback(async (identifier: string, newQuantity: number) => {
-    const currentItem = cartProducts.find((item) =>
-      item.product_id === identifier || item.id === identifier
-    );
-    
-    if (!currentItem) return;
-    const targetId = currentItem.product_id || currentItem.id;
-    if (newQuantity <= 0) {
-      await removeProductFromCart(targetId!, selectedCountry);
-    } else {
-      const currentQty = currentItem.quantity;
-      const delta = newQuantity - currentQty;
-      if (delta !== 0) {
-        await addProductToCart(currentItem.product || targetId!, delta, selectedCountry);
-      }
-    }
-  }, [cartProducts, addProductToCart, removeProductFromCart, selectedCountry]);
+    await setCartItemQuantity(identifier, newQuantity, selectedCountry);
+  }, [setCartItemQuantity, selectedCountry]);
 
   const handleRemoveItem = useCallback(async (identifier: string) => {
-      const item = cartProducts.find(i => i.id === identifier || i.product_id === identifier);
-      if(item) {
-         const targetId = item.product_id || item.id;
-         await removeProductFromCart(targetId!, selectedCountry);
-      }
-  }, [cartProducts, removeProductFromCart, selectedCountry]);
+    await removeProductFromCart(identifier, selectedCountry);
+  }, [removeProductFromCart, selectedCountry]);
 
   const handleItemSelect = (itemId: string, isChecked: boolean) => {
     const isCurrentlySelected = checkoutProducts.includes(itemId);
@@ -210,7 +192,7 @@ export default function CartPage() {
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const allIds = cartProducts
-        .map(i => i.id)
+        .map(i => i.product_id)
         .filter((id): id is string => !!id);
 
       const unselectedIds = allIds.filter(id => !checkoutProducts.includes(id));
@@ -279,7 +261,7 @@ export default function CartPage() {
   const getCurrencySymbol = () => {
     if (validItems.length > 0) {
       const firstSelected = validItems.find((item) =>
-        checkoutProducts.includes(item.product_id!) || checkoutProducts.includes(item.id!)
+        checkoutProducts.includes(item.product_id!)
       );
       
       if (firstSelected) {

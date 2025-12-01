@@ -20,13 +20,13 @@ export default function CartItemsList({
 }: CartItemsListProps) {
 
   const isItemSelected = (item: any) => {
-    return selectedItems.has(item.id);
+    return selectedItems.has(item.product_id);
   };
 
   const allSelected = items.length > 0 && items.every(isItemSelected);
   const someSelected = items.some(isItemSelected);
 
-  const getKey = (item: any) => item?.product_id || item?.id;
+  const getKey = (item: any) => item?.product_id;
 
   return (
     <Paper 

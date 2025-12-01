@@ -12,6 +12,7 @@ import {
 import { EcommerceCategory } from './ecommerce-category.entity';
 import { EcommerceSubCategory } from './ecommerce-sub-category.entity';
 import { EcommerceMeasurement } from './measurement.entity';
+import { EcommerceCargoOption } from './cargo-options.entity';
 
 @Entity('ecommerce_products')
 export class EcommerceProduct extends BaseTimestampEntity {
@@ -70,4 +71,8 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @ManyToOne(() => EcommerceMeasurement, { eager: true, nullable: true })
   @JoinColumn({ name: 'measurement_id' })
   measurement: EcommerceMeasurement;
+
+  @ManyToOne(() => EcommerceCargoOption, { eager: true, nullable: false })
+  @JoinColumn({ name: 'cargo_option_id' })
+  cargo_option: EcommerceCargoOption;
 }

@@ -198,7 +198,6 @@ export interface CategoryPayload {
   country_ids: string[],
   is_active: boolean;
   image_url: string;
-  cargo_option_id: string;
   description: string;
 };
 
@@ -226,6 +225,7 @@ export interface ProductPayload {
   unit_value: number;
   measurement_id: string;
   country_ids: string[],
+  cargo_option_id: string;
   stock_quantity: number;
   is_active: boolean;
 };

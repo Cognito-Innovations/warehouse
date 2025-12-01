@@ -21,11 +21,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           const cookies: string | undefined = req.headers?.cookie;
           if (typeof cookies === 'string') {
             const parts: string[] = cookies.split(';');
-            const jwtCookie: string | undefined = parts.find((cookie) =>
-              cookie.trim().startsWith('jwt-token='),
-            );
+            const jwtCookie: string | undefined = parts.find((c) => {
+              const cookie = c.trim();
+              return (
+                cookie.startsWith('jwt-token=') ||
+                cookie.startsWith('auth-token=')
+              );
+            });
             if (jwtCookie) {
-              const token = jwtCookie.split('=')[1];
+              const token = jwtCookie.trim().slice(jwtCookie.indexOf('=') + 1);
               return token ?? null;
             }
           }

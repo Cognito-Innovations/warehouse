@@ -1,20 +1,26 @@
 import { CartItem, EcommerceProduct } from "@/types/ecommerce";
 
+export interface PriceObject {
+  price: number;
+  currency: string;
+}
+
 export interface ParsedPrice {
   raw: number;
   formatted: string;
   currency: string;
 }
 
-export function parsePrice(priceInput: number | string, defaultCurrency = '$'): ParsedPrice {
+export function parsePrice(priceInput: PriceObject | number | string, defaultCurrency = '$'): ParsedPrice {
   let raw: number;
   let currency = defaultCurrency;
 
-  if (typeof priceInput === 'string') {
-    // Extract currency symbol
+  if (typeof priceInput === 'object' && 'price' in priceInput && 'currency' in priceInput) {
+    raw = priceInput.price || 0;
+    currency = priceInput.currency || defaultCurrency;
+  } else if (typeof priceInput === 'string') {
     const symbolMatch = priceInput.match(/[^\d\s.,-]/);
     currency = symbolMatch ? symbolMatch[0] : defaultCurrency;
-    // Extract numeric part
     raw = parseFloat(priceInput.replace(/[^\d.]/g, '')) || 0;
   } else {
     raw = priceInput || 0;
@@ -26,7 +32,7 @@ export function parsePrice(priceInput: number | string, defaultCurrency = '$'): 
 }
 
 export function formatPrice(rawPrice: number, currency = '$'): string {
-  return `${currency}${rawPrice.toFixed(2)}`;
+  return `${currency}${rawPrice?.toFixed(2)}`;
 }
 
 export function calculateDiscountedPrice(rawPrice: number, discountPercent: number): number {

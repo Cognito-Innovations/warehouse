@@ -26,16 +26,9 @@ attachClientIdentifierInterceptors(api);
 // Add auth token to requests
 api.interceptors.request.use(async (config) => {
   const session = await getSession();
-  const token = session?.access_token || localStorage.getItem("auth-token");
+  const token = session?.access_token;
   if (token) {
-    if (config.headers && typeof (config.headers as any).set === "function") {
-      (config.headers as any).set("Authorization", `Bearer ${token}`);
-    } else {
-      config.headers = {
-        ...(config.headers || {}),
-        Authorization: `Bearer ${token}`,
-      };
-    }
+    config.headers.set("Authorization", `Bearer ${token}`);
   }
   return config;
 });
@@ -64,13 +57,22 @@ export const ecommerceService = {
   },
 
   // Products
-  async getProducts(searchTerm?: string, country?: string, limit?: number, offset?: number): Promise<EcommerceProduct[]> {
+  async getProducts(
+    searchTerm?: string,
+    country?: string,
+    category?: string,
+    limit?: number,
+    offset?: number
+  ): Promise<EcommerceProduct[]> {
     const params: any = {};
     if (searchTerm) {
       params.search = searchTerm;
     }
     if (country) {
       params.country = country;
+    }
+    if (category) {
+      params.category = category;
     }
     if (limit !== undefined) {
       params.limit = limit;
@@ -91,16 +93,6 @@ export const ecommerceService = {
 
   async searchProducts(query: string): Promise<EcommerceProduct[]> {
     const response = await api.get(`/ecommerce-products?search=${encodeURIComponent(query)}`);
-    return response.data;
-  },
-
-  async getProductsByCategory(categoryId: string): Promise<EcommerceProduct[]> {
-    const response = await api.get(`/ecommerce-products?category=${categoryId}`);
-    return response.data;
-  },
-
-  async getProductsBySubCategory(subCategoryId: string): Promise<EcommerceProduct[]> {
-    const response = await api.get(`/ecommerce-products?sub_category=${subCategoryId}`);
     return response.data;
   },
 

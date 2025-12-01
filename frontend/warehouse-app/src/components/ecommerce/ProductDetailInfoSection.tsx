@@ -8,26 +8,27 @@ import ProductCartActions from "./ProductCartActions";
 import ProductDetailTabs from "./ProductDetailTabs"; 
 import OfferCard from "./OfferCard";
 import { formatDiscountPercentage } from "@/lib/utils";
-import { calculateDiscountedPrice, formatPrice, parsePrice } from "@/utils/priceUtils";
+import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceProduct } from "@/types/ecommerce";
 
 interface ProductDetailInfoSectionProps {
   product: EcommerceProduct;
+  detailsLoading?: boolean;
 }
 
 export default function ProductDetailInfoSection({
   product,
+  detailsLoading = false,
 }: ProductDetailInfoSectionProps) {
   const [offersExpanded, setOffersExpanded] = React.useState(false);
 
-  const parsedOriginal = parsePrice(product.price);
-  const currency = parsedOriginal.currency;
-  const rawPrice = parsedOriginal.raw;
+  const currency = product.price.currency;
+  const rawPrice = product.price.price;
   const discountPercentage = parseFloat(String(product.discount_percentage || "0"));
   const discountPriceRaw = calculateDiscountedPrice(rawPrice, discountPercentage);
   const formattedDiscountPrice = formatPrice(discountPriceRaw, currency);
-  const formattedOriginalPrice = parsedOriginal.formatted;
+  const formattedOriginalPrice = formatPrice(rawPrice, currency);
   const savingsAmount = rawPrice - discountPriceRaw;
   const formattedSavings = savingsAmount > 0 ? formatPrice(savingsAmount, currency) : '';
 
@@ -198,7 +199,7 @@ export default function ProductDetailInfoSection({
           )}
         </Box>
 
-        <ProductDetailTabs product={product} />
+        <ProductDetailTabs product={product} loading={detailsLoading} />
         
         <Divider sx={{ my: 3 }} />
 

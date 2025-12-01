@@ -19,8 +19,6 @@ interface CategoryRow {
   slug: string;
   discount_percentage: number,
   countries: Country[],
-  cargo_type_label: string;
-  cargo_option_id: string;
   products: number;
   image_url: string;
   description: string;
@@ -50,8 +48,6 @@ const Category: React.FC = () => {
         image_url: item.image_url || "",
         description: item.description || "",
         status: item.is_active ? "Active" : "Inactive",
-        cargo_option_id: item.cargo_option?.id,
-        cargo_type_label: item.cargo_option?.label,
       }));
       setCategories(mappedData);
     } catch (error) {
@@ -77,7 +73,6 @@ const Category: React.FC = () => {
       country_ids: category.countries.map((country: Country) => country.id),
       is_active: category.status === "Active",
       image_url: category.image_url || "",
-      cargo_option_id: category.cargo_option_id,
       description: category.description || "",
     };
     
@@ -144,11 +139,6 @@ const Category: React.FC = () => {
     {
       header: "Products",
       cell: (row) => <Typography variant="body2">{row.products}</Typography>,
-      width: "15%",
-    },
-    {
-      header: "Cargo Type",
-      cell: (row) => <Typography variant="body2">{row.cargo_type_label}</Typography>,
       width: "15%",
     },
     {

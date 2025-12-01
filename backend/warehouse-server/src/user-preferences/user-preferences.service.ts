@@ -4,15 +4,14 @@ import { UserPreference } from './user-preference.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
-import { Currency } from '../currencies/currency.entity';
+import { ExternalCurrencyService } from 'src/shared/external-currency.service';
 
 @Injectable()
 export class UserPreferencesService {
   constructor(
     @InjectRepository(UserPreference)
     private readonly userPreferenceRepository: Repository<UserPreference>,
-    @InjectRepository(Currency)
-    private readonly currencyRepository: Repository<Currency>,
+    private externalCurrencyService: ExternalCurrencyService,
   ) {}
 
   async create(createUserPreferenceDto: CreateUserPreferenceDto) {
@@ -86,42 +85,40 @@ export class UserPreferencesService {
   ): Promise<number> {
     if (!countryName || !price) return price;
 
-    const currency = await this.currencyRepository.findOne({
-      where: {
-        country: {
-          name: countryName,
-        },
-      },
-      relations: ['country'], 
-    });
+    try {
+      const currencyInfo =
+        await this.externalCurrencyService.getCurrencyInfo(countryName);
+      const { code, rate } = currencyInfo;
 
-    if (currency && currency.rate) {
-      return Number(price) * Number(currency.rate);
+      if (code === 'USD') {
+        return price;
+      }
+
+      return Number(price) * Number(rate);
+    } catch (error) {
+      return price;
     }
-
-    return price;
   }
 
   async getFormattedConvertedPriceByCountry(
     countryName: string,
     price: number,
   ) {
-    if (!countryName || !price) return String(price);
+    if (!countryName || !price) {
+      return { price: Number(price), currency: '$' };
+    }
 
-    const currency = await this.currencyRepository.findOne({
-      where: { country: { name: countryName } },
-      relations: ['country'],
-    });
+    try {
+      const currencyInfo =
+        await this.externalCurrencyService.getCurrencyInfo(countryName);
+      const { code, symbol, rate } = currencyInfo;
 
-    if (!currency) return String(price);
-
-    const currency_symbol = currency.currency_symbol;
-    const rate = Number(currency.rate);
-
-    if (!rate || !currency_symbol) return String(price);
-
-    const convertedPrice = Number(price) * rate;
-    return `${convertedPrice.toFixed(2)} ${currency_symbol}`
+      const convertedPrice =
+        code === 'USD' ? Number(price) : Number(price) * rate;
+      return { price: convertedPrice, currency: code === 'USD' ? '$' : symbol };
+    } catch (error) {
+      return { price: Number(price), currency: '$' };
+    }
   }
 
   async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {

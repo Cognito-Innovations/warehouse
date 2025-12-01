@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
+import React from "react";
 import {
   Card,
   CardMedia,
@@ -14,13 +14,15 @@ import {
 } from "@mui/material";
 import { Star, Image as ImageIcon, Add, Remove } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import { EcommerceProductCardProps } from "@/types/ecommerce";
-import { ecommerceData } from "@/data/ecommerceData";
-import { formatDiscountPercentage } from "@/lib/utils";
-import { calculateDiscountedPrice, formatPrice, parsePrice } from "@/utils/priceUtils";
+
 import useProductStore from "@/store/productStore";
 import { useCartStore } from "@/store/cartStore";
+import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
+import { formatDiscountPercentage } from "@/lib/utils";
+import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils";
+import { EcommerceProductCardProps } from "@/types/ecommerce";
 
 export default function EcommerceProductCard({
   product
@@ -28,35 +30,25 @@ export default function EcommerceProductCard({
   const router = useRouter();
   const theme = useTheme();
   const {handleProductSelect} = useProductStore();
-  const cartItems = useCartStore((state) => state.cartProducts);
-  const addProductToCart = useCartStore((state) => state.addProductToCart);
+  const incrementCartQuantity = useCartStore((state) => state.incrementCartQuantity);
+  const decrementCartQuantity = useCartStore((state) => state.decrementCartQuantity);
+  const cartQuantity = useCartStore((state) => state.cartProducts.find(item => item.product_id === product.id)?.quantity || 0);
 
-  const cartItem = useMemo(() => 
-    cartItems.find((item) => item.product_id === product.id),
-    [cartItems, product.id]
-  );
-  const cartQuantity = cartItem?.quantity || 0;
+  const locationData = useEffectiveUserLocation({
+    countryCode: undefined,
+    countryName: undefined,
+    city: '',
+    pincode: '',
+  });
+  const selectedCountry = locationData.location.countryName;
 
-  //TODO P0: move these to redux store
-  const handleAddToCart = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (cartQuantity + 1 > product.stock_quantity) {
-      return;
-    }
-    addProductToCart(product, 1);
-  }, [cartQuantity, product.stock_quantity, product, addProductToCart]);
-
-  const handleDecreaseQuantity = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (cartQuantity <= 0) return;
-    addProductToCart(product, -1);
-  }, [cartQuantity, product, addProductToCart]);
-
-  const { raw: rawPrice, formatted: formattedOriginal } = parsePrice(product.price);
-
+  const rawPrice = product.price.price;
+  const currency = product.price.currency;
+  const formattedOriginal = formatPrice(rawPrice, currency);
+  
   const discountPercent = parseFloat(String(product.discount_percentage || 0)) || 0;
   const discountedRaw = calculateDiscountedPrice(rawPrice, discountPercent);
-  const formattedDiscounted = formatPrice(discountedRaw, parsePrice(product.price).currency);
+  const formattedDiscounted = formatPrice(discountedRaw, currency);
 
   const unitValue = parseFloat(String(product.unit_value || "0"));
   const measurementLabel = product.measurement?.label || "";
@@ -66,6 +58,16 @@ export default function EcommerceProductCard({
   // Placeholder image URL  Make we process the image in 300x180 only for best UI view
   const placeholderImage = `https://placehold.co/300x180?text=${product.name}`;
   const imageUrl = product.image_url || placeholderImage;
+
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    incrementCartQuantity(product, selectedCountry);
+  };
+
+  const handleDecreaseClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    decrementCartQuantity(product, selectedCountry);
+  };
 
   return (
     <Card
@@ -241,7 +243,7 @@ export default function EcommerceProductCard({
                 >
                   <IconButton
                     size="small"
-                    onClick={handleDecreaseQuantity}
+                    onClick={handleDecreaseClick}
                     sx={{
                       width: 40,
                       height: 32,
@@ -256,7 +258,7 @@ export default function EcommerceProductCard({
                   </Typography>
                   <IconButton
                     size="small"
-                    onClick={handleAddToCart}
+                    onClick={handleAddClick}
                     disabled={cartQuantity >= stockQuantity}
                     sx={{
                       width: 40,
@@ -274,7 +276,7 @@ export default function EcommerceProductCard({
                   variant="contained"
                   color="primary"
                   size="small"
-                  onClick={handleAddToCart}
+                  onClick={handleAddClick}
                   sx={{
                     width: { xs: "100%", sm: 80 },
                     height: 32,

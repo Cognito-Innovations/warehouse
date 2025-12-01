@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useAddressAPI } from "@/hooks/useAddressAPI";
 import AddressLayout from "@/providers/AddressLayout";
 import { ROUTES } from "@/utils/constants";
+import { TW_COLORS } from "@/utils/colors";
 
 const FormLabel = ({ children, htmlFor }: { children: React.ReactNode; htmlFor: string }) => (
   <Typography
@@ -258,7 +259,7 @@ function CreatePickupRequestPageContent() {
               onClick={handleSubmit}
               disabled={!isFormValid || loading} 
               sx={{
-                bgcolor: "#7C3AED",
+                bgcolor: TW_COLORS.primary,
                 textTransform: "none",
                 fontWeight: "bold",
                 borderRadius: "8px",

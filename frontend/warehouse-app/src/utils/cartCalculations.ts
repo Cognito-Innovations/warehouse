@@ -18,7 +18,7 @@ export const calculateCartTotals = (
         return emptyTotals();
 
     const selectedItems = cartItems.filter((item) => 
-        selectedItemIds.has(item.id)
+        selectedItemIds.has(item.product_id)
     );
 
     if (selectedItems.length === 0)

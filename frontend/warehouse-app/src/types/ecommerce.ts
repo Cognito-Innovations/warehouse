@@ -35,7 +35,10 @@ export interface EcommerceProduct {
   description?: string;
   slug: string;
   image_url: string;
-  price: number;
+  price: {
+    price: number;
+    currency: string;
+  };
   discount_percentage: number;
   quantity: number;
   stock_quantity: number;
@@ -207,6 +210,7 @@ export interface ProductDetailImageSectionProps {
   product: EcommerceProduct;
   previewProducts: EcommerceProduct[];
   onProductSelect: (product: EcommerceProduct) => void;
+  arePreviewsLoading?: boolean;
 }
 
 export interface ProductDetailInfoSectionProps {
