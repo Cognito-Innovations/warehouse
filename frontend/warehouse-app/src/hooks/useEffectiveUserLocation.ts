@@ -73,32 +73,31 @@ export function useEffectiveUserLocation(
        return;
     }
 
-    const hasCheckedCache = user?.id && addressCache[user.id] !== undefined;
+    const hasCheckedCache = user?.id && addressCache[user?.id] !== undefined;
 
-    if (isLoadingAddress || (user?.id && !hasCheckedCache)) {
+    if (isLoadingAddress || !hasCheckedCache) {
       return;
     }
 
-    if (userAddress) {
-      const hasValid = !!userAddress.city && !!userAddress.zip_code;
-      if (hasValid) {
-        updateLocation({
-          city: userAddress.city,
-          pincode: userAddress.zip_code,
-          countryCode: undefined,
-          countryName: userAddress.country,
-        });
-      } else {
-        initializeLocation(defaults.city, defaults.pincode, true);
-      }
-    } else {
-      initializeLocation(defaults.city, defaults.pincode, true);
-    }
+    const hasValid = !!userAddress?.city && !!userAddress?.zip_code;
+    const city = hasValid ? userAddress.city : defaults.city;
+    const pincode = hasValid ? userAddress.zip_code : defaults.pincode;
+    const countryName = userAddress?.country || defaults.countryName;
+    const countryCode = defaults.countryCode;
+
+    updateLocation({
+      city,
+      pincode,
+      countryCode,
+      countryName,
+    });
   }, [
     userAddress, 
     isLoggedIn, 
     defaults.city, 
     defaults.pincode, 
+    defaults.countryCode,
+    defaults.countryName,
     initializeLocation, 
     updateLocation,
     isLoadingAddress,

@@ -307,6 +307,21 @@ export const useCartStore = create<CartStore>()(
           }
         }
       },
+
+      removePurchasedProducts: (purchasedProductIds: string[]) => {
+        const state = get();
+        
+        const remainingCartProducts = state.cartProducts.filter(
+          (item) => !purchasedProductIds.includes(item.product_id!)
+        );
+
+        set({ 
+          cartProducts: remainingCartProducts, 
+          checkoutProducts: []
+        });
+        
+        localStorage.removeItem("checkoutSelectedItems");
+      },
     }),
     {
       name: "cart-storage",

@@ -1,22 +1,71 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { Paper, Box, Typography, Button, Divider } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+import { useCartStore } from "@/store/cartStore";
+import { calculateCartTotals } from "@/utils/cartCalculations";
+import { ROUTES } from "@/utils/constants";
 import { OrderSummaryCardProps } from "@/types/ecommerce";
 
 export default function OrderSummaryCard({
-  subtotal,
-  discount,
-  deliveryFee,
-  taxes,
-  serviceCharge,
-  total,
-  checkoutLabel,
-  onCheckout,
-  borderColor,
+  userId,
+  items,
+  selectedCountry,
+  selectedAddress,
+  setHighlightAddressError,
   currencySymbol = "$",
 }: OrderSummaryCardProps) {
+  const router = useRouter();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const { checkoutProducts, cartProducts } = useCartStore();
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const totals = calculateCartTotals(items, new Set(checkoutProducts), selectedCountry);
+  
+  const handleCheckout = useCallback(() => {
+    const selected = cartProducts.filter(item =>
+      checkoutProducts.includes(item.product_id!)
+    );
+
+    if (selected?.length === 0) {
+      toast.error("Please select items to checkout");
+      return;
+    }
+
+    if (!userId) {
+      localStorage.setItem("checkoutSelectedItems", JSON.stringify(selected));
+      toast.info("Please sign in to continue with checkout");
+      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(ROUTES.CHECKOUT)}`);
+      return;
+    } else if (!selectedAddress) {
+      toast.error("Please add a delivery address to continue with checkout.");
+      setHighlightAddressError(true);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        setHighlightAddressError(false);
+        timeoutRef.current = null;
+      }, 3000);
+    } else {
+      localStorage.setItem("checkoutSelectedItems", JSON.stringify(selected));
+      router.push(ROUTES.CHECKOUT);
+    }
+  }, [router, cartProducts, userId, selectedAddress, checkoutProducts]); // ROUTES.CHECKOUT constant used directly
+  
   return (
     <Paper
       elevation={2}
@@ -26,7 +75,7 @@ export default function OrderSummaryCard({
         position: { md: "sticky", xs: "static" },
         top: { md: 20, xs: 0 },
         minWidth: { md: 320, xs: "auto" },
-        border: `1px solid ${borderColor}`,
+        border: `1px solid #e0e0e0`,
         bgcolor: "white",
         boxShadow: 3,
       }}
@@ -41,7 +90,7 @@ export default function OrderSummaryCard({
             Subtotal
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {currencySymbol}{(Number(subtotal) || 0).toFixed(2)}
+            {currencySymbol}{(Number(totals.subtotal) || 0).toFixed(2)}
           </Typography>
         </Box>
 
@@ -50,7 +99,7 @@ export default function OrderSummaryCard({
             Delivery Fee
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {currencySymbol}{(Number(deliveryFee) || 0).toFixed(2)}
+            {currencySymbol}{(Number(totals.deliveryFee) || 0).toFixed(2)}
           </Typography>
         </Box>
 
@@ -59,17 +108,17 @@ export default function OrderSummaryCard({
             Taxes
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {currencySymbol}{(Number(taxes) || 0).toFixed(2)}
+            {currencySymbol}{(Number(totals.taxes) || 0).toFixed(2)}
           </Typography>
         </Box>
         
-        {discount > 0 && (
+        {totals.discount > 0 && (
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
             <Typography variant="body2" color="success.main">
               Discount
             </Typography>
             <Typography variant="body2" color="success.main" fontWeight={500}>
-              -{currencySymbol}{(Number(discount) || 0).toFixed(2)}
+              -{currencySymbol}{(Number(totals.discount) || 0).toFixed(2)}
             </Typography>
           </Box>
         )}
@@ -79,7 +128,7 @@ export default function OrderSummaryCard({
             Service Charge
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {currencySymbol}{(Number(serviceCharge) || 0).toFixed(2)}
+            {currencySymbol}{(Number(totals.serviceCharge) || 0).toFixed(2)}
           </Typography>
         </Box>
 
@@ -90,7 +139,7 @@ export default function OrderSummaryCard({
             Grand Total
           </Typography>
           <Typography variant="h6" fontWeight="bold" color="primary.main">
-            {currencySymbol}{(Number(total) || 0).toFixed(2)}
+            {currencySymbol}{(Number(totals.total) || 0).toFixed(2)}
           </Typography>
         </Box>
       </Box>
@@ -99,7 +148,7 @@ export default function OrderSummaryCard({
         fullWidth
         variant="contained"
         size="large"
-        onClick={onCheckout}
+        onClick={handleCheckout}
         endIcon={<ArrowForward />}
         sx={{
           bgcolor: "#c8e6c9",
@@ -116,7 +165,7 @@ export default function OrderSummaryCard({
           },
         }}
       >
-        {checkoutLabel}
+        Checkout
       </Button>
     </Paper>
   );

@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { CircularProgress } from "@mui/material";
 import { ShoppingBag as ShoppingBagIcon } from "@mui/icons-material";
 
-import { useCartStore } from "@/store/cartStore";
 import { getOrdersByUser } from "@/lib/api.service";
 import TabPanel from "../../components/AssistedShopping/TabPanel";
 import EmptyState from "../../components/AssistedShopping/EmptyState";
@@ -20,22 +19,6 @@ export default function Orders() {
   const [isLoading, setIsLoading] = useState(false);
 
   const user_id = (session?.user as any)?.user_id;
-
-  const { cartProducts, setCartProducts, checkoutProducts, clearCheckoutProducts } = useCartStore();
-
-  const clearOrderedItemsFromCart = () => {
-    const orderedProductIds: string[] = checkoutProducts || [];
-
-    if (!orderedProductIds.length) return;
-
-    const remainingCartItems = cartProducts.filter(
-      item => !orderedProductIds.includes(item.product_id!)
-    );
-
-    setCartProducts(remainingCartItems);
-    clearCheckoutProducts();
-    localStorage.removeItem("checkoutSelectedItems");
-  };
 
   const fetchOrders  = async () => {
     if (!user_id) return;
@@ -54,7 +37,6 @@ export default function Orders() {
   useEffect(() => {
     if (status === "authenticated" && user_id) {
       fetchOrders();
-      clearOrderedItemsFromCart();
     }
   }, [user_id, status]);
 

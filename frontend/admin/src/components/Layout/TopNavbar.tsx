@@ -2,11 +2,8 @@ import React from 'react';
 import { Box } from '@mui/material';
 import SearchBar from './SearchBar';
 
-// import { useTabContext } from '../../App';
-
 import PageTitle from './PageTitle';
 import UserAvatar from './UserAvatar';
-
 
 interface TopNavbarProps {
   pageTitle?: string;
@@ -23,8 +20,6 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
   onSearchChange,
   showSearchBar = false,
 }) => {
-  //TODO: Don't use this way, correct it
-  // const { togglePageSidebar } = useTabContext();
   return (
     <Box sx={{ 
       display: 'flex', 

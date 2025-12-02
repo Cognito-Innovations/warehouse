@@ -237,12 +237,6 @@ export interface CartItemLoadingState {
   isRemoveLoading: boolean;
 }
 
-export interface CartHeaderProps {
-  title: string;
-  itemCount: number;
-  onBackClick: () => void;
-}
-
 export interface DeliveryBannerProps {
   text: string;
   icon?: React.ReactNode;
@@ -261,11 +255,6 @@ export interface DeliveryAddressCardProps {
 export interface CartItemCardProps {
   item: CartItem;
   isSelected: boolean;
-  onSelect: (itemId: string, selected: boolean) => void;
-  onQuantityChange: (itemId: string, newQuantity: number) => void;
-  onRemoveItem: (itemId: string) => void;
-  discountBadgeColor: string;
-  borderColor: string;
   currencySymbol?: string;
   selectedCountry?: string;
 }
@@ -274,21 +263,8 @@ export interface CartItemsListProps {
   items: CartItem[];
   loadingStates: Record<string, CartItemLoadingState>;
   selectedItems: Set<string>;
-  onItemSelect: (itemId: string, selected: boolean) => void;
-  onSelectAll: (selected: boolean) => void;
-  onQuantityChange: (itemId: string, newQuantity: number) => void;
-  onRemoveItem: (itemId: string) => void;
-  title: string;
-  discountBadgeColor: string;
-  borderColor: string;
   currencySymbol?: string;
   selectedCountry?: string;
-}
-
-export interface ContinueShoppingCardProps {
-  label: string;
-  onClick: () => void;
-  borderColor: string;
 }
 
 export interface PaymentOffer {
@@ -312,25 +288,16 @@ export interface FreeDeliveryThresholdCardProps {
 }
 
 export interface OrderSummaryCardProps {
-  subtotal: number;
-  discount: number;
-  deliveryFee: number;
-  taxes: number;
-  serviceCharge: number;
-  total: number;
-  checkoutLabel: string;
-  onCheckout: () => void;
-  borderColor: string;
+  userId?: string;
+  items: CartItem[];
+  selectedCountry?: string;
+  selectedAddress: CartAddressData | null;
+  setHighlightAddressError(value: boolean): void
   currencySymbol?: string;
 }
 
 export interface EmptyCartStateProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  buttonLabel: string;
   onButtonClick: () => void;
-  buttonColor: string;
 }
 
 export interface AddressSelectionProps {

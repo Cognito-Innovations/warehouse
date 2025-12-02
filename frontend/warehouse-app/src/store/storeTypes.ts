@@ -83,6 +83,7 @@ export type CartStore = {
   incrementCartQuantity: (product: EcommerceProduct, country?: string) => Promise<void>;
   decrementCartQuantity: (product: EcommerceProduct, country?: string) => Promise<void>;
   setCartItemQuantity: (productId: string, quantity: number, country?: string) => Promise<void>;
+  removePurchasedProducts: (purchasedProductIds: string[]) => void;
 }
 
 export interface UserLocation {
@@ -105,6 +106,7 @@ export type LocationStore = {
   addressCache: Record<string, UserAddress | null>;
   isLoadingLocation: boolean;
   isLoadingAddress: boolean;
+  hasInitialized: boolean;
   error: string | null;
 
   setUserLocation: (location: UserLocation) => void;

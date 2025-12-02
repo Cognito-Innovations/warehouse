@@ -17,9 +17,6 @@ import { User } from 'src/users/user.entity';
 import { Currency } from 'src/currencies/currency.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
-const roundCurrency = (value: number): number => 
-  Math.round((value + Number.EPSILON) * 100) / 100;
-
 @Injectable()
 export class OrderService {
   private cashfree: Cashfree;
@@ -52,6 +49,10 @@ export class OrderService {
     );
   }
 
+  private roundCurrency(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
+  }
+
   async createOrder(
     userId: string,
     createOrderDto: CreateOrderDto,
@@ -69,9 +70,10 @@ export class OrderService {
     let itemsToProcess = cart.items;
 
     if (createOrderDto.product_ids && createOrderDto.product_ids.length > 0) {
-      itemsToProcess = cart.items.filter((item) =>
-        createOrderDto.product_ids!.includes(item.product_id),
-      );
+      itemsToProcess = cart.items.filter((item) => {
+        const cartItemId = item.product_id || item.product?.id;
+        return createOrderDto.product_ids!.includes(cartItemId);
+      });
 
       if (itemsToProcess.length === 0) {
         throw new BadRequestException(
@@ -98,29 +100,35 @@ export class OrderService {
 
     const orderCurrency = currencyResponse.currency_code;
 
-    let subtotal = 0;
-    let totalBaseDiscount = 0;
+    let grossSubtotal = 0;
+    let totalDiscountAmount = 0;
 
     for (const item of itemsToProcess) {
       const basePrice = Number(item.product.price);
-      const baseDiscPerc = Number(item.product.discount_percentage || 0);
-      const baseDiscountAmountPerUnit = (basePrice * baseDiscPerc) / 100;
-      const baseUnitPrice = basePrice - baseDiscountAmountPerUnit;
-      const baseDiscountAmount = baseDiscountAmountPerUnit * item.quantity;
 
-      const rawConvertedUnitPrice =
+      const rawConvertedBasePrice =
         await this.userPreferenceService.getConvertedPriceByCountry(
           countryName,
-          baseUnitPrice,
+          basePrice,
         );
 
-      const convertedUnitPrice = roundCurrency(rawConvertedUnitPrice);
+      const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
 
-      subtotal += convertedUnitPrice * item.quantity;
-      totalBaseDiscount += baseDiscountAmount;
+      const discountPercent = Number(item.product.discount_percentage || 0);
+
+      const discountedUnitPrice = this.roundCurrency(
+        originalUnitPrice * (1 - discountPercent / 100)
+      );
+
+      const discountPerUnit = this.roundCurrency(
+        originalUnitPrice - discountedUnitPrice
+      );
+
+      grossSubtotal += originalUnitPrice * item.quantity;
+      totalDiscountAmount += discountPerUnit * item.quantity;
     };
 
-    const discountedSubTotal = subtotal;
+    const discountedSubTotal = grossSubtotal - totalDiscountAmount;
 
     if (isNaN(discountedSubTotal))
       throw new BadRequestException('Invalid cart amount');
@@ -138,10 +146,11 @@ export class OrderService {
     const finalTotal =
       discountedSubTotal + deliveryFee + taxAmount + serviceCharge;
 
-    const roundedTotal = roundCurrency(finalTotal);
-    const roundedSubtotal = roundCurrency(discountedSubTotal);
-    const roundedShipping = roundCurrency(deliveryFee);
-    const roundedTax = roundCurrency(taxAmount);
+    const roundedTotal = this.roundCurrency(finalTotal);
+    const roundedNetSubtotal = this.roundCurrency(discountedSubTotal);
+    const roundedShipping = this.roundCurrency(deliveryFee);
+    const roundedTax = this.roundCurrency(taxAmount);
+    const roundedDiscount = this.roundCurrency(totalDiscountAmount);
 
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
@@ -152,8 +161,8 @@ export class OrderService {
       user_id: userId,
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
-      subtotal: roundedSubtotal, 
-      discount_percentage: totalBaseDiscount,
+      subtotal: roundedNetSubtotal, 
+      discount_percentage: roundedDiscount,
       shipping_amount: roundedShipping,
       tax_amount: roundedTax,
       total_amount: roundedTotal,
@@ -162,24 +171,38 @@ export class OrderService {
 
     const savedOrder = await this.orderRepository.save(order);
 
-    // Create order items from cart items
-    const orderItems = itemsToProcess.map((cartItem) => {
-      const basePrice = Number(cartItem.product.price);
-      const baseDiscPerc = Number(cartItem.product.discount_percentage || 0);
-      const baseDiscountAmountPerUnit = (basePrice * baseDiscPerc) / 100;
-      const baseUnitPrice = basePrice - baseDiscountAmountPerUnit;
-      const totalPrice = baseUnitPrice * cartItem.quantity;
-      const totalDiscount = baseDiscountAmountPerUnit * cartItem.quantity;
+    const orderItems: EcommerceOrderItem[] = [];
 
-      return this.orderItemRepository.create({
+    for (const item of itemsToProcess) {
+      const basePrice = Number(item.product.price);
+      const rawConvertedBasePrice =
+        await this.userPreferenceService.getConvertedPriceByCountry(
+          countryName,
+          basePrice,
+        );
+
+      const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
+      const discountPercent = Number(item.product.discount_percentage || 0);
+      const discountedUnitPrice = this.roundCurrency(
+        originalUnitPrice * (1 - discountPercent / 100)
+      );
+
+      const discountPerUnit = this.roundCurrency(
+        originalUnitPrice - discountedUnitPrice
+      );
+      const totalLinePrice = discountedUnitPrice * item.quantity;
+      const totalLineDiscount = discountPerUnit * item.quantity;
+
+      const orderItem = this.orderItemRepository.create({
         order_id: savedOrder.id,
-        product_id: cartItem.product_id,
-        quantity: cartItem.quantity,
-        unit_price: baseUnitPrice,
-        total_price: totalPrice,
-        discount_percentage: totalDiscount,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: originalUnitPrice,
+        total_price: totalLinePrice,
+        discount_percentage: totalLineDiscount,
       });
-    });
+      orderItems.push(orderItem);
+    }
 
     await this.orderItemRepository.save(orderItems);
 

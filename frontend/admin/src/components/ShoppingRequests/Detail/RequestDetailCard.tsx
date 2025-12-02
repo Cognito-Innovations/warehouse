@@ -32,7 +32,7 @@ interface Request {
 }
 
 interface RequestDetailCardProps {
-  request: Request;
+  request: Request | null;
   onStatusUpdated: () => void;
   products: Product[];
   selectedItemIds: Set<string>;

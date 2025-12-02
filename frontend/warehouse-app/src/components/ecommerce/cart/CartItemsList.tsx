@@ -4,20 +4,21 @@ import React from "react";
 import { Paper, Typography, Box, Checkbox } from "@mui/material";
 import { CartItemsListProps } from "@/types/ecommerce";
 import CartItemCard from "./CartItemCard";
+import { useCartStore } from "@/store/cartStore";
 
 export default function CartItemsList({
   items,
   selectedItems,
-  onItemSelect,
-  onSelectAll,
-  onQuantityChange,
-  onRemoveItem,
-  title,
-  discountBadgeColor,
-  borderColor,
   currencySymbol,
   selectedCountry,
 }: CartItemsListProps) {
+
+  const {
+    cartProducts,
+    checkoutProducts,
+    toggleCartItemSelection,
+    clearCheckoutProducts,
+  } = useCartStore();
 
   const isItemSelected = (item: any) => {
     return selectedItems.has(item.product_id);
@@ -28,6 +29,21 @@ export default function CartItemsList({
 
   const getKey = (item: any) => item?.product_id;
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = cartProducts
+        .map(i => i.product_id)
+        .filter((id): id is string => !!id);
+
+      const unselectedIds = allIds.filter(id => !checkoutProducts.includes(id));
+      if (unselectedIds.length > 0) {
+        toggleCartItemSelection(unselectedIds);
+      }
+    } else {
+      clearCheckoutProducts();
+    }
+  };
+
   return (
     <Paper 
       elevation={0}
@@ -35,7 +51,7 @@ export default function CartItemsList({
         p: 2.5, 
         mb: 2, 
         borderRadius: 2,
-        border: `1px solid ${borderColor}`,
+        border: `1px solid #e0e0e0`,
         bgcolor: "white",
       }}
     >
@@ -43,7 +59,7 @@ export default function CartItemsList({
         <Checkbox
           checked={allSelected}
           indeterminate={someSelected && !allSelected}
-          onChange={(e) => onSelectAll(e.target.checked)}
+          onChange={(e) => handleSelectAll(e.target.checked)}
           sx={{
             color: "success.main",
             "&.Mui-checked": {
@@ -52,7 +68,7 @@ export default function CartItemsList({
           }}
         />
         <Typography variant="h6" fontWeight="bold">
-          {title}
+          Shopping Cart
         </Typography>
       </Box>
       
@@ -63,11 +79,6 @@ export default function CartItemsList({
             key={key}
             item={item}
             isSelected={isItemSelected(item)}
-            onSelect={onItemSelect}
-            onQuantityChange={onQuantityChange}
-            onRemoveItem={onRemoveItem}
-            discountBadgeColor={discountBadgeColor}
-            borderColor={borderColor}
             currencySymbol={currencySymbol}
             selectedCountry={selectedCountry}
           />

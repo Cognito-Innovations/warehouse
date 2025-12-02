@@ -14,6 +14,7 @@ const useLocationStore = create<LocationStore>((set, get) => ({
   addressCache: {},
   isLoadingLocation: false,
   isLoadingAddress: false,
+  hasInitialized: false,
   error: null,
 
   setUserLocation: (location) => set({ userLocation: location }),
@@ -118,16 +119,16 @@ const useLocationStore = create<LocationStore>((set, get) => ({
   },
 
   initializeLocation: async (defaultCity: string, defaultPincode: string, enableGeolocation = true) => {
-    const { userLocation, isLoadingLocation } = get();
-    if (isLoadingLocation) return;
+    const { hasInitialized, isLoadingLocation, userLocation } = get();
+    if (isLoadingLocation || hasInitialized) return;
 
-    if (userLocation.city && userLocation.city !== defaultCity) {
-      get().setLoadingLocation(false);
+    if (userLocation.countryCode || (userLocation.city && userLocation.city !== defaultCity)) {
       return;
     }
 
     get().setLoadingLocation(true);
     get().setError(null);
+    set({ hasInitialized: true });
 
     try {
       await get().fetchCountryFromIP(defaultCity, defaultPincode, enableGeolocation);

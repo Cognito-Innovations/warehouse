@@ -1,27 +1,30 @@
 "use client";
 
-import React from "react";
+import React, { useCallback } from "react";
 import { Box, Typography, IconButton, Checkbox, Chip, Stack, Divider } from "@mui/material";
 import { Add, Remove, Delete, LocationOn, Inventory } from "@mui/icons-material";
-import { CartItemCardProps, EcommerceProduct } from "@/types/ecommerce";
+import { useRouter } from "next/navigation";
+
+import { useCartStore } from "@/store/cartStore";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { getCurrencyForCountry } from "@/utils/currency";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
-import { useRouter } from "next/navigation";
 import { ROUTES } from "@/utils/constants";
+import { CartItemCardProps, EcommerceProduct } from "@/types/ecommerce";
 
 export default function CartItemCard({
   item,
   isSelected,
-  onSelect,
-  onQuantityChange,
-  onRemoveItem,
-  discountBadgeColor,
-  borderColor,
   currencySymbol,
   selectedCountry,
 }: CartItemCardProps) {
   const router = useRouter();
+  const {
+    checkoutProducts,
+    toggleCartItemSelection,
+    removeProductFromCart,
+    setCartItemQuantity,
+  } = useCartStore();
 
   const handleProductClick = (e: React.MouseEvent, product: EcommerceProduct) => {
     const blocked = ["BUTTON", "svg", "path", "INPUT"];
@@ -29,6 +32,21 @@ export default function CartItemCard({
 
     router.push(`${ROUTES.PRODUCT}/${product.id}`);
   }
+
+  const handleItemSelect = (itemId: string, isChecked: boolean) => {
+    const isCurrentlySelected = checkoutProducts.includes(itemId);
+    if (isChecked !== isCurrentlySelected) {
+      toggleCartItemSelection(itemId);
+    }
+  };
+
+  const handleQuantityChange = useCallback(async (identifier: string, newQuantity: number) => {
+    await setCartItemQuantity(identifier, newQuantity, selectedCountry);
+  }, [setCartItemQuantity, selectedCountry]);
+
+  const handleRemoveItem = useCallback(async (identifier: string) => {
+    await removeProductFromCart(identifier, selectedCountry);
+  }, [removeProductFromCart, selectedCountry]);
 
   const effectiveId = item.product_id!;
 
@@ -62,7 +80,7 @@ export default function CartItemCard({
         mb: 2,
         borderRadius: 3,
         bgcolor: "white",
-        border: `1px solid ${isSelected ? "success.main" : borderColor}`,
+        border: `1px solid ${isSelected ? "success.main" : "#e0e0e0"}`,
         boxShadow: isSelected
           ? "0 4px 12px rgba(76, 175, 80, 0.15)"
           : "0 2px 8px rgba(0, 0, 0, 0.08)",
@@ -82,7 +100,7 @@ export default function CartItemCard({
         <Box sx={{ display: "flex", alignItems: "flex-start", pt: 0.5 }}>
           <Checkbox
             checked={isSelected}
-            onChange={(e) => onSelect(effectiveId, e.target.checked)}
+            onChange={(e) => handleItemSelect(effectiveId, e.target.checked)}
             sx={{
               color: "success.main",
               "&.Mui-checked": {
@@ -149,7 +167,7 @@ export default function CartItemCard({
                 label={formatDiscountPercentage(item.product.discount_percentage, "OFF")}
                 size="small"
                 sx={{
-                  bgcolor: discountBadgeColor,
+                  bgcolor: "#4caf50",
                   color: "white",
                   fontSize: "0.7rem",
                   fontWeight: "bold",
@@ -234,7 +252,7 @@ export default function CartItemCard({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
             <IconButton
               size="small"
-              onClick={() => onQuantityChange(effectiveId, item.quantity - 1)}
+              onClick={() => handleQuantityChange(effectiveId, item.quantity - 1)}
               disabled={item.quantity <= 1}
               sx={{
                 border: "1.5px solid",
@@ -266,7 +284,7 @@ export default function CartItemCard({
             </Typography>
             <IconButton
               size="small"
-              onClick={() => onQuantityChange(effectiveId, item.quantity + 1)}
+              onClick={() => handleQuantityChange(effectiveId, item.quantity + 1)}
               disabled={item.quantity >= item.product.stock_quantity}
               sx={{
                 border: "1.5px solid",
@@ -302,7 +320,7 @@ export default function CartItemCard({
         >
           <IconButton
             size="small"
-            onClick={() => onRemoveItem(effectiveId)}
+            onClick={() => handleRemoveItem(effectiveId)}
             sx={{
               color: "text.secondary",
               width: 36,

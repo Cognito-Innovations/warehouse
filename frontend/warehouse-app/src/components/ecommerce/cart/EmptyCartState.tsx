@@ -3,16 +3,13 @@
 import React from "react";
 import { Box, Container, Typography, Button, AppBar, Toolbar, IconButton } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-import { EmptyCartStateProps } from "@/types/ecommerce";
+import { ShoppingCart } from "@mui/icons-material";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/utils/constants";
 
-export default function EmptyCartState({
-  icon,
-  title,
-  description,
-  buttonLabel,
-  onButtonClick,
-  buttonColor,
-}: EmptyCartStateProps) {
+export default function EmptyCartState() {
+  const router = useRouter();
+
   return (
     <Box sx={{ bgcolor: "#f8f9fa", minHeight: "100vh" }}>
       <AppBar position="sticky" elevation={0} sx={{ bgcolor: "white", color: "text.primary" }}>
@@ -40,24 +37,25 @@ export default function EmptyCartState({
           minHeight="50vh"
           textAlign="center"
         >
-          {icon}
+          <ShoppingCart sx={{ fontSize: 80, color: "text.secondary", mb: 2 }} />
+
           <Typography variant="h5" color="text.secondary" gutterBottom>
-            {title}
+            Your cart is empty
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {description}
+            Add some items to get started
           </Typography>
           <Button
             variant="contained"
-            onClick={onButtonClick}
+            onClick={() => router.push(ROUTES.ECOMMERCE)}
             sx={{
-              bgcolor: buttonColor,
+              bgcolor: "primary",
               textTransform: "none",
               px: 4,
               py: 1.5,
             }}
           >
-            {buttonLabel}
+            Start Shopping
           </Button>
         </Box>
       </Container>
