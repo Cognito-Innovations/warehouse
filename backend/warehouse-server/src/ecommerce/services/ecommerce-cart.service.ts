@@ -32,8 +32,8 @@ export class CartService {
           name: true,
           email: true,
           suite_no: true,
-        }
-      }
+        },
+      },
     });
   }
 
@@ -174,11 +174,11 @@ export class CartService {
 
     const totalAmount = computedItems.reduce(
       (sum, item) => sum + item.total_price,
-      0
+      0,
     );
     const totalDiscount = computedItems.reduce(
       (sum, item) => sum + item.discount_percentage,
-      0
+      0,
     );
     const finalAmount = totalAmount - totalDiscount;
 
@@ -193,7 +193,7 @@ export class CartService {
     const selectedCountry = country || 'United States of America';
     return this.applyCurrencyConversion(
       cartWithComputedTotals,
-      selectedCountry
+      selectedCountry,
     );
   }
 
@@ -233,7 +233,7 @@ export class CartService {
       total_amount: await convert(cart.total_amount),
       discount_percentage: await convert(cart.discount_percentage),
       final_amount: await convert(cart.final_amount),
-      items: convertedItems, 
+      items: convertedItems,
     };
   }
 }

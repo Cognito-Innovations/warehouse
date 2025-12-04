@@ -45,7 +45,9 @@ export class SeedService {
 
       // Get or create default measurement
       const measurement = await this.getOrCreateDefaultMeasurement();
-      this.logger.log(`Using measurement: ${measurement.label} (${measurement.id})`);
+      this.logger.log(
+        `Using measurement: ${measurement.label} (${measurement.id})`,
+      );
 
       // Seed categories
       const categories = await this.seedCategories(country.id);
@@ -126,7 +128,9 @@ export class SeedService {
     return measurement;
   }
 
-  private async seedCategories(countryId: string): Promise<EcommerceCategory[]> {
+  private async seedCategories(
+    countryId: string,
+  ): Promise<EcommerceCategory[]> {
     const categories: EcommerceCategory[] = [];
 
     for (const categoryData of categorySeedData) {
@@ -135,7 +139,9 @@ export class SeedService {
       });
 
       if (existing) {
-        this.logger.log(`Category ${categoryData.slug} already exists, skipping`);
+        this.logger.log(
+          `Category ${categoryData.slug} already exists, skipping`,
+        );
         categories.push(existing);
         continue;
       }
@@ -161,16 +167,26 @@ export class SeedService {
     // Map sub-categories to categories based on index
     // Each category has 2 sub-categories
     const subCategoryToCategoryMap = [
-      0, 0, // Fresh Fruits, Fresh Vegetables -> Fruits & Vegetables
-      1, 1, // Milk & Cream, Cheese & Butter -> Dairy & Eggs
-      2, 2, // Soft Drinks, Juices -> Beverages
-      3, 3, // Chips & Crisps, Chocolates -> Snacks & Sweets
-      4, 4, // Bread, Cakes & Pastries -> Bakery & Bread
-      5, 5, // Chicken, Fish -> Meat & Seafood
-      6, 6, // Frozen Vegetables, Ice Cream -> Frozen Foods
-      7, 7, // Skincare, Haircare -> Personal Care
-      8, 8, // Cleaning Supplies, Paper Products -> Household Essentials
-      9, 9, // Baby Food, Diapers & Wipes -> Baby Care
+      0,
+      0, // Fresh Fruits, Fresh Vegetables -> Fruits & Vegetables
+      1,
+      1, // Milk & Cream, Cheese & Butter -> Dairy & Eggs
+      2,
+      2, // Soft Drinks, Juices -> Beverages
+      3,
+      3, // Chips & Crisps, Chocolates -> Snacks & Sweets
+      4,
+      4, // Bread, Cakes & Pastries -> Bakery & Bread
+      5,
+      5, // Chicken, Fish -> Meat & Seafood
+      6,
+      6, // Frozen Vegetables, Ice Cream -> Frozen Foods
+      7,
+      7, // Skincare, Haircare -> Personal Care
+      8,
+      8, // Cleaning Supplies, Paper Products -> Household Essentials
+      9,
+      9, // Baby Food, Diapers & Wipes -> Baby Care
     ];
 
     for (let i = 0; i < subCategorySeedData.length; i++) {
@@ -266,7 +282,11 @@ export class SeedService {
         continue;
       }
 
-      for (let i = 0; i < mapping.count && productIndex < productSeedData.length; i++) {
+      for (
+        let i = 0;
+        i < mapping.count && productIndex < productSeedData.length;
+        i++
+      ) {
         const productData = productSeedData[productIndex];
 
         const existing = await this.productRepository.findOne({
@@ -302,7 +322,7 @@ export class SeedService {
   /**
    * Clean up seed data (categories, sub-categories, and products)
    * This will delete all seed data while preserving user data (users, carts, orders)
-   * 
+   *
    * @param deleteOrderItems - If true, will also delete order items referencing seed products.
    *                          If false, will only delete cart items (default: false)
    *                          Note: Setting to true will break order history for seed products
@@ -394,7 +414,8 @@ export class SeedService {
         },
         preserved: {
           users: 'All user accounts preserved',
-          carts: 'Cart structures preserved (items referencing seed products removed)',
+          carts:
+            'Cart structures preserved (items referencing seed products removed)',
           orders: deleteOrderItems
             ? 'Order items referencing seed products were deleted'
             : 'Order history preserved (order items referencing seed products kept)',
@@ -406,4 +427,3 @@ export class SeedService {
     }
   }
 }
-

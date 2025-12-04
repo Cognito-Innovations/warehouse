@@ -7,12 +7,10 @@ import EcommerceProductsGrid from "./EcommerceProductsGrid";
 
 interface RelatedProductsSectionProps {
   products: EcommerceProduct[];
-  onProductClick: (product: EcommerceProduct) => void;
 }
 
 export default function RelatedProductsSection({
   products,
-  onProductClick,
 }: RelatedProductsSectionProps) {
   if (products.length === 0) {
     return null;
@@ -33,10 +31,7 @@ export default function RelatedProductsSection({
         >
           You May Also Like
         </Typography>
-        <EcommerceProductsGrid
-          products={products}
-          onProductClick={onProductClick}
-        />
+        <EcommerceProductsGrid products={products} />
       </Container>
     </Box>
   );

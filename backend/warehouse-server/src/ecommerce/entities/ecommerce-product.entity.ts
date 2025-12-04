@@ -48,7 +48,7 @@ export class EcommerceProduct extends BaseTimestampEntity {
       referencedColumnName: 'id',
     },
   })
-  countries: Country[]
+  countries: Country[];
 
   @Column()
   image_url: string;

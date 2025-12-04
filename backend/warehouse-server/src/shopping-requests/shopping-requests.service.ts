@@ -34,6 +34,12 @@ export class ShoppingRequestsService {
     private readonly usersService: UsersService,
   ) {}
 
+  async getShoppingRequestsCountByStatus(
+    status: ShoppingRequestStatus,
+  ): Promise<number> {
+    return this.shoppingRequestRepository.count({ where: { status } });
+  }
+
   async createShoppingRequest(
     createShoppingRequestDto: CreateShoppingRequestDto,
   ): Promise<ShoppingRequestResponseDto> {
@@ -103,12 +109,12 @@ export class ShoppingRequestsService {
         const shoppingRequestProducts = await Promise.all(
           rawProducts.map(async (product) => ({
             ...product,
-            unit_price: 
+            unit_price:
               await this.userPreferencesService.getFormattedConvertedPrice(
                 request.user_id,
                 product.unit_price,
               ),
-          }))
+          })),
         );
 
         return {

@@ -79,7 +79,7 @@ export class ProductsService {
         ...product,
         price: {
           price: convertedPrice,
-          currency: finalCurrencySymbol
+          currency: finalCurrencySymbol,
         },
       };
     });
@@ -105,7 +105,7 @@ export class ProductsService {
 
     return {
       ...product,
-      price: convertedPriceObj
+      price: convertedPriceObj,
     };
   }
 

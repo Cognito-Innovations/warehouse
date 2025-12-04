@@ -30,7 +30,7 @@ export default function CartItemCard({
     const blocked = ["BUTTON", "svg", "path", "INPUT"];
     if (blocked.includes((e.target as HTMLElement).tagName)) return;
 
-    router.push(`${ROUTES.PRODUCT}/${product.id}`);
+    router.push(`${ROUTES.PRODUCT}/${product.slug}`);
   }
 
   const handleItemSelect = (itemId: string, isChecked: boolean) => {

@@ -36,6 +36,10 @@ export class ShipmentsService {
     private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
+  async getShipmentsCountByStatus(status: ShipmentStatus): Promise<number> {
+    return this.shipmentRepository.count({ where: { status } });
+  }
+
   private generateShipmentNo(countryCode: string): string {
     const year = new Date().getFullYear();
     const randomDigits = Math.floor(1000 + Math.random() * 9000);
@@ -86,7 +90,7 @@ export class ShipmentsService {
 
     if (!packageIds || packageIds.length === 0) {
       throw new BadRequestException(
-        'At least one package ID must be provided.'
+        'At least one package ID must be provided.',
       );
     }
 
@@ -192,7 +196,9 @@ export class ShipmentsService {
 
     const shipmentsWithInvoices = await Promise.all(
       shipments.map(async (shipment) => {
-        const invoice = await this.invoicesService.getInvoiceByShipmentId(shipment.id)
+        const invoice = await this.invoicesService.getInvoiceByShipmentId(
+          shipment.id,
+        );
 
         return {
           ...shipment,
@@ -206,7 +212,7 @@ export class ShipmentsService {
 
   async getShipmentsByUser(userId: string): Promise<ShipmentResponseDto[]> {
     const shipments = await this.shipmentRepository.find({
-      where: { 
+      where: {
         user: { id: userId },
       },
       relations: ['country', 'packages'],
@@ -245,7 +251,7 @@ export class ShipmentsService {
           shipment.id,
         ),
         this.documentsService.findByFeature(FeatureType.Shipment, shipment.id),
-        this.invoicesService.getInvoiceByShipmentId(shipment.id)
+        this.invoicesService.getInvoiceByShipmentId(shipment.id),
       ]);
 
     const trackingRequests =
@@ -286,8 +292,8 @@ export class ShipmentsService {
     const shipments = await this.shipmentRepository.find({
       where: { status: enumStatus },
       relations: ['user', 'packages', 'country'],
-      order: { created_at: 'DESC' }
-    })
+      order: { created_at: 'DESC' },
+    });
 
     return shipments;
   }
@@ -364,7 +370,11 @@ export class ShipmentsService {
       );
     }
 
-    const formattedInvoice = await this.formatInvoice(invoice, shipment.user.id, viewerId);
+    const formattedInvoice = await this.formatInvoice(
+      invoice,
+      shipment.user.id,
+      viewerId,
+    );
 
     return {
       ...updatedShipment,
@@ -407,13 +417,13 @@ export class ShipmentsService {
 
     if (payload.rack_slot !== undefined && payload.rack_slot !== oldRack?.id) {
       if (oldRack) {
-        oldRack.count = Math.max(0, oldRack.count - 1)
+        oldRack.count = Math.max(0, oldRack.count - 1);
         await this.rackRepository.save(oldRack);
       }
 
       if (payload.rack_slot) {
         const newRack = await this.rackRepository.findOneBy({
-          id: payload.rack_slot
+          id: payload.rack_slot,
         });
         if (!newRack) throw new NotFoundException('New Rack not found');
         newRack.count += 1;
@@ -441,9 +451,9 @@ export class ShipmentsService {
     pkg.shipment_id = null;
     await this.packageRepository.save(pkg);
 
-    return{
+    return {
       message: 'Package removed successfully',
-    }
+    };
   }
 
   async addShipmentDocument(

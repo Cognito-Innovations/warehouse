@@ -35,7 +35,7 @@ export class AuthService {
       if (registerDto.identifier !== Identifier.Google) {
         if (existingUser.password) {
           throw new ConflictException(
-            'User with this email already exists. Please log in.'
+            'User with this email already exists. Please log in.',
           );
         }
         if (registerDto.password) {
@@ -46,7 +46,7 @@ export class AuthService {
           });
         }
       }
-      
+
       const payload = { email: existingUser.email, sub: existingUser.id };
       const access_token = this.jwtService.sign(payload);
       return {
@@ -54,7 +54,7 @@ export class AuthService {
         ...this.usersService.mapToUserResponseDto(existingUser),
       };
     }
-    
+
     let hashedPassword: string | undefined = undefined;
     if (registerDto.password) {
       const salt = await bcrypt.genSalt();
@@ -95,8 +95,8 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id };
     const access_token = this.jwtService.sign(payload);
 
-    return { 
-      access_token, 
+    return {
+      access_token,
       user: this.usersService.mapToUserResponseDto(user),
     };
   }

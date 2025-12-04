@@ -15,13 +15,22 @@ import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
+interface AuthenticatedRequest {
+  user: {
+    id: string;
+  };
+}
+
 @UseGuards(JwtAuthGuard)
 @Controller('ecommerce-cart')
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
   @Get()
-  async getCart(@Request() req, @Query('country') country?: string,) {
+  async getCart(
+    @Request() req: AuthenticatedRequest,
+    @Query('country') country?: string,
+  ) {
     const userId = req.user?.id;
     if (!userId) {
       return { items: [], final_amount: 0 };
@@ -31,7 +40,7 @@ export class CartController {
 
   @Post('add')
   async addToCart(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Body() addToCartDto: AddToCartDto,
     @Query('country') country?: string,
   ) {
@@ -40,7 +49,7 @@ export class CartController {
 
   @Put('items/:itemId')
   async updateCartItem(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('itemId') itemId: string,
     @Body() updateCartItemDto: UpdateCartItemDto,
     @Query('country') country?: string,
@@ -63,7 +72,7 @@ export class CartController {
   }
 
   @Delete('clear')
-  async clearCart(@Request() req) {
+  async clearCart(@Request() req: AuthenticatedRequest) {
     await this.cartService.clearCart(req.user.id);
     return { message: 'Cart cleared successfully' };
   }

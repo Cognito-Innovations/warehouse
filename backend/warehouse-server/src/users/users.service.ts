@@ -44,6 +44,10 @@ export class UsersService {
     };
   }
 
+  async getUsersCount(): Promise<number> {
+    return this.userRepository.count();
+  }
+
   async getAllUsers(): Promise<UserResponseDto[]> {
     const users = await this.userRepository.find({
       order: { email: 'ASC' },

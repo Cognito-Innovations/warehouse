@@ -81,7 +81,7 @@ export class ShipmentsController {
     return this.shipmentsService.removePackageFromShipment(
       shipmentId,
       packageId,
-    )
+    );
   }
 
   @Get('detail/by-shipmentNo/:shipmentNo')
@@ -137,7 +137,7 @@ export class ShipmentsController {
     return this.shipmentsService.addShipmentDocument(
       id,
       body.data,
-      req.user.id
+      req.user.id,
     );
   }
 

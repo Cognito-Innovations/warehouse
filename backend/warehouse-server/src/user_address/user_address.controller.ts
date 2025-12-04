@@ -24,8 +24,8 @@ export class UserAddressController {
 
   @Patch(':id')
   update(
-    @Param('id') id: string, 
-    @Body() updateUserAddressDto: UpdateUserAddressDto
+    @Param('id') id: string,
+    @Body() updateUserAddressDto: UpdateUserAddressDto,
   ) {
     return this.userAddressService.update(id, updateUserAddressDto);
   }

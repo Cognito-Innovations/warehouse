@@ -41,9 +41,9 @@ import { ExternalCurrencyService } from './external-currency.service';
     CacheModule.registerAsync({
       isGlobal: false,
       useFactory: async () => {
-        const redisConfig = { url: process.env.REDIS_URL }
+        const redisConfig = { url: process.env.REDIS_URL };
         try {
-          const store = await redisStore(redisConfig)
+          const store = await redisStore(redisConfig);
           return {
             store,
             keyPrefix: 'palakart:',
@@ -52,13 +52,13 @@ import { ExternalCurrencyService } from './external-currency.service';
         } catch (error) {
           console.warn(
             'Redis connection failed, falling back to in-memory cache:',
-            error
+            error,
           );
           return {
             store: 'memory',
             keyPrefix: 'palakart:',
             ttl: 0,
-          }
+          };
         }
       },
     }),

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useCallback, useMemo } from "react";
 import { Box, Container, Alert } from "@mui/material";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
@@ -12,12 +12,10 @@ import ProductDetailInfoSection from "@/components/ecommerce/ProductDetailInfoSe
 import ProductDetailLoadingState from "@/components/ecommerce/ProductDetailLoadingState";
 import RelatedProductsSection from "@/components/ecommerce/RelatedProductsSection";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
-import { ROUTES } from "@/utils/constants";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceProduct } from "@/types/ecommerce";
 
 export default function ProductDetailPage() {
-  const router = useRouter();
   const params = useParams();
   
   const { 
@@ -45,7 +43,7 @@ export default function ProductDetailPage() {
   }, [params.slug]);
 
   const displayProduct = useMemo(() => {
-    if (currentDetailProduct && currentDetailProduct.id === productSlug) {
+    if (currentDetailProduct) {
       return currentDetailProduct;
     }
 
@@ -65,10 +63,6 @@ export default function ProductDetailPage() {
   const handleProductSelect = useCallback((selectedProduct: EcommerceProduct) => {
     setCurrentDetailProduct(selectedProduct);
   }, [setCurrentDetailProduct]);
-
-  const handleProductClick = useCallback((product: EcommerceProduct) => {
-    router.push(`${ROUTES.PRODUCT}/${product.slug}`);
-  }, [router]);
 
   const handleRefresh = () => {
     if (productSlug && countryName) {
@@ -129,10 +123,7 @@ export default function ProductDetailPage() {
 
       {/* Related Products Section */}
       {detailRelatedProducts.length > 0 && (
-        <RelatedProductsSection
-          products={detailRelatedProducts}
-          onProductClick={handleProductClick}
-        />
+        <RelatedProductsSection products={detailRelatedProducts} />
       )}
     </Box>
   );

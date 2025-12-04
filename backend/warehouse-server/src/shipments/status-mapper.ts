@@ -3,7 +3,7 @@ import { TrackingStatus } from 'src/tracking-requests/tracking-request.entity';
 
 export function mapToTrackingStatus(status: ShipmentStatus): TrackingStatus {
   switch (status) {
-    case ShipmentStatus.SHIP_REQUEST: 
+    case ShipmentStatus.SHIP_REQUEST:
       return TrackingStatus.ShipRequest;
     case ShipmentStatus.PAYMENT_PENDING:
       return TrackingStatus.PaymentPending;

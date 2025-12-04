@@ -117,16 +117,16 @@ export class OrderService {
       const discountPercent = Number(item.product.discount_percentage || 0);
 
       const discountedUnitPrice = this.roundCurrency(
-        originalUnitPrice * (1 - discountPercent / 100)
+        originalUnitPrice * (1 - discountPercent / 100),
       );
 
       const discountPerUnit = this.roundCurrency(
-        originalUnitPrice - discountedUnitPrice
+        originalUnitPrice - discountedUnitPrice,
       );
 
       grossSubtotal += originalUnitPrice * item.quantity;
       totalDiscountAmount += discountPerUnit * item.quantity;
-    };
+    }
 
     const discountedSubTotal = grossSubtotal - totalDiscountAmount;
 
@@ -161,7 +161,7 @@ export class OrderService {
       user_id: userId,
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
-      subtotal: roundedNetSubtotal, 
+      subtotal: roundedNetSubtotal,
       discount_percentage: roundedDiscount,
       shipping_amount: roundedShipping,
       tax_amount: roundedTax,
@@ -184,11 +184,11 @@ export class OrderService {
       const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
       const discountPercent = Number(item.product.discount_percentage || 0);
       const discountedUnitPrice = this.roundCurrency(
-        originalUnitPrice * (1 - discountPercent / 100)
+        originalUnitPrice * (1 - discountPercent / 100),
       );
 
       const discountPerUnit = this.roundCurrency(
-        originalUnitPrice - discountedUnitPrice
+        originalUnitPrice - discountedUnitPrice,
       );
       const totalLinePrice = discountedUnitPrice * item.quantity;
       const totalLineDiscount = discountPerUnit * item.quantity;

@@ -32,13 +32,11 @@ export class CourierCompaniesService {
       order: { created_at: 'DESC' },
     });
 
-    //TODO: create a document and paste this code and explain what are we doing here of plainToInstance
     return plainToInstance(CourierCompanyResponsesDto, courierCompanies, {
       excludeExtraneousValues: true,
     });
   }
 
-  //TODO: create a document and paste this code and explain what do you mean prelod vs find ?
   async update(id: string, updateCourierCompanyDto: UpdateCourierCompanyDto) {
     const courierCompany = await this.courierCompanyRepository.preload({
       id,

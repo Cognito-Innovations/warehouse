@@ -49,13 +49,13 @@ export class UserAddressService {
 
       await this.userRepository.update(
         createUserAddressDto.user_id,
-        userUpdates
+        userUpdates,
       );
     }
 
     return this.userAddressRepository.findOne({
       where: { id: savedAddress.id },
-      relations: ['user']
+      relations: ['user'],
     });
   }
 
@@ -64,16 +64,16 @@ export class UserAddressService {
   }
 
   findByUserId(id: string) {
-    return this.userAddressRepository.findOne({ 
+    return this.userAddressRepository.findOne({
       where: { user: { id } },
-      relations: ['user']
+      relations: ['user'],
     });
   }
 
   async update(id: string, updateUserAddressDto: UpdateUserAddressDto) {
     const existingAddress = await this.userAddressRepository.findOne({
       where: { id },
-      relations: ['user']
+      relations: ['user'],
     });
     if (!existingAddress) {
       throw new NotFoundException(`User address with ID ${id} not found`);
@@ -108,9 +108,9 @@ export class UserAddressService {
       await this.userRepository.update(existingAddress.user.id, userUpdates);
     }
 
-    return this.userAddressRepository.findOne({ 
+    return this.userAddressRepository.findOne({
       where: { id },
-      relations: ['user']
+      relations: ['user'],
     });
   }
 }

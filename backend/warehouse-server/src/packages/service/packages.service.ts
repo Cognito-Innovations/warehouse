@@ -40,6 +40,16 @@ export class PackagesService {
     private readonly packageChargeRepository: Repository<PackageCharge>,
   ) {}
 
+  async getPackagesCount(): Promise<number> {
+    return this.packageRepository.count();
+  }
+
+  async getActionRequiredPackagesCount(): Promise<number> {
+    return this.packageRepository.count({
+      where: { status: 'Action Required' },
+    });
+  }
+
   private async mapPackageToResponseDto(
     pkg: Package,
   ): Promise<PackageResponseDto> {
@@ -73,7 +83,7 @@ export class PackagesService {
         label: status,
         value: status,
       },
-      user: user 
+      user: user
         ? (({ alternate_phone_number, ...restOfUser }) => ({
             ...restOfUser,
             phone_number_2: alternate_phone_number,
@@ -115,9 +125,9 @@ export class PackagesService {
         })) || [],
       items:
         items?.map((item) => ({
-          ...item
+          ...item,
         })) || [],
-    }
+    };
   }
 
   //TODO: Need to improve this function

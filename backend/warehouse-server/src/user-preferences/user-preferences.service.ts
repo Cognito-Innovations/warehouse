@@ -122,7 +122,7 @@ export class UserPreferencesService {
   }
 
   async getCurrencyRateInfo(
-    countryName: string
+    countryName: string,
   ): Promise<{ code: string; symbol: string; rate: number }> {
     try {
       const currencyInfo =

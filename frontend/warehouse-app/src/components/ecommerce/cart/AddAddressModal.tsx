@@ -341,12 +341,15 @@ export default function AddAddressModal({
             rows={2}
             required
           />
+          {/* TODO: Only India is allowed when multiple currency enabe we can uncomment */}
           <FormControl fullWidth required error={!!errors.country}>
             <InputLabel>Country</InputLabel>
             <Select
-              value={formData.country}
-              onChange={handleChange("country")}
+              // value={formData.country}
+              value="India"
+              // onChange={handleChange("country")}
               label="Country"
+              disabled
             >
               {loadingCountries ? (
                 <MenuItem disabled>

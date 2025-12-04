@@ -18,9 +18,7 @@ export class SeedController {
 
   @Public()
   @Delete('ecommerce')
-  async cleanupSeedData(
-    @Query('deleteOrderItems') deleteOrderItems?: string,
-  ) {
+  async cleanupSeedData(@Query('deleteOrderItems') deleteOrderItems?: string) {
     const shouldDeleteOrderItems = deleteOrderItems === 'true';
     const result = await this.seedService.cleanupSeedData(
       shouldDeleteOrderItems,
@@ -28,4 +26,3 @@ export class SeedController {
     return result;
   }
 }
-

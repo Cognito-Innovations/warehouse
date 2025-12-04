@@ -37,7 +37,8 @@ export class ExternalCurrencyService {
     const cacheKey = `currency:${trimmedCountryName.toLowerCase()}`;
 
     // Check cache first
-    let cached: CurrencyInfo | undefined = await this.cacheManager.get<CurrencyInfo>(cacheKey);
+    let cached: CurrencyInfo | undefined =
+      await this.cacheManager.get<CurrencyInfo>(cacheKey);
     const now = Date.now();
     if (cached && now - cached.timestamp < this.TWENTY_FOUR_HOURS_MS) {
       return cached;
@@ -72,7 +73,9 @@ export class ExternalCurrencyService {
       try {
         // Fetch currency code and symbol from REST Countries
         const countryResponse = await firstValueFrom(
-          this.httpService.get(`${this.REST_COUNTRIES_URL}/${encodeURIComponent(trimmedCountryName)}?fullText=true`),
+          this.httpService.get(
+            `${this.REST_COUNTRIES_URL}/${encodeURIComponent(trimmedCountryName)}?fullText=true`,
+          ),
         );
         const countryData = countryResponse.data;
         if (!countryData || countryData.length === 0) {
@@ -151,7 +154,7 @@ export class ExternalCurrencyService {
     } catch (err) {
       console.error(
         `Background DB update failed for country ID ${countryId}:`,
-        err
+        err,
       );
     }
   }
