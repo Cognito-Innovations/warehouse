@@ -39,16 +39,19 @@ export class AnalyticsService {
   ) {}
 
   async getDashboardMetrics(): Promise<DashboardMetrics> {
+    // TODO P0: Don't fetch all users just to get the count.
+    // Use a query that returns only the total length of users.
     const users: UserResponseDto[] = await this.usersService.getAllUsers();
     const totalCustomers = users.length;
 
     const packages: PackageResponseDto[] =
-      await this.packagesService.getAllPackages();
+      await this.packagesService.getAllPackages(); // TODO P0: Don't fetch all packages just to get the count. // Use a query that returns only the total length of packages.
     const totalPackages = packages.length;
     const actionRequiredPackages = packages.filter(
       (pkg) => pkg.status?.value === 'Action Required',
-    ).length
+    ).length // TODO P0: Don't loop all packages just to get the count of action required. // Use a query that returns only the total length of packages with "action required".
 
+    //TODO P0: Instead of filtering find a way, because if there are more shipments, it might get in trouble to filter 20k shipments to get specific status count
     const rawShipments = await this.shipmentsService.getAllShipments();
     const shipRequestShipments = rawShipments.filter(
       (shipment: any) => shipment.status === ShipmentStatus.SHIP_REQUEST,
@@ -66,6 +69,8 @@ export class AnalyticsService {
       (shipment: any) => shipment.status === ShipmentStatus.DEPARTED,
     ).length;
 
+    // TODO P0: Don't fetch all pickupRequests just to get the count.
+    // Use a query that returns only the total length of pickupRequests.
     const pickupRequests: PickupRequestResponseDto[] =
       await this.pickupRequestsService.getAllPickupRequests();
     const pickupRequested = pickupRequests.length;
