@@ -14,10 +14,12 @@ export class CountriesService {
     private readonly countryRepository: Repository<Country>,
   ) {}
 
+  //TODO: Can you add try catch
   async createCountry(
     createCountryDto: CreateCountryDto,
   ): Promise<CountryResponseDto> {
     const country = this.countryRepository.create({
+      //TODO P0: Please resolve red errors
       code: createCountryDto.code as CountryCode,
       name: createCountryDto.name,
       image: createCountryDto.image,
@@ -37,6 +39,7 @@ export class CountriesService {
     };
   }
 
+  //TODO: Can you add try catch
   async createCountriesBulk(
     countries: CreateCountryDto[],
   ): Promise<CountryResponseDto[]> {
@@ -50,7 +53,7 @@ export class CountriesService {
     );
 
     const savedCountries = await this.countryRepository.save(countryEntities);
-
+    //TODO P0: Why can't return savedCountries directly ? why do we need to loop via and return ?
     return savedCountries.map((country) => ({
       id: country.id,
       code: country.code,
@@ -62,11 +65,12 @@ export class CountriesService {
     }));
   }
 
+  //TODO: Can you add try catch
   async getAllCountries(): Promise<CountryResponseDto[]> {
     const countries = await this.countryRepository.find({
       order: { code: 'ASC' },
     });
-
+    //TODO P0: Why can't return savedCountries directly ? why do we need to loop via and return ?
     return countries.map((country) => ({
       id: country.id,
       code: country.code,
@@ -78,6 +82,7 @@ export class CountriesService {
     }));
   }
 
+  //TODO: Can you add try catch
   async updateCountry(
     id: string,
     updateCountryDto: UpdateCountryDto
