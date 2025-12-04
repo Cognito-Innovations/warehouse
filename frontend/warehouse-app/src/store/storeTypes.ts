@@ -69,14 +69,18 @@ export type CartStore = {
   cartProducts: LocalCartItem[];
   cartProductQuantityCount: () => number;
   loading: boolean;
+  isSyncing: boolean,
+  _hasHydrated: boolean;
   checkoutProducts: string[];
   toggleCartItemSelection: (productIds: string | string[]) => void;
   setCartProducts: (products: any[]) => void;
   clearCheckoutProducts: () => void;
   setLoading: (value: boolean) => void;
+  setHasHydrated: (value: boolean) => void;
   getItemQuantity: (productId: string) => number;
+  refreshCart: (country?: string) => Promise<LocalCartItem[]>;
   syncCart: (country?: string) => Promise<void>;
-  getCart: (country?: string) => Promise<any[] | undefined>;
+  getCart: (country?: string) => Promise<LocalCartItem[]>;
   addOrIncreaseQty: (product: EcommerceProduct, quantity: number, country?: string) => Promise<void>;
   decreaseProductQty: (product: EcommerceProduct, quantity: number, country?: string) => Promise<void>;
   removeProductFromCart: (productId: string, country?: string) => Promise<void>;

@@ -5,6 +5,7 @@ import { UserAddress } from './user_address.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/user.entity';
 import { UpdateUserAddressDto } from './dto/update-user_address.dto';
+import { UserPreference } from 'src/user-preferences/user-preference.entity';
 
 @Injectable()
 export class UserAddressService {
@@ -13,6 +14,8 @@ export class UserAddressService {
     private userAddressRepository: Repository<UserAddress>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(UserPreference)
+    private userPreferenceRepository: Repository<UserPreference>,
   ) {}
 
   async create(createUserAddressDto: CreateUserAddressDto) {
@@ -51,6 +54,19 @@ export class UserAddressService {
         createUserAddressDto.user_id,
         userUpdates,
       );
+    }
+
+    if (createUserAddressDto.currency) {
+      const existingPref = await this.userPreferenceRepository.findOne({
+        where: { user: { id: createUserAddressDto.user_id } },
+      });
+
+      if (existingPref) {
+        await this.userPreferenceRepository.save({
+          ...existingPref,
+          currency: { id: createUserAddressDto.currency },
+        });
+      }
     }
 
     return this.userAddressRepository.findOne({
@@ -106,6 +122,19 @@ export class UserAddressService {
         userUpdates.email = updateUserAddressDto.email;
       }
       await this.userRepository.update(existingAddress.user.id, userUpdates);
+    }
+
+    if (updateUserAddressDto.currency) {
+      const existingPref = await this.userPreferenceRepository.findOne({
+        where: { user: { id: existingAddress.user.id } },
+      });
+
+      if (existingPref) {
+        await this.userPreferenceRepository.save({
+          ...existingPref,
+          currency: { id: updateUserAddressDto.currency },
+        });
+      }
     }
 
     return this.userAddressRepository.findOne({

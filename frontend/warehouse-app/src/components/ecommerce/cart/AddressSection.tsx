@@ -81,6 +81,7 @@ export default function AddressSection({
         city: addressData.city,
         phone_number: `${addressData.phone_code || ''}${addressData.phone_number || ''}`,
         email: addressData.email,
+        currency: addressData.currency,
       };
       const newAddress = await createUserAddress(apiData);
       const formattedAddress: CartAddressData = {
@@ -109,6 +110,7 @@ export default function AddressSection({
         city: addressData.city,
         phone_number: `${addressData.phone_code || ''}${addressData.phone_number || ''}`,
         email: addressData.email,
+        currency: addressData.currency,
       };
       await updateUserAddress(addressId, apiData);
       const formattedAddress: CartAddressData = {

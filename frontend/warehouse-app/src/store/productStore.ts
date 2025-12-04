@@ -191,7 +191,7 @@ const useProductStore = create<ProductStore>((set, get) => ({
       detailPreviewProducts: existingProductInList ? [existingProductInList] : [],
       isDetailLoading: true, 
       arePreviewsLoading: true, 
-      detailError: null 
+      detailError: null
     });
 
     try {

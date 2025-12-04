@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Box, Container } from "@mui/material";
 import { useSession } from "next-auth/react";
 
-import { useCartStore } from "@/store/cartStore";
+import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import CartHeader from "@/components/ecommerce/cart/CartHeader";
 import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
@@ -22,6 +22,7 @@ import { CartAddressData } from "@/types/ecommerce";
 
 export default function CartPage() {
   const { data: session, status } = useSession();
+  const hydrated = useCartHasHydrated();
   const {
     cartProducts,
     getCart,
@@ -44,31 +45,34 @@ export default function CartPage() {
 
   const initCart = useCallback(async () => {
     try {
-      if (cartProducts.length === 0) {
-        setIsCartLoading(true);
-      }
       await getCart(selectedCountry);
     } catch (e) {
       console.error("Initialization error:", e);
-    } finally {
-      setIsCartLoading(false);
     }
-  }, [cartProducts.length, getCart, selectedCountry]);
+  }, [getCart, selectedCountry]);
 
   useEffect(() => {
     if (status === "loading") return;
     if (!selectedCountry) return;
 
-    useCartStore.persist.onFinishHydration(() => {
+    if (hydrated) {
       initCart();
-    });
-  }, [selectedCountry, status, initCart]);
+    } else {
+      const unsub = useCartStore.persist.onFinishHydration(() => initCart());
+      const timer = setTimeout(() => initCart(), 3000);
 
-  if (status === "loading") {
+      return () => {
+        unsub();
+        clearTimeout(timer);
+      };
+    }
+  }, [selectedCountry, status, initCart, hydrated]);
+
+  if (status === "loading" || !hydrated) {
     return <CartSkeletonLoader />;
   }
 
-  if (!isCartLoading && (!cartProducts || cartProducts.length === 0)) {
+  if (!cartProducts || cartProducts.length === 0) {
     return <EmptyCartState/>
   }
 

@@ -322,6 +322,7 @@ export interface CartAddressData {
   phone_code?: string;
   phone_number?: string;
   email?: string;
+  currency?: string;
 }
 
 export interface UserAddress {

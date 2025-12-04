@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef } from "react";
-import { Paper, Box, Typography, Button, Divider } from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
+import { Paper, Box, Typography, Button, Divider, CircularProgress } from "@mui/material";
+import { ArrowForward, Login } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -22,7 +22,7 @@ export default function OrderSummaryCard({
   const router = useRouter();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { checkoutProducts, cartProducts } = useCartStore();
+  const { checkoutProducts, cartProducts, isSyncing } = useCartStore();
 
   useEffect(() => {
     return () => {
@@ -36,6 +36,11 @@ export default function OrderSummaryCard({
   const totals = calculateCartTotals(items, new Set(checkoutProducts), selectedCountry);
   
   const handleCheckout = useCallback(() => {
+    if (isSyncing) {
+      toast.info("Syncing your cart with server, please wait...");
+      return;
+    }
+
     const selected = cartProducts.filter(item =>
       checkoutProducts.includes(item.product_id!)
     );
@@ -48,7 +53,7 @@ export default function OrderSummaryCard({
     if (!userId) {
       localStorage.setItem("checkoutSelectedItems", JSON.stringify(selected));
       toast.info("Please sign in to continue with checkout");
-      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(ROUTES.CHECKOUT)}`);
+      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(ROUTES.CART)}`);
       return;
     } else if (!selectedAddress) {
       toast.error("Please add a delivery address to continue with checkout.");
@@ -64,7 +69,7 @@ export default function OrderSummaryCard({
       localStorage.setItem("checkoutSelectedItems", JSON.stringify(selected));
       router.push(ROUTES.CHECKOUT);
     }
-  }, [router, cartProducts, userId, selectedAddress, checkoutProducts]); // ROUTES.CHECKOUT constant used directly
+  }, [router, cartProducts, userId, selectedAddress, checkoutProducts, isSyncing]); // ROUTES.CHECKOUT constant used directly
   
   return (
     <Paper
@@ -149,10 +154,18 @@ export default function OrderSummaryCard({
         variant="contained"
         size="large"
         onClick={handleCheckout}
-        endIcon={<ArrowForward />}
+        endIcon={
+          isSyncing ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : userId ? (
+            <ArrowForward />
+          ) : (
+            <Login />
+          )
+        }
         sx={{
-          bgcolor: "#c8e6c9",
-          color: "text.primary",
+          bgcolor: userId ? "#c8e6c9" : "primary.main",
+          color: userId ? "text.primary" : "white",
           fontWeight: "bold",
           py: 1.75,
           borderRadius: 2,
@@ -160,12 +173,16 @@ export default function OrderSummaryCard({
           textTransform: "none",
           boxShadow: 2,
           "&:hover": {
-            bgcolor: "#a5d6a7",
+            bgcolor: userId ? "#a5d6a7" : "primary.dark",
             boxShadow: 4,
           },
+          "&.Mui-disabled": {
+            bgcolor: "#e0e0e0",
+            color: "#9e9e9e"
+          }
         }}
       >
-        Checkout
+        {isSyncing ? "Syncing Cart..." : userId ? "Checkout" : "Login"}
       </Button>
     </Paper>
   );

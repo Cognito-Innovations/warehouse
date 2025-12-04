@@ -28,6 +28,7 @@ export default function ProductDetailPage() {
     detailError,
     loadProductPageData,
     setCurrentDetailProduct,
+    resetDetailState
   } = useProductStore();
  
   const locationData = useEffectiveUserLocation({
@@ -58,6 +59,10 @@ export default function ProductDetailPage() {
     if (productSlug && countryName) {
       loadProductPageData(productSlug, countryName);
     }
+
+    return () => {
+      resetDetailState();
+    };
   }, [productSlug, countryName, loadProductPageData]);
 
   const handleProductSelect = useCallback((selectedProduct: EcommerceProduct) => {

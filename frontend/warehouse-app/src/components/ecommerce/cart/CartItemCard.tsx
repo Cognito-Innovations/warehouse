@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { Box, Typography, IconButton, Checkbox, Chip, Stack, Divider } from "@mui/material";
 import { Add, Remove, Delete, LocationOn, Inventory } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { useCartStore } from "@/store/cartStore";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { getCurrencyForCountry } from "@/utils/currency";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
+import { getOptimalImageSizing, handleImageLoad, ImageDimensions } from "@/utils/imageUtils";
 import { ROUTES } from "@/utils/constants";
 import { CartItemCardProps, EcommerceProduct } from "@/types/ecommerce";
 
@@ -26,7 +27,10 @@ export default function CartItemCard({
     setCartItemQuantity,
   } = useCartStore();
 
+  const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null);
+
   const handleProductClick = (e: React.MouseEvent, product: EcommerceProduct) => {
+    if (e.defaultPrevented) return;
     const blocked = ["BUTTON", "svg", "path", "INPUT"];
     if (blocked.includes((e.target as HTMLElement).tagName)) return;
 
@@ -47,6 +51,12 @@ export default function CartItemCard({
   const handleRemoveItem = useCallback(async (identifier: string) => {
     await removeProductFromCart(identifier, selectedCountry);
   }, [removeProductFromCart, selectedCountry]);
+
+  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    handleImageLoad(e, setImageDimensions);
+  };
+
+  const optimalSizing = getOptimalImageSizing(imageDimensions);
 
   const effectiveId = item.product_id!;
 
@@ -101,6 +111,7 @@ export default function CartItemCard({
           <Checkbox
             checked={isSelected}
             onChange={(e) => handleItemSelect(effectiveId, e.target.checked)}
+            onClick={(e) => e.stopPropagation()}
             sx={{
               color: "success.main",
               "&.Mui-checked": {
@@ -118,18 +129,22 @@ export default function CartItemCard({
             borderRadius: 2,
             overflow: "hidden",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+            width: { xs: 100, sm: 120, md: 140 },
+            height: { xs: 100, sm: 120, md: 140 },
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: "grey.100",
           }}
         >
           <Box
             component="img"
             src={imageUrl}
             alt={item.product.name}
+            onLoad={onImageLoad}
             sx={{
               borderRadius: 2,
-              objectFit: "cover",
-              width: { xs: 100, sm: 120, md: 140 },
-              height: { xs: 100, sm: 120, md: 140 },
-              bgcolor: "grey.100",
+              ...optimalSizing,
               cursor: "pointer",
               transition: "transform 0.3s ease",
               "&:hover": {
@@ -138,6 +153,7 @@ export default function CartItemCard({
             }}
             onError={(e: any) => {
               e.target.src = placeholderImage;
+              setImageDimensions(null);
             }}
           />
         </Box>
@@ -249,12 +265,16 @@ export default function CartItemCard({
           </Stack>
 
           {/* Quantity Selector */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+          <Box
+            onClick={(e) => e.stopPropagation()}
+            sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
+          >
             <IconButton
               size="small"
               onClick={() => handleQuantityChange(effectiveId, item.quantity - 1)}
               disabled={item.quantity <= 1}
               sx={{
+                pointerEvents: item.quantity <= 1 ? "none" : "auto",
                 border: "1.5px solid",
                 borderColor: item.quantity <= 1 ? "action.disabled" : "grey.300",
                 bgcolor: "white",
@@ -287,6 +307,7 @@ export default function CartItemCard({
               onClick={() => handleQuantityChange(effectiveId, item.quantity + 1)}
               disabled={item.quantity >= item.product.stock_quantity}
               sx={{
+                pointerEvents: item.quantity >= item.product.stock_quantity ? "none" : "auto",
                 border: "1.5px solid",
                 borderColor: item.quantity >= item.product.stock_quantity ? "action.disabled" : "grey.300",
                 bgcolor: "white",
@@ -308,6 +329,7 @@ export default function CartItemCard({
 
         {/* Quantity, Price and Remove */}
         <Box
+          onClick={(e) => e.stopPropagation()}
           sx={{
             display: "flex",
             flexDirection: "column",

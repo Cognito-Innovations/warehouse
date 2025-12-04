@@ -199,13 +199,17 @@ export default function EcommerceProductCard({
           display: { xs: "block", sm: "flex" }, 
           alignItems: { sm: "center" }, 
           justifyContent: { sm: "space-between" }, 
-          mb: 1 
+          mb: 1, 
+          columnGap: 1,
+          pr: 2
         }}>
           <Box sx={{ 
             display: "flex", 
             alignItems: "center", 
             gap: 1,
-            mb: { xs: 1.5, sm: 0 }
+            mb: { xs: 1.5, sm: 0 },
+            minWidth: 120,
+            flexShrink: 0,
           }}>
             <Typography variant="body1" fontWeight="bold" color="primary" sx={{ fontSize: "1rem" }}>
               {formattedDiscounted}

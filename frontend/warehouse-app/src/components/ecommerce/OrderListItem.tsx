@@ -47,9 +47,6 @@ export default function OrderListItem({ order }: OrderListItemProps) {
         <p className="text-sm text-gray-600">
           {formatDateTime(order.created_at)}
         </p>
-        <p className="text-sm text-gray-500 pt-1">
-          Ship to: {order.shipping_address || "N/A"}
-        </p>
       </div>
 
       <div className="flex flex-col items-end space-y-1">
