@@ -9,6 +9,12 @@ import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto.js'
 import { UserPreferencesService } from '../../user-preferences/user-preferences.service.js';
 import { EcommerceCargoOption } from '../entities/cargo-options.entity.js';
 
+interface CurrencyInfo {
+  code: string;
+  symbol: string;
+  rate: number;
+}
+
 @Injectable()
 export class ProductsService {
   constructor(
@@ -44,6 +50,8 @@ export class ProductsService {
     country?: string,
     search?: string,
     category?: string,
+    userId?: string,
+    role?: string,
     limit = 20,
     offset = 0,
   ) {
@@ -62,30 +70,56 @@ export class ProductsService {
       take: limit,
     });
 
-    const selectedCountry = country || 'United States of America';
+    const isAdmin = role === 'admin' || role === 'super_admin';
+    if (isAdmin) {
+      return products.map((product) => {
+        const basePrice = Number(product.price);
+        return {
+          ...product,
+          price: {
+            price: basePrice,
+            currency: '$',
+          },
+        };
+      });
+    }
 
-    const currencyInfo =
-      await this.userPreferencesService.getCurrencyRateInfo(selectedCountry);
+    let currencyInfo: CurrencyInfo;
+    const selectedCountry = country || 'India';
 
-    const { code, symbol, rate } = currencyInfo;
+    if (userId) {
+      const userCurrency =
+        await this.userPreferencesService.getUserPreferredCurrency(userId);
+      if (userCurrency) {
+        currencyInfo = userCurrency;
+      } else {
+        currencyInfo =
+          await this.userPreferencesService.getCurrencyRateInfo(
+            selectedCountry,
+          );
+      }
+    } else {
+      currencyInfo =
+        await this.userPreferencesService.getCurrencyRateInfo(selectedCountry);
+    }
+
+    const { symbol, rate, code } = currencyInfo;
 
     return products.map((product) => {
       const basePrice = Number(product.price);
-
-      const convertedPrice = code === 'USD' ? basePrice : basePrice * rate;
-      const finalCurrencySymbol = code === 'USD' ? '$' : symbol;
+      const convertedPrice = Math.round(basePrice * rate * 100) / 100;
 
       return {
         ...product,
         price: {
           price: convertedPrice,
-          currency: finalCurrencySymbol,
+          currency: code === 'USD' ? '$' : symbol,
         },
       };
     });
   }
 
-  async findOne(slug: string, country?: string) {
+  async findOne(slug: string, country?: string, userId?: string) {
     const product = await this.productRepository.findOne({
       where: { slug: slug },
       relations: ['countries', 'cargo_option'],
@@ -95,17 +129,35 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    const selectedCountry = country || 'United States of America';
+    let currencyInfo: CurrencyInfo;
+    const selectedCountry = country || 'India';
 
-    const convertedPriceObj =
-      await this.userPreferencesService.getFormattedConvertedPriceByCountry(
-        selectedCountry,
-        Number(product.price),
-      );
+    if (userId) {
+      const userCurrency =
+        await this.userPreferencesService.getUserPreferredCurrency(userId);
+      if (userCurrency) {
+        currencyInfo = userCurrency;
+      } else {
+        currencyInfo =
+          await this.userPreferencesService.getCurrencyRateInfo(
+            selectedCountry,
+          );
+      }
+    } else {
+      currencyInfo =
+        await this.userPreferencesService.getCurrencyRateInfo(selectedCountry);
+    }
+
+    const { symbol, rate, code } = currencyInfo;
+    const basePrice = Number(product.price);
+    const convertedPrice = Math.round(basePrice * rate * 100) / 100;
 
     return {
       ...product,
-      price: convertedPriceObj,
+      price: {
+        price: convertedPrice,
+        currency: code === 'USD' ? '$' : symbol,
+      },
     };
   }
 

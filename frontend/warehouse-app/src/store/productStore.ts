@@ -1,6 +1,7 @@
 import { ecommerceService } from "@/services/ecommerce.service";
 import { create } from "zustand";
-import { GetProductsParams, ProductCacheData, ProductStore } from "./storeTypes";
+
+import { FetchProductsParams, GetProductsParams, ProductCacheData, ProductStore } from "./storeTypes";
 import type { EcommerceProduct } from "@/types/ecommerce";
 import { ecommerceData } from "@/data/ecommerceData";
 
@@ -22,30 +23,31 @@ const useProductStore = create<ProductStore>((set, get) => ({
   isDetailLoading: true,
   arePreviewsLoading: true,
   detailError: null,
+  isLoadingSlug: null,
 
   handleProductSelect: (productId: string) => set({ selectedProduct: productId }),
   setSearchQuery: (query: string) => set({ searchQuery: query }),
   setError: (error: string | null) => set({ error }),
 
-  fetchProductBySlug: async (slug: string, country?: string) => {
+  fetchProductBySlug: async (slug: string, country?: string, userId?: string) => {
     try {
-      const product = await ecommerceService.getProduct(slug, country);
+      const product = await ecommerceService.getProduct(slug, country, userId);
       return product;
     } catch (error: any) {
       throw new Error(error.message || "Failed to fetch product");
     }
   },
 
-  getCategoryProducts: async (categoryId: string, country?: string, limit = 5) => {
+  getCategoryProducts: async (categoryId: string, country?: string, limit = 5, userId?: string) => {
     try {
-      const products = await ecommerceService.getProducts(undefined, country, categoryId, limit);
+      const products = await ecommerceService.getProducts(undefined, country, categoryId, limit, undefined, userId);
       return products;
     } catch (error: any) {
       throw new Error(error.message || "Failed to fetch category products");
     }
   },
 
-  getProducts: async ({ searchTerm, country, category, limit, offset }: GetProductsParams = {}) => {
+  getProducts: async ({ searchTerm, country, category, limit, offset, userId }: GetProductsParams = {}) => {
     set({ isLoading: true, error: null });
     try {
       const products = await ecommerceService.getProducts(
@@ -53,7 +55,8 @@ const useProductStore = create<ProductStore>((set, get) => ({
         country,
         category,
         limit,
-        offset
+        offset,
+        userId
       );
       set({ products, isLoading: false });
       return products;
@@ -63,17 +66,18 @@ const useProductStore = create<ProductStore>((set, get) => ({
     }
   },
 
-  fetchProducts: async (params: { category?: string; searchTerm?: string; country?: string }, reset = false) => {
+  fetchProducts: async (params: FetchProductsParams, reset = false) => {
     const state = get();
     if (!reset && state.loadingMore) return;
     if (reset && state.isLoading) return;
 
-    const { category, searchTerm, country } = params;
+    const { category, searchTerm, country, userId } = params;
 
     const cacheKey = JSON.stringify({
       category,
       searchTerm,
-      country
+      country,
+      userId
     });
 
     const currentOffset = reset ? 0 : state.offset;
@@ -101,7 +105,8 @@ const useProductStore = create<ProductStore>((set, get) => ({
         country,
         category || undefined, 
         20, 
-        currentOffset
+        currentOffset,
+        userId
       );
 
       set((prevState) => {
@@ -164,11 +169,13 @@ const useProductStore = create<ProductStore>((set, get) => ({
       detailPreviewProducts: [], 
       detailRelatedProducts: [], 
       isDetailLoading: true, 
-      detailError: null 
+      arePreviewsLoading: true,
+      detailError: null,
+      isLoadingSlug: null
     });
   },
 
-  loadProductPageData: async (slug: string, country: string) => {
+  loadProductPageData: async (slug: string, country: string, userId?: string) => {
     const state = get();
 
     if (state.detailCache[slug]) {
@@ -184,9 +191,14 @@ const useProductStore = create<ProductStore>((set, get) => ({
       return;
     }
 
+    if (state.isLoadingSlug === slug) {
+      return;
+    }
+
     const existingProductInList = state.products.find((p) => p.slug === slug);
 
     set({ 
+      isLoadingSlug: slug,
       currentDetailProduct: existingProductInList || null, 
       detailPreviewProducts: existingProductInList ? [existingProductInList] : [],
       isDetailLoading: true, 
@@ -195,29 +207,29 @@ const useProductStore = create<ProductStore>((set, get) => ({
     });
 
     try {
-      const product = await ecommerceService.getProduct(slug, country);
+      const product = await ecommerceService.getProduct(slug, country, userId);
       set({ currentDetailProduct: product, isDetailLoading: false });
 
       // Fetch Preview Products
       let previewProducts: EcommerceProduct[] = [product];
       let relatedProducts: EcommerceProduct[] = [];
+      let categoryProducts: EcommerceProduct[] | null = null;
 
       try {
         if (product.category) {
-          const categoryProducts = await ecommerceService.getProducts(undefined, country, product.category.id, 3);
+          categoryProducts = await ecommerceService.getProducts(undefined, country, product.category.id, 6, undefined, userId);
           const sameCategory = categoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
           previewProducts = [product, ...sameCategory.slice(0, 2)];
         }
 
         // Fetch Related Data
         if (product.sub_category) {
-          const subcategoryProducts = await ecommerceService.getProducts(undefined, country, product.sub_category.id, 6);
+          const subcategoryProducts = await ecommerceService.getProducts(undefined, country, product.sub_category.id, 6, undefined, userId);
           const sameSubcategory = subcategoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
           if (sameSubcategory.length > 0) relatedProducts = sameSubcategory.slice(0, 5);
         }
 
-        if (relatedProducts.length === 0 && product.category) {
-          const categoryProducts = await ecommerceService.getProducts(undefined, country, product.category.id, 6);
+        if (relatedProducts.length === 0 && product.category && categoryProducts) {
           const sameCategory = categoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
           relatedProducts = sameCategory.slice(0, 5);
         }
@@ -228,7 +240,8 @@ const useProductStore = create<ProductStore>((set, get) => ({
       set({
         detailPreviewProducts: previewProducts,
         detailRelatedProducts: relatedProducts,
-        arePreviewsLoading: false
+        arePreviewsLoading: false,
+        isLoadingSlug: null
       });
 
       set((prev) => ({
@@ -248,7 +261,8 @@ const useProductStore = create<ProductStore>((set, get) => ({
         currentDetailProduct: existingProductInList || null,
         isDetailLoading: false, 
         arePreviewsLoading: false,
-        detailError: error.message || ecommerceData.productDetail.productNotFound 
+        detailError: error.message || ecommerceData.productDetail.productNotFound,
+        isLoadingSlug: null
       });
     }
   }

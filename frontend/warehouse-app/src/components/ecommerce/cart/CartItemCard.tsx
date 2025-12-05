@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
 import { formatDiscountPercentage } from "@/lib/utils";
-import { getCurrencyForCountry } from "@/utils/currency";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { getOptimalImageSizing, handleImageLoad, ImageDimensions } from "@/utils/imageUtils";
 import { ROUTES } from "@/utils/constants";
@@ -16,7 +15,7 @@ import { CartItemCardProps, EcommerceProduct } from "@/types/ecommerce";
 export default function CartItemCard({
   item,
   isSelected,
-  currencySymbol,
+  currencyInfo,
   selectedCountry,
 }: CartItemCardProps) {
   const router = useRouter();
@@ -60,7 +59,7 @@ export default function CartItemCard({
 
   const effectiveId = item.product_id!;
 
-  const pricing = getCartItemPricingSummary(item);
+  const pricing = getCartItemPricingSummary(item, currencyInfo);
   const unitPrice = pricing.discountedUnitPrice;
   const totalPrice = pricing.lineTotal;
   const originalPrice = pricing.originalUnitPrice;
@@ -74,9 +73,8 @@ export default function CartItemCard({
       ? `Only ${item.product.stock_quantity} left`
       : "In Stock"
     : "Out of Stock";
-  const currentCountry = selectedCountry || 'United States of America';
-  const currencyInfo = getCurrencyForCountry(currentCountry);
-  const currencyStr = currencySymbol || pricing.currency || currencyInfo.symbol;
+
+  const currencyStr = currencyInfo?.symbol || '$';
 
   const formatLocalPrice = (price: number) => formatPrice(price, currencyStr);
   return (
@@ -333,7 +331,8 @@ export default function CartItemCard({
           sx={{
             display: "flex",
             flexDirection: "column",
-            alignItems: { xs: "flex-start", sm: "flex-end" },
+            alignItems: { xs: "flex-end", sm: "flex-end" },
+            justifyContent: "space-between",
             flexShrink: 0,
             minWidth: { xs: "unset", sm: 120 },
             width: { xs: "100%", sm: "auto" },
@@ -354,8 +353,6 @@ export default function CartItemCard({
                 color: "error.main",
                 transform: "scale(1.1)",
               },
-              alignSelf: { xs: 'flex-end', sm: 'center' },
-              mt: { xs: -5, sm: 0 },
             }}
           >
             <Delete sx={{ fontSize: 20 }} />
@@ -363,7 +360,7 @@ export default function CartItemCard({
 
           {/* Price Section */}
           <Box sx={{ 
-            textAlign: { xs: "left", sm: "right" },
+            textAlign: { xs: "right", sm: "right" },
             width: '100%',
           }}>
             {/* Original Unit Price */}

@@ -4,13 +4,16 @@ import React from "react";
 import { Box, Typography, Container } from "@mui/material";
 import { EcommerceProduct } from "@/types/ecommerce";
 import EcommerceProductsGrid from "./EcommerceProductsGrid";
+import GridSkeletonLoader from "./skeleton-loader/GridSkeletonLoader";
 
 interface RelatedProductsSectionProps {
   products: EcommerceProduct[];
+  arePreviewsLoading?: boolean;
 }
 
 export default function RelatedProductsSection({
   products,
+  arePreviewsLoading = false
 }: RelatedProductsSectionProps) {
   if (products.length === 0) {
     return null;
@@ -31,7 +34,11 @@ export default function RelatedProductsSection({
         >
           You May Also Like
         </Typography>
-        <EcommerceProductsGrid products={products} />
+        {arePreviewsLoading ? (
+          <GridSkeletonLoader count={5} />
+        ) : (
+          <EcommerceProductsGrid products={products} />
+        )}
       </Container>
     </Box>
   );

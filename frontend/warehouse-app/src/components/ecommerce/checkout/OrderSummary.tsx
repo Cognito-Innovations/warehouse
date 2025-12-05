@@ -13,6 +13,7 @@ import { ecommerceService } from "@/services/ecommerce.service";
 import { ROUTES } from "@/utils/constants";
 import { getCartItemPricingSummary } from "@/utils/priceUtils";
 import { CartItem } from "@/types/ecommerce";
+import { CurrencyInfo } from "@/types/ecommerce";
 
 interface OrderTotals {
   subtotal: number;
@@ -28,7 +29,7 @@ interface OrderSummaryProps {
   totals: OrderTotals;
   shippingAddress: string;
   selectedCountry: string | undefined;
-  currencySymbol: string;
+  currencyInfo: CurrencyInfo;
   user: any;
   formatLocalPrice: (amount: number) => string;
   addressLoading: boolean;
@@ -39,7 +40,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   totals,
   shippingAddress,
   selectedCountry,
-  currencySymbol,
+  currencyInfo,
   user,
   formatLocalPrice,
   addressLoading,
@@ -80,7 +81,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
       const paymentConfig = {
         orderId: orderNumber,
         orderAmount: totalAmount,
-        orderCurrency: currencySymbol,
+        orderCurrency: currencyInfo.code,
         customerName: user?.name,
         customerEmail: user?.email,
         customerPhone: user?.phone,
@@ -143,7 +144,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
           <Box sx={{ mb: 2, maxHeight: 300, overflow: "auto" }}>
             {items.map((item: CartItem) => {
-              const pricing = getCartItemPricingSummary(item);
+              const pricing = getCartItemPricingSummary(item, currencyInfo);
               return (
                 <Box
                   key={item.product_id}

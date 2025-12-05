@@ -69,7 +69,7 @@ export interface CartItem {
 }
 
 export interface LocalCartItem {
-  id: string;
+  id?: string;
   product_id: string;
   quantity: number;
   country?: string;
@@ -255,7 +255,7 @@ export interface DeliveryAddressCardProps {
 export interface CartItemCardProps {
   item: CartItem;
   isSelected: boolean;
-  currencySymbol?: string;
+  currencyInfo: CurrencyInfo;
   selectedCountry?: string;
 }
 
@@ -263,7 +263,7 @@ export interface CartItemsListProps {
   items: CartItem[];
   loadingStates: Record<string, CartItemLoadingState>;
   selectedItems: Set<string>;
-  currencySymbol?: string;
+  currencyInfo?: CurrencyInfo;
   selectedCountry?: string;
 }
 
@@ -293,7 +293,7 @@ export interface OrderSummaryCardProps {
   selectedCountry?: string;
   selectedAddress: CartAddressData | null;
   setHighlightAddressError(value: boolean): void
-  currencySymbol?: string;
+  currencyInfo: CurrencyInfo;
 }
 
 export interface EmptyCartStateProps {
@@ -325,11 +325,27 @@ export interface CartAddressData {
   currency?: string;
 }
 
+export interface CurrencyInfo {
+  symbol: string;
+  code: string;
+  rate: number;
+  isBase: boolean;
+}
+
 export interface UserAddress {
   id: string;
   city: string;
   zip_code: string;
   country: string;
+  user: {
+    preference: {
+      currency: {
+        currency_symbol: string;
+        currency_code: string;
+        rate: string;
+      };
+    };
+  };
 }
 
 export interface ProductCartActionsProps {

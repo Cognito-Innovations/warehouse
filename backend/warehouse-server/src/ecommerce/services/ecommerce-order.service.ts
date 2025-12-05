@@ -17,6 +17,12 @@ import { User } from 'src/users/user.entity';
 import { Currency } from 'src/currencies/currency.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
+interface CurrencyInfo {
+  code: string;
+  symbol: string;
+  rate: number;
+}
+
 @Injectable()
 export class OrderService {
   private cashfree: Cashfree;
@@ -89,16 +95,30 @@ export class OrderService {
 
     const countryName =
       createOrderDto.country_name || 'United States of America';
-    const currencyResponse = await this.currencyRepository.findOne({
-      where: { country: { name: countryName } },
-      relations: ['country'],
-    });
 
-    if (!currencyResponse) {
-      throw new BadRequestException('Currency not found for country');
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    let currencyInfo: CurrencyInfo;
+    let orderCurrency: string;
+    if (userCurrency) {
+      currencyInfo = userCurrency;
+      orderCurrency = userCurrency.code;
+    } else {
+      const currencyResponse = await this.currencyRepository.findOne({
+        where: { country: { name: countryName } },
+        relations: ['country'],
+      });
+
+      if (!currencyResponse) {
+        throw new BadRequestException('Currency not found for country');
+      }
+      currencyInfo = {
+        code: currencyResponse.currency_code,
+        symbol: currencyResponse.currency_symbol,
+        rate: currencyResponse.rate,
+      };
+      orderCurrency = currencyResponse.currency_code;
     }
-
-    const orderCurrency = currencyResponse.currency_code;
 
     let grossSubtotal = 0;
     let totalDiscountAmount = 0;
@@ -107,10 +127,7 @@ export class OrderService {
       const basePrice = Number(item.product.price);
 
       const rawConvertedBasePrice =
-        await this.userPreferenceService.getConvertedPriceByCountry(
-          countryName,
-          basePrice,
-        );
+        currencyInfo.code === 'USD' ? basePrice : basePrice * currencyInfo.rate;
 
       const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
 
@@ -176,10 +193,7 @@ export class OrderService {
     for (const item of itemsToProcess) {
       const basePrice = Number(item.product.price);
       const rawConvertedBasePrice =
-        await this.userPreferenceService.getConvertedPriceByCountry(
-          countryName,
-          basePrice,
-        );
+        currencyInfo.code === 'USD' ? basePrice : basePrice * currencyInfo.rate;
 
       const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
       const discountPercent = Number(item.product.discount_percentage || 0);
@@ -217,20 +231,30 @@ export class OrderService {
       );
 
       return await this.findOne(savedOrder.id);
-    } catch (cashfreeErr: any) {
+    } catch (cashfreeErr: unknown) {
       // Rollback on Cashfree failure
       await this.orderRepository.delete(savedOrder.id);
 
-      console.error(
-        'Cashfree error:',
-        cashfreeErr.response?.data || cashfreeErr.message,
-      );
+      console.error('Cashfree error:', cashfreeErr);
+
+      let errorMessage = 'Unknown error';
+      if (cashfreeErr instanceof Error) {
+        errorMessage = cashfreeErr.message;
+      } else if (
+        typeof cashfreeErr === 'object' &&
+        cashfreeErr !== null &&
+        'response' in cashfreeErr
+      ) {
+        const resp = (
+          cashfreeErr as { response?: { data?: { message?: string } } }
+        ).response;
+        if (resp?.data?.message) {
+          errorMessage = resp.data.message;
+        }
+      }
 
       throw new BadRequestException(
-        'Failed to initialize payment session: ' +
-          (cashfreeErr.response?.data?.message ||
-            cashfreeErr.message ||
-            'Unknown error'),
+        `Failed to initialize payment session: ${errorMessage}`,
       );
     }
   }
@@ -269,14 +293,21 @@ export class OrderService {
     await this.orderRepository.save(savedOrder);
   }
 
-  async findAll(userId?: string): Promise<EcommerceOrder[]> {
-    const whereCondition = userId ? { user_id: userId } : {};
-
-    return this.orderRepository.find({
-      where: whereCondition,
+  async findAll(userId: string): Promise<EcommerceOrder[]> {
+    const orders = await this.orderRepository.find({
+      where: { user_id: userId },
       relations: ['items', 'items.product', 'user'],
       order: { created_at: 'DESC' },
     });
+
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    const displayCurrency = userCurrency?.symbol || '$';
+
+    return orders.map((order) => ({
+      ...order,
+      display_currency: displayCurrency,
+    })) as unknown as EcommerceOrder[];
   }
 
   async findOne(id: string): Promise<EcommerceOrder> {
@@ -289,17 +320,57 @@ export class OrderService {
       throw new NotFoundException('Order not found');
     }
 
-    return order;
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(order.user_id);
+    const displayCurrency = userCurrency?.symbol || '$';
+
+    return {
+      ...order,
+      display_currency: displayCurrency,
+    } as unknown as EcommerceOrder;
   }
 
-  async getOrdersByUser(userId?: string): Promise<EcommerceOrder[]> {
-    const whereCondition = userId ? { user_id: userId } : {};
-
-    return this.orderRepository.find({
-      where: whereCondition,
+  async getOrdersByUser(userId: string): Promise<EcommerceOrder[]> {
+    const orders = await this.orderRepository.find({
+      where: { user_id: userId },
       relations: ['items', 'items.product', 'user'],
       order: { created_at: 'DESC' },
     });
+
+    if (orders.length === 0) {
+      return [];
+    }
+
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    let targetInfo: CurrencyInfo;
+    if (!userCurrency) {
+      targetInfo = { code: 'USD', symbol: '$', rate: 1 };
+    } else {
+      targetInfo = userCurrency;
+    }
+
+    const origCurrency = await this.currencyRepository.findOne({
+      where: { currency_code: 'INR' },
+    });
+
+    if (!origCurrency) {
+      return orders.map((order) => ({
+        ...order,
+        display_currency: targetInfo.symbol,
+      })) as unknown as EcommerceOrder[];
+    }
+
+    const origRate = origCurrency.rate;
+    const conversionFactor = targetInfo.rate / origRate;
+
+    const convertedOrders = orders.map((order) => ({
+      ...order,
+      total_amount: this.roundCurrency(order.total_amount * conversionFactor),
+      display_currency: targetInfo.symbol,
+    })) as unknown as EcommerceOrder[];
+
+    return convertedOrders;
   }
 
   async findByOrderNumber(orderNumber: string): Promise<EcommerceOrder> {

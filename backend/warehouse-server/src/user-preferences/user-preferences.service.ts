@@ -6,6 +6,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { ExternalCurrencyService } from 'src/shared/external-currency.service';
 
+interface CurrencyInfo {
+  code: string;
+  symbol: string;
+  rate: number;
+}
+
 @Injectable()
 export class UserPreferencesService {
   constructor(
@@ -121,16 +127,21 @@ export class UserPreferencesService {
     }
   }
 
-  async getCurrencyRateInfo(
-    countryName: string,
-  ): Promise<{ code: string; symbol: string; rate: number }> {
-    try {
-      const currencyInfo =
-        await this.externalCurrencyService.getCurrencyInfo(countryName);
-      return currencyInfo;
-    } catch (error) {
-      return { code: 'USD', symbol: '$', rate: 1 };
-    }
+  async getUserPreferredCurrency(userId: string): Promise<CurrencyInfo | null> {
+    const pref = await this.userPreferenceRepository.findOne({
+      where: { user: { id: userId } },
+      relations: { currency: true },
+    });
+    if (!pref || !pref.currency) return null;
+    return {
+      code: pref.currency.currency_code,
+      symbol: pref.currency.currency_symbol,
+      rate: pref.currency.rate,
+    };
+  }
+
+  async getCurrencyRateInfo(selectedCountry: string): Promise<CurrencyInfo> {
+    return this.externalCurrencyService.getCurrencyInfo(selectedCountry);
   }
 
   async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {

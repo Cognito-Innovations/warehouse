@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { toast } from "sonner";
 
 import { ecommerceService } from "@/services/ecommerce.service";
 import { getAuthToken } from "@/utils/getAuthToken";
@@ -10,6 +11,7 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       cartProducts: [],
+      updatingProducts: {},
       checkoutProducts: [],
       loading: false,
       isSyncing: false,
@@ -17,6 +19,14 @@ export const useCartStore = create<CartStore>()(
       setHasHydrated: (value: boolean) => set({ _hasHydrated: value }),
 
       setLoading: (value: boolean) => set({ loading: value }),
+
+      setUpdating: (productId: string, isUpdating: boolean) => 
+        set((state) => ({
+          updatingProducts: {
+            ...state.updatingProducts,
+            [productId]: isUpdating,
+          },
+        })),
 
       toggleCartItemSelection: (productIds: string | string[]) => {
         const state = get();
@@ -44,6 +54,20 @@ export const useCartStore = create<CartStore>()(
       getItemQuantity: (productId: string) => {
         const item = get().cartProducts.find((item) => item.product_id === productId);
         return item?.quantity || 0;
+      },
+
+      getLineId: async (productId: string, country?: string) => {
+        const token = getAuthToken();
+        if (!token) return undefined;
+
+        try {
+          const serverCart: any = await ecommerceService.getCart(country);
+          const serverItem = (serverCart.items ?? []).find((i: any) => i.product_id === productId);
+          return serverItem?.id || undefined;
+        } catch (error) {
+          console.error("Failed to get line id:", error);
+          return undefined;
+        }
       },
 
       refreshCart: async (country?: string) => {
@@ -161,7 +185,17 @@ export const useCartStore = create<CartStore>()(
           if (toUpdate.length > 0) {
             await Promise.allSettled(toUpdate.map(async (item) => {
               if (item.product_id) {
-                const lineId = item.id || item.product_id;
+                let lineId: string;
+                if (item.id) {
+                  lineId = item.id;
+                } else {
+                  const fetchedId = await get().getLineId(item.product_id, country);
+                  if (!fetchedId) {
+                    console.warn(`Skipping sync update for ${item.product_id}: no line ID found`);
+                    return;
+                  }
+                  lineId = fetchedId;
+                }
                 try {
                   await ecommerceService.updateCartItem(
                     lineId, 
@@ -235,9 +269,29 @@ export const useCartStore = create<CartStore>()(
 
         if (!token) return;
 
+        get().setUpdating(product_id, true);
+
         try {
           if (isUpdateOperation) {
-            const lineId = oldItem?.id || product_id;
+            let lineId: string;
+            if (oldItem?.id) {
+              lineId = oldItem.id;
+            } else {
+              const fetchedLineId = await get().getLineId(product_id, country);
+              if (!fetchedLineId) {
+                set((s) => {
+                  const cart = [...s.cartProducts];
+                  const idx = cart.findIndex((i) => i.product_id === product_id);
+                  if (idx !== -1 && oldItem) {
+                    cart[idx] = oldItem;
+                  }
+                  return { cartProducts: cart };
+                });
+                toast.error("Failed to update cart quantity. Please try again.");
+                return;
+              }
+              lineId = fetchedLineId;
+            }
             await ecommerceService.updateCartItem(
               lineId, 
               { quantity: updatedCart[existingIndex].quantity }, 
@@ -249,9 +303,13 @@ export const useCartStore = create<CartStore>()(
               country
             );
           }
-          await get().refreshCart(country);
         } catch (error) {
           console.error("Add/Update cart failed:", error);
+          toast.error(
+            isUpdateOperation 
+              ? "Failed to update cart quantity. Please try again." 
+              : "Failed to add to cart. Please try again."
+          );
           if (isUpdateOperation) {
             set((s) => {
               const cart = [...s.cartProducts];
@@ -264,6 +322,15 @@ export const useCartStore = create<CartStore>()(
           } else {
             set((s) => ({ cartProducts: s.cartProducts.filter((i) => i.product_id !== product_id) }));
           }
+          return;
+        } finally {
+          get().setUpdating(product_id, false);
+        }
+
+        try {
+          await get().refreshCart(country);
+        } catch (refreshError) {
+          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 
@@ -299,17 +366,37 @@ export const useCartStore = create<CartStore>()(
 
         if (!token) return;
 
+        get().setUpdating(product_id, true);
+
+        let lineId: string;
+        if (existing.id) {
+          lineId = existing.id;
+        } else {
+          const fetchedLineId = await get().getLineId(product_id, country);
+          if (!fetchedLineId) {
+            set((s) => {
+              const cart = [...s.cartProducts];
+              const idx = cart.findIndex((i) => i.product_id === product_id);
+              if (idx !== -1) {
+                cart[idx] = { ...existing, quantity: oldQuantity };
+              }
+              return { cartProducts: cart };
+            });
+            toast.error("Failed to update cart quantity. Please try again.");
+            return;
+          }
+          lineId = fetchedLineId;
+        }
+
         try {
-           const lineId = existing.id || product_id;
            await ecommerceService.updateCartItem(
              lineId, 
              { quantity: newQuantity }, 
              country
            );
-           await get().refreshCart(country);
         } catch (error) {
           console.error("Decrease cart qty failed", error);
-          // Revert
+          toast.error("Failed to update cart quantity. Please try again.");
           set((s) => {
             const cart = [...s.cartProducts];
             const idx = cart.findIndex((i) => i.product_id === product_id);
@@ -318,6 +405,15 @@ export const useCartStore = create<CartStore>()(
             }
             return { cartProducts: cart };
           });
+          return;
+        } finally {
+          get().setUpdating(product_id, false);
+        }
+
+        try {
+          await get().refreshCart(country);
+        } catch (refreshError) {
+          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 
@@ -337,13 +433,36 @@ export const useCartStore = create<CartStore>()(
 
         if (!token) return;
 
+        get().setUpdating(product_id, true);
+
+        let lineId: string;
+        if (item.id) {
+          lineId = item.id;
+        } else {
+          const fetchedLineId = await get().getLineId(product_id, country);
+          if (!fetchedLineId) {
+            set({ cartProducts: [...updatedCart, item] });
+            toast.error("Failed to remove item from cart. Please try again.");
+            return;
+          }
+          lineId = fetchedLineId;
+        }
+
         try {
-          const lineId = item.id || product_id;
           await ecommerceService.removeFromCart(lineId, country);
-          await get().refreshCart(country);
         } catch (error) {
           console.error("Failed to remove from server:", error);
+          toast.error("Failed to remove item from cart. Please try again.");
           set({ cartProducts: [...updatedCart, item] });
+          return;
+        } finally {
+          get().setUpdating(product_id, false);
+        }
+
+        try {
+          await get().refreshCart(country);
+        } catch (refreshError) {
+          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 
@@ -390,16 +509,35 @@ export const useCartStore = create<CartStore>()(
         set({ cartProducts: updatedCart });
         const token = getAuthToken();
         if (!token) return;
+        get().setUpdating(productId, true);
+        let lineId: string;
+        if (existing.id) {
+          lineId = existing.id;
+        } else {
+          const fetchedLineId = await get().getLineId(productId, country);
+          if (!fetchedLineId) {
+            set((s) => {
+              const cart = [...s.cartProducts];
+              const idx = cart.findIndex((i) => i.product_id === productId);
+              if (idx !== -1) {
+                cart[idx] = { ...existing, quantity: oldQuantity };
+              }
+              return { cartProducts: cart };
+            });
+            toast.error("Failed to update cart quantity. Please try again.");
+            return;
+          }
+          lineId = fetchedLineId;
+        }
         try {
-          const lineId = existing.id || productId;
           await ecommerceService.updateCartItem(
             lineId, 
             { quantity }, 
             country
           );
-          await get().refreshCart(country);
         } catch (error) {
           console.error("Failed to set cart quantity:", error);
+          toast.error("Failed to update cart quantity. Please try again.");
           set((s) => {
             const cart = [...s.cartProducts];
             const idx = cart.findIndex((i) => i.product_id === productId);
@@ -408,6 +546,15 @@ export const useCartStore = create<CartStore>()(
             }
             return { cartProducts: cart };
           });
+          return;
+        } finally {
+          get().setUpdating(productId, false);
+        }
+
+        try {
+          await get().refreshCart(country);
+        } catch (refreshError) {
+          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 

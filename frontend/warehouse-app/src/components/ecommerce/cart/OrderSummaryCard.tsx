@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
 import { calculateCartTotals } from "@/utils/cartCalculations";
+import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";
 import { OrderSummaryCardProps } from "@/types/ecommerce";
 
@@ -17,7 +18,7 @@ export default function OrderSummaryCard({
   selectedCountry,
   selectedAddress,
   setHighlightAddressError,
-  currencySymbol = "$",
+  currencyInfo,
 }: OrderSummaryCardProps) {
   const router = useRouter();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -33,7 +34,7 @@ export default function OrderSummaryCard({
     };
   }, []);
 
-  const totals = calculateCartTotals(items, new Set(checkoutProducts), selectedCountry);
+  const totals = calculateCartTotals(items, new Set(checkoutProducts), selectedCountry, currencyInfo);
   
   const handleCheckout = useCallback(() => {
     if (isSyncing) {
@@ -69,7 +70,7 @@ export default function OrderSummaryCard({
       localStorage.setItem("checkoutSelectedItems", JSON.stringify(selected));
       router.push(ROUTES.CHECKOUT);
     }
-  }, [router, cartProducts, userId, selectedAddress, checkoutProducts, isSyncing]); // ROUTES.CHECKOUT constant used directly
+  }, [router, cartProducts, userId, selectedAddress, checkoutProducts, isSyncing, setHighlightAddressError]);
   
   return (
     <Paper
@@ -95,7 +96,7 @@ export default function OrderSummaryCard({
             Subtotal
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {currencySymbol}{(Number(totals.subtotal) || 0).toFixed(2)}
+            {formatPrice(totals.subtotal, currencyInfo.symbol)}
           </Typography>
         </Box>
 
@@ -104,7 +105,7 @@ export default function OrderSummaryCard({
             Delivery Fee
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {currencySymbol}{(Number(totals.deliveryFee) || 0).toFixed(2)}
+            {formatPrice(totals.deliveryFee, currencyInfo.symbol)}
           </Typography>
         </Box>
 
@@ -113,7 +114,7 @@ export default function OrderSummaryCard({
             Taxes
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {currencySymbol}{(Number(totals.taxes) || 0).toFixed(2)}
+            {formatPrice(totals.taxes, currencyInfo.symbol)}
           </Typography>
         </Box>
         
@@ -123,7 +124,7 @@ export default function OrderSummaryCard({
               Discount
             </Typography>
             <Typography variant="body2" color="success.main" fontWeight={500}>
-              -{currencySymbol}{(Number(totals.discount) || 0).toFixed(2)}
+              -{formatPrice(totals.discount, currencyInfo.symbol)}
             </Typography>
           </Box>
         )}
@@ -133,7 +134,7 @@ export default function OrderSummaryCard({
             Service Charge
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {currencySymbol}{(Number(totals.serviceCharge) || 0).toFixed(2)}
+            {formatPrice(totals.serviceCharge, currencyInfo.symbol)}
           </Typography>
         </Box>
 
@@ -144,7 +145,7 @@ export default function OrderSummaryCard({
             Grand Total
           </Typography>
           <Typography variant="h6" fontWeight="bold" color="primary.main">
-            {currencySymbol}{(Number(totals.total) || 0).toFixed(2)}
+            {formatPrice(totals.total, currencyInfo.symbol)}
           </Typography>
         </Box>
       </Box>

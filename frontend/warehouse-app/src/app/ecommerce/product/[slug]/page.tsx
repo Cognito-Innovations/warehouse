@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useCallback, useMemo } from "react";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import { Box, Container, Alert } from "@mui/material";
 import { useParams } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import ProductDetailHeader from "@/components/ecommerce/ProductDetailHeader";
 import ProductDetailImageSection from "@/components/ecommerce/ProductDetailImageSection";
@@ -28,7 +29,6 @@ export default function ProductDetailPage() {
     detailError,
     loadProductPageData,
     setCurrentDetailProduct,
-    resetDetailState
   } = useProductStore();
  
   const locationData = useEffectiveUserLocation({
@@ -39,12 +39,27 @@ export default function ProductDetailPage() {
   });
   const countryName = locationData.location.countryName;
 
+  const { user } = useAuth();
+  const userId = user?.id;
+
   const productSlug = useMemo(() => {
     return params.slug && typeof params.slug === "string" ? params.slug : null;
   }, [params.slug]);
 
+  const selectionSlugRef = useRef<string | null>(null);
+  const previousSlugRef = useRef(productSlug);
+
+  if (previousSlugRef.current !== productSlug) {
+    selectionSlugRef.current = null;
+    previousSlugRef.current = productSlug;
+  }
+
   const displayProduct = useMemo(() => {
-    if (currentDetailProduct) {
+    if (currentDetailProduct && currentDetailProduct.slug === productSlug) {
+      return currentDetailProduct;
+    }
+
+    if (currentDetailProduct && selectionSlugRef.current === productSlug) {
       return currentDetailProduct;
     }
 
@@ -57,21 +72,18 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (productSlug && countryName) {
-      loadProductPageData(productSlug, countryName);
+      loadProductPageData(productSlug, countryName, userId);
     }
-
-    return () => {
-      resetDetailState();
-    };
-  }, [productSlug, countryName, loadProductPageData]);
+  }, [productSlug, countryName, loadProductPageData, userId]);
 
   const handleProductSelect = useCallback((selectedProduct: EcommerceProduct) => {
+    selectionSlugRef.current = productSlug;
     setCurrentDetailProduct(selectedProduct);
   }, [setCurrentDetailProduct]);
 
   const handleRefresh = () => {
     if (productSlug && countryName) {
-      loadProductPageData(productSlug, countryName);
+      loadProductPageData(productSlug, countryName, userId);
     }
   };
 
@@ -128,7 +140,10 @@ export default function ProductDetailPage() {
 
       {/* Related Products Section */}
       {detailRelatedProducts.length > 0 && (
-        <RelatedProductsSection products={detailRelatedProducts} />
+        <RelatedProductsSection
+          products={detailRelatedProducts}
+          arePreviewsLoading={arePreviewsLoading}
+        />
       )}
     </Box>
   );

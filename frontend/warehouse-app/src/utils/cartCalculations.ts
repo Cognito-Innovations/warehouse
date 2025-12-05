@@ -1,4 +1,5 @@
-import { getCartItemPricingSummary } from "./priceUtils";
+import { getCartItemPricingSummary, roundCurrency } from "./priceUtils";
+import { CurrencyInfo } from "@/types/ecommerce";
 
 export interface CartTotals {
     subtotal: number;
@@ -13,6 +14,7 @@ export const calculateCartTotals = (
     cartItems: any[],
     selectedItemIds: Set<string>,
     country?: string,
+    currencyInfo?: CurrencyInfo,
 ): CartTotals => {
     if (!cartItems || cartItems.length === 0)
         return emptyTotals();
@@ -24,13 +26,19 @@ export const calculateCartTotals = (
     if (selectedItems.length === 0)
         return emptyTotals();
 
-    const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(country);
+    let { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(country);
+
+    if (currencyInfo && !currencyInfo.isBase) {
+      threshold = roundCurrency(threshold / currencyInfo.rate);
+      deliveryBase = roundCurrency(deliveryBase / currencyInfo.rate);
+      serviceBase = roundCurrency(serviceBase / currencyInfo.rate);
+    }
 
     let subtotal = 0;
     let discount = 0;
 
     selectedItems.forEach((item) => {
-        const p = getCartItemPricingSummary(item);
+        const p = getCartItemPricingSummary(item, currencyInfo);
 
         subtotal += p.originalUnitPrice * p.quantity;
         discount += p.discountTotal;

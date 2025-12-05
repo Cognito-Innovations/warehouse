@@ -206,7 +206,7 @@ export interface SubCategoryPayload {
   category_id: string;
   name: string;
   slug: string;
-  image_url: string;
+  // image_url: string;
   discount_percentage: number,
   country_ids: string[],
   is_active: boolean;

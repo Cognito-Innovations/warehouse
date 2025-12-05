@@ -5,6 +5,7 @@ import { Container, Alert } from "@mui/material";
 
 import useProductStore from "@/store/productStore";
 import useCategoryStore from "@/store/categoryStore";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout"; 
 import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
@@ -23,6 +24,9 @@ export default function Ecommerce() {
     pincode: "",
   });
   const countryName = locationData.location.countryName;
+
+  const { user } = useAuth();
+  const userId = user?.id;
 
   const { categories, getCategories } = useCategoryStore();
   const { 
@@ -50,11 +54,16 @@ export default function Ecommerce() {
     hasFetched.current = true;
     try {
       await getCategories();
-      await fetchProducts({ country: cName, searchTerm: searchQuery, category: selectedCategory || undefined }, true);
+      await fetchProducts({
+        country: cName,
+        searchTerm: searchQuery,
+        category: selectedCategory || undefined,
+        userId,
+      }, true);
     } catch (err) {
       console.error("Init failed", err);
     }
-  }, [getCategories, fetchProducts, searchQuery, selectedCategory]);
+  }, [getCategories, fetchProducts, searchQuery, selectedCategory, userId]);
 
   useEffect(() => {
     if (countryName && !hasFetched.current) {
@@ -66,9 +75,10 @@ export default function Ecommerce() {
     fetchProducts({ 
         searchTerm: query, 
         category: category || undefined, 
-        country: country 
+        country: country,
+        userId 
     }, true);
-  }, [fetchProducts]);
+  }, [fetchProducts, userId]);
 
   const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
 
@@ -100,7 +110,8 @@ export default function Ecommerce() {
         fetchProducts({ 
             category: selectedCategory, 
             country: countryName, 
-            searchTerm: searchQuery 
+            searchTerm: searchQuery,
+            userId 
         }, false);
       }
     }, {
@@ -110,7 +121,7 @@ export default function Ecommerce() {
     return () => {
       observer.current?.disconnect();
     };
-  }, [hasMore, loadingMore, isLoading, selectedCategory, countryName, searchQuery, fetchProducts]);
+  }, [hasMore, loadingMore, isLoading, selectedCategory, countryName, searchQuery, fetchProducts, userId]);
   const handleRefresh = () => {
     setError(null);
     hasFetched.current = false;

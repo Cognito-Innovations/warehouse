@@ -9,6 +9,7 @@ interface TopNavbarProps {
   pageTitle?: string;
   pageSubtitle?: string;
   searchValue?: string;
+  placeholder?: string;
   onSearchChange?: (value: string) => void;
   showSearchBar?: boolean;
 }
@@ -18,6 +19,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
   pageSubtitle,
   searchValue,
   onSearchChange,
+  placeholder,
   showSearchBar = false,
 }) => {
   return (
@@ -40,7 +42,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
 
       {showSearchBar && (
         <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', maxWidth: '500px', width: '100%' }}>
-          <SearchBar value={searchValue} onChange={onSearchChange} />
+          <SearchBar value={searchValue} onChange={onSearchChange} placeholder={placeholder} />
         </Box>
       )}
       

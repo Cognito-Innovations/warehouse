@@ -449,8 +449,19 @@ export const createProduct = async (
   return response.data;
 };
 
-export const getProducts = async () => {
-  const response = await api.get("/ecommerce-products");
+export const getProducts = async (search: string = "") => {
+  const params = new URLSearchParams();
+  if (search) {
+    params.append("search", search);
+  }
+
+  params.append("limit", "1000");
+  params.append("role", "admin");
+
+  const queryString = params.toString();
+  const url = `/ecommerce-products${queryString ? `?${queryString}` : ""}`;
+
+  const response = await api.get(url);
   return response.data;
 };
 

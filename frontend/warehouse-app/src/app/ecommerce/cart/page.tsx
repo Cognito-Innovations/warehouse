@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Box, Container } from "@mui/material";
 import { useSession } from "next-auth/react";
 
@@ -16,8 +16,6 @@ import AddressSection from "@/components/ecommerce/cart/AddressSection";
 import CartLoginState from "@/components/ecommerce/cart/CartLoginState";
 import OrderSummarySkeleton from "@/components/ecommerce/skeleton-loader/OrderSummarySkeleton";
 import CartItemsSkeleton from "@/components/ecommerce/skeleton-loader/CartItemsSkeleton";
-import { getCurrencyForCountry } from "@/utils/currency";
-import { getCartItemPricingSummary } from "@/utils/priceUtils";
 import { CartAddressData } from "@/types/ecommerce";
 
 export default function CartPage() {
@@ -33,13 +31,14 @@ export default function CartPage() {
   const [highlightAddressError, setHighlightAddressError] = useState(false);
   const [isCartLoading, setIsCartLoading] = useState(false); 
 
-  const { location, refreshAddresses } = useEffectiveUserLocation({
+  const locationData = useEffectiveUserLocation({
     countryCode: undefined,
     countryName: undefined,
     city: '',
     pincode: '',
   });
-  const selectedCountry = location.countryName;
+  const selectedCountry = locationData.location.countryName;
+  const currencyInfo = locationData.currencyInfo; // Changed from currencySymbol
 
   const userId = (session?.user as any)?.user_id;
 
@@ -78,23 +77,6 @@ export default function CartPage() {
 
   const validItems = cartProducts.filter(item => item && item.product);
 
-  const getCurrencySymbol = () => {
-    if (validItems.length > 0) {
-      const firstSelected = validItems.find((item) =>
-        checkoutProducts.includes(item.product_id!)
-      );
-      
-      if (firstSelected) {
-        const pricing = getCartItemPricingSummary(firstSelected);
-        if (pricing.currency) return pricing.currency;
-      }
-    }
-    return currencyInfo.symbol;
-  };
-
-  const currencyInfo = getCurrencyForCountry(selectedCountry!);
-  const currencySymbol = getCurrencySymbol();
-
   return (
     <Box sx={{ bgcolor: "grey.50", minHeight: "100vh" }}>
       <CartHeader />
@@ -116,7 +98,7 @@ export default function CartPage() {
                 userId={userId}
                 onAddressChange={setSelectedAddress}
                 highlightAddressError={highlightAddressError}
-                refreshAddresses={refreshAddresses}
+                refreshAddresses={locationData.refreshAddresses}
               />
             )}
             {isCartLoading ? (
@@ -125,7 +107,7 @@ export default function CartPage() {
               <CartItemsList
                 items={validItems}
                 selectedItems={new Set(checkoutProducts)}
-                currencySymbol={currencySymbol}
+                currencyInfo={currencyInfo} // Pass full info (assume CartItemsList passes to CartItemCard)
                 selectedCountry={selectedCountry}
               />
             )}
@@ -144,7 +126,7 @@ export default function CartPage() {
                 selectedCountry={selectedCountry}
                 selectedAddress={selectedAddress}
                 setHighlightAddressError={setHighlightAddressError}
-                currencySymbol={currencySymbol}
+                currencyInfo={currencyInfo} // Pass full info
               />
             )}
           </Box>

@@ -27,7 +27,7 @@ export default function ProductCartActions({
     currency,
 }: ProductCartActionsProps) {
     const router = useRouter();
-    const { incrementCartQuantity, decrementCartQuantity, getItemQuantity } = useCartStore();
+    const { incrementCartQuantity, decrementCartQuantity, getItemQuantity, updatingProducts } = useCartStore();
     const locationData = useEffectiveUserLocation({
       countryCode: undefined,
       countryName: undefined,
@@ -37,6 +37,7 @@ export default function ProductCartActions({
     const selectedCountry = locationData.location.countryName;
 
     const cartQuantity = getItemQuantity(product.id);
+    const isUpdating = updatingProducts[product.id] || false;
     const stockQuantity = product.stock_quantity;
     const isOutOfStock = stockQuantity === 0;
     const formattedSubtotal = formatPrice(cartQuantity * discountPriceRaw, currency);
@@ -64,12 +65,12 @@ export default function ProductCartActions({
                     >
                         <IconButton
                             onClick={() => decrementCartQuantity(product, selectedCountry)}
-                            disabled={cartQuantity <= 0}
+                            disabled={cartQuantity <= 0 || isUpdating}
                             sx={{
                                 border: "1px solid",
-                                borderColor: cartQuantity <= 0 ? "action.disabled" : "primary.main",
+                                borderColor: (cartQuantity <= 0 || isUpdating) ? "action.disabled" : "primary.main",
                                 bgcolor: "action.hover",
-                                color: cartQuantity <= 0 ? "action.disabled" : "primary.main",
+                                color: (cartQuantity <= 0 || isUpdating) ? "action.disabled" : "primary.main",
                                 width: 40,
                                 height: 40,
                                 "&:hover:not(:disabled)": {
@@ -99,12 +100,12 @@ export default function ProductCartActions({
                         </Typography>
                         <IconButton
                             onClick={() => incrementCartQuantity(product, selectedCountry)}
-                            disabled={isOutOfStock || cartQuantity >= stockQuantity}
+                            disabled={isOutOfStock || cartQuantity >= stockQuantity || isUpdating}
                             sx={{
                                 border: "1px solid",
-                                borderColor: cartQuantity >= stockQuantity ? "action.disabled" : "primary.main",
+                                borderColor: (isOutOfStock || cartQuantity >= stockQuantity || isUpdating) ? "action.disabled" : "primary.main",
                                 bgcolor: "action.hover",
-                                color: cartQuantity >= stockQuantity ? "action.disabled" : "primary.main",
+                                color: (isOutOfStock || cartQuantity >= stockQuantity || isUpdating) ? "action.disabled" : "primary.main",
                                 width: 40,
                                 height: 40,
                                 "&:hover:not(:disabled)": {
@@ -141,7 +142,7 @@ export default function ProductCartActions({
                 fullWidth
                 size="large"
                 onClick={cartQuantity > 0 ? handleGoToCart : handleAddToCartClick}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || (!(cartQuantity > 0) && isUpdating)}
                 sx={{
                     py: 1.5,
                     borderRadius: 2,

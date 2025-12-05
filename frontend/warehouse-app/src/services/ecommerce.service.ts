@@ -61,7 +61,8 @@ export const ecommerceService = {
     country?: string,
     category?: string,
     limit?: number,
-    offset?: number
+    offset?: number,
+    userId?: string
   ): Promise<EcommerceProduct[]> {
     const params: any = {};
     if (searchTerm) {
@@ -79,14 +80,22 @@ export const ecommerceService = {
     if (offset !== undefined) {
       params.offset = offset;
     }
+    if (userId) {
+      params.user_id = userId;
+    }
     const response = await api.get("/ecommerce-products", { params });
     return response.data;
   },
 
-  async getProduct(slug: string, country?: string): Promise<EcommerceProduct> {
-    const response = await api.get(`/ecommerce-products/${slug}`, {
-      params: country ? { country } : {}
-    });
+  async getProduct(slug: string, country?: string, userId?: string): Promise<EcommerceProduct> {
+    const params: any = {};
+    if (country) {
+      params.country = country;
+    }
+    if (userId) {
+      params.user_id = userId;
+    }
+    const response = await api.get(`/ecommerce-products/${slug}`, { params });
     return response.data;
   },
 

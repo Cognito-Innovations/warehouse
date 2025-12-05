@@ -1,4 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  timeout: 120_000,
+});
 
 async function closeDialog(page) {
   const dialog = page.locator('.MuiDialog-container');

@@ -27,19 +27,20 @@ export type ProductStore = {
   isDetailLoading: boolean;
   arePreviewsLoading: boolean;
   detailError: string | null;
+  isLoadingSlug: string | null;
 
   setError: (error: string | null) => void;
   setSearchQuery: (query: string) => void;
   getProducts: (params?: GetProductsParams) => Promise<EcommerceProduct[]>;
-  fetchProductBySlug: (slug: string, country?: string) => Promise<EcommerceProduct>;
-  getCategoryProducts: (categoryId: string, country?: string, limit?: number) => Promise<EcommerceProduct[]>;
+  fetchProductBySlug: (slug: string, country?: string, userId?: string) => Promise<EcommerceProduct>;
+  getCategoryProducts: (categoryId: string, country?: string, limit?: number, userId?: string) => Promise<EcommerceProduct[]>;
   handleProductSelect: (productId: string) => void;
   fetchProducts: (
-    params: { category?: string; searchTerm?: string; country?: string },
+    params: FetchProductsParams,
     reset?: boolean
   ) => Promise<void>;
 
-  loadProductPageData: (slug: string, country: string) => Promise<void>;
+  loadProductPageData: (slug: string, country: string, userId?: string) => Promise<void>;
   setCurrentDetailProduct: (product: EcommerceProduct) => void;
   resetDetailState: () => void;
 }
@@ -63,10 +64,19 @@ export type GetProductsParams = {
   category?: string;
   limit?: number;
   offset?: number;
+  userId?: string;
+};
+
+export type FetchProductsParams = {
+  category?: string;
+  searchTerm?: string;
+  country?: string;
+  userId?: string;
 };
 
 export type CartStore = {
   cartProducts: LocalCartItem[];
+  updatingProducts: Record<string, boolean>;
   cartProductQuantityCount: () => number;
   loading: boolean;
   isSyncing: boolean,
@@ -77,7 +87,9 @@ export type CartStore = {
   clearCheckoutProducts: () => void;
   setLoading: (value: boolean) => void;
   setHasHydrated: (value: boolean) => void;
+  setUpdating: (productId: string, isUpdating: boolean) => void;
   getItemQuantity: (productId: string) => number;
+  getLineId: (productId: string, country?: string) => Promise<string | undefined>;
   refreshCart: (country?: string) => Promise<LocalCartItem[]>;
   syncCart: (country?: string) => Promise<void>;
   getCart: (country?: string) => Promise<LocalCartItem[]>;

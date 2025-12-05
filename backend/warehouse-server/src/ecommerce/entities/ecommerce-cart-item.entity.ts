@@ -24,7 +24,7 @@ export class EcommerceCartItem extends BaseTimestampEntity {
   @Column()
   product_id: string;
 
-  @ManyToOne(() => EcommerceProduct, { eager: true })
+  @ManyToOne(() => EcommerceProduct, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product: EcommerceProduct;
 

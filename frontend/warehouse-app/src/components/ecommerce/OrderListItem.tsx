@@ -51,7 +51,7 @@ export default function OrderListItem({ order }: OrderListItemProps) {
 
       <div className="flex flex-col items-end space-y-1">
         <p className="font-semibold text-gray-900">
-          Total: ${order.total_amount}
+          Total: {order.display_currency || '$'}{(order.total_amount || 0)}
         </p>
         
         <p className="text-sm text-gray-600">

@@ -1,5 +1,5 @@
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Box, Typography } from "@mui/material";
 
 import { deleteProduct, getProducts, updateEcommerceProduct } from "../services/api.services";
@@ -22,7 +22,10 @@ interface ProductRow {
   category_id: string;
   sub_category: string;
   sub_category_id: string;
-  price: number;
+  price: {
+    price: number;
+    currency: string;
+  };
   discount_percentage: number;
   unit: string;
   unit_value: number;
@@ -37,20 +40,23 @@ interface ProductRow {
 const Products: React.FC = () => {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [editingProduct, setEditingProduct] = useState<ProductPayload | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
+  const [searchValue, setSearchValue] = useState('');
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async (searchTerm: string = '') => {
     try {
       setLoading(true);
-      const response = await getProducts();
+      const response = await getProducts(searchTerm);
+      
       const mappedData: ProductRow[] = response.map((item: any) => {
-        const priceMatch = item.price.toString().match(/[\d.]+/);
-        const priceStr = priceMatch ? priceMatch[0] : '0';
+        const priceValue = item.price?.price || item.price || 0;
+        const currencyValue = item.price?.currency; 
+
         return {
           id: item.id,
           name: item.name,
@@ -61,7 +67,10 @@ const Products: React.FC = () => {
           category_id: item.category?.id || "",
           sub_category: item.sub_category?.name || "N/A",
           sub_category_id: item.sub_category?.id || "",
-          price: parseFloat(priceStr) || 0,
+          price: {
+            price: parseFloat(priceValue) || 0,
+            currency: currencyValue
+          },
           discount_percentage: parseFloat(item.discount_percentage) || 0,
           unit: `${parseFloat(item.unit_value).toFixed(0)} ${item.measurement?.label || ''}`.trim(),
           unit_value: parseFloat(item.unit_value) || 0,
@@ -79,11 +88,15 @@ const Products: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchProducts(searchValue);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchValue, fetchProducts]);
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
@@ -125,7 +138,7 @@ const Products: React.FC = () => {
       slug: product.slug,
       description: product.description,
       image_url: product.image_url,
-      price: product.price,
+      price: product.price.price,
       discount_percentage: product.discount_percentage,
       unit_value: product.unit_value,
       measurement_id: product.measurement_id,
@@ -158,6 +171,12 @@ const Products: React.FC = () => {
       setDeleteLoading(false);
     }
   };
+
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value);
+  };
+
+  const noDataMessage = searchValue.trim() ? "Product not found" : "No products available";
 
   const columns: ColumnDefinition<ProductRow>[] = [
     {
@@ -199,7 +218,7 @@ const Products: React.FC = () => {
     },
     {
       header: "Price",
-      cell: (row) => <Typography variant="body2">${row.price.toFixed(2)}</Typography>,
+      cell: (row) => <Typography variant="body2"> {row.price.currency} {row.price.price.toFixed(2)}</Typography>,
       width: "20%",
     },
     {
@@ -218,7 +237,14 @@ const Products: React.FC = () => {
 
   return (
     <Box>
-      <TopNavbar pageTitle="Products" pageSubtitle="All" />
+      <TopNavbar
+        pageTitle="Products"
+        pageSubtitle="All"
+        searchValue={searchValue} 
+        onSearchChange={handleSearchChange}
+        placeholder="Search product by product name"
+        showSearchBar
+      />
 
       <AddActionButton
         label="Add New Product"
@@ -241,7 +267,7 @@ const Products: React.FC = () => {
             setModalOpen(false);
             setEditingProduct(undefined);
           }}
-          onSuccess={fetchProducts}
+          onSuccess={() => fetchProducts(searchValue)}
           initialData={editingProduct}
         />
       </Modal>
@@ -251,7 +277,7 @@ const Products: React.FC = () => {
         columns={columns}
         loading={loading}
         statusOptions={statusOptions}
-        noDataMessage="No products available"
+        noDataMessage={noDataMessage}
         getIdentifier={(row) => row.id}
         getRowStatus={(row) => row.status}
         onEdit={handleEditProduct}
