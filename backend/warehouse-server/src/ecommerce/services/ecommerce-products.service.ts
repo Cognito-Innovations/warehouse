@@ -3,7 +3,6 @@ import { EcommerceProduct } from '../entities/ecommerce-product.entity.js';
 import { ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.js';
-import { Country } from 'src/Countries/country.entity.js';
 import { CreateEcommerceProductDto } from '../dto/product/create-product.dto.js';
 import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto.js';
 import { UserPreferencesService } from '../../user-preferences/user-preferences.service.js';
@@ -39,7 +38,7 @@ export class ProductsService {
       ...rest,
       category: { id: category_id },
       sub_category: { id: sub_category_id },
-      countries: country_ids.map((id) => ({ id }) as Country),
+      countries: country_ids.map((id) => ({ id }) as any),
       measurement: { id: measurement_id },
       cargo_option: { id: cargo_option_id } as EcommerceCargoOption,
     });
@@ -47,7 +46,7 @@ export class ProductsService {
   }
 
   async findAll(
-    country?: string,
+    currency?: string,
     search?: string,
     category?: string,
     userId?: string,
@@ -85,7 +84,7 @@ export class ProductsService {
     }
 
     let currencyInfo: CurrencyInfo;
-    const selectedCountry = country || 'India';
+    const selectedCurrency = currency || 'USD';
 
     if (userId) {
       const userCurrency =
@@ -94,13 +93,13 @@ export class ProductsService {
         currencyInfo = userCurrency;
       } else {
         currencyInfo =
-          await this.userPreferencesService.getCurrencyRateInfo(
-            selectedCountry,
+          await this.userPreferencesService.getCurrencyInfoByCode(
+            selectedCurrency,
           );
       }
     } else {
       currencyInfo =
-        await this.userPreferencesService.getCurrencyRateInfo(selectedCountry);
+        await this.userPreferencesService.getCurrencyInfoByCode(selectedCurrency);
     }
 
     const { symbol, rate, code } = currencyInfo;
@@ -119,7 +118,7 @@ export class ProductsService {
     });
   }
 
-  async findOne(slug: string, country?: string, userId?: string) {
+  async findOne(slug: string, currency?: string, userId?: string) {
     const product = await this.productRepository.findOne({
       where: { slug: slug },
       relations: ['countries', 'cargo_option'],
@@ -130,7 +129,7 @@ export class ProductsService {
     }
 
     let currencyInfo: CurrencyInfo;
-    const selectedCountry = country || 'India';
+    const selectedCurrency = currency || 'USD';
 
     if (userId) {
       const userCurrency =
@@ -139,13 +138,15 @@ export class ProductsService {
         currencyInfo = userCurrency;
       } else {
         currencyInfo =
-          await this.userPreferencesService.getCurrencyRateInfo(
-            selectedCountry,
+          await this.userPreferencesService.getCurrencyInfoByCode(
+            selectedCurrency,
           );
       }
     } else {
       currencyInfo =
-        await this.userPreferencesService.getCurrencyRateInfo(selectedCountry);
+        await this.userPreferencesService.getCurrencyInfoByCode(
+          selectedCurrency,
+        );
     }
 
     const { symbol, rate, code } = currencyInfo;
@@ -190,7 +191,7 @@ export class ProductsService {
       product.sub_category = { id: sub_category_id } as EcommerceSubCategory;
     }
     if (country_ids) {
-      product.countries = country_ids.map((id) => ({ id }) as Country);
+      product.countries = country_ids.map((id) => ({ id }) as any);
     }
     if (measurement_id) {
       product.measurement = { id: measurement_id } as any;

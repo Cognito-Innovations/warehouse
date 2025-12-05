@@ -28,7 +28,7 @@ interface OrderSummaryProps {
   items: CartItem[];
   totals: OrderTotals;
   shippingAddress: string;
-  selectedCountry: string | undefined;
+  selectedCurrency?: string;
   currencyInfo: CurrencyInfo;
   user: any;
   formatLocalPrice: (amount: number) => string;
@@ -39,7 +39,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   items,
   totals,
   shippingAddress,
-  selectedCountry,
+  selectedCurrency,
   currencyInfo,
   user,
   formatLocalPrice,
@@ -68,7 +68,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
       const orderData = {
         shipping_address: shippingAddress,
-        country_name: selectedCountry,
+        currency: selectedCurrency,
         product_ids: orderedProductIds,
       }
       const initiateResponse = await ecommerceService.initiateOrder(orderData);

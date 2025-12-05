@@ -23,7 +23,7 @@ export default function Ecommerce() {
     city: "",
     pincode: "",
   });
-  const countryName = locationData.location.countryName;
+  const currency = locationData.currencyInfo.code;
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -46,16 +46,16 @@ export default function Ecommerce() {
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
   const prevSearchQueryRef = useRef(searchQuery);
-  const prevCountryNameRef = useRef(countryName);
+  const prevCurrencyRef = useRef(currency);
   const prevCategoryRef = useRef(selectedCategory);
 
-  const initializeEcommerceData = useCallback(async (cName?: string) => {
-    if (hasFetched.current || !cName) return;
+  const initializeEcommerceData = useCallback(async (curr?: string) => {
+    if (hasFetched.current || !curr) return;
     hasFetched.current = true;
     try {
       await getCategories();
       await fetchProducts({
-        country: cName,
+        currency: curr,
         searchTerm: searchQuery,
         category: selectedCategory || undefined,
         userId,
@@ -66,16 +66,16 @@ export default function Ecommerce() {
   }, [getCategories, fetchProducts, searchQuery, selectedCategory, userId]);
 
   useEffect(() => {
-    if (countryName && !hasFetched.current) {
-      initializeEcommerceData(countryName);
+    if (currency && !hasFetched.current) {
+      initializeEcommerceData(currency);
     }
-  }, [countryName, initializeEcommerceData]);
+  }, [currency, initializeEcommerceData]);
 
-  const performSearch = useCallback((query: string, category: string | null, country: string) => {
+  const performSearch = useCallback((query: string, category: string | null, curr: string) => {
     fetchProducts({ 
         searchTerm: query, 
         category: category || undefined, 
-        country: country,
+        currency: curr,
         userId 
     }, true);
   }, [fetchProducts, userId]);
@@ -83,24 +83,24 @@ export default function Ecommerce() {
   const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
 
   useEffect(() => {
-    if (!countryName) return;
+    if (!currency) return;
 
     const searchChanged = searchQuery !== prevSearchQueryRef.current;
     const categoryChanged = selectedCategory !== prevCategoryRef.current;
-    const countryChanged = countryName !== prevCountryNameRef.current;
+    const currencyChanged = currency !== prevCurrencyRef.current;
 
-    if (searchChanged || categoryChanged || countryChanged) {
-      if (searchChanged && !categoryChanged && !countryChanged) {
-        debouncedSearch(searchQuery, selectedCategory, countryName);
+    if (searchChanged || categoryChanged || currencyChanged) {
+      if (searchChanged && !categoryChanged && !currencyChanged) {
+        debouncedSearch(searchQuery, selectedCategory, currency);
       } else {
-        performSearch(searchQuery, selectedCategory, countryName);
+        performSearch(searchQuery, selectedCategory, currency);
       }
     }
 
     prevSearchQueryRef.current = searchQuery;
     prevCategoryRef.current = selectedCategory;
-    prevCountryNameRef.current = countryName;
-  }, [searchQuery, selectedCategory, countryName, debouncedSearch, performSearch]);
+    prevCurrencyRef.current = currency;
+  }, [searchQuery, selectedCategory, currency, debouncedSearch, performSearch]);
 
   useEffect(() => {
     if (!selectedCategory || !observerRef.current || !hasMore || loadingMore || isLoading) return;
@@ -109,7 +109,7 @@ export default function Ecommerce() {
       if (entries[0].isIntersecting && hasMore && !loadingMore && !isLoading) {
         fetchProducts({ 
             category: selectedCategory, 
-            country: countryName, 
+            currency: currency, 
             searchTerm: searchQuery,
             userId 
         }, false);
@@ -121,11 +121,11 @@ export default function Ecommerce() {
     return () => {
       observer.current?.disconnect();
     };
-  }, [hasMore, loadingMore, isLoading, selectedCategory, countryName, searchQuery, fetchProducts, userId]);
+  }, [hasMore, loadingMore, isLoading, selectedCategory, currency, searchQuery, fetchProducts, userId]);
   const handleRefresh = () => {
     setError(null);
     hasFetched.current = false;
-    initializeEcommerceData(locationData.location.countryName);
+    initializeEcommerceData(locationData.currencyInfo.code);
   };
 
   const isNetworkError = error && (error.includes("Network Error") || error.includes("Failed to fetch") || error.includes("ECONNREFUSED") || error.includes("timeout"));

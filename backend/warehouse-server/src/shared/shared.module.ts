@@ -73,6 +73,7 @@ import { ExternalCurrencyService } from './external-currency.service';
     ExternalCurrencyService,
   ],
   exports: [
+    HttpModule,
     DocumentUploadService,
     CloudinaryService,
     ClientIdentifierService,

@@ -392,7 +392,7 @@ export default function AddAddressModal({
               ) : (
                 currencies.map((curr) => (
                 <MenuItem key={curr.id} value={curr.id}>
-                  {curr.currency_code} ({curr.currency_symbol})
+                  {curr.name} ({curr.currency_symbol})
                 </MenuItem>
                 ))
               )}

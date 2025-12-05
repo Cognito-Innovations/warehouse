@@ -49,7 +49,7 @@ export class CartService {
   async addToCart(
     userId: string,
     addToCartDto: AddToCartDto,
-    country?: string,
+    currency?: string,
   ): Promise<any> {
     const { product_id, quantity } = addToCartDto;
 
@@ -88,14 +88,14 @@ export class CartService {
       await this.cartItemRepository.save(cartItem);
     }
 
-    return this.getCart(userId, country);
+    return this.getCart(userId, currency);
   }
 
   async updateCartItem(
     userId: string,
     itemId: string,
     updateCartItemDto: UpdateCartItemDto,
-    country?: string,
+    currency?: string,
   ): Promise<any> {
     let cart = await this.findActiveCart(userId);
     if (!cart) {
@@ -114,13 +114,13 @@ export class CartService {
 
     await this.cartItemRepository.save(cartItem);
 
-    return this.getCart(userId, country);
+    return this.getCart(userId, currency);
   }
 
   async removeFromCart(
     userId: string,
     itemId: string,
-    country?: string,
+    currency?: string,
   ): Promise<any> {
     let cart = await this.findActiveCart(userId);
     if (!cart) {
@@ -132,12 +132,12 @@ export class CartService {
 
     // If item doesn't exist, it might have been already deleted (idempotent operation)
     if (!cartItem) {
-      return this.getCart(userId, country);
+      return this.getCart(userId, currency);
     }
 
     await this.cartItemRepository.remove(cartItem);
 
-    return this.getCart(userId, country);
+    return this.getCart(userId, currency);
   }
 
   async clearCart(userId: string): Promise<void> {
@@ -148,7 +148,7 @@ export class CartService {
     await this.cartItemRepository.delete({ cart_id: cart.id });
   }
 
-  async getCart(userId: string, country?: string): Promise<any> {
+  async getCart(userId: string, currency?: string): Promise<any> {
     let cart = await this.findActiveCart(userId);
     if (!cart) {
       cart = await this.createCart(userId);
@@ -190,22 +190,22 @@ export class CartService {
       final_amount: finalAmount,
     };
 
-    const selectedCountry = country || 'United States of America';
+    const selectedCurrency = currency || 'USD';
     return this.applyCurrencyConversion(
       cartWithComputedTotals,
-      selectedCountry,
+      selectedCurrency,
     );
   }
 
   private async applyCurrencyConversion(
     cart: any,
-    country: string,
+    currency: string,
   ): Promise<any> {
     if (!cart) return cart;
 
     const convert = (price: number | string) => 
-      this.userPreferencesService.getFormattedConvertedPriceByCountry(
-        country,
+      this.userPreferencesService.getFormattedConvertedPriceByCurrency(
+        currency,
         Number(price),
       );
 

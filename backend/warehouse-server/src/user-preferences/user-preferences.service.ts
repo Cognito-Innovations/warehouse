@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { ExternalCurrencyService } from 'src/shared/external-currency.service';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 interface CurrencyInfo {
   code: string;
@@ -14,10 +16,17 @@ interface CurrencyInfo {
 
 @Injectable()
 export class UserPreferencesService {
+  private readonly EXCHANGE_RATE_URL = 'https://api.frankfurter.app/latest';
+  private static SYMBOL_MAP: Record<string, string> = {
+    USD: '$',
+    INR: '₹',
+  };
+
   constructor(
     @InjectRepository(UserPreference)
     private readonly userPreferenceRepository: Repository<UserPreference>,
     private externalCurrencyService: ExternalCurrencyService,
+    private httpService: HttpService,
   ) {}
 
   async create(createUserPreferenceDto: CreateUserPreferenceDto) {
@@ -142,6 +151,41 @@ export class UserPreferencesService {
 
   async getCurrencyRateInfo(selectedCountry: string): Promise<CurrencyInfo> {
     return this.externalCurrencyService.getCurrencyInfo(selectedCountry);
+  }
+
+  async getCurrencyInfoByCode(currencyCode: string): Promise<CurrencyInfo> {
+    const code = currencyCode.toUpperCase();
+    const symbol = UserPreferencesService.SYMBOL_MAP[code] || '$';
+    let rate = 1;
+
+    try {
+      const rateResponse = await firstValueFrom(
+        this.httpService.get(`${this.EXCHANGE_RATE_URL}?from=USD&to=${code}`),
+      );
+      const rateData = rateResponse.data;
+
+      if (!rateData.rates || typeof rateData.rates[code] !== 'number') {
+        throw new Error(`No exchange rate found for ${code}`);
+      }
+      rate = rateData.rates[code];
+    } catch (error) {
+      console.error(`Failed to fetch rate for ${code}:`, error);
+      rate = 1;
+    }
+
+    return { code, symbol, rate };
+  }
+
+  async getFormattedConvertedPriceByCurrency(
+    currencyCode: string,
+    price: number,
+  ) {
+    const currencyInfo = await this.getCurrencyInfoByCode(currencyCode);
+    const { code, symbol, rate } = currencyInfo;
+
+    const convertedPrice =
+      code === 'USD' ? Number(price) : Number(price) * rate;
+    return { price: convertedPrice, currency: code === 'USD' ? '$' : symbol };
   }
 
   async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {

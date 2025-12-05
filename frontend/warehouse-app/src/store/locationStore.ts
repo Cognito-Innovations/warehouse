@@ -9,6 +9,7 @@ const useLocationStore = create<LocationStore>((set, get) => ({
     pincode: "",
     countryCode: undefined,
     countryName: undefined,
+    currency: undefined,
   },
   userAddress: null,
   addressCache: {},
@@ -25,7 +26,7 @@ const useLocationStore = create<LocationStore>((set, get) => ({
 
   fetchCountryFromIP: async (defaultCity: string, defaultPincode: string, enableGeolocation = true) => {
     try {
-      const { countryCode, countryName } = await getUserCountryByIP();
+      const { countryCode, countryName, currency } = await getUserCountryByIP();
 
       if (!countryCode) {
         get().requestLocation(enableGeolocation);
@@ -37,6 +38,7 @@ const useLocationStore = create<LocationStore>((set, get) => ({
         pincode: defaultPincode,
         countryCode,
         countryName,
+        currency,
       };
 
       get().setUserLocation(userLocation);
@@ -94,7 +96,8 @@ const useLocationStore = create<LocationStore>((set, get) => ({
             city, 
             pincode, 
             countryCode: ipGeo.countryCode, 
-            countryName: address.country || ipGeo.countryName 
+            countryName: address.country || ipGeo.countryName, 
+            currency: ipGeo.currency
           };
 
           get().setUserLocation(userLocation);
@@ -194,6 +197,7 @@ const useLocationStore = create<LocationStore>((set, get) => ({
       pincode: "",
       countryCode: undefined,
       countryName: undefined,
+      currency: undefined,
     });
     get().setUserAddress(null);
     get().setError(null);

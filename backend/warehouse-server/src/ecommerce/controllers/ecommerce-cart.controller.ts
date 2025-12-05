@@ -29,22 +29,22 @@ export class CartController {
   @Get()
   async getCart(
     @Request() req: AuthenticatedRequest,
-    @Query('country') country?: string,
+    @Query('currency') currency?: string,
   ) {
     const userId = req.user?.id;
     if (!userId) {
       return { items: [], final_amount: 0 };
     }
-    return this.cartService.getCart(userId, country);
+    return this.cartService.getCart(userId, currency);
   }
 
   @Post('add')
   async addToCart(
     @Request() req: AuthenticatedRequest,
     @Body() addToCartDto: AddToCartDto,
-    @Query('country') country?: string,
+    @Query('currency') currency?: string,
   ) {
-    return this.cartService.addToCart(req.user.id, addToCartDto, country);
+    return this.cartService.addToCart(req.user.id, addToCartDto, currency);
   }
 
   @Put('items/:itemId')
@@ -52,13 +52,13 @@ export class CartController {
     @Request() req: AuthenticatedRequest,
     @Param('itemId') itemId: string,
     @Body() updateCartItemDto: UpdateCartItemDto,
-    @Query('country') country?: string,
+    @Query('currency') currency?: string,
   ) {
     return this.cartService.updateCartItem(
       req.user.id,
       itemId,
       updateCartItemDto,
-      country,
+      currency,
     );
   }
 
@@ -66,9 +66,9 @@ export class CartController {
   async removeFromCart(
     @Request() req,
     @Param('itemId') itemId: string,
-    @Query('country') country?: string,
+    @Query('currency') currency?: string,
   ) {
-    return this.cartService.removeFromCart(req.user.id, itemId, country);
+    return this.cartService.removeFromCart(req.user.id, itemId, currency);
   }
 
   @Delete('clear')

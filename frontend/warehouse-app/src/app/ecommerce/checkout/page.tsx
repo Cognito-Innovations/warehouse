@@ -35,8 +35,8 @@ export default function CheckoutPage() {
     city: '',
     pincode: '',
   });
-  const selectedCountry = locationData.location.countryName;
-  const currencyInfo = locationData.currencyInfo; // Changed from currencySymbol
+  const selectedCurrency = locationData.currencyInfo.code;
+  const currencyInfo = locationData.currencyInfo;
 
   useEffect(() => {
     if (hasInitialized) return;
@@ -86,9 +86,9 @@ export default function CheckoutPage() {
   }, [checkedOutItems, router, itemsLoaded]);
 
   const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
-  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, selectedCountry, currencyInfo), [checkedOutItems, selectedIds, selectedCountry, currencyInfo]); // Pass currencyInfo
+  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, selectedCurrency, currencyInfo), [checkedOutItems, selectedIds, selectedCurrency, currencyInfo]);
   
-  const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencyInfo.symbol), [currencyInfo.symbol]); // Use symbol from info
+  const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencyInfo.symbol), [currencyInfo.symbol]);
 
   const handleAddressSelect = useCallback((address: string) => {
     setShippingAddress(address);
@@ -139,7 +139,7 @@ export default function CheckoutPage() {
               items={checkedOutItems}
               totals={totals}
               shippingAddress={shippingAddress}
-              selectedCountry={selectedCountry}
+              selectedCurrency={selectedCurrency}
               currencyInfo={currencyInfo}
               user={user}
               formatLocalPrice={formatLocalPrice}

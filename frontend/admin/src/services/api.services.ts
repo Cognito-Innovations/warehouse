@@ -451,8 +451,10 @@ export const createProduct = async (
 
 export const getProducts = async (search: string = "") => {
   const params = new URLSearchParams();
-  if (search) {
-    params.append("search", search);
+  
+  const cleanSearch = search.trim();
+  if (cleanSearch) {
+    params.append("search", cleanSearch);
   }
 
   params.append("limit", "1000");

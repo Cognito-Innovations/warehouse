@@ -451,7 +451,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
                 ) : (
                   currencies?.map((currency: any) => (
                     <MenuItem key={currency.id} value={currency.id}>
-                     {currency.currency_code} ({currency.currency_symbol})
+                     {currency.name} ({currency.currency_symbol})
                     </MenuItem>
                   ))
                 )}

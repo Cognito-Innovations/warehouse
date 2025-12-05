@@ -37,22 +37,22 @@ export default function CartPage() {
     city: '',
     pincode: '',
   });
-  const selectedCountry = locationData.location.countryName;
-  const currencyInfo = locationData.currencyInfo; // Changed from currencySymbol
+  const selectedCurrency = locationData.currencyInfo.code;
+  const currencyInfo = locationData.currencyInfo;
 
   const userId = (session?.user as any)?.user_id;
 
   const initCart = useCallback(async () => {
     try {
-      await getCart(selectedCountry);
+      await getCart(selectedCurrency);
     } catch (e) {
       console.error("Initialization error:", e);
     }
-  }, [getCart, selectedCountry]);
+  }, [getCart, selectedCurrency]);
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!selectedCountry) return;
+    if (!selectedCurrency) return;
 
     if (hydrated) {
       initCart();
@@ -65,7 +65,7 @@ export default function CartPage() {
         clearTimeout(timer);
       };
     }
-  }, [selectedCountry, status, initCart, hydrated]);
+  }, [selectedCurrency, status, initCart, hydrated]);
 
   if (status === "loading" || !hydrated) {
     return <CartSkeletonLoader />;
@@ -107,8 +107,8 @@ export default function CartPage() {
               <CartItemsList
                 items={validItems}
                 selectedItems={new Set(checkoutProducts)}
-                currencyInfo={currencyInfo} // Pass full info (assume CartItemsList passes to CartItemCard)
-                selectedCountry={selectedCountry}
+                currencyInfo={currencyInfo}
+                selectedCurrency={selectedCurrency}
               />
             )}
 
@@ -123,10 +123,10 @@ export default function CartPage() {
               <OrderSummaryCard
                 userId={userId}
                 items={validItems}
-                selectedCountry={selectedCountry}
+                selectedCurrency={selectedCurrency}
                 selectedAddress={selectedAddress}
                 setHighlightAddressError={setHighlightAddressError}
-                currencyInfo={currencyInfo} // Pass full info
+                currencyInfo={currencyInfo}
               />
             )}
           </Box>

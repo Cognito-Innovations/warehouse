@@ -162,7 +162,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
     formData.description &&
     formData.image_url &&
     formData.price > 0 &&
-    formData.discount_percentage > 0 &&
+    formData.discount_percentage >= 0 &&
     formData.unit_value > 0 &&
     formData.measurement_id &&
     formData.cargo_option_id &&

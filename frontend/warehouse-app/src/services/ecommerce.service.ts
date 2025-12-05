@@ -58,7 +58,7 @@ export const ecommerceService = {
   // Products
   async getProducts(
     searchTerm?: string,
-    country?: string,
+    currency?: string,
     category?: string,
     limit?: number,
     offset?: number,
@@ -68,8 +68,8 @@ export const ecommerceService = {
     if (searchTerm) {
       params.search = searchTerm;
     }
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     if (category) {
       params.category = category;
@@ -87,10 +87,10 @@ export const ecommerceService = {
     return response.data;
   },
 
-  async getProduct(slug: string, country?: string, userId?: string): Promise<EcommerceProduct> {
+  async getProduct(slug: string, currency?: string, userId?: string): Promise<EcommerceProduct> {
     const params: any = {};
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     if (userId) {
       params.user_id = userId;
@@ -105,37 +105,37 @@ export const ecommerceService = {
   },
 
   // Cart
-  async getCart(country?: string): Promise<Cart> {
+  async getCart(currency?: string): Promise<Cart> {
     let params: any = {};
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     const response = await api.get("/ecommerce-cart", { params });
     return response.data;
   },
 
-  async addToCart(data: AddToCartRequest, country?: string): Promise<Cart> {
+  async addToCart(data: AddToCartRequest, currency?: string): Promise<Cart> {
     let params: any = {};
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     const response = await api.post("/ecommerce-cart/add", data, { params });
     return response.data;
   },
 
-  async updateCartItem(itemId: string, data: UpdateCartItemRequest, country?: string): Promise<Cart> {
+  async updateCartItem(itemId: string, data: UpdateCartItemRequest, currency?: string): Promise<Cart> {
     let params: any = {};
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     const response = await api.put(`/ecommerce-cart/items/${itemId}`, data, { params });
     return response.data;
   },
 
-  async removeFromCart(itemId: string, country?: string): Promise<Cart> {
+  async removeFromCart(itemId: string, currency?: string): Promise<Cart> {
     let params: any = {};
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     const response = await api.delete(`/ecommerce-cart/items/${itemId}`, {params});
     return response.data;

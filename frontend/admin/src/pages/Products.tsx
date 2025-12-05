@@ -1,5 +1,5 @@
 import type React from "react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Box, Typography } from "@mui/material";
 
 import { deleteProduct, getProducts, updateEcommerceProduct } from "../services/api.services";
@@ -47,11 +47,20 @@ const Products: React.FC = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
   const [searchValue, setSearchValue] = useState('');
+  const [debouncedSearchValue, setDebouncedSearchValue] = useState('');
+
+  const lastRequestId = useRef(0);
 
   const fetchProducts = useCallback(async (searchTerm: string = '') => {
+    const currentRequestId = ++lastRequestId.current;
+    
     try {
       setLoading(true);
       const response = await getProducts(searchTerm);
+
+      if (currentRequestId !== lastRequestId.current) {
+        return; 
+      }
       
       const mappedData: ProductRow[] = response.map((item: any) => {
         const priceValue = item.price?.price || item.price || 0;
@@ -86,17 +95,27 @@ const Products: React.FC = () => {
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
-      setLoading(false);
+      if (currentRequestId === lastRequestId.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value);
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchProducts(searchValue);
+      setDebouncedSearchValue(searchValue);
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchValue, fetchProducts]);
+  }, [searchValue]);
+
+  useEffect(() => {
+    fetchProducts(debouncedSearchValue);
+  }, [debouncedSearchValue, fetchProducts]);
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
@@ -172,10 +191,6 @@ const Products: React.FC = () => {
     }
   };
 
-  const handleSearchChange = (value: string) => {
-    setSearchValue(value);
-  };
-
   const noDataMessage = searchValue.trim() ? "Product not found" : "No products available";
 
   const columns: ColumnDefinition<ProductRow>[] = [
@@ -223,7 +238,7 @@ const Products: React.FC = () => {
     },
     {
       header: "Discount",
-      cell: (row) => <Typography variant="body2">{row.discount_percentage ? `${row.discount_percentage.toFixed(0)}%` : "0%"}</Typography>,
+      cell: (row) => <Typography variant="body2">{row.discount_percentage !== undefined ? `${row.discount_percentage}%` : "0%"}</Typography>,
       width: "20%",
     },
     {

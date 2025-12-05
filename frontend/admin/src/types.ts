@@ -154,17 +154,17 @@ export interface Country {
 
 export interface Currency {
   id: string;
+  name: string;
   currency_symbol: string;
   rate: number;
   currency_code: string;
-  country: Pick<Country, 'id' | 'name'>
 }
 
 export type CreateCountryPayload = Partial<Country>;
 export type UpdateCountryPayload = Partial<CreateCountryPayload>;
 
 export type CreateCurrencyPayload = {
-  country: string;
+  name: string;
   currency_symbol: string;
   currency_code: string;
   rate: number;

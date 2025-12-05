@@ -14,7 +14,6 @@ import { CreateOrderDto } from '../dto/order/create-order.dto';
 import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { User } from 'src/users/user.entity';
-import { Currency } from 'src/currencies/currency.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
 interface CurrencyInfo {
@@ -36,8 +35,6 @@ export class OrderService {
     private readonly cartRepository: Repository<EcommerceCart>,
     @InjectRepository(EcommerceCartItem)
     private readonly cartItemRepository: Repository<EcommerceCartItem>,
-    @InjectRepository(Currency)
-    private readonly currencyRepository: Repository<Currency>,
     private readonly userPreferenceService: UserPreferencesService,
   ) {
     const appId = process.env.CASHFREE_APP_ID;
@@ -93,8 +90,7 @@ export class OrderService {
       throw new BadRequestException('User not found');
     }
 
-    const countryName =
-      createOrderDto.country_name || 'United States of America';
+    const selectedCurrency = createOrderDto.currency || 'USD';
 
     const userCurrency =
       await this.userPreferenceService.getUserPreferredCurrency(userId);
@@ -104,20 +100,11 @@ export class OrderService {
       currencyInfo = userCurrency;
       orderCurrency = userCurrency.code;
     } else {
-      const currencyResponse = await this.currencyRepository.findOne({
-        where: { country: { name: countryName } },
-        relations: ['country'],
-      });
-
-      if (!currencyResponse) {
-        throw new BadRequestException('Currency not found for country');
-      }
-      currencyInfo = {
-        code: currencyResponse.currency_code,
-        symbol: currencyResponse.currency_symbol,
-        rate: currencyResponse.rate,
-      };
-      orderCurrency = currencyResponse.currency_code;
+      currencyInfo =
+        await this.userPreferenceService.getCurrencyInfoByCode(
+          selectedCurrency,
+        );
+      orderCurrency = selectedCurrency.toUpperCase();
     }
 
     let grossSubtotal = 0;
@@ -150,7 +137,7 @@ export class OrderService {
     if (isNaN(discountedSubTotal))
       throw new BadRequestException('Invalid cart amount');
 
-    const isIndia = countryName?.includes('India');
+    const isIndia = orderCurrency === 'INR';
     const threshold = isIndia ? 299 : 20;
     const deliveryFeeBase = isIndia ? 3 : 5;
     const serviceChargeBase = 1;
@@ -350,9 +337,8 @@ export class OrderService {
       targetInfo = userCurrency;
     }
 
-    const origCurrency = await this.currencyRepository.findOne({
-      where: { currency_code: 'INR' },
-    });
+    const origCurrency =
+      await this.userPreferenceService.getCurrencyInfoByCode('INR');
 
     if (!origCurrency) {
       return orders.map((order) => ({

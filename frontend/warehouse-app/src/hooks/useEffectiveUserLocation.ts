@@ -125,6 +125,7 @@ export function useEffectiveUserLocation(
       countryName: geoHook.location.countryName,
       city: geoHook.location.city,
       pincode: geoHook.location.pincode,
+      currency: geoHook.location.currency,
     };
   }, [hasValidAddress, geoHook.location, userAddress]);
 
@@ -140,16 +141,19 @@ export function useEffectiveUserLocation(
         isBase: code === 'INR'
       };
     }
-    const fallbackCountry = location.countryName || defaults.countryName || 'United States of America';
-    const fallbackCurr = getCurrencyForCountry(fallbackCountry);
-    const fallbackCode = fallbackCountry.includes('India') ? 'INR' : 'USD';
-    return {
-      symbol: fallbackCurr.symbol,
-      code: fallbackCode,
-      rate: 1,
-      isBase: true
+    const fallbackCode = location.currency || 'USD';
+    const symbolMap: Record<string, string> = {
+      'USD': '$',
+      'INR': '₹',
     };
-  }, [hasValidAddress, userAddress?.user?.preference?.currency, location.countryName, defaults.countryName]);
+    const symbol = symbolMap[fallbackCode.toUpperCase()] || '$';
+    return {
+      symbol,
+      code: fallbackCode.toUpperCase(),
+      rate: 1,
+      isBase: fallbackCode.toUpperCase() === 'USD'
+    };
+  }, [hasValidAddress, userAddress?.user?.preference?.currency, location.currency]);
 
   const isLoading = geoHook.isLoading || isLoadingAddress;
   const error = geoHook.error || globalError;

@@ -72,7 +72,7 @@ export interface LocalCartItem {
   id?: string;
   product_id: string;
   quantity: number;
-  country?: string;
+  currency?: string;
   product?: EcommerceProduct;
 }
 

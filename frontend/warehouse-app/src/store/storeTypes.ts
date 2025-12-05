@@ -32,15 +32,15 @@ export type ProductStore = {
   setError: (error: string | null) => void;
   setSearchQuery: (query: string) => void;
   getProducts: (params?: GetProductsParams) => Promise<EcommerceProduct[]>;
-  fetchProductBySlug: (slug: string, country?: string, userId?: string) => Promise<EcommerceProduct>;
-  getCategoryProducts: (categoryId: string, country?: string, limit?: number, userId?: string) => Promise<EcommerceProduct[]>;
+  fetchProductBySlug: (slug: string, currency?: string, userId?: string) => Promise<EcommerceProduct>;
+  getCategoryProducts: (categoryId: string, currency?: string, limit?: number, userId?: string) => Promise<EcommerceProduct[]>;
   handleProductSelect: (productId: string) => void;
   fetchProducts: (
     params: FetchProductsParams,
     reset?: boolean
   ) => Promise<void>;
 
-  loadProductPageData: (slug: string, country: string, userId?: string) => Promise<void>;
+  loadProductPageData: (slug: string, currency: string, userId?: string) => Promise<void>;
   setCurrentDetailProduct: (product: EcommerceProduct) => void;
   resetDetailState: () => void;
 }
@@ -60,7 +60,7 @@ export interface ProductDetailCache {
 
 export type GetProductsParams = {
   searchTerm?: string;
-  country?: string;
+  currency?: string;
   category?: string;
   limit?: number;
   offset?: number;
@@ -70,7 +70,7 @@ export type GetProductsParams = {
 export type FetchProductsParams = {
   category?: string;
   searchTerm?: string;
-  country?: string;
+  currency?: string;
   userId?: string;
 };
 
@@ -89,16 +89,16 @@ export type CartStore = {
   setHasHydrated: (value: boolean) => void;
   setUpdating: (productId: string, isUpdating: boolean) => void;
   getItemQuantity: (productId: string) => number;
-  getLineId: (productId: string, country?: string) => Promise<string | undefined>;
-  refreshCart: (country?: string) => Promise<LocalCartItem[]>;
-  syncCart: (country?: string) => Promise<void>;
-  getCart: (country?: string) => Promise<LocalCartItem[]>;
-  addOrIncreaseQty: (product: EcommerceProduct, quantity: number, country?: string) => Promise<void>;
-  decreaseProductQty: (product: EcommerceProduct, quantity: number, country?: string) => Promise<void>;
-  removeProductFromCart: (productId: string, country?: string) => Promise<void>;
-  incrementCartQuantity: (product: EcommerceProduct, country?: string) => Promise<void>;
-  decrementCartQuantity: (product: EcommerceProduct, country?: string) => Promise<void>;
-  setCartItemQuantity: (productId: string, quantity: number, country?: string) => Promise<void>;
+  getLineId: (productId: string, currency?: string) => Promise<string | undefined>;
+  refreshCart: (currency?: string) => Promise<LocalCartItem[]>;
+  syncCart: (currency?: string) => Promise<void>;
+  getCart: (currency?: string) => Promise<LocalCartItem[]>;
+  addOrIncreaseQty: (product: EcommerceProduct, quantity: number, currency?: string) => Promise<void>;
+  decreaseProductQty: (product: EcommerceProduct, quantity: number, currency?: string) => Promise<void>;
+  removeProductFromCart: (productId: string, currency?: string) => Promise<void>;
+  incrementCartQuantity: (product: EcommerceProduct, currency?: string) => Promise<void>;
+  decrementCartQuantity: (product: EcommerceProduct, currency?: string) => Promise<void>;
+  setCartItemQuantity: (productId: string, quantity: number, currency?: string) => Promise<void>;
   removePurchasedProducts: (purchasedProductIds: string[]) => void;
 }
 
@@ -107,6 +107,7 @@ export interface UserLocation {
   pincode: string;
   countryCode?: string;
   countryName?: string;
+  currency?: string;
 }
 
 export interface EffectiveUserLocation {
@@ -114,6 +115,7 @@ export interface EffectiveUserLocation {
   countryName?: string;
   city?: string;
   pincode?: string;
+  currency?: string;
 }
 
 export type LocationStore = {

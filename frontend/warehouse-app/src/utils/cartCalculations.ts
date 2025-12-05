@@ -13,7 +13,7 @@ export interface CartTotals {
 export const calculateCartTotals = (
     cartItems: any[],
     selectedItemIds: Set<string>,
-    country?: string,
+    currency?: string,
     currencyInfo?: CurrencyInfo,
 ): CartTotals => {
     if (!cartItems || cartItems.length === 0)
@@ -26,7 +26,7 @@ export const calculateCartTotals = (
     if (selectedItems.length === 0)
         return emptyTotals();
 
-    let { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(country);
+    let { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(currency);
 
     if (currencyInfo && !currencyInfo.isBase) {
       threshold = roundCurrency(threshold / currencyInfo.rate);
@@ -73,8 +73,8 @@ const emptyTotals = (): CartTotals => ({
     total: 0,
 });
 
-const getThresholdAndFees = (country?: string) => {
-    if (country?.includes("India"))
+const getThresholdAndFees = (currency?: string) => {
+    if (currency === 'INR')
         return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
     return { threshold: 20, deliveryFee: 5, serviceCharge: 1 }
 }

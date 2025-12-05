@@ -40,7 +40,7 @@ export default function EcommerceProductCard({
     city: '',
     pincode: '',
   });
-  const selectedCountry = locationData.location.countryName;
+  const selectedCurrency = locationData.currencyInfo.code;
 
   const rawPrice = product.price.price;
   const currency = product.price.currency;
@@ -61,17 +61,23 @@ export default function EcommerceProductCard({
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    incrementCartQuantity(product, selectedCountry);
+    incrementCartQuantity(product, selectedCurrency);
   };
 
   const handleDecreaseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    decrementCartQuantity(product, selectedCountry);
+    decrementCartQuantity(product, selectedCurrency);
   };
 
   return (
     <Card
       sx={{
+        width: {
+          xs: "100%",
+          sm: 230,
+          md: 260,
+        },
+        maxWidth: 280,
         borderRadius: ecommerceData.ui.spacing.cardBorderRadius,
         overflow: "hidden",
         cursor: "pointer",
