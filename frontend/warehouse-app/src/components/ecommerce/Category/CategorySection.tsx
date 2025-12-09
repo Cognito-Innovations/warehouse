@@ -51,7 +51,8 @@ export default function CategorySection() {
         sx={{
           position: "absolute",
           right: { xs: -10, md: -20 },
-          top: { xs: "14px", md: "20px" },
+          top: { xs: "50%", md: "20px" },
+          transform: { xs: "translateY(-50%)", md: "none" },
           zIndex: 2,
           width: { xs: 32, md: 40 },
           height: { xs: 32, md: 40 },

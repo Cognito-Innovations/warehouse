@@ -92,7 +92,7 @@ export class ProductsService {
     }
 
     if (search?.trim()) {
-      queryBuilder.andWhere('product.name ILIKE: search', {
+      queryBuilder.andWhere('product.name ILIKE :search', {
         search: `%${search.trim()}%`,
       });
     }
