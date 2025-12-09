@@ -10,6 +10,19 @@ import { CreateCurrencyDto } from 'src/currencies/dto/create-currency.dto';
 import { UpdateCurrencyDto } from 'src/currencies/dto/update-currency.dto';
 import { CurrenciesService } from 'src/currencies/currencies.service';
 
+interface RestCountryCurrency {
+  name?: string;
+  symbol?: string;
+}
+
+interface RestCountry {
+  currencies?: Record<string, RestCountryCurrency>;
+}
+
+interface ExchangeRateResponse {
+  rates: Record<string, number>;
+}
+
 interface CurrencyInfo {
   code: string;
   symbol: string;
@@ -37,8 +50,7 @@ export class ExternalCurrencyService {
     const cacheKey = `currency:${trimmedCountryName.toLowerCase()}`;
 
     // Check cache first
-    const cached: CurrencyInfo | undefined =
-      await this.cacheManager.get<CurrencyInfo>(cacheKey);
+    const cached = await this.cacheManager.get<CurrencyInfo>(cacheKey);
     const now = Date.now();
     if (cached && now - cached.timestamp < this.TWENTY_FOUR_HOURS_MS) {
       return cached;
@@ -65,7 +77,7 @@ export class ExternalCurrencyService {
       try {
         // Fetch currency code, symbol and name from REST Countries
         const countryResponse = await firstValueFrom(
-          this.httpService.get(
+          this.httpService.get<RestCountry[]>(
             `${this.REST_COUNTRIES_URL}/${encodeURIComponent(trimmedCountryName)}?fullText=true`,
           ),
         );
@@ -82,12 +94,14 @@ export class ExternalCurrencyService {
         const currCode = Object.keys(currenciesObj)[0];
         code = currCode;
         const currInfo = currenciesObj[currCode];
-        symbol = currInfo.symbol || '';
-        currencyName = currInfo.name || '';
+        symbol = currInfo?.symbol ?? '';
+        currencyName = currInfo?.name ?? '';
 
         // Fetch exchange rate (local currency units per USD)
         const rateResponse = await firstValueFrom(
-          this.httpService.get(`${this.EXCHANGE_RATE_URL}?from=USD&to=${code}`),
+          this.httpService.get<ExchangeRateResponse>(
+            `${this.EXCHANGE_RATE_URL}?from=USD&to=${code}`,
+          ),
         );
         const rateData = rateResponse.data;
 
@@ -96,6 +110,7 @@ export class ExternalCurrencyService {
         }
         rate = rateData.rates[code]; // Local per USD
       } catch (error) {
+        console.log('Fallback to USD:', error);
         // Fallback to USD
         code = 'USD';
         symbol = '$';
@@ -114,7 +129,7 @@ export class ExternalCurrencyService {
     await this.cacheManager.set(cacheKey, currencyInfo, this.CACHE_TTL_SECONDS);
 
     // Update DB
-    this.updateCurrencyRecord(code, symbol, rate, currencyName);
+    await this.updateCurrencyRecord(code, symbol, rate, currencyName);
 
     return currencyInfo;
   }

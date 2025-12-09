@@ -20,6 +20,20 @@ import { Invoice, InvoiceStatus } from 'src/invoice/entities/invoice.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { CreateShipmentInvoiceDto } from './dto/create-shipment-invoice.dto';
 
+export type FormattedInvoice = {
+  amount: string;
+  total: string;
+  products?: undefined;
+  id: string;
+  invoice_no: string;
+  status: InvoiceStatus;
+  created_at: number;
+  updated_at: number;
+} & Omit<
+  Partial<Invoice>,
+  'amount' | 'total' | 'products' | 'id' | 'invoice_no' | 'status'
+>;
+
 @Injectable()
 export class ShipmentsService {
   constructor(
@@ -55,25 +69,25 @@ export class ShipmentsService {
     invoice: Invoice | null,
     shipmentUserId: string,
     viewerId?: string,
-  ): Promise<any | null> {
+  ): Promise<FormattedInvoice | null> {
     if (!invoice) return null;
 
     const isAdminView = viewerId && viewerId !== shipmentUserId;
-    let amountStr: string;
-    let totalStr: string;
-    if (isAdminView) {
-      amountStr = `${invoice.amount} USD`;
-      totalStr = `${invoice.total} USD`;
-    } else {
-      amountStr = await this.userPreferencesService.getFormattedConvertedPrice(
-        shipmentUserId,
-        invoice.amount,
-      );
-      totalStr = await this.userPreferencesService.getFormattedConvertedPrice(
-        shipmentUserId,
-        invoice.total,
-      );
-    }
+
+    const amountStr: string = isAdminView
+      ? `${invoice.amount} USD`
+      : await this.userPreferencesService.getFormattedConvertedPrice(
+          shipmentUserId,
+          invoice.amount,
+        );
+
+    const totalStr: string = isAdminView
+      ? `${invoice.total} USD`
+      : await this.userPreferencesService.getFormattedConvertedPrice(
+          shipmentUserId,
+          invoice.total,
+        );
+
     return {
       ...invoice,
       products: undefined,
@@ -272,14 +286,18 @@ export class ShipmentsService {
       (doc) => doc.category === 'SHIPMENT_PHOTO',
     );
 
-    const formattedInvoice = await this.formatInvoice(invoice, shipment.user.id, viewerId);
+    const formattedInvoice = await this.formatInvoice(
+      invoice,
+      shipment.user.id,
+      viewerId,
+    );
 
     return {
       ...shipment,
       tracking_requests: trackingRequests,
       payment_slips: paymentSlips,
       shipment_photos: shipmentPhotos,
-      invoice: formattedInvoice,
+      invoice: formattedInvoice ?? undefined,
     };
   }
 
@@ -378,7 +396,7 @@ export class ShipmentsService {
 
     return {
       ...updatedShipment,
-      invoice: formattedInvoice,
+      invoice: formattedInvoice ?? undefined,
     };
   }
 

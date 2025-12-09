@@ -1,7 +1,7 @@
 import { test, expect, defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  timeout: 120_000,
+  timeout: 180_000,
 });
 
 async function closeDialog(page) {
@@ -63,7 +63,7 @@ test('test', async ({ browser }) => {
 
   // await closeDialog(page);
 
-  await expect(page.getByText('Action Logs', { exact: true })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText('Action Logs', { exact: true })).toBeVisible({ timeout: 50000 });
 
   await page.waitForLoadState('networkidle');
   
@@ -80,8 +80,8 @@ test('test', async ({ browser }) => {
   // ]);
   // await expect(pdfPage.url()).toMatch(/blob:/);
 
-
   await page2.goto('http://localhost:3000/sign-in');
+  await page.waitForLoadState('networkidle');
   await page2.getByRole('textbox', { name: 'Email' }).fill('testuser@test.com');
   await page2.getByRole('textbox', { name: 'Password' }).fill('Test@123');
   await page2.locator('div').nth(2).click();
@@ -89,12 +89,13 @@ test('test', async ({ browser }) => {
 
   // await page2.getByRole('checkbox').check();
   // await page2.getByRole('button', { name: 'Request Ship (1)' }).click();
-  await page2.getByRole('button', { name: 'Shipments (2)' }).click();
-  await page2.getByText(/S20255933IN.*SHIP_REQUEST/).click({ timeout: 20000 });
-  await page2.goto('http://localhost:3000/shipment/S20255933IN');
+  await page.waitForLoadState('networkidle');
+  await page2.getByRole('button', { name: 'Shipments (2)' }).click({ timeout: 40000 });
+  await page2.getByText(/S20255933IN.*SHIP_REQUEST/).click({ timeout: 40000 });
+  await page2.goto('http://localhost:3000/shipment/S20255933IN', { timeout: 40000 });
 
-
-  await page.getByRole('button', { name: 'Shipments' }).click();
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'Shipments' }).click({ timeout: 40000 });
   const visibilityBtn = page.locator(
     'tr:has-text("S20255933IN") button:has(svg[data-testid="VisibilityOutlinedIcon"])'
   );

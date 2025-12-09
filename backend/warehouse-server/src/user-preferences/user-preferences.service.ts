@@ -14,6 +14,10 @@ interface CurrencyInfo {
   rate: number;
 }
 
+interface ExchangeRateResponse {
+  rates: Record<string, number>;
+}
+
 @Injectable()
 export class UserPreferencesService {
   private readonly EXCHANGE_RATE_URL = 'https://api.frankfurter.app/latest';
@@ -73,7 +77,6 @@ export class UserPreferencesService {
     const rate = userPreference?.currency.rate;
     const currency_symbol = userPreference?.currency.currency_symbol;
     if (rate && currency_symbol && price) {
-      const currency_symbol = userPreference?.currency.currency_symbol;
       const convertedPrice = price * (rate || 0);
       const formattedPrice = convertedPrice.toFixed(2);
       return `${formattedPrice} ${currency_symbol}`;
@@ -111,6 +114,10 @@ export class UserPreferencesService {
 
       return Number(price) * Number(rate);
     } catch (error) {
+      console.error(
+        `Error converting price by country (${countryName}):`,
+        error,
+      );
       return price;
     }
   }
@@ -132,6 +139,10 @@ export class UserPreferencesService {
         code === 'USD' ? Number(price) : Number(price) * rate;
       return { price: convertedPrice, currency: code === 'USD' ? '$' : symbol };
     } catch (error) {
+      console.error(
+        `Error formatting converted price by country (${countryName}):`,
+        error,
+      );
       return { price: Number(price), currency: '$' };
     }
   }
@@ -160,7 +171,9 @@ export class UserPreferencesService {
 
     try {
       const rateResponse = await firstValueFrom(
-        this.httpService.get(`${this.EXCHANGE_RATE_URL}?from=USD&to=${code}`),
+        this.httpService.get<ExchangeRateResponse>(
+          `${this.EXCHANGE_RATE_URL}?from=USD&to=${code}`,
+        ),
       );
       const rateData = rateResponse.data;
 

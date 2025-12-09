@@ -22,6 +22,11 @@ interface CurrencyInfo {
   rate: number;
 }
 
+interface CashfreePaymentUpdate {
+  cf_payment_id: string;
+  [key: string]: any;
+}
+
 @Injectable()
 export class OrderService {
   private cashfree: Cashfree;
@@ -383,7 +388,7 @@ export class OrderService {
 
   async updatePaymentStatus(
     orderId: string,
-    cashfreeData: any,
+    cashfreeData: CashfreePaymentUpdate,
   ): Promise<EcommerceOrder> {
     const order = await this.findOne(orderId);
     if (order.payment_status !== PaymentStatus.PENDING) {

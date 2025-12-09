@@ -9,6 +9,19 @@ import {
 import { EcommerceCart } from './ecommerce-cart.entity';
 import { EcommerceProduct } from './ecommerce-product.entity';
 
+export interface ComputedCartItem {
+  id: string;
+  cart_id: string;
+  product_id: string;
+  quantity: number;
+  product: EcommerceProduct | null;
+  unit_price: number;
+  total_price: number;
+  discount_amount: number;
+  created_at: number;
+  updated_at: number;
+}
+
 @Entity('ecommerce_cart_items')
 export class EcommerceCartItem extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')

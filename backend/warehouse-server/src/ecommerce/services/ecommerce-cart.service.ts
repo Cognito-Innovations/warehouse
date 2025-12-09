@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EcommerceCart } from '../entities/ecommerce-cart.entity';
-import { EcommerceCartItem } from '../entities/ecommerce-cart-item.entity';
+import { ComputedCart, EcommerceCart } from '../entities/ecommerce-cart.entity';
+import {
+  ComputedCartItem,
+  EcommerceCartItem,
+} from '../entities/ecommerce-cart-item.entity';
 import { EcommerceProduct } from '../entities/ecommerce-product.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -50,7 +53,7 @@ export class CartService {
     userId: string,
     addToCartDto: AddToCartDto,
     currency?: string,
-  ): Promise<any> {
+  ): Promise<ComputedCart> {
     const { product_id, quantity } = addToCartDto;
 
     // Get or create cart
@@ -96,7 +99,7 @@ export class CartService {
     itemId: string,
     updateCartItemDto: UpdateCartItemDto,
     currency?: string,
-  ): Promise<any> {
+  ): Promise<ComputedCart> {
     let cart = await this.findActiveCart(userId);
     if (!cart) {
       cart = await this.createCart(userId);
@@ -121,7 +124,7 @@ export class CartService {
     userId: string,
     itemId: string,
     currency?: string,
-  ): Promise<any> {
+  ): Promise<ComputedCart> {
     let cart = await this.findActiveCart(userId);
     if (!cart) {
       cart = await this.createCart(userId);
@@ -148,90 +151,82 @@ export class CartService {
     await this.cartItemRepository.delete({ cart_id: cart.id });
   }
 
-  async getCart(userId: string, currency?: string): Promise<any> {
+  async getCart(
+    userId: string,
+    currency?: string,
+  ): Promise<ComputedCart & { currency?: string }> {
     let cart = await this.findActiveCart(userId);
-    if (!cart) {
-      cart = await this.createCart(userId);
-    }
+    if (!cart) cart = await this.createCart(userId);
 
-    // Compute prices dynamically
-    const computedItems = (cart.items || []).map((item) => {
-      const price = Number(item.product?.price || 0);
-      const discPerc = Number(item.product?.discount_percentage || 0);
-      const discountAmountPerUnit = (price * discPerc) / 100;
-      const unitPrice = price - discountAmountPerUnit;
-      const totalPrice = unitPrice * item.quantity;
-      const discountAmount = discountAmountPerUnit * item.quantity;
+    const items: ComputedCartItem[] = (cart.items ?? []).map((item) => {
+      const price = Number(item.product?.price ?? 0);
+      const discountPerc = Number(item.product?.discount_percentage ?? 0);
+
+      const discountPerUnit = (price * discountPerc) / 100;
+      const unitPrice = price - discountPerUnit;
 
       return {
         ...item,
         unit_price: unitPrice,
-        total_price: totalPrice,
-        discount_percentage: discountAmount,
-        product: item.product,
+        total_price: unitPrice * item.quantity,
+        discount_amount: discountPerUnit * item.quantity,
+        product: item.product ?? null,
       };
     });
 
-    const totalAmount = computedItems.reduce(
-      (sum, item) => sum + item.total_price,
-      0,
-    );
-    const totalDiscount = computedItems.reduce(
-      (sum, item) => sum + item.discount_percentage,
+    const totalAmount = items.reduce((sum, it) => sum + it.total_price, 0);
+    const totalDiscount = items.reduce(
+      (sum, it) => sum + it.discount_amount,
       0,
     );
     const finalAmount = totalAmount - totalDiscount;
 
-    const cartWithComputedTotals = {
-      ...cart,
-      items: computedItems,
+    const computedCart: ComputedCart = {
+      items,
       total_amount: totalAmount,
-      discount_percentage: totalDiscount,
+      discount_amount: totalDiscount,
       final_amount: finalAmount,
     };
 
-    const selectedCurrency = currency || 'USD';
-    return this.applyCurrencyConversion(
-      cartWithComputedTotals,
-      selectedCurrency,
-    );
+    return this.applyCurrencyConversion(computedCart, currency ?? 'USD');
   }
 
   private async applyCurrencyConversion(
-    cart: any,
+    cart: ComputedCart,
     currency: string,
-  ): Promise<any> {
-    if (!cart) return cart;
-
-    const convert = (price: number | string) => 
-      this.userPreferencesService.getFormattedConvertedPriceByCurrency(
-        currency,
-        Number(price),
-      );
+  ): Promise<ComputedCart> {
+    const convert = async (price: number): Promise<number> => {
+      const result =
+        await this.userPreferencesService.getFormattedConvertedPriceByCurrency(
+          currency,
+          price,
+        );
+      return typeof result === 'number' ? result : Number(result.price);
+    };
 
     const convertedItems = await Promise.all(
-      (cart.items || []).map(async (item: any) => {
-        const convertedProduct = item.product
-          ? {
-              ...item.product,
-              price: await convert(item.product.price),
-            }
-          : null;
+      cart.items.map(async (item) => {
+        let product = item.product;
+        if (product) {
+          product = Object.assign(product, {
+            price: await convert(Number(product.price)),
+          });
+        }
 
         return {
           ...item,
           unit_price: await convert(item.unit_price),
           total_price: await convert(item.total_price),
-          discount_percentage: await convert(item.discount_percentage),
-          product: convertedProduct,
-        };
+          discount_amount: await convert(item.discount_amount),
+          product,
+        } as ComputedCartItem;
       }),
     );
 
     return {
       ...cart,
       total_amount: await convert(cart.total_amount),
-      discount_percentage: await convert(cart.discount_percentage),
+      discount_amount: await convert(cart.discount_amount),
       final_amount: await convert(cart.final_amount),
       items: convertedItems,
     };

@@ -231,7 +231,7 @@ export class PickupRequestsService {
           feature_type: FeatureType.PickupRequest,
           feature_fid: updatedPickupRequest.id,
           status: mapPickupToTrackingStatus(updatedPickupRequest.status),
-          user: updatedPickupRequest.user.id as any,
+          user: { id: updatedPickupRequest.user.id },
         });
         await queryRunner.manager.save(trackingRequest);
       }

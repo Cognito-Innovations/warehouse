@@ -130,7 +130,8 @@ export class UsersService {
       await this.userRepository.save(user);
       return { message: 'Password updated successfully' };
     } catch (error) {
-      throw new BadRequestException('Failed to update password', error);
+      console.error('Failed to update password:', error);
+      throw new BadRequestException('Failed to update password');
     }
   }
 

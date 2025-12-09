@@ -172,7 +172,6 @@ export class PackagesService {
     packageEntity.tracking_no = createPackageDto.tracking_no;
     packageEntity.vendor_id = createPackageDto.vendor;
     packageEntity.status = createPackageDto.status || 'Action Required';
-    // Remove the hardcoded country id
     packageEntity.country = { id: countryId } as Country;
     packageEntity.total_weight = createPackageDto.weight
       ? parseFloat(createPackageDto.weight)

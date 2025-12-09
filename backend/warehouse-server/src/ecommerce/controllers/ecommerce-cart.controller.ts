@@ -14,6 +14,7 @@ import { CartService } from '../services/ecommerce-cart.service';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { ComputedCart } from '../entities/ecommerce-cart.entity';
 
 interface AuthenticatedRequest {
   user: {
@@ -43,7 +44,7 @@ export class CartController {
     @Request() req: AuthenticatedRequest,
     @Body() addToCartDto: AddToCartDto,
     @Query('currency') currency?: string,
-  ) {
+  ): Promise<ComputedCart> {
     return this.cartService.addToCart(req.user.id, addToCartDto, currency);
   }
 
@@ -53,7 +54,7 @@ export class CartController {
     @Param('itemId') itemId: string,
     @Body() updateCartItemDto: UpdateCartItemDto,
     @Query('currency') currency?: string,
-  ) {
+  ): Promise<ComputedCart> {
     return this.cartService.updateCartItem(
       req.user.id,
       itemId,
@@ -64,15 +65,17 @@ export class CartController {
 
   @Delete('items/:itemId')
   async removeFromCart(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('itemId') itemId: string,
     @Query('currency') currency?: string,
-  ) {
+  ): Promise<ComputedCart> {
     return this.cartService.removeFromCart(req.user.id, itemId, currency);
   }
 
   @Delete('clear')
-  async clearCart(@Request() req: AuthenticatedRequest) {
+  async clearCart(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<{ message: string }> {
     await this.cartService.clearCart(req.user.id);
     return { message: 'Cart cleared successfully' };
   }

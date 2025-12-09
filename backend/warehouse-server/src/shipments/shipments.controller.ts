@@ -35,7 +35,7 @@ export class ShipmentsController {
   @Post()
   async create(
     @Body() createShipmentDto: CreateShipmentDto,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ShipmentResponseDto> {
     const userId = req.user.id;
     return this.shipmentsService.createShipment(createShipmentDto, userId);
