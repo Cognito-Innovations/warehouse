@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Box, Container } from "@mui/material";
 import { useSession } from "next-auth/react";
 
-import { useCartStore } from "@/store/cartStore";
+import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import CartHeader from "@/components/ecommerce/cart/CartHeader";
 import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
@@ -16,12 +16,11 @@ import AddressSection from "@/components/ecommerce/cart/AddressSection";
 import CartLoginState from "@/components/ecommerce/cart/CartLoginState";
 import OrderSummarySkeleton from "@/components/ecommerce/skeleton-loader/OrderSummarySkeleton";
 import CartItemsSkeleton from "@/components/ecommerce/skeleton-loader/CartItemsSkeleton";
-import { getCurrencyForCountry } from "@/utils/currency";
-import { getCartItemPricingSummary } from "@/utils/priceUtils";
 import { CartAddressData } from "@/types/ecommerce";
 
 export default function CartPage() {
   const { data: session, status } = useSession();
+  const hydrated = useCartHasHydrated();
   const {
     cartProducts,
     getCart,
@@ -32,64 +31,51 @@ export default function CartPage() {
   const [highlightAddressError, setHighlightAddressError] = useState(false);
   const [isCartLoading, setIsCartLoading] = useState(false); 
 
-  const { location, refreshAddresses } = useEffectiveUserLocation({
+  const locationData = useEffectiveUserLocation({
     countryCode: undefined,
     countryName: undefined,
     city: '',
     pincode: '',
   });
-  const selectedCountry = location.countryName;
+  const selectedCurrency = locationData.currencyInfo.code;
+  const currencyInfo = locationData.currencyInfo;
 
   const userId = (session?.user as any)?.user_id;
 
   const initCart = useCallback(async () => {
     try {
-      if (cartProducts.length === 0) {
-        setIsCartLoading(true);
-      }
-      await getCart(selectedCountry);
+      await getCart(selectedCurrency);
     } catch (e) {
       console.error("Initialization error:", e);
-    } finally {
-      setIsCartLoading(false);
     }
-  }, [cartProducts.length, getCart, selectedCountry]);
+  }, [getCart, selectedCurrency]);
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!selectedCountry) return;
+    if (!selectedCurrency) return;
 
-    useCartStore.persist.onFinishHydration(() => {
+    if (hydrated) {
       initCart();
-    });
-  }, [selectedCountry, status, initCart]);
+    } else {
+      const unsub = useCartStore.persist.onFinishHydration(() => initCart());
+      const timer = setTimeout(() => initCart(), 3000);
 
-  if (status === "loading") {
+      return () => {
+        unsub();
+        clearTimeout(timer);
+      };
+    }
+  }, [selectedCurrency, status, initCart, hydrated]);
+
+  if (status === "loading" || !hydrated) {
     return <CartSkeletonLoader />;
   }
 
-  if (!isCartLoading && (!cartProducts || cartProducts.length === 0)) {
+  if (!cartProducts || cartProducts.length === 0) {
     return <EmptyCartState/>
   }
 
   const validItems = cartProducts.filter(item => item && item.product);
-
-  const getCurrencySymbol = () => {
-    if (validItems.length > 0) {
-      const firstSelected = validItems.find((item) =>
-        checkoutProducts.includes(item.product_id!)
-      );
-      
-      if (firstSelected) {
-        const pricing = getCartItemPricingSummary(firstSelected);
-        if (pricing.currency) return pricing.currency;
-      }
-    }
-    return currencyInfo.symbol;
-  };
-
-  const currencyInfo = getCurrencyForCountry(selectedCountry!);
-  const currencySymbol = getCurrencySymbol();
 
   return (
     <Box sx={{ bgcolor: "grey.50", minHeight: "100vh" }}>
@@ -112,7 +98,7 @@ export default function CartPage() {
                 userId={userId}
                 onAddressChange={setSelectedAddress}
                 highlightAddressError={highlightAddressError}
-                refreshAddresses={refreshAddresses}
+                refreshAddresses={locationData.refreshAddresses}
               />
             )}
             {isCartLoading ? (
@@ -121,8 +107,8 @@ export default function CartPage() {
               <CartItemsList
                 items={validItems}
                 selectedItems={new Set(checkoutProducts)}
-                currencySymbol={currencySymbol}
-                selectedCountry={selectedCountry}
+                currencyInfo={currencyInfo}
+                selectedCurrency={selectedCurrency}
               />
             )}
 
@@ -137,10 +123,10 @@ export default function CartPage() {
               <OrderSummaryCard
                 userId={userId}
                 items={validItems}
-                selectedCountry={selectedCountry}
+                selectedCurrency={selectedCurrency}
                 selectedAddress={selectedAddress}
                 setHighlightAddressError={setHighlightAddressError}
-                currencySymbol={currencySymbol}
+                currencyInfo={currencyInfo}
               />
             )}
           </Box>

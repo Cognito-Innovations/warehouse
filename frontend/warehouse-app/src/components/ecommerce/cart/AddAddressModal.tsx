@@ -19,14 +19,14 @@ import {
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { CartAddressData } from "@/types/ecommerce";
-import { getCountries } from "@/lib/api.service";
+import { getCountries, getCurrencies } from "@/lib/api.service";
 import { getStatesForCountry, getCitiesForState } from "@/data/countryStatesCities";
 
 export interface AddAddressModalProps {
   open: boolean;
   initialData?: CartAddressData | null;
   onClose: () => void;
-  onSave: (address: Omit<CartAddressData, "id"> & { phone_code?: string }) => Promise<void>;
+  onSave: (address: Omit<CartAddressData, "id"> & { phone_code?: string; currency?: string; }) => Promise<void>;
   title: string;
   saveLabel: string;
   cancelLabel: string;
@@ -37,6 +37,13 @@ interface Country {
   name: string;
   code: string;
   phone_code: string;
+}
+
+interface Currency {
+  id: string;
+  currency_code: string;
+  name: string;
+  currency_symbol: string;
 }
 
 export default function AddAddressModal({
@@ -54,15 +61,18 @@ export default function AddAddressModal({
     city: "",
     state: "",
     zip_code: "",
-    country: "",
-    phone_code: "",
+    country: "India",
+    phone_code: "+91",
     phone_number: "",
     email: "",
+    currency: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [countries, setCountries] = useState<Country[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(false);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [loadingCurrencies, setLoadingCurrencies] = useState(false);
   const [availableStates, setAvailableStates] = useState<string[]>([]);
   const [availableCities, setAvailableCities] = useState<string[]>([]);
 
@@ -75,12 +85,20 @@ export default function AddAddressModal({
   useEffect(() => {
     if (open) {
       loadCountries();
+      loadCurrencies();
     }
   }, [open]);
 
   useEffect(() => {
     if (open) {
       if (initialData) {
+        let cleanPhoneNumber = initialData.phone_number || "";
+        const countryCode = "+91";
+
+        if (cleanPhoneNumber.startsWith(countryCode)) {
+          cleanPhoneNumber = cleanPhoneNumber.replace(countryCode, "");
+        }
+
         setFormData((prev) => ({
           ...prev,
           name: initialData.name || "",
@@ -88,9 +106,11 @@ export default function AddAddressModal({
           city: initialData.city || "",
           state: initialData.state || "",
           zip_code: initialData.zip_code || "",
-          country: initialData.country || "",
-          phone_number: initialData.phone_number || "",
+          country: initialData.country || "India",
+          phone_code: countryCode, 
+          phone_number: cleanPhoneNumber,
           email: initialData.email || "",
+          currency: (initialData as any).currency_id || (initialData as any).currency || "",
         }));
 
         const states = getStatesForCountry(initialData.country);
@@ -106,17 +126,18 @@ export default function AddAddressModal({
           city: "",
           state: "",
           zip_code: "",
-          country: "",
-          phone_code: "",
+          country: "India",
+          phone_code: "+91",
           phone_number: "",
           email: "",
+          currency: "",
         });
         setAvailableStates([]);
         setAvailableCities([]);
       }
       setErrors({});
     }
-  }, [open, initialData]);
+  }, [open]); 
 
   useEffect(() => {
     if (formData.country && countries.length > 0) {
@@ -182,11 +203,22 @@ export default function AddAddressModal({
     }
   };
 
+  const loadCurrencies = async () => {
+    setLoadingCurrencies(true);
+    try {
+      const currenciesData = await getCurrencies();
+      setCurrencies(Array.isArray(currenciesData) ? currenciesData : []);
+    } catch (err) {
+      console.error("Failed to load currencies:", err);
+    } finally {
+      setLoadingCurrencies(false);
+    }
+  };
+
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | { value: unknown }>) => {
     const value = (e.target as HTMLInputElement).value as string;
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
-      // Handle dependent fields
       if (field === "country") {
         newData.state = "";
         newData.city = "";
@@ -219,12 +251,12 @@ export default function AddAddressModal({
     if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.state.trim()) newErrors.state = "State is required";
     if (!formData.zip_code.trim()) newErrors.zip_code = "Zip code is required";
-    if (!formData.country.trim()) newErrors.country = "Country is required";
+    // if (!formData.country.trim()) newErrors.country = "Country is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
 
-    if (!formData.phone_code.trim()) {
-        newErrors.phone_code = "Required";
-    }
+    // if (!formData.phone_code.trim()) {
+    //      newErrors.phone_code = "Required";
+    // }
 
     if (!formData.phone_number.trim()) {
         newErrors.phone_number = "Phone number is required";
@@ -252,7 +284,6 @@ export default function AddAddressModal({
 
     setLoading(true);
     try {
-      // Only send required fields to API
       const addressData: Omit<CartAddressData, "id"> = {
         name: formData.name,
         address: formData.address,
@@ -263,22 +294,9 @@ export default function AddAddressModal({
         phone_code: formData.phone_code,
         phone_number: formData.phone_number || undefined,
         email: formData.email || undefined,
+        currency: formData.currency || undefined,
       };
       await onSave(addressData);
-      setFormData({
-        name: "",
-        address: "",
-        city: "",
-        state: "",
-        zip_code: "",
-        country: "",
-        phone_code: "",
-        phone_number: "",
-        email: "",
-      });
-      setAvailableStates([]);
-      setAvailableCities([]);
-      setErrors({});
       onClose();
     } catch (err) {
       console.error("Failed to save address:", err);
@@ -289,20 +307,6 @@ export default function AddAddressModal({
 
   const handleClose = () => {
     if (!loading) {
-      setFormData({
-        name: "",
-        address: "",
-        city: "",
-        state: "",
-        zip_code: "",
-        country: "",
-        phone_code: "",
-        phone_number: "",
-        email: "",
-      });
-      setAvailableStates([]);
-      setAvailableCities([]);
-      setErrors({});
       onClose();
     }
   };
@@ -341,32 +345,65 @@ export default function AddAddressModal({
             rows={2}
             required
           />
-          <FormControl fullWidth required error={!!errors.country}>
-            <InputLabel>Country</InputLabel>
-            <Select
-              value={formData.country}
-              onChange={handleChange("country")}
-              label="Country"
-            >
-              {loadingCountries ? (
+
+          <Box sx={{ display: "flex", gap: 2 }}>
+            {/* TODO: Only India is allowed when multiple currency enabe we can uncomment */}
+            <FormControl fullWidth required error={!!errors.country}>
+              <InputLabel>Country</InputLabel>
+              <Select
+                // value={formData.country}
+                value="India"
+                // onChange={handleChange("country")}
+                label="Country"
+                disabled
+              >
+                {loadingCountries ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    Loading countries...
+                  </MenuItem>
+                ) : (
+                  countries.map((country) => (
+                    <MenuItem key={country.id} value={country.name}>
+                      {country.name}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+              {errors.country && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                  {errors.country}
+                </Typography>
+              )}
+            </FormControl>
+
+            <FormControl fullWidth error={!!errors.currency}>
+              <InputLabel>Currency</InputLabel>
+              <Select
+                value={formData.currency}
+                onChange={handleChange("currency")}
+                label="Currency"
+              >
+              {loadingCurrencies ? (
                 <MenuItem disabled>
-                  <CircularProgress size={20} sx={{ mr: 1 }} />
-                  Loading countries...
+                <CircularProgress size={20} sx={{ mr: 1 }} />
+                Loading Currencies...
                 </MenuItem>
               ) : (
-                countries.map((country) => (
-                  <MenuItem key={country.id} value={country.name}>
-                    {country.name}
-                  </MenuItem>
+                currencies.map((curr) => (
+                <MenuItem key={curr.id} value={curr.id}>
+                  {curr.name} ({curr.currency_symbol})
+                </MenuItem>
                 ))
               )}
-            </Select>
-            {errors.country && (
+              </Select>
+              {errors.currency && (
               <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
-                {errors.country}
+                  {errors.currency}
               </Typography>
-            )}
-          </FormControl>
+              )}
+            </FormControl>
+          </Box>
 
           <Box sx={{ display: "flex", gap: 2 }}>
             {availableStates.length > 0 ? (
@@ -447,7 +484,7 @@ export default function AddAddressModal({
           <Box sx={{ display: "flex", gap: 1 }}>
             <TextField
               label="Code"
-              value={formData.phone_code}
+              value={"+91"}
               sx={{ width: "100px" }}
               disabled={true}
               error={!!errors.phone_code} 
@@ -463,7 +500,7 @@ export default function AddAddressModal({
               required
             />
           </Box>
-          
+            
           <TextField
             label="Email"
             type="email"

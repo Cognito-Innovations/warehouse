@@ -40,7 +40,7 @@ export default function EcommerceProductCard({
     city: '',
     pincode: '',
   });
-  const selectedCountry = locationData.location.countryName;
+  const selectedCurrency = locationData.currencyInfo.code;
 
   const rawPrice = product.price.price;
   const currency = product.price.currency;
@@ -61,17 +61,23 @@ export default function EcommerceProductCard({
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    incrementCartQuantity(product, selectedCountry);
+    incrementCartQuantity(product, selectedCurrency);
   };
 
   const handleDecreaseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    decrementCartQuantity(product, selectedCountry);
+    decrementCartQuantity(product, selectedCurrency);
   };
 
   return (
     <Card
       sx={{
+        width: {
+          xs: "100%",
+          sm: 230,
+          md: 260,
+        },
+        maxWidth: 280,
         borderRadius: ecommerceData.ui.spacing.cardBorderRadius,
         overflow: "hidden",
         cursor: "pointer",
@@ -199,13 +205,17 @@ export default function EcommerceProductCard({
           display: { xs: "block", sm: "flex" }, 
           alignItems: { sm: "center" }, 
           justifyContent: { sm: "space-between" }, 
-          mb: 1 
+          mb: 1, 
+          columnGap: 1,
+          pr: 2
         }}>
           <Box sx={{ 
             display: "flex", 
             alignItems: "center", 
             gap: 1,
-            mb: { xs: 1.5, sm: 0 }
+            mb: { xs: 1.5, sm: 0 },
+            minWidth: 120,
+            flexShrink: 0,
           }}>
             <Typography variant="body1" fontWeight="bold" color="primary" sx={{ fontSize: "1rem" }}>
               {formattedDiscounted}

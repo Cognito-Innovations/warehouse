@@ -40,7 +40,7 @@ export class EcommerceCategory extends BaseTimestampEntity {
       referencedColumnName: 'id',
     },
   })
-  countries: Country[]
+  countries: Country[];
 
   @Column({ type: 'text', nullable: true })
   description: string;

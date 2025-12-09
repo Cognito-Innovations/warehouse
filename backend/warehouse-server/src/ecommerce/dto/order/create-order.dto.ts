@@ -27,7 +27,7 @@ export class CreateOrderDto {
 
   @IsString()
   @IsOptional()
-  country_name?: string;
+  currency?: string;
 
   @IsArray()
   @IsString({ each: true })

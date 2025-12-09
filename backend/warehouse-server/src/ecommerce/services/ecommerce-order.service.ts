@@ -14,8 +14,18 @@ import { CreateOrderDto } from '../dto/order/create-order.dto';
 import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { User } from 'src/users/user.entity';
-import { Currency } from 'src/currencies/currency.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+
+interface CurrencyInfo {
+  code: string;
+  symbol: string;
+  rate: number;
+}
+
+interface CashfreePaymentUpdate {
+  cf_payment_id: string;
+  [key: string]: any;
+}
 
 @Injectable()
 export class OrderService {
@@ -30,8 +40,6 @@ export class OrderService {
     private readonly cartRepository: Repository<EcommerceCart>,
     @InjectRepository(EcommerceCartItem)
     private readonly cartItemRepository: Repository<EcommerceCartItem>,
-    @InjectRepository(Currency)
-    private readonly currencyRepository: Repository<Currency>,
     private readonly userPreferenceService: UserPreferencesService,
   ) {
     const appId = process.env.CASHFREE_APP_ID;
@@ -87,18 +95,22 @@ export class OrderService {
       throw new BadRequestException('User not found');
     }
 
-    const countryName =
-      createOrderDto.country_name || 'United States of America';
-    const currencyResponse = await this.currencyRepository.findOne({
-      where: { country: { name: countryName } },
-      relations: ['country'],
-    });
+    const selectedCurrency = createOrderDto.currency || 'USD';
 
-    if (!currencyResponse) {
-      throw new BadRequestException('Currency not found for country');
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    let currencyInfo: CurrencyInfo;
+    let orderCurrency: string;
+    if (userCurrency) {
+      currencyInfo = userCurrency;
+      orderCurrency = userCurrency.code;
+    } else {
+      currencyInfo =
+        await this.userPreferenceService.getCurrencyInfoByCode(
+          selectedCurrency,
+        );
+      orderCurrency = selectedCurrency.toUpperCase();
     }
-
-    const orderCurrency = currencyResponse.currency_code;
 
     let grossSubtotal = 0;
     let totalDiscountAmount = 0;
@@ -107,33 +119,30 @@ export class OrderService {
       const basePrice = Number(item.product.price);
 
       const rawConvertedBasePrice =
-        await this.userPreferenceService.getConvertedPriceByCountry(
-          countryName,
-          basePrice,
-        );
+        currencyInfo.code === 'USD' ? basePrice : basePrice * currencyInfo.rate;
 
       const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
 
       const discountPercent = Number(item.product.discount_percentage || 0);
 
       const discountedUnitPrice = this.roundCurrency(
-        originalUnitPrice * (1 - discountPercent / 100)
+        originalUnitPrice * (1 - discountPercent / 100),
       );
 
       const discountPerUnit = this.roundCurrency(
-        originalUnitPrice - discountedUnitPrice
+        originalUnitPrice - discountedUnitPrice,
       );
 
       grossSubtotal += originalUnitPrice * item.quantity;
       totalDiscountAmount += discountPerUnit * item.quantity;
-    };
+    }
 
     const discountedSubTotal = grossSubtotal - totalDiscountAmount;
 
     if (isNaN(discountedSubTotal))
       throw new BadRequestException('Invalid cart amount');
 
-    const isIndia = countryName?.includes('India');
+    const isIndia = orderCurrency === 'INR';
     const threshold = isIndia ? 299 : 20;
     const deliveryFeeBase = isIndia ? 3 : 5;
     const serviceChargeBase = 1;
@@ -161,7 +170,7 @@ export class OrderService {
       user_id: userId,
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
-      subtotal: roundedNetSubtotal, 
+      subtotal: roundedNetSubtotal,
       discount_percentage: roundedDiscount,
       shipping_amount: roundedShipping,
       tax_amount: roundedTax,
@@ -176,19 +185,16 @@ export class OrderService {
     for (const item of itemsToProcess) {
       const basePrice = Number(item.product.price);
       const rawConvertedBasePrice =
-        await this.userPreferenceService.getConvertedPriceByCountry(
-          countryName,
-          basePrice,
-        );
+        currencyInfo.code === 'USD' ? basePrice : basePrice * currencyInfo.rate;
 
       const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
       const discountPercent = Number(item.product.discount_percentage || 0);
       const discountedUnitPrice = this.roundCurrency(
-        originalUnitPrice * (1 - discountPercent / 100)
+        originalUnitPrice * (1 - discountPercent / 100),
       );
 
       const discountPerUnit = this.roundCurrency(
-        originalUnitPrice - discountedUnitPrice
+        originalUnitPrice - discountedUnitPrice,
       );
       const totalLinePrice = discountedUnitPrice * item.quantity;
       const totalLineDiscount = discountPerUnit * item.quantity;
@@ -217,20 +223,30 @@ export class OrderService {
       );
 
       return await this.findOne(savedOrder.id);
-    } catch (cashfreeErr: any) {
+    } catch (cashfreeErr: unknown) {
       // Rollback on Cashfree failure
       await this.orderRepository.delete(savedOrder.id);
 
-      console.error(
-        'Cashfree error:',
-        cashfreeErr.response?.data || cashfreeErr.message,
-      );
+      console.error('Cashfree error:', cashfreeErr);
+
+      let errorMessage = 'Unknown error';
+      if (cashfreeErr instanceof Error) {
+        errorMessage = cashfreeErr.message;
+      } else if (
+        typeof cashfreeErr === 'object' &&
+        cashfreeErr !== null &&
+        'response' in cashfreeErr
+      ) {
+        const resp = (
+          cashfreeErr as { response?: { data?: { message?: string } } }
+        ).response;
+        if (resp?.data?.message) {
+          errorMessage = resp.data.message;
+        }
+      }
 
       throw new BadRequestException(
-        'Failed to initialize payment session: ' +
-          (cashfreeErr.response?.data?.message ||
-            cashfreeErr.message ||
-            'Unknown error'),
+        `Failed to initialize payment session: ${errorMessage}`,
       );
     }
   }
@@ -269,14 +285,21 @@ export class OrderService {
     await this.orderRepository.save(savedOrder);
   }
 
-  async findAll(userId?: string): Promise<EcommerceOrder[]> {
-    const whereCondition = userId ? { user_id: userId } : {};
-
-    return this.orderRepository.find({
-      where: whereCondition,
+  async findAll(userId: string): Promise<EcommerceOrder[]> {
+    const orders = await this.orderRepository.find({
+      where: { user_id: userId },
       relations: ['items', 'items.product', 'user'],
       order: { created_at: 'DESC' },
     });
+
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    const displayCurrency = userCurrency?.symbol || '$';
+
+    return orders.map((order) => ({
+      ...order,
+      display_currency: displayCurrency,
+    })) as unknown as EcommerceOrder[];
   }
 
   async findOne(id: string): Promise<EcommerceOrder> {
@@ -289,17 +312,56 @@ export class OrderService {
       throw new NotFoundException('Order not found');
     }
 
-    return order;
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(order.user_id);
+    const displayCurrency = userCurrency?.symbol || '$';
+
+    return {
+      ...order,
+      display_currency: displayCurrency,
+    } as unknown as EcommerceOrder;
   }
 
-  async getOrdersByUser(userId?: string): Promise<EcommerceOrder[]> {
-    const whereCondition = userId ? { user_id: userId } : {};
-
-    return this.orderRepository.find({
-      where: whereCondition,
+  async getOrdersByUser(userId: string): Promise<EcommerceOrder[]> {
+    const orders = await this.orderRepository.find({
+      where: { user_id: userId },
       relations: ['items', 'items.product', 'user'],
       order: { created_at: 'DESC' },
     });
+
+    if (orders.length === 0) {
+      return [];
+    }
+
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    let targetInfo: CurrencyInfo;
+    if (!userCurrency) {
+      targetInfo = { code: 'USD', symbol: '$', rate: 1 };
+    } else {
+      targetInfo = userCurrency;
+    }
+
+    const origCurrency =
+      await this.userPreferenceService.getCurrencyInfoByCode('INR');
+
+    if (!origCurrency) {
+      return orders.map((order) => ({
+        ...order,
+        display_currency: targetInfo.symbol,
+      })) as unknown as EcommerceOrder[];
+    }
+
+    const origRate = origCurrency.rate;
+    const conversionFactor = targetInfo.rate / origRate;
+
+    const convertedOrders = orders.map((order) => ({
+      ...order,
+      total_amount: this.roundCurrency(order.total_amount * conversionFactor),
+      display_currency: targetInfo.symbol,
+    })) as unknown as EcommerceOrder[];
+
+    return convertedOrders;
   }
 
   async findByOrderNumber(orderNumber: string): Promise<EcommerceOrder> {
@@ -326,7 +388,7 @@ export class OrderService {
 
   async updatePaymentStatus(
     orderId: string,
-    cashfreeData: any,
+    cashfreeData: CashfreePaymentUpdate,
   ): Promise<EcommerceOrder> {
     const order = await this.findOne(orderId);
     if (order.payment_status !== PaymentStatus.PENDING) {

@@ -1,13 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EcommerceProduct } from '../entities/ecommerce-product.entity.js';
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.js';
-import { Country } from 'src/Countries/country.entity.js';
 import { CreateEcommerceProductDto } from '../dto/product/create-product.dto.js';
 import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto.js';
 import { UserPreferencesService } from '../../user-preferences/user-preferences.service.js';
 import { EcommerceCargoOption } from '../entities/cargo-options.entity.js';
+import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
+import { Country } from 'src/Countries/country.entity.js';
+import { EcommerceMeasurement } from '../entities/measurement.entity.js';
+
+interface CurrencyInfo {
+  code: string;
+  symbol: string;
+  rate: number;
+}
 
 @Injectable()
 export class ProductsService {
@@ -16,6 +24,26 @@ export class ProductsService {
     private readonly productRepository: Repository<EcommerceProduct>,
     private readonly userPreferencesService: UserPreferencesService,
   ) {}
+
+  private async getCurrencyInfo(
+    currency?: string,
+    userId?: string,
+  ): Promise<CurrencyInfo> {
+    const selectedCurrency = currency || 'USD';
+
+    if (userId) {
+      const userCurrency =
+        await this.userPreferencesService.getUserPreferredCurrency(userId);
+
+      if (userCurrency) {
+        return userCurrency;
+      }
+    }
+
+    return await this.userPreferencesService.getCurrencyInfoByCode(
+      selectedCurrency,
+    );
+  }
 
   async create(
     createProductDto: CreateEcommerceProductDto,
@@ -41,71 +69,92 @@ export class ProductsService {
   }
 
   async findAll(
-    country?: string,
+    currency?: string,
     search?: string,
     category?: string,
+    userId?: string,
+    role?: string,
     limit = 20,
     offset = 0,
   ) {
-    const where: any = {};
+    const isAdmin = role === 'admin' || role === 'super_admin';
+
+    const queryBuilder = this.productRepository.createQueryBuilder('product');
+
+    queryBuilder.leftJoinAndSelect('product.category', 'category');
+
+    if (isAdmin) {
+      queryBuilder
+        .leftJoinAndSelect('product.sub_category', 'sub_category')
+        .leftJoinAndSelect('product.measurement', 'measurement')
+        .leftJoinAndSelect('product.cargo_option', 'cargo_option')
+        .leftJoinAndSelect('product.countries', 'countries');
+    }
+
     if (search?.trim()) {
-      where.name = ILike(`%${search.trim()}%`);
+      queryBuilder.andWhere('product.name ILIKE: search', {
+        search: `%${search.trim()}%`,
+      });
     }
     if (category?.trim()) {
-      where.category = { id: category };
+      queryBuilder.andWhere('product.category_id = :categoryId', {
+        categoryId: category,
+      });
     }
 
-    const products = await this.productRepository.find({
-      where,
-      relations: ['category', 'sub_category', 'measurement'],
-      skip: offset,
-      take: limit,
-    });
+    const products = await queryBuilder
+      .skip(offset)
+      .take(limit)
+      .orderBy('product.created_at', 'DESC')
+      .getMany();
 
-    const selectedCountry = country || 'United States of America';
+    if (isAdmin) {
+      return products.map((product) => ({
+        ...product,
+        price: {
+          price: Number(product.price),
+          currency: '$',
+        },
+      }));
+    }
 
-    const currencyInfo =
-      await this.userPreferencesService.getCurrencyRateInfo(selectedCountry);
-
-    const { code, symbol, rate } = currencyInfo;
+    const currencyInfo = await this.getCurrencyInfo(currency, userId);
+    const { symbol, rate, code } = currencyInfo;
 
     return products.map((product) => {
       const basePrice = Number(product.price);
-
-      const convertedPrice = code === 'USD' ? basePrice : basePrice * rate;
-      const finalCurrencySymbol = code === 'USD' ? '$' : symbol;
+      const convertedPrice = Math.round(basePrice * rate * 100) / 100;
 
       return {
         ...product,
         price: {
           price: convertedPrice,
-          currency: finalCurrencySymbol
+          currency: code === 'USD' ? '$' : symbol,
         },
       };
     });
   }
 
-  async findOne(slug: string, country?: string) {
+  async findOne(slug: string, currency?: string, userId?: string) {
     const product = await this.productRepository.findOne({
       where: { slug: slug },
-      relations: ['countries', 'cargo_option'],
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    const selectedCountry = country || 'United States of America';
-
-    const convertedPriceObj =
-      await this.userPreferencesService.getFormattedConvertedPriceByCountry(
-        selectedCountry,
-        Number(product.price),
-      );
+    const currencyInfo = await this.getCurrencyInfo(currency, userId);
+    const { symbol, rate, code } = currencyInfo;
+    const basePrice = Number(product.price);
+    const convertedPrice = Math.round(basePrice * rate * 100) / 100;
 
     return {
       ...product,
-      price: convertedPriceObj
+      price: {
+        price: convertedPrice,
+        currency: code === 'USD' ? '$' : symbol,
+      },
     };
   }
 
@@ -132,7 +181,7 @@ export class ProductsService {
     Object.assign(product, rest);
 
     if (category_id) {
-      product.category = { id: category_id } as any;
+      product.category = { id: category_id } as EcommerceCategory;
     }
     if (sub_category_id) {
       product.sub_category = { id: sub_category_id } as EcommerceSubCategory;
@@ -141,7 +190,7 @@ export class ProductsService {
       product.countries = country_ids.map((id) => ({ id }) as Country);
     }
     if (measurement_id) {
-      product.measurement = { id: measurement_id } as any;
+      product.measurement = { id: measurement_id } as EcommerceMeasurement;
     }
     if (cargo_option_id) {
       product.cargo_option = { id: cargo_option_id } as EcommerceCargoOption;

@@ -1,4 +1,5 @@
-import { getCartItemPricingSummary } from "./priceUtils";
+import { getCartItemPricingSummary, roundCurrency } from "./priceUtils";
+import { CurrencyInfo } from "@/types/ecommerce";
 
 export interface CartTotals {
     subtotal: number;
@@ -12,7 +13,8 @@ export interface CartTotals {
 export const calculateCartTotals = (
     cartItems: any[],
     selectedItemIds: Set<string>,
-    country?: string,
+    currency?: string,
+    currencyInfo?: CurrencyInfo,
 ): CartTotals => {
     if (!cartItems || cartItems.length === 0)
         return emptyTotals();
@@ -24,13 +26,19 @@ export const calculateCartTotals = (
     if (selectedItems.length === 0)
         return emptyTotals();
 
-    const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(country);
+    let { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(currency);
+
+    if (currencyInfo && !currencyInfo.isBase) {
+      threshold = roundCurrency(threshold / currencyInfo.rate);
+      deliveryBase = roundCurrency(deliveryBase / currencyInfo.rate);
+      serviceBase = roundCurrency(serviceBase / currencyInfo.rate);
+    }
 
     let subtotal = 0;
     let discount = 0;
 
     selectedItems.forEach((item) => {
-        const p = getCartItemPricingSummary(item);
+        const p = getCartItemPricingSummary(item, currencyInfo);
 
         subtotal += p.originalUnitPrice * p.quantity;
         discount += p.discountTotal;
@@ -65,8 +73,8 @@ const emptyTotals = (): CartTotals => ({
     total: 0,
 });
 
-const getThresholdAndFees = (country?: string) => {
-    if (country?.includes("India"))
+const getThresholdAndFees = (currency?: string) => {
+    if (currency === 'INR')
         return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
     return { threshold: 20, deliveryFee: 5, serviceCharge: 1 }
 }

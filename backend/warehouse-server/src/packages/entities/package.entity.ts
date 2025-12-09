@@ -124,9 +124,9 @@ export class Package extends BaseTimestampEntity {
   })
   action_logs: PackageActionLog[];
 
-  @ManyToOne(() => Shipment, (shipment) => shipment.packages,{
+  @ManyToOne(() => Shipment, (shipment) => shipment.packages, {
     onDelete: 'SET NULL',
-    nullable: true 
+    nullable: true,
   })
   @JoinColumn({ name: 'shipment_id' })
   shipment: Shipment;

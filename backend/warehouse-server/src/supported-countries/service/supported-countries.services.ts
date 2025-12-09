@@ -40,7 +40,7 @@ export class SupportedCountriesService {
       await this.supportedCountryRepository.save(countryEntities);
 
     return savedCountries.map((country) => ({
-      ...country
+      ...country,
     }));
   }
 
@@ -50,7 +50,7 @@ export class SupportedCountriesService {
     });
 
     return countries.map((country) => ({
-      ...country
+      ...country,
     }));
   }
 }

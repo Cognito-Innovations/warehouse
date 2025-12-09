@@ -65,7 +65,7 @@ export class Shipment extends BaseTimestampEntity {
 
   @OneToMany(
     () => TrackingRequest,
-    (trackingRequest) => trackingRequest.feature_fid
+    (trackingRequest) => trackingRequest.feature_fid,
   )
   tracking_requests: TrackingRequest[];
 

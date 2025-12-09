@@ -1,16 +1,9 @@
-import {
-  IsString,
-  IsNumber,
-  IsNotEmpty,
-  Min,
-  IsUUID,
-  Length,
-} from 'class-validator';
+import { IsString, IsNumber, IsNotEmpty, Min, Length } from 'class-validator';
 
 export class CreateCurrencyDto {
-  @IsUUID()
+  @IsString()
   @IsNotEmpty()
-  country: string;
+  name: string;
 
   @IsString()
   @IsNotEmpty()

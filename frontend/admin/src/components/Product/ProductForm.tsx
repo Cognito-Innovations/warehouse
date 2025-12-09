@@ -78,7 +78,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
     if (initialData) {
       const updatedInitialData = {
         ...initialData,
-        price: Number(initialData.price) || 0,
+        price: initialData.price,
         discount_percentage: Number(initialData.discount_percentage) || 0,
         unit_value: Number(initialData.unit_value) || 0,
         stock_quantity: Number(initialData.stock_quantity) || 0,
@@ -162,7 +162,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
     formData.description &&
     formData.image_url &&
     formData.price > 0 &&
-    formData.discount_percentage > 0 &&
+    formData.discount_percentage >= 0 &&
     formData.unit_value > 0 &&
     formData.measurement_id &&
     formData.cargo_option_id &&

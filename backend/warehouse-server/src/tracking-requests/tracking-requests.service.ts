@@ -19,7 +19,6 @@ export class TrackingRequestsService {
   async createTrackingRequest(
     createTrackingRequestDto: CreateTrackingRequestDto,
   ): Promise<TrackingRequestResponseDto> {
-
     const courierRelation = createTrackingRequestDto.courier_id
       ? { courier: { id: createTrackingRequestDto.courier_id } as any }
       : {};

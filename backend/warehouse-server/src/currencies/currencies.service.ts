@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { CreateCurrencyDto } from './dto/create-currency.dto';
 import { UpdateCurrencyDto } from './dto/update-currency.dto';
 import { Currency } from './currency.entity';
-import { Country } from 'src/Countries/country.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -17,7 +16,6 @@ export class CurrenciesService {
     const currency = this.currencyRepository.create({
       ...createCurrencyDto,
       rate: parseFloat(createCurrencyDto.rate.toString()),
-      country: { id: createCurrencyDto.country },
     });
     return await this.currencyRepository.save(currency);
   }
@@ -30,21 +28,21 @@ export class CurrenciesService {
     return await this.currencyRepository.findOne({ where: { id } });
   }
 
-  async findByCountry(countryId: string): Promise<Currency | null> {
+  async findByCode(code: string): Promise<Currency | null> {
     return await this.currencyRepository.findOne({
-      where: { country: { id: countryId } },
+      where: { currency_code: code },
     });
   }
 
   async update(id: string, updateCurrencyDto: UpdateCurrencyDto) {
     const updateData: Partial<Currency> = {};
 
-    if (updateCurrencyDto.rate !== undefined) {
-      updateData.rate = parseFloat(updateCurrencyDto.rate.toString());
+    if (updateCurrencyDto.name !== undefined) {
+      updateData.name = updateCurrencyDto.name;
     }
 
-    if (updateCurrencyDto.country !== undefined) {
-      updateData.country = { id: updateCurrencyDto.country } as Country;
+    if (updateCurrencyDto.rate !== undefined) {
+      updateData.rate = parseFloat(updateCurrencyDto.rate.toString());
     }
 
     if (updateCurrencyDto.currency_symbol !== undefined) {

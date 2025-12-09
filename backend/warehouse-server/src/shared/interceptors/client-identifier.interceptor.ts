@@ -10,7 +10,7 @@ import { map } from 'rxjs/operators';
 
 @Injectable()
 export class ClientIdentifierInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+  intercept<T>(context: ExecutionContext, next: CallHandler<T>): Observable<T> {
     const http = context.switchToHttp();
     const request = http.getRequest<
       Request & { clientIdentifierId?: string }
@@ -18,7 +18,7 @@ export class ClientIdentifierInterceptor implements NestInterceptor {
     const response = http.getResponse<Response>();
 
     return next.handle().pipe(
-      map((responseBody) => {
+      map((responseBody: T) => {
         const identifier = request?.clientIdentifierId;
         if (identifier) {
           response.setHeader('X-Client-Identifier', identifier);

@@ -28,15 +28,15 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @Column()
   slug: string;
 
-  @ManyToOne(() => EcommerceCategory, { eager: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => EcommerceCategory, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'category_id' })
   category: EcommerceCategory;
 
-  @ManyToOne(() => EcommerceSubCategory, { eager: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => EcommerceSubCategory, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'sub_category_id' })
   sub_category: EcommerceSubCategory;
 
-  @ManyToMany(() => Country, { eager: true })
+  @ManyToMany(() => Country)
   @JoinTable({
     name: 'ecommerce_product_countries',
     joinColumn: {
@@ -48,7 +48,7 @@ export class EcommerceProduct extends BaseTimestampEntity {
       referencedColumnName: 'id',
     },
   })
-  countries: Country[]
+  countries: Country[];
 
   @Column()
   image_url: string;
@@ -68,11 +68,11 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @Column({ default: true })
   is_active: boolean;
 
-  @ManyToOne(() => EcommerceMeasurement, { eager: true, nullable: true })
+  @ManyToOne(() => EcommerceMeasurement, { nullable: true })
   @JoinColumn({ name: 'measurement_id' })
   measurement: EcommerceMeasurement;
 
-  @ManyToOne(() => EcommerceCargoOption, { eager: true, nullable: false })
+  @ManyToOne(() => EcommerceCargoOption, { nullable: false })
   @JoinColumn({ name: 'cargo_option_id' })
   cargo_option: EcommerceCargoOption;
 }
