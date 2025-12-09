@@ -25,18 +25,22 @@ export class ProductsController {
   @Public()
   @Get()
   findAll(
-    @Query('country') country?: string,
+    @Query('currency') currency?: string,
     @Query('search') search?: string,
     @Query('category') category?: string,
+    @Query('user_id') userId?: string,
+    @Query('role') role?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
     const parsedLimit = limit ? parseInt(limit, 10) : 20;
     const parsedOffset = offset ? parseInt(offset, 10) : 0;
     return this.productsService.findAll(
-      country,
+      currency,
       search,
       category,
+      userId,
+      role,
       parsedLimit,
       parsedOffset,
     );
@@ -44,8 +48,12 @@ export class ProductsController {
 
   @Public()
   @Get(':slug')
-  findOne(@Param('slug') slug: string, @Query('country') country?: string) {
-    return this.productsService.findOne(slug, country);
+  findOne(
+    @Param('slug') slug: string,
+    @Query('currency') currency?: string,
+    @Query('user_id') userId?: string,
+  ) {
+    return this.productsService.findOne(slug, currency, userId);
   }
 
   @Patch(':id')

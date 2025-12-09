@@ -14,8 +14,7 @@ import { OrderSummary } from "@/components/ecommerce/checkout/OrderSummary";
 import DeliveryAddressCard from "@/components/ecommerce/checkout/DeliveryAddressCard";
 import { ROUTES } from "@/utils/constants";
 import { calculateCartTotals } from "@/utils/cartCalculations";
-import { getCurrencyForCountry } from "@/utils/currency";
-import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
+import { formatPrice } from "@/utils/priceUtils";
 import { CartItem } from "@/types/ecommerce";
 
 export default function CheckoutPage() {
@@ -36,7 +35,8 @@ export default function CheckoutPage() {
     city: '',
     pincode: '',
   });
-  const selectedCountry = locationData.location.countryName;
+  const selectedCurrency = locationData.currencyInfo.code;
+  const currencyInfo = locationData.currencyInfo;
 
   useEffect(() => {
     if (hasInitialized) return;
@@ -86,18 +86,9 @@ export default function CheckoutPage() {
   }, [checkedOutItems, router, itemsLoaded]);
 
   const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
-  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, selectedCountry), [checkedOutItems, selectedIds, selectedCountry]);
-  const countryName = selectedCountry || '';
-  const currencyInfo = getCurrencyForCountry(countryName);
+  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, selectedCurrency, currencyInfo), [checkedOutItems, selectedIds, selectedCurrency, currencyInfo]);
   
-  const currencySymbol = useMemo(() => {
-    if (checkedOutItems?.length ?? 0 > 0) {
-      return getCartItemPricingSummary(checkedOutItems[0]).currency || currencyInfo.symbol;
-    }
-    return currencyInfo.symbol;
-  }, [checkedOutItems, currencyInfo.symbol]);
-  
-  const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencySymbol), [currencySymbol]);
+  const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencyInfo.symbol), [currencyInfo.symbol]);
 
   const handleAddressSelect = useCallback((address: string) => {
     setShippingAddress(address);
@@ -148,8 +139,8 @@ export default function CheckoutPage() {
               items={checkedOutItems}
               totals={totals}
               shippingAddress={shippingAddress}
-              selectedCountry={selectedCountry}
-              currencySymbol={currencySymbol}
+              selectedCurrency={selectedCurrency}
+              currencyInfo={currencyInfo}
               user={user}
               formatLocalPrice={formatLocalPrice}
               addressLoading={addressLoading}

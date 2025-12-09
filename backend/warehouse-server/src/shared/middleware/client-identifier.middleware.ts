@@ -7,7 +7,7 @@ export class ClientIdentifierMiddleware implements NestMiddleware {
   private readonly logger = new Logger(ClientIdentifierMiddleware.name);
 
   constructor(
-    private readonly clientIdentifierService: ClientIdentifierService
+    private readonly clientIdentifierService: ClientIdentifierService,
   ) {}
 
   async use(req: Request, _res: Response, next: NextFunction): Promise<void> {
@@ -25,7 +25,7 @@ export class ClientIdentifierMiddleware implements NestMiddleware {
     } catch (error) {
       this.logger.error(
         'Failed to resolve client identifier',
-        error instanceof Error ? error.stack : String(error)
+        error instanceof Error ? error.stack : String(error),
       );
     } finally {
       next();

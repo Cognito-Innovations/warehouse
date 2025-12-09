@@ -90,7 +90,7 @@ export class PackageItemsService {
 
     return {
       items: savedItems.map((item) => ({
-        ...item
+        ...item,
       })),
     };
   }
@@ -102,7 +102,7 @@ export class PackageItemsService {
     });
 
     return items.map((item) => ({
-      ...item
+      ...item,
     }));
   }
 }

@@ -92,13 +92,12 @@ export const databaseConfig: TypeOrmModuleOptions = {
     EcommerceMeasurement,
     EcommerceCart,
     EcommerceCartItem,
-    ShoppingRequestProduct,
     Shipment,
     InvoiceCharge,
     EcommerceCargoOption,
   ],
-  synchronize: true, // Disable schema synchronization to prevent modifying existing database
+  synchronize: false, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],
-  migrationsRun: true,
+  migrationsRun: false,
   logging: process.env.NODE_ENV === 'development',
 };

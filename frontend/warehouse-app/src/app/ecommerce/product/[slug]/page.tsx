@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useCallback, useMemo } from "react";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import { Box, Container, Alert } from "@mui/material";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import ProductDetailHeader from "@/components/ecommerce/ProductDetailHeader";
 import ProductDetailImageSection from "@/components/ecommerce/ProductDetailImageSection";
@@ -12,12 +13,10 @@ import ProductDetailInfoSection from "@/components/ecommerce/ProductDetailInfoSe
 import ProductDetailLoadingState from "@/components/ecommerce/ProductDetailLoadingState";
 import RelatedProductsSection from "@/components/ecommerce/RelatedProductsSection";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
-import { ROUTES } from "@/utils/constants";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceProduct } from "@/types/ecommerce";
 
 export default function ProductDetailPage() {
-  const router = useRouter();
   const params = useParams();
   
   const { 
@@ -38,14 +37,29 @@ export default function ProductDetailPage() {
     city: '',
     pincode: '',
   });
-  const countryName = locationData.location.countryName;
+  const currency = locationData.currencyInfo.code;
+
+  const { user } = useAuth();
+  const userId = user?.id;
 
   const productSlug = useMemo(() => {
     return params.slug && typeof params.slug === "string" ? params.slug : null;
   }, [params.slug]);
 
+  const selectionSlugRef = useRef<string | null>(null);
+  const previousSlugRef = useRef(productSlug);
+
+  if (previousSlugRef.current !== productSlug) {
+    selectionSlugRef.current = null;
+    previousSlugRef.current = productSlug;
+  }
+
   const displayProduct = useMemo(() => {
-    if (currentDetailProduct && currentDetailProduct.id === productSlug) {
+    if (currentDetailProduct && currentDetailProduct.slug === productSlug) {
+      return currentDetailProduct;
+    }
+
+    if (currentDetailProduct && selectionSlugRef.current === productSlug) {
       return currentDetailProduct;
     }
 
@@ -57,22 +71,19 @@ export default function ProductDetailPage() {
   }, [currentDetailProduct, products, productSlug]);
 
   useEffect(() => {
-    if (productSlug && countryName) {
-      loadProductPageData(productSlug, countryName);
+    if (productSlug && currency) {
+      loadProductPageData(productSlug, currency, userId);
     }
-  }, [productSlug, countryName, loadProductPageData]);
+  }, [productSlug, currency, loadProductPageData, userId]);
 
   const handleProductSelect = useCallback((selectedProduct: EcommerceProduct) => {
+    selectionSlugRef.current = productSlug;
     setCurrentDetailProduct(selectedProduct);
   }, [setCurrentDetailProduct]);
 
-  const handleProductClick = useCallback((product: EcommerceProduct) => {
-    router.push(`${ROUTES.PRODUCT}/${product.slug}`);
-  }, [router]);
-
   const handleRefresh = () => {
-    if (productSlug && countryName) {
-      loadProductPageData(productSlug, countryName);
+    if (productSlug && currency) {
+      loadProductPageData(productSlug, currency, userId);
     }
   };
 
@@ -131,7 +142,7 @@ export default function ProductDetailPage() {
       {detailRelatedProducts.length > 0 && (
         <RelatedProductsSection
           products={detailRelatedProducts}
-          onProductClick={handleProductClick}
+          arePreviewsLoading={arePreviewsLoading}
         />
       )}
     </Box>

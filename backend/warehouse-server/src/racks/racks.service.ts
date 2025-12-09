@@ -1,6 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
+import { plainToInstance } from 'class-transformer';
 import { Rack } from './rack.entity';
 import { CreateRackDto } from './dto/create-rack.dto';
 import { RackResponseDto } from './dto/rack-response.dto';
@@ -30,13 +31,7 @@ export class RacksService {
 
     const savedRack = await this.rackRepository.save(rack);
 
-    return {
-      id: savedRack.id,
-      label: savedRack.label,
-      color: savedRack.color,
-      count: savedRack.count,
-      created_at: savedRack.created_at,
-    };
+    return savedRack as RackResponseDto;
   }
 
   async getAllRacks(): Promise<RackResponseDto[]> {
@@ -44,13 +39,9 @@ export class RacksService {
       order: { label: 'ASC' },
     });
 
-    return racks.map((rack) => ({
-      id: rack.id,
-      label: rack.label,
-      color: rack.color,
-      count: rack.count,
-      created_at: rack.created_at,
-    }));
+    return plainToInstance(RackResponseDto, racks, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async updateRack(
@@ -64,13 +55,7 @@ export class RacksService {
       throw new Error('Rack not found');
     }
 
-    return {
-      id: updatedRack.id,
-      label: updatedRack.label,
-      color: updatedRack.color,
-      count: updatedRack.count,
-      created_at: updatedRack.created_at,
-    };
+    return updatedRack as RackResponseDto;
   }
 
   async deleteRack(id: string): Promise<{ success: boolean }> {

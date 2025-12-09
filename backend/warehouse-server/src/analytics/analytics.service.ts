@@ -5,13 +5,7 @@ import { ShipmentsService } from 'src/shipments/shipments.service';
 import { ShoppingRequestsService } from 'src/shopping-requests/shopping-requests.service';
 import { UsersService } from 'src/users/users.service';
 import { ShipmentStatus } from 'src/shipments/shipment.entity';
-import {
-  ShoppingRequest,
-  ShoppingRequestStatus,
-} from 'src/shopping-requests/shopping-request.entity';
-import { PackageResponseDto } from 'src/packages/dto/package-response.dto';
-import { PickupRequestResponseDto } from 'src/pickup-requests/dto/pickup-request-response.dto';
-import { UserResponseDto } from 'src/users/dto/user-response.dto';
+import { ShoppingRequestStatus } from 'src/shopping-requests/shopping-request.entity';
 
 export interface DashboardMetrics {
   customers: number;
@@ -39,48 +33,49 @@ export class AnalyticsService {
   ) {}
 
   async getDashboardMetrics(): Promise<DashboardMetrics> {
-    const users: UserResponseDto[] = await this.usersService.getAllUsers();
-    const totalCustomers = users.length;
+    const totalCustomers = await this.usersService.getUsersCount();
 
-    const packages: PackageResponseDto[] =
-      await this.packagesService.getAllPackages();
-    const totalPackages = packages.length;
-    const actionRequiredPackages = packages.filter(
-      (pkg) => pkg.status?.value === 'Action Required',
-    ).length
+    const totalPackages = await this.packagesService.getPackagesCount();
 
-    const rawShipments = await this.shipmentsService.getAllShipments();
-    const shipRequestShipments = rawShipments.filter(
-      (shipment: any) => shipment.status === ShipmentStatus.SHIP_REQUEST,
-    ).length;
-    const paymentPendingShipments = rawShipments.filter(
-      (shipment: any) => shipment.status === ShipmentStatus.PAYMENT_PENDING,
-    ).length;
-    const paymentApprovalShipments = rawShipments.filter(
-      (shipment: any) => shipment.status === ShipmentStatus.PAYMENT_APPROVED,
-    ).length;
-    const readyToShipShipments = rawShipments.filter(
-      (shipment: any) => shipment.status === ShipmentStatus.READY_TO_SHIP,
-    ).length;
-    const shippedShipments = rawShipments.filter(
-      (shipment: any) => shipment.status === ShipmentStatus.DEPARTED,
-    ).length;
+    const actionRequiredPackages =
+      await this.packagesService.getActionRequiredPackagesCount();
 
-    const pickupRequests: PickupRequestResponseDto[] =
-      await this.pickupRequestsService.getAllPickupRequests();
-    const pickupRequested = pickupRequests.length;
+    const shipRequestShipments =
+      await this.shipmentsService.getShipmentsCountByStatus(
+        ShipmentStatus.SHIP_REQUEST,
+      );
+    const paymentPendingShipments =
+      await this.shipmentsService.getShipmentsCountByStatus(
+        ShipmentStatus.PAYMENT_PENDING,
+      );
+    const paymentApprovalShipments =
+      await this.shipmentsService.getShipmentsCountByStatus(
+        ShipmentStatus.PAYMENT_APPROVED,
+      );
+    const readyToShipShipments =
+      await this.shipmentsService.getShipmentsCountByStatus(
+        ShipmentStatus.READY_TO_SHIP,
+      );
+    const shippedShipments =
+      await this.shipmentsService.getShipmentsCountByStatus(
+        ShipmentStatus.DEPARTED,
+      );
 
-    const shoppingRequests: ShoppingRequest[] =
-      await this.shoppingRequestsService.getAllShoppingRequests();
-    const shoppingRequested = shoppingRequests.filter(
-      (sr) => sr.status === ShoppingRequestStatus.REQUESTED,
-    ).length;
-    const quotationConfirm = shoppingRequests.filter(
-      (sr) => sr.status === ShoppingRequestStatus.QUOTATION_READY,
-    ).length;
-    const assistPaymentApproval = shoppingRequests.filter(
-      (sr) => sr.status === ShoppingRequestStatus.PAYMENT_APPROVED,
-    ).length;
+    const pickupRequested =
+      await this.pickupRequestsService.getPickupRequestsCount();
+
+    const shoppingRequested =
+      await this.shoppingRequestsService.getShoppingRequestsCountByStatus(
+        ShoppingRequestStatus.REQUESTED,
+      );
+    const quotationConfirm =
+      await this.shoppingRequestsService.getShoppingRequestsCountByStatus(
+        ShoppingRequestStatus.QUOTATION_READY,
+      );
+    const assistPaymentApproval =
+      await this.shoppingRequestsService.getShoppingRequestsCountByStatus(
+        ShoppingRequestStatus.PAYMENT_APPROVED,
+      );
 
     return {
       customers: totalCustomers,

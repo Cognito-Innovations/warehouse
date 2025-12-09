@@ -29,19 +29,20 @@ export default function ProductQuantityControl({
         height: 32,
         width: { xs: "100%", sm: "auto" },
         justifyContent: "space-between",
+        ml: 1
       }}
     >
       <IconButton
         size="small"
         onClick={onDecrement}
         sx={{
-          width: 40,
+          width: 24,
           height: 32,
           p: 0,
           position: "relative",
         }}
       >
-        <Remove sx={{ fontSize: 16 }} />
+        <Remove sx={{ fontSize: 14 }} />
       </IconButton>
       
       <Typography
@@ -57,14 +58,14 @@ export default function ProductQuantityControl({
         onClick={onIncrement}
         disabled={isMaxLimitReached}
         sx={{
-          width: 40,
+          width: 24,
           height: 32,
           p: 0,
           position: "relative",
           color: isMaxLimitReached ? "action.disabled" : "inherit",
         }}
       >
-        <Add sx={{ fontSize: 16 }} />
+        <Add sx={{ fontSize: 14 }} />
       </IconButton>
     </Box>
   );

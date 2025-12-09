@@ -5,6 +5,7 @@ import { UserAddress } from './user_address.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/user.entity';
 import { UpdateUserAddressDto } from './dto/update-user_address.dto';
+import { UserPreference } from 'src/user-preferences/user-preference.entity';
 
 @Injectable()
 export class UserAddressService {
@@ -13,6 +14,8 @@ export class UserAddressService {
     private userAddressRepository: Repository<UserAddress>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(UserPreference)
+    private userPreferenceRepository: Repository<UserPreference>,
   ) {}
 
   async create(createUserAddressDto: CreateUserAddressDto) {
@@ -49,31 +52,46 @@ export class UserAddressService {
 
       await this.userRepository.update(
         createUserAddressDto.user_id,
-        userUpdates
+        userUpdates,
       );
+    }
+
+    if (createUserAddressDto.currency) {
+      const existingPref = await this.userPreferenceRepository.findOne({
+        where: { user: { id: createUserAddressDto.user_id } },
+      });
+
+      if (existingPref) {
+        await this.userPreferenceRepository.save({
+          ...existingPref,
+          currency: { id: createUserAddressDto.currency },
+        });
+      }
     }
 
     return this.userAddressRepository.findOne({
       where: { id: savedAddress.id },
-      relations: ['user']
+      relations: ['user', 'user.preference', 'user.preference.currency'],
     });
   }
 
   findAll() {
-    return this.userAddressRepository.find({ relations: ['user'] });
+    return this.userAddressRepository.find({
+      relations: ['user', 'user.preference', 'user.preference.currency'],
+    });
   }
 
   findByUserId(id: string) {
-    return this.userAddressRepository.findOne({ 
+    return this.userAddressRepository.findOne({
       where: { user: { id } },
-      relations: ['user']
+      relations: ['user', 'user.preference', 'user.preference.currency'],
     });
   }
 
   async update(id: string, updateUserAddressDto: UpdateUserAddressDto) {
     const existingAddress = await this.userAddressRepository.findOne({
       where: { id },
-      relations: ['user']
+      relations: ['user', 'user.preference', 'user.preference.currency'],
     });
     if (!existingAddress) {
       throw new NotFoundException(`User address with ID ${id} not found`);
@@ -108,9 +126,22 @@ export class UserAddressService {
       await this.userRepository.update(existingAddress.user.id, userUpdates);
     }
 
-    return this.userAddressRepository.findOne({ 
+    if (updateUserAddressDto.currency) {
+      const existingPref = await this.userPreferenceRepository.findOne({
+        where: { user: { id: existingAddress.user.id } },
+      });
+
+      if (existingPref) {
+        await this.userPreferenceRepository.save({
+          ...existingPref,
+          currency: { id: updateUserAddressDto.currency },
+        });
+      }
+    }
+
+    return this.userAddressRepository.findOne({
       where: { id },
-      relations: ['user']
+      relations: ['user', 'user.preference', 'user.preference.currency'],
     });
   }
 }

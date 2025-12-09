@@ -27,6 +27,10 @@ export class PickupRequestsService {
     private readonly usersService: UsersService,
   ) {}
 
+  async getPickupRequestsCount(): Promise<number> {
+    return this.pickupRequestRepository.count();
+  }
+
   async createPickupRequest(
     createPickupRequestDto: CreatePickupRequestDto,
   ): Promise<PickupRequestResponseDto> {
@@ -106,7 +110,7 @@ export class PickupRequestsService {
           user: user
             ? this.usersService.mapToUserResponseDto(request.user)
             : undefined,
-        }
+        };
       });
     } catch (error) {
       throw new BadRequestException(
@@ -227,7 +231,7 @@ export class PickupRequestsService {
           feature_type: FeatureType.PickupRequest,
           feature_fid: updatedPickupRequest.id,
           status: mapPickupToTrackingStatus(updatedPickupRequest.status),
-          user: updatedPickupRequest.user.id as any,
+          user: { id: updatedPickupRequest.user.id },
         });
         await queryRunner.manager.save(trackingRequest);
       }
@@ -261,7 +265,7 @@ export class PickupRequestsService {
         country: country?.name,
         user: user
           ? this.usersService.mapToUserResponseDto(
-              pickupRequestWithRelations.user
+              pickupRequestWithRelations.user,
             )
           : undefined,
         tracking_requests: trackingRequests,

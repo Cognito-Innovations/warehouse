@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, MenuItem, CircularProgress } from '@mui/material';
-import { getCountries} from '../../services/api.services';
-import type { Country, CreateCurrencyPayload, Currency } from '../../types';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, CircularProgress } from '@mui/material';
+import type { CreateCurrencyPayload, Currency } from '../../types';
 
 interface AddEditCurrencyDialogProps {
   open: boolean;
@@ -11,29 +10,16 @@ interface AddEditCurrencyDialogProps {
   initialData?: Currency | null;
 }
 
-const emptyForm = { country: '', currency_symbol: '', currency_code: '', rate: '' };
+const emptyForm = { name: '', currency_symbol: '', currency_code: '', rate: '' };
 
 const AddEditCurrencyDialog: React.FC<AddEditCurrencyDialogProps> = ({ open, onClose, onSave, saving, initialData }) => {
-  const [countries, setCountries] = useState<Pick<Country, 'id' | 'name'>[]>([]);
   const [form, setForm] = useState(emptyForm);
   const isEditing = React.useMemo(() => !!initialData, [initialData]);
 
   useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const data = await getCountries();
-        setCountries(data);
-      } catch (err) {
-        console.error('Failed to fetch countries', err);
-      }
-    };
-    fetchCountries();
-  }, []);
-
-  useEffect(() => {
     if (isEditing && open) {
       setForm({
-        country: initialData?.country?.id || '',
+        name: initialData?.name || '',
         currency_symbol: initialData?.currency_symbol || '',
         currency_code: initialData?.currency_code || '',
         rate: initialData?.rate?.toString() || '',
@@ -50,7 +36,7 @@ const AddEditCurrencyDialog: React.FC<AddEditCurrencyDialogProps> = ({ open, onC
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
-      country: form.country,
+      name: form.name,
       currency_symbol: form.currency_symbol,
       currency_code: form.currency_code,
       rate: parseFloat(form.rate),
@@ -62,15 +48,13 @@ const AddEditCurrencyDialog: React.FC<AddEditCurrencyDialogProps> = ({ open, onC
       <DialogTitle sx={{ fontWeight: 600 }}>{isEditing ? 'Edit Currency' : 'Add New Currency'}</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
-          <TextField select required margin="dense" name="country" label="Country" value={form.country} onChange={handleChange} fullWidth>
-            {countries.map((c) => (<MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>))}
-          </TextField>
+          <TextField required margin="dense" name="name" label="Currency Name (e.g., US Dollar)" value={form.name} onChange={handleChange} fullWidth />
           <TextField required margin="dense" name="currency_symbol" label="Currency Symbol (e.g., $)" value={form.currency_symbol} onChange={handleChange} fullWidth />
           <TextField 
             required
             margin="dense"
             name="currency_code"
-            label="Currency Code (ISO 4217, e.g., INR)"
+            label="Currency Code (ISO 4217, e.g., USD)"
             value={form.currency_code}
             onChange={handleChange}
             fullWidth

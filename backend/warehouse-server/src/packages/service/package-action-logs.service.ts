@@ -63,7 +63,7 @@ export class PackageActionLogsService {
     });
 
     return actionLogs.map((log) => ({
-      ...log
+      ...log,
     }));
   }
 

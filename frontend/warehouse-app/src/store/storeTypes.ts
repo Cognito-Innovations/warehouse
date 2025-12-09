@@ -27,19 +27,20 @@ export type ProductStore = {
   isDetailLoading: boolean;
   arePreviewsLoading: boolean;
   detailError: string | null;
+  isLoadingSlug: string | null;
 
   setError: (error: string | null) => void;
   setSearchQuery: (query: string) => void;
   getProducts: (params?: GetProductsParams) => Promise<EcommerceProduct[]>;
-  fetchProductBySlug: (slug: string, country?: string) => Promise<EcommerceProduct>;
-  getCategoryProducts: (categoryId: string, country?: string, limit?: number) => Promise<EcommerceProduct[]>;
+  fetchProductBySlug: (slug: string, currency?: string, userId?: string) => Promise<EcommerceProduct>;
+  getCategoryProducts: (categoryId: string, currency?: string, limit?: number, userId?: string) => Promise<EcommerceProduct[]>;
   handleProductSelect: (productId: string) => void;
   fetchProducts: (
-    params: { category?: string; searchTerm?: string; country?: string },
+    params: FetchProductsParams,
     reset?: boolean
   ) => Promise<void>;
 
-  loadProductPageData: (slug: string, country: string) => Promise<void>;
+  loadProductPageData: (slug: string, currency: string, userId?: string) => Promise<void>;
   setCurrentDetailProduct: (product: EcommerceProduct) => void;
   resetDetailState: () => void;
 }
@@ -59,30 +60,45 @@ export interface ProductDetailCache {
 
 export type GetProductsParams = {
   searchTerm?: string;
-  country?: string;
+  currency?: string;
   category?: string;
   limit?: number;
   offset?: number;
+  userId?: string;
+};
+
+export type FetchProductsParams = {
+  category?: string;
+  searchTerm?: string;
+  currency?: string;
+  userId?: string;
 };
 
 export type CartStore = {
   cartProducts: LocalCartItem[];
+  updatingProducts: Record<string, boolean>;
   cartProductQuantityCount: () => number;
   loading: boolean;
+  isSyncing: boolean,
+  _hasHydrated: boolean;
   checkoutProducts: string[];
   toggleCartItemSelection: (productIds: string | string[]) => void;
   setCartProducts: (products: any[]) => void;
   clearCheckoutProducts: () => void;
   setLoading: (value: boolean) => void;
+  setHasHydrated: (value: boolean) => void;
+  setUpdating: (productId: string, isUpdating: boolean) => void;
   getItemQuantity: (productId: string) => number;
-  syncCart: (country?: string) => Promise<void>;
-  getCart: (country?: string) => Promise<any[] | undefined>;
-  addOrIncreaseQty: (product: EcommerceProduct, quantity: number, country?: string) => Promise<void>;
-  decreaseProductQty: (product: EcommerceProduct, quantity: number, country?: string) => Promise<void>;
-  removeProductFromCart: (productId: string, country?: string) => Promise<void>;
-  incrementCartQuantity: (product: EcommerceProduct, country?: string) => Promise<void>;
-  decrementCartQuantity: (product: EcommerceProduct, country?: string) => Promise<void>;
-  setCartItemQuantity: (productId: string, quantity: number, country?: string) => Promise<void>;
+  getLineId: (productId: string, currency?: string) => Promise<string | undefined>;
+  refreshCart: (currency?: string) => Promise<LocalCartItem[]>;
+  syncCart: (currency?: string) => Promise<void>;
+  getCart: (currency?: string) => Promise<LocalCartItem[]>;
+  addOrIncreaseQty: (product: EcommerceProduct, quantity: number, currency?: string) => Promise<void>;
+  decreaseProductQty: (product: EcommerceProduct, quantity: number, currency?: string) => Promise<void>;
+  removeProductFromCart: (productId: string, currency?: string) => Promise<void>;
+  incrementCartQuantity: (product: EcommerceProduct, currency?: string) => Promise<void>;
+  decrementCartQuantity: (product: EcommerceProduct, currency?: string) => Promise<void>;
+  setCartItemQuantity: (productId: string, quantity: number, currency?: string) => Promise<void>;
   removePurchasedProducts: (purchasedProductIds: string[]) => void;
 }
 
@@ -91,6 +107,7 @@ export interface UserLocation {
   pincode: string;
   countryCode?: string;
   countryName?: string;
+  currency?: string;
 }
 
 export interface EffectiveUserLocation {
@@ -98,6 +115,7 @@ export interface EffectiveUserLocation {
   countryName?: string;
   city?: string;
   pincode?: string;
+  currency?: string;
 }
 
 export type LocationStore = {
