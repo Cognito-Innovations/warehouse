@@ -28,7 +28,7 @@ export class CartService {
   private async findActiveCart(userId: string): Promise<EcommerceCart | null> {
     return await this.cartRepository.findOne({
       where: { user_id: userId, status: CartStatus.ACTIVE },
-      relations: ['items', 'items.product', 'user'],
+      relations: ['items', 'items.product', 'items.product.category', 'user'],
       select: {
         user: {
           id: true,
