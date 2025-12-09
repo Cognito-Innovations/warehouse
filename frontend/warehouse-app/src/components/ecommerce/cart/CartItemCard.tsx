@@ -84,7 +84,7 @@ export default function CartItemCard({
         display: "flex",
         flexDirection: { xs: "column", sm: "row" },
         gap: 2,
-        p: { xs: 2, sm: 2.5 },
+        p: { xs: 1.5, sm: 2.5 },
         mb: 2,
         borderRadius: 3,
         bgcolor: "white",
@@ -94,6 +94,7 @@ export default function CartItemCard({
           : "0 2px 8px rgba(0, 0, 0, 0.08)",
         cursor: "pointer",
         transition: "all 0.3s ease",
+        position: "relative",
         "&:hover": {
           boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
           transform: "translateY(-2px)",
@@ -103,7 +104,7 @@ export default function CartItemCard({
         },
       }}
     >
-      <Box sx={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+      <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
         {/* Selection Checkbox */}
         <Box sx={{ display: "flex", alignItems: "flex-start", pt: 0.5 }}>
           <Checkbox
@@ -127,8 +128,8 @@ export default function CartItemCard({
             borderRadius: 2,
             overflow: "hidden",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-            width: { xs: 100, sm: 120, md: 140 },
-            height: { xs: 100, sm: 120, md: 140 },
+            width: { xs: 80, sm: 120, md: 140 },
+            height: { xs: 80, sm: 120, md: 140 },
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -165,13 +166,18 @@ export default function CartItemCard({
       }}>
         {/* Product Details */}
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75, flexWrap: 'wrap' }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, mb: 0.75, flexWrap: 'wrap' }}>
             <Typography
               variant="body1"
               fontWeight="bold"
               sx={{
-                fontSize: "1.1rem",
+                fontSize: { xs: "1rem", sm: "1.1rem" },
                 color: "text.primary",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                minWidth: 0,
               }}
             >
               {item.product.name}
@@ -265,7 +271,14 @@ export default function CartItemCard({
           {/* Quantity Selector */}
           <Box
             onClick={(e) => e.stopPropagation()}
-            sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
+            sx={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 1.5, 
+              mb: 1,
+              width: { xs: "100%", sm: "auto" },
+              justifyContent: { xs: "center", sm: "flex-start" }
+            }}
           >
             <IconButton
               size="small"
@@ -331,7 +344,7 @@ export default function CartItemCard({
           sx={{
             display: "flex",
             flexDirection: "column",
-            alignItems: { xs: "flex-end", sm: "flex-end" },
+            alignItems: { xs: "flex-start", sm: "flex-end" },
             justifyContent: "space-between",
             flexShrink: 0,
             minWidth: { xs: "unset", sm: 120 },
@@ -343,10 +356,14 @@ export default function CartItemCard({
             size="small"
             onClick={() => handleRemoveItem(effectiveId)}
             sx={{
+              position: { xs: "absolute", sm: "relative" },
+              top: { xs: 12, sm: "auto" },
+              right: { xs: 12, sm: "auto" },
+              zIndex: { xs: 1, sm: "auto" },
               color: "text.secondary",
               width: 36,
               height: 36,
-              mb: 1,
+              mb: { xs: 0, sm: 1 },
               transition: "all 0.2s ease",
               "&:hover": {
                 bgcolor: "error.lighter",
@@ -360,7 +377,7 @@ export default function CartItemCard({
 
           {/* Price Section */}
           <Box sx={{ 
-            textAlign: { xs: "right", sm: "right" },
+            textAlign: { xs: "left", sm: "right" },
             width: '100%',
           }}>
             {/* Original Unit Price */}
@@ -401,6 +418,9 @@ export default function CartItemCard({
                 fontSize: "0.875rem",
                 fontFamily: "monospace",
                 display: "block",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
               {item.quantity} × {formatLocalPrice(unitPrice)} = <Box component="span" sx={{ color: "primary.main", fontWeight: 600 }}>{formatLocalPrice(totalPrice)}</Box>
