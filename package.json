@@ -20,6 +20,5 @@
     "lucide-react": "^0.542.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1"
-  },
-  "packageManager": "pnpm@9.0.0"
+  }
 }
