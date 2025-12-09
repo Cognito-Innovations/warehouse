@@ -12,7 +12,7 @@ import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
 import { debounce } from "@/utils/debounce";
 import { ecommerceData } from "@/data/ecommerceData";
-import CategorySection from "@/components/ecommerce/category/CategorySection";
+import CategorySection from "@/components/ecommerce/Category/CategorySection";
 import ProductsGridView from "@/components/ecommerce/product/ProductsGridView";
 
 export default function Ecommerce() {
