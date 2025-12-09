@@ -1,5 +1,5 @@
 //TODO P0: Resolve these typescript errors
-import type { CargoOption, CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
+import type { CargoOption, CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, DashboardMetrics, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
 import type { PreArrival } from '../types/PreArrival';
 import api from './axios';
 
@@ -449,8 +449,21 @@ export const createProduct = async (
   return response.data;
 };
 
-export const getProducts = async () => {
-  const response = await api.get("/ecommerce-products");
+export const getProducts = async (search: string = "") => {
+  const params = new URLSearchParams();
+  
+  const cleanSearch = search.trim();
+  if (cleanSearch) {
+    params.append("search", cleanSearch);
+  }
+
+  params.append("limit", "1000");
+  params.append("role", "admin");
+
+  const queryString = params.toString();
+  const url = `/ecommerce-products${queryString ? `?${queryString}` : ""}`;
+
+  const response = await api.get(url);
   return response.data;
 };
 
@@ -559,5 +572,10 @@ export const createShipmentInvoice = async (
 
 export const getCargoOptions = async (): Promise<CargoOption[]> => {
   const response = await api.get<CargoOption[]>('/ecommerce-cargo-options');
+  return response.data;
+};
+
+export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
+  const response = await api.get<DashboardMetrics>('/analytics');
   return response.data;
 };

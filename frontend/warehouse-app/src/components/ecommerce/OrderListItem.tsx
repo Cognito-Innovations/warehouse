@@ -47,14 +47,11 @@ export default function OrderListItem({ order }: OrderListItemProps) {
         <p className="text-sm text-gray-600">
           {formatDateTime(order.created_at)}
         </p>
-        <p className="text-sm text-gray-500 pt-1">
-          Ship to: {order.shipping_address || "N/A"}
-        </p>
       </div>
 
       <div className="flex flex-col items-end space-y-1">
         <p className="font-semibold text-gray-900">
-          Total: ${order.total_amount}
+          Total: {order.display_currency || '$'}{(order.total_amount || 0)}
         </p>
         
         <p className="text-sm text-gray-600">

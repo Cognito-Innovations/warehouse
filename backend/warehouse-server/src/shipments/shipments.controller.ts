@@ -35,7 +35,7 @@ export class ShipmentsController {
   @Post()
   async create(
     @Body() createShipmentDto: CreateShipmentDto,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ShipmentResponseDto> {
     const userId = req.user.id;
     return this.shipmentsService.createShipment(createShipmentDto, userId);
@@ -81,7 +81,7 @@ export class ShipmentsController {
     return this.shipmentsService.removePackageFromShipment(
       shipmentId,
       packageId,
-    )
+    );
   }
 
   @Get('detail/by-shipmentNo/:shipmentNo')
@@ -137,7 +137,7 @@ export class ShipmentsController {
     return this.shipmentsService.addShipmentDocument(
       id,
       body.data,
-      req.user.id
+      req.user.id,
     );
   }
 

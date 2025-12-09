@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useCallback, useMemo } from "react";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import { Box, Container, Alert } from "@mui/material";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import ProductDetailHeader from "@/components/ecommerce/ProductDetailHeader";
 import ProductDetailImageSection from "@/components/ecommerce/ProductDetailImageSection";
@@ -12,15 +13,14 @@ import ProductDetailInfoSection from "@/components/ecommerce/ProductDetailInfoSe
 import ProductDetailLoadingState from "@/components/ecommerce/ProductDetailLoadingState";
 import RelatedProductsSection from "@/components/ecommerce/RelatedProductsSection";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
-import { ROUTES } from "@/utils/constants";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceProduct } from "@/types/ecommerce";
 
 export default function ProductDetailPage() {
-  const router = useRouter();
   const params = useParams();
   
   const { 
+    products,
     currentDetailProduct,
     detailPreviewProducts,
     detailRelatedProducts,
@@ -37,29 +37,53 @@ export default function ProductDetailPage() {
     city: '',
     pincode: '',
   });
-  const countryName = locationData.location.countryName;
+  const currency = locationData.currencyInfo.code;
 
-  const productId = useMemo(() => {
-    return params.id && typeof params.id === "string" ? params.id : null;
-  }, [params.id]);
+  const { user } = useAuth();
+  const userId = user?.id;
+
+  const productSlug = useMemo(() => {
+    return params.slug && typeof params.slug === "string" ? params.slug : null;
+  }, [params.slug]);
+
+  const selectionSlugRef = useRef<string | null>(null);
+  const previousSlugRef = useRef(productSlug);
+
+  if (previousSlugRef.current !== productSlug) {
+    selectionSlugRef.current = null;
+    previousSlugRef.current = productSlug;
+  }
+
+  const displayProduct = useMemo(() => {
+    if (currentDetailProduct && currentDetailProduct.slug === productSlug) {
+      return currentDetailProduct;
+    }
+
+    if (currentDetailProduct && selectionSlugRef.current === productSlug) {
+      return currentDetailProduct;
+    }
+
+    if (productSlug && products.length > 0) {
+      return products.find((p) => p.slug === productSlug) || null;
+    }
+
+    return null;
+  }, [currentDetailProduct, products, productSlug]);
 
   useEffect(() => {
-    if (productId && countryName) {
-      loadProductPageData(productId, countryName);
+    if (productSlug && currency) {
+      loadProductPageData(productSlug, currency, userId);
     }
-  }, [productId, countryName, loadProductPageData]);
+  }, [productSlug, currency, loadProductPageData, userId]);
 
   const handleProductSelect = useCallback((selectedProduct: EcommerceProduct) => {
+    selectionSlugRef.current = productSlug;
     setCurrentDetailProduct(selectedProduct);
   }, [setCurrentDetailProduct]);
 
-  const handleProductClick = useCallback((product: EcommerceProduct) => {
-    router.push(`${ROUTES.PRODUCT}/${product.id}`);
-  }, [router]);
-
   const handleRefresh = () => {
-    if (productId && countryName) {
-      loadProductPageData(productId, countryName);
+    if (productSlug && currency) {
+      loadProductPageData(productSlug, currency, userId);
     }
   };
 
@@ -70,11 +94,11 @@ export default function ProductDetailPage() {
       detailError.includes("ECONNREFUSED") ||
       detailError.includes("timeout"));
 
-  if (!currentDetailProduct && isDetailLoading) {
+  if (!displayProduct && isDetailLoading) {
     return <ProductDetailLoadingState />;
   }
 
-  if (!currentDetailProduct && detailError) {
+  if (!displayProduct && detailError) {
     if (isNetworkError) {
       return (
         <EcommerceSkeletonLoader
@@ -92,7 +116,7 @@ export default function ProductDetailPage() {
     }
   }
 
-  if (!currentDetailProduct) return null;
+  if (!displayProduct) return null;
 
   return (
     <Box sx={{ bgcolor: ecommerceData.ui.colors.productDetailBackground, minHeight: "100vh" }}>
@@ -101,14 +125,14 @@ export default function ProductDetailPage() {
       <Container maxWidth="lg" sx={{ py: 2 }}>
         <Box sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, gap: 3 }}>
           <ProductDetailImageSection
-            product={currentDetailProduct}
+            product={displayProduct}
             previewProducts={detailPreviewProducts}
             onProductSelect={handleProductSelect}
             arePreviewsLoading={arePreviewsLoading}
           />
 
           <ProductDetailInfoSection
-            product={currentDetailProduct}
+            product={displayProduct}
             detailsLoading={isDetailLoading}
           />
         </Box>
@@ -118,7 +142,7 @@ export default function ProductDetailPage() {
       {detailRelatedProducts.length > 0 && (
         <RelatedProductsSection
           products={detailRelatedProducts}
-          onProductClick={handleProductClick}
+          arePreviewsLoading={arePreviewsLoading}
         />
       )}
     </Box>

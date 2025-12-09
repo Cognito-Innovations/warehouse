@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { toast } from "sonner";
 
 import { ecommerceService } from "@/services/ecommerce.service";
-import { getAuthToken } from "./ecommerceStore";
+import { getAuthToken } from "@/utils/getAuthToken";
 import { CartStore } from "./storeTypes";
 import { EcommerceProduct, LocalCartItem } from "@/types/ecommerce";
 
@@ -10,10 +11,22 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       cartProducts: [],
+      updatingProducts: {},
       checkoutProducts: [],
       loading: false,
+      isSyncing: false,
+      _hasHydrated: false,
+      setHasHydrated: (value: boolean) => set({ _hasHydrated: value }),
 
       setLoading: (value: boolean) => set({ loading: value }),
+
+      setUpdating: (productId: string, isUpdating: boolean) => 
+        set((state) => ({
+          updatingProducts: {
+            ...state.updatingProducts,
+            [productId]: isUpdating,
+          },
+        })),
 
       toggleCartItemSelection: (productIds: string | string[]) => {
         const state = get();
@@ -28,6 +41,8 @@ export const useCartStore = create<CartStore>()(
         set({ checkoutProducts: [...selected] });
       },
 
+      setCartProducts: (products: any[]) => set({ cartProducts: products }),
+
       // LEARN: clearing products in checkout section after successful payment
       clearCheckoutProducts: () => set({ checkoutProducts: [] }),
 
@@ -41,23 +56,86 @@ export const useCartStore = create<CartStore>()(
         return item?.quantity || 0;
       },
 
-      getCart: async (country?: string) => {
+      getLineId: async (productId: string, currency?: string) => {
+        const token = getAuthToken();
+        if (!token) return undefined;
+
+        try {
+          const serverCart: any = await ecommerceService.getCart(currency);
+          const serverItem = (serverCart.items ?? []).find((i: any) => i.product_id === productId);
+          return serverItem?.id || undefined;
+        } catch (error) {
+          console.error("Failed to get line id:", error);
+          return undefined;
+        }
+      },
+
+      refreshCart: async (currency?: string) => {
+        const token = getAuthToken();
+        if (!token) return get().cartProducts;
+
+        try {
+          const serverCart: any = await ecommerceService.getCart(currency);
+          const serverItems = serverCart.items ?? [];
+          const currentState = get();
+          const mergedItems = serverItems.map((serverItem: any) => {
+            const localItem = currentState.cartProducts.find(
+              (l: LocalCartItem) => l.product_id === serverItem.product_id
+            );
+            return {
+              ...serverItem,
+              ...(localItem && !serverItem.product ? { product: localItem.product } : {}),
+            };
+          });
+          set({ cartProducts: mergedItems as LocalCartItem[] });
+          return mergedItems as LocalCartItem[];
+        } catch (error) {
+          console.error("Failed to refresh cart:", error);
+          return get().cartProducts;
+        }
+      },
+
+      getCart: async (currency?: string) => {
         const token = getAuthToken();
         const state = get();
 
-        if (state.cartProducts.length > 0) {
-          if (token) {
-             state.syncCart(country).catch(console.error);
-          }
+        if (token) {
+          try {
+            const hasLocalItemsToSync = state.cartProducts.length > 0;
 
-          const needsPopulation = state.cartProducts.some(i => !i.product);
+            if (hasLocalItemsToSync) {
+              await state.syncCart(currency);
+            }
+
+            await state.refreshCart(currency);
+            return get().cartProducts;
+
+          } catch (error) {
+            console.error("Failed to fetch/sync cart:", error);
+            try {
+              await state.refreshCart(currency);
+              return get().cartProducts;
+            } catch (innerError) {
+              console.error("Fallback failed:", innerError);
+              return state.cartProducts;
+            }
+          }
+        }
+
+        if (state.cartProducts.length > 0) {
+          const needsPopulation = state.cartProducts.some((i) => !i.product);
           
           if (needsPopulation) {
             try {
               const itemsWithProducts = await Promise.all(
                 state.cartProducts.map(async (item) => {
                   if (item.product) return item;
-                  const product = await ecommerceService.getProduct(item.product_id!, country);
+                  if (!item.product_id) return item; 
+
+                  const product = await ecommerceService.getProduct(
+                    item.product_id,
+                    currency
+                  );
                   return { ...item, product };
                 })
               );
@@ -66,63 +144,77 @@ export const useCartStore = create<CartStore>()(
               console.error("Failed to populate cart products:", error);
             }
           }
-          return state.cartProducts;
+          return get().cartProducts;
         }
 
-        if (!token) return state.cartProducts;
-
-        set({ loading: true });
-        try {
-          const serverCart: any = await ecommerceService.getCart(country);
-          const serverItems = serverCart.items ?? [];
-          set({ cartProducts: serverItems });
-          return serverItems;
-        } catch (error) {
-          console.error("Failed to fetch cart:", error);
-          return [];
-        } finally {
-          set({ loading: false });
-        }
+        return [];
       },
 
-      syncCart: async (country?: string) => {
+      syncCart: async (currency?: string) => {
         const token = getAuthToken();
         if (!token) return;
 
-        const serverCart: any = await ecommerceService.getCart(country);
-        const serverItems: LocalCartItem[] = serverCart.items ?? [];
-        const localCart = get().cartProducts;
+        set({ isSyncing: true });
 
-        const toAdd = localCart.filter((local: LocalCartItem) =>
-          !serverItems.some((server: LocalCartItem) => server.product_id === local.product_id)
-        );
+        try {
+          const serverCart: any = await ecommerceService.getCart(currency);
+          const serverItems: LocalCartItem[] = serverCart.items ?? [];
+          const localCart = get().cartProducts;
 
-        const toRemove = serverItems.filter((server: LocalCartItem) =>
-          !localCart.some((local: LocalCartItem) => local.product_id === server.product_id)
-        );
-        
-        const toUpdate = localCart.filter((local) => {
-           const serverItem = serverItems.find(s => s.product_id === local.product_id);
-           return serverItem && serverItem.quantity !== local.quantity;
-        });
+          const toAdd = localCart.filter((local: LocalCartItem) =>
+            !serverItems.some((server: LocalCartItem) => server.product_id === local.product_id)
+          );
 
-        await Promise.all([
-          ...toAdd.map((item) =>
-            ecommerceService.addToCart(
-              { product_id: item.product_id!, quantity: item.quantity },
-              country
-            )
-          ),
-          ...toUpdate.map((item) => 
-             ecommerceService.addToCart(
-               { product_id: item.product_id!, quantity: item.quantity }, 
-               country
-             )
-          ),
-          ...toRemove.map((item) =>
-            ecommerceService.removeFromCart(item.product_id!, country)
-          ),
-        ]);
+          const toUpdate = localCart.filter((local) => {
+            const serverItem = serverItems.find(s => s.product_id === local.product_id);
+            return serverItem && serverItem.quantity !== local.quantity;
+          });
+          
+          if (toAdd.length > 0) {
+            await Promise.allSettled(toAdd.map(async (item) => {
+              if (item.product_id) {
+                try {
+                  await ecommerceService.addToCart({ product_id: item.product_id, quantity: item.quantity }, currency);
+                } catch (e) {
+                  console.warn(`Failed to sync add item ${item.product_id}`, e);
+                }
+              }
+            }));
+          }
+
+          if (toUpdate.length > 0) {
+            await Promise.allSettled(toUpdate.map(async (item) => {
+              if (item.product_id) {
+                let lineId: string;
+                if (item.id) {
+                  lineId = item.id;
+                } else {
+                  const fetchedId = await get().getLineId(item.product_id, currency);
+                  if (!fetchedId) {
+                    console.warn(`Skipping sync update for ${item.product_id}: no line ID found`);
+                    return;
+                  }
+                  lineId = fetchedId;
+                }
+                try {
+                  await ecommerceService.updateCartItem(
+                    lineId, 
+                    { quantity: item.quantity }, 
+                    currency
+                  );
+                } catch (e) {
+                  console.warn(`Failed to sync update item ${item.product_id}`, e);
+                }
+              }
+            }));
+          }
+
+        } catch (error) {
+          console.error("Sync Cart General Error:", error);
+        } finally {
+          await get().refreshCart(currency);
+          set({ isSyncing: false });
+        }
       },
 
       //TODO P0: We need to break this API into 4-5 parts
@@ -131,7 +223,7 @@ export const useCartStore = create<CartStore>()(
       addOrIncreaseQty: async (
         product: EcommerceProduct,
         quantity: number,
-        country?: string,
+        currency?: string,
       ) => {
         // Add or Increase the quantity of product to cart
         if (quantity <= 0) {
@@ -150,41 +242,102 @@ export const useCartStore = create<CartStore>()(
         }
 
         const updatedCart = [...state.cartProducts];
-        const existing = updatedCart.find(
+        const existingIndex = updatedCart.findIndex(
           (item: LocalCartItem) => item.product_id === product_id
         );
+        let oldItem: LocalCartItem | undefined;
+        let isUpdateOperation = false;
 
-        let newQuantity: number;
-        if (existing) {
-          existing.quantity += quantity;
-          newQuantity = existing.quantity;
-
-          if (product) {
-            existing.product = product;
-          }
+        if (existingIndex !== -1) {
+          oldItem = { ...updatedCart[existingIndex] };
+          const existing = updatedCart[existingIndex];
+          const newQuantity = existing.quantity + quantity;
+          updatedCart[existingIndex] = { ...existing, quantity: newQuantity };
+          if (product) updatedCart[existingIndex].product = product;
+          isUpdateOperation = true;
         } else {
-          newQuantity = quantity;
-          updatedCart.push({
+          const newItem: LocalCartItem = {
             product_id,
-            quantity: newQuantity,
-            country,
-            product: product
-          } as LocalCartItem);
+            quantity,
+            currency,
+            product
+          };
+          updatedCart.push(newItem);
         }
 
         set({ cartProducts: updatedCart });
 
         if (!token) return;
 
-        ecommerceService
-          .addToCart({ product_id, quantity: newQuantity }, country)
-          .catch(() => get().syncCart(country));
+        get().setUpdating(product_id, true);
+
+        try {
+          if (isUpdateOperation) {
+            let lineId: string;
+            if (oldItem?.id) {
+              lineId = oldItem.id;
+            } else {
+              const fetchedLineId = await get().getLineId(product_id, currency);
+              if (!fetchedLineId) {
+                set((s) => {
+                  const cart = [...s.cartProducts];
+                  const idx = cart.findIndex((i) => i.product_id === product_id);
+                  if (idx !== -1 && oldItem) {
+                    cart[idx] = oldItem;
+                  }
+                  return { cartProducts: cart };
+                });
+                toast.error("Failed to update cart quantity. Please try again.");
+                return;
+              }
+              lineId = fetchedLineId;
+            }
+            await ecommerceService.updateCartItem(
+              lineId, 
+              { quantity: updatedCart[existingIndex].quantity }, 
+              currency
+            );
+          } else {
+            await ecommerceService.addToCart(
+              { product_id, quantity }, 
+              currency
+            );
+          }
+        } catch (error) {
+          console.error("Add/Update cart failed:", error);
+          toast.error(
+            isUpdateOperation 
+              ? "Failed to update cart quantity. Please try again." 
+              : "Failed to add to cart. Please try again."
+          );
+          if (isUpdateOperation) {
+            set((s) => {
+              const cart = [...s.cartProducts];
+              const idx = cart.findIndex((i) => i.product_id === product_id);
+              if (idx !== -1 && oldItem) {
+                cart[idx] = oldItem;
+              }
+              return { cartProducts: cart };
+            });
+          } else {
+            set((s) => ({ cartProducts: s.cartProducts.filter((i) => i.product_id !== product_id) }));
+          }
+          return;
+        } finally {
+          get().setUpdating(product_id, false);
+        }
+
+        try {
+          await get().refreshCart(currency);
+        } catch (refreshError) {
+          console.error("Failed to refresh cart after operation:", refreshError);
+        }
       },
 
       decreaseProductQty: async (
         product: EcommerceProduct,
         quantity: number,
-        country?: string
+        currency?: string
       ) => {
         // Decrease the quantity of the product from the cart
         if (quantity <= 0) return;
@@ -194,120 +347,244 @@ export const useCartStore = create<CartStore>()(
 
         const product_id = product?.id;
 
-        const updatedCart = [...state.cartProducts];
-        const existingIndex = updatedCart.findIndex(item => item.product_id === product_id);
+        const existingIndex = state.cartProducts.findIndex(item => item.product_id === product_id);
 
         if (existingIndex === -1) return;
 
-        const existing = updatedCart[existingIndex];
-        const newQuantity = existing.quantity - quantity;
+        const existing = state.cartProducts[existingIndex];
+        const oldQuantity = existing.quantity;
+        const newQuantity = oldQuantity - quantity;
 
         if (newQuantity <= 0) {
-          updatedCart.splice(existingIndex, 1);
-          set({ cartProducts: updatedCart });
-
-          if (token) {
-            ecommerceService
-              .removeFromCart(product_id, country)
-              .catch(() => get().syncCart(country));
-          }
+          await state.removeProductFromCart(product_id, currency);
           return;
         }
 
-        existing.quantity = newQuantity;
+        const updatedCart = [...state.cartProducts];
+        updatedCart[existingIndex] = { ...existing, quantity: newQuantity }; 
         set({ cartProducts: updatedCart });
 
         if (!token) return;
 
-        ecommerceService
-          .addToCart({ product_id, quantity: newQuantity }, country)
-          .catch(() => get().syncCart(country));
+        get().setUpdating(product_id, true);
+
+        let lineId: string;
+        if (existing.id) {
+          lineId = existing.id;
+        } else {
+          const fetchedLineId = await get().getLineId(product_id, currency);
+          if (!fetchedLineId) {
+            set((s) => {
+              const cart = [...s.cartProducts];
+              const idx = cart.findIndex((i) => i.product_id === product_id);
+              if (idx !== -1) {
+                cart[idx] = { ...existing, quantity: oldQuantity };
+              }
+              return { cartProducts: cart };
+            });
+            toast.error("Failed to update cart quantity. Please try again.");
+            return;
+          }
+          lineId = fetchedLineId;
+        }
+
+        try {
+           await ecommerceService.updateCartItem(
+             lineId, 
+             { quantity: newQuantity }, 
+             currency
+           );
+        } catch (error) {
+          console.error("Decrease cart qty failed", error);
+          toast.error("Failed to update cart quantity. Please try again.");
+          set((s) => {
+            const cart = [...s.cartProducts];
+            const idx = cart.findIndex((i) => i.product_id === product_id);
+            if (idx !== -1) {
+              cart[idx] = { ...existing, quantity: oldQuantity };
+            }
+            return { cartProducts: cart };
+          });
+          return;
+        } finally {
+          get().setUpdating(product_id, false);
+        }
+
+        try {
+          await get().refreshCart(currency);
+        } catch (refreshError) {
+          console.error("Failed to refresh cart after operation:", refreshError);
+        }
       },
 
-      removeProductFromCart: async (product_id: string, country?: string) => {
+      removeProductFromCart: async (product_id: string, currency?: string) => {
         // Completely remove product from the cart
         const token = getAuthToken();
 
-        const updatedCart = get().cartProducts.filter(
-          (item: LocalCartItem) => item.product_id !== product_id
+        const state = get();
+        const item = state.cartProducts.find((i: LocalCartItem) => i.product_id === product_id);
+        if (!item) return;
+
+        const updatedCart = state.cartProducts.filter(
+          (i: LocalCartItem) => i.product_id !== product_id
         );
 
         set({ cartProducts: updatedCart });
 
-          if (token) {
-                ecommerceService
-                  .removeFromCart(product_id, country)
-                  .catch(() => get().syncCart(country));
-              }
-
         if (!token) return;
 
-         if (quantity <= 0) {
-              // const index = updatedCart.indexOf(quantity);
-              // updatedCart.splice(index, 1);
-              // set({ cartProducts: updatedCart });
-              // return;
-            }
+        get().setUpdating(product_id, true);
 
-        ecommerceService
-          .removeFromCart(product_id, country)
-          .catch(() => get().syncCart(country));
+        let lineId: string;
+        if (item.id) {
+          lineId = item.id;
+        } else {
+          const fetchedLineId = await get().getLineId(product_id, currency);
+          if (!fetchedLineId) {
+            set({ cartProducts: [...updatedCart, item] });
+            toast.error("Failed to remove item from cart. Please try again.");
+            return;
+          }
+          lineId = fetchedLineId;
+        }
+
+        try {
+          await ecommerceService.removeFromCart(lineId, currency);
+        } catch (error) {
+          console.error("Failed to remove from server:", error);
+          toast.error("Failed to remove item from cart. Please try again.");
+          set({ cartProducts: [...updatedCart, item] });
+          return;
+        } finally {
+          get().setUpdating(product_id, false);
+        }
+
+        try {
+          await get().refreshCart(currency);
+        } catch (refreshError) {
+          console.error("Failed to refresh cart after operation:", refreshError);
+        }
       },
 
-      incrementCartQuantity: async (product: EcommerceProduct, country?: string) => {
+      incrementCartQuantity: async (product: EcommerceProduct, currency?: string) => {
         // Increments the quantity of a product in the cart by 1 but only if the current quantity is below the available stock
         const state = get();
         const currentQuantity = state.getItemQuantity(product.id);
         if (currentQuantity >= product.stock_quantity) {
           return;
         }
-        await state.addOrIncreaseQty(product, 1, country);
+        await state.addOrIncreaseQty(product, 1, currency);
       },
 
-      decrementCartQuantity: async (product: EcommerceProduct, country?: string) => {
+      decrementCartQuantity: async (product: EcommerceProduct, currency?: string) => {
         // Decrements the quantity of a product in the cart by 1 but only if the current quantity is greater than 0
         const state = get();
         const currentQuantity = state.getItemQuantity(product.id);
         if (currentQuantity <= 0) {
           return;
         }
-        await state.decreaseProductQty(product, 1, country);
+        await state.decreaseProductQty(product, 1, currency);
       },
 
-      setCartItemQuantity: async (productId: string, quantity: number, country?: string) => {
+      setCartItemQuantity: async (productId: string, quantity: number, currency?: string) => {
         // Sets the exact quantity for a specific product in the cart to the provided value
         // If the new quantity is <= 0 it removes the item entirely
         // If the item isn't found in the cart, it logs warning
         const state = get();
         if (quantity <= 0) {
-          await state.removeProductFromCart(productId, country);
+          await state.removeProductFromCart(productId, currency);
           return;
         }
+
+        const existingIndex = state.cartProducts.findIndex((item: LocalCartItem) => item.product_id === productId);
+        
+        if (existingIndex === -1) return;
+
+        const existing = state.cartProducts[existingIndex];
+        const oldQuantity = existing.quantity;
+        if (oldQuantity === quantity) return;
+
         const updatedCart = [...state.cartProducts];
-        const existingIndex = updatedCart.findIndex((item: LocalCartItem) => item.product_id === productId);
-        if (existingIndex === -1) {
-          console.warn(`Cart item with productId ${productId} not found.`);
-          return;
-        }
-        const existing = updatedCart[existingIndex];
-        if (existing.quantity === quantity) {
-          return;
-        }
         updatedCart[existingIndex] = { ...existing, quantity };
         set({ cartProducts: updatedCart });
         const token = getAuthToken();
-        if (token) {
-          try {
-            await ecommerceService.addToCart({ product_id: productId, quantity }, country);
-          } catch (error) {
-            console.error("Failed to set cart quantity:", error);
-            await state.syncCart(country);
+        if (!token) return;
+        get().setUpdating(productId, true);
+        let lineId: string;
+        if (existing.id) {
+          lineId = existing.id;
+        } else {
+          const fetchedLineId = await get().getLineId(productId, currency);
+          if (!fetchedLineId) {
+            set((s) => {
+              const cart = [...s.cartProducts];
+              const idx = cart.findIndex((i) => i.product_id === productId);
+              if (idx !== -1) {
+                cart[idx] = { ...existing, quantity: oldQuantity };
+              }
+              return { cartProducts: cart };
+            });
+            toast.error("Failed to update cart quantity. Please try again.");
+            return;
           }
+          lineId = fetchedLineId;
         }
+        try {
+          await ecommerceService.updateCartItem(
+            lineId, 
+            { quantity }, 
+            currency
+          );
+        } catch (error) {
+          console.error("Failed to set cart quantity:", error);
+          toast.error("Failed to update cart quantity. Please try again.");
+          set((s) => {
+            const cart = [...s.cartProducts];
+            const idx = cart.findIndex((i) => i.product_id === productId);
+            if (idx !== -1) {
+              cart[idx] = { ...existing, quantity: oldQuantity };
+            }
+            return { cartProducts: cart };
+          });
+          return;
+        } finally {
+          get().setUpdating(productId, false);
+        }
+
+        try {
+          await get().refreshCart(currency);
+        } catch (refreshError) {
+          console.error("Failed to refresh cart after operation:", refreshError);
+        }
+      },
+
+      removePurchasedProducts: (purchasedProductIds: string[]) => {
+        const state = get();
+        
+        const remainingCartProducts = state.cartProducts.filter(
+          (item) => !purchasedProductIds.includes(item.product_id!)
+        );
+
+        set({ 
+          cartProducts: remainingCartProducts, 
+          checkoutProducts: []
+        });
+        
+        localStorage.removeItem("checkoutSelectedItems");
       },
     }),
     {
       name: "cart-storage",
+      version: 2,
+      partialize: (state) => ({
+        cartProducts: state.cartProducts,
+        checkoutProducts: state.checkoutProducts
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
+
+export const useCartHasHydrated = () => useCartStore((state) => state._hasHydrated);

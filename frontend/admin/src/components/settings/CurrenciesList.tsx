@@ -17,7 +17,7 @@ const CurrenciesList: React.FC<CurrenciesListProps> = ({ currencies, onEdit }) =
             <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Currency Code</TableCell>
             <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Currency Symbol</TableCell>
             <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Rate</TableCell>
-            <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Country</TableCell>
+            <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Name</TableCell>
             <TableCell sx={{ fontWeight: 600, color: '#475569', textAlign: 'right' }}>Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -34,7 +34,7 @@ const CurrenciesList: React.FC<CurrenciesListProps> = ({ currencies, onEdit }) =
                 <Typography variant="body2" color="text.secondary">{row.rate}</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="body2" color="text.secondary">{row.country?.name}</Typography>
+                <Typography variant="body2" color="text.secondary">{row.name}</Typography>
               </TableCell>
               <TableCell align="right">
                 <Tooltip title="Edit Currency">

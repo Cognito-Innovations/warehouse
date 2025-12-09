@@ -8,12 +8,22 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from 'src/users/user.entity';
-import { EcommerceCartItem } from './ecommerce-cart-item.entity';
+import {
+  ComputedCartItem,
+  EcommerceCartItem,
+} from './ecommerce-cart-item.entity';
 
 export enum CartStatus {
   ACTIVE = 'ACTIVE',
   ABANDONED = 'ABANDONED',
   CHECKED_OUT = 'CHECKED_OUT',
+}
+
+export interface ComputedCart {
+  items: ComputedCartItem[];
+  total_amount: number;
+  discount_amount: number;
+  final_amount: number;
 }
 
 @Entity('ecommerce_carts')

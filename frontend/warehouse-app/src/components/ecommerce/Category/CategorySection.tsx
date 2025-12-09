@@ -31,6 +31,7 @@ export default function CategorySection() {
           flexWrap: "nowrap",
           overflowX: "auto",
           borderBottom: "1px solid #d3d2d2",
+          py: 2,
           pb: { xs: -2, sm: -2.5, md: -3 },
           "::-webkit-scrollbar": {
             display: "none",
@@ -50,7 +51,7 @@ export default function CategorySection() {
         sx={{
           position: "absolute",
           right: { xs: -10, md: -20 },
-          top: { xs: "6px", md: "15px" },
+          top: { xs: "14px", md: "20px" },
           zIndex: 2,
           width: { xs: 32, md: 40 },
           height: { xs: 32, md: 40 },

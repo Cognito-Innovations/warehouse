@@ -100,7 +100,6 @@ export class PickupRequestResponseDto {
   })
   user?: UserResponseDto;
 
-  //TODO: Why does it optional ?
   @ApiPropertyOptional({
     description: 'History of tracking updates for the pickup request',
     type: [TrackingRequestResponseDto],

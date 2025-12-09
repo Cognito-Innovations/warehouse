@@ -53,7 +53,7 @@ export class PreArrivalService {
     });
 
     const savedPreArrival = await this.preArrivalRepository.save(preArrival);
-    savedPreArrival.user = user; 
+    savedPreArrival.user = user;
 
     return this.mapToResponseDto(savedPreArrival);
   }

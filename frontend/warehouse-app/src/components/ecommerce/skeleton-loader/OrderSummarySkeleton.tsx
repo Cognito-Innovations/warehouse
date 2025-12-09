@@ -1,18 +1,14 @@
 import React from "react";
 import { Paper, Box, Skeleton } from "@mui/material";
 
-interface OrderSummarySkeletonProps {
-  borderColor?: string;
-}
-
-export default function OrderSummarySkeleton({ borderColor }: OrderSummarySkeletonProps) {
+export default function OrderSummarySkeleton() {
   return (
     <Paper
       elevation={0}
       sx={{
         p: 2,
         borderRadius: 2,
-        border: `1px solid ${borderColor}`,
+        border: `1px solid #e0e0e0`,
         bgcolor: "white",
       }}
     >

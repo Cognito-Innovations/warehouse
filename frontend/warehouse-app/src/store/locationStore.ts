@@ -9,11 +9,13 @@ const useLocationStore = create<LocationStore>((set, get) => ({
     pincode: "",
     countryCode: undefined,
     countryName: undefined,
+    currency: undefined,
   },
   userAddress: null,
   addressCache: {},
   isLoadingLocation: false,
   isLoadingAddress: false,
+  hasInitialized: false,
   error: null,
 
   setUserLocation: (location) => set({ userLocation: location }),
@@ -24,7 +26,7 @@ const useLocationStore = create<LocationStore>((set, get) => ({
 
   fetchCountryFromIP: async (defaultCity: string, defaultPincode: string, enableGeolocation = true) => {
     try {
-      const { countryCode, countryName } = await getUserCountryByIP();
+      const { countryCode, countryName, currency } = await getUserCountryByIP();
 
       if (!countryCode) {
         get().requestLocation(enableGeolocation);
@@ -36,6 +38,7 @@ const useLocationStore = create<LocationStore>((set, get) => ({
         pincode: defaultPincode,
         countryCode,
         countryName,
+        currency,
       };
 
       get().setUserLocation(userLocation);
@@ -93,7 +96,8 @@ const useLocationStore = create<LocationStore>((set, get) => ({
             city, 
             pincode, 
             countryCode: ipGeo.countryCode, 
-            countryName: address.country || ipGeo.countryName 
+            countryName: address.country || ipGeo.countryName, 
+            currency: ipGeo.currency
           };
 
           get().setUserLocation(userLocation);
@@ -118,16 +122,16 @@ const useLocationStore = create<LocationStore>((set, get) => ({
   },
 
   initializeLocation: async (defaultCity: string, defaultPincode: string, enableGeolocation = true) => {
-    const { userLocation, isLoadingLocation } = get();
-    if (isLoadingLocation) return;
+    const { hasInitialized, isLoadingLocation, userLocation } = get();
+    if (isLoadingLocation || hasInitialized) return;
 
-    if (userLocation.city && userLocation.city !== defaultCity) {
-      get().setLoadingLocation(false);
+    if (userLocation.countryCode || (userLocation.city && userLocation.city !== defaultCity)) {
       return;
     }
 
     get().setLoadingLocation(true);
     get().setError(null);
+    set({ hasInitialized: true });
 
     try {
       await get().fetchCountryFromIP(defaultCity, defaultPincode, enableGeolocation);
@@ -137,12 +141,11 @@ const useLocationStore = create<LocationStore>((set, get) => ({
   },
 
   fetchUserAddress: async (userId: string) => {
-    const { addressCache, isLoadingAddress } = get();
-    if (isLoadingAddress) return;
+    const state = get();
+    if (state.isLoadingAddress) return;
 
-    if (addressCache[userId] !== undefined) {
-      get().setUserAddress(addressCache[userId]);
-      get().setLoadingAddress(false);
+    if (state.addressCache[userId] !== undefined) {
+      state.setUserAddress(state.addressCache[userId]);
       return;
     }
 
@@ -194,6 +197,7 @@ const useLocationStore = create<LocationStore>((set, get) => ({
       pincode: "",
       countryCode: undefined,
       countryName: undefined,
+      currency: undefined,
     });
     get().setUserAddress(null);
     get().setError(null);

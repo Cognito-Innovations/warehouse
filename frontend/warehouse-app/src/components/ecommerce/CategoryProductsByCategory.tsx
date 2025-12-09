@@ -2,9 +2,11 @@
 
 import React, { useEffect, useRef } from "react";
 import { Box, Typography } from "@mui/material";
-import EcommerceProductsGrid from "./EcommerceProductsGrid";
+
 import useCategoryStore from "@/store/categoryStore";
 import useProductStore from "@/store/productStore";
+import { useAuth } from "@/contexts/AuthContext";
+import EcommerceProductsGrid from "./EcommerceProductsGrid";
 
 export default function CategoryProductsByCategory() {
   const getProducts = useProductStore(state=>state.getProducts);
@@ -13,6 +15,9 @@ export default function CategoryProductsByCategory() {
   const getCategories = useCategoryStore(state=>state.getCategories);
   const categories = useCategoryStore(state=>state.categories);
   const hasInitiatedLoadRef = useRef(false);
+
+  const { user } = useAuth();
+  const userId = user?.id;
 
   useEffect(()=>{
     if (hasInitiatedLoadRef.current) return;
@@ -25,7 +30,7 @@ export default function CategoryProductsByCategory() {
       getCategories();
     }
     if (currentProducts.length === 0 && !currentIsLoading) {
-      getProducts();
+      getProducts({ userId });
     }
     
     hasInitiatedLoadRef.current = true;

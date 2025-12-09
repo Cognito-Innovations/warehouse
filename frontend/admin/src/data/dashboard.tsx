@@ -13,19 +13,19 @@ import {
 import type { ChartConfig } from '../components/Dashboard/DashboardCharts';
 import type { MetricCardProps } from '../components/Dashboard/MetricCard';
 
-export const metricsData: MetricCardProps[] = [
-  { title: 'Customers', value: '21951', subtitle: 'Total', color: '#22c55e', bgColor: '#dcfce7', icon: <GroupsIcon /> },
-  { title: 'Active', value: '29', subtitle: 'Packages', color: '#ec4899', bgColor: '#fce7f3', icon: <DraftIcon /> },
-  { title: 'Action Required', value: '0', subtitle: 'Packages', color: '#ef4444', bgColor: '#fee2e2', icon: <WarningIcon /> },
-  { title: 'Ship Request', value: '0', subtitle: 'Shipment', color: '#ec4899', bgColor: '#fce7f3', icon: <ShipRequestIcon /> },
-  { title: 'Payment Pending', value: '0', subtitle: 'Shipment', color: '#ef4444', bgColor: '#fee2e2', icon: <PaymentIcon /> },
-  { title: 'Payment Approval', value: '0', subtitle: 'Shipment', color: '#3b82f6', bgColor: '#dbeafe', icon: <ApprovalIcon /> },
-  { title: 'Ready to Ship', value: '0', subtitle: 'Shipment', color: '#22c55e', bgColor: '#dcfce7', icon: <ShippingIcon /> },
-  { title: 'Shipped', value: '0', subtitle: 'Shipment', color: '#64748b', bgColor: '#f1f5f9', icon: <InventoryIcon /> },
-  { title: 'Pickup Requested', value: '9', subtitle: 'Pickup', color: '#ec4899', bgColor: '#fce7f3', icon: <ShippingIcon /> },
-  { title: 'Shopping Requested', value: '3', subtitle: 'Assist Purchase', color: '#ec4899', bgColor: '#fce7f3', icon: <ShoppingIcon /> },
-  { title: 'Quotation Confirm', value: '0', subtitle: 'Assist Purchase', color: '#22c55e', bgColor: '#dcfce7', icon: <QuoteIcon /> },
-  { title: 'Payment Approval', value: '0', subtitle: 'Assist Purchase', color: '#3b82f6', bgColor: '#dbeafe', icon: <ApprovalIcon /> },
+export const metricsConfig: Omit<MetricCardProps, 'value'>[] = [
+  { title: 'Customers', subtitle: 'Total', color: '#22c55e', bgColor: '#dcfce7', icon: <GroupsIcon /> },
+  { title: 'Active', subtitle: 'Packages', color: '#ec4899', bgColor: '#fce7f3', icon: <DraftIcon /> },
+  { title: 'Action Required', subtitle: 'Packages', color: '#ef4444', bgColor: '#fee2e2', icon: <WarningIcon /> },
+  { title: 'Ship Request', subtitle: 'Shipment', color: '#ec4899', bgColor: '#fce7f3', icon: <ShipRequestIcon /> },
+  { title: 'Payment Pending', subtitle: 'Shipment', color: '#ef4444', bgColor: '#fee2e2', icon: <PaymentIcon /> },
+  { title: 'Payment Approval', subtitle: 'Shipment', color: '#3b82f6', bgColor: '#dbeafe', icon: <ApprovalIcon /> },
+  { title: 'Ready to Ship', subtitle: 'Shipment', color: '#22c55e', bgColor: '#dcfce7', icon: <ShippingIcon /> },
+  { title: 'Shipped', subtitle: 'Shipment', color: '#64748b', bgColor: '#f1f5f9', icon: <InventoryIcon /> },
+  { title: 'Pickup Requested', subtitle: 'Pickup', color: '#ec4899', bgColor: '#fce7f3', icon: <ShippingIcon /> },
+  { title: 'Shopping Requested', subtitle: 'Assist Purchase', color: '#ec4899', bgColor: '#fce7f3', icon: <ShoppingIcon /> },
+  { title: 'Quotation Confirm', subtitle: 'Assist Purchase', color: '#22c55e', bgColor: '#dcfce7', icon: <QuoteIcon /> },
+  { title: 'Payment Approval', subtitle: 'Assist Purchase', color: '#3b82f6', bgColor: '#dbeafe', icon: <ApprovalIcon /> },
 ];
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

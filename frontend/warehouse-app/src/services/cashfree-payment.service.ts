@@ -27,7 +27,8 @@ export async function launchCashfreePayment(paymentConfig: any, onSuccess: any, 
     await loadCashfreeScript();
     if (!window.Cashfree) throw new Error("Cashfree SDK not found!");
 
-    const cashfree = window.Cashfree({ mode: "sandbox" });
+    const mode = process.env.NEXT_PUBLIC_CASHFREE_MODE;
+    const cashfree = window.Cashfree({ mode });
 
     const options = {
       paymentSessionId: paymentConfig.orderToken,

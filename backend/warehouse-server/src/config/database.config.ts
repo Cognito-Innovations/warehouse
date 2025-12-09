@@ -45,7 +45,6 @@ import { EcommerceCart } from 'src/ecommerce/entities/ecommerce-cart.entity';
 import { EcommerceCartItem } from 'src/ecommerce/entities/ecommerce-cart-item.entity';
 import { EcommerceCargoOption } from 'src/ecommerce/entities/cargo-options.entity';
 
-//TODO: Remove all comments
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
@@ -93,13 +92,12 @@ export const databaseConfig: TypeOrmModuleOptions = {
     EcommerceMeasurement,
     EcommerceCart,
     EcommerceCartItem,
-    ShoppingRequestProduct,
     Shipment,
     InvoiceCharge,
     EcommerceCargoOption,
   ],
-  synchronize: true, // Disable schema synchronization to prevent modifying existing database
+  synchronize: false, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],
-  migrationsRun: true,
+  migrationsRun: false,
   logging: process.env.NODE_ENV === 'development',
 };

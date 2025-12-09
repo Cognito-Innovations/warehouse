@@ -1,11 +1,7 @@
 import React from "react";
 import { Box, Paper, Skeleton } from "@mui/material";
 
-interface CartItemsSkeletonProps {
-  borderColor?: string;
-}
-
-export default function CartItemsSkeleton({ borderColor }: CartItemsSkeletonProps) {
+export default function CartItemsSkeleton() {
   return (
     <Paper
       elevation={0}
@@ -13,7 +9,7 @@ export default function CartItemsSkeleton({ borderColor }: CartItemsSkeletonProp
         p: 2,
         mb: 2,
         borderRadius: 2,
-        border: `1px solid ${borderColor}`,
+        border: `1px solid #e0e0e0`,
         bgcolor: "white",
       }}
     >

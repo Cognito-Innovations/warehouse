@@ -9,8 +9,8 @@ import {
   UpdateCartItemRequest,
   CreateOrderRequest,
 } from "../types/ecommerce";
-import { getSession } from "next-auth/react";
 import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
+import { getAuthTokenWithFallback } from "@/utils/getAuthToken";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001";
 
@@ -25,8 +25,7 @@ attachClientIdentifierInterceptors(api);
 
 // Add auth token to requests
 api.interceptors.request.use(async (config) => {
-  const session = await getSession();
-  const token = session?.access_token;
+  const token = await getAuthTokenWithFallback();
   if (token) {
     config.headers.set("Authorization", `Bearer ${token}`);
   }
@@ -59,17 +58,18 @@ export const ecommerceService = {
   // Products
   async getProducts(
     searchTerm?: string,
-    country?: string,
+    currency?: string,
     category?: string,
     limit?: number,
-    offset?: number
+    offset?: number,
+    userId?: string
   ): Promise<EcommerceProduct[]> {
     const params: any = {};
     if (searchTerm) {
       params.search = searchTerm;
     }
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     if (category) {
       params.category = category;
@@ -80,14 +80,22 @@ export const ecommerceService = {
     if (offset !== undefined) {
       params.offset = offset;
     }
+    if (userId) {
+      params.user_id = userId;
+    }
     const response = await api.get("/ecommerce-products", { params });
     return response.data;
   },
 
-  async getProduct(id: string, country?: string): Promise<EcommerceProduct> {
-    const response = await api.get(`/ecommerce-products/${id}`, {
-      params: country ? { country } : {}
-    });
+  async getProduct(slug: string, currency?: string, userId?: string): Promise<EcommerceProduct> {
+    const params: any = {};
+    if (currency) {
+      params.currency = currency;
+    }
+    if (userId) {
+      params.user_id = userId;
+    }
+    const response = await api.get(`/ecommerce-products/${slug}`, { params });
     return response.data;
   },
 
@@ -97,37 +105,37 @@ export const ecommerceService = {
   },
 
   // Cart
-  async getCart(country?: string): Promise<Cart> {
+  async getCart(currency?: string): Promise<Cart> {
     let params: any = {};
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     const response = await api.get("/ecommerce-cart", { params });
     return response.data;
   },
 
-  async addToCart(data: AddToCartRequest, country?: string): Promise<Cart> {
+  async addToCart(data: AddToCartRequest, currency?: string): Promise<Cart> {
     let params: any = {};
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     const response = await api.post("/ecommerce-cart/add", data, { params });
     return response.data;
   },
 
-  async updateCartItem(itemId: string, data: UpdateCartItemRequest, country?: string): Promise<Cart> {
+  async updateCartItem(itemId: string, data: UpdateCartItemRequest, currency?: string): Promise<Cart> {
     let params: any = {};
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     const response = await api.put(`/ecommerce-cart/items/${itemId}`, data, { params });
     return response.data;
   },
 
-  async removeFromCart(itemId: string, country?: string): Promise<Cart> {
+  async removeFromCart(itemId: string, currency?: string): Promise<Cart> {
     let params: any = {};
-    if (country) {
-      params.country = country;
+    if (currency) {
+      params.currency = currency;
     }
     const response = await api.delete(`/ecommerce-cart/items/${itemId}`, {params});
     return response.data;

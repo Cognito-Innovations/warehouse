@@ -4,6 +4,7 @@ import TopNavbar from '../components/Layout/TopNavbar';
 import { StatusCards, PackagesTable } from '../components/Packages';
 import RegisterPackageModal from '../components/Modals/RegisterPackageModal';
 import { getPackage } from '../services/api.services';
+import { PACKAGE_STATUS_CARDS } from '../utils/constants';
 
 interface StatusCard {
   title: string;
@@ -59,43 +60,29 @@ const Packages: React.FC = () => {
       }, {});
 
       // Create status cards with real data - only the 3 needed statuses
-      //TODO P0: Needs to move these status to utils constants
-      const cards: StatusCard[] = [
-        {
-          title: 'Action Required',
-          value: statusCounts['Action Required'] || 0,
-          color: '#ef4444',
-          bgColor: '#fee2e2',
-          icon: 'WarningIcon',
-          status: 'Action Required'
-        },
-        {
-          title: 'In Review',
-          value: statusCounts['In Review'] || 0,
-          color: '#3b82f6',
-          bgColor: '#dbeafe',
-          icon: 'InfoIcon',
-          status: 'In Review'
-        },
-        {
-          title: 'Draft',
-          value: statusCounts['Draft'] || 0,
-          color: '#ec4899',
-          bgColor: '#fce7f3',
-          icon: 'InfoIcon',
-          status: 'Draft'
-        }
-      ];
+      const cards: StatusCard[] = PACKAGE_STATUS_CARDS.map(card => ({
+        title: card.title,
+        value: statusCounts[card.key] || 0,
+        color: card.color,
+        bgColor: card.bgColor,
+        icon: card.icon,
+        status: card.key
+      }))
 
       setStatusCards(cards);
     } catch (error) {
       console.error('Failed to fetch status data:', error);
       // Fallback to empty cards
-      setStatusCards([
-        { title: 'Action Required', value: 0, color: '#ef4444', bgColor: '#fee2e2', icon: 'WarningIcon', status: 'Action Required' },
-        { title: 'In Review', value: 0, color: '#3b82f6', bgColor: '#dbeafe', icon: 'InfoIcon', status: 'In Review' },
-        { title: 'Draft', value: 0, color: '#ec4899', bgColor: '#fce7f3', icon: 'InfoIcon', status: 'Draft' }
-      ]);
+      setStatusCards(
+        PACKAGE_STATUS_CARDS.map(card => ({
+          title: card.title,
+          value: 0,
+          color: card.color,
+          bgColor: card.bgColor,
+          icon: card.icon,
+          status: card.key,
+        }))
+      );
     } finally {
       setLoading(false);
     }

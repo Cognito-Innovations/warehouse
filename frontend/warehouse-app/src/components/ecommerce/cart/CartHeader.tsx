@@ -3,9 +3,15 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, IconButton } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-import { CartHeaderProps } from "@/types/ecommerce";
+import { useRouter } from "next/navigation";
+import { useCartStore } from "@/store/cartStore";
 
-export default function CartHeader({ title, itemCount, onBackClick }: CartHeaderProps) {
+export default function CartHeader() {
+  const router = useRouter();
+
+  const { cartProductQuantityCount } = useCartStore();
+  const itemCount = cartProductQuantityCount();
+
   return (
     <AppBar 
       position="sticky" 
@@ -21,7 +27,7 @@ export default function CartHeader({ title, itemCount, onBackClick }: CartHeader
         <IconButton
           edge="start"
           color="inherit"
-          onClick={onBackClick}
+          onClick={() => router.back()}
           sx={{ mr: 2 }}
         >
           <ArrowBack />
@@ -33,7 +39,7 @@ export default function CartHeader({ title, itemCount, onBackClick }: CartHeader
           sx={{ flexGrow: 1 }} 
           color="primary"
         >
-          {title}
+          My Cart
         </Typography>
         
         <Typography 

@@ -65,6 +65,15 @@ export class CreateUserAddressDto {
   city: string;
 
   @ApiProperty({
+    description: 'Preferred Currency',
+    example: 'USD',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  currency?: string;
+
+  @ApiProperty({
     description: 'Phone Code',
     example: '+91',
     required: false,

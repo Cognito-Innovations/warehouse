@@ -70,7 +70,7 @@ export class PreArrivaController {
   })
   @ApiResponse({ status: 404, description: 'Pre-arrival not found' })
   async getPreArrivalById(
-    @Param('id') id: string
+    @Param('id') id: string,
   ): Promise<PreArrivalResponseDto> {
     return this.preArrivalService.getPreArrivalById(id);
   }
@@ -99,7 +99,7 @@ export class PreArrivaController {
     type: [PreArrivalResponseDto],
   })
   async getPreArrivalByUser(
-    @Param('userId') userId: string
+    @Param('userId') userId: string,
   ): Promise<PreArrivalResponseDto[]> {
     return this.preArrivalService.getPreArrivalsByUser(userId);
   }
@@ -109,7 +109,7 @@ export class PreArrivaController {
   @ApiOkResponse({ description: 'Pre-arrival deleted successfully' })
   @ApiResponse({ status: 404, description: 'Pre-arrival not found' })
   async deletePreArrival(
-    @Param('id') id: string
+    @Param('id') id: string,
   ): Promise<{ message: string }> {
     await this.preArrivalService.deletePreArrival(id);
     return { message: 'Pre-arrival deleted successfully' };

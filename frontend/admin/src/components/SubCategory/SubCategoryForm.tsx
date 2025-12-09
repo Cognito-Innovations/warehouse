@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
 
 import { createSubCategory, getCategories, getCountries, updateSubCategory } from "../../services/api.services";
-import ImageUpload from "../common/ImageUpload";
+// import ImageUpload from "../common/ImageUpload";
 import { arraysEqual } from "../../utils/arrayEqual";
 import { statusOptions } from "../../utils/constants";
 import type { Category } from "../Product/ProductForm";
@@ -22,7 +22,7 @@ const defaultFormData: SubCategoryPayload = {
   discount_percentage: 0,
   country_ids: [],
   is_active: true,
-  image_url: "",
+  // image_url: "",
 };
 
 const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
@@ -69,7 +69,9 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.slug || !formData.image_url) return;
+    if (!formData.name || !formData.slug 
+      // || !formData.image_url
+    ) return;
 
     if (initialData) {
       const hasChanged = Object.keys(defaultFormData).some((key) => {
@@ -137,11 +139,11 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
           fullWidth
         />
 
-        <ImageUpload
+        {/* <ImageUpload
           value={formData.image_url}
           onChange={(url) => handleChange("image_url", url)}
           label="Sub Category Image"
-        />
+        /> */}
 
         <TextField
           label="Slug"
@@ -244,7 +246,9 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={loading || !formData.name || !formData.slug || !formData.image_url}
+            disabled={loading || !formData.name || !formData.slug 
+              // || !formData.image_url
+            }
           >
             {loading ? <CircularProgress size={20} color="inherit" /> : initialData ? "Update" : "Add"}
           </Button>

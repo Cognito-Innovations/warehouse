@@ -2,6 +2,7 @@ import { ProfileData } from "@/components/Modals/EditProfileModal";
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { getSession } from "next-auth/react";
 import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
+import { getAuthTokenWithFallback } from "@/utils/getAuthToken";
 
 // Interface for the pickup request payload, combining the best types from both examples.
 export interface PickupRequestPayload {
@@ -37,8 +38,7 @@ const createAuthenticatedApi = (): AxiosInstance => {
   api.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {
       try {
-        const session = await getSession();
-        const token = (session as any)?.access_token;
+        const token = await getAuthTokenWithFallback();
         if (token) {
           config.headers.set("Authorization", `Bearer ${token}`);
         }

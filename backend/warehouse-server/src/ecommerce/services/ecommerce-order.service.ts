@@ -14,13 +14,19 @@ import { CreateOrderDto } from '../dto/order/create-order.dto';
 import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { User } from 'src/users/user.entity';
-import { Currency } from 'src/currencies/currency.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
-const roundCurrency = (value: number): number => 
-  Math.round((value + Number.EPSILON) * 100) / 100;
+interface CurrencyInfo {
+  code: string;
+  symbol: string;
+  rate: number;
+}
 
-//TODO: Generated temprorarily need to look requirment and change
+interface CashfreePaymentUpdate {
+  cf_payment_id: string;
+  [key: string]: any;
+}
+
 @Injectable()
 export class OrderService {
   private cashfree: Cashfree;
@@ -34,8 +40,6 @@ export class OrderService {
     private readonly cartRepository: Repository<EcommerceCart>,
     @InjectRepository(EcommerceCartItem)
     private readonly cartItemRepository: Repository<EcommerceCartItem>,
-    @InjectRepository(Currency)
-    private readonly currencyRepository: Repository<Currency>,
     private readonly userPreferenceService: UserPreferencesService,
   ) {
     const appId = process.env.CASHFREE_APP_ID;
@@ -51,6 +55,10 @@ export class OrderService {
       appId,
       secretKey,
     );
+  }
+
+  private roundCurrency(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
   }
 
   async createOrder(
@@ -70,9 +78,10 @@ export class OrderService {
     let itemsToProcess = cart.items;
 
     if (createOrderDto.product_ids && createOrderDto.product_ids.length > 0) {
-      itemsToProcess = cart.items.filter((item) =>
-        createOrderDto.product_ids!.includes(item.product_id),
-      );
+      itemsToProcess = cart.items.filter((item) => {
+        const cartItemId = item.product_id || item.product?.id;
+        return createOrderDto.product_ids!.includes(cartItemId);
+      });
 
       if (itemsToProcess.length === 0) {
         throw new BadRequestException(
@@ -86,47 +95,54 @@ export class OrderService {
       throw new BadRequestException('User not found');
     }
 
-    const countryName =
-      createOrderDto.country_name || 'United States of America';
-    const currencyResponse = await this.currencyRepository.findOne({
-      where: { country: { name: countryName } },
-      relations: ['country'],
-    });
+    const selectedCurrency = createOrderDto.currency || 'USD';
 
-    if (!currencyResponse) {
-      throw new BadRequestException('Currency not found for country');
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    let currencyInfo: CurrencyInfo;
+    let orderCurrency: string;
+    if (userCurrency) {
+      currencyInfo = userCurrency;
+      orderCurrency = userCurrency.code;
+    } else {
+      currencyInfo =
+        await this.userPreferenceService.getCurrencyInfoByCode(
+          selectedCurrency,
+        );
+      orderCurrency = selectedCurrency.toUpperCase();
     }
 
-    const orderCurrency = currencyResponse.currency_code;
-
-    let subtotal = 0;
-    let totalBaseDiscount = 0;
+    let grossSubtotal = 0;
+    let totalDiscountAmount = 0;
 
     for (const item of itemsToProcess) {
       const basePrice = Number(item.product.price);
-      const baseDiscPerc = Number(item.product.discount_percentage || 0);
-      const baseDiscountAmountPerUnit = (basePrice * baseDiscPerc) / 100;
-      const baseUnitPrice = basePrice - baseDiscountAmountPerUnit;
-      const baseDiscountAmount = baseDiscountAmountPerUnit * item.quantity;
 
-      const rawConvertedUnitPrice =
-        await this.userPreferenceService.getConvertedPriceByCountry(
-          countryName,
-          baseUnitPrice,
-        );
+      const rawConvertedBasePrice =
+        currencyInfo.code === 'USD' ? basePrice : basePrice * currencyInfo.rate;
 
-      const convertedUnitPrice = roundCurrency(rawConvertedUnitPrice);
+      const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
 
-      subtotal += convertedUnitPrice * item.quantity;
-      totalBaseDiscount += baseDiscountAmount;
-    };
+      const discountPercent = Number(item.product.discount_percentage || 0);
 
-    const discountedSubTotal = subtotal;
+      const discountedUnitPrice = this.roundCurrency(
+        originalUnitPrice * (1 - discountPercent / 100),
+      );
+
+      const discountPerUnit = this.roundCurrency(
+        originalUnitPrice - discountedUnitPrice,
+      );
+
+      grossSubtotal += originalUnitPrice * item.quantity;
+      totalDiscountAmount += discountPerUnit * item.quantity;
+    }
+
+    const discountedSubTotal = grossSubtotal - totalDiscountAmount;
 
     if (isNaN(discountedSubTotal))
       throw new BadRequestException('Invalid cart amount');
 
-    const isIndia = countryName?.includes('India');
+    const isIndia = orderCurrency === 'INR';
     const threshold = isIndia ? 299 : 20;
     const deliveryFeeBase = isIndia ? 3 : 5;
     const serviceChargeBase = 1;
@@ -139,10 +155,11 @@ export class OrderService {
     const finalTotal =
       discountedSubTotal + deliveryFee + taxAmount + serviceCharge;
 
-    const roundedTotal = roundCurrency(finalTotal);
-    const roundedSubtotal = roundCurrency(discountedSubTotal);
-    const roundedShipping = roundCurrency(deliveryFee);
-    const roundedTax = roundCurrency(taxAmount);
+    const roundedTotal = this.roundCurrency(finalTotal);
+    const roundedNetSubtotal = this.roundCurrency(discountedSubTotal);
+    const roundedShipping = this.roundCurrency(deliveryFee);
+    const roundedTax = this.roundCurrency(taxAmount);
+    const roundedDiscount = this.roundCurrency(totalDiscountAmount);
 
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
@@ -153,36 +170,45 @@ export class OrderService {
       user_id: userId,
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
-      subtotal: roundedSubtotal, 
-      discount_percentage: totalBaseDiscount,
+      subtotal: roundedNetSubtotal,
+      discount_percentage: roundedDiscount,
       shipping_amount: roundedShipping,
       tax_amount: roundedTax,
       total_amount: roundedTotal,
-      shipping_address: createOrderDto.shipping_address,
-      billing_address: createOrderDto.billing_address,
       notes: createOrderDto.notes,
     });
 
     const savedOrder = await this.orderRepository.save(order);
 
-    // Create order items from cart items
-    const orderItems = itemsToProcess.map((cartItem) => {
-      const basePrice = Number(cartItem.product.price);
-      const baseDiscPerc = Number(cartItem.product.discount_percentage || 0);
-      const baseDiscountAmountPerUnit = (basePrice * baseDiscPerc) / 100;
-      const baseUnitPrice = basePrice - baseDiscountAmountPerUnit;
-      const totalPrice = baseUnitPrice * cartItem.quantity;
-      const totalDiscount = baseDiscountAmountPerUnit * cartItem.quantity;
+    const orderItems: EcommerceOrderItem[] = [];
 
-      return this.orderItemRepository.create({
+    for (const item of itemsToProcess) {
+      const basePrice = Number(item.product.price);
+      const rawConvertedBasePrice =
+        currencyInfo.code === 'USD' ? basePrice : basePrice * currencyInfo.rate;
+
+      const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
+      const discountPercent = Number(item.product.discount_percentage || 0);
+      const discountedUnitPrice = this.roundCurrency(
+        originalUnitPrice * (1 - discountPercent / 100),
+      );
+
+      const discountPerUnit = this.roundCurrency(
+        originalUnitPrice - discountedUnitPrice,
+      );
+      const totalLinePrice = discountedUnitPrice * item.quantity;
+      const totalLineDiscount = discountPerUnit * item.quantity;
+
+      const orderItem = this.orderItemRepository.create({
         order_id: savedOrder.id,
-        product_id: cartItem.product_id,
-        quantity: cartItem.quantity,
-        unit_price: baseUnitPrice,
-        total_price: totalPrice,
-        discount_percentage: totalDiscount,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: originalUnitPrice,
+        total_price: totalLinePrice,
+        discount_percentage: totalLineDiscount,
       });
-    });
+      orderItems.push(orderItem);
+    }
 
     await this.orderItemRepository.save(orderItems);
 
@@ -197,20 +223,30 @@ export class OrderService {
       );
 
       return await this.findOne(savedOrder.id);
-    } catch (cashfreeErr: any) {
+    } catch (cashfreeErr: unknown) {
       // Rollback on Cashfree failure
       await this.orderRepository.delete(savedOrder.id);
 
-      console.error(
-        'Cashfree error:',
-        cashfreeErr.response?.data || cashfreeErr.message,
-      );
+      console.error('Cashfree error:', cashfreeErr);
+
+      let errorMessage = 'Unknown error';
+      if (cashfreeErr instanceof Error) {
+        errorMessage = cashfreeErr.message;
+      } else if (
+        typeof cashfreeErr === 'object' &&
+        cashfreeErr !== null &&
+        'response' in cashfreeErr
+      ) {
+        const resp = (
+          cashfreeErr as { response?: { data?: { message?: string } } }
+        ).response;
+        if (resp?.data?.message) {
+          errorMessage = resp.data.message;
+        }
+      }
 
       throw new BadRequestException(
-        'Failed to initialize payment session: ' +
-          (cashfreeErr.response?.data?.message ||
-            cashfreeErr.message ||
-            'Unknown error'),
+        `Failed to initialize payment session: ${errorMessage}`,
       );
     }
   }
@@ -249,14 +285,21 @@ export class OrderService {
     await this.orderRepository.save(savedOrder);
   }
 
-  async findAll(userId?: string): Promise<EcommerceOrder[]> {
-    const whereCondition = userId ? { user_id: userId } : {};
-
-    return this.orderRepository.find({
-      where: whereCondition,
+  async findAll(userId: string): Promise<EcommerceOrder[]> {
+    const orders = await this.orderRepository.find({
+      where: { user_id: userId },
       relations: ['items', 'items.product', 'user'],
       order: { created_at: 'DESC' },
     });
+
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    const displayCurrency = userCurrency?.symbol || '$';
+
+    return orders.map((order) => ({
+      ...order,
+      display_currency: displayCurrency,
+    })) as unknown as EcommerceOrder[];
   }
 
   async findOne(id: string): Promise<EcommerceOrder> {
@@ -269,17 +312,56 @@ export class OrderService {
       throw new NotFoundException('Order not found');
     }
 
-    return order;
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(order.user_id);
+    const displayCurrency = userCurrency?.symbol || '$';
+
+    return {
+      ...order,
+      display_currency: displayCurrency,
+    } as unknown as EcommerceOrder;
   }
 
-  async getOrdersByUser(userId?: string): Promise<EcommerceOrder[]> {
-    const whereCondition = userId ? { user_id: userId } : {};
-
-    return this.orderRepository.find({
-      where: whereCondition,
+  async getOrdersByUser(userId: string): Promise<EcommerceOrder[]> {
+    const orders = await this.orderRepository.find({
+      where: { user_id: userId },
       relations: ['items', 'items.product', 'user'],
       order: { created_at: 'DESC' },
     });
+
+    if (orders.length === 0) {
+      return [];
+    }
+
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    let targetInfo: CurrencyInfo;
+    if (!userCurrency) {
+      targetInfo = { code: 'USD', symbol: '$', rate: 1 };
+    } else {
+      targetInfo = userCurrency;
+    }
+
+    const origCurrency =
+      await this.userPreferenceService.getCurrencyInfoByCode('INR');
+
+    if (!origCurrency) {
+      return orders.map((order) => ({
+        ...order,
+        display_currency: targetInfo.symbol,
+      })) as unknown as EcommerceOrder[];
+    }
+
+    const origRate = origCurrency.rate;
+    const conversionFactor = targetInfo.rate / origRate;
+
+    const convertedOrders = orders.map((order) => ({
+      ...order,
+      total_amount: this.roundCurrency(order.total_amount * conversionFactor),
+      display_currency: targetInfo.symbol,
+    })) as unknown as EcommerceOrder[];
+
+    return convertedOrders;
   }
 
   async findByOrderNumber(orderNumber: string): Promise<EcommerceOrder> {
@@ -306,7 +388,7 @@ export class OrderService {
 
   async updatePaymentStatus(
     orderId: string,
-    cashfreeData: any,
+    cashfreeData: CashfreePaymentUpdate,
   ): Promise<EcommerceOrder> {
     const order = await this.findOne(orderId);
     if (order.payment_status !== PaymentStatus.PENDING) {

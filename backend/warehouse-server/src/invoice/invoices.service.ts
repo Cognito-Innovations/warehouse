@@ -81,7 +81,7 @@ export class InvoicesService {
   }
 
   async createShipmentInvoice(payload: {
-    shipment: Shipment,
+    shipment: Shipment;
     charges: ChargeDto[];
     total: number;
   }): Promise<Invoice> {
@@ -100,14 +100,14 @@ export class InvoicesService {
       total,
       status: InvoiceStatus.UNPAID,
       shipment,
-    })
+    });
     const savedInvoice = await this.invoiceRepository.save(invoice);
 
     const chargeEntities = charges.map((charge) =>
       this.invoiceChargeRepository.create({
         ...charge,
         invoice: savedInvoice,
-      })
+      }),
     );
     const savedCharges =
       await this.invoiceChargeRepository.save(chargeEntities);
@@ -118,8 +118,8 @@ export class InvoicesService {
 
   async getInvoiceByShipmentId(shipmentId: string): Promise<Invoice | null> {
     return this.invoiceRepository.findOne({
-      where: { shipment: { id: shipmentId } }
-    })
+      where: { shipment: { id: shipmentId } },
+    });
   }
 
   async updateInvoice(invoice: Invoice): Promise<Invoice> {

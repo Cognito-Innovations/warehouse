@@ -43,7 +43,7 @@ export class DocumentUploadService {
     @InjectRepository(ShoppingRequestDocument)
     private readonly shoppingRequestDocumentRepository: Repository<ShoppingRequestDocument>,
   ) {}
-  private getBucketName(_entityType: string): string {
+  private getBucketName(): string {
     // Use the single warehouse bucket for all documents
     return 'wearhouse_bucket';
   }

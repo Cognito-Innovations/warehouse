@@ -13,13 +13,22 @@ import { CreateOrderDto } from '../dto/order/create-order.dto';
 import { OrderStatus } from '../entities/ecommerce-order.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
+interface AuthenticatedRequest {
+  user: {
+    id: string;
+  };
+}
+
 @Controller('ecommerce-orders')
 @UseGuards(JwtAuthGuard)
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post('initiate')
-  async initiateOrder(@Request() req, @Body() createOrderDto: CreateOrderDto) {
+  async initiateOrder(
+    @Request() req: AuthenticatedRequest,
+    @Body() createOrderDto: CreateOrderDto,
+  ) {
     const order = await this.orderService.createOrder(
       req.user.id,
       createOrderDto,
@@ -34,12 +43,15 @@ export class OrderController {
   }
 
   @Post()
-  async createOrder(@Request() req, @Body() createOrderDto: CreateOrderDto) {
+  async createOrder(
+    @Request() req: AuthenticatedRequest,
+    @Body() createOrderDto: CreateOrderDto,
+  ) {
     return this.orderService.createOrder(req.user.id, createOrderDto);
   }
 
   @Get()
-  async findAll(@Request() req) {
+  async findAll(@Request() req: AuthenticatedRequest) {
     return this.orderService.findAll(req.user.id);
   }
 

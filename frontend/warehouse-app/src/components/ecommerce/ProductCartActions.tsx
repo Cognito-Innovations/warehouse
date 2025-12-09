@@ -27,16 +27,17 @@ export default function ProductCartActions({
     currency,
 }: ProductCartActionsProps) {
     const router = useRouter();
-    const { incrementCartQuantity, decrementCartQuantity, getItemQuantity } = useCartStore();
+    const { incrementCartQuantity, decrementCartQuantity, getItemQuantity, updatingProducts } = useCartStore();
     const locationData = useEffectiveUserLocation({
       countryCode: undefined,
       countryName: undefined,
       city: '',
       pincode: '',
     });
-    const selectedCountry = locationData.location.countryName;
+    const selectedCurrency = locationData.currencyInfo.code;
 
     const cartQuantity = getItemQuantity(product.id);
+    const isUpdating = updatingProducts[product.id] || false;
     const stockQuantity = product.stock_quantity;
     const isOutOfStock = stockQuantity === 0;
     const formattedSubtotal = formatPrice(cartQuantity * discountPriceRaw, currency);
@@ -46,8 +47,8 @@ export default function ProductCartActions({
     }, [router]);
 
     const handleAddToCartClick = useCallback(() => {
-        incrementCartQuantity(product, selectedCountry);
-    }, [product, selectedCountry, incrementCartQuantity]);
+        incrementCartQuantity(product, selectedCurrency);
+    }, [product, selectedCurrency, incrementCartQuantity]);
 
     return (
         <React.Fragment>
@@ -63,13 +64,13 @@ export default function ProductCartActions({
                         }}
                     >
                         <IconButton
-                            onClick={() => decrementCartQuantity(product, selectedCountry)}
-                            disabled={cartQuantity <= 0}
+                            onClick={() => decrementCartQuantity(product, selectedCurrency)}
+                            disabled={cartQuantity <= 0 || isUpdating}
                             sx={{
                                 border: "1px solid",
-                                borderColor: cartQuantity <= 0 ? "action.disabled" : "primary.main",
+                                borderColor: (cartQuantity <= 0 || isUpdating) ? "action.disabled" : "primary.main",
                                 bgcolor: "action.hover",
-                                color: cartQuantity <= 0 ? "action.disabled" : "primary.main",
+                                color: (cartQuantity <= 0 || isUpdating) ? "action.disabled" : "primary.main",
                                 width: 40,
                                 height: 40,
                                 "&:hover:not(:disabled)": {
@@ -98,13 +99,13 @@ export default function ProductCartActions({
                             {cartQuantity}
                         </Typography>
                         <IconButton
-                            onClick={() => incrementCartQuantity(product, selectedCountry)}
-                            disabled={isOutOfStock || cartQuantity >= stockQuantity}
+                            onClick={() => incrementCartQuantity(product, selectedCurrency)}
+                            disabled={isOutOfStock || cartQuantity >= stockQuantity || isUpdating}
                             sx={{
                                 border: "1px solid",
-                                borderColor: cartQuantity >= stockQuantity ? "action.disabled" : "primary.main",
+                                borderColor: (isOutOfStock || cartQuantity >= stockQuantity || isUpdating) ? "action.disabled" : "primary.main",
                                 bgcolor: "action.hover",
-                                color: cartQuantity >= stockQuantity ? "action.disabled" : "primary.main",
+                                color: (isOutOfStock || cartQuantity >= stockQuantity || isUpdating) ? "action.disabled" : "primary.main",
                                 width: 40,
                                 height: 40,
                                 "&:hover:not(:disabled)": {
@@ -141,7 +142,7 @@ export default function ProductCartActions({
                 fullWidth
                 size="large"
                 onClick={cartQuantity > 0 ? handleGoToCart : handleAddToCartClick}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || (!(cartQuantity > 0) && isUpdating)}
                 sx={{
                     py: 1.5,
                     borderRadius: 2,

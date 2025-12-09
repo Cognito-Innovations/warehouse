@@ -1,28 +1,36 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { CategoryStore } from "./storeTypes";
 import type { EcommerceCategory } from "@/types/ecommerce";
 
+const useCategoryStore = create<CategoryStore>()(
+  persist(
+    (set, get) => ({
+      selectedCategory: null,
+      categories: [],
 
-const useCategoryStore = create<CategoryStore>((set, get) => ({
-  selectedCategory: null,
-  categories: [],
+      setCategory: (categoryId: string | null) => set({ selectedCategory: categoryId }),
 
-  setCategory: (categoryId: string | null) => set({ selectedCategory: categoryId }),
+      handleCategorySelect: (categoryId: string | null) =>
+        set({ selectedCategory: categoryId }),
 
-  handleCategorySelect: (categoryId: string | null) =>
-    set({ selectedCategory: categoryId }),
+      getCategories: async () => {
+        const currentCategories = get().categories;
+        if (currentCategories.length > 0) {
+          return currentCategories;
+        }
 
-  getCategories: async () => {
-    const currentCategories = get().categories;
-    if (currentCategories.length > 0) {
-      return currentCategories;
+        const categories: EcommerceCategory[] = await ecommerceService.getCategories();
+        set({ categories });
+        return categories;
+      },
+    }),
+    {
+      name: "category-storage",
+      partialize: (state) => ({ selectedCategory: state.selectedCategory }),
     }
-    
-    const categories: EcommerceCategory[] = await ecommerceService.getCategories();
-    set({ categories });
-    return categories;
-  },
-}));
+  )
+);
 
 export default useCategoryStore;

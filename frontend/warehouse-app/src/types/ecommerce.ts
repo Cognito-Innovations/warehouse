@@ -69,10 +69,10 @@ export interface CartItem {
 }
 
 export interface LocalCartItem {
-  id: string;
+  id?: string;
   product_id: string;
   quantity: number;
-  country?: string;
+  currency?: string;
   product?: EcommerceProduct;
 }
 
@@ -237,12 +237,6 @@ export interface CartItemLoadingState {
   isRemoveLoading: boolean;
 }
 
-export interface CartHeaderProps {
-  title: string;
-  itemCount: number;
-  onBackClick: () => void;
-}
-
 export interface DeliveryBannerProps {
   text: string;
   icon?: React.ReactNode;
@@ -261,12 +255,7 @@ export interface DeliveryAddressCardProps {
 export interface CartItemCardProps {
   item: CartItem;
   isSelected: boolean;
-  onSelect: (itemId: string, selected: boolean) => void;
-  onQuantityChange: (itemId: string, newQuantity: number) => void;
-  onRemoveItem: (itemId: string) => void;
-  discountBadgeColor: string;
-  borderColor: string;
-  currencySymbol?: string;
+  currencyInfo: CurrencyInfo;
   selectedCountry?: string;
 }
 
@@ -274,21 +263,8 @@ export interface CartItemsListProps {
   items: CartItem[];
   loadingStates: Record<string, CartItemLoadingState>;
   selectedItems: Set<string>;
-  onItemSelect: (itemId: string, selected: boolean) => void;
-  onSelectAll: (selected: boolean) => void;
-  onQuantityChange: (itemId: string, newQuantity: number) => void;
-  onRemoveItem: (itemId: string) => void;
-  title: string;
-  discountBadgeColor: string;
-  borderColor: string;
-  currencySymbol?: string;
+  currencyInfo?: CurrencyInfo;
   selectedCountry?: string;
-}
-
-export interface ContinueShoppingCardProps {
-  label: string;
-  onClick: () => void;
-  borderColor: string;
 }
 
 export interface PaymentOffer {
@@ -312,25 +288,16 @@ export interface FreeDeliveryThresholdCardProps {
 }
 
 export interface OrderSummaryCardProps {
-  subtotal: number;
-  discount: number;
-  deliveryFee: number;
-  taxes: number;
-  serviceCharge: number;
-  total: number;
-  checkoutLabel: string;
-  onCheckout: () => void;
-  borderColor: string;
-  currencySymbol?: string;
+  userId?: string;
+  items: CartItem[];
+  selectedCountry?: string;
+  selectedAddress: CartAddressData | null;
+  setHighlightAddressError(value: boolean): void
+  currencyInfo: CurrencyInfo;
 }
 
 export interface EmptyCartStateProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  buttonLabel: string;
   onButtonClick: () => void;
-  buttonColor: string;
 }
 
 export interface AddressSelectionProps {
@@ -355,6 +322,14 @@ export interface CartAddressData {
   phone_code?: string;
   phone_number?: string;
   email?: string;
+  currency?: string;
+}
+
+export interface CurrencyInfo {
+  symbol: string;
+  code: string;
+  rate: number;
+  isBase: boolean;
 }
 
 export interface UserAddress {
@@ -362,6 +337,15 @@ export interface UserAddress {
   city: string;
   zip_code: string;
   country: string;
+  user: {
+    preference: {
+      currency: {
+        currency_symbol: string;
+        currency_code: string;
+        rate: string;
+      };
+    };
+  };
 }
 
 export interface ProductCartActionsProps {

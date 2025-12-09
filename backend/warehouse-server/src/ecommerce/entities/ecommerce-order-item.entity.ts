@@ -9,7 +9,6 @@ import {
 import { EcommerceOrder } from './ecommerce-order.entity';
 import { EcommerceProduct } from './ecommerce-product.entity';
 
-//TODO: Generated temprorarily need to look requirment and change
 @Entity('ecommerce_order_items')
 export class EcommerceOrderItem extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -27,7 +26,7 @@ export class EcommerceOrderItem extends BaseTimestampEntity {
   @Column()
   product_id: string;
 
-  @ManyToOne(() => EcommerceProduct, { eager: true })
+  @ManyToOne(() => EcommerceProduct, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product: EcommerceProduct;
 

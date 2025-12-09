@@ -154,17 +154,17 @@ export interface Country {
 
 export interface Currency {
   id: string;
+  name: string;
   currency_symbol: string;
   rate: number;
   currency_code: string;
-  country: Pick<Country, 'id' | 'name'>
 }
 
 export type CreateCountryPayload = Partial<Country>;
 export type UpdateCountryPayload = Partial<CreateCountryPayload>;
 
 export type CreateCurrencyPayload = {
-  country: string;
+  name: string;
   currency_symbol: string;
   currency_code: string;
   rate: number;
@@ -206,7 +206,7 @@ export interface SubCategoryPayload {
   category_id: string;
   name: string;
   slug: string;
-  image_url: string;
+  // image_url: string;
   discount_percentage: number,
   country_ids: string[],
   is_active: boolean;
@@ -233,4 +233,19 @@ export interface ProductPayload {
 export interface CargoOption {
   id: string;
   label: string;
+}
+
+export interface DashboardMetrics {
+  customers: number;
+  activePackages: number;
+  actionRequiredPackages: number;
+  shipRequestShipments: number;
+  paymentPendingShipments: number;
+  paymentApprovalShipments: number;
+  readyToShipShipments: number;
+  shippedShipments: number;
+  pickupRequested: number;
+  shoppingRequested: number;
+  quotationConfirm: number;
+  assistPaymentApproval: number;
 }

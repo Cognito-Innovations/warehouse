@@ -26,7 +26,7 @@ export class InvoiceCharge extends BaseTimestampEntity {
   total: number;
 
   @ManyToOne(() => Invoice, (invoice) => invoice.charges, {
-    onDelete: 'CASCADE'
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'invoice_id' })
   invoice: Invoice;
