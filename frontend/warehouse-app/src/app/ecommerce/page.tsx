@@ -12,8 +12,9 @@ import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
 import { debounce } from "@/utils/debounce";
 import { ecommerceData } from "@/data/ecommerceData";
-import CategorySection from "@/components/ecommerce/Category/CategorySection";
+
 import ProductsGridView from "@/components/ecommerce/product/ProductsGridView";
+import CategorySection from "@/components/ecommerce/category_temp/CategorySection";
 
 export default function Ecommerce() {
 
@@ -165,7 +166,7 @@ export default function Ecommerce() {
       ) : (
         <ProductsGridView />
       )}
-      {selectedCategory && <div ref={observerRef} style={{ height: 10, background: 'transparent' }} />}
+      {selectedCategory && <div ref={observerRef} style={{ height: 10, background: "transparent" }} />}
       
     </EcommercePageLayout>
   );
