@@ -73,11 +73,14 @@ export default function EcommerceProductCard({
     <Card
       sx={{
         width: {
-          xs: "100%",
+          xs: 280,
           sm: 230,
           md: 260,
         },
         maxWidth: 280,
+        justifySelf: {
+          xs: "center",
+        },
         borderRadius: ecommerceData.ui.spacing.cardBorderRadius,
         overflow: "hidden",
         cursor: "pointer",
@@ -178,7 +181,7 @@ export default function EcommerceProductCard({
             mb: 0.5,
             height: 20,
             lineHeight: 1.25,
-          }}
+         }}
         >
           {product.name}
         </Typography>

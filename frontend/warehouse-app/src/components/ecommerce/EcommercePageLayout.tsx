@@ -6,7 +6,7 @@ import { Box, Container } from "@mui/material";
 import { useCartStore } from "@/store/cartStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import EcommerceHeader from "@/components/ecommerce/EcommerceHeader";
-import EcommerceBottomNavigation from "@/components/ecommerce/EcommerceBottomNavigation";
+// import EcommerceBottomNavigation from "@/components/ecommerce/EcommerceBottomNavigation";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceCategory } from "@/types/ecommerce";
 
@@ -55,7 +55,8 @@ export default function EcommercePageLayout({
 
         {children}
 
-        <EcommerceBottomNavigation cartItemCount={cartProductQuantityCount()} />
+        {/* TODO: Uncomment when functionality added */}
+        {/* <EcommerceBottomNavigation cartItemCount={cartProductQuantityCount()} /> */}
       </Container>
     </Box>
   );
