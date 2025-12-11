@@ -19,6 +19,7 @@ interface BoxCardProps {
   onSelect: (boxId: number) => void;
   selected: boolean;
   isDeleting?: boolean;
+  isDeparted: boolean;
 }
 
 const BoxCard: React.FC<BoxCardProps> = ({
@@ -30,6 +31,7 @@ const BoxCard: React.FC<BoxCardProps> = ({
   onSelect,
   selected,
   isDeleting,
+  isDeparted,
 }) => {
   const displayLabel =
     box.label || (total === 1 ? "Box 1" : `Box ${index + 1}`);
@@ -71,6 +73,7 @@ const BoxCard: React.FC<BoxCardProps> = ({
             size="small"
             sx={{ bgcolor: "#e0e7ff", color: "#4f46e5" }}
             onClick={() => onEdit(box.id, displayLabel)}
+            disabled={isDeparted}
           >
             <EditIcon fontSize="small" />
           </IconButton>
@@ -78,7 +81,7 @@ const BoxCard: React.FC<BoxCardProps> = ({
             size="small"
             sx={{ bgcolor: "#fee2e2", color: "#ef4444" }}
             onClick={() => onDelete(box.id)}
-            disabled={isDeleting}
+            disabled={isDeleting || isDeparted}
           >
             {isDeleting ? (
               <CircularProgress size={20} color="inherit" />

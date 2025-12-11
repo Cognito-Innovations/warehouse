@@ -36,6 +36,7 @@ interface BoxShipmentsListProps {
   totalBoxes: number;
   shipments: Shipment[];
   isLoading: boolean;
+  isDeparted: boolean;
 }
 
 const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
@@ -46,10 +47,11 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
   boxLabel,
   shipments,
   isLoading,
+  isDeparted,
 }) => {
 
   const handleDeleteShipment = async (shipmentId: string) => {
-    if (!boxId) return;
+    if (!boxId || isDeparted) return;
     try {
       await removeShipmentFromBox(boxId, shipmentId);
       refreshShipments();
@@ -147,6 +149,7 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
                       }}
                       size="small"
                       onClick={() => handleDeleteShipment(pkg.id)}
+                      disabled={isDeparted}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>

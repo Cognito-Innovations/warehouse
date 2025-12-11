@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { CategoriesController } from './controllers/ecommerce-categories.controller';
 import { SubCategoriesController } from './controllers/ecommerce-sub-categories.controller';
 import { ProductsController } from './controllers/ecommerce-products.controller';
@@ -31,6 +32,7 @@ import { Currency } from 'src/currencies/currency.entity';
 
 @Module({
   imports: [
+    HttpModule,
     TypeOrmModule.forFeature([
       EcommerceCategory,
       EcommerceSubCategory,

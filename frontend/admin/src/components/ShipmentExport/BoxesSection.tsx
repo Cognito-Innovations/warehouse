@@ -39,6 +39,7 @@ interface BoxesSectionProps {
   loadingShipments: boolean;
   refreshShipments: () => void;
   onBoxAdded: () => void;
+  status: string;
 }
 
 const BoxesSection: React.FC<BoxesSectionProps> = ({
@@ -50,15 +51,18 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
   loadingShipments,
   refreshShipments,
   onBoxAdded,
+  status,
 }) => {
   const [open, setOpen] = useState(false);
   const [isAddingBox, setIsAddingBox] = useState(false);
   const [deletingBoxId, setDeletingBoxId] = useState<number | null>(null);
   const [editingBoxLabel, setEditingBoxLabel] = useState<string | null>(null);
 
+  const isDeparted = status === "SHIPMENTS DEPARTED";
   const selectedBoxData = boxes.find((b) => b.id === selectedBoxId);
 
   const handleEditClick = (boxId: number, displayLabel: string) => {
+    if (isDeparted) return;
     setSelectedBoxId(boxId);
     setEditingBoxLabel(displayLabel);
     setOpen(true);
@@ -71,7 +75,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
   };
 
   const handleSave = async (values: BoxFormValues) => {
-    if (!selectedBoxId) return;
+    if (!selectedBoxId || isDeparted) return;
 
     try {
       await updateShipmentExportBox(selectedBoxId, {
@@ -93,6 +97,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
   };
 
   const handleAddBox = async () => {
+    if (isDeparted) return; // Disabled when departed
     setIsAddingBox(true);
     try {
       await createShipmentExportBox(shipmentId, {
@@ -111,6 +116,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
   };
 
   const handleDelete = async (boxId: number) => {
+    if (isDeparted) return; // Disabled when departed
     setDeletingBoxId(boxId);
     try {
       await deleteShipmentExportBox(boxId);
@@ -140,12 +146,13 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
               onSelect={() => setSelectedBoxId(box.id)}
               selected={selectedBoxId === box.id}
               isDeleting={deletingBoxId === box.id}
+              isDeparted={isDeparted}
             />
           ))}
 
           <Button
             variant="contained"
-            disabled={isAddingBox}
+            disabled={isAddingBox || isDeparted}
             startIcon={
               isAddingBox ? (
                 <CircularProgress size={20} color="inherit" />
@@ -176,6 +183,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
               totalBoxes={boxes.length}
               shipments={shipmentsInSelectedBox}
               isLoading={loadingShipments}
+              isDeparted={isDeparted}
             />
           ) : (
             <Box

@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Request,
+  Patch,
 } from '@nestjs/common';
 import { OrderService } from '../services/ecommerce-order.service';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
@@ -55,6 +56,11 @@ export class OrderController {
     return this.orderService.findAll(req.user.id);
   }
 
+  @Get('all')
+  async getAllOrders() {
+    return this.orderService.getAllOrders();
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.orderService.findOne(id);
@@ -70,20 +76,18 @@ export class OrderController {
     return this.orderService.findByOrderNumber(orderNumber);
   }
 
-  @Put(':id/status')
+  @Patch(':id/status')
   async updateOrderStatus(
     @Param('id') id: string,
     @Body('status') status: OrderStatus,
+    @Body('comment') comment?: string,
   ) {
-    return this.orderService.updateOrderStatus(id, status);
+    return this.orderService.updateOrderStatus(id, status, comment);
   }
 
   @Put(':id/payment-status')
-  async updatePaymentStatus(
-    @Param('id') id: string,
-    @Body() cashfreeData: any,
-  ) {
-    return this.orderService.updatePaymentStatus(id, cashfreeData);
+  async updatePaymentStatus(@Param('id') id: string) {
+    return this.orderService.updatePaymentStatus(id);
   }
 
   @Put(':id/cancel')

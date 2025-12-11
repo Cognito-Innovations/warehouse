@@ -25,6 +25,7 @@ export default function Ecommerce() {
     pincode: "",
   });
   const currency = locationData.currencyInfo.code;
+  const countryCode = locationData.location.countryCode;
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -50,13 +51,14 @@ export default function Ecommerce() {
   const prevCurrencyRef = useRef(currency);
   const prevCategoryRef = useRef(selectedCategory);
 
-  const initializeEcommerceData = useCallback(async (curr?: string) => {
+  const initializeEcommerceData = useCallback(async (curr?: string, cntCode?: string) => {
     if (hasFetched.current || !curr) return;
     hasFetched.current = true;
     try {
-      await getCategories();
+      await getCategories(cntCode);
       await fetchProducts({
         currency: curr,
+        countryCode: cntCode,
         searchTerm: searchQuery,
         category: selectedCategory || undefined,
         userId,
@@ -68,23 +70,24 @@ export default function Ecommerce() {
 
   useEffect(() => {
     if (currency && !hasFetched.current) {
-      initializeEcommerceData(currency);
+      initializeEcommerceData(currency, countryCode);
     }
-  }, [currency, initializeEcommerceData]);
+  }, [currency, countryCode, initializeEcommerceData]);
 
-  const performSearch = useCallback((query: string, category: string | null, curr: string) => {
+  const performSearch = useCallback((query: string, category: string | null, curr: string, cntCode: string) => {
     fetchProducts({ 
         searchTerm: query, 
         category: category || undefined, 
         currency: curr,
+        countryCode: cntCode,
         userId 
     }, true);
   }, [fetchProducts, userId]);
 
-  const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
+  const debouncedSearch = useMemo(() => debounce((query: string, category: string | null, curr: string, cntCode: string) => performSearch(query, category, curr, cntCode), 500), [performSearch]);
 
   useEffect(() => {
-    if (!currency) return;
+    if (!currency || !countryCode) return;
 
     const searchChanged = searchQuery !== prevSearchQueryRef.current;
     const categoryChanged = selectedCategory !== prevCategoryRef.current;
@@ -92,16 +95,16 @@ export default function Ecommerce() {
 
     if (searchChanged || categoryChanged || currencyChanged) {
       if (searchChanged && !categoryChanged && !currencyChanged) {
-        debouncedSearch(searchQuery, selectedCategory, currency);
+        debouncedSearch(searchQuery, selectedCategory, currency, countryCode);
       } else {
-        performSearch(searchQuery, selectedCategory, currency);
+        performSearch(searchQuery, selectedCategory, currency, countryCode);
       }
     }
 
     prevSearchQueryRef.current = searchQuery;
     prevCategoryRef.current = selectedCategory;
     prevCurrencyRef.current = currency;
-  }, [searchQuery, selectedCategory, currency, debouncedSearch, performSearch]);
+  }, [searchQuery, selectedCategory, currency, countryCode, debouncedSearch, performSearch]);
 
   useEffect(() => {
     if (!selectedCategory || !observerRef.current || !hasMore || loadingMore || isLoading) return;
@@ -111,6 +114,7 @@ export default function Ecommerce() {
         fetchProducts({ 
             category: selectedCategory, 
             currency: currency, 
+            countryCode: countryCode,
             searchTerm: searchQuery,
             userId 
         }, false);
@@ -122,11 +126,11 @@ export default function Ecommerce() {
     return () => {
       observer.current?.disconnect();
     };
-  }, [hasMore, loadingMore, isLoading, selectedCategory, currency, searchQuery, fetchProducts, userId]);
+  }, [hasMore, loadingMore, isLoading, selectedCategory, currency, countryCode, searchQuery, fetchProducts, userId]);
   const handleRefresh = () => {
     setError(null);
     hasFetched.current = false;
-    initializeEcommerceData(locationData.currencyInfo.code);
+    initializeEcommerceData(locationData.currencyInfo.code, locationData.location.countryCode);
   };
 
   const isNetworkError = error && (error.includes("Network Error") || error.includes("Failed to fetch") || error.includes("ECONNREFUSED") || error.includes("timeout"));

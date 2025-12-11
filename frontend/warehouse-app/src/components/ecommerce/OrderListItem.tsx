@@ -62,6 +62,12 @@ export default function OrderListItem({ order }: OrderListItemProps) {
           <Icon className="w-5 h-5" />
           <span className="text-sm font-medium">{order.status}</span>
         </div>
+
+        {order.comment && (
+          <p className="text-xs text-gray-500 mt-1">
+            {order.comment}
+          </p>
+        )}
       </div>
     </div>
   );

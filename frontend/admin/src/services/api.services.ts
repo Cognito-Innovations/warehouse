@@ -488,7 +488,7 @@ export const getMeasurements = async () => {
 
 // Orders
 export const getOrders = async () => {
-  const response = await api.get("/ecommerce-orders");
+  const response = await api.get("/ecommerce-orders/all");
   return response.data;
 };
 
@@ -497,8 +497,8 @@ export const getOrderByOrderId = async (orderId: string | number) => {
   return response.data;
 };
 
-export const updateOrderStatus = async (id: string, status: string) => {
-  const response = await api.patch(`/ecommerce-orders/${id}/status`, status);
+export const updateOrderStatus = async (id: string, status: string, comment?: string) => {
+  const response = await api.patch(`/ecommerce-orders/${id}/status`, { status, comment });
   return response.data;
 };
 

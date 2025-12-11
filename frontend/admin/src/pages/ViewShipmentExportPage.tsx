@@ -88,6 +88,7 @@ const ViewShipmentExportPage: React.FC = () => {
         exportId={shipment.id}
         status={shipment.status}
         onStatusUpdated={(newStatus) => setShipment({ ...shipment, status: newStatus })}
+        selectedBoxShipments={selectedBoxShipments}
       />
       
       <BoxesSection 
@@ -99,6 +100,7 @@ const ViewShipmentExportPage: React.FC = () => {
         shipmentsInSelectedBox={selectedBoxShipments}
         loadingShipments={loadingShipments}
         refreshShipments={handlePackageAdded}
+        status={shipment.status}
       />
     </Box>
   );

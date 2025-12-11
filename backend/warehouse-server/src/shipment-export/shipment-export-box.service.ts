@@ -4,7 +4,29 @@ import { Repository } from 'typeorm';
 import { ShipmentExportBox } from './shipment-export-box.entity';
 import { ShipmentExport } from './shipment-export.entity';
 import { CreateBoxDto } from './dto/create-box.dto';
-import { Shipment } from 'src/shipments/shipment.entity';
+import { Shipment, ShipmentStatus } from 'src/shipments/shipment.entity';
+import { Package, PackageItem } from 'src/packages/entities';
+import { UsersService } from 'src/users/users.service';
+import { UserResponseDto } from 'src/users/dto/user-response.dto';
+
+export interface TransformedShipment {
+  id: string;
+  shipment_no: string;
+  tracking_no: string;
+  status: ShipmentStatus;
+  user: UserResponseDto;
+  shipmentExportBox: ShipmentExportBox | null;
+  customs_value: number | null;
+  dangerous_good: boolean;
+  total_weight: number | null;
+  total_volumetric_weight: number | null;
+  length: number | null;
+  width: number | null;
+  height: number | null;
+  created_at: number;
+  updated_at: number;
+  packageItemNames: string[];
+}
 
 @Injectable()
 export class ShipmentExportBoxesService {
@@ -15,6 +37,7 @@ export class ShipmentExportBoxesService {
     private readonly exportRepo: Repository<ShipmentExport>,
     @InjectRepository(Shipment)
     private readonly shipmentRepo: Repository<Shipment>,
+    private readonly usersService: UsersService,
   ) {}
 
   async createBox(
@@ -51,13 +74,38 @@ export class ShipmentExportBoxesService {
     }
   }
 
-  async getShipmentsByBoxId(boxId: string): Promise<Shipment[]> {
+  async getShipmentsByBoxId(boxId: string): Promise<TransformedShipment[]> {
     const box = await this.boxRepo.findOne({
       where: { id: boxId },
-      relations: ['shipments'],
+      relations: [
+        'shipments',
+        'shipments.user.preference',
+        'shipments.packages.items',
+      ],
     });
     if (!box) throw new NotFoundException(`Box with id ${boxId} not found`);
-    return box.shipments;
+
+    const transformedShipments = box.shipments.map((shipment: Shipment) => {
+      const packageItemNames: string[] =
+        shipment.packages?.flatMap(
+          (pkg: Package) =>
+            pkg.items?.map((item: PackageItem) => item.name) || [],
+        ) || [];
+
+      const transformedUser = this.usersService.mapToUserResponseDto(
+        shipment.user,
+      );
+
+      const { packages, user, ...rest } = shipment;
+
+      return {
+        ...rest,
+        user: transformedUser,
+        packageItemNames,
+      };
+    });
+
+    return transformedShipments;
   }
 
   async addShipmentToBox(boxId: string, shipmentId: string): Promise<Shipment> {

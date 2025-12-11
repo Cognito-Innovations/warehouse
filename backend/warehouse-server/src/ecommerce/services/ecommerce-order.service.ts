@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 import { Cashfree, CFEnvironment } from 'cashfree-pg';
 import { EcommerceOrder } from '../entities/ecommerce-order.entity';
 import { EcommerceOrderItem } from '../entities/ecommerce-order-item.entity';
@@ -22,14 +24,19 @@ interface CurrencyInfo {
   rate: number;
 }
 
-interface CashfreePaymentUpdate {
+interface CashfreePayment {
   cf_payment_id: string;
-  [key: string]: any;
+  payment_status: string;
+  payment_group?: string;
 }
 
 @Injectable()
 export class OrderService {
   private cashfree: Cashfree;
+  private readonly appId: string;
+  private readonly secretKey: string;
+  private readonly mode: string;
+  private readonly baseUrl: string;
 
   constructor(
     @InjectRepository(EcommerceOrder)
@@ -41,19 +48,27 @@ export class OrderService {
     @InjectRepository(EcommerceCartItem)
     private readonly cartItemRepository: Repository<EcommerceCartItem>,
     private readonly userPreferenceService: UserPreferencesService,
+    private readonly httpService: HttpService,
   ) {
-    const appId = process.env.CASHFREE_APP_ID;
-    const secretKey = process.env.CASHFREE_SECRET_KEY;
-    const mode = process.env.CASHFREE_MODE;
+    this.appId = process.env.CASHFREE_APP_ID!;
+    this.secretKey = process.env.CASHFREE_SECRET_KEY!;
+    this.mode = process.env.CASHFREE_MODE!;
 
-    if (!appId || !secretKey) {
+    if (!this.appId || !this.secretKey) {
       throw new BadRequestException('Cashfree credentials not configured');
     }
 
+    this.baseUrl =
+      this.mode === 'production'
+        ? 'https://api.cashfree.com/pg'
+        : 'https://sandbox.cashfree.com/pg';
+
     this.cashfree = new Cashfree(
-      mode === 'production' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
-      appId,
-      secretKey,
+      this.mode === 'production'
+        ? CFEnvironment.PRODUCTION
+        : CFEnvironment.SANDBOX,
+      this.appId,
+      this.secretKey,
     );
   }
 
@@ -175,6 +190,7 @@ export class OrderService {
       shipping_amount: roundedShipping,
       tax_amount: roundedTax,
       total_amount: roundedTotal,
+      payment_gateway: 'cashfree',
       notes: createOrderDto.notes,
     });
 
@@ -302,6 +318,26 @@ export class OrderService {
     })) as unknown as EcommerceOrder[];
   }
 
+  async getAllOrders(): Promise<any[]> {
+    const orders = await this.orderRepository.find({
+      relations: ['items', 'user'],
+      order: { created_at: 'DESC' },
+    });
+
+    return orders.map((order) => ({
+      id: order.id,
+      order_number: order.order_number,
+      customer_name: order.user?.name || 'Unknown',
+      payment_id: order.cashfree_payment_id || '',
+      item_count: order.items.length,
+      total: order.total_amount,
+      payment_method: order.payment_mode || 'Unknown',
+      order_date: order.created_at,
+      status: order.status,
+      payment_status: order.payment_status,
+    }));
+  }
+
   async findOne(id: string): Promise<EcommerceOrder> {
     const order = await this.orderRepository.findOne({
       where: { id },
@@ -380,23 +416,62 @@ export class OrderService {
   async updateOrderStatus(
     id: string,
     status: OrderStatus,
+    comment?: string,
   ): Promise<EcommerceOrder> {
     const order = await this.findOne(id);
     order.status = status;
+
+    if (comment !== undefined) {
+      order.comment = comment;
+    }
+
     return this.orderRepository.save(order);
   }
 
-  async updatePaymentStatus(
-    orderId: string,
-    cashfreeData: CashfreePaymentUpdate,
-  ): Promise<EcommerceOrder> {
+  async updatePaymentStatus(orderId: string): Promise<EcommerceOrder> {
     const order = await this.findOne(orderId);
     if (order.payment_status !== PaymentStatus.PENDING) {
       throw new BadRequestException('Payment already processed');
     }
 
+    let successfulPayment: CashfreePayment | null = null;
+
+    try {
+      const paymentsUrl = `${this.baseUrl}/orders/${order.order_number}/payments`;
+      const paymentsResponse = await firstValueFrom(
+        this.httpService.get<CashfreePayment[]>(paymentsUrl, {
+          headers: {
+            'x-api-version': '2025-01-01',
+            'x-client-id': this.appId,
+            'x-client-secret': this.secretKey,
+          },
+        }),
+      );
+      const payments: CashfreePayment[] = paymentsResponse.data;
+
+      if (!Array.isArray(payments) || payments.length === 0) {
+        throw new BadRequestException('No payments found for this order');
+      }
+
+      successfulPayment =
+        payments.find((p) => p.payment_status === 'SUCCESS') || null;
+
+      if (!successfulPayment) {
+        throw new BadRequestException(
+          'No successful payment found for this order',
+        );
+      }
+    } catch (fetchError: unknown) {
+      console.error('Error fetching payments from Cashfree:', fetchError);
+      throw new BadRequestException('Failed to verify payment status');
+    }
+
     order.payment_status = PaymentStatus.PAID;
-    order.cashfree_payment_id = cashfreeData.cf_payment_id;
+    order.cashfree_payment_id = successfulPayment.cf_payment_id;
+
+    if (successfulPayment.payment_group) {
+      order.payment_mode = successfulPayment.payment_group;
+    }
 
     const orderProductIds = order.items.map((item) => item.product_id);
     const cart = await this.cartRepository.findOne({

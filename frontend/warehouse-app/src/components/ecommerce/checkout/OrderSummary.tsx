@@ -94,7 +94,11 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           try {
             const purchasedIds = items.map((item) => item.product_id!);
             removePurchasedProducts(purchasedIds);
-            await ecommerceService.updatePaymentStatus(orderId, paymentResult);
+            ecommerceService.updatePaymentStatus(orderId).catch((updateError) => {
+              console.error("Order update failed in background:", updateError);
+              toast.error("Payment succeeded, but order update may have failed. Please check your orders.");
+            });
+            router.push('/order');
           } catch (error) {
             setError("Payment succeeded but order update failed. Contact support.");
             toast.error("Order update error");

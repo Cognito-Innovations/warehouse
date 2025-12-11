@@ -32,7 +32,7 @@ export async function launchCashfreePayment(paymentConfig: any, onSuccess: any, 
 
     const options = {
       paymentSessionId: paymentConfig.orderToken,
-      redirectTarget: "_self",
+      redirectTarget: "_modal",
     }
 
     const paymentPromise = cashfree.checkout(options);

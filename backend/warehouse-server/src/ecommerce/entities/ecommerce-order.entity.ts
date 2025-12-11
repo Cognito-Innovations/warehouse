@@ -71,6 +71,15 @@ export class EcommerceOrder extends BaseTimestampEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total_amount: number;
 
+  @Column({ type: 'varchar', nullable: true })
+  payment_gateway: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  payment_mode: string;
+
+  @Column({ type: 'text', nullable: true })
+  comment: string;
+
   @Column({ type: 'text', nullable: true })
   notes: string;
 

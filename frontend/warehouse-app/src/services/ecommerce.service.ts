@@ -34,24 +34,40 @@ api.interceptors.request.use(async (config) => {
 
 export const ecommerceService = {
   // Categories
-  async getCategories(): Promise<EcommerceCategory[]> {
-    const response = await api.get("/ecommerce-categories");
+  async getCategories(countryCode?: string): Promise<EcommerceCategory[]> {
+    const params: any = {};
+    if (countryCode) {
+      params.countryCode = countryCode;
+    }
+    const response = await api.get("/ecommerce-categories", { params });
     return response.data;
   },
 
-  async getCategory(id: string): Promise<EcommerceCategory> {
-    const response = await api.get(`/ecommerce-categories/${id}`);
+  async getCategory(id: string, countryCode?: string): Promise<EcommerceCategory> {
+    const params: any = {};
+    if (countryCode) {
+      params.countryCode = countryCode;
+    }
+    const response = await api.get(`/ecommerce-categories/${id}`, { params });
     return response.data;
   },
 
   // Sub Categories
-  async getSubCategories(): Promise<EcommerceSubCategory[]> {
-    const response = await api.get("/ecommerce-sub-categories");
+  async getSubCategories(countryCode?: string): Promise<EcommerceSubCategory[]> {
+    const params: any = {};
+    if (countryCode) {
+      params.countryCode = countryCode;
+    }
+    const response = await api.get("/ecommerce-sub-categories", { params });
     return response.data;
   },
 
-  async getSubCategory(id: string): Promise<EcommerceSubCategory> {
-    const response = await api.get(`/ecommerce-sub-categories/${id}`);
+  async getSubCategory(id: string, countryCode?: string): Promise<EcommerceSubCategory> {
+    const params: any = {};
+    if (countryCode) {
+      params.countryCode = countryCode;
+    }
+    const response = await api.get(`/ecommerce-sub-categories/${id}`, { params });
     return response.data;
   },
 
@@ -62,7 +78,8 @@ export const ecommerceService = {
     category?: string,
     limit?: number,
     offset?: number,
-    userId?: string
+    userId?: string,
+    countryCode?: string
   ): Promise<EcommerceProduct[]> {
     const params: any = {};
     if (searchTerm) {
@@ -83,17 +100,23 @@ export const ecommerceService = {
     if (userId) {
       params.user_id = userId;
     }
+    if (countryCode) {
+      params.countryCode = countryCode;
+    }
     const response = await api.get("/ecommerce-products", { params });
     return response.data;
   },
 
-  async getProduct(slug: string, currency?: string, userId?: string): Promise<EcommerceProduct> {
+  async getProduct(slug: string, currency?: string, userId?: string, countryCode?: string): Promise<EcommerceProduct> {
     const params: any = {};
     if (currency) {
       params.currency = currency;
     }
     if (userId) {
       params.user_id = userId;
+    }
+    if (countryCode) {
+      params.countryCode = countryCode;
     }
     const response = await api.get(`/ecommerce-products/${slug}`, { params });
     return response.data;
@@ -176,8 +199,8 @@ export const ecommerceService = {
     return response.data;
   },
 
-  async updatePaymentStatus(id: string, paymentStatus: any): Promise<Order> {
-    const response = await api.put(`/ecommerce-orders/${id}/payment-status`, { paymentStatus });
+  async updatePaymentStatus(id: string): Promise<Order> {
+    const response = await api.put(`/ecommerce-orders/${id}/payment-status`);
     return response.data;
   },
 
