@@ -25,6 +25,7 @@ export default function CartPage() {
     cartProducts,
     getCart,
     checkoutProducts,
+    toggleCartItemSelection,
   } = useCartStore();
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
@@ -43,10 +44,13 @@ export default function CartPage() {
   const userId = (session?.user as any)?.user_id;
 
   const initCart = useCallback(async () => {
+    setIsCartLoading(true);
     try {
       await getCart(selectedCurrency);
     } catch (e) {
       console.error("Initialization error:", e);
+    } finally {
+      setIsCartLoading(false);
     }
   }, [getCart, selectedCurrency]);
 
@@ -66,6 +70,16 @@ export default function CartPage() {
       };
     }
   }, [selectedCurrency, status, initCart, hydrated]);
+
+  useEffect(() => {
+    if (hydrated && cartProducts.length > 0 && checkoutProducts.length === 0) {
+      const validItems = cartProducts.filter(item => item && item.product);
+      const allIds = validItems.map(item => item.product_id).filter((id): id is string => !!id);
+      if (allIds.length > 0) {
+        toggleCartItemSelection(allIds);
+      }
+    }
+  }, [hydrated, cartProducts, checkoutProducts.length, toggleCartItemSelection]);
 
   if (status === "loading" || !hydrated) {
     return <CartSkeletonLoader />;

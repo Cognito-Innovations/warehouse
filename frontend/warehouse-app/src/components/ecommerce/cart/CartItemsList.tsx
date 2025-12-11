@@ -14,7 +14,6 @@ export default function CartItemsList({
 }: CartItemsListProps) {
 
   const {
-    cartProducts,
     checkoutProducts,
     toggleCartItemSelection,
     clearCheckoutProducts,
@@ -31,7 +30,7 @@ export default function CartItemsList({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = cartProducts
+      const allIds = items
         .map(i => i.product_id)
         .filter((id): id is string => !!id);
 

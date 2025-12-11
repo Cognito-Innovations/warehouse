@@ -105,9 +105,10 @@ export const useCartStore = create<CartStore>()(
 
             if (hasLocalItemsToSync) {
               await state.syncCart(currency);
+            } else {
+              await state.refreshCart(currency);
             }
 
-            await state.refreshCart(currency);
             return get().cartProducts;
 
           } catch (error) {
@@ -153,7 +154,7 @@ export const useCartStore = create<CartStore>()(
       syncCart: async (currency?: string) => {
         const token = getAuthToken();
         if (!token) return;
-
+        
         set({ isSyncing: true });
 
         try {
@@ -170,6 +171,21 @@ export const useCartStore = create<CartStore>()(
             return serverItem && serverItem.quantity !== local.quantity;
           });
           
+          if (toAdd.length === 0 && toUpdate.length === 0) {
+            const currentState = get();
+            const mergedItems = serverItems.map((serverItem: any) => {
+              const localItem = currentState.cartProducts.find(
+                (l: LocalCartItem) => l.product_id === serverItem.product_id
+              );
+              return {
+                ...serverItem,
+                ...(localItem && !serverItem.product ? { product: localItem.product } : {}),
+              };
+            });
+            set({ cartProducts: mergedItems as LocalCartItem[] });
+            return; 
+          }
+
           if (toAdd.length > 0) {
             await Promise.allSettled(toAdd.map(async (item) => {
               if (item.product_id) {
@@ -209,10 +225,11 @@ export const useCartStore = create<CartStore>()(
             }));
           }
 
+          await get().refreshCart(currency);
         } catch (error) {
           console.error("Sync Cart General Error:", error);
-        } finally {
           await get().refreshCart(currency);
+        } finally {
           set({ isSyncing: false });
         }
       },
