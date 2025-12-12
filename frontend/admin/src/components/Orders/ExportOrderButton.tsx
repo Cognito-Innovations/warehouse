@@ -8,12 +8,12 @@ import { formatDateTime } from "../../utils/formatDateTime";
 interface OrderRow {
   id: string;
   order_number: string;
-  customer_name: string;
-  payment_id: string;
-  item_count: number;
-  total: number;
-  payment_method: string;
-  order_date: string;
+  user_name: string;
+  cashfree_payment_id: string;
+  items_count: string;
+  total_amount: string;
+  payment_mode: string;
+  created_at: string;
   status: string;
   payment_status: string;
 }
@@ -30,16 +30,21 @@ const ExportOrdersButton: React.FC<ExportOrdersButtonProps> = ({ orders }) => {
       return;
     }
 
-    const data = orders.map((order) => ({
-      "Order Number": order.order_number,
-      "Customer Name": order.customer_name,
-      "Item Count": order.item_count,
-      "Total": Number(order.total),
-      "Payment Method": order.payment_method,
-      "Order Date": order.order_date ? formatDateTime(order.order_date) : '-',
-      "Status": order.status,
-      "Payment Status": order.payment_status,
-    }));
+    const data = orders.map((order) => {
+      const itemCount = parseInt(order.items_count || '0', 10);
+      const total = Number(order.total_amount || '0');
+      const timestampMs = Number(order.created_at || '0') * 1000;
+      return {
+        "Order Number": order.order_number,
+        "Customer Name": order.user_name,
+        "Item Count": isNaN(itemCount) ? 0 : itemCount,
+        "Total": isNaN(total) ? 0 : total,
+        "Payment Method": order.payment_mode || 'Unknown',
+        "Order Date": order.created_at ? formatDateTime(timestampMs) : '-',
+        "Status": order.status,
+        "Payment Status": order.payment_status,
+      };
+    });
 
     // Create workbook and worksheet
     const wb = XLSX.utils.book_new();

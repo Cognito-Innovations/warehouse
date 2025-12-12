@@ -107,9 +107,7 @@ export class PickupRequestsService {
         return {
           ...rest,
           country: country?.name,
-          user: user
-            ? this.usersService.mapToUserResponseDto(request.user)
-            : undefined,
+          user: user ? user : undefined,
         };
       });
     } catch (error) {
@@ -166,9 +164,7 @@ export class PickupRequestsService {
       return {
         ...rest,
         country: country?.name,
-        user: user
-          ? this.usersService.mapToUserResponseDto(pickupRequest.user)
-          : undefined,
+        user: user ? user : undefined,
         tracking_requests: trackingRequests,
       };
     } catch (error) {
@@ -263,11 +259,7 @@ export class PickupRequestsService {
       return {
         ...rest,
         country: country?.name,
-        user: user
-          ? this.usersService.mapToUserResponseDto(
-              pickupRequestWithRelations.user,
-            )
-          : undefined,
+        user: user ? user : undefined,
         tracking_requests: trackingRequests,
       };
     } catch (error) {

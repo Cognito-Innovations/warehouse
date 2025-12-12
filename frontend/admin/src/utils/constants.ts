@@ -1,3 +1,5 @@
+import type { StatusOption } from "../components/Orders/EditOrderStatusModal";
+
 export const PromiseStatus = {
   Fulfilled: 'fulfilled',
   Rejected: 'rejected',
@@ -37,3 +39,13 @@ export const PACKAGE_STATUS_CARDS = [
     icon: "InfoIcon",
   },
 ] as const;
+
+export const ORDER_STATUS_OPTIONS: StatusOption[] = [
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'CONFIRMED', label: 'Confirmed' },
+  { value: 'PROCESSING', label: 'Processing' },
+  { value: 'SHIPPED', label: 'Shipped' },
+  { value: 'DELIVERED', label: 'Delivered' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'REFUNDED', label: 'Refunded' },
+];

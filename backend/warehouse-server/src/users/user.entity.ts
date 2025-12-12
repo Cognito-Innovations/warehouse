@@ -37,8 +37,7 @@ export class User extends BaseTimestampEntity {
   @IsEmail()
   email: string;
 
-  //TODO: Add select: false to password column and try admin login and make it correct
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   password: string;
 
   @Column({ nullable: true })
@@ -78,13 +77,13 @@ export class User extends BaseTimestampEntity {
   @Column({ default: false })
   email_verified: boolean;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', nullable: true, select: false })
   otp: string | null;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamp', nullable: true, select: false })
   otp_expires_at: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   last_logout: number;
 
   @OneToOne(() => UserPreference, (preference) => preference.user)

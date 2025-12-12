@@ -24,8 +24,8 @@ export default function Ecommerce() {
     city: "",
     pincode: "",
   });
-  const currency = locationData.currencyInfo.code;
-  const countryCode = locationData.location.countryCode;
+  const currency = locationData?.currencyInfo?.code || '';
+  const countryCode = locationData?.location?.countryCode || '';
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -130,7 +130,7 @@ export default function Ecommerce() {
   const handleRefresh = () => {
     setError(null);
     hasFetched.current = false;
-    initializeEcommerceData(locationData.currencyInfo.code, locationData.location.countryCode);
+    initializeEcommerceData(locationData?.currencyInfo?.code || '', locationData?.location?.countryCode || '');
   };
 
   const isNetworkError = error && (error.includes("Network Error") || error.includes("Failed to fetch") || error.includes("ECONNREFUSED") || error.includes("timeout"));

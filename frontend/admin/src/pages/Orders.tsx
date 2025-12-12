@@ -9,18 +9,19 @@ import StatusChip from "../components/common/StatusChip";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatDateTime } from "../utils/formatDateTime";
 import type { ColumnDefinition } from "../types/table";
-import EditOrderStatusModal, { type StatusOption } from "../components/Orders/EditOrderStatusModal";
+import EditOrderStatusModal from "../components/Orders/EditOrderStatusModal";
 import ExportOrdersButton from "../components/Orders/ExportOrderButton";
+import { ORDER_STATUS_OPTIONS } from "../utils/constants";
 
 interface OrderRow {
   id: string;
   order_number: string;
-  customer_name: string;
-  payment_id: string;
-  item_count: number;
-  total: number;
-  payment_method: string;
-  order_date: string;
+  user_name: string;
+  cashfree_payment_id: string;
+  items_count: string;
+  total_amount: string;
+  payment_mode: string;
+  created_at: string;
   status: string;
   payment_status: string;
 }
@@ -46,16 +47,6 @@ const Orders: React.FC = () => {
     fetchOrders();
   }, [fetchOrders]);
 
-  const statusOptions: StatusOption[] = [
-    { value: 'PENDING', label: 'Pending' },
-    { value: 'CONFIRMED', label: 'Confirmed' },
-    { value: 'PROCESSING', label: 'Processing' },
-    { value: 'SHIPPED', label: 'Shipped' },
-    { value: 'DELIVERED', label: 'Delivered' },
-    { value: 'CANCELLED', label: 'Cancelled' },
-    { value: 'REFUNDED', label: 'Refunded' },
-  ];
-
   const columns: ColumnDefinition<OrderRow>[] = [
     {
       header: "Order No.",
@@ -64,27 +55,36 @@ const Orders: React.FC = () => {
     },
     {
       header: "Customer",
-      cell: (row) => <Typography variant="body2">{row.customer_name}</Typography>,
+      cell: (row) => <Typography variant="body2">{row.user_name}</Typography>,
       width: "15%",
     },
     {
       header: "Items",
-      cell: (row) => <Typography variant="body2">{row.item_count}</Typography>,
+      cell: (row) => {
+        const count = parseInt(row.items_count || '0', 10);
+        return <Typography variant="body2">{isNaN(count) ? 0 : count}</Typography>;
+      },
       width: "8%",
     },
     {
       header: "Total",
-      cell: (row) => <Typography variant="body2">{formatCurrency(row.total)}</Typography>,
+      cell: (row) => {
+        const amount = Number(row.total_amount || '0');
+        return <Typography variant="body2">{isNaN(amount) ? formatCurrency(0) : formatCurrency(amount)}</Typography>;
+      },
       width: "12%",
     },
     {
       header: "Payment Method",
-      cell: (row) => <Typography variant="body2">{row.payment_method}</Typography>,
+      cell: (row) => <Typography variant="body2">{row.payment_mode || 'Unknown'}</Typography>,
       width: "12%",
     },
     {
       header: "Order Date",
-      cell: (row) => <Typography variant="body2">{formatDateTime(row.order_date)}</Typography>,
+      cell: (row) => {
+        const timestampMs = Number(row.created_at || '0') * 1000;
+        return <Typography variant="body2">{formatDateTime(timestampMs)}</Typography>;
+      },
       width: "15%",
     },
     {
@@ -123,7 +123,7 @@ const Orders: React.FC = () => {
         rows={orders}
         columns={columns}
         loading={loading}
-        statusOptions={statusOptions}
+        statusOptions={ORDER_STATUS_OPTIONS}
         noDataMessage="No orders available"
         onEdit={handleEditStatus}
         getIdentifier={(row) => row.id}
@@ -136,7 +136,7 @@ const Orders: React.FC = () => {
         orderId={selectedOrder?.id || ''}
         orderNumber={selectedOrder?.order_number || ''}
         currentStatus={selectedOrder?.status || ''}
-        statusOptions={statusOptions}
+        statusOptions={ORDER_STATUS_OPTIONS}
         onOrderUpdated={fetchOrders}
       />
     </Box>

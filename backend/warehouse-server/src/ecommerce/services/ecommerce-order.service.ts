@@ -17,6 +17,7 @@ import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { User } from 'src/users/user.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+import { PAYMENT_GATEWAY } from 'src/shared/constants';
 
 interface CurrencyInfo {
   code: string;
@@ -24,7 +25,7 @@ interface CurrencyInfo {
   rate: number;
 }
 
-interface CashfreePayment {
+interface PaymentInfo {
   cf_payment_id: string;
   payment_status: string;
   payment_group?: string;
@@ -33,10 +34,10 @@ interface CashfreePayment {
 @Injectable()
 export class OrderService {
   private cashfree: Cashfree;
-  private readonly appId: string;
-  private readonly secretKey: string;
-  private readonly mode: string;
-  private readonly baseUrl: string;
+  private readonly gatewayAppId: string;
+  private readonly gatewaySecretKey: string;
+  private readonly gatewayMode: string;
+  private readonly gatewayBaseUrl: string;
 
   constructor(
     @InjectRepository(EcommerceOrder)
@@ -50,25 +51,25 @@ export class OrderService {
     private readonly userPreferenceService: UserPreferencesService,
     private readonly httpService: HttpService,
   ) {
-    this.appId = process.env.CASHFREE_APP_ID!;
-    this.secretKey = process.env.CASHFREE_SECRET_KEY!;
-    this.mode = process.env.CASHFREE_MODE!;
+    this.gatewayAppId = process.env.CASHFREE_APP_ID!;
+    this.gatewaySecretKey = process.env.CASHFREE_SECRET_KEY!;
+    this.gatewayMode = process.env.CASHFREE_MODE!;
 
-    if (!this.appId || !this.secretKey) {
+    if (!this.gatewayAppId || !this.gatewaySecretKey) {
       throw new BadRequestException('Cashfree credentials not configured');
     }
 
-    this.baseUrl =
-      this.mode === 'production'
+    this.gatewayBaseUrl =
+      this.gatewayMode === 'production'
         ? 'https://api.cashfree.com/pg'
         : 'https://sandbox.cashfree.com/pg';
 
     this.cashfree = new Cashfree(
-      this.mode === 'production'
+      this.gatewayMode === 'production'
         ? CFEnvironment.PRODUCTION
         : CFEnvironment.SANDBOX,
-      this.appId,
-      this.secretKey,
+      this.gatewayAppId,
+      this.gatewaySecretKey,
     );
   }
 
@@ -190,7 +191,8 @@ export class OrderService {
       shipping_amount: roundedShipping,
       tax_amount: roundedTax,
       total_amount: roundedTotal,
-      payment_gateway: 'cashfree',
+      payment_gateway: PAYMENT_GATEWAY.CASHFREE,
+      payment_mode: 'UNKNOWN',
       notes: createOrderDto.notes,
     });
 
@@ -319,23 +321,29 @@ export class OrderService {
   }
 
   async getAllOrders(): Promise<any[]> {
-    const orders = await this.orderRepository.find({
-      relations: ['items', 'user'],
-      order: { created_at: 'DESC' },
-    });
+    const queryBuilder = this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoin('order.user', 'user')
+      .leftJoin('order.items', 'items')
+      .select([
+        'order.id AS "id"',
+        'order.order_number AS "order_number"',
+        'order.status AS "status"',
+        'order.payment_status AS "payment_status"',
+        'order.total_amount AS "total_amount"',
+        'order.payment_mode AS "payment_mode"',
+        'order.created_at AS "created_at"',
+        'order.cashfree_payment_id AS "cashfree_payment_id"',
+        'COUNT(items.id) AS "items_count"',
+      ])
+      .addSelect('COALESCE(user.name, \'Unknown\') AS "user_name"')
+      .groupBy(
+        'order.id, order.order_number, order.status, order.payment_status, order.total_amount, order.payment_mode, order.created_at, order.cashfree_payment_id, user.name',
+      )
+      .orderBy('order.created_at', 'DESC');
 
-    return orders.map((order) => ({
-      id: order.id,
-      order_number: order.order_number,
-      customer_name: order.user?.name || 'Unknown',
-      payment_id: order.cashfree_payment_id || '',
-      item_count: order.items.length,
-      total: order.total_amount,
-      payment_method: order.payment_mode || 'Unknown',
-      order_date: order.created_at,
-      status: order.status,
-      payment_status: order.payment_status,
-    }));
+    const results = await queryBuilder.getRawMany();
+    return results;
   }
 
   async findOne(id: string): Promise<EcommerceOrder> {
@@ -421,7 +429,7 @@ export class OrderService {
     const order = await this.findOne(id);
     order.status = status;
 
-    if (comment !== undefined) {
+    if (comment) {
       order.comment = comment;
     }
 
@@ -434,20 +442,20 @@ export class OrderService {
       throw new BadRequestException('Payment already processed');
     }
 
-    let successfulPayment: CashfreePayment | null = null;
+    let successfulPayment: PaymentInfo | null = null;
 
     try {
-      const paymentsUrl = `${this.baseUrl}/orders/${order.order_number}/payments`;
+      const paymentsUrl = `${this.gatewayBaseUrl}/orders/${order.order_number}/payments`;
       const paymentsResponse = await firstValueFrom(
-        this.httpService.get<CashfreePayment[]>(paymentsUrl, {
+        this.httpService.get<PaymentInfo[]>(paymentsUrl, {
           headers: {
             'x-api-version': '2025-01-01',
-            'x-client-id': this.appId,
-            'x-client-secret': this.secretKey,
+            'x-client-id': this.gatewayAppId,
+            'x-client-secret': this.gatewaySecretKey,
           },
         }),
       );
-      const payments: CashfreePayment[] = paymentsResponse.data;
+      const payments: PaymentInfo[] = paymentsResponse.data;
 
       if (!Array.isArray(payments) || payments.length === 0) {
         throw new BadRequestException('No payments found for this order');

@@ -7,12 +7,10 @@ import { ShipmentExportBoxesService } from './shipment-export-box.service';
 import { ShipmentExport } from './shipment-export.entity';
 import { ShipmentExportBox } from './shipment-export-box.entity';
 import { Shipment } from 'src/shipments/shipment.entity';
-import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ShipmentExport, ShipmentExportBox, Shipment]),
-    UsersModule
   ],
   controllers: [ShipmentExportsController, ShipmentExportBoxesController],
   providers: [ShipmentExportsService, ShipmentExportBoxesService],

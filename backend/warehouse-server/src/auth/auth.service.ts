@@ -29,7 +29,9 @@ export class AuthService {
       }
     }
 
-    const existingUser = await this.usersService.findByEmail(registerDto.email);
+    const existingUser = await this.usersService.findByEmailWithPassword(
+      registerDto.email,
+    );
 
     if (existingUser) {
       if (registerDto.identifier !== Identifier.Google) {
@@ -44,14 +46,22 @@ export class AuthService {
             password: hashedPassword,
             identifier: Identifier.Email,
           });
+          const user = await this.usersService.findById(existingUser.id);
+          const payload = { email: user?.email, sub: user?.id };
+          const access_token = this.jwtService.sign(payload);
+          return {
+            access_token,
+            ...user,
+          };
         }
       }
 
+      (existingUser as any).password = undefined;
       const payload = { email: existingUser.email, sub: existingUser.id };
       const access_token = this.jwtService.sign(payload);
       return {
         access_token,
-        ...this.usersService.mapToUserResponseDto(existingUser),
+        ...existingUser,
       };
     }
 
@@ -78,7 +88,9 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const user = await this.usersService.findByEmail(loginDto.email);
+    const user = await this.usersService.findByEmailWithPassword(
+      loginDto.email,
+    );
     if (!user || !user.password) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -92,12 +104,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    (user as any).password = undefined;
+
     const payload = { email: user.email, sub: user.id };
     const access_token = this.jwtService.sign(payload);
 
     return {
       access_token,
-      user: this.usersService.mapToUserResponseDto(user),
+      user,
     };
   }
 
