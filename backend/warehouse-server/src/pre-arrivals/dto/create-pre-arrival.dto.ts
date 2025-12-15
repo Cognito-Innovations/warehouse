@@ -19,8 +19,8 @@ export class CreatePreArrivalDto {
   otp: number;
 
   @IsString()
-  @Length(7, 14, {
-    message: 'Tracking number must be between 7 and 14 characters',
+  @Length(5, 15, {
+    message: 'Tracking number must be between 5 and 15 characters',
   })
   tracking_no: string;
 

@@ -28,12 +28,6 @@ export const calculateCartTotals = (
 
     let { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(currency);
 
-    if (currencyInfo && !currencyInfo.isBase) {
-      threshold = roundCurrency(threshold / currencyInfo.rate);
-      deliveryBase = roundCurrency(deliveryBase / currencyInfo.rate);
-      serviceBase = roundCurrency(serviceBase / currencyInfo.rate);
-    }
-
     let subtotal = 0;
     let discount = 0;
 

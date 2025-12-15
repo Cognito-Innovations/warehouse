@@ -9,6 +9,14 @@ import { Country } from '../Countries/country.entity';
 import { CreateCurrencyDto } from 'src/currencies/dto/create-currency.dto';
 import { UpdateCurrencyDto } from 'src/currencies/dto/update-currency.dto';
 import { CurrenciesService } from 'src/currencies/currencies.service';
+import {
+  BASE_EXCHANGE_CURRENCY,
+  CACHE_TTL_SECONDS,
+  DEFAULT_CURRENCY,
+  EXCHANGE_RATE_URL,
+  REST_COUNTRIES_URL,
+  TWENTY_FOUR_HOURS_MS,
+} from './constants';
 
 interface RestCountryCurrency {
   name?: string;
@@ -32,11 +40,6 @@ interface CurrencyInfo {
 
 @Injectable()
 export class ExternalCurrencyService {
-  private readonly REST_COUNTRIES_URL = 'https://restcountries.com/v3.1/name';
-  private readonly EXCHANGE_RATE_URL = 'https://api.frankfurter.app/latest';
-  private readonly TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
-  private readonly CACHE_TTL_SECONDS = 25 * 60 * 60; // Slightly more than 24h
-
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private httpService: HttpService,
@@ -52,7 +55,7 @@ export class ExternalCurrencyService {
     // Check cache first
     const cached = await this.cacheManager.get<CurrencyInfo>(cacheKey);
     const now = Date.now();
-    if (cached && now - cached.timestamp < this.TWENTY_FOUR_HOURS_MS) {
+    if (cached && now - cached.timestamp < TWENTY_FOUR_HOURS_MS) {
       return cached;
     }
 
@@ -69,16 +72,16 @@ export class ExternalCurrencyService {
 
     if (!isSupported) {
       // Fallback to USD
-      code = 'USD';
-      symbol = '$';
-      rate = 1;
+      code = DEFAULT_CURRENCY.code;
+      symbol = DEFAULT_CURRENCY.symbol;
+      rate = DEFAULT_CURRENCY.rate;
       currencyName = 'US Dollar';
     } else {
       try {
         // Fetch currency code, symbol and name from REST Countries
         const countryResponse = await firstValueFrom(
           this.httpService.get<RestCountry[]>(
-            `${this.REST_COUNTRIES_URL}/${encodeURIComponent(trimmedCountryName)}?fullText=true`,
+            `${REST_COUNTRIES_URL}/${encodeURIComponent(trimmedCountryName)}?fullText=true`,
           ),
         );
         const countryData = countryResponse.data;
@@ -100,7 +103,7 @@ export class ExternalCurrencyService {
         // Fetch exchange rate (local currency units per USD)
         const rateResponse = await firstValueFrom(
           this.httpService.get<ExchangeRateResponse>(
-            `${this.EXCHANGE_RATE_URL}?from=USD&to=${code}`,
+            `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
           ),
         );
         const rateData = rateResponse.data;
@@ -112,9 +115,9 @@ export class ExternalCurrencyService {
       } catch (error) {
         console.log('Fallback to USD:', error);
         // Fallback to USD
-        code = 'USD';
-        symbol = '$';
-        rate = 1;
+        code = DEFAULT_CURRENCY.code;
+        symbol = DEFAULT_CURRENCY.symbol;
+        rate = DEFAULT_CURRENCY.rate;
         currencyName = 'US Dollar';
       }
     }
@@ -126,7 +129,7 @@ export class ExternalCurrencyService {
       timestamp: now,
     };
     // Store in Redis
-    await this.cacheManager.set(cacheKey, currencyInfo, this.CACHE_TTL_SECONDS);
+    await this.cacheManager.set(cacheKey, currencyInfo, CACHE_TTL_SECONDS);
 
     // Update DB
     await this.updateCurrencyRecord(code, symbol, rate, currencyName);

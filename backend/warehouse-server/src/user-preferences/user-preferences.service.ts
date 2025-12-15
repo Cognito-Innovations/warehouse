@@ -7,6 +7,12 @@ import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { ExternalCurrencyService } from 'src/shared/external-currency.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import {
+  BASE_EXCHANGE_CURRENCY,
+  CURRENCY_SYMBOL_MAP,
+  DEFAULT_CURRENCY,
+  EXCHANGE_RATE_URL,
+} from '../shared/constants';
 
 interface CurrencyInfo {
   code: string;
@@ -20,12 +26,6 @@ interface ExchangeRateResponse {
 
 @Injectable()
 export class UserPreferencesService {
-  private readonly EXCHANGE_RATE_URL = 'https://api.frankfurter.app/latest';
-  private static SYMBOL_MAP: Record<string, string> = {
-    USD: '$',
-    INR: '₹',
-  };
-
   constructor(
     @InjectRepository(UserPreference)
     private readonly userPreferenceRepository: Repository<UserPreference>,
@@ -108,7 +108,7 @@ export class UserPreferencesService {
         await this.externalCurrencyService.getCurrencyInfo(countryName);
       const { code, rate } = currencyInfo;
 
-      if (code === 'USD') {
+      if (code === DEFAULT_CURRENCY.code) {
         return price;
       }
 
@@ -127,7 +127,7 @@ export class UserPreferencesService {
     price: number,
   ) {
     if (!countryName || !price) {
-      return { price: Number(price), currency: '$' };
+      return { price: Number(price), currency: DEFAULT_CURRENCY.symbol };
     }
 
     try {
@@ -136,14 +136,18 @@ export class UserPreferencesService {
       const { code, symbol, rate } = currencyInfo;
 
       const convertedPrice =
-        code === 'USD' ? Number(price) : Number(price) * rate;
-      return { price: convertedPrice, currency: code === 'USD' ? '$' : symbol };
+        code === DEFAULT_CURRENCY.code ? Number(price) : Number(price) * rate;
+      return {
+        price: convertedPrice,
+        currency:
+          code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
+      };
     } catch (error) {
       console.error(
         `Error formatting converted price by country (${countryName}):`,
         error,
       );
-      return { price: Number(price), currency: '$' };
+      return { price: Number(price), currency: DEFAULT_CURRENCY.symbol };
     }
   }
 
@@ -166,13 +170,13 @@ export class UserPreferencesService {
 
   async getCurrencyInfoByCode(currencyCode: string): Promise<CurrencyInfo> {
     const code = currencyCode.toUpperCase();
-    const symbol = UserPreferencesService.SYMBOL_MAP[code] || '$';
-    let rate = 1;
+    const symbol = CURRENCY_SYMBOL_MAP[code] || DEFAULT_CURRENCY.symbol;
+    let rate: number = DEFAULT_CURRENCY.rate;
 
     try {
       const rateResponse = await firstValueFrom(
         this.httpService.get<ExchangeRateResponse>(
-          `${this.EXCHANGE_RATE_URL}?from=USD&to=${code}`,
+          `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
         ),
       );
       const rateData = rateResponse.data;
@@ -197,8 +201,12 @@ export class UserPreferencesService {
     const { code, symbol, rate } = currencyInfo;
 
     const convertedPrice =
-      code === 'USD' ? Number(price) : Number(price) * rate;
-    return { price: convertedPrice, currency: code === 'USD' ? '$' : symbol };
+      code === DEFAULT_CURRENCY.code ? Number(price) : Number(price) * rate;
+    return {
+      price: convertedPrice,
+      currency:
+        code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
+    };
   }
 
   async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {

@@ -87,7 +87,7 @@ export class OrderController {
 
   @Put(':id/payment-status')
   async updatePaymentStatus(@Param('id') id: string) {
-    return this.orderService.updatePaymentStatus(id);
+    return this.orderService.processOrderPayment(id);
   }
 
   @Put(':id/cancel')

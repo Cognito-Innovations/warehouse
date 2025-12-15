@@ -59,7 +59,7 @@ export const getProductPricingSummary = (
   let currency = parsed.currency;
 
   if (currencyInfo && !currencyInfo.isBase) {
-    raw = roundCurrency(raw / currencyInfo.rate);
+    raw = roundCurrency(raw * currencyInfo.rate);
     currency = currencyInfo.symbol;
   } else if (currencyInfo) {
     currency = currencyInfo.symbol;

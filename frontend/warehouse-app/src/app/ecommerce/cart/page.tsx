@@ -21,12 +21,7 @@ import { CartAddressData } from "@/types/ecommerce";
 export default function CartPage() {
   const { data: session, status } = useSession();
   const hydrated = useCartHasHydrated();
-  const {
-    cartProducts,
-    getCart,
-    checkoutProducts,
-    toggleCartItemSelection,
-  } = useCartStore();
+  const { cartProducts, getCart, checkoutProducts, setCheckoutProducts } = useCartStore();
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [highlightAddressError, setHighlightAddressError] = useState(false);
@@ -72,14 +67,18 @@ export default function CartPage() {
   }, [selectedCurrency, status, initCart, hydrated]);
 
   useEffect(() => {
-    if (hydrated && cartProducts.length > 0 && checkoutProducts.length === 0) {
+    if (hydrated && cartProducts.length > 0) {
       const validItems = cartProducts.filter(item => item && item.product);
       const allIds = validItems.map(item => item.product_id).filter((id): id is string => !!id);
       if (allIds.length > 0) {
-        toggleCartItemSelection(allIds);
+        const cleanCheckoutProducts = checkoutProducts.filter(id => allIds.includes(id));
+
+        if (cleanCheckoutProducts.length !== checkoutProducts.length) {
+          setCheckoutProducts(cleanCheckoutProducts);
+        }
       }
     }
-  }, [hydrated, cartProducts, checkoutProducts.length, toggleCartItemSelection]);
+  }, [hydrated, cartProducts, checkoutProducts, setCheckoutProducts]);
 
   if (status === "loading" || !hydrated) {
     return <CartSkeletonLoader />;

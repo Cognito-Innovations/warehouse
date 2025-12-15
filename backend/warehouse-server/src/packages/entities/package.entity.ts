@@ -18,6 +18,7 @@ import { PackageActionLog } from './package-action-log.entity';
 import { PackageMeasurement } from './package-measurement.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import { Shipment } from 'src/shipments/shipment.entity';
+import { Length } from 'class-validator';
 
 @Entity('packages')
 export class Package extends BaseTimestampEntity {
@@ -25,6 +26,9 @@ export class Package extends BaseTimestampEntity {
   id: string;
 
   @Column({ unique: true })
+  @Length(5, 15, {
+    message: 'Tracking number must be between 5 and 15 characters',
+  })
   tracking_no: string;
 
   @Column({ default: 'Action Required' })
