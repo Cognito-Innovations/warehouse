@@ -174,10 +174,24 @@ export class OrderService {
       discountedSubTotal + deliveryFee + taxAmount + serviceCharge;
 
     const roundedTotal = this.roundCurrency(finalTotal);
-    const roundedNetSubtotal = this.roundCurrency(discountedSubTotal);
-    const roundedShipping = this.roundCurrency(deliveryFee);
-    const roundedTax = this.roundCurrency(taxAmount);
-    const roundedDiscount = this.roundCurrency(totalDiscountAmount);
+
+    let usdTotalAmount: number;
+    const usdCurrencyInfo =
+      await this.userPreferenceService.getCurrencyInfoByCode('USD');
+
+    if (!usdCurrencyInfo) {
+      throw new BadRequestException(
+        'System configuration error: USD currency not found',
+      );
+    }
+
+    if (currencyInfo.code === 'USD') {
+      usdTotalAmount = roundedTotal;
+    } else {
+      usdTotalAmount = this.roundCurrency(
+        (roundedTotal / currencyInfo.rate) * usdCurrencyInfo.rate,
+      );
+    }
 
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
@@ -188,11 +202,7 @@ export class OrderService {
       user_id: userId,
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
-      subtotal: roundedNetSubtotal,
-      discount_percentage: roundedDiscount,
-      shipping_amount: roundedShipping,
-      tax_amount: roundedTax,
-      total_amount: roundedTotal,
+      total_amount: usdTotalAmount,
       payment_gateway: PAYMENT_GATEWAY.CASHFREE,
       payment_mode: 'UNKNOWN',
       notes: createOrderDto.notes,
@@ -400,7 +410,7 @@ export class OrderService {
     }
 
     const origCurrency =
-      await this.userPreferenceService.getCurrencyInfoByCode('INR');
+      await this.userPreferenceService.getCurrencyInfoByCode('USD');
 
     if (!origCurrency) {
       return orders.map((order) => ({

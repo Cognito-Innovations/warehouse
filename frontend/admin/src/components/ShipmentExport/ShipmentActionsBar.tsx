@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Box, Button, CircularProgress, InputAdornment, TextField, Typography } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
 import { 
   addShipmentToBox,
+  getShipmentsByBoxIds,
   markShipmentExportDeparted,
   searchReadyToShipShipment,
   updateShipmentStatus,
@@ -15,7 +16,7 @@ interface Shipment {
 }
 
 interface BoxItem {
-  id: string | number;
+  id: string;
   shipments?: Shipment[];
 }
 
@@ -25,13 +26,14 @@ interface ShipmentExport {
 }
 
 interface ShipmentActionsBarProps {
-  selectedBoxId: number | null;
+  selectedBoxId: string | null;
   onPackageAdded: () => void;
   hasShipments: boolean;
   exportId: string;
   status: string;
   onStatusUpdated: (newStatus: string) => void;
   selectedBoxShipments: any[];
+  boxes?: BoxItem[];
 }
 
 const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
@@ -42,20 +44,43 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
   status,
   onStatusUpdated,
   selectedBoxShipments,
+  boxes = [],
 }) => {
   const [shipmentNumber, setShipmentNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [allShipments, setAllShipments] = useState<any[]>([]);
+  const [exportLoading, setExportLoading] = useState(false);
 
   const isDeparted = status === "SHIPMENTS DEPARTED";
 
-  const csvData = selectedBoxShipments.map((shipment: any) => ({
+  const loadAllShipments = useCallback(async () => {
+    if (isDeparted && boxes.length > 0 && allShipments.length === 0) {
+      setExportLoading(true);
+      try {
+        const boxIds = boxes.map((box: BoxItem) => box.id);
+        const shipments = await getShipmentsByBoxIds(boxIds);
+        setAllShipments(shipments);
+      } catch (error) {
+        console.error('Error fetching all shipments for export:', error);
+        setAllShipments([]);
+      } finally {
+        setExportLoading(false);
+      }
+    }
+  }, [isDeparted, boxes, allShipments.length]);
+
+  useEffect(() => {
+    loadAllShipments();
+  }, [loadAllShipments]);
+
+  const csvData = (isDeparted ? allShipments : selectedBoxShipments).map((shipment: any) => ({
     reference_number: shipment.tracking_no || '',
     weight: shipment.total_weight || '',
     description: shipment.packageItemNames?.join(', ') || '',
     customs_value_usd: shipment.customs_value || '',
-    qty: selectedBoxShipments.length,
+    qty: shipment.packageItemNames?.length || 0,
     medium: 'air',
     receiver_name: shipment.user?.name || '',
     receiver_address: shipment.user?.preference?.courier?.address || '',
@@ -160,7 +185,14 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
           <ExportButton
             data={csvData}
             filename={`export_${exportId}_${new Date().toISOString().split('T')[0]}.xlsx`}
+            disabled={csvData.length === 0}
+            loading={exportLoading}
           />
+          {csvData.length === 0 && !exportLoading && isDeparted && (
+            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+              No shipments available for export.
+            </Typography>
+          )}
         </Box>
       )}
 

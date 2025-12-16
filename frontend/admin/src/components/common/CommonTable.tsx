@@ -73,6 +73,8 @@ const CommonTable = <T,>({
   };
 
   const hasActions = Boolean(onViewDetails || onEdit || onDelete || onToggle);
+  const actionCount = Number(!!onViewDetails) + Number(!!onEdit) + Number(!!onDelete) + Number(!!onToggle);
+  const actionsWidth = actionCount === 0 ? '0px' : actionCount === 1 ? '60px' : actionCount === 2 ? '100px' : '140px';
 
   return (
     <>
@@ -137,7 +139,7 @@ const CommonTable = <T,>({
                         py: 1.5,
                         px: 2,
                         fontWeight: 600,
-                        width: '150px'
+                        width: actionsWidth
                       }}
                     >
                       Actions
@@ -156,6 +158,7 @@ const CommonTable = <T,>({
                 getIdentifier={getIdentifier}
                 getRowStatus={getRowStatus}
                 hasActions={hasActions}
+                actionsWidth={actionsWidth}
               />
             </Table>
           </TableContainer>

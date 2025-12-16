@@ -3,7 +3,6 @@ import { Box} from "@mui/material";
 import useCategoryStore from "@/store/categoryStore";
 import useProductStore from "@/store/productStore";
 import EcommerceProductsGrid from "../EcommerceProductsGrid";
-import CategoryProductsByCategory from "../CategoryProductsByCategory";
 import GridSkeletonLoader from "../skeleton-loader/GridSkeletonLoader";
 
 const ProductsGridView = () => {
@@ -18,23 +17,19 @@ const ProductsGridView = () => {
         );
     }
 
-    if (selectedCategory) {
-        return (
-            <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
-                <EcommerceProductsGrid
-                    products={products}
-                    loading={loadingMore}
-                />
-                {loadingMore && (
-                     <Box sx={{ py: 2 }}>
-                        <GridSkeletonLoader count={4} />
-                     </Box>
-                )}
-            </Box>
-        );
-    }
-
-    return <CategoryProductsByCategory />;
+    return (
+        <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
+            <EcommerceProductsGrid
+                products={products}
+                loading={loadingMore}
+            />
+            {loadingMore && (
+                 <Box sx={{ py: 2 }}>
+                    <GridSkeletonLoader count={4} />
+                 </Box>
+            )}
+        </Box>
+    );
 };
 
 export default ProductsGridView;

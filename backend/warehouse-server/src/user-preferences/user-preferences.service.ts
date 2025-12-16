@@ -1,12 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserPreferenceDto } from './dto/create-user-preference.dto';
 import { UserPreference } from './user-preference.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
-import { ExternalCurrencyService } from 'src/shared/external-currency.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
+import { ExternalCurrencyService } from 'src/shared/external-currency.service';
+import { Currency } from 'src/currencies/currency.entity';
+import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import {
   BASE_EXCHANGE_CURRENCY,
   CURRENCY_SYMBOL_MAP,
@@ -34,6 +40,24 @@ export class UserPreferencesService {
   ) {}
 
   async create(createUserPreferenceDto: CreateUserPreferenceDto) {
+    const existingPreference = await this.userPreferenceRepository.findOne({
+      where: { user: { id: createUserPreferenceDto.user_id } },
+    });
+
+    if (existingPreference) {
+      if (createUserPreferenceDto.currency_id) {
+        existingPreference.currency = {
+          id: createUserPreferenceDto.currency_id,
+        } as Currency;
+      }
+      if (createUserPreferenceDto.courier_id) {
+        existingPreference.courier = {
+          id: createUserPreferenceDto.courier_id,
+        } as CourierCompany;
+      }
+      return await this.userPreferenceRepository.save(existingPreference);
+    }
+
     const userPreference = this.userPreferenceRepository.create({
       currency: { id: createUserPreferenceDto.currency_id },
       courier: { id: createUserPreferenceDto.courier_id },
@@ -210,14 +234,34 @@ export class UserPreferencesService {
   }
 
   async update(id: string, updateUserPreferenceDto: UpdateUserPreferenceDto) {
-    const userPreference = this.userPreferenceRepository.create({
-      id,
-      user: { id: updateUserPreferenceDto.user_id },
-      courier: { id: updateUserPreferenceDto.courier_id },
-      currency: { id: updateUserPreferenceDto.currency_id },
+    const existingPreference = await this.userPreferenceRepository.findOne({
+      where: { id },
+      relations: ['user'],
     });
 
-    return this.userPreferenceRepository.save(userPreference);
+    if (!existingPreference) {
+      throw new NotFoundException(`UserPreference with id ${id} not found`);
+    }
+
+    if (
+      updateUserPreferenceDto.user_id !== undefined &&
+      existingPreference.user.id !== updateUserPreferenceDto.user_id
+    ) {
+      throw new BadRequestException('User ID mismatch');
+    }
+
+    if (updateUserPreferenceDto.currency_id) {
+      existingPreference.currency = {
+        id: updateUserPreferenceDto.currency_id,
+      } as Currency;
+    }
+    if (updateUserPreferenceDto.courier_id) {
+      existingPreference.courier = {
+        id: updateUserPreferenceDto.courier_id,
+      } as CourierCompany;
+    }
+
+    return this.userPreferenceRepository.save(existingPreference);
   }
 
   async delete(id: string) {

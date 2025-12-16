@@ -4,7 +4,7 @@ import { Edit as EditIcon, DeleteOutline as DeleteIcon } from "@mui/icons-materi
 
 interface BoxCardProps {
   box: {
-    id: number;
+    id: string;
     label?: string;
     length_cm: number;
     breadth_cm: number;
@@ -14,9 +14,9 @@ interface BoxCardProps {
   };
   index: number;
   total: number;
-  onEdit: (boxId: number, displayLabel: string) => void;
-  onDelete: (boxId: number) => void;
-  onSelect: (boxId: number) => void;
+  onEdit: (boxId: string, displayLabel: string) => void;
+  onDelete: (boxId: string) => void;
+  onSelect: () => void;
   selected: boolean;
   isDeleting?: boolean;
   isDeparted: boolean;
@@ -39,7 +39,7 @@ const BoxCard: React.FC<BoxCardProps> = ({
   return (
     <Card
       variant="outlined"
-      onClick={() => onSelect(box.id)}
+      onClick={onSelect}
       sx={{
         p: 2,
         mb: 2,

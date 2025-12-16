@@ -6,6 +6,7 @@ import { deletePackageDocument, updatePackageStatus, uploadPackageDocuments } fr
 import UploadModal from './UploadModal';
 import ImageWithPreview from './ImageWithPreview';
 import { formatFileName } from '../../utils/formatFileName';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface UploadedDocument {
   id: string;
@@ -36,6 +37,9 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
   onActionLogUpdate,
   isDiscarded,
 }) => {
+  const { user } = useAuth();
+  const userId = user?.id;
+
   const [actionLogStatus, setActionLogStatus] = useState(initialStatus.value);
   const [isAdminChecked, setIsAdminChecked] = useState(initialStatus.value === 'Ready To Send');
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>(initialDocuments);
@@ -97,7 +101,7 @@ const ActionLogsSection: React.FC<ActionLogsSectionProps> = ({
     setUploadedDocuments(prev => [...prev, ...tempDocuments]);
 
     try {
-      const responseData = await uploadPackageDocuments(packageId, files);
+      const responseData = await uploadPackageDocuments(packageId, files, userId);
       const newDocuments = responseData.documents || [];
 
       const completedDocuments = newDocuments.map((newDoc: any, index: number) => ({

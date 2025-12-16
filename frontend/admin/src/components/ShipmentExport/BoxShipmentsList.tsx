@@ -29,7 +29,7 @@ export interface Shipment {
 }
 
 interface BoxShipmentsListProps {
-  boxId: number | null;
+  boxId: string;
   refreshShipments: () => void;
   boxLabel?: string; 
   boxIndex: number;

@@ -51,12 +51,12 @@ const Orders: React.FC = () => {
     {
       header: "Order No.",
       cell: (row) => <Typography variant="body2" fontWeight={500}>{row.order_number}</Typography>,
-      width: "18%",
+      width: "15%",
     },
     {
       header: "Customer",
       cell: (row) => <Typography variant="body2">{row.user_name}</Typography>,
-      width: "15%",
+      width: "13%",
     },
     {
       header: "Items",
@@ -75,17 +75,14 @@ const Orders: React.FC = () => {
       width: "12%",
     },
     {
-      header: "Payment Method",
+      header: "Payment Mode",
       cell: (row) => <Typography variant="body2">{row.payment_mode || 'Unknown'}</Typography>,
       width: "12%",
     },
     {
       header: "Order Date",
-      cell: (row) => {
-        const timestampMs = Number(row.created_at || '0') * 1000;
-        return <Typography variant="body2">{formatDateTime(timestampMs)}</Typography>;
-      },
-      width: "15%",
+      cell: (row) => <Typography variant="body2">{formatDateTime(row.created_at)}</Typography>,
+      width: "12%",
     },
     {
       header: "Payment",
@@ -95,7 +92,7 @@ const Orders: React.FC = () => {
     {
       header: "Status",
       cell: (row) => <StatusChip status={row.status} />,
-      width: "10%",
+      width: "12%",
     },
   ];
 

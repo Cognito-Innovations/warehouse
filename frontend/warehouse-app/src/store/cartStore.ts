@@ -175,8 +175,12 @@ export const useCartStore = create<CartStore>()(
             const serverItem = serverItems.find(s => s.product_id === local.product_id);
             return serverItem && serverItem.quantity !== local.quantity;
           });
+
+          const toRemove = serverItems.filter((serverItem: any) => 
+            !localCart.some((localItem: LocalCartItem) => localItem.product_id === serverItem.product_id)
+          );
           
-          if (toAdd.length === 0 && toUpdate.length === 0) {
+          if (toAdd.length === 0 && toUpdate.length === 0 && toRemove.length === 0) {
             const currentState = get();
             const mergedItems = serverItems.map((serverItem: any) => {
               const localItem = currentState.cartProducts.find(
@@ -225,6 +229,18 @@ export const useCartStore = create<CartStore>()(
                   );
                 } catch (e) {
                   console.warn(`Failed to sync update item ${item.product_id}`, e);
+                }
+              }
+            }));
+          }
+
+          if (toRemove.length > 0) {
+            await Promise.allSettled(toRemove.map(async (item: any) => {
+              if (item.id) {
+                try {
+                  await ecommerceService.removeFromCart(item.id, currency);
+                } catch (e) {
+                  console.warn(`Failed to sync remove item ${item.product_id}`, e);
                 }
               }
             }));
@@ -289,6 +305,10 @@ export const useCartStore = create<CartStore>()(
 
         set({ cartProducts: updatedCart, hasUnsyncedChanges: true });
 
+        if (existingIndex === -1) {
+          get().toggleCartItemSelection(product_id);
+        }
+
         if (!token) return;
 
         get().setUpdating(product_id, true);
@@ -344,15 +364,10 @@ export const useCartStore = create<CartStore>()(
           } else {
             set((s) => ({ cartProducts: s.cartProducts.filter((i) => i.product_id !== product_id) }));
           }
+          set({ hasUnsyncedChanges: false });
           return;
         } finally {
           get().setUpdating(product_id, false);
-        }
-
-        try {
-          await get().refreshCart(currency);
-        } catch (refreshError) {
-          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 
@@ -427,15 +442,10 @@ export const useCartStore = create<CartStore>()(
             }
             return { cartProducts: cart };
           });
+          set({ hasUnsyncedChanges: false });
           return;
         } finally {
           get().setUpdating(product_id, false);
-        }
-
-        try {
-          await get().refreshCart(currency);
-        } catch (refreshError) {
-          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 
@@ -463,7 +473,7 @@ export const useCartStore = create<CartStore>()(
         } else {
           const fetchedLineId = await get().getLineId(product_id, currency);
           if (!fetchedLineId) {
-            set({ cartProducts: [...updatedCart, item], hasUnsyncedChanges: true });
+            set({ cartProducts: [...updatedCart, item], hasUnsyncedChanges: false });
             toast.error("Failed to remove item from cart. Please try again.");
             return;
           }
@@ -475,16 +485,10 @@ export const useCartStore = create<CartStore>()(
         } catch (error) {
           console.error("Failed to remove from server:", error);
           toast.error("Failed to remove item from cart. Please try again.");
-          set({ cartProducts: [...updatedCart, item], hasUnsyncedChanges: true });
+          set({ cartProducts: [...updatedCart, item], hasUnsyncedChanges: false });
           return;
         } finally {
           get().setUpdating(product_id, false);
-        }
-
-        try {
-          await get().refreshCart(currency);
-        } catch (refreshError) {
-          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 
@@ -568,15 +572,10 @@ export const useCartStore = create<CartStore>()(
             }
             return { cartProducts: cart };
           });
+          set({ hasUnsyncedChanges: false });
           return;
         } finally {
           get().setUpdating(productId, false);
-        }
-
-        try {
-          await get().refreshCart(currency);
-        } catch (refreshError) {
-          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 

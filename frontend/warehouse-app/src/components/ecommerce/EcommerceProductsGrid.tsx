@@ -3,7 +3,6 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { EcommerceProduct, EcommerceProductsGridProps } from "@/types/ecommerce";
-import { ecommerceData } from "@/data/ecommerceData";
 import EcommerceProductCard from "./EcommerceProductCard";
 import ProductCardSkeletonLoader from "./skeleton-loader/ProductCardSkeletonLoader";
 
@@ -17,9 +16,9 @@ export default function EcommerceProductsGrid({
         display: "grid",
         gridTemplateColumns: {
           xs: "1fr",
-          sm: `repeat(${ecommerceData.ui.grid.columns.sm}, 1fr)`,
-          md: `repeat(${ecommerceData.ui.grid.columns.md}, 1fr)`,
-          lg: `repeat(${ecommerceData.ui.grid.columns.lg}, 1fr)`,
+          sm: "repeat(auto-fill, minmax(220px, 1fr))",
+          md: "repeat(auto-fill, minmax(240px, 1fr))",
+          lg: "repeat(auto-fill, minmax(260px, 1fr))",
         },
         gap: 2,
       }}

@@ -18,7 +18,11 @@ export class PackageDocumentsService {
     private readonly actionLogsService: PackageActionLogsService,
     private readonly documentUploadService: DocumentUploadService,
   ) {}
-  async uploadDocuments(package_id: string, files: Express.Multer.File[]) {
+  async uploadDocuments(
+    package_id: string,
+    files: Express.Multer.File[],
+    userId: string,
+  ) {
     // First, resolve the package_id to the actual package UUID
     const packageEntity = await this.packageRepository.findOne({
       where: [
@@ -40,7 +44,7 @@ export class PackageDocumentsService {
       entityId: packageEntity.id,
       category: 'action_required',
       isRequired: true,
-      uploadedBy: '5a66b7c1-decd-4437-be64-6e7f2cf486f9', // TODO: Get from auth context
+      uploadedBy: userId,
     });
 
     // Create action logs for each uploaded document
