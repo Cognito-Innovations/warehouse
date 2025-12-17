@@ -24,7 +24,8 @@ export default function Ecommerce() {
     city: "",
     pincode: "",
   });
-  const currency = locationData.currencyInfo.code;
+  const currency = locationData?.currencyInfo?.code || '';
+  const countryCode = locationData?.location?.countryCode || '';
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -46,17 +47,17 @@ export default function Ecommerce() {
   const hasFetched = React.useRef(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
+  const prevCategoryRef = useRef<string | null>(selectedCategory);
   const prevSearchQueryRef = useRef(searchQuery);
-  const prevCurrencyRef = useRef(currency);
-  const prevCategoryRef = useRef(selectedCategory);
+  const lastSearchRequestTime = useRef<number>(0);
 
-  const initializeEcommerceData = useCallback(async (curr?: string) => {
-    if (hasFetched.current || !curr) return;
-    hasFetched.current = true;
+  const initializeEcommerceData = useCallback(async (curr?: string, cntCode?: string) => {
+    if (!curr) return;
     try {
-      await getCategories();
+      await getCategories(cntCode);
       await fetchProducts({
         currency: curr,
+        countryCode: cntCode,
         searchTerm: searchQuery,
         category: selectedCategory || undefined,
         userId,
@@ -68,40 +69,73 @@ export default function Ecommerce() {
 
   useEffect(() => {
     if (currency && !hasFetched.current) {
-      initializeEcommerceData(currency);
+      initializeEcommerceData(currency, countryCode);
     }
-  }, [currency, initializeEcommerceData]);
+  }, [currency, countryCode, initializeEcommerceData]);
 
-  const performSearch = useCallback((query: string, category: string | null, curr: string) => {
+  const performSearch = useCallback((query: string, category: string | null, curr: string, cntCode: string) => {
+    const requestTime = Date.now();
+    lastSearchRequestTime.current = requestTime;
+
     fetchProducts({ 
-        searchTerm: query, 
-        category: category || undefined, 
-        currency: curr,
-        userId 
+      searchTerm: query, 
+      category: category || undefined, 
+      currency: curr,
+      countryCode: cntCode,
+      userId 
     }, true);
   }, [fetchProducts, userId]);
 
-  const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
+  const performSearchRef = useRef(performSearch);
 
   useEffect(() => {
-    if (!currency) return;
+    performSearchRef.current = performSearch;
+  }, [performSearch]);
 
-    const searchChanged = searchQuery !== prevSearchQueryRef.current;
-    const categoryChanged = selectedCategory !== prevCategoryRef.current;
-    const currencyChanged = currency !== prevCurrencyRef.current;
+  const debouncedSearch = useMemo(
+    () => debounce(
+      (query: string, category: string | null, curr: string, cntCode: string) => {
+        performSearchRef.current(query, category, curr, cntCode);
+      },
+      500
+    ),
+    [] 
+  );
 
-    if (searchChanged || categoryChanged || currencyChanged) {
-      if (searchChanged && !categoryChanged && !currencyChanged) {
-        debouncedSearch(searchQuery, selectedCategory, currency);
+  useEffect(() => {
+    if (!currency || !countryCode) return;
+
+    if (searchQuery !== prevSearchQueryRef.current) {  
+      if (searchQuery.trim() === "") {
+        debouncedSearch.cancel();
+        performSearchRef.current("", selectedCategory, currency, countryCode);
       } else {
-        performSearch(searchQuery, selectedCategory, currency);
+        debouncedSearch(searchQuery, selectedCategory, currency, countryCode);
       }
+      prevSearchQueryRef.current = searchQuery;
     }
 
-    prevSearchQueryRef.current = searchQuery;
-    prevCategoryRef.current = selectedCategory;
-    prevCurrencyRef.current = currency;
-  }, [searchQuery, selectedCategory, currency, debouncedSearch, performSearch]);
+    return () => {
+      debouncedSearch.cancel();
+    }
+  }, [searchQuery, selectedCategory, currency, countryCode, debouncedSearch]);
+
+  useEffect(() => {
+    if (!currency || !countryCode) return;
+
+    if (prevCategoryRef.current !== selectedCategory) {
+      debouncedSearch.cancel();
+
+      performSearch(
+        searchQuery,
+        selectedCategory || null,
+        currency,
+        countryCode
+      );
+
+      prevCategoryRef.current = selectedCategory;
+    }
+  }, [selectedCategory, currency, countryCode, searchQuery, debouncedSearch, performSearch]);
 
   useEffect(() => {
     if (!selectedCategory || !observerRef.current || !hasMore || loadingMore || isLoading) return;
@@ -109,10 +143,11 @@ export default function Ecommerce() {
     observer.current = new window.IntersectionObserver((entries) => {
       if (entries[0].isIntersecting && hasMore && !loadingMore && !isLoading) {
         fetchProducts({ 
-            category: selectedCategory, 
-            currency: currency, 
-            searchTerm: searchQuery,
-            userId 
+          category: selectedCategory, 
+          currency: currency, 
+          countryCode: countryCode,
+          searchTerm: searchQuery,
+          userId 
         }, false);
       }
     }, {
@@ -122,11 +157,11 @@ export default function Ecommerce() {
     return () => {
       observer.current?.disconnect();
     };
-  }, [hasMore, loadingMore, isLoading, selectedCategory, currency, searchQuery, fetchProducts, userId]);
+  }, [hasMore, loadingMore, isLoading, selectedCategory, currency, countryCode, searchQuery, fetchProducts, userId]);
   const handleRefresh = () => {
     setError(null);
     hasFetched.current = false;
-    initializeEcommerceData(locationData.currencyInfo.code);
+    initializeEcommerceData(locationData?.currencyInfo?.code || '', locationData?.location?.countryCode || '');
   };
 
   const isNetworkError = error && (error.includes("Network Error") || error.includes("Failed to fetch") || error.includes("ECONNREFUSED") || error.includes("timeout"));

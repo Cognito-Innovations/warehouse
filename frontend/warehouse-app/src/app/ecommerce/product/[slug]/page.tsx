@@ -38,6 +38,7 @@ export default function ProductDetailPage() {
     pincode: '',
   });
   const currency = locationData.currencyInfo.code;
+  const countryCode = locationData.location.countryCode;
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -72,9 +73,9 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (productSlug && currency) {
-      loadProductPageData(productSlug, currency, userId);
+      loadProductPageData(productSlug, currency, countryCode, userId);
     }
-  }, [productSlug, currency, loadProductPageData, userId]);
+  }, [productSlug, currency, countryCode, loadProductPageData, userId]);
 
   const handleProductSelect = useCallback((selectedProduct: EcommerceProduct) => {
     selectionSlugRef.current = productSlug;
@@ -83,7 +84,7 @@ export default function ProductDetailPage() {
 
   const handleRefresh = () => {
     if (productSlug && currency) {
-      loadProductPageData(productSlug, currency, userId);
+      loadProductPageData(productSlug, currency, countryCode, userId);
     }
   };
 

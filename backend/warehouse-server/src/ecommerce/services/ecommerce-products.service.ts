@@ -8,8 +8,9 @@ import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto.js'
 import { UserPreferencesService } from '../../user-preferences/user-preferences.service.js';
 import { EcommerceCargoOption } from '../entities/cargo-options.entity.js';
 import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
-import { Country } from 'src/Countries/country.entity.js';
+import { Country, CountryCode } from 'src/Countries/country.entity.js';
 import { EcommerceMeasurement } from '../entities/measurement.entity.js';
+import { DEFAULT_CURRENCY } from '../../shared/constants.js';
 
 interface CurrencyInfo {
   code: string;
@@ -29,7 +30,7 @@ export class ProductsService {
     currency?: string,
     userId?: string,
   ): Promise<CurrencyInfo> {
-    const selectedCurrency = currency || 'USD';
+    const selectedCurrency = currency || DEFAULT_CURRENCY.code;
 
     if (userId) {
       const userCurrency =
@@ -74,6 +75,7 @@ export class ProductsService {
     category?: string,
     userId?: string,
     role?: string,
+    countryCode?: string,
     limit = 20,
     offset = 0,
   ) {
@@ -89,6 +91,12 @@ export class ProductsService {
         .leftJoinAndSelect('product.measurement', 'measurement')
         .leftJoinAndSelect('product.cargo_option', 'cargo_option')
         .leftJoinAndSelect('product.countries', 'countries');
+    }
+
+    if (countryCode) {
+      queryBuilder
+        .innerJoinAndSelect('product.countries', 'countryFilter')
+        .andWhere('countryFilter.code = :countryCode', { countryCode });
     }
 
     if (search?.trim()) {
@@ -113,7 +121,7 @@ export class ProductsService {
         ...product,
         price: {
           price: Number(product.price),
-          currency: '$',
+          currency: DEFAULT_CURRENCY.symbol,
         },
       }));
     }
@@ -129,20 +137,35 @@ export class ProductsService {
         ...product,
         price: {
           price: convertedPrice,
-          currency: code === 'USD' ? '$' : symbol,
+          currency:
+            code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
         },
       };
     });
   }
 
-  async findOne(slug: string, currency?: string, userId?: string) {
+  async findOne(
+    slug: string,
+    currency?: string,
+    userId?: string,
+    countryCode?: string,
+  ) {
     const product = await this.productRepository.findOne({
       where: { slug: slug },
-      relations: ['category'],
+      relations: ['category', 'countries'],
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
+    }
+
+    if (
+      countryCode &&
+      !product.countries.some(
+        (c: Country) => c.code === (countryCode as CountryCode),
+      )
+    ) {
+      throw new NotFoundException('Product not available in this country');
     }
 
     const currencyInfo = await this.getCurrencyInfo(currency, userId);
@@ -154,7 +177,8 @@ export class ProductsService {
       ...product,
       price: {
         price: convertedPrice,
-        currency: code === 'USD' ? '$' : symbol,
+        currency:
+          code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
       },
     };
   }

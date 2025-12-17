@@ -3,7 +3,7 @@ import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.
 import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Country } from 'src/Countries/country.entity.js';
+import { Country, CountryCode } from 'src/Countries/country.entity.js';
 import { CreateEcommerceSubCategoryDto } from '../dto/sub_category/create-sub_category.dto.js';
 import { UpdateEcommerceSubCategoryDto } from '../dto/sub_category/update-sub_category.dto.js';
 
@@ -29,23 +29,48 @@ export class SubCategoriesService {
     return await this.subCategoryRepository.save(subCategory);
   }
 
-  findAll() {
-    return this.subCategoryRepository
+  findAll(countryCode?: string) {
+    const queryBuilder = this.subCategoryRepository
       .createQueryBuilder('subCategory')
       .leftJoinAndSelect('subCategory.countries', 'countries')
       .leftJoinAndSelect('subCategory.category', 'category')
       .loadRelationCountAndMap(
         'subCategory.products_count',
         'subCategory.products',
-      )
-      .getMany();
+      );
+
+    if (countryCode) {
+      queryBuilder
+        .innerJoinAndSelect('subCategory.countries', 'countryFilter')
+        .andWhere('countryFilter.code = :countryCode', { countryCode });
+    }
+
+    return queryBuilder.getMany();
   }
 
-  findOne(id: string) {
-    return this.subCategoryRepository.findOne({
-      where: { id },
-      relations: ['countries'],
+  async findOne(id: string, countryCode?: string) {
+    const where: { id: string } = { id };
+    const relations = ['countries', 'category'];
+
+    const subCategory = await this.subCategoryRepository.findOne({
+      where,
+      relations,
     });
+
+    if (!subCategory) {
+      throw new NotFoundException('Sub category not found');
+    }
+
+    if (
+      countryCode &&
+      !subCategory.countries.some(
+        (c: Country) => c.code === (countryCode as CountryCode),
+      )
+    ) {
+      throw new NotFoundException('Sub category not available in this country');
+    }
+
+    return subCategory;
   }
 
   async update(

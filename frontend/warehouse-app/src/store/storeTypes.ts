@@ -5,7 +5,7 @@ export type CategoryStore = {
   categories: EcommerceCategory[];
   setCategory: (categoryId: string | null) => void;
   handleCategorySelect: (categoryId: string | null) => void;
-  getCategories: () => Promise<EcommerceCategory[]>;
+  getCategories: (countryCode?: string) => Promise<EcommerceCategory[]>;
 };
 
 export type ProductStore = {
@@ -32,15 +32,15 @@ export type ProductStore = {
   setError: (error: string | null) => void;
   setSearchQuery: (query: string) => void;
   getProducts: (params?: GetProductsParams) => Promise<EcommerceProduct[]>;
-  fetchProductBySlug: (slug: string, currency?: string, userId?: string) => Promise<EcommerceProduct>;
-  getCategoryProducts: (categoryId: string, currency?: string, limit?: number, userId?: string) => Promise<EcommerceProduct[]>;
+  fetchProductBySlug: (slug: string, currency?: string, userId?: string, countryCode?: string) => Promise<EcommerceProduct>;
+  getCategoryProducts: (categoryId: string, currency?: string, countryCode?: string, limit?: number, userId?: string) => Promise<EcommerceProduct[]>;
   handleProductSelect: (productId: string) => void;
   fetchProducts: (
     params: FetchProductsParams,
     reset?: boolean
   ) => Promise<void>;
 
-  loadProductPageData: (slug: string, currency: string, userId?: string) => Promise<void>;
+  loadProductPageData: (slug: string, currency: string, countryCode?: string, userId?: string) => Promise<void>;
   setCurrentDetailProduct: (product: EcommerceProduct) => void;
   resetDetailState: () => void;
 }
@@ -62,6 +62,7 @@ export type GetProductsParams = {
   searchTerm?: string;
   currency?: string;
   category?: string;
+  countryCode?: string;
   limit?: number;
   offset?: number;
   userId?: string;
@@ -71,6 +72,7 @@ export type FetchProductsParams = {
   category?: string;
   searchTerm?: string;
   currency?: string;
+  countryCode?: string;
   userId?: string;
 };
 
@@ -81,7 +83,9 @@ export type CartStore = {
   loading: boolean;
   isSyncing: boolean,
   _hasHydrated: boolean;
+  hasUnsyncedChanges: boolean;
   checkoutProducts: string[];
+  setCheckoutProducts: (productIds: string[]) => void;
   toggleCartItemSelection: (productIds: string | string[]) => void;
   setCartProducts: (products: any[]) => void;
   clearCheckoutProducts: () => void;

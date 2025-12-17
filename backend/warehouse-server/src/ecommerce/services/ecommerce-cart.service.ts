@@ -12,6 +12,7 @@ import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+import { DEFAULT_CURRENCY } from '../../shared/constants.js';
 
 @Injectable()
 export class CartService {
@@ -188,7 +189,10 @@ export class CartService {
       final_amount: finalAmount,
     };
 
-    return this.applyCurrencyConversion(computedCart, currency ?? 'USD');
+    return this.applyCurrencyConversion(
+      computedCart,
+      currency ?? DEFAULT_CURRENCY.code,
+    );
   }
 
   private async applyCurrencyConversion(

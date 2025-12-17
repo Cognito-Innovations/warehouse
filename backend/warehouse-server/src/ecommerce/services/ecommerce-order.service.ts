@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 import { Cashfree, CFEnvironment } from 'cashfree-pg';
 import { EcommerceOrder } from '../entities/ecommerce-order.entity';
 import { EcommerceOrderItem } from '../entities/ecommerce-order-item.entity';
@@ -15,6 +17,7 @@ import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { User } from 'src/users/user.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+import { DEFAULT_CURRENCY, PAYMENT_GATEWAY } from '../../shared/constants.js';
 
 interface CurrencyInfo {
   code: string;
@@ -22,14 +25,19 @@ interface CurrencyInfo {
   rate: number;
 }
 
-interface CashfreePaymentUpdate {
+interface PaymentInfo {
   cf_payment_id: string;
-  [key: string]: any;
+  payment_status: string;
+  payment_group?: string;
 }
 
 @Injectable()
 export class OrderService {
   private cashfree: Cashfree;
+  private readonly gatewayAppId: string;
+  private readonly gatewaySecretKey: string;
+  private readonly gatewayMode: string;
+  private readonly gatewayBaseUrl: string;
 
   constructor(
     @InjectRepository(EcommerceOrder)
@@ -41,19 +49,27 @@ export class OrderService {
     @InjectRepository(EcommerceCartItem)
     private readonly cartItemRepository: Repository<EcommerceCartItem>,
     private readonly userPreferenceService: UserPreferencesService,
+    private readonly httpService: HttpService,
   ) {
-    const appId = process.env.CASHFREE_APP_ID;
-    const secretKey = process.env.CASHFREE_SECRET_KEY;
-    const mode = process.env.CASHFREE_MODE;
+    this.gatewayAppId = process.env.CASHFREE_APP_ID!;
+    this.gatewaySecretKey = process.env.CASHFREE_SECRET_KEY!;
+    this.gatewayMode = process.env.CASHFREE_MODE!;
 
-    if (!appId || !secretKey) {
+    if (!this.gatewayAppId || !this.gatewaySecretKey) {
       throw new BadRequestException('Cashfree credentials not configured');
     }
 
+    this.gatewayBaseUrl =
+      this.gatewayMode === 'production'
+        ? 'https://api.cashfree.com/pg'
+        : 'https://sandbox.cashfree.com/pg';
+
     this.cashfree = new Cashfree(
-      mode === 'production' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
-      appId,
-      secretKey,
+      this.gatewayMode === 'production'
+        ? CFEnvironment.PRODUCTION
+        : CFEnvironment.SANDBOX,
+      this.gatewayAppId,
+      this.gatewaySecretKey,
     );
   }
 
@@ -95,7 +111,7 @@ export class OrderService {
       throw new BadRequestException('User not found');
     }
 
-    const selectedCurrency = createOrderDto.currency || 'USD';
+    const selectedCurrency = createOrderDto.currency || DEFAULT_CURRENCY.code;
 
     const userCurrency =
       await this.userPreferenceService.getUserPreferredCurrency(userId);
@@ -119,7 +135,9 @@ export class OrderService {
       const basePrice = Number(item.product.price);
 
       const rawConvertedBasePrice =
-        currencyInfo.code === 'USD' ? basePrice : basePrice * currencyInfo.rate;
+        currencyInfo.code === DEFAULT_CURRENCY.code
+          ? basePrice
+          : basePrice * currencyInfo.rate;
 
       const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
 
@@ -156,10 +174,24 @@ export class OrderService {
       discountedSubTotal + deliveryFee + taxAmount + serviceCharge;
 
     const roundedTotal = this.roundCurrency(finalTotal);
-    const roundedNetSubtotal = this.roundCurrency(discountedSubTotal);
-    const roundedShipping = this.roundCurrency(deliveryFee);
-    const roundedTax = this.roundCurrency(taxAmount);
-    const roundedDiscount = this.roundCurrency(totalDiscountAmount);
+
+    let usdTotalAmount: number;
+    const usdCurrencyInfo =
+      await this.userPreferenceService.getCurrencyInfoByCode('USD');
+
+    if (!usdCurrencyInfo) {
+      throw new BadRequestException(
+        'System configuration error: USD currency not found',
+      );
+    }
+
+    if (currencyInfo.code === 'USD') {
+      usdTotalAmount = roundedTotal;
+    } else {
+      usdTotalAmount = this.roundCurrency(
+        (roundedTotal / currencyInfo.rate) * usdCurrencyInfo.rate,
+      );
+    }
 
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
@@ -170,11 +202,9 @@ export class OrderService {
       user_id: userId,
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
-      subtotal: roundedNetSubtotal,
-      discount_percentage: roundedDiscount,
-      shipping_amount: roundedShipping,
-      tax_amount: roundedTax,
-      total_amount: roundedTotal,
+      total_amount: usdTotalAmount,
+      payment_gateway: PAYMENT_GATEWAY.CASHFREE,
+      payment_mode: 'UNKNOWN',
       notes: createOrderDto.notes,
     });
 
@@ -185,7 +215,9 @@ export class OrderService {
     for (const item of itemsToProcess) {
       const basePrice = Number(item.product.price);
       const rawConvertedBasePrice =
-        currencyInfo.code === 'USD' ? basePrice : basePrice * currencyInfo.rate;
+        currencyInfo.code === DEFAULT_CURRENCY.code
+          ? basePrice
+          : basePrice * currencyInfo.rate;
 
       const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
       const discountPercent = Number(item.product.discount_percentage || 0);
@@ -294,7 +326,7 @@ export class OrderService {
 
     const userCurrency =
       await this.userPreferenceService.getUserPreferredCurrency(userId);
-    const displayCurrency = userCurrency?.symbol || '$';
+    const displayCurrency = userCurrency?.symbol || DEFAULT_CURRENCY.symbol;
 
     return orders.map((order) => ({
       ...order,
@@ -302,11 +334,42 @@ export class OrderService {
     })) as unknown as EcommerceOrder[];
   }
 
+  async getAllOrders(): Promise<any[]> {
+    const queryBuilder = this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoin('order.user', 'user')
+      .leftJoin('order.items', 'items')
+      .select([
+        'order.id AS "id"',
+        'order.order_number AS "order_number"',
+        'order.status AS "status"',
+        'order.payment_status AS "payment_status"',
+        'order.total_amount AS "total_amount"',
+        'order.payment_mode AS "payment_mode"',
+        'order.created_at AS "created_at"',
+        'order.cashfree_payment_id AS "cashfree_payment_id"',
+        'COUNT(items.id) AS "items_count"',
+      ])
+      .addSelect('COALESCE(user.name, \'Unknown\') AS "user_name"')
+      .groupBy(
+        'order.id, order.order_number, order.status, order.payment_status, order.total_amount, order.payment_mode, order.created_at, order.cashfree_payment_id, user.name',
+      )
+      .orderBy('order.created_at', 'DESC');
+
+    const results = await queryBuilder.getRawMany();
+    return results;
+  }
+
   async findOne(id: string): Promise<EcommerceOrder> {
-    const order = await this.orderRepository.findOne({
-      where: { id },
-      relations: ['items', 'items.product', 'user'],
-    });
+    const order = await this.orderRepository
+      .createQueryBuilder('order')
+      .select('order')
+      .leftJoinAndSelect('order.items', 'items')
+      .leftJoinAndSelect('items.product', 'product')
+      .leftJoin('order.user', 'user')
+      .addSelect(['user.id', 'user.name', 'user.email', 'user.phone_number'])
+      .where('order.id = :id', { id })
+      .getOne();
 
     if (!order) {
       throw new NotFoundException('Order not found');
@@ -314,7 +377,7 @@ export class OrderService {
 
     const userCurrency =
       await this.userPreferenceService.getUserPreferredCurrency(order.user_id);
-    const displayCurrency = userCurrency?.symbol || '$';
+    const displayCurrency = userCurrency?.symbol || DEFAULT_CURRENCY.symbol;
 
     return {
       ...order,
@@ -325,7 +388,7 @@ export class OrderService {
   async getOrdersByUser(userId: string): Promise<EcommerceOrder[]> {
     const orders = await this.orderRepository.find({
       where: { user_id: userId },
-      relations: ['items', 'items.product', 'user'],
+      relations: ['items', 'items.product'],
       order: { created_at: 'DESC' },
     });
 
@@ -337,13 +400,17 @@ export class OrderService {
       await this.userPreferenceService.getUserPreferredCurrency(userId);
     let targetInfo: CurrencyInfo;
     if (!userCurrency) {
-      targetInfo = { code: 'USD', symbol: '$', rate: 1 };
+      targetInfo = {
+        code: DEFAULT_CURRENCY.code,
+        symbol: DEFAULT_CURRENCY.symbol,
+        rate: DEFAULT_CURRENCY.rate,
+      };
     } else {
       targetInfo = userCurrency;
     }
 
     const origCurrency =
-      await this.userPreferenceService.getCurrencyInfoByCode('INR');
+      await this.userPreferenceService.getCurrencyInfoByCode('USD');
 
     if (!origCurrency) {
       return orders.map((order) => ({
@@ -365,10 +432,15 @@ export class OrderService {
   }
 
   async findByOrderNumber(orderNumber: string): Promise<EcommerceOrder> {
-    const order = await this.orderRepository.findOne({
-      where: { order_number: orderNumber },
-      relations: ['items', 'items.product', 'user'],
-    });
+    const order = await this.orderRepository
+      .createQueryBuilder('order')
+      .select('order')
+      .leftJoinAndSelect('order.items', 'items')
+      .leftJoinAndSelect('items.product', 'product')
+      .leftJoin('order.user', 'user')
+      .addSelect(['user.id', 'user.name', 'user.email', 'user.phone_number'])
+      .where('order.order_number = :orderNumber', { orderNumber })
+      .getOne();
 
     if (!order) {
       throw new NotFoundException('Order not found');
@@ -380,25 +452,87 @@ export class OrderService {
   async updateOrderStatus(
     id: string,
     status: OrderStatus,
+    comment?: string,
   ): Promise<EcommerceOrder> {
     const order = await this.findOne(id);
     order.status = status;
+
+    if (comment) {
+      order.comment = comment;
+    }
+
     return this.orderRepository.save(order);
   }
 
-  async updatePaymentStatus(
-    orderId: string,
-    cashfreeData: CashfreePaymentUpdate,
-  ): Promise<EcommerceOrder> {
+  async processOrderPayment(orderId: string): Promise<EcommerceOrder> {
     const order = await this.findOne(orderId);
     if (order.payment_status !== PaymentStatus.PENDING) {
       throw new BadRequestException('Payment already processed');
     }
 
-    order.payment_status = PaymentStatus.PAID;
-    order.cashfree_payment_id = cashfreeData.cf_payment_id;
+    const successfulPayment = await this.fetchSuccessfulPayment(
+      order.order_number,
+    );
 
+    this.applyPaymentToOrder(order, successfulPayment);
+
+    await this.cleanupCartItems(order);
+
+    return this.orderRepository.save(order);
+  }
+
+  private async fetchSuccessfulPayment(
+    orderNumber: string,
+  ): Promise<PaymentInfo> {
+    try {
+      const paymentsUrl = `${this.gatewayBaseUrl}/orders/${orderNumber}/payments`;
+      const paymentsResponse = await firstValueFrom(
+        this.httpService.get<PaymentInfo[]>(paymentsUrl, {
+          headers: {
+            'x-api-version': '2025-01-01',
+            'x-client-id': this.gatewayAppId,
+            'x-client-secret': this.gatewaySecretKey,
+          },
+        }),
+      );
+      const payments: PaymentInfo[] = paymentsResponse.data;
+
+      if (!Array.isArray(payments) || payments.length === 0) {
+        throw new BadRequestException('No payments found for this order');
+      }
+
+      const successfulPayment = payments.find(
+        (p) => p.payment_status === 'SUCCESS',
+      );
+
+      if (!successfulPayment) {
+        throw new BadRequestException(
+          'No successful payment found for this order',
+        );
+      }
+
+      return successfulPayment;
+    } catch (fetchError: unknown) {
+      console.error('Error fetching payments from Cashfree:', fetchError);
+      throw new BadRequestException('Failed to verify payment status');
+    }
+  }
+
+  private applyPaymentToOrder(
+    order: EcommerceOrder,
+    payment: PaymentInfo,
+  ): void {
+    order.payment_status = PaymentStatus.PAID;
+    order.cashfree_payment_id = payment.cf_payment_id;
+
+    if (payment.payment_group) {
+      order.payment_mode = payment.payment_group;
+    }
+  }
+
+  private async cleanupCartItems(order: EcommerceOrder): Promise<void> {
     const orderProductIds = order.items.map((item) => item.product_id);
+
     const cart = await this.cartRepository.findOne({
       where: {
         user_id: order.user.id,
@@ -407,26 +541,23 @@ export class OrderService {
       relations: ['items', 'items.product'],
     });
 
-    if (cart && cart.items.length > 0) {
-      const itemsToRemove = cart.items.filter((item) => {
-        const cartItemId = item.product_id || item.product?.id;
-        return orderProductIds.includes(cartItemId);
-      });
+    if (!cart || cart.items.length === 0) return;
 
-      if (itemsToRemove.length > 0) {
-        await this.cartItemRepository.delete(itemsToRemove.map((i) => i.id));
+    const itemsToRemove = cart.items.filter((item) => {
+      const cartItemId = item.product_id || item.product?.id;
+      return orderProductIds.includes(cartItemId);
+    });
 
-        const remainingItemsCount = cart.items.length - itemsToRemove.length;
+    if (itemsToRemove.length === 0) return;
 
-        if (remainingItemsCount <= 0) {
-          cart.status = CartStatus.CHECKED_OUT;
-          cart.items = [];
-          await this.cartRepository.save(cart);
-        }
-      }
+    await this.cartItemRepository.delete(itemsToRemove.map((i) => i.id));
+
+    const remainingItemsCount = cart.items.length - itemsToRemove.length;
+    if (remainingItemsCount <= 0) {
+      cart.status = CartStatus.CHECKED_OUT;
+      cart.items = [];
+      await this.cartRepository.save(cart);
     }
-
-    return this.orderRepository.save(order);
   }
 
   async cancelOrder(id: string): Promise<EcommerceOrder> {

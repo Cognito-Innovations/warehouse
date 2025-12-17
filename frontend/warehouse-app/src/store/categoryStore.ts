@@ -15,13 +15,13 @@ const useCategoryStore = create<CategoryStore>()(
       handleCategorySelect: (categoryId: string | null) =>
         set({ selectedCategory: categoryId }),
 
-      getCategories: async () => {
+      getCategories: async (countryCode?: string) => {
         const currentCategories = get().categories;
         if (currentCategories.length > 0) {
           return currentCategories;
         }
 
-        const categories: EcommerceCategory[] = await ecommerceService.getCategories();
+        const categories: EcommerceCategory[] = await ecommerceService.getCategories(countryCode);
         set({ categories });
         return categories;
       },

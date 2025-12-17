@@ -15,7 +15,6 @@ import {
 } from 'src/tracking-requests/tracking-request.entity';
 import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
 import { mapPickupToTrackingStatus } from './status-mapper';
-import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class PickupRequestsService {
@@ -24,7 +23,6 @@ export class PickupRequestsService {
     private readonly pickupRequestRepository: Repository<PickupRequest>,
     private readonly dataSource: DataSource,
     private readonly trackingRequestsService: TrackingRequestsService,
-    private readonly usersService: UsersService,
   ) {}
 
   async getPickupRequestsCount(): Promise<number> {
@@ -107,9 +105,7 @@ export class PickupRequestsService {
         return {
           ...rest,
           country: country?.name,
-          user: user
-            ? this.usersService.mapToUserResponseDto(request.user)
-            : undefined,
+          user: user ? user : undefined,
         };
       });
     } catch (error) {
@@ -166,9 +162,7 @@ export class PickupRequestsService {
       return {
         ...rest,
         country: country?.name,
-        user: user
-          ? this.usersService.mapToUserResponseDto(pickupRequest.user)
-          : undefined,
+        user: user ? user : undefined,
         tracking_requests: trackingRequests,
       };
     } catch (error) {
@@ -263,11 +257,7 @@ export class PickupRequestsService {
       return {
         ...rest,
         country: country?.name,
-        user: user
-          ? this.usersService.mapToUserResponseDto(
-              pickupRequestWithRelations.user,
-            )
-          : undefined,
+        user: user ? user : undefined,
         tracking_requests: trackingRequests,
       };
     } catch (error) {

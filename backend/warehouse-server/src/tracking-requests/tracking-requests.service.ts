@@ -38,7 +38,7 @@ export class TrackingRequestsService {
 
     return {
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     };
   }
 
@@ -50,7 +50,7 @@ export class TrackingRequestsService {
 
     return trackingRequests.map(({ user, ...rest }) => ({
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     }));
   }
 
@@ -70,7 +70,7 @@ export class TrackingRequestsService {
 
     return {
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     };
   }
 
@@ -85,7 +85,7 @@ export class TrackingRequestsService {
 
     return trackingRequests.map(({ user, ...rest }) => ({
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     }));
   }
 
@@ -104,7 +104,7 @@ export class TrackingRequestsService {
 
     return trackingRequests.map(({ user, ...rest }) => ({
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     }));
   }
 
@@ -128,7 +128,7 @@ export class TrackingRequestsService {
 
     return {
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     };
   }
 

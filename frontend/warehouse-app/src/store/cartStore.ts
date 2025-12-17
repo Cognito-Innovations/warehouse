@@ -16,6 +16,7 @@ export const useCartStore = create<CartStore>()(
       loading: false,
       isSyncing: false,
       _hasHydrated: false,
+      hasUnsyncedChanges: false,
       setHasHydrated: (value: boolean) => set({ _hasHydrated: value }),
 
       setLoading: (value: boolean) => set({ loading: value }),
@@ -27,6 +28,10 @@ export const useCartStore = create<CartStore>()(
             [productId]: isUpdating,
           },
         })),
+
+      setCheckoutProducts: (productIds: string[]) => {
+        set({ checkoutProducts: productIds });
+      },
 
       toggleCartItemSelection: (productIds: string | string[]) => {
         const state = get();
@@ -87,7 +92,7 @@ export const useCartStore = create<CartStore>()(
               ...(localItem && !serverItem.product ? { product: localItem.product } : {}),
             };
           });
-          set({ cartProducts: mergedItems as LocalCartItem[] });
+          set({ cartProducts: mergedItems as LocalCartItem[], hasUnsyncedChanges: false });       
           return mergedItems as LocalCartItem[];
         } catch (error) {
           console.error("Failed to refresh cart:", error);
@@ -103,7 +108,7 @@ export const useCartStore = create<CartStore>()(
           try {
             const hasLocalItemsToSync = state.cartProducts.length > 0;
 
-            if (hasLocalItemsToSync) {
+            if (hasLocalItemsToSync && state.hasUnsyncedChanges) {
               await state.syncCart(currency);
             } else {
               await state.refreshCart(currency);
@@ -170,8 +175,12 @@ export const useCartStore = create<CartStore>()(
             const serverItem = serverItems.find(s => s.product_id === local.product_id);
             return serverItem && serverItem.quantity !== local.quantity;
           });
+
+          const toRemove = serverItems.filter((serverItem: any) => 
+            !localCart.some((localItem: LocalCartItem) => localItem.product_id === serverItem.product_id)
+          );
           
-          if (toAdd.length === 0 && toUpdate.length === 0) {
+          if (toAdd.length === 0 && toUpdate.length === 0 && toRemove.length === 0) {
             const currentState = get();
             const mergedItems = serverItems.map((serverItem: any) => {
               const localItem = currentState.cartProducts.find(
@@ -182,7 +191,7 @@ export const useCartStore = create<CartStore>()(
                 ...(localItem && !serverItem.product ? { product: localItem.product } : {}),
               };
             });
-            set({ cartProducts: mergedItems as LocalCartItem[] });
+            set({ cartProducts: mergedItems as LocalCartItem[], hasUnsyncedChanges: false });
             return; 
           }
 
@@ -220,6 +229,18 @@ export const useCartStore = create<CartStore>()(
                   );
                 } catch (e) {
                   console.warn(`Failed to sync update item ${item.product_id}`, e);
+                }
+              }
+            }));
+          }
+
+          if (toRemove.length > 0) {
+            await Promise.allSettled(toRemove.map(async (item: any) => {
+              if (item.id) {
+                try {
+                  await ecommerceService.removeFromCart(item.id, currency);
+                } catch (e) {
+                  console.warn(`Failed to sync remove item ${item.product_id}`, e);
                 }
               }
             }));
@@ -282,7 +303,11 @@ export const useCartStore = create<CartStore>()(
           updatedCart.push(newItem);
         }
 
-        set({ cartProducts: updatedCart });
+        set({ cartProducts: updatedCart, hasUnsyncedChanges: true });
+
+        if (existingIndex === -1) {
+          get().toggleCartItemSelection(product_id);
+        }
 
         if (!token) return;
 
@@ -339,15 +364,10 @@ export const useCartStore = create<CartStore>()(
           } else {
             set((s) => ({ cartProducts: s.cartProducts.filter((i) => i.product_id !== product_id) }));
           }
+          set({ hasUnsyncedChanges: false });
           return;
         } finally {
           get().setUpdating(product_id, false);
-        }
-
-        try {
-          await get().refreshCart(currency);
-        } catch (refreshError) {
-          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 
@@ -379,7 +399,7 @@ export const useCartStore = create<CartStore>()(
 
         const updatedCart = [...state.cartProducts];
         updatedCart[existingIndex] = { ...existing, quantity: newQuantity }; 
-        set({ cartProducts: updatedCart });
+        set({ cartProducts: updatedCart, hasUnsyncedChanges: true });
 
         if (!token) return;
 
@@ -422,15 +442,10 @@ export const useCartStore = create<CartStore>()(
             }
             return { cartProducts: cart };
           });
+          set({ hasUnsyncedChanges: false });
           return;
         } finally {
           get().setUpdating(product_id, false);
-        }
-
-        try {
-          await get().refreshCart(currency);
-        } catch (refreshError) {
-          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 
@@ -446,7 +461,7 @@ export const useCartStore = create<CartStore>()(
           (i: LocalCartItem) => i.product_id !== product_id
         );
 
-        set({ cartProducts: updatedCart });
+        set({ cartProducts: updatedCart, hasUnsyncedChanges: true });
 
         if (!token) return;
 
@@ -458,7 +473,7 @@ export const useCartStore = create<CartStore>()(
         } else {
           const fetchedLineId = await get().getLineId(product_id, currency);
           if (!fetchedLineId) {
-            set({ cartProducts: [...updatedCart, item] });
+            set({ cartProducts: [...updatedCart, item], hasUnsyncedChanges: false });
             toast.error("Failed to remove item from cart. Please try again.");
             return;
           }
@@ -470,16 +485,10 @@ export const useCartStore = create<CartStore>()(
         } catch (error) {
           console.error("Failed to remove from server:", error);
           toast.error("Failed to remove item from cart. Please try again.");
-          set({ cartProducts: [...updatedCart, item] });
+          set({ cartProducts: [...updatedCart, item], hasUnsyncedChanges: false });
           return;
         } finally {
           get().setUpdating(product_id, false);
-        }
-
-        try {
-          await get().refreshCart(currency);
-        } catch (refreshError) {
-          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 
@@ -523,7 +532,7 @@ export const useCartStore = create<CartStore>()(
 
         const updatedCart = [...state.cartProducts];
         updatedCart[existingIndex] = { ...existing, quantity };
-        set({ cartProducts: updatedCart });
+        set({ cartProducts: updatedCart, hasUnsyncedChanges: true });
         const token = getAuthToken();
         if (!token) return;
         get().setUpdating(productId, true);
@@ -563,15 +572,10 @@ export const useCartStore = create<CartStore>()(
             }
             return { cartProducts: cart };
           });
+          set({ hasUnsyncedChanges: false });
           return;
         } finally {
           get().setUpdating(productId, false);
-        }
-
-        try {
-          await get().refreshCart(currency);
-        } catch (refreshError) {
-          console.error("Failed to refresh cart after operation:", refreshError);
         }
       },
 
@@ -584,7 +588,8 @@ export const useCartStore = create<CartStore>()(
 
         set({ 
           cartProducts: remainingCartProducts, 
-          checkoutProducts: []
+          checkoutProducts: [],
+          hasUnsyncedChanges: true
         });
         
         localStorage.removeItem("checkoutSelectedItems");
@@ -595,7 +600,8 @@ export const useCartStore = create<CartStore>()(
       version: 2,
       partialize: (state) => ({
         cartProducts: state.cartProducts,
-        checkoutProducts: state.checkoutProducts
+        checkoutProducts: state.checkoutProducts,
+        hasUnsyncedChanges: state.hasUnsyncedChanges
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

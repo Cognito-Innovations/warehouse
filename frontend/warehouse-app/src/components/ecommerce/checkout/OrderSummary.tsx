@@ -14,6 +14,7 @@ import { ROUTES } from "@/utils/constants";
 import { getCartItemPricingSummary } from "@/utils/priceUtils";
 import { CartItem } from "@/types/ecommerce";
 import { CurrencyInfo } from "@/types/ecommerce";
+import { OrderSuccessModal } from "../OrderSuccessModal";
 
 interface OrderTotals {
   subtotal: number;
@@ -33,6 +34,7 @@ interface OrderSummaryProps {
   user: any;
   formatLocalPrice: (amount: number) => string;
   addressLoading: boolean;
+  onOrderSuccess?: () => void;
 }
 
 export const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -44,6 +46,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   user,
   formatLocalPrice,
   addressLoading,
+  onOrderSuccess,
 }) => {
   const router = useRouter();
   const { removePurchasedProducts } = useCartStore();
@@ -51,6 +54,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   async function handlePaymentAndOrder() {
     if (!items.length || !shippingAddress || authLoading) {
@@ -94,7 +98,12 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           try {
             const purchasedIds = items.map((item) => item.product_id!);
             removePurchasedProducts(purchasedIds);
-            await ecommerceService.updatePaymentStatus(orderId, paymentResult);
+            ecommerceService.updatePaymentStatus(orderId).catch((updateError) => {
+              console.error("Order update failed in background:", updateError);
+              toast.error("Payment succeeded, but order update may have failed. Please check your orders.");
+            });
+            onOrderSuccess?.();
+            setShowSuccessModal(true);
           } catch (error) {
             setError("Payment succeeded but order update failed. Contact support.");
             toast.error("Order update error");
@@ -292,6 +301,12 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           By placing your order, you agree to our Terms of Service
         </Typography>
       </Box>
+
+      <OrderSuccessModal
+        open={showSuccessModal}
+        onContinueShopping={() => setShowSuccessModal(false)}
+        onViewOrders={() => setShowSuccessModal(false)}
+      />
     </Box>
   );
 };

@@ -14,6 +14,7 @@ interface CommonTableBodyProps<T> {
   getIdentifier: (row: T) => string | number;
   getRowStatus: (row: T) => string;
   hasActions?: boolean;
+  actionsWidth?: string;
 }
 
 const CommonTableBody = <T,>({
@@ -27,6 +28,7 @@ const CommonTableBody = <T,>({
   getIdentifier,
   getRowStatus,
   hasActions,
+  actionsWidth = '150px',
 }: CommonTableBodyProps<T>) => {
   const hasEditDelete = Boolean(onEdit || onDelete);
 
@@ -58,7 +60,7 @@ const CommonTableBody = <T,>({
                 sx={{
                   py: 1.5,
                   px: 2,
-                  width: '150px'
+                  width: actionsWidth
                 }}
               >    
                  <Stack direction="row" spacing={1} justifyContent="flex-end">

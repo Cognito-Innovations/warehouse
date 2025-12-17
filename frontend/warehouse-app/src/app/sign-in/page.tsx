@@ -70,7 +70,7 @@ function SignInContent() {
       <Box
         sx={{
           flex: { xs: "0 0 0%", sm: "1 1 50%", md: "1 1 70%" },
-          backgroundImage: "url(/palakart-background.png)",
+          backgroundImage: "url(/palakart-login.png)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

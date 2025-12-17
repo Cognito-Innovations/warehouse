@@ -199,9 +199,7 @@ export class ShoppingRequestsService {
 
     return {
       ...rest,
-      user: user
-        ? this.usersService.mapToUserResponseDto(shoppingRequest.user)
-        : undefined,
+      user: user ? user : undefined,
       courier: courier?.name,
       shopping_request_products: await Promise.all(
         shoppingRequestProducts.map(async (product) => ({

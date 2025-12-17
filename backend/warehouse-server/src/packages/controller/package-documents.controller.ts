@@ -8,6 +8,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,6 +30,12 @@ interface CreatePackageDocumentDto {
   type: string;
   url: string;
   size: number;
+}
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+  };
 }
 
 @ApiTags('Package Documents')
@@ -82,8 +89,14 @@ export class PackageDocumentsController {
   async uploadDocuments(
     @Param('package_id') package_id: string,
     @UploadedFiles() files: Express.Multer.File[],
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.packageDocumentsService.uploadDocuments(package_id, files);
+    const userId = req.user.id;
+    return this.packageDocumentsService.uploadDocuments(
+      package_id,
+      files,
+      userId,
+    );
   }
 
   @Post()

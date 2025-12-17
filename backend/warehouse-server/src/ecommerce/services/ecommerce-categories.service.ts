@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Country } from 'src/Countries/country.entity.js';
+import { Country, CountryCode } from 'src/Countries/country.entity.js';
 import { CreateCategoryDto } from '../dto/category/ecommerce-create-category.dto.js';
 import { UpdateCategoryDto } from '../dto/category/ecommerce-update-category.dto.js';
 
@@ -27,20 +27,45 @@ export class CategoriesService {
     return await this.categoryRepository.save(category);
   }
 
-  findAll() {
-    return this.categoryRepository
+  findAll(countryCode?: string) {
+    const queryBuilder = this.categoryRepository
       .createQueryBuilder('category')
       .leftJoinAndSelect('category.countries', 'countries')
       .loadRelationCountAndMap('category.products_count', 'category.products')
-      .orderBy('category.name', 'ASC')
-      .getMany();
+      .orderBy('category.name', 'ASC');
+
+    if (countryCode) {
+      queryBuilder
+        .innerJoinAndSelect('category.countries', 'countryFilter')
+        .andWhere('countryFilter.code = :countryCode', { countryCode });
+    }
+
+    return queryBuilder.getMany();
   }
 
-  findOne(id: string) {
-    return this.categoryRepository.findOne({
-      where: { id },
-      relations: ['countries'],
+  async findOne(id: string, countryCode?: string) {
+    const where: { id: string } = { id };
+    const relations = ['countries'];
+
+    const category = await this.categoryRepository.findOne({
+      where,
+      relations,
     });
+
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
+    if (
+      countryCode &&
+      !category.countries.some(
+        (c: Country) => c.code === (countryCode as CountryCode),
+      )
+    ) {
+      throw new NotFoundException('Category not available in this country');
+    }
+
+    return category;
   }
 
   async update(

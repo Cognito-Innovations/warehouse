@@ -30,6 +30,7 @@ export class ProductsController {
     @Query('category') category?: string,
     @Query('user_id') userId?: string,
     @Query('role') role?: string,
+    @Query('countryCode') countryCode?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
@@ -41,6 +42,7 @@ export class ProductsController {
       category,
       userId,
       role,
+      countryCode,
       parsedLimit,
       parsedOffset,
     );
@@ -52,8 +54,9 @@ export class ProductsController {
     @Param('slug') slug: string,
     @Query('currency') currency?: string,
     @Query('user_id') userId?: string,
+    @Query('countryCode') countryCode?: string,
   ) {
-    return this.productsService.findOne(slug, currency, userId);
+    return this.productsService.findOne(slug, currency, userId, countryCode);
   }
 
   @Patch(':id')

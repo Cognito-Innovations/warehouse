@@ -40,15 +40,8 @@ export class SuppliersService {
   }
 
   async getAllSuppliers(): Promise<SupplierResponseDto[]> {
-    const suppliers = await this.supplierRepository.find({
+    return this.supplierRepository.find({
       order: { supplier_name: 'ASC' },
     });
-
-    return suppliers.map((supplier) => ({
-      id: supplier.id,
-      country: supplier.country,
-      supplier_name: supplier.supplier_name,
-      created_at: supplier.created_at,
-    }));
   }
 }

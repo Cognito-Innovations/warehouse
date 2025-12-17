@@ -130,11 +130,19 @@ export const bulkUploadPackageItems = async (packageId: string, items: Array<{
 };
 
 // Package Documents API functions
-export const uploadPackageDocuments = async (packageId: string, files: File[]): Promise<any> => {
+export const uploadPackageDocuments = async (
+  packageId: string,
+  files: File[],
+  userId?: string,
+): Promise<any> => {
   const formData = new FormData();
   files.forEach(file => {
     formData.append('files', file);
   });
+
+  if (userId) {
+    formData.append('uploadedBy', userId);
+  }
   
   const response = await api.post(`/packages/${packageId}/documents/upload`, formData, {
     headers: {
@@ -289,7 +297,7 @@ export const markShipmentExportDeparted = async (id: string) => {
   return response.data;
 };
 
-export const updateShipmentExportBox = async (id: number, payload: any) => {
+export const updateShipmentExportBox = async (id: string, payload: any) => {
   const response = await api.patch(`/shipment-export-boxes/${id}`, payload);
   return response.data;
 };
@@ -299,7 +307,7 @@ export const createShipmentExportBox = async (exportId: string, payload: any = {
   return response.data;
 };
 
-export const deleteShipmentExportBox = async (id: number) => {
+export const deleteShipmentExportBox = async (id: string) => {
   await api.delete(`/shipment-export-boxes/${id}`);
 };
 
@@ -322,17 +330,22 @@ export const searchReadyToShipShipment = async (shipmentNumber: string) => {
   return response.data;
 };
 
-export const addShipmentToBox = async (boxId: number, shipmentId: string) => {
+export const addShipmentToBox = async (boxId: string, shipmentId: string) => {
   const response = await api.post(`/shipment-export-boxes/${boxId}/shipments`, { shipmentId });
   return response.data;
 };
 
-export const getShipmentsByBoxId = async (boxId: number) => {
-  const response = await api.get(`/shipment-export-boxes/${boxId}/shipments`);
+export const getShipmentsByBoxIds = async (boxIds: string[]) => {
+  if (!boxIds.length) return [];
+  const response = await api.get(`/shipment-export-boxes/shipments`, {
+    params: {
+      boxIds: boxIds.join(','),
+    },
+  });
   return response.data;
 };
 
-export const removeShipmentFromBox = async (boxId: number, shipmentId: string) => {
+export const removeShipmentFromBox = async (boxId: string, shipmentId: string) => {
   const response = await api.delete(`/shipment-export-boxes/${boxId}/shipments/${shipmentId}`);
   return response.data;
 };
@@ -488,7 +501,7 @@ export const getMeasurements = async () => {
 
 // Orders
 export const getOrders = async () => {
-  const response = await api.get("/ecommerce-orders");
+  const response = await api.get("/ecommerce-orders/all");
   return response.data;
 };
 
@@ -497,8 +510,8 @@ export const getOrderByOrderId = async (orderId: string | number) => {
   return response.data;
 };
 
-export const updateOrderStatus = async (id: string, status: string) => {
-  const response = await api.patch(`/ecommerce-orders/${id}/status`, status);
+export const updateOrderStatus = async (id: string, status: string, comment?: string) => {
+  const response = await api.patch(`/ecommerce-orders/${id}/status`, { status, comment });
   return response.data;
 };
 

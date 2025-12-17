@@ -11,7 +11,6 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -21,39 +20,15 @@ export class UsersService {
     private readonly mailerService: MailerService,
   ) {}
 
-  mapToUserResponseDto(user: User): UserResponseDto {
-    return {
-      id: user.id,
-      email: user.email,
-      id_card_passport_no: user.id_card_passport_no,
-      name: user.name,
-      role: user.role,
-      suite_no: user.suite_no,
-      phone_code: user.phone_code,
-      phone_number: user.phone_number,
-      alternate_phone_number: user.alternate_phone_number,
-      gender: user.gender,
-      dob: user.dob,
-      preference: user.preference,
-      address: user.address,
-      identifier: user.identifier,
-      verified: user.verified,
-      email_verified: user.email_verified,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
-    };
-  }
-
   async getUsersCount(): Promise<number> {
     return this.userRepository.count();
   }
 
-  async getAllUsers(): Promise<UserResponseDto[]> {
-    const users = await this.userRepository.find({
+  async getAllUsers(): Promise<User[]> {
+    return this.userRepository.find({
+      relations: ['preference', 'address'],
       order: { email: 'ASC' },
     });
-
-    return users.map((user) => this.mapToUserResponseDto(user));
   }
 
   async findById(id: string): Promise<User | null> {
@@ -79,23 +54,33 @@ export class UsersService {
     });
   }
 
+  async findByEmailWithPassword(email: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.preference', 'preference')
+      .leftJoinAndSelect('user.address', 'address')
+      .where('user.email = :email', { email })
+      .addSelect('user.password')
+      .getOne();
+  }
+
   async findCountryByName(name: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { name } });
   }
 
-  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const user = this.userRepository.create({
       ...createUserDto,
     });
     const savedUser = await this.userRepository.save(user);
-
-    return this.mapToUserResponseDto(savedUser);
+    (savedUser as any).password = undefined;
+    return savedUser;
   }
 
   async update(
     id: string,
     updateUserDto: Partial<UpdateUserDto>,
-  ): Promise<UserResponseDto> {
+  ): Promise<User> {
     const user = await this.findById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -105,7 +90,8 @@ export class UsersService {
       ...updateUserDto,
     });
     const updatedUser = await this.userRepository.save(user);
-    return this.mapToUserResponseDto(updatedUser);
+    (updatedUser as any).password = undefined;
+    return updatedUser;
   }
 
   async updatePassword(
@@ -114,7 +100,13 @@ export class UsersService {
     newPassword: string,
   ): Promise<{ message: string }> {
     try {
-      const user = await this.findById(id);
+      const user = await this.userRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.preference', 'preference')
+        .leftJoinAndSelect('user.address', 'address')
+        .where('user.id = :id', { id })
+        .addSelect('user.password')
+        .getOne();
       if (!user) throw new NotFoundException(`User with ID ${id} not found`);
       const isPasswordValid = await bcrypt.compare(
         currentPassword,
@@ -179,8 +171,15 @@ export class UsersService {
     return { message: 'OTP has been sent to your email.' };
   }
 
-  async verifyEmailOtp(userId: string, otp: string): Promise<UserResponseDto> {
-    const user = await this.findById(userId);
+  async verifyEmailOtp(userId: string, otp: string): Promise<User> {
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.preference', 'preference')
+      .leftJoinAndSelect('user.address', 'address')
+      .where('user.id = :id', { id: userId })
+      .addSelect('user.otp')
+      .addSelect('user.otp_expires_at')
+      .getOne();
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
@@ -198,7 +197,8 @@ export class UsersService {
     user.otp_expires_at = null;
 
     const updatedUser = await this.userRepository.save(user);
-
-    return this.mapToUserResponseDto(updatedUser);
+    (updatedUser as any).otp = undefined;
+    (updatedUser as any).otp_expires_at = undefined;
+    return updatedUser;
   }
 }

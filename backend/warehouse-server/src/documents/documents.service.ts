@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
+import { plainToInstance } from 'class-transformer';
 import { Document } from './documents.entity';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { DocumentResponseDto } from './dto/document-response.dto';
@@ -24,7 +25,7 @@ export class DocumentsService {
     });
 
     const saved = await this.documentRepository.save(document);
-    return this.toResponseDto(saved);
+    return plainToInstance(DocumentResponseDto, saved);
   }
 
   async findAll(): Promise<DocumentResponseDto[]> {
@@ -32,7 +33,7 @@ export class DocumentsService {
       order: { created_at: 'DESC' },
       relations: ['uploaded_by'],
     });
-    return docs.map(this.toResponseDto);
+    return plainToInstance(DocumentResponseDto, docs);
   }
 
   async findOne(id: string): Promise<DocumentResponseDto> {
@@ -43,7 +44,7 @@ export class DocumentsService {
     if (!doc) {
       throw new NotFoundException(`Document with id ${id} not found`);
     }
-    return this.toResponseDto(doc);
+    return plainToInstance(DocumentResponseDto, doc);
   }
 
   async findByFeature(
@@ -65,7 +66,7 @@ export class DocumentsService {
       order: { created_at: 'DESC' },
       relations: ['uploaded_by'],
     });
-    return docs.map(this.toResponseDto);
+    return plainToInstance(DocumentResponseDto, docs);
   }
 
   async remove(id: string): Promise<void> {
@@ -75,21 +76,4 @@ export class DocumentsService {
     }
     await this.documentRepository.remove(doc);
   }
-
-  private toResponseDto = (doc: Document): DocumentResponseDto => ({
-    id: doc.id,
-    uploaded_by: doc.uploaded_by,
-    feature_type: doc.feature_type,
-    feature_fid: doc.feature_fid,
-    document_name: doc.document_name,
-    original_filename: doc.original_filename,
-    document_url: doc.document_url,
-    document_type: doc.document_type,
-    file_size: doc.file_size,
-    mime_type: doc.mime_type,
-    category: doc.category,
-    is_required: doc.is_required,
-    created_at: doc.created_at,
-    updated_at: doc.updated_at,
-  });
 }

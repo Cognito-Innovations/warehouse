@@ -57,7 +57,7 @@ export class UsersController {
         `User with suite number ${suiteNo} not found`,
       );
     }
-    return this.usersService.mapToUserResponseDto(user);
+    return user;
   }
 
   @Get(':id')
@@ -81,7 +81,7 @@ export class UsersController {
     if (!user) {
       throw new Error('User not found');
     }
-    return this.usersService.mapToUserResponseDto(user);
+    return user;
   }
 
   @Post()

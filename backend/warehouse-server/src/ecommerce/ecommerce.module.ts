@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { CategoriesController } from './controllers/ecommerce-categories.controller';
 import { SubCategoriesController } from './controllers/ecommerce-sub-categories.controller';
 import { ProductsController } from './controllers/ecommerce-products.controller';
@@ -28,9 +29,11 @@ import { CargoOptionsController } from './controllers/cargoOptions.controller';
 import { CargoOptionsService } from './services/cargo-options.service';
 import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 import { Currency } from 'src/currencies/currency.entity';
+import { SharedModule } from 'src/shared/shared.module';
 
 @Module({
   imports: [
+    HttpModule,
     TypeOrmModule.forFeature([
       EcommerceCategory,
       EcommerceSubCategory,
@@ -46,6 +49,7 @@ import { Currency } from 'src/currencies/currency.entity';
       Currency,
     ]),
     UserPreferencesModule,
+    SharedModule,
   ],
   controllers: [
     CategoriesController,

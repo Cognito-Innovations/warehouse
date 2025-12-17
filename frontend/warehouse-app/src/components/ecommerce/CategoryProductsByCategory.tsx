@@ -6,6 +6,7 @@ import { Box, Typography } from "@mui/material";
 import useCategoryStore from "@/store/categoryStore";
 import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 import EcommerceProductsGrid from "./EcommerceProductsGrid";
 
 export default function CategoryProductsByCategory() {
@@ -15,6 +16,14 @@ export default function CategoryProductsByCategory() {
   const getCategories = useCategoryStore(state=>state.getCategories);
   const categories = useCategoryStore(state=>state.categories);
   const hasInitiatedLoadRef = useRef(false);
+
+  const locationData = useEffectiveUserLocation({
+    countryCode: undefined,
+    countryName: undefined,
+    city: '',
+    pincode: '',
+  });
+  const countryCode = locationData.location.countryCode;
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -27,10 +36,10 @@ export default function CategoryProductsByCategory() {
     const currentIsLoading = useProductStore.getState().isLoading;
     
     if (currentCategories.length === 0) {
-      getCategories();
+      getCategories(countryCode);
     }
     if (currentProducts.length === 0 && !currentIsLoading) {
-      getProducts({ userId });
+      getProducts({ userId, countryCode });
     }
     
     hasInitiatedLoadRef.current = true;

@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { CategoriesService } from '../services/ecommerce-categories.service';
@@ -23,13 +24,14 @@ export class CategoriesController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.categoriesService.findAll();
+  findAll(@Query('countryCode') countryCode?: string) {
+    return this.categoriesService.findAll(countryCode);
   }
 
+  @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.categoriesService.findOne(id);
+  findOne(@Param('id') id: string, @Query('countryCode') countryCode?: string) {
+    return this.categoriesService.findOne(id, countryCode);
   }
 
   @Patch(':id')

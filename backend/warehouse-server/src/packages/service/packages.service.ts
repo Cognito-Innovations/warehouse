@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, ILike, IsNull, Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
 
-import { CreatePackageDto } from '../dto/create-package.dto';
+import { CreatePackageDto, PackagePieceDto } from '../dto/create-package.dto';
 import { PackageResponseDto } from '../dto/package-response.dto';
 import { UpdatePackageDto } from '../dto/update-package.dto';
 import { CreatePackageChargeDto } from '../dto/create-package-charge.dto';
@@ -130,7 +130,6 @@ export class PackagesService {
     };
   }
 
-  //TODO: Need to improve this function
   async createPackage(
     createPackageDto: CreatePackageDto,
   ): Promise<PackageResponseDto> {
@@ -148,137 +147,27 @@ export class PackagesService {
     const package_id =
       createPackageDto.package_id ||
       (await this.generateCountryBasedpackage_id(countryId));
-    const existingPackage = await this.packageRepository.findOne({
-      where: { package_id: package_id },
-    });
 
-    if (existingPackage) {
-      throw new BadRequestException(`Package ID ${package_id} already exists`);
-    }
+    await this.ensurePackageAndTrackingUnique(
+      package_id,
+      createPackageDto.tracking_no,
+    );
 
-    const existingTracking = await this.packageRepository.findOne({
-      where: { tracking_no: createPackageDto.tracking_no },
-    });
-
-    if (existingTracking) {
-      throw new BadRequestException(
-        `Tracking number ${createPackageDto.tracking_no} already exists`,
-      );
-    }
-    const packageEntity = new Package();
-    packageEntity.package_id = package_id;
-    packageEntity.user = createPackageDto.user as unknown as User;
-    packageEntity.rack_slot_id = createPackageDto.rack_slot;
-    packageEntity.tracking_no = createPackageDto.tracking_no;
-    packageEntity.vendor_id = createPackageDto.vendor;
-    packageEntity.status = createPackageDto.status || 'Action Required';
-    packageEntity.country = { id: countryId } as Country;
-    packageEntity.total_weight = createPackageDto.weight
-      ? parseFloat(createPackageDto.weight)
-      : null;
-    packageEntity.total_volumetric_weight = createPackageDto.volumetric_weight
-      ? parseFloat(createPackageDto.volumetric_weight)
-      : null;
-    packageEntity.dangerous_good = createPackageDto.dangerous_good || false;
-
-    packageEntity.allow_user_items = createPackageDto.allow_user_items || false;
-    packageEntity.shop_invoice_received =
-      createPackageDto.shop_invoice_received || false;
-    packageEntity.remarks = createPackageDto.remarks || null;
-
-    // Ensure created_by is not null
-    if (!createPackageDto.created_by) {
-      throw new BadRequestException(
-        'Authentication required - created_by field is missing',
-      );
-    }
-
-    // Set the relationship (TypeORM will handle the foreign key)
-    packageEntity.created_by = createPackageDto.created_by as unknown as User;
+    const packageEntity = this.preparePackageEntity(
+      createPackageDto,
+      package_id,
+      countryId,
+    );
 
     try {
       const savedPackage = await this.packageRepository.save(packageEntity);
 
-      if (createPackageDto.rack_slot) {
-        const rack = await this.rackRepository.findOne({
-          where: { id: createPackageDto.rack_slot },
-        });
+      await this.updateRackSlot(createPackageDto.rack_slot);
 
-        if (rack) {
-          rack.count = (rack.count || 0) + 1;
-          await this.rackRepository.save(rack);
-        }
-      }
-
-      // Handle pieces array if provided
-      if (createPackageDto.pieces && createPackageDto.pieces.length > 0) {
-        const measurements: PackageMeasurement[] = [];
-        let totalWeight = 0;
-        let totalVolumetricWeight = 0;
-
-        for (let i = 0; i < createPackageDto.pieces.length; i++) {
-          const piece = createPackageDto.pieces[i];
-
-          const hasPartialDimensions =
-            (piece.length || piece.width || piece.height) &&
-            !(piece.length && piece.width && piece.height);
-
-          if (hasPartialDimensions) {
-            throw new BadRequestException(
-              `For piece ${i + 1}, if any dimension (length, width, height) is provided, all three are required.`,
-            );
-          }
-
-          const pieceWeight = parseFloat(piece.weight || '0');
-          totalWeight += pieceWeight;
-
-          let pieceVolumetricWeight = 0;
-          let hasMeasurements = false;
-
-          const length = parseFloat(piece.length || '0');
-          const width = parseFloat(piece.width || '0');
-          const height = parseFloat(piece.height || '0');
-
-          // Calculate volumetric weight if dimensions are provided
-          if (length > 0 && width > 0 && height > 0) {
-            // Standard volumetric weight calculation: (L × W × H) / 5000 (for cm to kg)
-            pieceVolumetricWeight = (length * width * height) / 5000;
-            hasMeasurements = true;
-          }
-
-          // Use provided volumetric weight if available, otherwise use calculated
-          if (piece.volumetric_weight) {
-            pieceVolumetricWeight =
-              parseFloat(piece.volumetric_weight) || pieceVolumetricWeight;
-          }
-
-          totalVolumetricWeight += pieceVolumetricWeight;
-
-          const measurement = this.packageMeasurementRepository.create({
-            packageId: savedPackage.id,
-            piece_number: i + 1,
-            weight: parseFloat(pieceWeight.toFixed(3)),
-            volumetric_weight: parseFloat(pieceVolumetricWeight.toFixed(3)),
-            length: length > 0 ? parseFloat(length.toFixed(2)) : undefined,
-            width: width > 0 ? parseFloat(width.toFixed(2)) : undefined,
-            height: height > 0 ? parseFloat(height.toFixed(2)) : undefined,
-            has_measurements: hasMeasurements,
-            measurement_verified: false,
-          });
-
-          measurements.push(measurement);
-        }
-
-        // Save all measurements
-        await this.packageMeasurementRepository.save(measurements);
-
-        // Update package with calculated totals
-        savedPackage.total_weight = parseFloat(totalWeight.toFixed(3));
-        savedPackage.total_volumetric_weight = parseFloat(
-          totalVolumetricWeight.toFixed(3),
-        );
-        await this.packageRepository.save(savedPackage);
-      }
+      await this.handlePackageMeasurements(
+        savedPackage,
+        createPackageDto.pieces || [],
+      );
 
       // Load the package with all relations before mapping to response DTO
       const packageWithRelations = await this.packageRepository.findOne({
@@ -312,6 +201,137 @@ export class PackagesService {
       }
       throw error;
     }
+  }
+
+  private async ensurePackageAndTrackingUnique(
+    package_id: string,
+    tracking_no: string,
+  ) {
+    const existingPackage = await this.packageRepository.findOne({
+      where: { package_id },
+    });
+    if (existingPackage) {
+      throw new BadRequestException(`Package ID ${package_id} already exists`);
+    }
+
+    const existingTracking = await this.packageRepository.findOne({
+      where: { tracking_no },
+    });
+    if (existingTracking) {
+      throw new BadRequestException(
+        `Tracking number ${tracking_no} already exists`,
+      );
+    }
+  }
+
+  private preparePackageEntity(
+    createPackageDto: CreatePackageDto,
+    package_id: string,
+    countryId: string,
+  ): Package {
+    if (!createPackageDto.created_by) {
+      throw new BadRequestException(
+        'Authentication required - created_by field is missing',
+      );
+    }
+
+    const packageEntity = new Package();
+    packageEntity.package_id = package_id;
+    packageEntity.user = createPackageDto.user as unknown as User;
+    packageEntity.rack_slot_id = createPackageDto.rack_slot;
+    packageEntity.tracking_no = createPackageDto.tracking_no;
+    packageEntity.vendor_id = createPackageDto.vendor;
+    packageEntity.status = createPackageDto.status || 'Action Required';
+    packageEntity.country = { id: countryId } as Country;
+    packageEntity.total_weight = createPackageDto.weight
+      ? parseFloat(createPackageDto.weight)
+      : null;
+    packageEntity.total_volumetric_weight = createPackageDto.volumetric_weight
+      ? parseFloat(createPackageDto.volumetric_weight)
+      : null;
+    packageEntity.dangerous_good = createPackageDto.dangerous_good || false;
+    packageEntity.allow_user_items = createPackageDto.allow_user_items || false;
+    packageEntity.shop_invoice_received =
+      createPackageDto.shop_invoice_received || false;
+    packageEntity.remarks = createPackageDto.remarks || null;
+    packageEntity.created_by = createPackageDto.created_by as unknown as User;
+
+    return packageEntity;
+  }
+
+  private async updateRackSlot(rack_slot_id: string | undefined) {
+    if (!rack_slot_id) return;
+    const rack = await this.rackRepository.findOne({
+      where: { id: rack_slot_id },
+    });
+    if (rack) {
+      rack.count = (rack.count || 0) + 1;
+      await this.rackRepository.save(rack);
+    }
+  }
+
+  private async handlePackageMeasurements(
+    savedPackage: Package,
+    pieces: PackagePieceDto[],
+  ): Promise<void> {
+    if (!pieces || pieces.length === 0) return;
+
+    const measurements: PackageMeasurement[] = [];
+    let totalWeight = 0;
+    let totalVolumetricWeight = 0;
+
+    for (let i = 0; i < pieces.length; i++) {
+      const piece = pieces[i];
+      const hasPartialDimensions =
+        (piece.length || piece.width || piece.height) &&
+        !(piece.length && piece.width && piece.height);
+      if (hasPartialDimensions) {
+        throw new BadRequestException(
+          `For piece ${i + 1}, if any dimension (length, width, height) is provided, all three are required.`,
+        );
+      }
+
+      const weight = parseFloat(piece.weight || '0');
+      totalWeight += weight;
+
+      let volumetricWeight = 0;
+      const length = parseFloat(piece.length || '0');
+      const width = parseFloat(piece.width || '0');
+      const height = parseFloat(piece.height || '0');
+
+      if (length > 0 && width > 0 && height > 0) {
+        volumetricWeight = (length * width * height) / 5000;
+      }
+
+      if (piece.volumetric_weight) {
+        volumetricWeight =
+          parseFloat(piece.volumetric_weight) || volumetricWeight;
+      }
+
+      totalVolumetricWeight += volumetricWeight;
+
+      const measurement = this.packageMeasurementRepository.create({
+        packageId: savedPackage.id,
+        piece_number: i + 1,
+        weight: parseFloat(weight.toFixed(3)),
+        volumetric_weight: parseFloat(volumetricWeight.toFixed(3)),
+        length: length > 0 ? parseFloat(length.toFixed(2)) : undefined,
+        width: width > 0 ? parseFloat(width.toFixed(2)) : undefined,
+        height: height > 0 ? parseFloat(height.toFixed(2)) : undefined,
+        has_measurements: length > 0 && width > 0 && height > 0,
+        measurement_verified: false,
+      });
+
+      measurements.push(measurement);
+    }
+
+    await this.packageMeasurementRepository.save(measurements);
+
+    savedPackage.total_weight = parseFloat(totalWeight.toFixed(3));
+    savedPackage.total_volumetric_weight = parseFloat(
+      totalVolumetricWeight.toFixed(3),
+    );
+    await this.packageRepository.save(savedPackage);
   }
 
   async getAllPackages(): Promise<PackageResponseDto[]> {
