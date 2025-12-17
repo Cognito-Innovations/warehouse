@@ -29,6 +29,7 @@ import { CargoOptionsController } from './controllers/cargoOptions.controller';
 import { CargoOptionsService } from './services/cargo-options.service';
 import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 import { Currency } from 'src/currencies/currency.entity';
+import { SharedModule } from 'src/shared/shared.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { Currency } from 'src/currencies/currency.entity';
       Currency,
     ]),
     UserPreferencesModule,
+    SharedModule,
   ],
   controllers: [
     CategoriesController,

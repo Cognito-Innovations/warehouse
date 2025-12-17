@@ -28,6 +28,7 @@ export default function CheckoutPage() {
   const [checkedOutItems, setCheckedOutItems] = useState<CartItem[]>([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
   
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
@@ -80,10 +81,10 @@ export default function CheckoutPage() {
   }, [cartProducts, checkoutProducts, toggleCartItemSelection, hasInitialized]);
 
   useEffect(() => {
-    if (itemsLoaded && (!checkedOutItems || checkedOutItems.length === 0)) {
+    if (itemsLoaded && checkedOutItems.length === 0 && !orderPlaced) {
       router.replace(ROUTES.CART);
     }
-  }, [checkedOutItems, router, itemsLoaded]);
+  }, [checkedOutItems, router, itemsLoaded, orderPlaced]);
 
   const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
   const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, selectedCurrency, currencyInfo), [checkedOutItems, selectedIds, selectedCurrency, currencyInfo]);
@@ -106,7 +107,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if ((!checkedOutItems || checkedOutItems.length === 0) && itemsLoaded) {
+  if ((!checkedOutItems || checkedOutItems.length === 0) && itemsLoaded && !orderPlaced) {
     return null;
   }
 
@@ -144,6 +145,7 @@ export default function CheckoutPage() {
               user={user}
               formatLocalPrice={formatLocalPrice}
               addressLoading={addressLoading}
+              onOrderSuccess={() => setOrderPlaced(true)}
             />
           </Grid>
         </Grid>

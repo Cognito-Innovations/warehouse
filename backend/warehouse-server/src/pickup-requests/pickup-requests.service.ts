@@ -15,7 +15,6 @@ import {
 } from 'src/tracking-requests/tracking-request.entity';
 import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
 import { mapPickupToTrackingStatus } from './status-mapper';
-import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class PickupRequestsService {
@@ -24,7 +23,6 @@ export class PickupRequestsService {
     private readonly pickupRequestRepository: Repository<PickupRequest>,
     private readonly dataSource: DataSource,
     private readonly trackingRequestsService: TrackingRequestsService,
-    private readonly usersService: UsersService,
   ) {}
 
   async getPickupRequestsCount(): Promise<number> {

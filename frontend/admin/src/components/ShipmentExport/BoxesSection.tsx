@@ -12,7 +12,7 @@ import Modal from "../common/Modal";
 import BoxDetailsForm from "./BoxDetailsForm";
 
 interface BoxItem {
-  id: number;
+  id: string;
   label: string;
   length_cm: number;
   breadth_cm: number;
@@ -32,8 +32,8 @@ interface BoxFormValues {
 
 interface BoxesSectionProps {
   boxes: BoxItem[];
-  selectedBoxId: number | null;
-  setSelectedBoxId: React.Dispatch<React.SetStateAction<number | null>>;
+  selectedBoxId: string | null;
+  setSelectedBoxId: React.Dispatch<React.SetStateAction<string | null>>;
   shipmentId: string;
   shipmentsInSelectedBox: Shipment[];
   loadingShipments: boolean;
@@ -55,13 +55,13 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [isAddingBox, setIsAddingBox] = useState(false);
-  const [deletingBoxId, setDeletingBoxId] = useState<number | null>(null);
+  const [deletingBoxId, setDeletingBoxId] = useState<string | null>(null);
   const [editingBoxLabel, setEditingBoxLabel] = useState<string | null>(null);
 
   const isDeparted = status === "SHIPMENTS DEPARTED";
   const selectedBoxData = boxes.find((b) => b.id === selectedBoxId);
 
-  const handleEditClick = (boxId: number, displayLabel: string) => {
+  const handleEditClick = (boxId: string, displayLabel: string) => {
     if (isDeparted) return;
     setSelectedBoxId(boxId);
     setEditingBoxLabel(displayLabel);
@@ -115,7 +115,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
     }
   };
 
-  const handleDelete = async (boxId: number) => {
+  const handleDelete = async (boxId: string) => {
     if (isDeparted) return; // Disabled when departed
     setDeletingBoxId(boxId);
     try {

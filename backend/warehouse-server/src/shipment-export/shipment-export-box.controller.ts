@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   Get,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,6 +15,7 @@ import {
   ApiOkResponse,
   ApiBody,
   ApiResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { ShipmentExportBoxesService } from './shipment-export-box.service';
 import { CreateBoxDto } from './dto/create-box.dto';
@@ -87,11 +89,21 @@ export class ShipmentExportBoxesController {
     return this.boxesService.deleteBox(id);
   }
 
-  @Get(':boxId/shipments')
-  @ApiOperation({ summary: 'Get all shipments in a specific box' })
-  @ApiOkResponse({ description: 'List of shipments in the box.' })
-  async getShipmentsInBox(@Param('boxId') boxId: string) {
-    return this.boxesService.getShipmentsByBoxId(boxId);
+  @Get('shipments')
+  @ApiOperation({ summary: 'Get all shipments across multiple boxes' })
+  @ApiOkResponse({ description: 'List of shipments in the specified boxes.' })
+  @ApiQuery({
+    name: 'boxIds',
+    type: String,
+    example: '1,2,3',
+    description: 'Comma-separated box IDs',
+  })
+  async getShipmentsByMultipleBoxes(@Query('boxIds') boxIds: string) {
+    if (!boxIds) {
+      return [];
+    }
+    const idArray = boxIds.split(',').map((id) => id.trim());
+    return this.boxesService.getShipmentsByBoxIds(idArray);
   }
 
   @Post(':boxId/shipments')

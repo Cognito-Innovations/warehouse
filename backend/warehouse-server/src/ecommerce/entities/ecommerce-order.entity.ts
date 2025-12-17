@@ -57,18 +57,6 @@ export class EcommerceOrder extends BaseTimestampEntity {
   payment_status: PaymentStatus;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  subtotal: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  discount_percentage: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  shipping_amount: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  tax_amount: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
   total_amount: number;
 
   @Column({ type: 'varchar', default: 'cashfree' })

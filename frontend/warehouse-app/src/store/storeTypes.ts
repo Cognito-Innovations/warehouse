@@ -83,7 +83,9 @@ export type CartStore = {
   loading: boolean;
   isSyncing: boolean,
   _hasHydrated: boolean;
+  hasUnsyncedChanges: boolean;
   checkoutProducts: string[];
+  setCheckoutProducts: (productIds: string[]) => void;
   toggleCartItemSelection: (productIds: string | string[]) => void;
   setCartProducts: (products: any[]) => void;
   clearCheckoutProducts: () => void;

@@ -47,13 +47,12 @@ export default function Ecommerce() {
   const hasFetched = React.useRef(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
+  const prevCategoryRef = useRef<string | null>(selectedCategory);
   const prevSearchQueryRef = useRef(searchQuery);
-  const prevCurrencyRef = useRef(currency);
-  const prevCategoryRef = useRef(selectedCategory);
+  const lastSearchRequestTime = useRef<number>(0);
 
   const initializeEcommerceData = useCallback(async (curr?: string, cntCode?: string) => {
-    if (hasFetched.current || !curr) return;
-    hasFetched.current = true;
+    if (!curr) return;
     try {
       await getCategories(cntCode);
       await fetchProducts({
@@ -75,36 +74,68 @@ export default function Ecommerce() {
   }, [currency, countryCode, initializeEcommerceData]);
 
   const performSearch = useCallback((query: string, category: string | null, curr: string, cntCode: string) => {
+    const requestTime = Date.now();
+    lastSearchRequestTime.current = requestTime;
+
     fetchProducts({ 
-        searchTerm: query, 
-        category: category || undefined, 
-        currency: curr,
-        countryCode: cntCode,
-        userId 
+      searchTerm: query, 
+      category: category || undefined, 
+      currency: curr,
+      countryCode: cntCode,
+      userId 
     }, true);
   }, [fetchProducts, userId]);
 
-  const debouncedSearch = useMemo(() => debounce((query: string, category: string | null, curr: string, cntCode: string) => performSearch(query, category, curr, cntCode), 500), [performSearch]);
+  const performSearchRef = useRef(performSearch);
+
+  useEffect(() => {
+    performSearchRef.current = performSearch;
+  }, [performSearch]);
+
+  const debouncedSearch = useMemo(
+    () => debounce(
+      (query: string, category: string | null, curr: string, cntCode: string) => {
+        performSearchRef.current(query, category, curr, cntCode);
+      },
+      500
+    ),
+    [] 
+  );
 
   useEffect(() => {
     if (!currency || !countryCode) return;
 
-    const searchChanged = searchQuery !== prevSearchQueryRef.current;
-    const categoryChanged = selectedCategory !== prevCategoryRef.current;
-    const currencyChanged = currency !== prevCurrencyRef.current;
-
-    if (searchChanged || categoryChanged || currencyChanged) {
-      if (searchChanged && !categoryChanged && !currencyChanged) {
-        debouncedSearch(searchQuery, selectedCategory, currency, countryCode);
+    if (searchQuery !== prevSearchQueryRef.current) {  
+      if (searchQuery.trim() === "") {
+        debouncedSearch.cancel();
+        performSearchRef.current("", selectedCategory, currency, countryCode);
       } else {
-        performSearch(searchQuery, selectedCategory, currency, countryCode);
+        debouncedSearch(searchQuery, selectedCategory, currency, countryCode);
       }
+      prevSearchQueryRef.current = searchQuery;
     }
 
-    prevSearchQueryRef.current = searchQuery;
-    prevCategoryRef.current = selectedCategory;
-    prevCurrencyRef.current = currency;
-  }, [searchQuery, selectedCategory, currency, countryCode, debouncedSearch, performSearch]);
+    return () => {
+      debouncedSearch.cancel();
+    }
+  }, [searchQuery, selectedCategory, currency, countryCode, debouncedSearch]);
+
+  useEffect(() => {
+    if (!currency || !countryCode) return;
+
+    if (prevCategoryRef.current !== selectedCategory) {
+      debouncedSearch.cancel();
+
+      performSearch(
+        searchQuery,
+        selectedCategory || null,
+        currency,
+        countryCode
+      );
+
+      prevCategoryRef.current = selectedCategory;
+    }
+  }, [selectedCategory, currency, countryCode, searchQuery, debouncedSearch, performSearch]);
 
   useEffect(() => {
     if (!selectedCategory || !observerRef.current || !hasMore || loadingMore || isLoading) return;
@@ -112,11 +143,11 @@ export default function Ecommerce() {
     observer.current = new window.IntersectionObserver((entries) => {
       if (entries[0].isIntersecting && hasMore && !loadingMore && !isLoading) {
         fetchProducts({ 
-            category: selectedCategory, 
-            currency: currency, 
-            countryCode: countryCode,
-            searchTerm: searchQuery,
-            userId 
+          category: selectedCategory, 
+          currency: currency, 
+          countryCode: countryCode,
+          searchTerm: searchQuery,
+          userId 
         }, false);
       }
     }, {

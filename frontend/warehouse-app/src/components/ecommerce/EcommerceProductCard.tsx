@@ -72,15 +72,8 @@ export default function EcommerceProductCard({
   return (
     <Card
       sx={{
-        width: {
-          xs: 280,
-          sm: 230,
-          md: 260,
-        },
-        maxWidth: 280,
-        justifySelf: {
-          xs: "center",
-        },
+        width: "100%",
+        maxWidth: "100%",
         borderRadius: ecommerceData.ui.spacing.cardBorderRadius,
         overflow: "hidden",
         cursor: "pointer",

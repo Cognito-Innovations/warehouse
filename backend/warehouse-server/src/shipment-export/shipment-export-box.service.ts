@@ -71,9 +71,13 @@ export class ShipmentExportBoxesService {
     }
   }
 
-  async getShipmentsByBoxId(boxId: string): Promise<TransformedShipment[]> {
-    const box = await this.boxRepo.findOne({ where: { id: boxId } });
-    if (!box) throw new NotFoundException(`Box with id ${boxId} not found`);
+  async getShipmentsByBoxIds(boxIds: string[]): Promise<TransformedShipment[]> {
+    if (!boxIds.length) return [];
+
+    const validBoxIds = boxIds
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0);
+    if (!validBoxIds.length) return [];
 
     const shipments = await this.shipmentRepo
       .createQueryBuilder('shipment')
@@ -81,7 +85,9 @@ export class ShipmentExportBoxesService {
       .leftJoin('shipment.country', 'country')
       .leftJoin('user.preference', 'preference')
       .leftJoin('preference.courier', 'courier')
-      .where('shipment.shipment_export_box_id = :boxId', { boxId })
+      .where('shipment.shipment_export_box_id IN (:...boxIds)', {
+        boxIds: validBoxIds,
+      })
       .select([
         'shipment.id AS id',
         'shipment.shipment_no AS shipment_no',
@@ -145,7 +151,7 @@ export class ShipmentExportBoxesService {
       where: { id: shipmentId },
     });
     if (!shipment)
-      throw new NotFoundException(`Shipment with id ${shipment} not found`);
+      throw new NotFoundException(`Shipment with id ${shipmentId} not found`);
 
     shipment.shipmentExportBox = box;
     return this.shipmentRepo.save(shipment);

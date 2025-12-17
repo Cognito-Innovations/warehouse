@@ -15,6 +15,8 @@ import {
   InputLabel,
   FormHelperText,
   CircularProgress,
+  OutlinedInput,
+  InputAdornment,
 } from "@mui/material";
 import {
   Close,
@@ -235,6 +237,8 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     !preferencesFormData.courier_id ||
     !preferencesFormData.currency_id;
 
+  const EmptyIcon = () => null;
+
   return (
     <Dialog
       open={open}
@@ -409,24 +413,27 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
                 value={preferencesFormData.courier_id}
                 onChange={handleChangePreferences("courier_id")}
                 label="Courier"
-                sx={{
-                  borderRadius: "8px",
-                }}
+                IconComponent={loadingPreferences ? EmptyIcon : undefined}
+                disabled={loadingPreferences}
+                input={
+                  <OutlinedInput
+                    label="Courier"
+                    endAdornment={
+                      loadingPreferences ? (
+                        <InputAdornment position="end">
+                          <CircularProgress size={18} />
+                        </InputAdornment>
+                      ) : null
+                    }
+                  />
+                }
+                sx={{ borderRadius: "8px" }}
               >
-                {loadingPreferences ? (
-                  <MenuItem disabled>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <CircularProgress size={16} />
-                      Loading couriers...
-                    </Box>
+                {courierCompanies.map((courier: any) => (
+                  <MenuItem key={courier.id} value={courier.id}>
+                    {courier.name}, {courier.address}, {courier.country || courier.country?.name}
                   </MenuItem>
-                ) : (
-                  courierCompanies?.map((courier: any) => (
-                    <MenuItem key={courier.id} value={courier.id}>
-                      {courier.name}, {courier.address}, {courier.country || courier.country?.name}
-                    </MenuItem>
-                  ))
-                )}
+                ))}
               </Select>
               {errors.courier_id && <FormHelperText>{errors.courier_id}</FormHelperText>}
             </FormControl>
@@ -437,31 +444,32 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
                 value={preferencesFormData.currency_id}
                 onChange={handleChangePreferences("currency_id")}
                 label="Currency"
-                sx={{
-                  borderRadius: "8px",
-                }}
+                IconComponent={loadingPreferences ? EmptyIcon : undefined}
+                disabled={loadingPreferences}
+                input={
+                  <OutlinedInput
+                    label="Currency"
+                    endAdornment={
+                      loadingPreferences ? (
+                        <InputAdornment position="end">
+                          <CircularProgress size={18} />
+                        </InputAdornment>
+                      ) : null
+                    }
+                  />
+                }
+                sx={{ borderRadius: "8px" }}
               >
-                {loadingPreferences ? (
-                  <MenuItem disabled>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <CircularProgress size={16} />
-                      Loading currencies...
-                    </Box>
+                {currencies.map((currency: any) => (
+                  <MenuItem key={currency.id} value={currency.id}>
+                    {currency.name} ({currency.currency_symbol})
                   </MenuItem>
-                ) : (
-                  currencies?.map((currency: any) => (
-                    <MenuItem key={currency.id} value={currency.id}>
-                     {currency.name} ({currency.currency_symbol})
-                    </MenuItem>
-                  ))
-                )}
+                ))}
               </Select>
               {errors.currency_id && <FormHelperText>{errors.currency_id}</FormHelperText>}
             </FormControl>
           </Box>
         </>
-
-
       </DialogContent>
       <DialogActions sx={{ p: 3, pt: 1 }}>
         <Button

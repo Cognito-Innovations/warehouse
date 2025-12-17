@@ -10,6 +10,7 @@ import { EcommerceCargoOption } from '../entities/cargo-options.entity.js';
 import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
 import { Country, CountryCode } from 'src/Countries/country.entity.js';
 import { EcommerceMeasurement } from '../entities/measurement.entity.js';
+import { DEFAULT_CURRENCY } from '../../shared/constants.js';
 
 interface CurrencyInfo {
   code: string;
@@ -29,7 +30,7 @@ export class ProductsService {
     currency?: string,
     userId?: string,
   ): Promise<CurrencyInfo> {
-    const selectedCurrency = currency || 'USD';
+    const selectedCurrency = currency || DEFAULT_CURRENCY.code;
 
     if (userId) {
       const userCurrency =
@@ -120,7 +121,7 @@ export class ProductsService {
         ...product,
         price: {
           price: Number(product.price),
-          currency: '$',
+          currency: DEFAULT_CURRENCY.symbol,
         },
       }));
     }
@@ -136,7 +137,8 @@ export class ProductsService {
         ...product,
         price: {
           price: convertedPrice,
-          currency: code === 'USD' ? '$' : symbol,
+          currency:
+            code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
         },
       };
     });
@@ -175,7 +177,8 @@ export class ProductsService {
       ...product,
       price: {
         price: convertedPrice,
-        currency: code === 'USD' ? '$' : symbol,
+        currency:
+          code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
       },
     };
   }

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@mui/material";
+import { Button, CircularProgress } from "@mui/material";
 import { FileDownload as FileDownloadIcon } from "@mui/icons-material";
 import * as XLSX from 'xlsx';
 
@@ -7,12 +7,19 @@ interface ExportButtonProps {
   data: any[];
   filename: string;
   className?: string;
+  disabled?: boolean;
+  loading?: boolean;
 }
 
-const ExportButton: React.FC<ExportButtonProps> = ({ data, filename, className }) => {
+const ExportButton: React.FC<ExportButtonProps> = ({ 
+  data, 
+  filename, 
+  className, 
+  disabled = false, 
+  loading = false 
+}) => {
   const generateReport = () => {
-    if (!data || data.length === 0) {
-      // Optionally add toast.error("No data available to export.");
+    if (loading || disabled || !data || data.length === 0) {
       return;
     }
 
@@ -28,12 +35,19 @@ const ExportButton: React.FC<ExportButtonProps> = ({ data, filename, className }
   return (
     <Button
       variant="contained"
-      startIcon={<FileDownloadIcon />}
+      startIcon={
+        loading ? (
+          <CircularProgress size={20} color="inherit" />
+        ) : (
+          <FileDownloadIcon />
+        )
+      }
       onClick={generateReport}
+      disabled={loading || disabled}
       className={className}
       sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, textTransform: "none" }}
     >
-      Export
+      {loading ? "Loading..." : "Export"}
     </Button>
   );
 };
