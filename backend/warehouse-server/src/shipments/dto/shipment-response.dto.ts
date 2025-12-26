@@ -6,6 +6,18 @@ import { TrackingRequestResponseDto } from 'src/tracking-requests/dto/tracking-r
 import { DocumentResponseDto } from 'src/documents/dto/document-response.dto';
 import { InvoiceResponseDto } from 'src/invoice/dto/invoice-response.dto';
 
+export class ShipmentPieceResponseDto {
+  id: string;
+  piece_number: number;
+  weight: number;
+  length: number;
+  width: number;
+  height: number;
+  volumetric_weight: number;
+  created_at: number;
+  updated_at: number;
+}
+
 export class ShipmentResponseDto {
   id: string;
   shipment_no: string;
@@ -15,6 +27,7 @@ export class ShipmentResponseDto {
   country: Country;
   packages: Package[];
   invoice?: InvoiceResponseDto;
+  pieces?: ShipmentPieceResponseDto[];
   rack_slot: Rack | null;
   tracking_requests?: TrackingRequestResponseDto[];
   payment_slips?: DocumentResponseDto[];
@@ -23,9 +36,9 @@ export class ShipmentResponseDto {
   dangerous_good: boolean;
   total_weight: number;
   total_volumetric_weight: number;
-  length: number;
-  width: number;
-  height: number;
+  length: number | null;
+  width: number | null;
+  height: number | null;
   created_at: number;
   updated_at: number;
 }

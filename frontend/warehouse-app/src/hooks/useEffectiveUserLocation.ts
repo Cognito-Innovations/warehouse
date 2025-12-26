@@ -4,7 +4,6 @@ import { useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserLocation } from "./useUserLocation";
 import useLocationStore from "@/store/locationStore";
-import { getCurrencyForCountry } from "@/utils/currency";
 import { UserAddress } from "@/types/ecommerce";
 import { CurrencyInfo } from "@/types/ecommerce";
 import { EffectiveUserLocation } from "@/store/storeTypes";
@@ -31,7 +30,7 @@ export function useEffectiveUserLocation(
     defaultCity: defaults.city,
     defaultPincode: defaults.pincode,
     enableGeolocation: true,
-    skipInit: true,
+    skipInit: false,
   });
 
   const userAddress = useLocationStore((state) => state.userAddress);
@@ -80,7 +79,7 @@ export function useEffectiveUserLocation(
     const city = hasValid ? userAddress.city : defaults.city;
     const pincode = hasValid ? userAddress.zip_code : defaults.pincode;
     const countryName = userAddress?.country || defaults.countryName;
-    const countryCode = defaults.countryCode;
+    const countryCode = defaults.countryCode || geoHook.location.countryCode;
 
     updateLocation({
       city,
@@ -100,7 +99,8 @@ export function useEffectiveUserLocation(
     isLoadingAddress,
     isLoadingLocation,
     addressCache,
-    user?.id
+    user?.id,
+    geoHook.location.countryCode
   ]);
 
   const refreshAddresses = useCallback(async () => {
@@ -114,7 +114,7 @@ export function useEffectiveUserLocation(
   const location: EffectiveUserLocation = useMemo(() => {
     if (hasValidAddress) {
       return {
-        countryCode: geoHook.location.countryCode,
+        countryCode: geoHook.location.countryCode, 
         countryName: userAddress!.country,
         city: userAddress!.city,
         pincode: userAddress!.zip_code,

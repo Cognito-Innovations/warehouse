@@ -16,11 +16,24 @@ interface Package {
   items: Items[];
 }
 
+export interface Pieces {
+  id: string;
+  piece_number: number;
+  weight: number;
+  length: number;
+  width: number;
+  height: number;
+  volumetric_weight: number;
+  created_at: number;
+  updated_at: number;
+}
+
 interface ShipmentDetailsSectionProps {
   shipments: {
     id: string;
     tracking_no: string;
     packages: Package[];
+    pieces: Pieces[];
     dangerous_good: string;
     customs_value: string;
     total_weight: number;
@@ -28,6 +41,7 @@ interface ShipmentDetailsSectionProps {
     length: number;
     width: number;
     height: number;
+    manifested?: boolean;
     created_by?: {
       name: string;
     }
@@ -57,25 +71,34 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
   const handleCloseInfoModal = () => setInfoModalOpen(false);
 
   const { totalWeight, totalVolumetricWeight } = useMemo(() => {
-    if (!shipments?.packages?.length) {
+    const pieces = shipments?.pieces || [];
+
+    if (pieces.length > 0) {
+      const totalWeight = pieces.reduce((acc: number, p: any) => acc + parseFloat(p.weight || '0'), 0);
+      const totalVolumetricWeight = pieces.reduce((acc: number, p: any) => acc + parseFloat(p.volumetric_weight || '0'), 0);
+      return { totalWeight, totalVolumetricWeight };
+    }
+
+    const packages = shipments?.packages || [];
+    
+    if (!packages.length) {
       return { totalWeight: 0, totalVolumetricWeight: 0 };
     }
 
-    const totalWeight = shipments.packages.reduce((acc, pkg) => {
+    const totalWeight = packages.reduce((acc, pkg) => {
       const weight = parseFloat(pkg.total_weight || '0');
       return acc + (isNaN(weight) ? 0 : weight);
     }, 0);
 
-    const totalVolumetricWeight = shipments.packages.reduce((acc, pkg) => {
+    const totalVolumetricWeight = packages.reduce((acc, pkg) => {
       const volWeight = parseFloat(pkg.total_volumetric_weight || '0');
       return acc + (isNaN(volWeight) ? 0 : volWeight);
     }, 0);
 
     return { totalWeight, totalVolumetricWeight };
-  }, [shipments.packages]);
+  }, [shipments.packages, shipments.pieces]);
 
-
-  const packagesCount = shipments.packages.length || 0
+  const packagesCount = (shipments?.packages || []).length;
 
   return (
     <>
@@ -122,7 +145,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
         
         <CardContent>
           <Grid container spacing={4} sx={{ mb: 2 }}>
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid item xs={12} sm={4}>
                 <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
                   REDBOX (air)
                 </Typography>
@@ -131,7 +154,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
                 </Typography>
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid item xs={12} sm={4}>
                 <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
                   Weight
                 </Typography>
@@ -140,7 +163,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
                 </Typography>
               </Grid>
 
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid item xs={12} sm={4}>
                 <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
                   Volumetric Weight
                 </Typography>
@@ -152,16 +175,16 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
             </Grid>
 
             <Grid container spacing={4} sx={{ mb: 2 }}>
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid item xs={12} sm={4}>
                     <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
                       Customs Value
                     </Typography>
                     <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                        {shipments.customs_value}
+                        {shipments.customs_value ? `$${parseFloat(shipments.customs_value).toFixed(2)}` : '0.00'}
                     </Typography>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid item xs={12} sm={4}>
                     <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
                       Dangerous Good
                     </Typography>
@@ -177,7 +200,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
                     </Typography>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid item xs={12} sm={4}>
                     <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
                       Packages Count
                     </Typography>
@@ -188,7 +211,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
             </Grid>
 
             <Grid container spacing={4}>
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid item xs={12} sm={4}>
                     <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
                       Manifested
                     </Typography>
@@ -197,7 +220,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
                     </Typography>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid item xs={12} sm={4}>
                     {shipments.rack_slot ? (
                       <RackSlotInfo
                         shipments={shipments}

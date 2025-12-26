@@ -19,6 +19,7 @@ import { InvoicesService } from 'src/invoice/invoices.service';
 import { Invoice, InvoiceStatus } from 'src/invoice/entities/invoice.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { CreateShipmentInvoiceDto } from './dto/create-shipment-invoice.dto';
+import { ShipmentPiece } from './shipment-piece.entity';
 
 export type FormattedInvoice = {
   amount: string;
@@ -43,6 +44,8 @@ export class ShipmentsService {
     private readonly packageRepository: Repository<Package>,
     @InjectRepository(Rack)
     private readonly rackRepository: Repository<Rack>,
+    @InjectRepository(ShipmentPiece)
+    private readonly shipmentPieceRepository: Repository<ShipmentPiece>,
     private readonly dataSource: DataSource,
     private readonly trackingRequestsService: TrackingRequestsService,
     private readonly documentsService: DocumentsService,
@@ -191,6 +194,25 @@ export class ShipmentsService {
         await queryRunner.manager.save(pkg);
       }
 
+      const initialWeight = packages.reduce(
+        (sum, pkg) => sum + parseFloat(String(pkg.total_weight || '0')),
+        0,
+      );
+      const initialPiece = queryRunner.manager.create(ShipmentPiece, {
+        piece_number: 1,
+        weight: initialWeight,
+        length: 0,
+        width: 0,
+        height: 0,
+        volumetric_weight: 0,
+        shipment: savedShipment,
+      });
+      await queryRunner.manager.save(initialPiece);
+
+      savedShipment.total_weight = initialWeight;
+      savedShipment.total_volumetric_weight = 0;
+      await queryRunner.manager.save(savedShipment);
+
       await queryRunner.commitTransaction();
 
       return savedShipment;
@@ -246,6 +268,7 @@ export class ShipmentsService {
         'user',
         'packages',
         'country',
+        'pieces',
         'packages.items',
         'user.address',
         'user.preference',
@@ -309,7 +332,7 @@ export class ShipmentsService {
 
     const shipments = await this.shipmentRepository.find({
       where: { status: enumStatus },
-      relations: ['user', 'packages', 'country'],
+      relations: ['user', 'packages', 'country', 'pieces'],
       order: { created_at: 'DESC' },
     });
 
@@ -401,56 +424,114 @@ export class ShipmentsService {
   }
 
   async updateShipmentById(id: string, payload: UpdateShipmentDto) {
-    const shipment = await this.shipmentRepository.findOne({
-      where: { id },
-      relations: ['rack_slot'],
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (!shipment) {
-      throw new NotFoundException(`Shipment with id ${id} not found`);
-    }
+    try {
+      const shipment = await queryRunner.manager.findOne(Shipment, {
+        where: { id },
+        relations: ['rack_slot', 'pieces'],
+      });
 
-    const oldRack = shipment.rack_slot;
-
-    if (payload.weight !== undefined) shipment.total_weight = payload.weight;
-    if (payload.length !== undefined) shipment.length = payload.length;
-    if (payload.width !== undefined) shipment.width = payload.width;
-    if (payload.height !== undefined) shipment.height = payload.height;
-
-    if (
-      typeof payload.length !== 'undefined' &&
-      typeof payload.width !== 'undefined' &&
-      typeof payload.height !== 'undefined'
-    ) {
-      const length = Number(payload.length);
-      const width = Number(payload.width);
-      const height = Number(payload.height);
-
-      if (isNaN(length) || isNaN(width) || isNaN(height)) {
-        throw new BadRequestException('Invalid dimensional values.');
+      if (!shipment) {
+        throw new NotFoundException(`Shipment with id ${id} not found`);
       }
 
-      shipment.total_volumetric_weight = (length * width * height) / 5000;
-    }
+      const oldRack = shipment.rack_slot;
 
-    if (payload.rack_slot !== undefined && payload.rack_slot !== oldRack?.id) {
-      if (oldRack) {
-        oldRack.count = Math.max(0, oldRack.count - 1);
-        await this.rackRepository.save(oldRack);
+      if (payload.customs_value !== undefined) {
+        shipment.customs_value = payload.customs_value;
       }
 
-      if (payload.rack_slot) {
-        const newRack = await this.rackRepository.findOneBy({
-          id: payload.rack_slot,
+      if (payload.dangerous_good !== undefined) {
+        shipment.dangerous_good = payload.dangerous_good;
+      }
+
+      if (payload.pieces && payload.pieces.length > 0) {
+        await queryRunner.manager.delete(ShipmentPiece, {
+          shipment: { id },
         });
-        if (!newRack) throw new NotFoundException('New Rack not found');
-        newRack.count += 1;
-        await this.rackRepository.save(newRack);
-        shipment.rack_slot = newRack;
-      }
-    }
 
-    return await this.shipmentRepository.save(shipment);
+        const newPieces = payload.pieces.map((p) => {
+          const volumetricWeight =
+            p.volumetric_weight ?? (p.length * p.width * p.height) / 5000;
+
+          const piece = queryRunner.manager.create(ShipmentPiece, {
+            piece_number: p.piece_number,
+            weight: p.weight,
+            length: p.length,
+            width: p.width,
+            height: p.height,
+            volumetric_weight: volumetricWeight,
+          });
+
+          piece.shipment = shipment;
+          return piece;
+        });
+
+        shipment.pieces = newPieces;
+
+        shipment.total_weight = newPieces.reduce(
+          (sum, p) => sum + Number(p.weight),
+          0,
+        );
+
+        shipment.total_volumetric_weight = newPieces.reduce(
+          (sum, p) => sum + Number(p.volumetric_weight),
+          0,
+        );
+
+        shipment.length = null;
+        shipment.width = null;
+        shipment.height = null;
+      }
+
+      if (
+        payload.rack_slot !== undefined &&
+        payload.rack_slot !== oldRack?.id
+      ) {
+        if (oldRack) {
+          oldRack.count = Math.max(0, oldRack.count - 1);
+          await queryRunner.manager.save(oldRack);
+        }
+
+        if (payload.rack_slot) {
+          const newRack = await queryRunner.manager.findOne(Rack, {
+            where: { id: payload.rack_slot },
+          });
+
+          if (!newRack) {
+            throw new NotFoundException('New Rack not found');
+          }
+
+          newRack.count += 1;
+          await queryRunner.manager.save(newRack);
+          shipment.rack_slot = newRack;
+        }
+      }
+
+      await queryRunner.manager.save(shipment);
+      await queryRunner.commitTransaction();
+
+      const responseShipment = await this.dataSource
+        .getRepository(Shipment)
+        .findOne({
+          where: { id },
+          relations: ['rack_slot', 'pieces'],
+        });
+
+      responseShipment?.pieces?.forEach((p) => {
+        delete (p as any).shipment;
+      });
+
+      return responseShipment;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async removePackageFromShipment(shipmentId: string, packageId: string) {

@@ -77,6 +77,19 @@ export class OrderService {
     return Math.round((value + Number.EPSILON) * 100) / 100;
   }
 
+  private generateOrderNumber(): string {
+    // last 3 digits of timestamp
+    const timeBasedSuffix = Date.now().toString().slice(-3);
+
+    // 3-character alphanumeric (A-Z, 0-9)
+    const randomAlphaNumeric = Math.random()
+      .toString(36)
+      .substring(2, 5)
+      .toUpperCase();
+
+    return `ORD-${timeBasedSuffix}-${randomAlphaNumeric}`;
+  }
+
   async createOrder(
     userId: string,
     createOrderDto: CreateOrderDto,
@@ -194,7 +207,7 @@ export class OrderService {
     }
 
     // Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
+    const orderNumber = this.generateOrderNumber();
 
     // Create order
     const order = this.orderRepository.create({

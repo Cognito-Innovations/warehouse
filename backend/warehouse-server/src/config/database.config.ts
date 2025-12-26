@@ -44,6 +44,7 @@ import { InvoiceCharge } from 'src/invoice/entities/invoice-charge.entity';
 import { EcommerceCart } from 'src/ecommerce/entities/ecommerce-cart.entity';
 import { EcommerceCartItem } from 'src/ecommerce/entities/ecommerce-cart-item.entity';
 import { EcommerceCargoOption } from 'src/ecommerce/entities/cargo-options.entity';
+import { ShipmentPiece } from 'src/shipments/shipment-piece.entity';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -93,6 +94,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     EcommerceCart,
     EcommerceCartItem,
     Shipment,
+    ShipmentPiece,
     InvoiceCharge,
     EcommerceCargoOption,
   ],
