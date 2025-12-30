@@ -20,6 +20,7 @@ import { PackageCharge } from './entities';
 import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { DocumentsModule } from 'src/documents/documents.module';
 import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
+import { PackageSequence } from './entities/package-sequence.entity';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { UserPreferencesModule } from 'src/user-preferences/user-preferences.mod
       Rack,
       User,
       UserPreference,
+      PackageSequence,
     ]),
     SharedModule,
     DocumentsModule,

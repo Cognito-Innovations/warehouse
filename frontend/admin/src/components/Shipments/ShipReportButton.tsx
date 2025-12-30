@@ -1,14 +1,15 @@
 import { AssessmentOutlined } from "@mui/icons-material";
-import { Button } from "@mui/material";
+import { Button, CircularProgress } from "@mui/material";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 import { formatDateTime } from "../../utils/formatDateTime";
 
 interface ShipReportButtonProps {
     shipments: any[];
+    loading: boolean;
 }
 
-const ShipReportButton: React.FC<ShipReportButtonProps> = ({ shipments }) => {
+const ShipReportButton: React.FC<ShipReportButtonProps> = ({ shipments, loading }) => {
     const generateReport = () => {
         if (!shipments || shipments.length === 0) {
             toast.error("No shipments data available to export.");
@@ -71,8 +72,15 @@ const ShipReportButton: React.FC<ShipReportButtonProps> = ({ shipments }) => {
     return (
         <Button
           variant="contained"
-          startIcon={<AssessmentOutlined />}
+          startIcon={
+            loading ? (
+              <CircularProgress size={18} color="inherit" />
+            ) : (
+              <AssessmentOutlined />
+            )
+          }
           onClick={generateReport}
+          disabled={loading}
           sx={{
             textTransform: 'none',
             borderRadius: 2,
@@ -82,7 +90,7 @@ const ShipReportButton: React.FC<ShipReportButtonProps> = ({ shipments }) => {
             },
           }}
         >
-           Ship Requested Report 
+           {loading ? "Loading..." : "Ship Requested Report"} 
         </Button>
     )
 }

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Edit as EditIcon } from '@mui/icons-material';
-import { Box, Typography, Grid, Card, CardContent, Button, CircularProgress } from '@mui/material';
+import { Box, Typography, Card, CardContent, Button, CircularProgress } from '@mui/material';
 import RackSlotInfo from './RackSlotInfo';
 import AddToRackCard from './AddToRackCard';
 import MeasurementsTable from './MeasurementsTable';
@@ -122,7 +122,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
             </Button>
         </Box>
 
-      <Card sx={{ mb: 3, px: 1, position: 'relative' }}>
+      <Card sx={{ mb: 3, position: 'relative' }}>
         {loading && (
           <Box
             sx={{
@@ -143,104 +143,122 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
           </Box>
         )}
         
-        <CardContent>
-          <Grid container spacing={4} sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={4}>
-                <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
-                  REDBOX (air)
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                  {shipments.tracking_no}
-                </Typography>
-            </Grid>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ 
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+            gap: 3,
+            mb: 3
+          }}>
+            <Box>
+              <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 1 }}>
+                REDBOX (air)
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                {shipments.tracking_no}
+              </Typography>
+            </Box>
 
-            <Grid item xs={12} sm={4}>
-                <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
-                  Weight
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                  {totalWeight > 0 ? `${totalWeight.toFixed(2)} kg` : '-'}
-                </Typography>
-              </Grid>
+            <Box>
+              <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 1 }}>
+                Weight
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                {totalWeight > 0 ? `${totalWeight.toFixed(2)} kg` : '-'}
+              </Typography>
+            </Box>
 
-            <Grid item xs={12} sm={4}>
-                <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
-                  Volumetric Weight
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                  {totalVolumetricWeight > 0 ? `${totalVolumetricWeight.toFixed(2)} kg` : '-'}
-                </Typography>
-            </Grid>
-            
-            </Grid>
+            <Box>
+              <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 1 }}>
+                Volumetric Weight
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                {totalVolumetricWeight > 0 ? `${totalVolumetricWeight.toFixed(2)} kg` : '-'}
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ 
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+            gap: 3,
+            mb: 3
+          }}>
+            <Box>
+              <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 1 }}>
+                Customs Value
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                {shipments.customs_value ? `$${parseFloat(shipments.customs_value).toFixed(2)}` : '0.00'}
+              </Typography>
+            </Box>
 
-            <Grid container spacing={4} sx={{ mb: 2 }}>
-                <Grid item xs={12} sm={4}>
-                    <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
-                      Customs Value
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                        {shipments.customs_value ? `$${parseFloat(shipments.customs_value).toFixed(2)}` : '0.00'}
-                    </Typography>
-                </Grid>
+            <Box>
+              <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 1 }}>
+                Dangerous Good
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                {shipments?.dangerous_good ? '⛔️ Yes' : 'No'}
+              </Typography>
+            </Box>
 
-                <Grid item xs={12} sm={4}>
-                    <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
-                      Dangerous Good
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                      {shipments?.dangerous_good 
-                        ? (
-                          <>
-                            ⛔️ Yes 
-                          </>
-                        ) : (
-                          'No'
-                        )}
-                    </Typography>
-                </Grid>
+            <Box>
+              <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 1 }}>
+                Packages Count
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                {packagesCount}
+              </Typography>
+            </Box>
+          </Box>
 
-                <Grid item xs={12} sm={4}>
-                    <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
-                      Packages Count
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                      {packagesCount}
-                    </Typography>
-                </Grid>
-            </Grid>
+          <Box sx={{ 
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+            gap: 3,
+            mb: 3,
+            alignItems: 'start',
+          }}>
+            <Box>
+              <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 1 }}>
+                Manifested
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                {shipments.manifested ? 'Yes' : 'No'}
+              </Typography>
+            </Box>
+            <Box sx={{ 
+              pt: { xs: 0, sm: 0 }, 
+              display: 'flex',
+              alignItems: 'flex-start'
+            }}>
+              <Box sx={{ 
+                flex: 1,
+                display: 'flex',
+                alignItems: 'flex-start'
+              }}>
+                {shipments.rack_slot ? (
+                  <RackSlotInfo
+                    shipments={shipments}
+                    onRefresh={onRefresh}
+                    isDiscarded={isDiscarded}
+                  />
+                ) : (
+                  <AddToRackCard
+                    shipmentId={shipments.id}
+                    onRefresh={onRefresh}
+                    isDiscarded={isDiscarded}
+                  />
+                )}
+              </Box>
+            </Box>
+          </Box>
 
-            <Grid container spacing={4}>
-                <Grid item xs={12} sm={4}>
-                    <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 0.5 }}>
-                      Manifested
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                      {shipments.manifested ? 'Yes' : 'No'}
-                    </Typography>
-                </Grid>
-
-                <Grid item xs={12} sm={4}>
-                    {shipments.rack_slot ? (
-                      <RackSlotInfo
-                        shipments={shipments}
-                        onRefresh={onRefresh}
-                        isDiscarded={isDiscarded}
-                      />
-                    ) : (
-                      <AddToRackCard
-                        shipmentId={shipments.id}
-                        onRefresh={onRefresh}
-                        isDiscarded={isDiscarded}
-                      />
-                    )}
-                </Grid>
-            </Grid>
-
-          <MeasurementsTable 
-            shipments={shipments}
-            isDiscarded={isDiscarded}
-          />
+          <Box sx={{ mt: 3 }}>
+            <MeasurementsTable 
+              shipments={shipments}
+              isDiscarded={isDiscarded}
+            />
+          </Box>
         </CardContent>
       </Card>
 

@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import QRCode from 'qrcode';
 import JsBarcode from "jsbarcode";
 import { toast } from "sonner";
+import { formatDateTime } from "../../utils/formatDateTime";
 
 interface HoldLabelData {
     id: string;
@@ -60,14 +61,15 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.setFont("helvetica", "bold");
             doc.text("SHIPMENT", 40, 12);
 
+            const shipmentNo = data.shipment_no;
+
             // 2. QR Code (Top-Right)
-            const qrCodeUrl = data.id ? `${window.location.origin}/shipments/${data.id}` : 'No shipment ID';
+            const qrCodeUrl = shipmentNo;
             const qrCodeDataURL = await QRCode.toDataURL(qrCodeUrl, { width: 100, margin: 1, errorCorrectionLevel: 'H' });
             doc.addImage(qrCodeDataURL, 'PNG', 125, 5, 20, 20);
 
             // 3. Barcode with "ONHOLD" overlay
             const canvas = document.createElement('canvas');
-            const shipmentNo = data.shipment_no;
             JsBarcode(canvas, shipmentNo, {
                 format: "CODE128",
                 displayValue: false,
@@ -127,7 +129,11 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
             doc.text(weightText, 5, 65);
 
             // 8. REG. DATE (Bottom-Right)
-            const regDateText = `REG. DATE: ${data.created_at || ''}`;
+            const regDateText = `REG. DATE: ${formatDateTime(data.created_at)
+                ?.split(',')
+                .slice(0, 2)
+                .join(',')
+                .trim() || ''}`;
             const pageWidth = 150;
             const margin = 5;
             const textWidth = doc.getTextWidth(regDateText);

@@ -3,6 +3,7 @@ import { Button, CircularProgress } from "@mui/material";
 import jsPDF from "jspdf";
 import autoTable, { type UserOptions } from 'jspdf-autotable';
 import { toast } from "sonner";
+import { formatDateTime } from "../../utils/formatDateTime";
 
 interface AutoTableFinalY {
   finalY: number;
@@ -26,13 +27,16 @@ interface Item {
 
 interface InvoiceData {
     id: string;
+    invoice?: {
+        invoice_no: string;
+        created_at?: string;
+    }
     user?: {
         name: string;
         phone?: string;
         suite_no?: string;
         address?: string;
     }
-    updated_at?: string;
     to_address?: {
         line1?: string;
         zip_code?: string;
@@ -140,8 +144,12 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
             // Invoice Details Box
             const invoiceDetailsContent = [
                 `Suite ID: ${data.user?.suite_no || '714-881'}`,
-                `Invoice Number: ${data.id || 'S2025236IN'}`,
-                `Invoice Date: ${data.updated_at || '2025-09-22'}`,
+                `Invoice Number: ${data.invoice?.invoice_no || 'N/A'}`,
+                `Invoice Date: ${formatDateTime(data.invoice?.created_at)
+                  ?.split(',')
+                  .slice(0, 2)
+                  .join(',')
+                  .trim() || 'Dec 29, 2025'}`,
                 'Currency: USD'
             ];
             drawInfoBox(margin + (boxWidth + 6) * 2, yPos, 'Invoice Details', invoiceDetailsContent);

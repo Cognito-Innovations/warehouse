@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { Shipment, ShipmentStatus } from './shipment.entity';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { ShipmentResponseDto } from './dto/shipment-response.dto';
@@ -20,6 +20,7 @@ import { Invoice, InvoiceStatus } from 'src/invoice/entities/invoice.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { CreateShipmentInvoiceDto } from './dto/create-shipment-invoice.dto';
 import { ShipmentPiece } from './shipment-piece.entity';
+import { ShipmentSequence } from './shipment-sequence.entity';
 
 export type FormattedInvoice = {
   amount: string;
@@ -57,10 +58,47 @@ export class ShipmentsService {
     return this.shipmentRepository.count({ where: { status } });
   }
 
-  private generateShipmentNo(countryCode: string): string {
+  private async generateShipmentNo(
+    countryCode: string,
+    manager: EntityManager,
+  ): Promise<string> {
     const year = new Date().getFullYear();
-    const randomDigits = Math.floor(1000 + Math.random() * 9000);
-    return `S${year}${randomDigits}${countryCode.toUpperCase()}`;
+    const country = countryCode.toUpperCase();
+
+    let sequence = await manager.findOne(ShipmentSequence, {
+      where: { country_code: country, year },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    if (!sequence) {
+      try {
+        const newSequence = manager.create(ShipmentSequence, {
+          country_code: country,
+          year,
+          last_value: 0,
+        });
+        sequence = await manager.save(newSequence);
+      } catch (error) {
+        console.error('Error creating shipment sequence, retrying...', error);
+        sequence = await manager.findOne(ShipmentSequence, {
+          where: { country_code: country, year },
+          lock: { mode: 'pessimistic_write' },
+        });
+
+        if (!sequence) {
+          throw new Error(
+            `Failed to generate shipment sequence for ${country}-${year}`,
+          );
+        }
+      }
+    }
+
+    sequence.last_value += 1;
+    await manager.save(sequence);
+
+    const padded = String(sequence.last_value).padStart(5, '0');
+
+    return `S${year}${padded}${country}`;
   }
 
   private generateTrackingNo(): string {
@@ -167,7 +205,10 @@ export class ShipmentsService {
         return sum + pkgValue;
       }, 0);
 
-      const shipmentNo = this.generateShipmentNo(country.code || 'IN');
+      const shipmentNo = await this.generateShipmentNo(
+        country.code || 'IN',
+        queryRunner.manager,
+      );
       const trackingNo = this.generateTrackingNo();
 
       const newShipment = queryRunner.manager.create(Shipment, {

@@ -204,12 +204,18 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
     if (formData.pieces.length === 0) {
       return false;
     }
-    return formData.pieces.every(
-      (p) =>
-        p.weight && parseFloat(p.weight) > 0 &&
-        p.length && parseFloat(p.length) > 0 &&
-        p.width && parseFloat(p.width) > 0 &&
-        p.height && parseFloat(p.height) > 0
+    return formData.pieces.every((p) => {
+      const weightValid = p.weight && parseFloat(p.weight) > 0;
+
+      const l = parseFloat(p.length) || 0;
+      const w = parseFloat(p.width) || 0;
+      const h = parseFloat(p.height) || 0;
+
+      const anyVolProvided = l > 0 || w > 0 || h > 0;
+      const allVolProvided = l > 0 && w > 0 && h > 0;
+
+      return weightValid && (!anyVolProvided || allVolProvided);
+    }
     );
   }, [formData]);
 
@@ -233,16 +239,24 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
         newErrors[`piece_${idx}_weight`] = "Required > 0";
         isValid = false;
       }
-      if (!piece.length || parseFloat(piece.length) <= 0) {
-        newErrors[`piece_${idx}_length`] = "Required > 0";
-        isValid = false;
-      }
-      if (!piece.width || parseFloat(piece.width) <= 0) {
-        newErrors[`piece_${idx}_width`] = "Required > 0";
-        isValid = false;
-      }
-      if (!piece.height || parseFloat(piece.height) <= 0) {
-        newErrors[`piece_${idx}_height`] = "Required > 0";
+
+      const l = parseFloat(piece.length) || 0;
+      const w = parseFloat(piece.width) || 0;
+      const h = parseFloat(piece.height) || 0;
+
+      const anyVolProvided = l > 0 || w > 0 || h > 0;
+      const allVolProvided = l > 0 && w > 0 && h > 0;
+
+      if (anyVolProvided && !allVolProvided) {
+        if (l <= 0) {
+          newErrors[`piece_${idx}_length`] = "Required when using volumetric weight";
+        }
+        if (w <= 0) {
+          newErrors[`piece_${idx}_width`] = "Required when using volumetric weight";
+        }
+        if (h <= 0) {
+          newErrors[`piece_${idx}_height`] = "Required when using volumetric weight";
+        }
         isValid = false;
       }
     });

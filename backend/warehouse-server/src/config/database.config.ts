@@ -45,6 +45,8 @@ import { EcommerceCart } from 'src/ecommerce/entities/ecommerce-cart.entity';
 import { EcommerceCartItem } from 'src/ecommerce/entities/ecommerce-cart-item.entity';
 import { EcommerceCargoOption } from 'src/ecommerce/entities/cargo-options.entity';
 import { ShipmentPiece } from 'src/shipments/shipment-piece.entity';
+import { ShipmentSequence } from 'src/shipments/shipment-sequence.entity';
+import { PackageSequence } from 'src/packages/entities/package-sequence.entity';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -97,6 +99,8 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ShipmentPiece,
     InvoiceCharge,
     EcommerceCargoOption,
+    ShipmentSequence,
+    PackageSequence,
   ],
   synchronize: false, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],
