@@ -28,7 +28,6 @@ interface ShipmentExport {
 interface ShipmentActionsBarProps {
   selectedBoxId: string | null;
   onPackageAdded: () => void;
-  hasShipments: boolean;
   exportId: string;
   status: string;
   onStatusUpdated: (newStatus: string) => void;
@@ -39,7 +38,6 @@ interface ShipmentActionsBarProps {
 const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
   selectedBoxId,
   onPackageAdded,
-  hasShipments,
   exportId,
   status,
   onStatusUpdated,
@@ -56,7 +54,7 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
   const isDeparted = status === "SHIPMENTS DEPARTED";
 
   const loadAllShipments = useCallback(async () => {
-    if (isDeparted && boxes.length > 0 && allShipments.length === 0) {
+    if (boxes.length > 0) {
       setExportLoading(true);
       try {
         const boxIds = boxes.map((box: BoxItem) => box.id);
@@ -68,8 +66,10 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
       } finally {
         setExportLoading(false);
       }
+    } else {
+      setAllShipments([]);
     }
-  }, [isDeparted, boxes, allShipments.length]);
+  }, [boxes]);
 
   useEffect(() => {
     loadAllShipments();
@@ -127,6 +127,10 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
             )
           );
         }
+
+        const boxIds = updated.boxes.map((box: any) => box.id);
+        const refreshedShipments = await getShipmentsByBoxIds(boxIds);
+        setAllShipments(refreshedShipments);
       }
     } catch (err) {
       console.error("Failed to update to departed", err);
@@ -196,25 +200,23 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
         </Box>
       )}
 
-      {selectedBoxId && hasShipments && (
+      {!isDeparted && (
         <Box sx={{ display: "flex", gap: 2, flexShrink: 0, marginLeft: "auto" }}>
-          {status !== "SHIPMENTS DEPARTED" && !isDeparted && (
-            <Button
-              variant="contained"
-              disabled={loading}
-              onClick={handleUpdateDeparted}
-              sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none" }}
-            >
-              {loading ? (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <CircularProgress size={16} color="inherit" />
-                  Updating...
-                </Box>
-              ) : (
-                "Update to Departed"
-              )}
-            </Button>
-          )}
+          <Button
+            variant="contained"
+            disabled={loading || allShipments.length === 0}
+            onClick={handleUpdateDeparted}
+            sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none" }}
+          >
+            {loading ? (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CircularProgress size={16} color="inherit" />
+                Updating...
+              </Box>
+            ) : (
+              "Update to Departed"
+            )}
+          </Button>
         </Box>
       )}
     </Box>

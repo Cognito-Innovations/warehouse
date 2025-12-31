@@ -84,7 +84,6 @@ const ViewShipmentExportPage: React.FC = () => {
       <ShipmentActionsBar 
         selectedBoxId={selectedBoxId}
         onPackageAdded={handlePackageAdded}
-        hasShipments={selectedBoxShipments.length > 0}
         exportId={shipment.id}
         status={shipment.status}
         onStatusUpdated={(newStatus) => setShipment({ ...shipment, status: newStatus })}
