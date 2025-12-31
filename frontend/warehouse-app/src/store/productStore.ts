@@ -70,7 +70,6 @@ const useProductStore = create<ProductStore>((set, get) => ({
   fetchProducts: async (params: FetchProductsParams, reset = false) => {
     const state = get();
     if (!reset && state.loadingMore) return;
-    if (reset && state.isLoading) return;
 
     const { category, searchTerm, currency, countryCode, userId } = params;
 

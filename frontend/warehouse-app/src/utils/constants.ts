@@ -11,6 +11,8 @@ export enum ROUTES {
   CHECKOUT = "/ecommerce/checkout",
   ORDER = "/ecommerce/orders",
   ASSISTED_SHOPPING = "/assisted-shopping",
+  ECOMMERCE_BUYING_ASSISTANT = "/ecommerce/buying-assistant/start",
+  CREATE_ASSISTED_SHOPPING = "/assisted-shopping/create-request"
 }
 
 export const IMAGE_FILE_REGEX = /\.(jpeg|jpg|png|gif|webp)$/i;
@@ -49,3 +51,12 @@ export const CF_SCRIPT_SRC = "https://sdk.cashfree.com/js/v3/cashfree.js";
 
 export const DEFAULT_IMG =
   "https://rukminim2.flixcart.com/fk-p-flap/108/108/image/eb75e5d9571bde1a.png?q=60";
+
+export const ASSISTED_SHOPPING_PRODUCT_LINK_KEY = "assisted_shopping_product_link";
+
+export const orderStatusPhrases: { [key: string]: string } = {
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+  shipped: "Shipped",
+  pending: "Pending",
+};

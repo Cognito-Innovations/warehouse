@@ -95,7 +95,7 @@ export default function EcommerceSkeletonLoader({
             mt: 5,
           }}
         >
-          {[...Array(5)].map((_, index) => (
+          {[...Array(3)].map((_, index) => (
             <Box
               key={`promotional-card-${index}`}
               sx={{

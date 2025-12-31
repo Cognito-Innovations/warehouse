@@ -125,19 +125,21 @@ const Header = () => {
 
   return (
     <>
-      <header className="bg-purple-700 text-white sticky top-0 z-50 shadow-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-16">
-          <HeaderLogo />
+      {pathname === "/assisted-shopping/start" ? null : (
+        <header className="bg-purple-700 text-white sticky top-0 z-50 shadow-md">
+          <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-16">
+            <HeaderLogo />
 
-          <HeaderNavigation />
+            <HeaderNavigation />
 
-          <HeaderProfileTrigger
-            currentUser={user}
-            open={open}
-            handleProfileMenuOpen={handleProfileMenuOpen}
-          />
-        </div>
-      </header>
+            <HeaderProfileTrigger
+              currentUser={user}
+              open={open}
+              handleProfileMenuOpen={handleProfileMenuOpen}
+            />
+          </div>
+        </header>
+      )}
 
       {pathname === "/assisted-shopping/create-request" ||
         pathname.startsWith("/pickup-request/") ||

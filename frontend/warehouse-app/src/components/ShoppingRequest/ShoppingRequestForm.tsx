@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
 import { useAddressAPI } from "@/hooks/useAddressAPI";
-import { ROUTES } from "@/utils/constants";
+import { ROUTES, ASSISTED_SHOPPING_PRODUCT_LINK_KEY } from "@/utils/constants";
 
 interface ShoppingItem {
   id: string;
@@ -41,6 +41,23 @@ export default function ShoppingRequestForm() {
   ]);
   const [remarks, setRemarks] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const productLink = sessionStorage.getItem(ASSISTED_SHOPPING_PRODUCT_LINK_KEY);
+      
+      if (productLink) {
+        setItems((prevItems) => {
+          const newItems = [...prevItems];
+          if (newItems.length > 0) {
+            newItems[0].url = productLink;
+          }
+          return newItems;
+        });
+        sessionStorage.removeItem(ASSISTED_SHOPPING_PRODUCT_LINK_KEY);
+      }
+    }
+  }, []);
 
   const handleAddNewItem = () => {
     const newItem: ShoppingItem = {
@@ -117,33 +134,33 @@ export default function ShoppingRequestForm() {
   };
 
   const inputStyles =
-    "w-full px-3 py-1.5 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent";
+    "w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent";
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
+    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
       <form onSubmit={handleSubmit}>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {items.map((item, index) => (
             <div
               key={item.id}
-              className="border border-gray-200 rounded-lg p-4"
+              className="border border-gray-200 rounded-lg p-3 sm:p-4"
             >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-900">{index + 1}.</h3>
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{index + 1}.</h3>
                 {items.length > 1 && (
                   <button
                     type="button"
                     onClick={() => handleRemoveItem(item.id)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-md sm:rounded-lg transition-colors"
                   >
-                    <TrashIcon className="w-4 h-4" />
+                    <TrashIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                 <div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1 tracking-tight">
                         Link <span className="text-red-500">*</span>
@@ -179,7 +196,7 @@ export default function ShoppingRequestForm() {
                 </div>
 
                 <div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1 tracking-tight">
                         Quantity <span className="text-red-500">*</span>
@@ -229,7 +246,7 @@ export default function ShoppingRequestForm() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1 tracking-tight">
                     Other Variants
@@ -273,18 +290,18 @@ export default function ShoppingRequestForm() {
           ))}
         </div>
 
-        <div className="mt-4">
+        <div className="mt-3 sm:mt-4">
           <button
             type="button"
             onClick={handleAddNewItem}
-            className="bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+            className="bg-purple-700 text-white px-3 sm:px-4 py-2 rounded-md sm:rounded-lg text-sm font-medium flex items-center gap-2 w-full sm:w-auto"
           >
             <PlusIcon className="w-4 h-4" />
             Add New Link
           </button>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-3 sm:mt-4">
           <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-tight">
             Remarks
           </label>
@@ -292,7 +309,7 @@ export default function ShoppingRequestForm() {
             value={remarks}
             onChange={(e) => setRemarks(e.target.value)}
             placeholder="Enter any specific requests"
-            rows={4}
+            rows={3}
             className={`${inputStyles} resize-vertical`}
           />
         </div>
@@ -301,11 +318,11 @@ export default function ShoppingRequestForm() {
           <button
             type="submit"
             disabled={loading}
-            className={`bg-purple-700 text-white px-8 py-3 rounded-lg text-sm font-medium transition-colors duration-200 
+            className={`bg-purple-700 text-white px-6 sm:px-8 py-3 rounded-md sm:rounded-lg text-sm font-medium transition-colors duration-200 w-full sm:w-auto
               ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-purple-600"}`}
           >
             {loading ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 justify-center">
                 <CircularProgress size={18} color="inherit" />
                 Submitting...
               </div>
