@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import { CheckoutHeader } from "@/components/ecommerce/checkout/CheckoutHeader";
 import { FastDeliveryBanner } from "@/components/ecommerce/checkout/FastDeliveryBanner";
 import { DeliveryInfoCard } from "@/components/ecommerce/checkout/DeliveryInfoCard";
 import { OrderSummary } from "@/components/ecommerce/checkout/OrderSummary";
@@ -113,8 +112,6 @@ export default function CheckoutPage() {
 
   return (
     <Box sx={{ bgcolor: "#fafafa", minHeight: "100vh" }}>
-      <CheckoutHeader itemCount={checkedOutItems.length} />
-
       <Container maxWidth="lg" sx={{ py: { xs: 1, md: 3 }, px: { xs: 1, sm: 2 } }}>
         <FastDeliveryBanner />
 

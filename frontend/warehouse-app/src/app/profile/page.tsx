@@ -77,10 +77,11 @@ function ProfileContent() {
   );
 
   useEffect(() => {
-    if (viewParam && viewParam !== activeView) {
-      setActiveView(viewParam);
+    const targetView = viewParam || (isDesktop ? "details" : "menu");
+    if (targetView !== activeView) {
+      setActiveView(targetView);
     }
-  }, [viewParam, activeView]);
+  }, [viewParam, activeView, isDesktop]);
 
   const handleNavigate = (view: ProfileViewType) => {
     if (!isDesktop && view === "details") {
@@ -97,12 +98,13 @@ function ProfileContent() {
   };
 
   const handleBack = () => {
+    const targetView = isDesktop ? "details" : "menu";
     // Update URL when going back
     const params = new URLSearchParams(searchParams.toString());
-    params.set("view", "menu");
+    params.set("view", targetView);
     router.replace(`/profile?${params.toString()}`);
 
-    setActiveView("menu");
+    setActiveView(targetView);
   };
 
   const renderContent = () => {
@@ -118,9 +120,9 @@ function ProfileContent() {
           />
         );
       case "country":
-        return <CountrySelectionView onBack={handleBack} showBackButton={!isDesktop} />;
+        return <CountrySelectionView onBack={handleBack} showBackButton={false} />;
       case "currency":
-        return <CurrencySelectionView onBack={handleBack} showBackButton={!isDesktop} />;
+        return <CurrencySelectionView onBack={handleBack} showBackButton={false} />;
       case "menu":
       default:
         return isDesktop ? (

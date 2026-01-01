@@ -2,7 +2,6 @@
 import React from "react";
 import { useSession } from "next-auth/react";
 
-import OrdersHeader from "@/components/ecommerce/order/OrdersHeader";
 import OrdersContent from "@/components/ecommerce/order/OrdersContent";
 
 export default function Orders() {
@@ -11,7 +10,6 @@ export default function Orders() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <OrdersHeader />
       <OrdersContent userId={user_id} />
     </div>
   );

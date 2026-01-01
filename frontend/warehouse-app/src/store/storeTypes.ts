@@ -3,8 +3,8 @@ import { EcommerceCategory, EcommerceProduct, LocalCartItem, UserAddress } from 
 export type CategoryStore = {
   selectedCategory: string | null;
   categories: EcommerceCategory[];
-  setCategory: (categoryId: string | null) => void;
-  handleCategorySelect: (categoryId: string | null) => void;
+  setCategory: (categorySlug: string | null) => void;
+  handleCategorySelect: (categorySlug: string | null) => void;
   getCategories: (countryCode?: string) => Promise<EcommerceCategory[]>;
 };
 
@@ -33,7 +33,7 @@ export type ProductStore = {
   setSearchQuery: (query: string) => void;
   getProducts: (params?: GetProductsParams) => Promise<EcommerceProduct[]>;
   fetchProductBySlug: (slug: string, currency?: string, userId?: string, countryCode?: string) => Promise<EcommerceProduct>;
-  getCategoryProducts: (categoryId: string, currency?: string, countryCode?: string, limit?: number, userId?: string) => Promise<EcommerceProduct[]>;
+  getCategoryProducts: (categorySlug: string, currency?: string, countryCode?: string, limit?: number, userId?: string) => Promise<EcommerceProduct[]>;
   handleProductSelect: (productId: string) => void;
   fetchProducts: (
     params: FetchProductsParams,

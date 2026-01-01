@@ -140,15 +140,6 @@ export interface CreateOrderRequest {
 }
 
 // Component Props Interfaces
-export interface EcommerceHeaderProps {
-  cartItemCount: number;
-  locationData: any;
-  onMenuClick?: () => void;
-  hideMenuButton?: boolean;
-  hideSearch?: boolean;
-  hideLocation?: boolean;
-}
-
 export interface EcommerceSearchBarProps {
   searchQuery: string;
   placeholder: string;

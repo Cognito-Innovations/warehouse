@@ -10,10 +10,10 @@ const useCategoryStore = create<CategoryStore>()(
       selectedCategory: null,
       categories: [],
 
-      setCategory: (categoryId: string | null) => set({ selectedCategory: categoryId }),
+      setCategory: (categorySlug: string | null) => set({ selectedCategory: categorySlug }),
 
-      handleCategorySelect: (categoryId: string | null) =>
-        set({ selectedCategory: categoryId }),
+      handleCategorySelect: (categorySlug: string | null) =>
+        set({ selectedCategory: categorySlug }),
 
       getCategories: async (countryCode?: string) => {
         const currentCategories = get().categories;

@@ -1,15 +1,18 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Box, IconButton } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
-
+import useCategoryStore from "@/store/categoryStore";
 import CategoryItems from "./CategoryItems";
 import CategoryStaticAllCard from "./CategoryStaticAllCard";
 import CategoryStaticAssistedCard from "./CategoryStaticAssistedCard";
 
 export default function CategorySection() {
+  const router = useRouter();
+  const { selectedCategory, setCategory } = useCategoryStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
@@ -36,6 +39,16 @@ export default function CategorySection() {
     }
   };
 
+  const handleAllClick = () => {
+    setCategory(null);
+    router.push('/ecommerce');
+  };
+
+  const handleAssistedClick = () => {
+    setCategory('assisted');
+    router.push('/ecommerce/assisted-shopping');
+  };
+
   return (
     <Box sx={{ position: "relative" }}>
       <Box
@@ -57,8 +70,8 @@ export default function CategorySection() {
           scrollBehavior: "smooth",
         }}
       >
-        <CategoryStaticAllCard />
-        <CategoryStaticAssistedCard />
+        <CategoryStaticAllCard onClick={handleAllClick} isSelected={selectedCategory === null} />
+        <CategoryStaticAssistedCard onClick={handleAssistedClick} isSelected={selectedCategory === 'assisted'} />
         <CategoryItems />
       </Box>
 
@@ -68,7 +81,8 @@ export default function CategorySection() {
           sx={{
             position: "absolute",
             right: { xs: -10, md: -20 },
-            top: { xs: "14px", md: "20px" },
+            top: { xs: "50%", md: "20px" },
+            transform: { xs: "translateY(-50%)", md: "none" },
             zIndex: 2,
             width: { xs: 32, md: 40 },
             height: { xs: 32, md: 40 },

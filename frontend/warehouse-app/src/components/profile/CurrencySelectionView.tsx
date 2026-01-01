@@ -48,24 +48,42 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const currenciesData = await getCurrencies();
+                const currenciesPromise = getCurrencies();
+
+                const prefsPromise = user?.id 
+                    ? getUserPreferences(user.id) 
+                    : Promise.resolve(null);
+
+                const [currenciesData, prefsData] = await Promise.all([
+                    currenciesPromise,
+                    prefsPromise
+                ]);
+
                 setCurrencies(currenciesData);
 
-                if (user?.id) {
-                    const prefs = await getUserPreferences(user.id);
-                    if (prefs?.currency?.id) {
-                        setCurrentCurrencyId(prefs.currency.id);
-                    }
+                let selectedId = "";
+
+                if (prefsData?.currency?.id) {
+                    selectedId = prefsData.currency.id;
+                } 
+                else if (userLocation?.currency) {
+                    const localMatch = currenciesData.find(
+                        (c: Currency) => c.currency_symbol === userLocation.currency
+                    );
+                    if (localMatch) selectedId = localMatch.id;
+                }
+                if (selectedId) {
+                    setCurrentCurrencyId(selectedId);
                 }
             } catch (error) {
-                console.error("Failed to fetch currencies or preferences", error);
+                console.error("Failed to fetch data", error);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchData();
-    }, [user?.id]);
+    }, [user?.id, userLocation?.currency]);
 
     const filteredCurrencies = currencies.filter(currency =>
         currency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,26 +94,27 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
         if (updatingId || currency.id === currentCurrencyId) return;
 
         setUpdatingId(currency.id);
+        const previousId = currentCurrencyId;
+        setCurrentCurrencyId(currency.id);
+
         try {
+            setUserLocation({
+                ...userLocation,
+                currency: currency.currency_symbol 
+            });
+
             if (user?.id) {
                 await updatePreferences({
                     user_id: user.id,
                     currency_id: currency.id
                 });
+                await refreshUserPreferences();
             }
-
-            // Update local store for system-wide consistency
-            setUserLocation({
-                ...userLocation,
-                currency: currency.currency_symbol // Or code if available
-            });
-
-            setCurrentCurrencyId(currency.id);
-            await refreshUserPreferences();
             toast.success(`Currency updated to ${currency.name}`);
         } catch (error) {
             console.error("Failed to update currency preference", error);
             toast.error("Failed to update currency preference");
+            setCurrentCurrencyId(previousId);
         } finally {
             setUpdatingId(null);
         }

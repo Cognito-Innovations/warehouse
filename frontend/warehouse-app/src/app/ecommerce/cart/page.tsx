@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 
 import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import CartHeader from "@/components/ecommerce/cart/CartHeader";
 import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
 import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
@@ -92,8 +91,6 @@ export default function CartPage() {
 
   return (
     <Box sx={{ bgcolor: "grey.50", minHeight: "100vh" }}>
-      <CartHeader />
-
       <Container maxWidth="lg" sx={{ py: 3, px: { xs: 2, sm: 3 } }}>
         <Box
           sx={{

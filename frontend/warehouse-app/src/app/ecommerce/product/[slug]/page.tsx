@@ -7,7 +7,6 @@ import { useParams } from "next/navigation";
 import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import ProductDetailHeader from "@/components/ecommerce/ProductDetailHeader";
 import ProductDetailImageSection from "@/components/ecommerce/ProductDetailImageSection";
 import ProductDetailInfoSection from "@/components/ecommerce/ProductDetailInfoSection";
 import ProductDetailLoadingState from "@/components/ecommerce/ProductDetailLoadingState";
@@ -121,8 +120,6 @@ export default function ProductDetailPage() {
 
   return (
     <Box sx={{ bgcolor: ecommerceData.ui.colors.productDetailBackground, minHeight: "100vh" }}>
-      <ProductDetailHeader />
-
       <Container maxWidth="lg" sx={{ py: 2 }}>
         <Box sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, gap: 3 }}>
           <ProductDetailImageSection
