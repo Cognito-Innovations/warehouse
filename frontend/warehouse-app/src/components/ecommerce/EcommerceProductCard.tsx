@@ -7,11 +7,12 @@ import {
   CardContent,
   Typography,
   Box,
-  Button,
   Chip,
+  IconButton,
+  Button,
   useTheme,
 } from "@mui/material";
-import { Star } from "@mui/icons-material";
+import { Star, Add } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
@@ -37,8 +38,8 @@ export default function EcommerceProductCard({
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
     countryName: undefined,
-    city: '',
-    pincode: '',
+    city: "",
+    pincode: "",
   });
 
   const rawPrice = product.price.price;
@@ -87,7 +88,7 @@ export default function EcommerceProductCard({
       <Box
         sx={{
           position: "relative",
-          height: { xs: 140, sm: 180 },
+          height: { xs: 160, sm: 180 },
           overflow: "hidden",
         }}
       >
@@ -103,49 +104,50 @@ export default function EcommerceProductCard({
             size="small"
             sx={{
               position: "absolute",
-              top: 8,
-              left: 8,
+              top: { xs: 6, sm: 8 },
+              left: { xs: 6, sm: 8 },
               bgcolor: ecommerceData.ui.colors.discountBadge,
               color: "white",
-              fontSize: "0.7rem",
-              height: 20,
+              fontSize: { xs: "0.65rem", sm: "0.7rem" },
+              height: { xs: 18, sm: 20 },
               fontWeight: 600,
             }}
           />
         )}
       </Box>
 
-      <CardContent sx={{ p: 1.25, pb: 1 }}>
+      <CardContent sx={{ p: { xs: 1, sm: 1.25 }, pb: { xs: 0.75, sm: 1 }, pt: { xs: 1.5, sm: 1.25 }, "&:last-child": { pb: { xs: 0.75, sm: 1 } } }}>
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            mb: 0.5,
+            mb: { xs: 0.5, sm: 0.5 },
+            minHeight: { xs: 20, sm: "auto" },
           }}
         >
           {unitValue > 0 && (
-            <Typography variant="caption" color="text.secondary">
-              {unitValue} {measurementLabel}
+            <Typography 
+              variant="caption" 
+              color="text.secondary"
+              sx={{ fontSize: { xs: "0.65rem", sm: "0.75rem" } }}
+            >
+              Qty: {unitValue} {measurementLabel}
             </Typography>
           )}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-            <Star sx={{ fontSize: 14, color: ecommerceData.ui.colors.starColor }} />
-            <Typography variant="caption" color="text.secondary">
-              4.1
-            </Typography>
-          </Box>
         </Box>
         <Typography
           variant="body2"
           fontWeight={600}
           sx={{
             display: "-webkit-box",
-            WebkitLineClamp: 2,
+            WebkitLineClamp: { xs: 1, sm: 2 },
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
-            fontSize: "0.9rem",
-            mb: 0.25,
+            fontSize: { xs: "0.8rem", sm: "0.9rem" },
+            mb: { xs: 0.5, sm: 0.25 },
+            lineHeight: { xs: 1.2, sm: 1.4 },
+            minHeight: { xs: 19.2, sm: "auto" },
           }}
         >
           {product.name}
@@ -154,32 +156,36 @@ export default function EcommerceProductCard({
           variant="caption"
           color="text.secondary"
           sx={{
-            display: "-webkit-box",
+            display: { xs: "none", sm: "-webkit-box" },
             WebkitLineClamp: 1,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
-            mb: 1,
+            mb: { xs: 0, sm: 1 },
           }}
         >
           {product.description || ""}
         </Typography>
 
-        {/* Price and Add Button  */}
+        {/* Price and Quantity Controls */}
         <Box
           sx={{
             display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { sm: "center" },
-            justifyContent: { sm: "space-between" },
-            gap: { xs: 0.75, sm: 1 },
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1,
+            mt: { xs: 0.5, sm: 0 },
           }}
         >
-          <Box>
+          <Box sx={{ flex: 1 }}>
             <Typography
               variant="body1"
               fontWeight={700}
               color="primary"
-              sx={{ fontSize: "1rem", lineHeight: 1 }}
+              sx={{ 
+                fontSize: { xs: "0.9rem", sm: "1rem" }, 
+                lineHeight: 1.2,
+              }}
             >
               {formattedDiscounted}
             </Typography>
@@ -189,52 +195,74 @@ export default function EcommerceProductCard({
                 sx={{
                   textDecoration: "line-through",
                   color: "text.secondary",
+                  fontSize: { xs: "0.7rem", sm: "0.75rem" },
                 }}
               >
                 {formattedOriginal}
               </Typography>
             )}
           </Box>
+          
 
-          {/* Add Button or Quantity Controls */}
-          {!isOutOfStock ? (
-            cartQuantity > 0 ? (
-              <ProductQuantityControl
-                quantity={cartQuantity}
-                stockQuantity={stockQuantity}
-                onIncrement={handleAddClick}
-                onDecrement={handleDecreaseClick}
-              />
-            ) : (
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleAddClick}
+          {/* Add to Cart Button - Positioned opposite to price */}
+          {!isOutOfStock && cartQuantity === 0 && (
+            <Button
+              onClick={handleAddClick}
+              variant="outlined"
+              sx={{
+                borderColor: "primary.main",
+                color: "primary.main",
+                minWidth: { xs: 32, sm: 80 },
+                width: { xs: 32, sm: "auto" },
+                height: { xs: 32, sm: 36 },
+                px: { xs: 0, sm: 1.5 },
+                borderRadius: 1,
+                borderWidth: 1.5,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: { xs: "0.875rem", sm: "0.875rem" },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                "&:hover": {
+                  borderColor: "primary.dark",
+                  bgcolor: "primary.light",
+                  color: "white",
+                  borderWidth: 1.5,
+                },
+                "&:active": {
+                  transform: "scale(0.95)",
+                },
+              }}
+            >
+              <Add sx={{ fontSize: { xs: 18, sm: 18 } }} />
+              <Typography
+                component="span"
                 sx={{
-                  height: 32,
-                  width: { xs: "100%", sm: "auto" },
-                  minWidth: { sm: 72 },
-                  fontSize: "0.8rem",
+                  display: { xs: "none", sm: "inline" },
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  ml: 0.5,
                 }}
               >
                 Add
-              </Button>
-            )
-          ) : (
-            <Button
-              variant="contained"
-              disabled
-              size="small"
-              fullWidth
-              sx={{
-                height: 32,
-                width: { xs: "100%", sm: "auto" },
-              }}
-            >
-              Add
+              </Typography>
             </Button>
           )}
+
+          {/* Quantity Controls - Only show when item is in cart */}
+          {!isOutOfStock && cartQuantity > 0 && (
+            <ProductQuantityControl
+              quantity={cartQuantity}
+              stockQuantity={stockQuantity}
+              onIncrement={handleAddClick}
+              onDecrement={handleDecreaseClick}
+            />
+          )}
+          
         </Box>
+        
+        
       </CardContent>
     </Card>
   );

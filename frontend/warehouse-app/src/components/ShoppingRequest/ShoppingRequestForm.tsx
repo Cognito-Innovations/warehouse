@@ -137,16 +137,16 @@ export default function ShoppingRequestForm() {
     "w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent";
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
       <form onSubmit={handleSubmit}>
         <div className="space-y-4 sm:space-y-6">
           {items.map((item, index) => (
             <div
               key={item.id}
-              className="border border-gray-200 rounded-lg p-3 sm:p-4"
+              className="border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6 bg-gray-50 hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{index + 1}.</h3>
+                <h3 className="font-semibold text-gray-900 text-sm">{index + 1}.</h3>
                 {items.length > 1 && (
                   <button
                     type="button"
@@ -290,18 +290,18 @@ export default function ShoppingRequestForm() {
           ))}
         </div>
 
-        <div className="mt-3 sm:mt-4">
+        <div className="mt-4 sm:mt-6">
           <button
             type="button"
             onClick={handleAddNewItem}
-            className="bg-purple-700 text-white px-3 sm:px-4 py-2 rounded-md sm:rounded-lg text-sm font-medium flex items-center gap-2 w-full sm:w-auto"
+            className="bg-purple-700 text-white px-4 sm:px-5 md:px-6 py-2.5 md:py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 w-full sm:w-auto hover:bg-purple-600 transition-colors shadow-sm hover:shadow-md"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
             Add New Link
           </button>
         </div>
 
-        <div className="mt-3 sm:mt-4">
+        <div className="mt-4 sm:mt-6">
           <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-tight">
             Remarks
           </label>
@@ -309,16 +309,16 @@ export default function ShoppingRequestForm() {
             value={remarks}
             onChange={(e) => setRemarks(e.target.value)}
             placeholder="Enter any specific requests"
-            rows={3}
+            rows={4}
             className={`${inputStyles} resize-vertical`}
           />
         </div>
 
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-end mt-6 sm:mt-8">
           <button
             type="submit"
             disabled={loading}
-            className={`bg-purple-700 text-white px-6 sm:px-8 py-3 rounded-md sm:rounded-lg text-sm font-medium transition-colors duration-200 w-full sm:w-auto
+            className={`bg-purple-700 text-white px-6 sm:px-8 md:px-10 py-3 md:py-3.5 rounded-lg text-sm font-medium transition-all duration-200 w-full sm:w-auto shadow-sm hover:shadow-md
               ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-purple-600"}`}
           >
             {loading ? (

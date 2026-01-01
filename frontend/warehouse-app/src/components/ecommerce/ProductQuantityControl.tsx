@@ -1,7 +1,6 @@
 import React from "react";
-import { Box, IconButton, Typography } from "@mui/material";
+import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { Add, Remove } from "@mui/icons-material";
-import { ecommerceData } from "@/data/ecommerceData";
 
 interface ProductQuantityControlProps {
   quantity: number;
@@ -16,6 +15,7 @@ export default function ProductQuantityControl({
   onIncrement,
   onDecrement,
 }: ProductQuantityControlProps) {
+  const theme = useTheme();
   const isMaxLimitReached = quantity >= stockQuantity;
 
   return (
@@ -24,7 +24,7 @@ export default function ProductQuantityControl({
         display: "flex",
         alignItems: "center",
         gap: 0.5,
-        border: `1px solid ${ecommerceData.ui.colors.borderColor}`,
+        border: `1px solid ${theme.palette.primary.main}`,
         borderRadius: 1,
         height: 32,
         width: { xs: "100%", sm: "auto" },
@@ -40,6 +40,7 @@ export default function ProductQuantityControl({
           height: 32,
           p: 0,
           position: "relative",
+          color: "primary.main"
         }}
       >
         <Remove sx={{ fontSize: 14 }} />
@@ -48,7 +49,7 @@ export default function ProductQuantityControl({
       <Typography
         variant="body2"
         fontWeight="bold"
-        sx={{ minWidth: 20, textAlign: "center" }}
+        sx={{ minWidth: 20, textAlign: "center", color: "primary.main" }}
       >
         {quantity}
       </Typography>
@@ -62,7 +63,7 @@ export default function ProductQuantityControl({
           height: 32,
           p: 0,
           position: "relative",
-          color: isMaxLimitReached ? "action.disabled" : "inherit",
+          color: isMaxLimitReached ? "action.disabled" : "primary.main"
         }}
       >
         <Add sx={{ fontSize: 14 }} />

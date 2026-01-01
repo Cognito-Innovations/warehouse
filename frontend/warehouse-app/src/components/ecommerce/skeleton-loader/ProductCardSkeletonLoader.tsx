@@ -7,22 +7,39 @@ export default function ProductCardSkeletonLoader() {
   return (
     <Card sx={{ borderRadius: ecommerceData.ui.spacing.cardBorderRadius, overflow: "hidden" }}>
       <Skeleton variant="rectangular" width="100%" height={180} />
-      <CardContent sx={{ p: 2, pb: "1 !important" }}>
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.5, justifyContent: "space-between", mb: 1 }}>
-          <Skeleton variant="rectangular" width={60} height={20} sx={{ borderRadius: 1 }} />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Skeleton variant="circular" width={16} height={16} />
-            <Skeleton variant="text" width={50} height={16} />
-          </Box>
+      <CardContent sx={{ p: { xs: 1, sm: 1.25 }, pb: { xs: 0.75, sm: 1 }, pt: { xs: 1.5, sm: 1.25 }, "&:last-child": { pb: { xs: 0.75, sm: 1 } } }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: { xs: 0.5, sm: 0.5 }, minHeight: { xs: 20, sm: "auto" } }}>
+          <Skeleton variant="rectangular" width={60} height={16} sx={{ borderRadius: 0.5 }} />
         </Box>
-        <Skeleton variant="text" width="100%" height={20} sx={{ mb: 0.5 }} />
-        <Skeleton variant="text" width="100%" height={32} sx={{ mb: 1 }} />
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Skeleton variant="text" width={60} height={20} />
-            <Skeleton variant="text" width={50} height={16} />
+        <Skeleton 
+          variant="text" 
+          width="100%" 
+          height={20} 
+          sx={{ 
+            mb: { xs: 0.5, sm: 0.25 },
+            fontSize: { xs: "0.8rem", sm: "0.9rem" },
+          }} 
+        />
+        <Skeleton 
+          variant="text" 
+          width="80%" 
+          height={16} 
+          sx={{ 
+            mb: { xs: 0, sm: 1 },
+            display: { xs: "none", sm: "block" },
+          }} 
+        />
+        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 1, mt: { xs: 0.5, sm: 0 } }}>
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width={80} height={24} />
+            <Skeleton variant="text" width={60} height={14} sx={{ mt: 0.25 }} />
           </Box>
-          <Skeleton variant="rectangular" width={80} height={32} sx={{ borderRadius: 1 }} />
+          <Skeleton 
+            variant="rectangular" 
+            width={{ xs: 32, sm: 80 }} 
+            height={{ xs: 32, sm: 36 }} 
+            sx={{ borderRadius: 1 }} 
+          />
         </Box>
       </CardContent>
     </Card>
