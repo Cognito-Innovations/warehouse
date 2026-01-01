@@ -14,7 +14,7 @@ export default function ProfileLayout({
 }) {
   return (
     <Box sx={{ display: "flex", height: "calc(100vh - 64px)" }}>
-      <ProfileSidebar />
+      {/* <ProfileSidebar /> */}
       <Box sx={{ flex: 1, p: 3, overflow: "auto" }}>
         {children}
       </Box>

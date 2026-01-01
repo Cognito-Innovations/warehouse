@@ -37,7 +37,7 @@ export class UserPreferencesService {
     private readonly userPreferenceRepository: Repository<UserPreference>,
     private externalCurrencyService: ExternalCurrencyService,
     private httpService: HttpService,
-  ) {}
+  ) { }
 
   async create(createUserPreferenceDto: CreateUserPreferenceDto) {
     const existingPreference = await this.userPreferenceRepository.findOne({
@@ -196,19 +196,22 @@ export class UserPreferencesService {
     const code = currencyCode.toUpperCase();
     const symbol = CURRENCY_SYMBOL_MAP[code] || DEFAULT_CURRENCY.symbol;
     let rate: number = DEFAULT_CURRENCY.rate;
-
     try {
-      const rateResponse = await firstValueFrom(
-        this.httpService.get<ExchangeRateResponse>(
-          `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
-        ),
-      );
-      const rateData = rateResponse.data;
+      if (code === BASE_EXCHANGE_CURRENCY) {
+        rate = 1;
+      } else {
+        const rateResponse = await firstValueFrom(
+          this.httpService.get<ExchangeRateResponse>(
+            `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
+          ),
+        );
+        const rateData = rateResponse.data;
 
-      if (!rateData.rates || typeof rateData.rates[code] !== 'number') {
-        throw new Error(`No exchange rate found for ${code}`);
+        if (!rateData.rates || typeof rateData.rates[code] !== 'number') {
+          throw new Error(`No exchange rate found for ${code}`);
+        }
+        rate = rateData.rates[code];
       }
-      rate = rateData.rates[code];
     } catch (error) {
       console.error(`Failed to fetch rate for ${code}:`, error);
       rate = 1;
@@ -248,6 +251,32 @@ export class UserPreferencesService {
       existingPreference.user.id !== updateUserPreferenceDto.user_id
     ) {
       throw new BadRequestException('User ID mismatch');
+    }
+
+    if (updateUserPreferenceDto.currency_id) {
+      existingPreference.currency = {
+        id: updateUserPreferenceDto.currency_id,
+      } as Currency;
+    }
+    if (updateUserPreferenceDto.courier_id) {
+      existingPreference.courier = {
+        id: updateUserPreferenceDto.courier_id,
+      } as CourierCompany;
+    }
+
+    return this.userPreferenceRepository.save(existingPreference);
+  }
+
+  async updateByUserId(
+    userId: string,
+    updateUserPreferenceDto: UpdateUserPreferenceDto,
+  ) {
+    const existingPreference = await this.findByUser(userId);
+
+    if (!existingPreference) {
+      throw new NotFoundException(
+        `UserPreference for user ID ${userId} not found`,
+      );
     }
 
     if (updateUserPreferenceDto.currency_id) {

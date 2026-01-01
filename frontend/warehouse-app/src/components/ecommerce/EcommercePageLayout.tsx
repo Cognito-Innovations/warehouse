@@ -5,7 +5,7 @@ import { Box, Container } from "@mui/material";
 
 import { useCartStore } from "@/store/cartStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import EcommerceHeader from "@/components/ecommerce/EcommerceHeader";
+
 // import EcommerceBottomNavigation from "@/components/ecommerce/EcommerceBottomNavigation";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceCategory } from "@/types/ecommerce";
@@ -37,10 +37,7 @@ export default function EcommercePageLayout({
           mx: "auto",
         }}
       >
-        <EcommerceHeader
-          locationData={locationData}
-          cartItemCount={cartProductQuantityCount()}
-        />
+
 
         {/* Today's Deals Section with Promotional Cards */}
         <Box

@@ -10,16 +10,18 @@ import {
 import { CurrenciesService } from './currencies.service';
 import { CreateCurrencyDto } from './dto/create-currency.dto';
 import { UpdateCurrencyDto } from './dto/update-currency.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('currencies')
 export class CurrenciesController {
-  constructor(private readonly currenciesService: CurrenciesService) {}
+  constructor(private readonly currenciesService: CurrenciesService) { }
 
   @Post()
   create(@Body() createCurrencyDto: CreateCurrencyDto) {
     return this.currenciesService.create(createCurrencyDto);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.currenciesService.findAll();

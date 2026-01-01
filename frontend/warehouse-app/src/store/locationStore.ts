@@ -5,11 +5,11 @@ import { LocationStore, UserLocation } from "./storeTypes";
 
 const useLocationStore = create<LocationStore>((set, get) => ({
   userLocation: {
-    city: "",
-    pincode: "",
-    countryCode: undefined,
-    countryName: undefined,
-    currency: undefined,
+    city: "Mumbai",
+    pincode: "400001",
+    countryCode: "IN",
+    countryName: "India",
+    currency: "USD",
   },
   userAddress: null,
   addressCache: {},
@@ -28,17 +28,12 @@ const useLocationStore = create<LocationStore>((set, get) => ({
     try {
       const { countryCode, countryName, currency } = await getUserCountryByIP();
 
-      if (!countryCode) {
-        get().requestLocation(enableGeolocation);
-        return;
-      }
-
       const userLocation: UserLocation = {
-        city: defaultCity, 
-        pincode: defaultPincode,
-        countryCode,
-        countryName,
-        currency,
+        city: countryCode === "IN" ? "Mumbai" : defaultCity,
+        pincode: countryCode === "IN" ? "400001" : defaultPincode,
+        countryCode: countryCode || "IN",
+        countryName: countryName || "India",
+        currency: "USD", // Support requested default currency
       };
 
       get().setUserLocation(userLocation);
@@ -92,11 +87,11 @@ const useLocationStore = create<LocationStore>((set, get) => ({
 
           const pincode = address.postcode || "";
           const ipGeo = await getUserCountryByIP();
-          const userLocation: UserLocation = { 
-            city, 
-            pincode, 
-            countryCode: ipGeo.countryCode, 
-            countryName: address.country || ipGeo.countryName, 
+          const userLocation: UserLocation = {
+            city,
+            pincode,
+            countryCode: ipGeo.countryCode,
+            countryName: address.country || ipGeo.countryName,
             currency: ipGeo.currency
           };
 

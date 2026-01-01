@@ -12,4 +12,4 @@ import { SharedModule } from 'src/shared/shared.module';
   providers: [UserPreferencesService],
   exports: [UserPreferencesService],
 })
-export class UserPreferencesModule {}
+export class UserPreferencesModule { }

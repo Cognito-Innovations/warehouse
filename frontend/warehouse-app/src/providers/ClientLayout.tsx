@@ -2,8 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Toaster } from "sonner";
-import AddressLayout from "./AddressLayout";
-import Header from "@/components/Navbar/Header";
+import EcommerceHeader from "@/components/ecommerce/EcommerceHeader";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -11,20 +10,14 @@ interface ClientLayoutProps {
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const pathname = usePathname();
-  //To force move site, we need to update it here "/" to "/path-name".
-  const hideHeader = pathname === "/";
-  
-  // Don't show header for ecommerce routes
-  const isEcommerceRoute = pathname.startsWith("/ecommerce");
+
 
   const hideForAuth = pathname === "/sign-in";
 
   return (
     <>
-      {!hideHeader && !isEcommerceRoute && !hideForAuth && (
-        <AddressLayout>
-          <Header />
-        </AddressLayout>
+      {!hideForAuth && (
+        <EcommerceHeader />
       )}
       {children}
       <Toaster position="top-right" richColors />
