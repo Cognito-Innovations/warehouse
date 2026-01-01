@@ -19,15 +19,15 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
   placeholder
 }) => {
   return (
-    <div className="flex items-center gap-2 my-4">
-      <div className="flex-shrink-0 w-[250px]">
+    <div className="flex items-center gap-2 sm:gap-3 my-2 sm:my-4">
+      <div className="flex-grow sm:flex-initial sm:w-[300px]">
         <SearchBar
           placeholder={placeholder}
           value={searchTerm}
           onChange={onSearchChange}
         />
       </div>
-      <div className="flex-1" /> {/* empty area */}
+      <div className="hidden sm:block flex-1" />
       <div className="flex-shrink-0">
         <FilterDropdown
           options={filterOptions}
