@@ -1,34 +1,31 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-    LocalShipping as ShipmentIcon
-} from "@mui/icons-material";
+import { LocalShipping as ShipmentIcon } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 
 import { getShipmentsByUser } from "@/lib/api.service";
-import { formatDateTime } from "@/lib/utils";
-import { getStatusProps } from "@/lib/statusUtils";
-import { ROUTES } from "@/utils/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import EmptyState from "../Tabs/EmptyState";
 import SearchAndFilter from "../Tabs/SearchAndFilter";
+import ShipmentHeader from "./Shipments/ShipmentHeader";
+import ShipmentCardMobile from "./Shipments/ShipmentCardMobile";
+import ShipmentTableRow from "./Shipments/ShipmentTableRow";
 
 const ShipmentsContent = () => {
     const { user } = useAuth();
     const { data: session } = useSession();
-    const router = useRouter();
 
     const [shipments, setShipments] = useState<any[]>([]);
     const [shipmentsLoading, setShipmentsLoading] = useState(false);
     const [shipmentSearchTerm, setShipmentSearchTerm] = useState("");
     const [shipmentFilter, setShipmentFilter] = useState<string>("all");
 
-    const fetchData = async () => {
-        const userId = (session?.user as any)?.user_id;
+    const userId = (session?.user as any)?.user_id;
+
+    const fetchData = useCallback(async () => {
         if (!userId) return;
 
         setShipmentsLoading(true);
@@ -40,11 +37,11 @@ const ShipmentsContent = () => {
         } finally {
             setShipmentsLoading(false);
         }
-    };
+    }, [userId]);
 
     useEffect(() => {
         fetchData();
-    }, [(session?.user as any)?.user_id, user?.id]);
+    }, [fetchData]);
 
 
     const filteredShipments = shipments.filter((shipment) => {
@@ -55,7 +52,9 @@ const ShipmentsContent = () => {
 
     return (
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-            <div className="p-4 border-b border-gray-100 space-y-4">
+            <ShipmentHeader title="Shipments" />
+
+            <div className="p-4 border-b border-gray-100">
                 <SearchAndFilter
                     searchTerm={shipmentSearchTerm}
                     onSearchChange={setShipmentSearchTerm}
@@ -65,20 +64,50 @@ const ShipmentsContent = () => {
                 />
             </div>
 
-            <div className="overflow-x-auto max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+            {/* Mobile Card */}
+            <div className="md:hidden max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 p-4 space-y-3">
+                {shipmentsLoading ? (
+                    <div className="flex justify-center items-center py-12">
+                        <CircularProgress size={32} className="text-purple-600" />
+                    </div>
+                ) : filteredShipments.length === 0 ? (
+                    <div className="py-12">
+                        <EmptyState icon={<ShipmentIcon />} message="No Shipments Found" />
+                    </div>
+                ) : (
+                    filteredShipments.map((shipment) => (
+                        <ShipmentCardMobile key={shipment.id} shipment={shipment} />
+                    ))
+                )}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
                 <table className="min-w-full divide-y divide-gray-200 border-separate border-spacing-0">
                     <thead className="bg-gray-50/95 sticky top-0 z-10 backdrop-blur-sm shadow-sm">
                         <tr>
-                            <th scope="col" className="px-6 py-4 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                            <th
+                                scope="col"
+                                className="px-6 py-4 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200"
+                            >
                                 Shipment No
                             </th>
-                            <th scope="col" className="px-6 py-4 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                            <th
+                                scope="col"
+                                className="px-6 py-4 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200"
+                            >
                                 Created Date
                             </th>
-                            <th scope="col" className="px-6 py-4 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                            <th
+                                scope="col"
+                                className="px-6 py-4 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200"
+                            >
                                 Status
                             </th>
-                            <th scope="col" className="px-6 py-4 text-right text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                            <th
+                                scope="col"
+                                className="px-6 py-4 text-right text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200"
+                            >
                                 Action
                             </th>
                         </tr>
@@ -97,37 +126,14 @@ const ShipmentsContent = () => {
                                 </td>
                             </tr>
                         ) : (
-                            filteredShipments.map((shipment) => {
-                                const { IconComponent, colorClassName } = getStatusProps(shipment.status);
-                                return (
-                                    <tr
-                                        key={shipment.id}
-                                        className="group hover:bg-gray-50/80 transition-all duration-200 cursor-pointer"
-                                        onClick={() => router.push(`${ROUTES.SHIPMENT}/${shipment.shipment_no}`)}
-                                    >
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 group-hover:text-purple-700 transition-colors">
-                                            {shipment.shipment_no}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
-                                            {formatDateTime(shipment.created_at)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${colorClassName} bg-opacity-10 font-bold`}>
-                                                <IconComponent className="text-[14px]" />
-                                                <span className="uppercase text-[9px] sm:text-[10px] tracking-wider">{shipment.status}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-purple-600 group-hover:underline">
-                                            View Details
-                                        </td>
-                                    </tr>
-                                );
-                            })
+                            filteredShipments.map((shipment) => (
+                                <ShipmentTableRow key={shipment.id} shipment={shipment} />
+                            ))
                         )}
                     </tbody>
                 </table>
             </div>
-        </div >
+        </div>
     );
 };
 

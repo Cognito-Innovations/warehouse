@@ -136,13 +136,6 @@ export default function ShipmentDetailPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          <div className="w-full lg:w-[320px] lg:flex-shrink-0">
-            <TrackingStatus
-              trackingRequests={request.tracking_requests || []}
-              status={request.status}
-            />
-          </div>
-
           <div className="w-full lg:flex-1 space-y-6">
             {displayInvoiceSection && (
               <>
@@ -155,6 +148,12 @@ export default function ShipmentDetailPage() {
                 <Invoices request={request} payment_slips={request.payment_slips} onUpdate={fetchRequest} />
               </>
             )}
+          </div>
+          <div className="w-full lg:w-[320px] lg:flex-shrink-0">
+            <TrackingStatus
+              trackingRequests={request.tracking_requests || []}
+              status={request.status}
+            />
           </div>
         </div>
       </div>

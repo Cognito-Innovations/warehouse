@@ -84,7 +84,7 @@ export default function CartPage() {
   }
 
   if (!cartProducts || cartProducts.length === 0) {
-    return <EmptyCartState/>
+    return <EmptyCartState/>;
   }
 
   const validItems = cartProducts.filter(item => item && item.product);
