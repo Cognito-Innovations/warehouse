@@ -15,12 +15,12 @@ export default function EcommerceProductsGrid({
       sx={{
         display: "grid",
         gridTemplateColumns: {
-          xs: "1fr",
+          xs: "repeat(2, 1fr)",
           sm: "repeat(auto-fill, minmax(220px, 1fr))",
           md: "repeat(auto-fill, minmax(240px, 1fr))",
           lg: "repeat(auto-fill, minmax(260px, 1fr))",
         },
-        gap: 2,
+        gap: { xs: 1, sm: 2 },
       }}
     >
       {products.map((product: EcommerceProduct) => {

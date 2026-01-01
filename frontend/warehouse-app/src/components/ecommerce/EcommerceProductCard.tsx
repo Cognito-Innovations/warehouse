@@ -7,11 +7,12 @@ import {
   CardContent,
   Typography,
   Box,
-  Button,
   Chip,
+  IconButton,
+  Button,
   useTheme,
 } from "@mui/material";
-import { Star, Image as ImageIcon } from "@mui/icons-material";
+import { Star, Add } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
@@ -32,22 +33,20 @@ export default function EcommerceProductCard({
   const {handleProductSelect} = useProductStore();
   const incrementCartQuantity = useCartStore((state) => state.incrementCartQuantity);
   const decrementCartQuantity = useCartStore((state) => state.decrementCartQuantity);
-  const cartQuantity = useCartStore((state) => state.cartProducts.find(item => item.product_id === product.id)?.quantity || 0);
+  const cartQuantity = useCartStore((state) => state.cartProducts.find((item) => item.product_id === product.id))?.quantity || 0;
 
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
     countryName: undefined,
-    city: '',
-    pincode: '',
+    city: "",
+    pincode: "",
   });
-  const selectedCurrency = locationData.currencyInfo.code;
 
   const rawPrice = product.price.price;
   const currency = product.price.currency;
-  const formattedOriginal = formatPrice(rawPrice, currency);
-  
   const discountPercent = parseFloat(String(product.discount_percentage || 0)) || 0;
   const discountedRaw = calculateDiscountedPrice(rawPrice, discountPercent);
+  const formattedOriginal = formatPrice(rawPrice, currency);
   const formattedDiscounted = formatPrice(discountedRaw, currency);
 
   const unitValue = parseFloat(String(product.unit_value || "0"));
@@ -55,29 +54,26 @@ export default function EcommerceProductCard({
   const stockQuantity = product.stock_quantity;
   const isOutOfStock = stockQuantity === 0;
 
-  // Placeholder image URL  Make we process the image in 300x180 only for best UI view
-  const placeholderImage = `https://placehold.co/300x180?text=${product.name}`;
-  const imageUrl = product.image_url || placeholderImage;
+  const imageUrl = product.image_url || `https://placehold.co/300x180?text=${product.name}`;
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    incrementCartQuantity(product, selectedCurrency);
+    incrementCartQuantity(product, locationData.currencyInfo.code);
   };
 
   const handleDecreaseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    decrementCartQuantity(product, selectedCurrency);
+    decrementCartQuantity(product, locationData.currencyInfo.code);
   };
 
   return (
     <Card
       sx={{
         width: "100%",
-        maxWidth: "100%",
         borderRadius: ecommerceData.ui.spacing.cardBorderRadius,
         overflow: "hidden",
         cursor: "pointer",
-        transition: "all 0.2s ease-in-out",
+        transition: "all 0.2s ease",
         opacity: isOutOfStock ? 0.6 : 1,
         "&:hover": {
           transform: "translateY(-2px)",
@@ -89,92 +85,70 @@ export default function EcommerceProductCard({
         router.push(`${ROUTES.PRODUCT}/${product.slug}`);
       }}
     >
-     <Box sx={{ position: "relative", height: 180, width: "100%", overflow: "hidden" }}>
-        {!product.image_url ? (
-          <Box
-            sx={{
-              width: "100%",
-              height: "100%",
-              bgcolor: "grey.200",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <ImageIcon sx={{ fontSize: 48, color: "grey.400" }} />
-          </Box>
-        ) : (
-          <CardMedia
-            component="img"
-            height={180}
-            image={imageUrl}
-            alt={product.name}
-            sx={{
-              objectFit: "cover",
-              width: "100%",
-              height: "100%",
-            }}
-            onError={(e: any) => {
-              // Fallback to placeholder if image fails to load
-              e.target.src = placeholderImage;
-            }}
-          />
-        )}
-        {product.discount_percentage > 0 && !isOutOfStock && (
+      <Box
+        sx={{
+          position: "relative",
+          height: { xs: 160, sm: 180 },
+          overflow: "hidden",
+        }}
+      >
+        <CardMedia
+          component="img"
+          image={imageUrl}
+          alt={product.name}
+          sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+        {discountPercent > 0 && !isOutOfStock && (
           <Chip
-            label={formatDiscountPercentage(product.discount_percentage, "OFF")}
+            label={formatDiscountPercentage(discountPercent, "OFF")}
             size="small"
             sx={{
               position: "absolute",
-              top: 8,
-              left: 8,
+              top: { xs: 6, sm: 8 },
+              left: { xs: 6, sm: 8 },
               bgcolor: ecommerceData.ui.colors.discountBadge,
               color: "white",
-              fontWeight: "bold",
-              fontSize: "0.7rem",
+              fontSize: { xs: "0.65rem", sm: "0.7rem" },
+              height: { xs: 18, sm: 20 },
+              fontWeight: 600,
             }}
           />
         )}
-        {isOutOfStock && (
-          <Chip
-            label="Out of Stock"
-            size="small"
-            color="error"
-            sx={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              fontWeight: "bold",
-              fontSize: "0.7rem",
-            }}
-          />
-        )}
-     </Box>
+      </Box>
 
-      <CardContent sx={{ p: 2, pb: 1 }}>
-        <Box sx={{display: "flex", alignItems: "flex-start", gap: 0.5, justifyContent: "space-between"}}>
+      <CardContent sx={{ p: { xs: 1, sm: 1.25 }, pb: { xs: 0.75, sm: 1 }, pt: { xs: 1.5, sm: 1.25 }, "&:last-child": { pb: { xs: 0.75, sm: 1 } } }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: { xs: 0.5, sm: 0.5 },
+            minHeight: { xs: 20, sm: "auto" },
+          }}
+        >
           {unitValue > 0 && (
-            <Chip label={`${unitValue} ${measurementLabel}`} variant="outlined" size="small" sx={{ mb: 1, borderColor: "primary.main", color: "primary.main", fontSize: "0.7rem", height: 20 }}/>
-          )}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Star sx={{ fontSize: 16, color: ecommerceData.ui.colors.starColor }} />
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.875rem" }}>
-              4.1 32
+            <Typography 
+              variant="caption" 
+              color="text.secondary"
+              sx={{ fontSize: { xs: "0.65rem", sm: "0.75rem" } }}
+            >
+              Qty: {unitValue} {measurementLabel}
             </Typography>
-          </Box>
+          )}
         </Box>
         <Typography
           variant="body2"
-          fontWeight="bold"
+          fontWeight={600}
           sx={{
             display: "-webkit-box",
-            WebkitLineClamp: 2,
+            WebkitLineClamp: { xs: 1, sm: 2 },
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
-            mb: 0.5,
-            height: 20,
-            lineHeight: 1.25,
-         }}
+            fontSize: { xs: "0.8rem", sm: "0.9rem" },
+            mb: { xs: 0.5, sm: 0.25 },
+            lineHeight: { xs: 1.2, sm: 1.4 },
+            minHeight: { xs: 19.2, sm: "auto" },
+          }}
         >
           {product.name}
         </Typography>
@@ -182,100 +156,113 @@ export default function EcommerceProductCard({
           variant="caption"
           color="text.secondary"
           sx={{
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
+            display: { xs: "none", sm: "-webkit-box" },
+            WebkitLineClamp: 1,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
-            textOverflow: "ellipsis",
-            mb: 1,
-            width: "100%",
-            minHeight: 32,
-            lineHeight: 1.4,
+            mb: { xs: 0, sm: 1 },
           }}
         >
           {product.description || ""}
         </Typography>
 
-        {/* Price and Add Button */}
-        <Box sx={{ 
-          display: { xs: "block", sm: "flex" }, 
-          alignItems: { sm: "center" }, 
-          justifyContent: { sm: "space-between" }, 
-          mb: 1, 
-          columnGap: 1,
-          pr: 2
-        }}>
-          <Box sx={{ 
-            display: "flex", 
-            alignItems: "center", 
+        {/* Price and Quantity Controls */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
             gap: 1,
-            mb: { xs: 1.5, sm: 0 },
-            minWidth: 120,
-            flexShrink: 0,
-          }}>
-            <Typography variant="body1" fontWeight="bold" color="primary" sx={{ fontSize: "1rem" }}>
+            mt: { xs: 0.5, sm: 0 },
+          }}
+        >
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              variant="body1"
+              fontWeight={700}
+              color="primary"
+              sx={{ 
+                fontSize: { xs: "0.9rem", sm: "1rem" }, 
+                lineHeight: 1.2,
+              }}
+            >
               {formattedDiscounted}
             </Typography>
-            {product.discount_percentage > 0 && (
+            {discountPercent > 0 && (
               <Typography
-                variant="body2"
+                variant="caption"
                 sx={{
                   textDecoration: "line-through",
                   color: "text.secondary",
-                  fontSize: "0.875rem",
+                  fontSize: { xs: "0.7rem", sm: "0.75rem" },
                 }}
               >
                 {formattedOriginal}
               </Typography>
             )}
           </Box>
+          
 
-          {/* Add Button or Quantity Controls - NOW USES INTERNAL STATE */}
-          {!isOutOfStock && (
-            <>
-              {cartQuantity > 0 ? (
-                <ProductQuantityControl
-                  quantity={cartQuantity}
-                  stockQuantity={stockQuantity}
-                  onIncrement={handleAddClick}
-                  onDecrement={handleDecreaseClick}
-                />
-              ) : (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  onClick={handleAddClick}
-                  sx={{
-                    width: { xs: "100%", sm: 80 },
-                    height: 32,
-                    minWidth: { sm: 80 },
-                    fontSize: "0.8rem",
-                    position: "relative",
-                  }}
-                >
-                  Add
-                </Button>
-              )}
-            </>
-          )}
-          {isOutOfStock && (
+          {/* Add to Cart Button - Positioned opposite to price */}
+          {!isOutOfStock && cartQuantity === 0 && (
             <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              disabled
+              onClick={handleAddClick}
+              variant="outlined"
               sx={{
-                width: { xs: "100%", sm: 80 },
-                height: 32,
-                minWidth: { sm: 80 },
-                fontSize: "0.8rem",
+                borderColor: "primary.main",
+                color: "primary.main",
+                minWidth: { xs: 32, sm: 80 },
+                width: { xs: 32, sm: "auto" },
+                height: { xs: 32, sm: 36 },
+                px: { xs: 0, sm: 1.5 },
+                borderRadius: 1,
+                borderWidth: 1.5,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: { xs: "0.875rem", sm: "0.875rem" },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                "&:hover": {
+                  borderColor: "primary.dark",
+                  bgcolor: "primary.light",
+                  color: "white",
+                  borderWidth: 1.5,
+                },
+                "&:active": {
+                  transform: "scale(0.95)",
+                },
               }}
             >
-              Add
+              <Add sx={{ fontSize: { xs: 18, sm: 18 } }} />
+              <Typography
+                component="span"
+                sx={{
+                  display: { xs: "none", sm: "inline" },
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  ml: 0.5,
+                }}
+              >
+                Add
+              </Typography>
             </Button>
           )}
+
+          {/* Quantity Controls - Only show when item is in cart */}
+          {!isOutOfStock && cartQuantity > 0 && (
+            <ProductQuantityControl
+              quantity={cartQuantity}
+              stockQuantity={stockQuantity}
+              onIncrement={handleAddClick}
+              onDecrement={handleDecreaseClick}
+            />
+          )}
+          
         </Box>
+        
+        
       </CardContent>
     </Card>
   );

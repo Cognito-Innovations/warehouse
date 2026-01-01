@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge, Button, CircularProgress, Avatar } from "@mui/material";
-import { LocationOn, Search, ShoppingCart } from "@mui/icons-material";
+import { LocationOn, Search, ShoppingCart, Menu as MenuIcon } from "@mui/icons-material";
 
 import { useCartStore } from "@/store/cartStore";
 import useProductStore from "@/store/productStore";
@@ -19,7 +19,13 @@ import HeaderProfileMenu from "../Header/HeaderProfileMenu";
 import HeaderLocationMenu from "../Header/HeaderLocationMenu";
 
 
-export default function EcommerceHeader() {
+export default function EcommerceHeader({
+  locationData,
+  onMenuClick,
+  hideMenuButton = false,
+  hideSearch = false,
+  hideLocation = false,
+}: EcommerceHeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { searchQuery, setSearchQuery } = useProductStore();
@@ -60,7 +66,7 @@ export default function EcommerceHeader() {
   const { selectedAddress, refreshUserPreferences } = useAddressAPI();
 
   const handleSaveAddress = useCallback(async (addressData: any) => {
-    if (!user?.id) return;
+    if (!user?.id || !locationData) return;
     try {
       const apiData = {
         user_id: user.id,
@@ -68,14 +74,44 @@ export default function EcommerceHeader() {
       }
       await createUserAddress(apiData);
       await refreshUserPreferences();
+      if (locationData.refreshAddresses) {
+        await locationData.refreshAddresses();
+      }
     } catch (err) {
       console.error("Failed to save address:", err);
     } finally {
       setShowAddAddressModal(false);
     }
-  }, [user, refreshUserPreferences]);
+  }, [user, locationData, refreshUserPreferences]);
 
+  let locationText: string | null = null;
+  let onLocationClick: (() => void) | null = null;
+  let locationButtonText: string | null = null;
 
+  if (!hideLocation && locationData) {
+    if (!locationData.isLoggedIn) {
+      // Not logged in: Show Login button
+      locationButtonText = "Login";
+      onLocationClick = () => {
+        const returnTo = `${window.location.pathname}${window.location.search}`;
+        const callback = encodeURIComponent(returnTo);
+        router.push(`/sign-in?callbackUrl=${callback}`);
+      };
+    } else {
+      // Logged in: (has city & zip_code)
+      const validDefaultAddress = (locationData.address && locationData.address.city && locationData.address.zip_code)
+        ? locationData.address
+        : null;
+      if (validDefaultAddress) {
+        // Has valid address: Show default
+        locationText = `${validDefaultAddress.city}, ${validDefaultAddress.zip_code}`;
+      } else {
+        // No valid address found: Show Add Address
+        locationButtonText = "Add Address";
+        onLocationClick = () => setShowAddAddressModal(true);
+      }
+    }
+  }
 
   return (
     <>
@@ -86,71 +122,95 @@ export default function EcommerceHeader() {
             alignItems: "center",
             gap: { xs: 1, sm: 2 },
             flexWrap: { xs: "wrap", md: "nowrap" },
-            py: { xs: 2, sm: 2.5, md: 3 },
+            py: { xs: 1.5, sm: 2, md: 2.5 },
             px: { xs: 2, sm: 3, md: 4 },
             minHeight: { xs: "64px", sm: "72px", md: "80px" },
           }}
         >
-          {/* Brand Name */}
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            color="primary"
-            onClick={() => router.push("/")}
-            sx={{
-              fontSize: { xs: "1.25rem", sm: "1.5rem", md: "1.75rem" },
-              flexShrink: 0,
-              letterSpacing: "-0.02em",
-              cursor: "pointer",
-              "&:hover": {
-                opacity: 0.8
-              }
-            }}
-          >
-            Palakart
-          </Typography>
-          {/* Search Bar - Centered and Spacious */}
+          {/* Logo and Menu Trigger Wrapper */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Menu Button */}
+              {!hideMenuButton && (
+                <IconButton 
+                  edge="start" 
+                  color="inherit" 
+                  aria-label="menu" 
+                  onClick={onMenuClick}
+                  sx={{ mr: 0.5 }}
+                >
+                  <MenuIcon />
+                </IconButton>
+              )}
+
+              {/* Brand Name */}
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                color="primary"
+                sx={{
+                  fontSize: { xs: "1.25rem", sm: "1.5rem", md: "1.75rem" },
+                  flexShrink: 0,
+                  letterSpacing: "-0.02em",
+                  cursor: "pointer"
+                }}
+                onClick={() => router.push("/")}
+              >
+                Palakart
+              </Typography>
+          </Box>
+
+          {/* Search Bar */}
+          {!hideSearch && (
+            <Box
+              sx={{
+                flexGrow: { md: 1 },
+                order: { xs: 3, md: 2 },
+                width: { xs: "100%", md: "auto" },
+                maxWidth: { xs: "100%", sm: "450px", md: "600px" },
+                mx: { xs: 0, sm: 3, md: 4 },
+              }}
+            >
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Search for products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                size="medium"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ color: "text.secondary" }} />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: ecommerceData.ui.spacing.searchBorderRadius,
+                    bgcolor: ecommerceData.ui.colors.searchBackground,
+                    "& fieldset": { border: "none" },
+                    height: { xs: "44px", sm: "48px" },
+                    fontSize: { xs: "0.9375rem", sm: "1rem" },
+                  },
+                }}
+              />
+            </Box>
+          )}
+          {/* Location and Cart - Right Side */}
           <Box
             sx={{
-              flexGrow: { md: 1 },
-              order: { xs: 3, md: 2 },
-              width: { xs: "100%", md: "auto" },
-              maxWidth: { xs: "100%", sm: "450px", md: "600px" },
-              mx: { xs: 0, sm: 3, md: 4 },
+              display: "flex",
+              alignItems: "center",
+              gap: { xs: 0.5, sm: 1 },
+              order: { xs: 2, md: 3 },
+              flexShrink: 0,
+              ml: hideSearch ? 'auto' : 0 
             }}
           >
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Search for products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              size="medium"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search sx={{ color: "text.secondary" }} />
-                  </InputAdornment>
-                ),
-                sx: {
-                  borderRadius: ecommerceData.ui.spacing.searchBorderRadius,
-                  bgcolor: ecommerceData.ui.colors.searchBackground,
-                  "& fieldset": { border: "none" },
-                  height: { xs: "44px", sm: "48px" },
-                  fontSize: { xs: "0.9375rem", sm: "1rem" },
-                },
-              }}
-            />
-          </Box>
-          {/* Location and Cart - Right Side */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.25, sm: 0.5 }, order: { xs: 2, md: 3 }, flexShrink: 0, }}>
             <HeaderProfileTrigger
               currentUser={user}
               open={open}
               handleProfileMenuOpen={handleProfileMenuOpen}
               handleLocationClick={handleLocationClick}
             />
-
             <IconButton
               color="inherit"
               onClick={() => router.push(ROUTES.CART)}

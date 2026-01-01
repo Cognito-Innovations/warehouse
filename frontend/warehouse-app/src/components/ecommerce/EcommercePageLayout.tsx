@@ -1,14 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Box, Container } from "@mui/material";
 
 import { useCartStore } from "@/store/cartStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
 
 // import EcommerceBottomNavigation from "@/components/ecommerce/EcommerceBottomNavigation";
+import Sidebar from "@/components/ecommerce/sidebar/Sidebar";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceCategory } from "@/types/ecommerce";
+import EcommerceHeader from "./EcommerceHeader";
 
 interface EcommercePageLayoutProps {
   locationData: ReturnType<typeof useEffectiveUserLocation>;
@@ -22,8 +24,16 @@ export default function EcommercePageLayout({
   children,
 }: EcommercePageLayoutProps) {
   const { cartProductQuantityCount } = useCartStore();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => !prev);
+  };
+
   return (
     <Box sx={{ bgcolor: ecommerceData.ui.colors.background, minHeight: "100vh" }}>
+      <Sidebar open={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
       <Container
         maxWidth="xl"
         sx={{
@@ -37,18 +47,11 @@ export default function EcommercePageLayout({
           mx: "auto",
         }}
       >
-
-
-        {/* Today's Deals Section with Promotional Cards */}
-        <Box
-          sx={{
-            bgcolor: "white",
-            pt: { xs: 2.5, sm: 3, md: 3.5 },
-            pb: { xs: 2, sm: 2.5, md: 3 },
-            px: { xs: 2, sm: 3, md: 4 },
-          }}
-        >
-        </Box>
+        <EcommerceHeader
+          locationData={locationData}
+          cartItemCount={cartProductQuantityCount()}
+          onMenuClick={toggleSidebar}
+        />
 
         {children}
 

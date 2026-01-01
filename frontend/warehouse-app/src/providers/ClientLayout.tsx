@@ -16,9 +16,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <>
-      {!hideForAuth && (
+
+      {/*
+      TODO: Uncomment this code
+       {!hideForAuth && (
         <EcommerceHeader />
-      )}
+      )} */}
       {children}
       <Toaster position="top-right" richColors />
     </>

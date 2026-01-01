@@ -59,17 +59,17 @@ const HeaderProfileTrigger = ({
 
 
   return (
-    <div className="flex items-center space-x-1">
+    <div className="flex items-center space-x-2">
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           gap: 0.5,
-          mr: 0.2,
+          mr: { xs: 0.5, sm: 1 },
         }}
       >
         <span className="text-gray-900 text-sm opacity-80">
-          Ship to:
+          Ship from:
         </span>
         {countryCode && (
           <span onClick={handleLocationClick || handleProfileMenuOpen} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>

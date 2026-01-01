@@ -7,6 +7,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
 import CategoryItems from "./CategoryItems";
 import CategoryStaticAllCard from "./CategoryStaticAllCard";
+import CategoryStaticAssistedCard from "./CategoryStaticAssistedCard";
 
 export default function CategorySection() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -45,8 +46,8 @@ export default function CategorySection() {
           flexWrap: "nowrap",
           overflowX: "auto",
           borderBottom: "1px solid #d3d2d2",
-          py: 2,
-          pb: { xs: -2, sm: -2.5, md: -3 },
+          pt: { xs: 1.5, sm: 2 },
+          pb: { xs: 1, sm: 1.5 },
           "::-webkit-scrollbar": {
             display: "none",
           },
@@ -57,6 +58,7 @@ export default function CategorySection() {
         }}
       >
         <CategoryStaticAllCard />
+        <CategoryStaticAssistedCard />
         <CategoryItems />
       </Box>
 
@@ -91,4 +93,3 @@ export default function CategorySection() {
     </Box>
   );
 }
-
