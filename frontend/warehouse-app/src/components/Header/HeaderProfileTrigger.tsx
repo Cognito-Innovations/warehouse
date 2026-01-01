@@ -1,66 +1,147 @@
 "use client";
 
 import React from "react";
-import { Avatar, Box, IconButton } from "@mui/material";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/utils/constants";
+import { Person } from "@mui/icons-material";
+import ReactCountryFlag from "react-country-flag";
+import { useAddressAPI } from "@/hooks/useAddressAPI";
+import { Avatar, Box, IconButton, Button } from "@mui/material";
 
 interface HeaderProfileTriggerProps {
   currentUser: any;
   open: boolean;
   handleProfileMenuOpen: (event: React.MouseEvent<HTMLElement>) => void;
+  handleLocationClick?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
 const HeaderProfileTrigger = ({
   currentUser,
   open,
   handleProfileMenuOpen,
+  handleLocationClick,
 }: HeaderProfileTriggerProps) => {
+  const { selectedAddress, selectedCountry, availableCountries } =
+    useAddressAPI();
+
+  const getCountryDetails = () => {
+    if (selectedAddress?.country_code) {
+      return {
+        countryName: selectedAddress.country_name,
+        countryCode: selectedAddress.country_code,
+      };
+    }
+
+    if (selectedCountry) {
+      const country = availableCountries.find(
+        (c) => c.name === selectedCountry
+      );
+      return {
+        countryName: selectedCountry,
+        countryCode: country?.code || "",
+      };
+    }
+
+    return {
+      countryName: "India",
+      countryCode: "IN",
+    };
+  };
+
+  const { countryName, countryCode } = getCountryDetails();
+  const router = useRouter();
+
+  const handleLogin = () => {
+    const returnTo = `${window.location.pathname}${window.location.search}`;
+    const callback = encodeURIComponent(returnTo);
+    router.push(`/sign-in?callbackUrl=${callback}`);
+  };
+
+
   return (
     <div className="flex items-center space-x-2">
-      {currentUser ? (
-        <>
-          <Box>
-            <p className="px-1 py-2 text-sm font-medium rounded-md transition-all duration-200">
-              Welcome,{" "}
-              <span style={{ textTransform: "capitalize" }}>
-                {currentUser?.name || "User"}
-              </span>
-            </p>
-          </Box>
-
-          <IconButton
-            onClick={handleProfileMenuOpen}
-            className="p-0"
-            aria-controls={open ? "profile-menu" : undefined}
-            aria-haspopup="true"
-            aria-expanded={open ? "true" : undefined}
-          >
-            <Avatar
-              src={currentUser.image}
-              alt={currentUser.name}
-              sx={{
-                width: 32,
-                height: 32,
-                bgcolor: "rgba(255, 255, 255, 0.2)",
-                color: "white",
-                fontSize: "14px",
-                fontWeight: "bold",
-                border: "2px solid rgba(255, 255, 255, 0.3)",
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.3)",
-                  border: "2px solid rgba(255, 255, 255, 0.5)",
-                },
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          mr: { xs: 0.5, sm: 1 },
+        }}
+      >
+        <span className="text-gray-900 text-sm opacity-80">
+          Ship from:
+        </span>
+        {countryCode && (
+          <span onClick={handleLocationClick || handleProfileMenuOpen} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+            <ReactCountryFlag
+              countryCode={countryCode}
+              svg
+              style={{
+                width: "1.5em",
+                height: "1.5em",
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "1px solid rgba(0, 0, 0, 0.1)",
               }}
-            >
-              {currentUser.name?.charAt(0) ||
-                currentUser.email?.charAt(0) ||
-                "U"}
-            </Avatar>
-          </IconButton>
-        </>
+              title={countryName}
+            />
+          </span>
+        )}
+        <span className="hidden md:block text-gray-900 text-sm font-medium ml-1">
+          {countryCode === "AE" ? "UAE" : countryCode}
+        </span>
+      </Box>
+
+      {currentUser ? (
+        <IconButton
+          onClick={handleProfileMenuOpen}
+          className="p-0"
+          aria-controls={open ? "profile-menu" : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? "true" : undefined}
+        >
+          <Avatar
+            src={currentUser.image}
+            alt={currentUser.name}
+            imgProps={{ referrerPolicy: "no-referrer" }}
+            sx={{
+              width: 32,
+              height: 32,
+              bgcolor: "rgba(255, 255, 255, 0.2)",
+              color: "white",
+              fontSize: "14px",
+              fontWeight: "bold",
+              border: "2px solid rgba(255, 255, 255, 0)",
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 0.3)",
+                border: "2px solid rgba(255, 255, 255, 0.5)",
+              },
+            }}
+          >
+            <Person sx={{ color: "Black" }} />
+          </Avatar>
+        </IconButton>
       ) : (
-        <div className="w-8 h-8 bg-white bg-opacity-20 text-white rounded-full flex items-center justify-center font-medium text-sm cursor-pointer hover:bg-opacity-30 transition-colors">
-          ?
-        </div>
+        <Button
+          variant="outlined"
+          color="primary"
+          size="small"
+          onClick={handleLogin}
+          sx={{
+            textTransform: "none",
+            borderRadius: 20,
+            px: 2,
+            py: 0.5,
+            borderColor: "primary.main",
+            color: "primary.main",
+            "&:hover": {
+              borderColor: "primary.dark",
+              bgcolor: "rgba(0, 0, 0, 0.04)",
+            },
+          }}
+        >
+          Login
+        </Button>
       )}
     </div>
   );

@@ -14,6 +14,7 @@ import HeaderProfileMenu from "../Header/HeaderProfileMenu";
 import AddressDetailsModal from "../Modals/AddressDetailsModal/AddressDetailsModal";
 import SavedAddressesModal from "../Modals/SavedAddressesModal/SavedAddressesModal";
 import HeaderAddressSection from "./HeaderAddressSection";
+import HeaderLocationMenu from "../Header/HeaderLocationMenu";
 import { ROUTES } from "@/utils/constants";
 
 const Header = () => {
@@ -32,12 +33,22 @@ const Header = () => {
   const { user, logout } = useAuth();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [locationAnchorEl, setLocationAnchorEl] = useState<null | HTMLElement>(null);
   const [isSavedAddressesModalOpen, setIsSavedAddressesModalOpen] = useState(false);
   const [isAddressDetailsModalOpen, setIsAddressDetailsModalOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   const open = Boolean(anchorEl);
-  
+  const isLocationMenuOpen = Boolean(locationAnchorEl);
+
+  const handleLocationClick = (event: React.MouseEvent<HTMLElement>) => {
+    setLocationAnchorEl(event.currentTarget);
+  };
+
+  const handleLocationClose = () => {
+    setLocationAnchorEl(null);
+  };
+
   const handleOpenSavedAddressesModal = () => {
     setIsSavedAddressesModalOpen(true);
   };
@@ -144,14 +155,14 @@ const Header = () => {
       {pathname === "/assisted-shopping/create-request" ||
         pathname.startsWith("/pickup-request/") ||
         pathname.startsWith("/assisted-shopping/") ? null : (
-          <HeaderAddressSection
-            addressData={selectedAddress}
-            isLoading={isLoading}
-            error={error}
-            onOpenSavedAddressesModal={handleOpenSavedAddressesModal}
-            onOpenAddressDetailsModal={handleOpenAddressDetailsModal}
-          />
-        )
+        <HeaderAddressSection
+          addressData={selectedAddress}
+          isLoading={isLoading}
+          error={error}
+          onOpenSavedAddressesModal={handleOpenSavedAddressesModal}
+          onOpenAddressDetailsModal={handleOpenAddressDetailsModal}
+        />
+      )
       }
 
       <SavedAddressesModal
@@ -174,6 +185,14 @@ const Header = () => {
         handleProfileMenuClose={handleProfileMenuClose}
         handleProfileClick={handleProfileClick}
         handleLogoutClick={handleLogoutClick}
+      />
+
+      <HeaderLocationMenu
+        locationAnchorEl={locationAnchorEl}
+        isLocationMenuOpen={isLocationMenuOpen}
+        handleLocationClose={handleLocationClose}
+        selectedAddress={selectedAddress}
+        countryCode={selectedAddress?.country_code || ""}
       />
     </>
   );

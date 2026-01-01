@@ -15,7 +15,7 @@ import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 export class UserPreferencesController {
   constructor(
     private readonly userPreferencesService: UserPreferencesService,
-  ) {}
+  ) { }
 
   @Post()
   create(@Body() createUserPreferenceDto: CreateUserPreferenceDto) {
@@ -43,6 +43,17 @@ export class UserPreferencesController {
     @Body() updateUserPreferenceDto: UpdateUserPreferenceDto,
   ) {
     return this.userPreferencesService.update(id, updateUserPreferenceDto);
+  }
+
+  @Patch('by-user/:userId')
+  updateByUserId(
+    @Param('userId') userId: string,
+    @Body() updateUserPreferenceDto: UpdateUserPreferenceDto,
+  ) {
+    return this.userPreferencesService.updateByUserId(
+      userId,
+      updateUserPreferenceDto,
+    );
   }
 
   @Delete(':id')

@@ -5,11 +5,12 @@ import { Box, Container } from "@mui/material";
 
 import { useCartStore } from "@/store/cartStore";
 import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import EcommerceHeader from "@/components/ecommerce/EcommerceHeader";
+
 // import EcommerceBottomNavigation from "@/components/ecommerce/EcommerceBottomNavigation";
 import Sidebar from "@/components/ecommerce/sidebar/Sidebar";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceCategory } from "@/types/ecommerce";
+import EcommerceHeader from "./EcommerceHeader";
 
 interface EcommercePageLayoutProps {
   locationData: ReturnType<typeof useEffectiveUserLocation>;

@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge, Button, CircularProgress } from "@mui/material";
+import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge, Button, CircularProgress, Avatar } from "@mui/material";
 import { LocationOn, Search, ShoppingCart, Menu as MenuIcon } from "@mui/icons-material";
 
 import { useCartStore } from "@/store/cartStore";
@@ -13,20 +13,57 @@ import { createUserAddress } from "@/lib/api.service";
 import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
 import { EcommerceHeaderProps } from "@/types/ecommerce";
+import { useAddressAPI } from "@/hooks/useAddressAPI";
+import HeaderProfileTrigger from "../Header/HeaderProfileTrigger";
+import HeaderProfileMenu from "../Header/HeaderProfileMenu";
+import HeaderLocationMenu from "../Header/HeaderLocationMenu";
+
 
 export default function EcommerceHeader({
   locationData,
-  cartItemCount,
   onMenuClick,
   hideMenuButton = false,
   hideSearch = false,
   hideLocation = false,
 }: EcommerceHeaderProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const { searchQuery, setSearchQuery } = useProductStore();
-  const { loading: cartLoading } = useCartStore();
+  const { loading: cartLoading, cartProductQuantityCount } = useCartStore();
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [locationAnchorEl, setLocationAnchorEl] = useState<null | HTMLElement>(null);
+
+  const open = Boolean(anchorEl);
+  const isLocationMenuOpen = Boolean(locationAnchorEl);
+
+  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleProfileMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleProfileClick = () => {
+    router.push(ROUTES.PROFILE);
+    handleProfileMenuClose();
+  };
+
+  const handleLogoutClick = () => {
+    logout();
+    handleProfileMenuClose();
+  };
+
+  const handleLocationClick = (event: React.MouseEvent<HTMLElement>) => {
+    setLocationAnchorEl(event.currentTarget);
+  };
+
+  const handleLocationClose = () => {
+    setLocationAnchorEl(null);
+  };
+
+  const { selectedAddress, refreshUserPreferences } = useAddressAPI();
 
   const handleSaveAddress = useCallback(async (addressData: any) => {
     if (!user?.id || !locationData) return;
@@ -36,6 +73,7 @@ export default function EcommerceHeader({
         ...addressData,
       }
       await createUserAddress(apiData);
+      await refreshUserPreferences();
       if (locationData.refreshAddresses) {
         await locationData.refreshAddresses();
       }
@@ -44,7 +82,7 @@ export default function EcommerceHeader({
     } finally {
       setShowAddAddressModal(false);
     }
-  }, [user, locationData]);
+  }, [user, locationData, refreshUserPreferences]);
 
   let locationText: string | null = null;
   let onLocationClick: (() => void) | null = null;
@@ -167,71 +205,28 @@ export default function EcommerceHeader({
               ml: hideSearch ? 'auto' : 0 
             }}
           >
-            {!hideLocation && (
-                locationText ? (
-                  <>
-                    <IconButton
-                      color="inherit"
-                      size="small"
-                      sx={{
-                        display: { xs: "none", sm: "flex" },
-                        color: "text.secondary",
-                      }}
-                    >
-                      <LocationOn fontSize="small" />
-                    </IconButton>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        display: { xs: "none", md: "block" },
-                        fontSize: "0.875rem",
-                      }}
-                    >
-                      {locationText}
-                    </Typography>
-                  </>
-                ) : (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={onLocationClick || undefined}
-                    sx={{
-                      display: { xs: "none", md: "block" },
-                      textTransform: "none",
-                      fontSize: "0.875rem",
-                      color: "#6D28D9",
-                      borderColor: "#6D28D9",
-                      p: 0.5,
-                      minWidth: "auto",
-                      borderRadius: 1,
-                      "&:hover": {
-                        borderColor: "#5B21B6",
-                        color: "#5B21B6",
-                        bgcolor: "rgba(109, 40, 217, 0.04)",
-                      },
-                    }}
-                  >
-                    {locationButtonText}
-                  </Button>
-                )
-            )}
+            <HeaderProfileTrigger
+              currentUser={user}
+              open={open}
+              handleProfileMenuOpen={handleProfileMenuOpen}
+              handleLocationClick={handleLocationClick}
+            />
             <IconButton
               color="inherit"
               onClick={() => router.push(ROUTES.CART)}
               sx={{
                 color: "text.primary",
-                ml: { xs: 0.5, sm: 1 },
+                ml: 0,
               }}
             >
-              <Badge 
+              <Badge
                 badgeContent={
                   cartLoading ? (
                     <CircularProgress size={10} sx={{ color: 'white' }} />
                   ) : (
-                    cartItemCount
+                    cartProductQuantityCount()
                   )
-                } 
+                }
                 color="error"
               >
                 <ShoppingCart />
@@ -240,6 +235,23 @@ export default function EcommerceHeader({
           </Box>
         </Toolbar>
       </AppBar>
+
+      <HeaderProfileMenu
+        currentUser={user}
+        anchorEl={anchorEl}
+        open={open}
+        handleProfileMenuClose={handleProfileMenuClose}
+        handleProfileClick={handleProfileClick}
+        handleLogoutClick={handleLogoutClick}
+      />
+
+      <HeaderLocationMenu
+        locationAnchorEl={locationAnchorEl}
+        isLocationMenuOpen={isLocationMenuOpen}
+        handleLocationClose={handleLocationClose}
+        selectedAddress={selectedAddress}
+        countryCode={selectedAddress?.country_code || ""}
+      />
 
       <AddAddressModal
         open={showAddAddressModal}

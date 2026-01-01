@@ -46,7 +46,7 @@ export class ExternalCurrencyService {
     @InjectRepository(Country)
     private countryRepository: Repository<Country>,
     private currenciesService: CurrenciesService,
-  ) {}
+  ) { }
 
   async getCurrencyInfo(countryName: string): Promise<CurrencyInfo> {
     const trimmedCountryName = countryName.trim();
@@ -101,17 +101,21 @@ export class ExternalCurrencyService {
         currencyName = currInfo?.name ?? '';
 
         // Fetch exchange rate (local currency units per USD)
-        const rateResponse = await firstValueFrom(
-          this.httpService.get<ExchangeRateResponse>(
-            `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
-          ),
-        );
-        const rateData = rateResponse.data;
+        if (code === BASE_EXCHANGE_CURRENCY) {
+          rate = 1;
+        } else {
+          const rateResponse = await firstValueFrom(
+            this.httpService.get<ExchangeRateResponse>(
+              `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
+            ),
+          );
+          const rateData = rateResponse.data;
 
-        if (!rateData.rates || typeof rateData.rates[code] !== 'number') {
-          throw new Error(`No exchange rate found for ${code}`);
+          if (!rateData.rates || typeof rateData.rates[code] !== 'number') {
+            throw new Error(`No exchange rate found for ${code}`);
+          }
+          rate = rateData.rates[code]; // Local per USD
         }
-        rate = rateData.rates[code]; // Local per USD
       } catch (error) {
         console.log('Fallback to USD:', error);
         // Fallback to USD
