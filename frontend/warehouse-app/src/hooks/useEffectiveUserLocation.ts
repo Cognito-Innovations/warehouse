@@ -38,6 +38,7 @@ export function useEffectiveUserLocation(
   const isLoadingLocation = useLocationStore((state) => state.isLoadingLocation);
   const addressCache = useLocationStore((state) => state.addressCache); 
   const globalError = useLocationStore((state) => state.error);
+  const userLocation = useLocationStore((state) => state.userLocation);
 
   const fetchUserAddress = useLocationStore((state) => state.fetchUserAddress);
   const refreshUserAddress = useLocationStore((state) => state.refreshUserAddress);
@@ -80,12 +81,14 @@ export function useEffectiveUserLocation(
     const pincode = hasValid ? userAddress.zip_code : defaults.pincode;
     const countryName = userAddress?.country || defaults.countryName;
     const countryCode = defaults.countryCode || geoHook.location.countryCode;
+    const currentCurrency = userLocation.currency;
 
     updateLocation({
       city,
       pincode,
       countryCode,
       countryName,
+      currency: currentCurrency,
     });
   }, [
     userAddress, 
@@ -100,7 +103,8 @@ export function useEffectiveUserLocation(
     isLoadingLocation,
     addressCache,
     user?.id,
-    geoHook.location.countryCode
+    geoHook.location.countryCode,
+    userLocation.currency
   ]);
 
   const refreshAddresses = useCallback(async () => {
@@ -118,6 +122,7 @@ export function useEffectiveUserLocation(
         countryName: userAddress!.country,
         city: userAddress!.city,
         pincode: userAddress!.zip_code,
+        currency: geoHook.location.currency,
       };
     }
     return {

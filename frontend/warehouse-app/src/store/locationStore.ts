@@ -5,11 +5,11 @@ import { LocationStore, UserLocation } from "./storeTypes";
 
 const useLocationStore = create<LocationStore>((set, get) => ({
   userLocation: {
-    city: "Mumbai",
-    pincode: "400001",
-    countryCode: "IN",
-    countryName: "India",
-    currency: "USD",
+    city: "",
+    pincode: "",
+    countryCode: undefined,
+    countryName: undefined,
+    currency: undefined,
   },
   userAddress: null,
   addressCache: {},
@@ -33,7 +33,7 @@ const useLocationStore = create<LocationStore>((set, get) => ({
         pincode: countryCode === "IN" ? "400001" : defaultPincode,
         countryCode: countryCode || "IN",
         countryName: countryName || "India",
-        currency: "USD", // Support requested default currency
+        currency: currency || "USD",
       };
 
       get().setUserLocation(userLocation);
