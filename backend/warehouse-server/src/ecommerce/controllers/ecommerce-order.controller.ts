@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { OrderService } from '../services/ecommerce-order.service';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
+import { CaptureOrderDto } from '../dto/order/capture-order.dto';
 import { OrderStatus } from '../entities/ecommerce-order.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
@@ -38,7 +39,7 @@ export class OrderController {
       success: true,
       orderId: order.id,
       orderNumber: order.order_number,
-      paymentSessionId: order.cashfree_session_id,
+      paymentSessionId: order.gateway_order_id,
       totalAmount: order.total_amount,
     };
   }
@@ -88,6 +89,11 @@ export class OrderController {
   @Put(':id/payment-status')
   async updatePaymentStatus(@Param('id') id: string) {
     return this.orderService.processOrderPayment(id);
+  }
+
+  @Post(':id/capture')
+  async captureOrder(@Param('id') id: string, @Body() body: CaptureOrderDto) {
+    return this.orderService.processOrderPayment(id, body.orderID);
   }
 
   @Put(':id/cancel')

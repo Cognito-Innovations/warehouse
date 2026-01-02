@@ -173,6 +173,13 @@ export const ecommerceService = {
     const response = await api.post('/ecommerce-orders/initiate', orderData);
     return response.data;
   },
+
+  async captureOrder(orderId: string, paypalOrderId: string): Promise<any> {
+    const response = await api.post(`/ecommerce-orders/${orderId}/capture`,
+      { orderID: paypalOrderId }
+    );
+    return response.data;
+  },
   
   async createOrder(data: CreateOrderRequest): Promise<Order> {
     const response = await api.post("/ecommerce-orders", data);

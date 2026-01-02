@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { Cashfree, CFEnvironment } from 'cashfree-pg';
 import { EcommerceOrder } from '../entities/ecommerce-order.entity';
 import { EcommerceOrderItem } from '../entities/ecommerce-order-item.entity';
 import { EcommerceCart } from '../entities/ecommerce-cart.entity';
@@ -25,19 +24,39 @@ interface CurrencyInfo {
   rate: number;
 }
 
-interface PaymentInfo {
-  cf_payment_id: string;
-  payment_status: string;
-  payment_group?: string;
+interface PayPalAccessTokenResponse {
+  access_token: string;
+  token_type: string;
+  app_id: string;
+  expires_in: number;
+  scope: string;
+  nonce: string;
+}
+
+interface PayPalOrderResponse {
+  id: string;
+  status: string;
+}
+
+interface PayPalCaptureResponse {
+  id: string;
+  status: string;
+  purchase_units: Array<{
+    payments: {
+      captures: Array<{
+        id: string;
+        status: string;
+      }>;
+    };
+  }>;
 }
 
 @Injectable()
 export class OrderService {
-  private cashfree: Cashfree;
-  private readonly gatewayAppId: string;
-  private readonly gatewaySecretKey: string;
-  private readonly gatewayMode: string;
-  private readonly gatewayBaseUrl: string;
+  private readonly clientId: string;
+  private readonly secretKey: string;
+  private readonly mode: string;
+  private readonly baseUrl: string;
 
   constructor(
     @InjectRepository(EcommerceOrder)
@@ -51,26 +70,18 @@ export class OrderService {
     private readonly userPreferenceService: UserPreferencesService,
     private readonly httpService: HttpService,
   ) {
-    this.gatewayAppId = process.env.CASHFREE_APP_ID!;
-    this.gatewaySecretKey = process.env.CASHFREE_SECRET_KEY!;
-    this.gatewayMode = process.env.CASHFREE_MODE!;
+    this.clientId = process.env.PAYPAL_CLIENT_ID!;
+    this.secretKey = process.env.PAYPAL_SECRET_KEY!;
+    this.mode = process.env.PAYPAL_MODE || 'sandbox';
 
-    if (!this.gatewayAppId || !this.gatewaySecretKey) {
-      throw new BadRequestException('Cashfree credentials not configured');
+    if (!this.clientId || !this.secretKey) {
+      throw new BadRequestException('PayPal credentials not configured');
     }
 
-    this.gatewayBaseUrl =
-      this.gatewayMode === 'production'
-        ? 'https://api.cashfree.com/pg'
-        : 'https://sandbox.cashfree.com/pg';
-
-    this.cashfree = new Cashfree(
-      this.gatewayMode === 'production'
-        ? CFEnvironment.PRODUCTION
-        : CFEnvironment.SANDBOX,
-      this.gatewayAppId,
-      this.gatewaySecretKey,
-    );
+    this.baseUrl =
+      this.mode === 'live'
+        ? 'https://api-m.paypal.com'
+        : 'https://api-m.sandbox.paypal.com';
   }
 
   private roundCurrency(value: number): number {
@@ -88,6 +99,25 @@ export class OrderService {
       .toUpperCase();
 
     return `ORD-${timeBasedSuffix}-${randomAlphaNumeric}`;
+  }
+
+  private async getAccessToken(): Promise<string> {
+    const auth = Buffer.from(`${this.clientId}:${this.secretKey}`).toString(
+      'base64',
+    );
+    const response = await firstValueFrom(
+      this.httpService.post<PayPalAccessTokenResponse>(
+        `${this.baseUrl}/v1/oauth2/token`,
+        'grant_type=client_credentials',
+        {
+          headers: {
+            Authorization: `Basic ${auth}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      ),
+    );
+    return response.data.access_token;
   }
 
   async createOrder(
@@ -216,7 +246,7 @@ export class OrderService {
       status: OrderStatus.PENDING,
       payment_status: PaymentStatus.PENDING,
       total_amount: usdTotalAmount,
-      payment_gateway: PAYMENT_GATEWAY.CASHFREE,
+      payment_gateway: PAYMENT_GATEWAY.PAYPAL,
       payment_mode: 'UNKNOWN',
       notes: createOrderDto.notes,
     });
@@ -258,7 +288,7 @@ export class OrderService {
     await this.orderItemRepository.save(orderItems);
 
     try {
-      await this.createCashfreePaymentSession(
+      await this.createPayPalPaymentSession(
         savedOrder,
         user,
         orderNumber,
@@ -268,26 +298,46 @@ export class OrderService {
       );
 
       return await this.findOne(savedOrder.id);
-    } catch (cashfreeErr: unknown) {
-      // Rollback on Cashfree failure
+    } catch (paypalErr: unknown) {
+      // Rollback on PayPal failure
       await this.orderRepository.delete(savedOrder.id);
 
-      console.error('Cashfree error:', cashfreeErr);
+      console.error('PayPal error:', paypalErr);
 
-      let errorMessage = 'Unknown error';
-      if (cashfreeErr instanceof Error) {
-        errorMessage = cashfreeErr.message;
-      } else if (
-        typeof cashfreeErr === 'object' &&
-        cashfreeErr !== null &&
-        'response' in cashfreeErr
+      let errorMessage = 'Unknown PayPal error';
+
+      if (
+        paypalErr &&
+        typeof paypalErr === 'object' &&
+        paypalErr !== null &&
+        'response' in paypalErr
       ) {
-        const resp = (
-          cashfreeErr as { response?: { data?: { message?: string } } }
-        ).response;
-        if (resp?.data?.message) {
-          errorMessage = resp.data.message;
+        const errResponse = (paypalErr as any).response;
+        if (
+          errResponse &&
+          errResponse.data &&
+          typeof errResponse.data === 'object'
+        ) {
+          const data = errResponse.data;
+          if (data.message) {
+            errorMessage = data.message;
+          }
+          if (
+            data.details &&
+            Array.isArray(data.details) &&
+            data.details.length > 0
+          ) {
+            const detail = data.details[0];
+            const detailMsg = detail.description || detail.issue || 'Validation failed';
+            errorMessage += ` Details: ${detailMsg}`;
+            console.error('PayPal error details:', data.details);
+          }
+        } else {
+          errorMessage =
+            (paypalErr as unknown as Error).message || errorMessage;
         }
+      } else if (paypalErr instanceof Error) {
+        errorMessage = paypalErr.message;
       }
 
       throw new BadRequestException(
@@ -296,7 +346,7 @@ export class OrderService {
     }
   }
 
-  private async createCashfreePaymentSession(
+  private async createPayPalPaymentSession(
     savedOrder: EcommerceOrder,
     user: User,
     orderNumber: string,
@@ -304,29 +354,47 @@ export class OrderService {
     orderCurrency: string,
     finalAmount: number,
   ): Promise<void> {
-    const cashfreeOrderRequest = {
-      order_amount: finalAmount,
-      order_currency: orderCurrency,
-      order_id: orderNumber,
-      customer_details: {
-        customer_id: user.id,
-        customer_name: user.name,
-        customer_email: user.email,
-        customer_phone: user.phone_number,
-      },
-      order_meta: {
+    const token = await this.getAccessToken();
+
+    const paypalOrderRequest = {
+      intent: 'CAPTURE',
+      purchase_units: [
+        {
+          amount: {
+            currency_code: orderCurrency,
+            value: finalAmount.toFixed(2),
+          },
+          description: `Order ${orderNumber}`,
+        },
+      ],
+      application_context: {
         return_url: `${process.env.FRONTEND_URL}/order`,
+        cancel_url: `${process.env.FRONTEND_URL}/cart`,
+        shipping_preference: 'NO_SHIPPING',
+        user_action: 'PAY_NOW',
       },
-      order_note: createOrderDto.notes || '',
     };
 
-    const cashfreeResponse =
-      await this.cashfree.PGCreateOrder(cashfreeOrderRequest);
+    const paypalResponse = await firstValueFrom(
+      this.httpService.post<PayPalOrderResponse>(
+        `${this.baseUrl}/v2/checkout/orders`,
+        paypalOrderRequest,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'PayPal-Request-Id': orderNumber,
+          },
+        },
+      ),
+    );
 
-    const { payment_session_id, cf_order_id } = cashfreeResponse.data || {};
-    savedOrder.cashfree_session_id = payment_session_id!;
-    savedOrder.cfc_order_id = cf_order_id!;
+    const orderData = paypalResponse.data;
+    if (orderData.status !== 'CREATED') {
+      throw new Error(`PayPal order creation failed: ${orderData.status}`);
+    }
 
+    savedOrder.gateway_order_id = orderData.id;
     await this.orderRepository.save(savedOrder);
   }
 
@@ -360,12 +428,12 @@ export class OrderService {
         'order.total_amount AS "total_amount"',
         'order.payment_mode AS "payment_mode"',
         'order.created_at AS "created_at"',
-        'order.cashfree_payment_id AS "cashfree_payment_id"',
+        'order.gateway_transaction_id AS "gateway_transaction_id"',
         'COUNT(items.id) AS "items_count"',
       ])
       .addSelect('COALESCE(user.name, \'Unknown\') AS "user_name"')
       .groupBy(
-        'order.id, order.order_number, order.status, order.payment_status, order.total_amount, order.payment_mode, order.created_at, order.cashfree_payment_id, user.name',
+        'order.id, order.order_number, order.status, order.payment_status, order.total_amount, order.payment_mode, order.created_at, order.gateway_transaction_id, user.name',
       )
       .orderBy('order.created_at', 'DESC');
 
@@ -477,70 +545,75 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  async processOrderPayment(orderId: string): Promise<EcommerceOrder> {
+  async processOrderPayment(
+    orderId: string,
+    paypalOrderId?: string,
+  ): Promise<EcommerceOrder> {
     const order = await this.findOne(orderId);
-    if (order.payment_status !== PaymentStatus.PENDING) {
-      throw new BadRequestException('Payment already processed');
+
+    if (order.payment_status === PaymentStatus.PAID) {
+      await this.cleanupCartItems(order);
+      return order;
     }
 
-    const successfulPayment = await this.fetchSuccessfulPayment(
-      order.order_number,
-    );
+    if (order.payment_status !== PaymentStatus.PENDING) {
+      throw new BadRequestException(
+        'Payment already processed or invalid status',
+      );
+    }
 
-    this.applyPaymentToOrder(order, successfulPayment);
+    if (paypalOrderId && order.gateway_order_id !== paypalOrderId) {
+      throw new BadRequestException('Invalid PayPal order ID');
+    }
+
+    const captureData = await this.capturePayPalPayment(order);
+    this.applyPayPalToOrder(order, captureData);
 
     await this.cleanupCartItems(order);
 
     return this.orderRepository.save(order);
   }
 
-  private async fetchSuccessfulPayment(
-    orderNumber: string,
-  ): Promise<PaymentInfo> {
+  private async capturePayPalPayment(
+    order: EcommerceOrder,
+  ): Promise<PayPalCaptureResponse> {
     try {
-      const paymentsUrl = `${this.gatewayBaseUrl}/orders/${orderNumber}/payments`;
-      const paymentsResponse = await firstValueFrom(
-        this.httpService.get<PaymentInfo[]>(paymentsUrl, {
-          headers: {
-            'x-api-version': '2025-01-01',
-            'x-client-id': this.gatewayAppId,
-            'x-client-secret': this.gatewaySecretKey,
+      const token = await this.getAccessToken();
+
+      const captureResponse = await firstValueFrom(
+        this.httpService.post<PayPalCaptureResponse>(
+          `${this.baseUrl}/v2/checkout/orders/${order.gateway_order_id}/capture`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
           },
-        }),
-      );
-      const payments: PaymentInfo[] = paymentsResponse.data;
-
-      if (!Array.isArray(payments) || payments.length === 0) {
-        throw new BadRequestException('No payments found for this order');
-      }
-
-      const successfulPayment = payments.find(
-        (p) => p.payment_status === 'SUCCESS',
+        ),
       );
 
-      if (!successfulPayment) {
-        throw new BadRequestException(
-          'No successful payment found for this order',
-        );
+      const captureData = captureResponse.data;
+
+      if (captureData.status !== 'COMPLETED') {
+        throw new BadRequestException('PayPal capture failed');
       }
 
-      return successfulPayment;
-    } catch (fetchError: unknown) {
-      console.error('Error fetching payments from Cashfree:', fetchError);
-      throw new BadRequestException('Failed to verify payment status');
+      return captureData;
+    } catch (captureError: unknown) {
+      console.error('Error capturing PayPal payment:', captureError);
+      throw new BadRequestException('Failed to capture payment');
     }
   }
 
-  private applyPaymentToOrder(
+  private applyPayPalToOrder(
     order: EcommerceOrder,
-    payment: PaymentInfo,
+    captureData: PayPalCaptureResponse,
   ): void {
     order.payment_status = PaymentStatus.PAID;
-    order.cashfree_payment_id = payment.cf_payment_id;
-
-    if (payment.payment_group) {
-      order.payment_mode = payment.payment_group;
-    }
+    order.gateway_transaction_id =
+      captureData.purchase_units[0].payments.captures[0].id;
+    order.payment_mode = PAYMENT_GATEWAY.PAYPAL;
   }
 
   private async cleanupCartItems(order: EcommerceOrder): Promise<void> {

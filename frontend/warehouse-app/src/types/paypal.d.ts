@@ -1,7 +1,7 @@
+export {};
+
 declare global {
   interface Window {
-    Cashfree?: any;
+    paypal: any;
   }
 }
-
-export {};

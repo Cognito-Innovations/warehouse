@@ -1,4 +1,7 @@
-export const PAYMENT_GATEWAY = { CASHFREE: 'cashfree' };
+export const PAYMENT_GATEWAY = {
+  CASHFREE: 'cashfree',
+  PAYPAL: 'paypal',
+} as const;
 
 export const DEFAULT_CURRENCY_CODE = 'USD';
 

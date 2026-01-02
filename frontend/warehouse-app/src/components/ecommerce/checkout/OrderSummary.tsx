@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, Stack, Typography, Box, Divider, Button, CircularProgress } from "@mui/material";
 import { Payment, DeliveryDining } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { launchCashfreePayment } from "@/services/cashfree-payment.service";
+import { launchPayPalPayment } from "@/services/paypal-payment.service";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { ROUTES } from "@/utils/constants";
 import { getCartItemPricingSummary } from "@/utils/priceUtils";
@@ -53,8 +53,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const { loading: authLoading } = useAuth();
   
   const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showPaypal, setShowPaypal] = useState(false);
+  const [paypalConfig, setPaypalConfig] = useState<{ orderId: string; paypalOrderId: string; orderCurrency: string } | null>(null);
 
   async function handlePaymentAndOrder() {
     if (!items.length || !shippingAddress || authLoading) {
@@ -63,7 +64,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     }
 
     setProcessing(true);
-    setError(null);
+    setShowPaypal(false);
+    setPaypalConfig(null);
     
     try {
       const orderedProductIds = items
@@ -82,47 +84,62 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
         throw new Error('Failed to initiate payment');
       }
 
-      const paymentConfig = {
-        orderId: orderNumber,
-        orderAmount: totalAmount,
+      const config = {
+        orderId,
+        paypalOrderId: paymentSessionId,
         orderCurrency: currencyInfo.code,
-        customerName: user?.name,
-        customerEmail: user?.email,
-        customerPhone: user?.phone,
-        orderToken: paymentSessionId,
       };
 
-      await launchCashfreePayment(
-        paymentConfig,
-        async (paymentResult: any) => {
-          try {
-            const purchasedIds = items.map((item) => item.product_id!);
-            removePurchasedProducts(purchasedIds);
-            ecommerceService.updatePaymentStatus(orderId).catch((updateError) => {
-              console.error("Order update failed in background:", updateError);
-              toast.error("Payment succeeded, but order update may have failed. Please check your orders.");
-            });
-            onOrderSuccess?.();
-            setShowSuccessModal(true);
-          } catch (error) {
-            setError("Payment succeeded but order update failed. Contact support.");
-            toast.error("Order update error");
-          }
-        },
-        (failData: any) => {
-          console.error("Payment Failed:", failData);
-          toast.error(failData?.reason || "Payment cancelled");
-          router.replace(ROUTES.CART);
-        }
-      )
+      setPaypalConfig(config);
+      setShowPaypal(true);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to initiate checkout.";
-      setError(errorMsg);
-      toast.error("Checkout initiation failed");
+      toast.error(errorMsg);
     } finally {
       setProcessing(false);
     }
   }
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (showPaypal && paypalConfig) {
+      launchPayPalPayment(
+        paypalConfig,
+        async () => {
+          if (isCancelled) return;
+          try {
+            const purchasedIds = items.map((item) => item.product_id!);
+            removePurchasedProducts(purchasedIds);
+            onOrderSuccess?.();
+            setShowSuccessModal(true);
+            setShowPaypal(false);
+            setPaypalConfig(null);
+          } catch (error) {
+            toast.error("Order update error");
+          }
+        },
+        (failData: any) => {
+          if (isCancelled) return;
+          console.error("Payment Failed:", failData);
+          toast.error(failData?.reason || "Payment cancelled");
+          setShowPaypal(false);
+          setPaypalConfig(null);
+          router.replace(ROUTES.CART);
+        }
+      ).catch((err) => {
+        if (isCancelled) return;
+        console.error("PayPal launch error:", err);
+        toast.error("Failed to initialize PayPal");
+        setShowPaypal(false);
+        setPaypalConfig(null);
+      });
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [showPaypal, paypalConfig, items, onOrderSuccess, removePurchasedProducts, router]);
 
   const hasAddress = !!shippingAddress && shippingAddress.trim().length > 0;
   const isButtonDisabled =
@@ -130,7 +147,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     !hasAddress ||
     authLoading ||
     addressLoading ||
-    items.length === 0;
+    items.length === 0 ||
+    showPaypal;
 
   return (
     <Box>
@@ -252,49 +270,64 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
         </CardContent>
       </Card>
 
-      <Button
-        fullWidth
-        variant="contained"
-        size="large"
-        startIcon={<Payment />}
-        onClick={handlePaymentAndOrder}
-        disabled={isButtonDisabled}
-        sx={{
-          borderRadius: 3,
-          py: 2,
-          fontSize: "1.1rem",
-          fontWeight: 600,
-          textTransform: "none",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-          transition: "all 0.2s ease",
-          bgcolor: "primary.main",
-          "&:hover": { 
-            bgcolor: "primary.dark",
-            boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
-            transform: "translateY(-1px)"
-          },
-          "&:disabled": {
-            bgcolor: "grey.300",
-            color: "grey.500",
-            boxShadow: "none",
-            transform: "none"
-          }
-        }}
-      >
-        {processing ? (
-          <Box display="flex" alignItems="center" gap={1}>
-            <CircularProgress size={24} color="inherit" />
-            <Typography>Processing Payment...</Typography>
-          </Box>
-        ) : addressLoading ? (
-          <Box display="flex" alignItems="center" gap={1}>
-            <CircularProgress size={24} color="inherit" />
-            <Typography>Fetching Address...</Typography>
-          </Box>
-        ) : (
-          `Pay & Place Order • ${formatLocalPrice(totals.total)}`
-        )}
-      </Button>
+      {!showPaypal ? (
+        <Button
+          fullWidth
+          variant="contained"
+          size="large"
+          startIcon={<Payment />}
+          onClick={handlePaymentAndOrder}
+          disabled={isButtonDisabled}
+          sx={{
+            borderRadius: 3,
+            py: 2,
+            fontSize: "1.1rem",
+            fontWeight: 600,
+            textTransform: "none",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            transition: "all 0.2s ease",
+            bgcolor: "primary.main",
+            "&:hover": { 
+              bgcolor: "primary.dark",
+              boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
+              transform: "translateY(-1px)"
+            },
+            "&:disabled": {
+              bgcolor: "grey.300",
+              color: "grey.500",
+              boxShadow: "none",
+              transform: "none"
+            }
+          }}
+        >
+          {processing ? (
+            <Box display="flex" alignItems="center" gap={1}>
+              <CircularProgress size={24} color="inherit" />
+              <Typography>Processing Payment...</Typography>
+            </Box>
+          ) : addressLoading ? (
+            <Box display="flex" alignItems="center" gap={1}>
+              <CircularProgress size={24} color="inherit" />
+              <Typography>Fetching Address...</Typography>
+            </Box>
+          ) : (
+            `Pay & Place Order • ${formatLocalPrice(totals.total)}`
+          )}
+        </Button>
+      ) : (
+        <Box
+          id="paypal-button-container"
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            py: 2,
+            minHeight: "50px",
+            border: "1px solid #e9ecef",
+            borderRadius: 3,
+            bgcolor: "white"
+          }}
+        />
+      )}
 
       <Box sx={{ mt: 2, textAlign: "center" }}>
         <Typography variant="body2" color="text.secondary">
