@@ -1,5 +1,4 @@
 import React from "react";
-// import { Delete as DeleteIcon } from "@mui/icons-material";
 import { formatDateTime } from "@/lib/utils";
 
 interface RequestHeaderProps {
@@ -18,7 +17,6 @@ interface RequestHeaderProps {
       name: string;
     };
   };
-  // onDelete?: (id: string) => void;
 }
 
 const statusStyles: { [key: string]: string } = {
@@ -30,9 +28,7 @@ const statusStyles: { [key: string]: string } = {
   "DISCARDED": "bg-red-100 text-red-700 border border-red-200",
 };
 
-const RequestHeader: React.FC<RequestHeaderProps> = ({ request, 
-  // onDelete 
-}) => {
+const RequestHeader: React.FC<RequestHeaderProps> = ({ request }) => {
   const statusClassName =
     statusStyles[request.status] || "bg-gray-100 text-gray-700 border border-gray-200";
 
@@ -60,19 +56,6 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({ request,
           </span>
         </div>
       </div>
-
-      {/* TODO: Uncomment when we get clarified */}
-      {/* {request.status === "SHIP_REQUEST" && (
-        <button
-          onClick={() => onDelete?.(request.id)}
-          className="flex items-center gap-1.5 text-red-600 bg-red-50 rounded-md px-3 py-1.5 hover:bg-red-100 transition-colors duration-200"
-        >
-          <DeleteIcon sx={{ fontSize: 18 }} />
-          <span className="text-sm font-medium whitespace-nowrap">
-            Delete Request
-          </span>
-        </button>
-      )} */}
     </div>
   );
 };

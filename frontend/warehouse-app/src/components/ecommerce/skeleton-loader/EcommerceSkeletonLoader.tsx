@@ -58,26 +58,34 @@ export default function EcommerceSkeletonLoader({
           </Box>
         )}
 
-        {/* Promotional Cards Skeleton */}
+        {/* Category Navigation Skeleton */}
         <Box
           sx={{
             display: "flex",
             gap: { xs: 4, sm: 6, md: 8 },
-            flexWrap: "wrap",
+            flexWrap: "nowrap",
+            overflowX: "auto",
             borderBottom: "1px solid #d3d2d2",
-            pb: { xs: 2, sm: 2.5, md: 3 },
+            pb: { xs: 1, sm: 1.5 },
+            pt: { xs: 1.5, sm: 2 },
             mb: 2,
-            mt: 5,
+            mt: 0,
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
           }}
         >
-          {[...Array(3)].map((_, index) => (
+          {[...Array(8)].map((_, index) => (
             <Box
-              key={`promotional-card-${index}`}
+              key={`category-card-${index}`}
               sx={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 minWidth: { xs: "80px", sm: "100px", md: "120px" },
+                flexShrink: 0,
               }}
             >
               <Box
@@ -85,29 +93,29 @@ export default function EcommerceSkeletonLoader({
                   width: { xs: 44, sm: 52, md: 60 },
                   height: { xs: 44, sm: 52, md: 60 },
                   borderRadius: 2.5,
-                  bgcolor: "#ede9fe",
+                  bgcolor: index === 0 ? "#d5c4ff" : "#ede9fe",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   mb: 2.5,
+                  boxShadow: index === 0 ? "0 2px 12px rgba(0,0,0,0.12)" : "none",
+                  overflow: "hidden",
                 }}
               >
                 <Skeleton
-                  variant="rectangular"
+                  variant="circular"
                   width="70%"
                   height="70%"
-                  sx={{ borderRadius: 1 }}
                 />
               </Box>
 
               {/* Label */}
               <Skeleton
                 variant="text"
-                width={80}
-                height={20}
+                width={index === 0 ? 30 : 80}
+                height={16}
                 sx={{
-                  mb: 0.5,
-                  fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
+                  fontSize: { xs: "0.75rem", sm: "0.8125rem", md: "0.875rem" },
                 }}
               />
             </Box>

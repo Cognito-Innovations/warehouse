@@ -184,7 +184,7 @@ const PackagesContent = () => {
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div className="min-h-screen bg-white border border-gray-200 rounded-lg shadow-sm">
             <PackageHeader
                 selectedCount={selectedPackageIds.length}
                 isRequestingShip={isRequestingShip}

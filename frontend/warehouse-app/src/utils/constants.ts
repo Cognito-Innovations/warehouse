@@ -1,8 +1,11 @@
 export enum ROUTES {
   SIGN_IN = "/sign-in",  
   DASHBOARD = "/dashboard",  
+  DASHBOARD_PACKAGES = "/packages",
+  DASHBOARD_SHIPMENTS = "/shipments",
   PROFILE = "/profile",
   PICKUP_REQUEST = "/pickup-request",
+  CREATE_PICKUP_REQUEST = "/pickup-request/create-request",
   ORDER_HISTORY = "/order",
   SHIPMENT = "/shipment",
   ECOMMERCE = "/ecommerce",

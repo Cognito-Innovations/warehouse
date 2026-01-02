@@ -80,9 +80,13 @@ export default function ViewRequestPage() {
 
   if (!details) {
     return (
-      <Box sx={{ textAlign: "center", py: 6 }}>
-        <Typography variant="h6">Request not found</Typography>
-        <Button onClick={() => router.push(ROUTES.PICKUP_REQUEST)} sx={{ mt: 2 }}>
+      <Box sx={{ textAlign: "center", py: 6, px: 2 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>Request not found</Typography>
+        <Button 
+          onClick={() => router.push(ROUTES.PICKUP_REQUEST)} 
+          variant="contained"
+          sx={{ textTransform: "none" }}
+        >
           Back to Requests
         </Button>
       </Box>
@@ -92,9 +96,15 @@ export default function ViewRequestPage() {
   return (
     <Box className="min-h-screen bg-gray-100">
       <Box className="max-w-7xl mx-auto px-4 py-6">
-
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          <Link href="/pickup-request" style={{ textDecoration: "none", color: "#3B82F6", fontWeight: 500 }}>
+        <Typography 
+          variant="body2" 
+          color="text.secondary" 
+          sx={{ mb: 2, fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
+        >
+          <Link 
+            href={ROUTES.PICKUP_REQUEST} 
+            style={{ textDecoration: "none", color: "#3B82F6", fontWeight: 500 }}
+          >
             Pickup Requests
           </Link>{" "}
           / <strong>View Request</strong>
@@ -102,7 +112,7 @@ export default function ViewRequestPage() {
 
         <Paper
           sx={{
-            p: 2,
+            p: { xs: 1.5, sm: 2 },
             mb: 2,
             borderRadius: 2,
             backgroundColor:
@@ -113,6 +123,7 @@ export default function ViewRequestPage() {
           <Typography
             variant="body2"
             color={details.status.toUpperCase() === PICKUP_REQUEST_STATUS.CANCELLED ? "error.main" : "text.primary"}
+            sx={{ fontSize: { xs: "0.8125rem", sm: "0.875rem" } }}
           >
             {details.status.toUpperCase() === PICKUP_REQUEST_STATUS.CANCELLED
               ? "Your request has been cancelled or rejected."
@@ -120,22 +131,41 @@ export default function ViewRequestPage() {
           </Typography>
         </Paper>
 
-        <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start" }}>
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <Box 
+          sx={{ 
+            display: "flex", 
+            flexDirection: { xs: "column", md: "row" },
+            gap: { xs: 2, md: 3 }, 
+            alignItems: { xs: "stretch", md: "flex-start" }
+          }}
+        >
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
             <RequestDetails details={details} />
 
             {details.status.toUpperCase() === PICKUP_REQUEST_STATUS.QUOTED && (
               <QuotedPriceCard price={details.price} />
             )}
 
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
+            <Box 
+              sx={{ 
+                display: "flex", 
+                flexDirection: { xs: "column", sm: "row" },
+                justifyContent: { xs: "stretch", sm: "flex-end" },
+                mt: 2, 
+                gap: 1 
+              }}
+            >
               {!NON_DELETABLE_STATUSES.includes(details.status.toUpperCase()) && (        
                 <Button
                   variant="contained"
                   color="error"
                   startIcon={<DeleteIcon />}
                   onClick={() => setConfirmOpen(true)}
-                  sx={{ borderRadius: 2, textTransform: "none" }}
+                  sx={{ 
+                    borderRadius: 2, 
+                    textTransform: "none",
+                    width: { xs: "100%", sm: "auto" }
+                  }}
                 >
                   Delete Request
                 </Button>
@@ -146,7 +176,11 @@ export default function ViewRequestPage() {
                   variant="contained"
                   color="primary"
                   onClick={handleConfirm}
-                  sx={{ borderRadius: 2, textTransform: "none" }}
+                  sx={{ 
+                    borderRadius: 2, 
+                    textTransform: "none",
+                    width: { xs: "100%", sm: "auto" }
+                  }}
                 >
                   Confirm
                 </Button>
@@ -154,7 +188,7 @@ export default function ViewRequestPage() {
             </Box>
           </Box>
 
-          <Box sx={{ width: 300 }}>
+          <Box sx={{ width: { xs: "100%", md: 300 }, flexShrink: 0 }}>
             <TrackingStatus details={details} />
           </Box>
 
