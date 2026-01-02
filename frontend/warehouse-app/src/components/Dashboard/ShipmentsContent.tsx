@@ -51,8 +51,8 @@ const ShipmentsContent = () => {
     });
 
     return (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-            <ShipmentHeader title="Shipments" />
+        <>
+            <ShipmentHeader title="Ship the packages" />
 
             <div className="p-4 border-b border-gray-100">
                 <SearchAndFilter
@@ -133,7 +133,7 @@ const ShipmentsContent = () => {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </>
     );
 };
 

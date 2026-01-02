@@ -104,14 +104,14 @@ function CreatePickupRequestPageContent() {
   return (
     <Box sx={{ bgcolor: "#F9FAFB", p: { xs: 2, sm: 3 }, minHeight: "100vh" }}>
       <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2, mt: 2 }}>
-        <Link href="/pickup-request"  style={{
+        <Link href={ROUTES.PICKUP_REQUEST} style={{
               textDecoration: "none",
               color: "#6B7280",
-              fontSize: "0.875rem",
+              fontSize: { xs: "0.75rem", sm: "0.875rem" },
             }}>
             Pickup Request
         </Link>
-        <Typography color="text.primary" sx={{ fontSize: "0.875rem" }}>
+        <Typography color="text.primary" sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
           Create Request
         </Typography>
       </Breadcrumbs>
@@ -157,7 +157,7 @@ function CreatePickupRequestPageContent() {
             />
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
             <Box sx={{ flex: 1 }}>
               <FormLabel htmlFor="supplier-phone">Supplier Phone Number *</FormLabel>
               <TextField
@@ -185,7 +185,7 @@ function CreatePickupRequestPageContent() {
             </Box>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
             <Box sx={{ flex: 1 }}>
               <FormLabel htmlFor="pcs-box">No. of Pcs/Box *</FormLabel>
               <TextField
@@ -252,7 +252,7 @@ function CreatePickupRequestPageContent() {
             />
           </Box>
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: { xs: "stretch", sm: "flex-end" }, mt: 2 }}>
             <Button
               variant="contained"
               type="submit"
@@ -266,6 +266,7 @@ function CreatePickupRequestPageContent() {
                 px: 3,
                 py: 1.25,
                 fontSize: "0.875rem",
+                width: { xs: "100%", sm: "auto" },
                 "&:hover": { bgcolor: "#6D28D9" },
               }}
             >

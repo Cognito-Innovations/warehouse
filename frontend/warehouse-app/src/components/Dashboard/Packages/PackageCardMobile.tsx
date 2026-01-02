@@ -93,6 +93,15 @@ const PackageCardMobile: React.FC<PackageCardMobileProps> = ({
                         </div>
                     </div>
 
+                    {pkg.remarks && (
+                                <div className="mb-3 text-sm text-gray-600 font-medium">
+                                    <span className="text-gray-400 uppercase text-[10px] tracking-wider block mb-1">
+                                        Remarks
+                                    </span>
+                                    {pkg.remarks}
+                                </div>
+                            )}
+
                     {/* Actions */}
                     <div className="pt-2 border-t border-gray-100">
                         <PackageActions
@@ -116,14 +125,7 @@ const PackageCardMobile: React.FC<PackageCardMobileProps> = ({
                                     <ExpandedPackageSection documents={pkg.documents || []} />
                                 </div>
                             )}
-                            {pkg.remarks && (
-                                <div className="mb-3 text-sm text-gray-600 font-medium">
-                                    <span className="text-gray-400 uppercase text-[10px] tracking-wider block mb-1">
-                                        Remarks
-                                    </span>
-                                    {pkg.remarks}
-                                </div>
-                            )}
+                           
                             <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
                                 Created: {formatDateTime(pkg.created_at)}
                             </div>

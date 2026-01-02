@@ -60,7 +60,8 @@ export default function Header({
   const count = cartProductQuantityCount();
 
   const isEcommerce = (pathname === '/' || pathname.startsWith('/ecommerce')) && !['/ecommerce/orders', '/ecommerce/checkout', '/ecommerce/product', '/ecommerce/cart'].some(p => pathname.startsWith(p));
-  const isOrders = pathname.startsWith('/ecommerce/orders') || pathname.startsWith('/dashboard');
+  const isOrders = pathname.startsWith('/ecommerce/orders');
+  const isPickupRequest = pathname.startsWith('/dashboard/pickup-request');
   const isCheckout = pathname.startsWith('/ecommerce/checkout');
   const isProductDetail = pathname.startsWith('/ecommerce/product');
   const isCart = pathname.startsWith('/ecommerce/cart');
@@ -68,6 +69,7 @@ export default function Header({
     (isEcommerce ? "Palakart" : 
       isOrders ? "My Orders" : 
       isCheckout ? "Checkout" : 
+      isPickupRequest ? "Pickup Request" : 
       isProductDetail ? "Product Details" : "Palakart");
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);

@@ -24,38 +24,38 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   const hideHeader = pathname === "/sign-in";
 
-  const isEcommercePath = pathname === '/' || pathname.startsWith('/ecommerce');
+  const isEcommercePath = pathname === "/" || pathname.startsWith("/ecommerce");
 
   let title: string | undefined = undefined;
-  if (pathname.startsWith('/profile')) {
-    const view = searchParams.get('view');
-    if (view === 'country') {
-      title = 'Profile / Country';
-    } else if (view === 'currency') {
-      title = 'Profile / Currency';
+  if (pathname.startsWith("/profile")) {
+    const view = searchParams.get("view");
+    if (view === "country") {
+      title = "Profile / Country";
+    } else if (view === "currency") {
+      title = "Profile / Currency";
     } else {
-      title = 'Profile';
+      title = "Profile";
     }
   } else {
     title =
-      pathname === '/dashboard' ? "Dashboard" :
-      pathname.includes('/cart') ? "My Cart" :
-      pathname.includes('/packages') ? "Packages" :
-      pathname.includes('/shipments') ? "Shipments" :
+      pathname === "/dashboard" ? "Dashboard" :
+      pathname.includes("/cart") ? "My Cart" :
+      pathname.includes("/packages") ? "Packages" :
+      pathname.includes("/shipments") ? "Shipments" :
       undefined;
   }
 
   const headerProps = {
     locationData,
     onMenuClick: toggleSidebar,
-    hideMenuButton: !isEcommercePath || pathname.includes('/orders') || pathname.includes('/checkout'),
-    hideSearch: !isEcommercePath || pathname.includes('/product'),
-    hideLocation: pathname.includes('/cart') || pathname.includes('/orders') || pathname.includes('/checkout'),
-    itemCount: pathname.includes('/checkout') ? cartProductQuantityCount() : undefined,
+    hideMenuButton: !isEcommercePath || pathname.includes("/orders") || pathname.includes("/checkout"),
+    hideSearch: !isEcommercePath || pathname.includes("/product"),
+    hideLocation: pathname.includes("/cart") || pathname.includes("/orders") || pathname.includes("/checkout"),
+    itemCount: pathname.includes("/checkout") ? cartProductQuantityCount() : undefined,
     title,
   };
 
-  const isEcommerceRoute = pathname.startsWith('/ecommerce');
+  const isEcommerceRoute = pathname.startsWith("/ecommerce");
   const renderedContent = isEcommerceRoute ? (
     <EcommerceWrapper
       isSidebarOpen={isSidebarOpen}
