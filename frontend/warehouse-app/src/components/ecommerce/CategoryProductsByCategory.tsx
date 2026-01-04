@@ -59,7 +59,7 @@ export default function CategoryProductsByCategory() {
   }
 
   return (
-    <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
+    <Box sx={{ bgcolor: "white" }}>
       {productsByCategory.map(({ category, products: categoryProducts }) => (
         <Box key={category.id} sx={{ mb: 4 }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>

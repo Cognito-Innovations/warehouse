@@ -16,7 +16,7 @@ const ProductsGridView = () => {
     }
 
     return (
-        <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
+        <Box sx={{ bgcolor: "white", py: 2 }}>
             <EcommerceProductsGrid
                 products={products}
                 loading={loadingMore}

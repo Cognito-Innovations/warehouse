@@ -96,10 +96,11 @@ export default function ShoppingRequestForm() {
 
     const userId = (session?.user as any)?.user_id;
 
+    //TODO: revert hardcoded values
     const shoppingRequest = {
       user_id: userId,
-      request_code: `SR/${selectedAddress.country_code.toUpperCase()}/${Date.now()}`,
-      courier_id: selectedAddress.id,
+      request_code: `SR/IN/${Date.now()}`,
+      courier_id: "0f502386-b904-4cb8-8861-6c32e900bd84",
       items_count: items.length,
       remarks,
       status: "REQUESTED",

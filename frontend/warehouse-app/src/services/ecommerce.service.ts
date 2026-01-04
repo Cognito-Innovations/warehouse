@@ -170,7 +170,7 @@ export const ecommerceService = {
 
   // Orders
   async initiateOrder(orderData: any): Promise<any> {
-    const response = await api.post('/ecommerce-orders/initiate', orderData);
+    const response = await api.post("/ecommerce-orders/initiate", orderData);
     return response.data;
   },
 
