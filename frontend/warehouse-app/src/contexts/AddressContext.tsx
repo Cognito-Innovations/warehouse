@@ -217,6 +217,7 @@ const setupDefaultPreferences = async (userId: string, dispatch: React.Dispatch<
   }
 };
 
+//TODO: Remove this function everywhere
 const loadUserPreferences = async (userId: string, dispatch: React.Dispatch<AddressAction>) => {
   dispatch({ type: "SET_LOADING", payload: true });
   try {
@@ -311,78 +312,3 @@ export const AddressProvider: React.FC<AddressProviderProps> = ({ children }) =>
   );
 };
 
-// Custom Hook
-export const useAddress = () => {
-  const context = useContext(AddressContext);
-  if (!context) {
-    throw new Error("useAddress must be used within an AddressProvider");
-  }
-  return context;
-};
-
-// Selector Hooks for better performance
-export const useSelectedCountry = () => {
-  const { state } = useAddress();
-  return state.selectedCountry;
-};
-
-export const useSelectedAddress = () => {
-  const { state } = useAddress();
-  return state.selectedAddress;
-};
-
-export const useSavedAddresses = () => {
-  const { state } = useAddress();
-  return state.savedAddresses;
-};
-
-export const useAvailableCountries = () => {
-  const { state } = useAddress();
-  return state.availableCountries;
-};
-
-export const useAddressLoading = () => {
-  const { state } = useAddress();
-  return state.isLoading;
-};
-
-// Action Creators
-export const useAddressActions = () => {
-  const { dispatch } = useAddress();
-  const { user } = useAuth();
-
-  return {
-    setLoading: (loading: boolean) =>
-      dispatch({ type: "SET_LOADING", payload: loading }),
-
-    setError: (error: string | null) =>
-      dispatch({ type: "SET_ERROR", payload: error }),
-
-    setCountries: (countries: Country[]) =>
-      dispatch({ type: "SET_COUNTRIES", payload: countries }),
-
-    setAddresses: (addresses: AddressData[]) =>
-      dispatch({ type: "SET_ADDRESSES", payload: addresses }),
-
-    selectCountry: (country: string) =>
-      dispatch({ type: "SELECT_COUNTRY", payload: country }),
-
-    selectAddress: (address: AddressData) =>
-      dispatch({ type: "SELECT_ADDRESS", payload: address }),
-
-    updateAddress: (address: AddressData) =>
-      dispatch({ type: "UPDATE_ADDRESS", payload: address }),
-
-    addAddress: (address: AddressData) =>
-      dispatch({ type: "ADD_ADDRESS", payload: address }),
-
-    removeAddress: (id: string) =>
-      dispatch({ type: "REMOVE_ADDRESS", payload: id }),
-
-    refreshUserPreferences: async () => {
-      if (user?.id) {
-        await loadUserPreferences(user.id, dispatch);
-      }
-    }
-  };
-};

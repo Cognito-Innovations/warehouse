@@ -49,7 +49,7 @@ export const MENUS = {
     {
       icon: ListAlt,
       label: "My Orders",
-      path: ROUTES.ORDER,
+      path: ROUTES.ORDER_HISTORY,
       requiresAuth: true,
     },
     {

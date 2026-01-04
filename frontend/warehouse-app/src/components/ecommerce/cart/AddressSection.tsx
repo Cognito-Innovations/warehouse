@@ -79,7 +79,7 @@ export default function AddressSection({
         zip_code: addressData.zip_code,
         state: addressData.state,
         city: addressData.city,
-        phone_number: `${addressData.phone_code || ''}${addressData.phone_number || ''}`,
+        phone_number: `${addressData.phone_code || ""}${addressData.phone_number || ""}`,
         email: addressData.email,
         currency: addressData.currency,
       };
@@ -108,7 +108,7 @@ export default function AddressSection({
         zip_code: addressData.zip_code,
         state: addressData.state,
         city: addressData.city,
-        phone_number: `${addressData.phone_code || ''}${addressData.phone_number || ''}`,
+        phone_number: `${addressData.phone_code || ""}${addressData.phone_number || ""}`,
         email: addressData.email,
         currency: addressData.currency,
       };
@@ -153,7 +153,7 @@ export default function AddressSection({
           borderRadius: 2,
           border: `1px solid ${highlightAddressError ? "#f44336" : "#e0e0e0"}`,
           bgcolor: "white",
-          transition: 'border 0.3s ease'
+          transition: "border 0.3s ease"
         }}
       >
         <Typography variant="subtitle1" fontWeight={600}>
@@ -169,9 +169,9 @@ export default function AddressSection({
             color: "primary.main", 
             cursor: "pointer", 
             fontWeight: 600,
-            textDecoration: 'none',
-            '&:hover': {
-              textDecoration: 'underline'
+            textDecoration: "none",
+            "&:hover": {
+              textDecoration: "underline"
             }
           }}
           onClick={handleAddClick}
@@ -188,25 +188,25 @@ export default function AddressSection({
           p: 2.5,
           mb: 2,
           borderRadius: 2,
-          border: `1px solid #e0e0e0`,
+          border: "1px solid #e0e0e0",
           bgcolor: "white",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
           transition: "all 0.3s ease",
           "&:hover": {
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
           },
-          position: 'relative',
+          position: "relative",
         }}
       >
         <IconButton
           onClick={handleEditClick}
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 8,
             right: 8,
-            color: 'text.secondary',
-            '&:hover': {
-              color: 'primary.main',
+            color: "text.secondary",
+            "&:hover": {
+              color: "primary.main",
             },
           }}
           size="small"

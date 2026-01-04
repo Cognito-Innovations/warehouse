@@ -18,7 +18,6 @@ import {
 } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
 import useLocationStore from "@/store/locationStore";
-import { useAddressActions } from "@/contexts/AddressContext";
 import { Search, MonetizationOn, ArrowBack } from "@mui/icons-material";
 import { getCurrencies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 import { toast } from "sonner";
@@ -37,7 +36,6 @@ interface CurrencySelectionViewProps {
 
 export default function CurrencySelectionView({ onBack, showBackButton }: CurrencySelectionViewProps) {
     const { user } = useAuth();
-    const { refreshUserPreferences } = useAddressActions();
     const { userLocation, setUserLocation } = useLocationStore();
     const [searchTerm, setSearchTerm] = useState("");
     const [currencies, setCurrencies] = useState<Currency[]>([]);
@@ -108,7 +106,6 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                     user_id: user.id,
                     currency_id: currency.id
                 });
-                await refreshUserPreferences();
             }
             toast.success(`Currency updated to ${currency.name}`);
         } catch (error) {
@@ -200,7 +197,7 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                                         </ListItemIcon>
                                         <ListItemText
                                             primary={currency.name}
-                                            secondary={`Global standard for price display`}
+                                            secondary={""}
                                             primaryTypographyProps={{
                                                 fontWeight: isSelected ? 600 : 500,
                                                 color: isSelected ? "primary.main" : "text.primary"

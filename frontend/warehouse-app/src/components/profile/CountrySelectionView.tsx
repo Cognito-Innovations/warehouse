@@ -19,7 +19,6 @@ import {
 } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
 import useLocationStore from "@/store/locationStore";
-import { useAddressActions } from "@/contexts/AddressContext";
 import { Search, Public, ArrowBack, LocationOn } from "@mui/icons-material";
 import { getCourierCompanies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 import { toast } from "sonner";
@@ -40,7 +39,6 @@ interface CountrySelectionViewProps {
 
 export default function CountrySelectionView({ onBack, showBackButton }: CountrySelectionViewProps) {
     const { user } = useAuth();
-    const { refreshUserPreferences } = useAddressActions();
     const { userLocation, setUserLocation } = useLocationStore();
     const [searchTerm, setSearchTerm] = useState("");
     const [couriers, setCouriers] = useState<CourierCompany[]>([]);
@@ -100,7 +98,6 @@ export default function CountrySelectionView({ onBack, showBackButton }: Country
             });
 
             setCurrentCourierId(courier.id);
-            await refreshUserPreferences();
             toast.success(`Active location updated to ${courier.country_name}`);
         } catch (error) {
             console.error("Failed to update location preference", error);

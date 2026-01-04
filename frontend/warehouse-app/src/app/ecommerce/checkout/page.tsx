@@ -112,12 +112,14 @@ export default function CheckoutPage() {
 
   return (
     <Box sx={{ bgcolor: "#fafafa", minHeight: "100vh" }}>
-      <Container maxWidth="lg" sx={{ py: { xs: 1, md: 3 }, px: { xs: 1, sm: 2 } }}>
-        <FastDeliveryBanner />
+      <Container maxWidth="lg" sx={{ py: { xs: 2, md: 3 }, px: { xs: 1.5, sm: 2, md: 3 } }}>
+        <Box sx={{ mb: { xs: 2, md: 3 } }}>
+          <FastDeliveryBanner />
+        </Box>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, md: 3 }}>
           <Grid size={{ xs: 12, lg: 8 }}>
-            <Grid container spacing={3}>
+            <Grid container spacing={{ xs: 2, md: 3 }}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <DeliveryAddressCard 
                   userId={user?.id}
@@ -133,17 +135,19 @@ export default function CheckoutPage() {
           </Grid>
 
           <Grid size={{ xs: 12, lg: 4 }}>
-            <OrderSummary 
-              items={checkedOutItems}
-              totals={totals}
-              shippingAddress={shippingAddress}
-              selectedCurrency={selectedCurrency}
-              currencyInfo={currencyInfo}
-              user={user}
-              formatLocalPrice={formatLocalPrice}
-              addressLoading={addressLoading}
-              onOrderSuccess={() => setOrderPlaced(true)}
-            />
+            <Box sx={{ position: { lg: "sticky" }, top: { lg: 20 } }}>
+              <OrderSummary 
+                items={checkedOutItems}
+                totals={totals}
+                shippingAddress={shippingAddress}
+                selectedCurrency={selectedCurrency}
+                currencyInfo={currencyInfo}
+                user={user}
+                formatLocalPrice={formatLocalPrice}
+                addressLoading={addressLoading}
+                onOrderSuccess={() => setOrderPlaced(true)}
+              />
+            </Box>
           </Grid>
         </Grid>
       </Container>

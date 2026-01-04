@@ -50,7 +50,7 @@ export default function CartItemsList({
         p: 2.5, 
         mb: 2, 
         borderRadius: 2,
-        border: `1px solid #e0e0e0`,
+        border: "1px solid #e0e0e0",
         bgcolor: "white",
       }}
     >

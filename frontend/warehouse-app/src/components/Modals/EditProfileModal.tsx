@@ -21,7 +21,6 @@ import {
 import { toast, Toaster } from "sonner";
 import { updateUser } from "@/lib/api.service";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAddressActions } from "@/contexts/AddressContext";
 import OtpVerification from "../PageComponents/OtpVerification";
 
 export interface ProfileData {
@@ -47,7 +46,6 @@ interface EditProfileModalProps {
 export default function EditProfileModal({ open, onClose, profileData, onProfileUpdate, loading }: EditProfileModalProps) {
 
   const { user } = useAuth();
-  const { refreshUserPreferences } = useAddressActions();
   const [formData, setFormData] = useState(profileData);
   const [isEmailVerified, setIsEmailVerified] = useState(profileData.email_verified);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -152,8 +150,6 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
       };
 
       await updateUser(user?.id!, payload);
-
-      await refreshUserPreferences();
 
       toast.success("Profile updated successfully");
       onProfileUpdate(payload);

@@ -1,13 +1,11 @@
 import { Box} from "@mui/material";
 
-import useCategoryStore from "@/store/categoryStore";
 import useProductStore from "@/store/productStore";
 import EcommerceProductsGrid from "../EcommerceProductsGrid";
 import GridSkeletonLoader from "../skeleton-loader/GridSkeletonLoader";
 
 const ProductsGridView = () => {
     const { products, isLoading, loadingMore } = useProductStore();
-    const { selectedCategory } = useCategoryStore();
 
     if (isLoading && products.length === 0) {
         return (

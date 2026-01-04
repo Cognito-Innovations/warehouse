@@ -1,9 +1,10 @@
 "use client";
-import { useAddress, useAddressActions } from "../contexts/AddressContext";
 
+//TODO: Rework on it by removing and use zustand store
 export const useAddressAPI = () => {
-  const { state } = useAddress();
-  const actions = useAddressActions();
+  
+  const state = {};
+  const actions = {};
 
   return {
     // State

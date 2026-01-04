@@ -20,8 +20,8 @@ export default function CategoryProductsByCategory() {
   const locationData = useEffectiveUserLocation({
     countryCode: undefined,
     countryName: undefined,
-    city: '',
-    pincode: '',
+    city: "",
+    pincode: "",
   });
   const countryCode = locationData.location.countryCode;
 

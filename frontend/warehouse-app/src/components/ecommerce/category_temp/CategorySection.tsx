@@ -41,12 +41,12 @@ export default function CategorySection() {
 
   const handleAllClick = () => {
     setCategory(null);
-    router.push('/ecommerce');
+    router.push("/ecommerce");
   };
 
   const handleAssistedClick = () => {
-    setCategory('assisted');
-    router.push('/ecommerce/assisted-shopping');
+    setCategory("assisted");
+    router.push("/ecommerce/assisted-shopping");
   };
 
   return (
@@ -71,7 +71,7 @@ export default function CategorySection() {
         }}
       >
         <CategoryStaticAllCard onClick={handleAllClick} isSelected={selectedCategory === null} />
-        <CategoryStaticAssistedCard onClick={handleAssistedClick} isSelected={selectedCategory === 'assisted'} />
+        <CategoryStaticAssistedCard onClick={handleAssistedClick} isSelected={selectedCategory === "assisted"} />
         <CategoryItems />
       </Box>
 

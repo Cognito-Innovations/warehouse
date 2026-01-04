@@ -4,7 +4,6 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import {
     Menu,
-    MenuItem,
     Typography,
     Box,
     Button,
@@ -12,15 +11,15 @@ import {
 } from "@mui/material";
 import { LocationOn } from "@mui/icons-material";
 import { ROUTES } from "@/utils/constants";
-import { AddressData } from "../../contexts/AddressContext";
 import useLocationStore from "@/store/locationStore";
+
 
 interface HeaderLocationMenuProps {
     locationAnchorEl: null | HTMLElement;
     isLocationMenuOpen: boolean;
     handleLocationClose: () => void;
-    selectedAddress: AddressData;
-    countryCode?: string;
+    selectedAddress: any;
+    countryCode: string;
 }
 
 const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
@@ -36,6 +35,10 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
     const handleChangeLocation = () => {
         router.push(`${ROUTES.PROFILE}?view=country`);
         handleLocationClose();
+    };
+
+    const login = () => {
+        router.push(`${ROUTES.SIGN_IN}`);
     };
 
     const displayCountry = selectedAddress?.country_name || countryCode || userLocation.countryName || "None";
@@ -74,7 +77,7 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                     <LocationOn fontSize="small" color="primary" />
                     <Typography variant="subtitle1" fontWeight="bold">
-                        Shipping to
+                        Shipping from
                     </Typography>
                 </Box>
                 <Divider sx={{ mb: 2 }} />
@@ -97,15 +100,12 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
                 ) : (
                     <Box sx={{ mb: 2 }}>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                            Currently selected country:
-                        </Typography>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                            {displayCountry}
+                            Currently selected country: <span className="font-bold">{displayCountry}</span>
                         </Typography>
                     </Box>
                 )}
 
-                <Button
+               { selectedAddress ? <Button
                     variant="outlined"
                     fullWidth
                     size="small"
@@ -113,7 +113,15 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
                     sx={{ textTransform: "none" }}
                 >
                     Change Location
-                </Button>
+                </Button> : <Button
+                    variant="outlined"
+                    fullWidth
+                    size="small"
+                    onClick={login}
+                    sx={{ textTransform: "none" }}
+                >
+                    Login
+                </Button>}
             </Box>
         </Menu>
     );

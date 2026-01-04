@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useCallback, useEffect, useState } from "react";
-import { useRouter, useSearchParams, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Container, Alert } from "@mui/material";
 
 import useProductStore from "@/store/productStore";
@@ -18,8 +18,6 @@ import { ecommerceData } from "@/data/ecommerceData";
 import { debounce } from "@/utils/debounce";
 
 export default function CategoryPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const params = useParams();
   const slug = params?.slug as string;
   
@@ -29,8 +27,8 @@ export default function CategoryPage() {
     city: "",
     pincode: "",
   });
-  const currency = locationData?.currencyInfo?.code || '';
-  const countryCode = locationData?.location?.countryCode || '';
+  const currency = locationData?.currencyInfo?.code || "";
+  const countryCode = locationData?.location?.countryCode || "";
 
   const { user } = useAuth();
   const userId = user?.id;

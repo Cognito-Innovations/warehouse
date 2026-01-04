@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge, Chip, CircularProgress } from "@mui/material";
 import { ArrowBack, Search, ShoppingCart, Menu as MenuIcon, Share } from "@mui/icons-material";
@@ -12,9 +12,7 @@ import { useAddressAPI } from "@/hooks/useAddressAPI";
 import HeaderProfileTrigger from "../Header/HeaderProfileTrigger"; 
 import HeaderProfileMenu from "../Header/HeaderProfileMenu";
 import HeaderLocationMenu from "../Header/HeaderLocationMenu";
-import AddAddressModal from "@/components/ecommerce/cart/AddAddressModal";
 import { ROUTES } from "@/utils/constants";
-import { createUserAddress } from "@/lib/api.service";
 import { ecommerceData } from "@/data/ecommerceData";
 
 interface HeaderProps {
@@ -59,12 +57,12 @@ export default function Header({
 
   const count = cartProductQuantityCount();
 
-  const isEcommerce = (pathname === '/' || pathname.startsWith('/ecommerce')) && !['/ecommerce/orders', '/ecommerce/checkout', '/ecommerce/product', '/ecommerce/cart'].some(p => pathname.startsWith(p));
-  const isOrders = pathname.startsWith('/ecommerce/orders');
-  const isPickupRequest = pathname.startsWith('/dashboard/pickup-request');
-  const isCheckout = pathname.startsWith('/ecommerce/checkout');
-  const isProductDetail = pathname.startsWith('/ecommerce/product');
-  const isCart = pathname.startsWith('/ecommerce/cart');
+  const isEcommerce = (pathname === "/" || pathname.startsWith("/ecommerce")) && !["/ecommerce/orders", "/ecommerce/checkout", "/ecommerce/product", "/ecommerce/cart"].some(p => pathname.startsWith(p));
+  const isOrders = pathname.startsWith("/ecommerce/orders");
+  const isPickupRequest = pathname.startsWith("/dashboard/pickup-request");
+  const isCheckout = pathname.startsWith("/ecommerce/checkout");
+  const isProductDetail = pathname.startsWith("/ecommerce/product");
+  const isCart = pathname.startsWith("/ecommerce/cart");
   const headerTitle = title || 
     (isEcommerce ? "Palakart" : 
       isOrders ? "My Orders" : 
@@ -79,21 +77,7 @@ export default function Header({
 
   const handleLocationClick = (event: React.MouseEvent<HTMLElement>) => setLocationAnchorEl(event.currentTarget);
   const handleLocationClose = () => setLocationAnchorEl(null);
-  const { selectedAddress, refreshUserPreferences } = useAddressAPI();
-
-  const handleSaveAddress = useCallback(async (addressData: any) => {
-    if (!user?.id || !locationData) return;
-    try {
-      const apiData = { user_id: user.id, ...addressData };
-      await createUserAddress(apiData);
-      await refreshUserPreferences();
-      if (locationData.refreshAddresses) await locationData.refreshAddresses();
-    } catch (err) {
-      console.error("Failed to save address:", err);
-    } finally {
-      setShowAddAddressModal(false);
-    }
-  }, [user, locationData, refreshUserPreferences]);
+  const { selectedAddress } = useAddressAPI();
 
   let locationText: string | null = null;
   let onLocationClick: (() => void) | null = null;
@@ -119,17 +103,17 @@ export default function Header({
   }
 
   const handleBack = () => {
-    if (pathname.startsWith('/profile')) {
-      const view = searchParams.get('view');
-      if (view === 'country' || view === 'currency') {
-        router.replace('/profile');
+    if (pathname.startsWith("/profile")) {
+      const view = searchParams.get("view");
+      if (view === "country" || view === "currency") {
+        router.replace("/profile");
         return;
       }
     }
-    if (typeof window !== 'undefined' && window.history.length > 1) {
+    if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
-      router.push('/ecommerce');
+      router.push("/ecommerce");
     }
   };
 
@@ -137,7 +121,7 @@ export default function Header({
     <>
       <AppBar position="sticky" elevation={0} sx={{ bgcolor: "white", color: "text.primary" }}>
         <Toolbar sx={{ justifyContent: "space-between", alignItems: "center", gap: { xs: 1, sm: 2 }, flexWrap: { xs: "wrap", md: "nowrap" }, py: { xs: 1.5, sm: 2, md: 2.5 }, px: { xs: 2, sm: 3, md: 4 }, minHeight: { xs: "64px", sm: "72px", md: "80px" } }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
             {isEcommerce && !hideMenuButton && (
               <IconButton edge="start" color="inherit" aria-label="menu" onClick={onMenuClick} sx={{ mr: 0.5 }}>
                 <MenuIcon />
@@ -176,7 +160,7 @@ export default function Header({
             </Box>
           )}
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, order: { xs: 2, md: 3 }, flexShrink: 0, ml: hideSearch ? 'auto' : 0 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, order: { xs: 2, md: 3 }, flexShrink: 0, ml: hideSearch ? "auto" : 0 }}>
             {isEcommerce && (
               <>
                 {!hideLocation && (
@@ -194,7 +178,7 @@ export default function Header({
                   <Badge 
                     badgeContent={
                       hasMounted 
-                        ? (cartLoading ? <CircularProgress size={10} sx={{ color: 'white' }} /> : count) 
+                        ? (cartLoading ? <CircularProgress size={10} sx={{ color: "white" }} /> : count) 
                         : 0
                     } 
                     color="error"
@@ -218,13 +202,13 @@ export default function Header({
                 </IconButton>
               </>
             )}
-            {isCart && count > 0 && (
+            {isCart && hasMounted && count > 0 && (
               <Typography 
                 variant="body2" 
                 color="text.secondary"
                 sx={{ fontWeight: 500 }}
               >
-                {hasMounted ? count : 0} {hasMounted && count === 1 ? "item" : "items"}
+                {count} {count === 1 ? "item" : "items"}
               </Typography>
             )}
           </Box>
@@ -233,7 +217,6 @@ export default function Header({
 
       <HeaderProfileMenu currentUser={user} anchorEl={anchorEl} open={open} handleProfileMenuClose={handleProfileMenuClose} handleProfileClick={handleProfileClick} handleLogoutClick={handleLogoutClick} />
       <HeaderLocationMenu locationAnchorEl={locationAnchorEl} isLocationMenuOpen={isLocationMenuOpen} handleLocationClose={handleLocationClose} selectedAddress={selectedAddress} countryCode={selectedAddress?.country_code || ""} />
-      <AddAddressModal open={showAddAddressModal} onClose={() => setShowAddAddressModal(false)} onSave={handleSaveAddress} title="Add Address" saveLabel="Save" cancelLabel="Cancel" />
     </>
   );
 }

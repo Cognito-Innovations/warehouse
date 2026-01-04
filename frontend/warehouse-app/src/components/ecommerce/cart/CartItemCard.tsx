@@ -34,7 +34,7 @@ export default function CartItemCard({
     if (blocked.includes((e.target as HTMLElement).tagName)) return;
 
     router.push(`${ROUTES.PRODUCT}/${product.slug}`);
-  }
+  };
 
   const handleItemSelect = (itemId: string, isChecked: boolean) => {
     const isCurrentlySelected = checkoutProducts.includes(itemId);
@@ -74,7 +74,7 @@ export default function CartItemCard({
       : "In Stock"
     : "Out of Stock";
 
-  const currencyStr = currencyInfo?.symbol || '$';
+  const currencyStr = currencyInfo?.symbol || "$";
 
   const formatLocalPrice = (price: number) => formatPrice(price, currencyStr);
   return (
@@ -104,7 +104,7 @@ export default function CartItemCard({
         },
       }}
     >
-      <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
+      <Box sx={{ display: "flex", gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
         {/* Selection Checkbox */}
         <Box sx={{ display: "flex", alignItems: "flex-start", pt: 0.5 }}>
           <Checkbox
@@ -159,14 +159,14 @@ export default function CartItemCard({
       </Box>
 
       <Box sx={{ 
-        display: 'flex', 
+        display: "flex", 
         flexGrow: 1, 
         minWidth: 0, 
-        flexDirection: { xs: 'column', sm: 'row' } 
+        flexDirection: { xs: "column", sm: "row" } 
       }}>
         {/* Product Details */}
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, mb: 0.75, flexWrap: 'wrap' }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, mb: 0.75, flexWrap: "wrap" }}>
             <Typography
               variant="body1"
               fontWeight="bold"
@@ -378,7 +378,7 @@ export default function CartItemCard({
           {/* Price Section */}
           <Box sx={{ 
             textAlign: { xs: "left", sm: "right" },
-            width: '100%',
+            width: "100%",
           }}>
             {/* Original Unit Price */}
             {hasDiscount && (

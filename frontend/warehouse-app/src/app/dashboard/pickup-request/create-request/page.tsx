@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { useSession } from "next-auth/react"; 
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { useAddressAPI } from "@/hooks/useAddressAPI";
 import AddressLayout from "@/providers/AddressLayout";
 import { ROUTES } from "@/utils/constants";
