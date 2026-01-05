@@ -1,19 +1,25 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import ReactCountryFlag from "react-country-flag";
-import { useAddressAPI } from "../../hooks/useAddressAPI";
+import { getCountries } from "@/lib/api.service";
 
 const AddressSection = () => {
-  const {
-    selectedCountry, 
-    availableCountries,
-  } = useAddressAPI();
+  const [availableCountries, setAvailableCountries] = useState<any[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<string>("");
   
   const [isClient, setIsClient] = useState(false);
 
   // Set client flag on mount
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    const fetchAvailableCountries = async () => {
+      const data = await getCountries();
+      setAvailableCountries(data);
+    };
+    fetchAvailableCountries();
   }, []);
 
   const getCountryCode = (country: string) => {

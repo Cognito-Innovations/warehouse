@@ -3,7 +3,7 @@
 import { ROUTES } from "@/utils/constants";
 import { useAuth } from "../contexts/AuthContext";
 import { Box, CircularProgress, Typography } from "@mui/material";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useEffect, ReactNode } from "react";
 
 //TODO P0: Need to wrap address layout only required routes not in root

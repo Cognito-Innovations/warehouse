@@ -11,26 +11,24 @@ import {
 } from "@mui/material";
 import { LocationOn } from "@mui/icons-material";
 import { ROUTES } from "@/utils/constants";
-import useLocationStore from "@/store/locationStore";
 
 
 interface HeaderLocationMenuProps {
+    user: any;
     locationAnchorEl: null | HTMLElement;
     isLocationMenuOpen: boolean;
     handleLocationClose: () => void;
-    selectedAddress: any;
     countryCode: string;
 }
 
 const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
+    user,
     locationAnchorEl,
     isLocationMenuOpen,
     handleLocationClose,
-    selectedAddress,
     countryCode,
 }) => {
     const router = useRouter();
-    const { userLocation } = useLocationStore();
 
     const handleChangeLocation = () => {
         router.push(`${ROUTES.PROFILE}?view=country`);
@@ -40,8 +38,6 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
     const login = () => {
         router.push(`${ROUTES.SIGN_IN}`);
     };
-
-    const displayCountry = selectedAddress?.country_name || countryCode || userLocation.countryName || "None";
 
     return (
         <Menu
@@ -82,30 +78,14 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
                 </Box>
                 <Divider sx={{ mb: 2 }} />
 
-                {selectedAddress?.id ? (
-                    <Box sx={{ mb: 2 }}>
-                        <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                            {selectedAddress.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {selectedAddress.address}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {selectedAddress.country_name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            {selectedAddress.phone_number}
-                        </Typography>
-                    </Box>
-                ) : (
-                    <Box sx={{ mb: 2 }}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                            Currently selected country: <span className="font-bold">{displayCountry}</span>
-                        </Typography>
-                    </Box>
-                )}
+                
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Currently selected country: <span className="font-bold">{countryCode === "AE" ? "UAE" : countryCode}</span>
+                    </Typography>
+                </Box>
 
-               { selectedAddress ? <Button
+               { user ? <Button
                     variant="outlined"
                     fullWidth
                     size="small"

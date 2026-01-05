@@ -34,7 +34,7 @@ export const MENUS = {
     {
       icon: ShoppingBag,
       label: "Assisted Shopping",
-      path: ROUTES.ECOMMERCE_BUYING_ASSISTANT,
+      path: ROUTES.ASSISTED_SHOPPING,
       requiresAuth: false,
     },
     {

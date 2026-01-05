@@ -18,7 +18,6 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
 
   const handleNavigation = (path: string, requiresAuth: boolean = true) => {
     let targetPath = path;
-
     if (requiresAuth && !user) {
       const callbackUrl = encodeURIComponent(targetPath);
       router.push(`/sign-in?callbackUrl=${callbackUrl}`);

@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
-import { useAddressAPI } from "@/hooks/useAddressAPI";
 import { ROUTES, ASSISTED_SHOPPING_PRODUCT_LINK_KEY } from "@/utils/constants";
 
 interface ShoppingItem {
@@ -24,7 +23,6 @@ interface ShoppingItem {
 export default function ShoppingRequestForm() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { selectedAddress } = useAddressAPI();
 
   const [items, setItems] = useState<ShoppingItem[]>([
     {

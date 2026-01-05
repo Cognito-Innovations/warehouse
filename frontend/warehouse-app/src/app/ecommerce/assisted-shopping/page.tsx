@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef, useCallback, useEffect } from "react";
-import { Container, Alert } from "@mui/material";
 
 import useCategoryStore from "@/store/categoryStore";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,8 +19,8 @@ export default function AssistedShoppingPage() {
     city: "",
     pincode: "",
   });
-  const currency = locationData?.currencyInfo?.code || '';
-  const countryCode = locationData?.location?.countryCode || '';
+  const currency = locationData?.currencyInfo?.code || "";
+  const countryCode = locationData?.location?.countryCode || "";
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -30,7 +29,7 @@ export default function AssistedShoppingPage() {
   const hasFetched = useRef(false);
 
   useEffect(() => {
-    setCategory('assisted');
+    setCategory("assisted");
   }, [setCategory]);
 
   const initializeEcommerceData = useCallback(async (curr?: string, cntCode?: string) => {

@@ -8,12 +8,12 @@ import { ArrowBack, Search, ShoppingCart, Menu as MenuIcon, Share } from "@mui/i
 import { useCartStore } from "@/store/cartStore";
 import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAddressAPI } from "@/hooks/useAddressAPI";
 import HeaderProfileTrigger from "../Header/HeaderProfileTrigger"; 
 import HeaderProfileMenu from "../Header/HeaderProfileMenu";
 import HeaderLocationMenu from "../Header/HeaderLocationMenu";
 import { ROUTES } from "@/utils/constants";
 import { ecommerceData } from "@/data/ecommerceData";
+import { getUserPreferences } from "@/lib/api.service";
 
 interface HeaderProps {
   locationData?: any; 
@@ -77,7 +77,20 @@ export default function Header({
 
   const handleLocationClick = (event: React.MouseEvent<HTMLElement>) => setLocationAnchorEl(event.currentTarget);
   const handleLocationClose = () => setLocationAnchorEl(null);
-  const { selectedAddress } = useAddressAPI();
+
+  const [countryName, setCountryName] = useState<string>("");
+  const [countryCode, setCountryCode] = useState<string>("");
+
+  useEffect(() => {
+    if (user?.id){
+      const fetchCountryDetails = async () => {
+        const userPreferences = await getUserPreferences(user?.id);
+        setCountryCode(userPreferences?.courier?.country?.code || "");
+        setCountryName(userPreferences?.courier?.country?.name || "");
+      };
+      fetchCountryDetails();
+    }
+  }, [user]);
 
   let locationText: string | null = null;
   let onLocationClick: (() => void) | null = null;
@@ -165,13 +178,12 @@ export default function Header({
               <>
                 {!hideLocation && (
                   <HeaderProfileTrigger
+                    countryName={countryName || ""}
+                    countryCode={countryCode || ""}
                     currentUser={user}
                     open={open}
                     handleProfileMenuOpen={handleProfileMenuOpen}
                     handleLocationClick={handleLocationClick}
-                    locationText={locationText}
-                    locationButtonText={locationButtonText}
-                    onLocationClick={onLocationClick}
                   />
                 )}
                 <IconButton color="inherit" onClick={() => router.push(ROUTES.CART)} sx={{ color: "text.primary", ml: 0 }}>
@@ -216,7 +228,7 @@ export default function Header({
       </AppBar>
 
       <HeaderProfileMenu currentUser={user} anchorEl={anchorEl} open={open} handleProfileMenuClose={handleProfileMenuClose} handleProfileClick={handleProfileClick} handleLogoutClick={handleLogoutClick} />
-      <HeaderLocationMenu locationAnchorEl={locationAnchorEl} isLocationMenuOpen={isLocationMenuOpen} handleLocationClose={handleLocationClose} selectedAddress={selectedAddress} countryCode={selectedAddress?.country_code || ""} />
+      <HeaderLocationMenu locationAnchorEl={locationAnchorEl} isLocationMenuOpen={isLocationMenuOpen} handleLocationClose={handleLocationClose} countryCode={countryCode || ""} user={user} />
     </>
   );
 }

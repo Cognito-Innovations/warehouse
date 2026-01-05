@@ -12,8 +12,7 @@ export enum ROUTES {
   PRODUCT = "/ecommerce/product",
   CART = "/ecommerce/cart",
   CHECKOUT = "/ecommerce/checkout",
-  ASSISTED_SHOPPING = "/assisted-shopping",
-  ECOMMERCE_BUYING_ASSISTANT = "/ecommerce/buying-assistant/start",
+  ASSISTED_SHOPPING = "/ecommerce/assisted-shopping",
   CREATE_ASSISTED_SHOPPING = "/assisted-shopping/create-request"
 }
 
