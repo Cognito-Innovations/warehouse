@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { FastDeliveryBanner } from "@/components/ecommerce/checkout/FastDeliveryBanner";
 import { DeliveryInfoCard } from "@/components/ecommerce/checkout/DeliveryInfoCard";
 import { OrderSummary } from "@/components/ecommerce/checkout/OrderSummary";
@@ -29,14 +29,7 @@ export default function CheckoutPage() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   
-  const locationData = useEffectiveUserLocation({
-    countryCode: undefined,
-    countryName: undefined,
-    city: '',
-    pincode: '',
-  });
-  const selectedCurrency = locationData.currencyInfo.code;
-  const currencyInfo = locationData.currencyInfo;
+  const {currencyCode, countryCode} = useDetectUserLocation();
 
   useEffect(() => {
     if (hasInitialized) return;
@@ -86,9 +79,8 @@ export default function CheckoutPage() {
   }, [checkedOutItems, router, itemsLoaded, orderPlaced]);
 
   const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
-  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, selectedCurrency, currencyInfo), [checkedOutItems, selectedIds, selectedCurrency, currencyInfo]);
-  
-  const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencyInfo.symbol), [currencyInfo.symbol]);
+  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, currencyCode), [checkedOutItems, selectedIds, currencyCode]);
+  const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencyCode), [currencyCode]);
 
   const handleAddressSelect = useCallback((address: string) => {
     setShippingAddress(address);
@@ -140,8 +132,8 @@ export default function CheckoutPage() {
                 items={checkedOutItems}
                 totals={totals}
                 shippingAddress={shippingAddress}
-                selectedCurrency={selectedCurrency}
-                currencyInfo={currencyInfo}
+                selectedCurrency={currencyCode}
+                currencyInfo={{symbol: currencyCode, code: currencyCode, rate: 1, isBase: true}} //TODO: remove currencyinfo and inside order summary do individual api call
                 user={user}
                 formatLocalPrice={formatLocalPrice}
                 addressLoading={addressLoading}

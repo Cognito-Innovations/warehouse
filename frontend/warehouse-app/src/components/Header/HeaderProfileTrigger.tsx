@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { Person } from "@mui/icons-material";
 import ReactCountryFlag from "react-country-flag";
 import { Avatar, Box, IconButton, Button } from "@mui/material";
-import { getUserPreferences } from "@/lib/api.service";
 
 interface HeaderProfileTriggerProps {
   countryName: string;

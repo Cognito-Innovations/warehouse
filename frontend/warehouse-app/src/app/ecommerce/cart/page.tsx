@@ -5,7 +5,7 @@ import { Box, Container } from "@mui/material";
 import { useSession } from "next-auth/react";
 
 import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
 import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
@@ -26,31 +26,24 @@ export default function CartPage() {
   const [highlightAddressError, setHighlightAddressError] = useState(false);
   const [isCartLoading, setIsCartLoading] = useState(false); 
 
-  const locationData = useEffectiveUserLocation({
-    countryCode: undefined,
-    countryName: undefined,
-    city: '',
-    pincode: '',
-  });
-  const selectedCurrency = locationData.currencyInfo.code;
-  const currencyInfo = locationData.currencyInfo;
+  const {currencyCode, countryCode} = useDetectUserLocation();
 
   const userId = (session?.user as any)?.user_id;
 
   const initCart = useCallback(async () => {
     setIsCartLoading(true);
     try {
-      await getCart(selectedCurrency);
+      await getCart(currencyCode);
     } catch (e) {
       console.error("Initialization error:", e);
     } finally {
       setIsCartLoading(false);
     }
-  }, [getCart, selectedCurrency]);
+  }, [getCart, currencyCode]);
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!selectedCurrency) return;
+    if (!currencyCode) return;
 
     if (hydrated) {
       initCart();
@@ -63,7 +56,7 @@ export default function CartPage() {
         clearTimeout(timer);
       };
     }
-  }, [selectedCurrency, status, initCart, hydrated]);
+  }, [currencyCode, status, initCart, hydrated]);
 
   useEffect(() => {
     if (hydrated && cartProducts.length > 0) {
@@ -99,8 +92,9 @@ export default function CartPage() {
             gap: 3,
           }}
         >
+          {/* TODO P0: Uncomment this when the cart items section is implemented */}
           {/* Cart Items Section */}
-          <Box sx={{ flex: { md: "0 0 65%" }, width: { xs: "100%", md: "65%" } }}>
+          {/* <Box sx={{ flex: { md: "0 0 65%" }, width: { xs: "100%", md: "65%" } }}>
             {!userId ? (
               <CartLoginState />
             ) : (
@@ -123,10 +117,10 @@ export default function CartPage() {
             )}
 
             <ContinueShoppingCard />
-          </Box>
+          </Box> */}
 
           {/* Order Summary Section */}
-          <Box sx={{ flex: { md: "0 0 35%" }, width: { xs: "100%", md: "35%" } }}>
+          {/* <Box sx={{ flex: { md: "0 0 35%" }, width: { xs: "100%", md: "35%" } }}>
             {isCartLoading ? (
               <OrderSummarySkeleton />
             ) : (
@@ -139,7 +133,7 @@ export default function CartPage() {
                 currencyInfo={currencyInfo}
               />
             )}
-          </Box>
+          </Box> */}
         </Box>
       </Container>
     </Box>

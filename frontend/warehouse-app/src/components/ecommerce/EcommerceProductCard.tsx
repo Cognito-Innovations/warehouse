@@ -17,12 +17,12 @@ import { useRouter } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
 import { useCartStore } from "@/store/cartStore";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import ProductQuantityControl from "./ProductQuantityControl";
 import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
 import { formatDiscountPercentage } from "@/lib/utils";
-import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils";
+import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils"; 
 import { EcommerceProductCardProps } from "@/types/ecommerce";
 
 export default function EcommerceProductCard({
@@ -35,12 +35,7 @@ export default function EcommerceProductCard({
   const decrementCartQuantity = useCartStore((state) => state.decrementCartQuantity);
   const cartQuantity = useCartStore((state) => state.cartProducts.find((item) => item.product_id === product.id))?.quantity || 0;
 
-  const locationData = useEffectiveUserLocation({
-    countryCode: undefined,
-    countryName: undefined,
-    city: "",
-    pincode: "",
-  });
+  const {currencyCode, countryCode} = useDetectUserLocation();
 
   const rawPrice = product.price.price;
   const currency = product.price.currency;
@@ -58,12 +53,12 @@ export default function EcommerceProductCard({
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    incrementCartQuantity(product, locationData.currencyInfo.code);
+    incrementCartQuantity(product, currencyCode);
   };
 
   const handleDecreaseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    decrementCartQuantity(product, locationData.currencyInfo.code);
+    decrementCartQuantity(product, currencyCode);
   };
 
   return (

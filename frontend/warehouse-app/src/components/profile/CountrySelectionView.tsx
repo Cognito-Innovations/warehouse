@@ -18,7 +18,6 @@ import {
     Avatar
 } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
-import useLocationStore from "@/store/locationStore";
 import { Search, Public, ArrowBack, LocationOn } from "@mui/icons-material";
 import { getCourierCompanies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 import { toast } from "sonner";
@@ -39,7 +38,6 @@ interface CountrySelectionViewProps {
 
 export default function CountrySelectionView({ onBack, showBackButton }: CountrySelectionViewProps) {
     const { user } = useAuth();
-    const { userLocation, setUserLocation } = useLocationStore();
     const [searchTerm, setSearchTerm] = useState("");
     const [couriers, setCouriers] = useState<CourierCompany[]>([]);
     const [currentCourierId, setCurrentCourierId] = useState<string>("");
@@ -50,7 +48,6 @@ export default function CountrySelectionView({ onBack, showBackButton }: Country
         const fetchData = async () => {
             try {
                 const response = await getCourierCompanies();
-                // response is expected to be CourierCompanyResponsesDto[]
                 setCouriers(response);
 
                 if (user?.id) {
@@ -91,11 +88,12 @@ export default function CountrySelectionView({ onBack, showBackButton }: Country
             }
 
             // Update local store for system-wide consistency
-            setUserLocation({
-                ...userLocation,
-                countryName: courier.country_name,
-                countryCode: courier.country_code
-            });
+            //TODO P0: Uncomment this when the country selection view is implemented
+            // setUserLocation({
+            //     ...userLocation,
+            //     countryName: courier.country_name,
+            //     countryCode: courier.country_code
+            // });
 
             setCurrentCourierId(courier.id);
             toast.success(`Active location updated to ${courier.country_name}`);
