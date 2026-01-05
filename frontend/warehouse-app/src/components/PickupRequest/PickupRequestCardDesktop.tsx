@@ -2,15 +2,7 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 import { formatDateTime } from "@/lib/utils";
 import { statusConfig } from "@/lib/pickupStatus";
-
-interface PickupRequest {
-  id: string;
-  request_no?: string;
-  created_at: string;
-  pickup_address: string;
-  supplier_name: string;
-  status: string;
-}
+import { PickupRequest } from "./PickupRequestCard";
 
 interface PickupRequestCardDesktopProps {
   request: PickupRequest;
@@ -31,7 +23,7 @@ const PickupRequestCardDesktop: React.FC<PickupRequestCardDesktopProps> = ({ req
       {/* Request No & Date */}
       <Box sx={{ flexShrink: 0, width: "15%", minWidth: 120 }}>
         <Typography variant="body2" fontWeight={600} sx={{ color: "text.primary", mb: 0.5 }}>
-          {request.request_no || `PR/IN/${request.id.substring(0, 8)}`}
+          {request.request_no || `PR/${request.country}/${request.id.substring(0, 8)}`}
         </Typography>
         <Typography variant="caption" color="text.secondary">
           {formatDateTime(request.created_at)}

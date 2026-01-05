@@ -5,13 +5,14 @@ import PickupRequestCardMobile from "./PickupRequestCardMobile";
 import PickupRequestCardDesktop from "./PickupRequestCardDesktop";
 import { ROUTES } from "@/utils/constants";
 
-interface PickupRequest {
+export interface PickupRequest {
   id: string;
   request_no?: string;
   created_at: string;
   pickup_address: string;
   supplier_name: string;
   status: string;
+  country: string;
 }
 
 interface PickupRequestCardProps {

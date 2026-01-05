@@ -3,15 +3,7 @@ import { Box, Typography } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 import { formatDateTime } from "@/lib/utils";
 import { statusConfig } from "@/lib/pickupStatus";
-
-interface PickupRequest {
-  id: string;
-  request_no?: string;
-  created_at: string;
-  pickup_address: string;
-  supplier_name: string;
-  status: string;
-}
+import { PickupRequest } from "./PickupRequestCard";
 
 interface PickupRequestCardMobileProps {
   request: PickupRequest;
@@ -27,7 +19,7 @@ const PickupRequestCardMobile: React.FC<PickupRequestCardMobileProps> = ({ reque
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
         <Box>
           <Typography variant="body2" fontWeight={600} sx={{ color: "text.primary", mb: 0.5 }}>
-            {request.request_no || `PR/IN/${request.id.substring(0, 8)}`}
+            {request.request_no || `PR/${request.country}/${request.id.substring(0, 8)}`}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {formatDateTime(request.created_at)}
