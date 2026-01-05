@@ -14,7 +14,6 @@ import { EcommerceCartItem } from '../entities/ecommerce-cart-item.entity';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
 import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
-import { User } from 'src/users/user.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { DEFAULT_CURRENCY, PAYMENT_GATEWAY } from '../../shared/constants.js';
 
@@ -49,6 +48,15 @@ interface PayPalCaptureResponse {
       }>;
     };
   }>;
+}
+
+interface PayPalHttpError {
+  response: {
+    data: {
+      message?: string;
+      details?: Array<{ description?: string }>;
+    };
+  };
 }
 
 @Injectable()
@@ -88,6 +96,13 @@ export class OrderService {
     return Math.round((value + Number.EPSILON) * 100) / 100;
   }
 
+  private getThresholdAndFees(currency: string) {
+    if (currency === 'INR') {
+      return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
+    }
+    return { threshold: 20, deliveryFee: 5, serviceCharge: 1 };
+  }
+
   private generateOrderNumber(): string {
     // last 3 digits of timestamp
     const timeBasedSuffix = Date.now().toString().slice(-3);
@@ -124,220 +139,170 @@ export class OrderService {
     userId: string,
     createOrderDto: CreateOrderDto,
   ): Promise<EcommerceOrder> {
-    // Get user's active cart
-    const cart = await this.cartRepository.findOne({
-      where: { user_id: userId, status: CartStatus.ACTIVE },
-      relations: ['items', 'items.product', 'user'],
-    });
-
-    if (!cart || cart.items.length === 0) {
-      throw new BadRequestException('Cart is empty');
-    }
-
-    let itemsToProcess = cart.items;
-
-    if (createOrderDto.product_ids && createOrderDto.product_ids.length > 0) {
-      itemsToProcess = cart.items.filter((item) => {
-        const cartItemId = item.product_id || item.product?.id;
-        return createOrderDto.product_ids!.includes(cartItemId);
-      });
-
-      if (itemsToProcess.length === 0) {
-        throw new BadRequestException(
-          'None of the selected products exist in your active cart',
-        );
-      }
-    }
-
-    const user = cart.user;
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-
-    const selectedCurrency = createOrderDto.currency || DEFAULT_CURRENCY.code;
-
-    const userCurrency =
-      await this.userPreferenceService.getUserPreferredCurrency(userId);
-    let currencyInfo: CurrencyInfo;
-    let orderCurrency: string;
-    if (userCurrency) {
-      currencyInfo = userCurrency;
-      orderCurrency = userCurrency.code;
-    } else {
-      currencyInfo =
-        await this.userPreferenceService.getCurrencyInfoByCode(
-          selectedCurrency,
-        );
-      orderCurrency = selectedCurrency.toUpperCase();
-    }
-
-    let grossSubtotal = 0;
-    let totalDiscountAmount = 0;
-
-    for (const item of itemsToProcess) {
-      const basePrice = Number(item.product.price);
-
-      const rawConvertedBasePrice =
-        currencyInfo.code === DEFAULT_CURRENCY.code
-          ? basePrice
-          : basePrice * currencyInfo.rate;
-
-      const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
-
-      const discountPercent = Number(item.product.discount_percentage || 0);
-
-      const discountedUnitPrice = this.roundCurrency(
-        originalUnitPrice * (1 - discountPercent / 100),
-      );
-
-      const discountPerUnit = this.roundCurrency(
-        originalUnitPrice - discountedUnitPrice,
-      );
-
-      grossSubtotal += originalUnitPrice * item.quantity;
-      totalDiscountAmount += discountPerUnit * item.quantity;
-    }
-
-    const discountedSubTotal = grossSubtotal - totalDiscountAmount;
-
-    if (isNaN(discountedSubTotal))
-      throw new BadRequestException('Invalid cart amount');
-
-    const isIndia = orderCurrency === 'INR';
-    const threshold = isIndia ? 299 : 20;
-    const deliveryFeeBase = isIndia ? 3 : 5;
-    const serviceChargeBase = 1;
-
-    const deliveryFee = discountedSubTotal >= threshold ? 0 : deliveryFeeBase;
-
-    const taxAmount = discountedSubTotal * 0.02;
-    const serviceCharge = serviceChargeBase;
-
-    const finalTotal =
-      discountedSubTotal + deliveryFee + taxAmount + serviceCharge;
-
-    const roundedTotal = this.roundCurrency(finalTotal);
-
-    let usdTotalAmount: number;
-    const usdCurrencyInfo =
-      await this.userPreferenceService.getCurrencyInfoByCode('USD');
-
-    if (!usdCurrencyInfo) {
-      throw new BadRequestException(
-        'System configuration error: USD currency not found',
-      );
-    }
-
-    if (currencyInfo.code === 'USD') {
-      usdTotalAmount = roundedTotal;
-    } else {
-      usdTotalAmount = this.roundCurrency(
-        (roundedTotal / currencyInfo.rate) * usdCurrencyInfo.rate,
-      );
-    }
-
-    // Generate order number
-    const orderNumber = this.generateOrderNumber();
-
-    // Create order
-    const order = this.orderRepository.create({
-      order_number: orderNumber,
-      user_id: userId,
-      status: OrderStatus.PENDING,
-      payment_status: PaymentStatus.PENDING,
-      total_amount: usdTotalAmount,
-      payment_gateway: PAYMENT_GATEWAY.PAYPAL,
-      payment_mode: 'UNKNOWN',
-      notes: createOrderDto.notes,
-    });
-
-    const savedOrder = await this.orderRepository.save(order);
-
-    const orderItems: EcommerceOrderItem[] = [];
-
-    for (const item of itemsToProcess) {
-      const basePrice = Number(item.product.price);
-      const rawConvertedBasePrice =
-        currencyInfo.code === DEFAULT_CURRENCY.code
-          ? basePrice
-          : basePrice * currencyInfo.rate;
-
-      const originalUnitPrice = this.roundCurrency(rawConvertedBasePrice);
-      const discountPercent = Number(item.product.discount_percentage || 0);
-      const discountedUnitPrice = this.roundCurrency(
-        originalUnitPrice * (1 - discountPercent / 100),
-      );
-
-      const discountPerUnit = this.roundCurrency(
-        originalUnitPrice - discountedUnitPrice,
-      );
-      const totalLinePrice = discountedUnitPrice * item.quantity;
-      const totalLineDiscount = discountPerUnit * item.quantity;
-
-      const orderItem = this.orderItemRepository.create({
-        order_id: savedOrder.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        unit_price: originalUnitPrice,
-        total_price: totalLinePrice,
-        discount_percentage: totalLineDiscount,
-      });
-      orderItems.push(orderItem);
-    }
-
-    await this.orderItemRepository.save(orderItems);
+    let savedOrder: EcommerceOrder | null = null;
 
     try {
-      await this.createPayPalPaymentSession(
-        savedOrder,
-        user,
-        orderNumber,
-        createOrderDto,
-        orderCurrency,
-        roundedTotal,
+      // Get user's active cart
+      const cart = await this.cartRepository.findOne({
+        where: { user_id: userId, status: CartStatus.ACTIVE },
+        relations: ['items', 'items.product', 'user'],
+      });
+
+      if (!cart || cart.items.length === 0) {
+        throw new BadRequestException('Cart is empty');
+      }
+
+      const itemsToProcess = createOrderDto.product_ids?.length
+        ? cart.items.filter((item) =>
+            createOrderDto.product_ids!.includes(
+              item.product_id || item.product?.id,
+            ),
+          )
+        : cart.items;
+
+      if (!itemsToProcess.length) {
+        throw new BadRequestException('No valid items to order');
+      }
+
+      const userCurrencyInfo =
+        await this.userPreferenceService.getUserPreferredCurrency(userId);
+
+      const sourceInfo: CurrencyInfo = userCurrencyInfo || DEFAULT_CURRENCY;
+      const sourceCurrency = sourceInfo.code;
+
+      if (!sourceInfo.rate) {
+        throw new BadRequestException(
+          `Currency rate missing for ${sourceCurrency}`,
+        );
+      }
+
+      let subtotalLocal = 0;
+      let totalDiscountLocal = 0;
+
+      for (const item of itemsToProcess) {
+        const basePrice = Number(item.product?.price || 0);
+        const localPrice = this.roundCurrency(basePrice * sourceInfo.rate);
+        const discountPerc = Number(item.product?.discount_percentage || 0);
+        const discountPerUnitLocal = this.roundCurrency(
+          localPrice * (discountPerc / 100),
+        );
+        const discountedUnitLocal = this.roundCurrency(
+          localPrice - discountPerUnitLocal,
+        );
+
+        if (isNaN(discountedUnitLocal) || localPrice <= 0) {
+          throw new BadRequestException('Invalid cart item price');
+        }
+
+        subtotalLocal += localPrice * item.quantity;
+        totalDiscountLocal += discountPerUnitLocal * item.quantity;
+      }
+
+      const discountedSubtotalLocal = this.roundCurrency(
+        subtotalLocal - totalDiscountLocal,
       );
 
-      return await this.findOne(savedOrder.id);
+      if (isNaN(discountedSubtotalLocal) || discountedSubtotalLocal < 0) {
+        throw new BadRequestException('Invalid order amount');
+      }
+
+      const {
+        threshold,
+        deliveryFee: deliveryBaseLocal,
+        serviceCharge: serviceBaseLocal,
+      } = this.getThresholdAndFees(sourceCurrency);
+
+      const deliveryFeeLocal =
+        discountedSubtotalLocal >= threshold ? 0 : deliveryBaseLocal;
+      const taxesLocal = this.roundCurrency(discountedSubtotalLocal * 0.02);
+      const serviceChargeLocal = serviceBaseLocal;
+
+      const finalLocalTotal = this.roundCurrency(
+        discountedSubtotalLocal +
+          deliveryFeeLocal +
+          taxesLocal +
+          serviceChargeLocal,
+      );
+
+      const finalUSDTotal = this.roundCurrency(
+        finalLocalTotal / sourceInfo.rate,
+      );
+
+      // Generate order number
+      const orderNumber = this.generateOrderNumber();
+
+      // Create order
+      const order = this.orderRepository.create({
+        order_number: orderNumber,
+        user_id: userId,
+        status: OrderStatus.PENDING,
+        payment_status: PaymentStatus.PENDING,
+        total_amount: finalUSDTotal,
+        payment_gateway: PAYMENT_GATEWAY.PAYPAL,
+        payment_mode: 'UNKNOWN',
+        notes: createOrderDto.notes,
+      });
+
+      savedOrder = await this.orderRepository.save(order);
+
+      const orderItems = itemsToProcess.map((item) => {
+        const basePrice = Number(item.product?.price || 0);
+        const localPrice = this.roundCurrency(basePrice * sourceInfo.rate);
+        const discountPerc = Number(item.product?.discount_percentage || 0);
+        const discountPerUnitLocal = this.roundCurrency(
+          localPrice * (discountPerc / 100),
+        );
+        const discountedUnitLocal = this.roundCurrency(
+          localPrice - discountPerUnitLocal,
+        );
+        const discountedUnitUSD = this.roundCurrency(
+          discountedUnitLocal / sourceInfo.rate,
+        );
+
+        return this.orderItemRepository.create({
+          order_id: savedOrder!.id,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price: discountedUnitUSD,
+          total_price: this.roundCurrency(discountedUnitUSD * item.quantity),
+          discount_percentage: discountPerc,
+        });
+      });
+
+      await this.orderItemRepository.save(orderItems);
+
+      await this.createPayPalPaymentSession(
+        savedOrder,
+        orderNumber,
+        finalUSDTotal,
+      );
+
+      return this.findOne(savedOrder.id);
     } catch (paypalErr: unknown) {
       // Rollback on PayPal failure
-      await this.orderRepository.delete(savedOrder.id);
+      if (savedOrder?.id) {
+        await this.orderRepository.delete(savedOrder.id);
+      }
 
       console.error('PayPal error:', paypalErr);
 
       let errorMessage = 'Unknown PayPal error';
 
-      if (
+      if (paypalErr instanceof Error) {
+        errorMessage = paypalErr.message;
+      } else if (
         paypalErr &&
         typeof paypalErr === 'object' &&
-        paypalErr !== null &&
         'response' in paypalErr
       ) {
-        const errResponse = (paypalErr as any).response;
-        if (
-          errResponse &&
-          errResponse.data &&
-          typeof errResponse.data === 'object'
-        ) {
-          const data = errResponse.data;
-          if (data.message) {
-            errorMessage = data.message;
-          }
-          if (
-            data.details &&
-            Array.isArray(data.details) &&
-            data.details.length > 0
-          ) {
-            const detail = data.details[0];
-            const detailMsg = detail.description || detail.issue || 'Validation failed';
-            errorMessage += ` Details: ${detailMsg}`;
-            console.error('PayPal error details:', data.details);
-          }
-        } else {
+        const httpError = paypalErr as PayPalHttpError;
+        const responseData = httpError.response?.data;
+        if (responseData && typeof responseData === 'object') {
           errorMessage =
-            (paypalErr as unknown as Error).message || errorMessage;
+            responseData.message ||
+            responseData.details?.[0]?.description ||
+            errorMessage;
         }
-      } else if (paypalErr instanceof Error) {
-        errorMessage = paypalErr.message;
       }
 
       throw new BadRequestException(
@@ -347,12 +312,9 @@ export class OrderService {
   }
 
   private async createPayPalPaymentSession(
-    savedOrder: EcommerceOrder,
-    user: User,
+    order: EcommerceOrder,
     orderNumber: string,
-    createOrderDto: CreateOrderDto,
-    orderCurrency: string,
-    finalAmount: number,
+    usdAmount: number,
   ): Promise<void> {
     const token = await this.getAccessToken();
 
@@ -361,8 +323,8 @@ export class OrderService {
       purchase_units: [
         {
           amount: {
-            currency_code: orderCurrency,
-            value: finalAmount.toFixed(2),
+            currency_code: 'USD',
+            value: usdAmount.toFixed(2),
           },
           description: `Order ${orderNumber}`,
         },
@@ -375,7 +337,7 @@ export class OrderService {
       },
     };
 
-    const paypalResponse = await firstValueFrom(
+    const response = await firstValueFrom(
       this.httpService.post<PayPalOrderResponse>(
         `${this.baseUrl}/v2/checkout/orders`,
         paypalOrderRequest,
@@ -389,13 +351,12 @@ export class OrderService {
       ),
     );
 
-    const orderData = paypalResponse.data;
-    if (orderData.status !== 'CREATED') {
-      throw new Error(`PayPal order creation failed: ${orderData.status}`);
+    if (response.data.status !== 'CREATED') {
+      throw new Error('PayPal order creation failed');
     }
 
-    savedOrder.gateway_order_id = orderData.id;
-    await this.orderRepository.save(savedOrder);
+    order.gateway_order_id = response.data.id;
+    await this.orderRepository.save(order);
   }
 
   async findAll(userId: string): Promise<EcommerceOrder[]> {

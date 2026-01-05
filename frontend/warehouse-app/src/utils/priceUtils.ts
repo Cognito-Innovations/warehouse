@@ -32,8 +32,8 @@ export function parsePrice(priceInput: PriceObject | number | string, defaultCur
   return { raw, formatted, currency };
 }
 
-export function formatPrice(rawPrice: number, currency = 'INR'): string {
-  return `${currency}${rawPrice?.toFixed(2)}`;
+export function formatPrice(rawPrice: number, currency_symbol = 'INR'): string {
+  return `${currency_symbol}${rawPrice?.toFixed(2)}`;
 }
 
 export function calculateDiscountedPrice(rawPrice: number, discountPercent: number): number {
@@ -58,7 +58,7 @@ export const getProductPricingSummary = (
   let raw = parsed.raw;
   let currency = parsed.currency;
 
-  if (currencyInfo && !currencyInfo.isBase) {
+  if (currencyInfo) {
     raw = roundCurrency(raw * currencyInfo.rate);
     currency = currencyInfo.symbol;
   } else if (currencyInfo) {
@@ -88,31 +88,38 @@ export const getCartItemPricingSummary = (
   item: CartItem,
   currencyInfo?: CurrencyInfo
 ): CartItemPricingSummary => {
-  const productPricing = getProductPricingSummary(item.product, currencyInfo);
-
-  if (productPricing.originalUnitPrice === 0 && item.unit_price) {
-    let unitRaw = parsePrice(item.unit_price, 'INR').raw;
-    if (currencyInfo && !currencyInfo.isBase) {
-      unitRaw = roundCurrency(unitRaw / currencyInfo.rate);
-    }
-    productPricing.discountedUnitPrice = roundCurrency(unitRaw);
-    productPricing.originalUnitPrice =
-      productPricing.discountPercent > 0
-        ? roundCurrency(productPricing.discountedUnitPrice / (1 - productPricing.discountPercent / 100))
-        : productPricing.discountedUnitPrice;
-    productPricing.discountPerUnit = roundCurrency(
-      productPricing.originalUnitPrice - productPricing.discountedUnitPrice
-    );
-  }
-
+  const unitPrice = roundCurrency(Number(item.unit_price) || 0);
   const quantity = item.quantity || 0;
-  const lineTotal = roundCurrency(productPricing.discountedUnitPrice * quantity);
-  const discountTotal = roundCurrency(productPricing.discountPerUnit * quantity);
+  const discountAmount = roundCurrency(Number(item.discount_amount) || 0);
+
+  const originalUnitPrice =
+    discountAmount > 0
+      ? roundCurrency(unitPrice + discountAmount)
+      : unitPrice;
+
+  const discountPerUnit = roundCurrency(originalUnitPrice - unitPrice);
 
   return {
-    ...productPricing,
+    currency: currencyInfo?.symbol ?? 'INR',
+    originalUnitPrice,
+    discountedUnitPrice: unitPrice,
+    discountPercent:
+      originalUnitPrice > 0
+        ? roundCurrency((discountPerUnit / originalUnitPrice) * 100)
+        : 0,
+    discountPerUnit,
     quantity,
-    lineTotal,
-    discountTotal,
+    lineTotal: roundCurrency(unitPrice * quantity),
+    discountTotal: roundCurrency(discountPerUnit * quantity),
   };
 };
+
+export function getUSDFromLocal(localAmount: number, currencyInfo: CurrencyInfo): number {
+  if (!currencyInfo.rate) {
+    if (currencyInfo.code === 'INR') {
+      return roundCurrency(localAmount / 90.25);
+    }
+    return roundCurrency(localAmount);
+  }
+  return roundCurrency(localAmount / currencyInfo.rate);
+}

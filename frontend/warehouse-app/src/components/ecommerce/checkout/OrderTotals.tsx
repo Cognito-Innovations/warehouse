@@ -10,6 +10,7 @@ interface OrderTotalsProps {
   serviceCharge: number;
   total: number;
   formatLocalPrice: (amount: number) => string;
+  formatUSDPrice: (amount: number) => string;
 }
 
 export const OrderTotals: React.FC<OrderTotalsProps> = ({
@@ -20,6 +21,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
   serviceCharge,
   total,
   formatLocalPrice,
+  formatUSDPrice,
 }) => {
   return (
     <Stack spacing={1.5} sx={{ mb: 2 }}>
@@ -38,7 +40,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
           color="text.primary"
           sx={{ fontSize: { xs: "0.875rem", md: "1rem" } }}
         >
-          {formatLocalPrice(subtotal)}
+          {formatUSDPrice(subtotal)} ({formatLocalPrice(subtotal)})
         </Typography>
       </Box>
 
@@ -58,7 +60,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
             fontWeight={500}
             sx={{ fontSize: { xs: "0.875rem", md: "1rem" } }}
           >
-            -{formatLocalPrice(discount)}
+            -{formatUSDPrice(discount)} (-{formatLocalPrice(discount)})
           </Typography>
         </Box>
       )}
@@ -80,7 +82,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
         >
           <DeliveryDining sx={{ fontSize: { xs: 14, md: 16 } }} />
           <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: "0.75rem", md: "0.875rem" } }}>
-            {formatLocalPrice(deliveryFee)}
+            {formatUSDPrice(deliveryFee)} ({formatLocalPrice(deliveryFee)})
           </Typography>
         </Stack>
       </Box>
@@ -100,7 +102,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
           color="text.primary"
           sx={{ fontSize: { xs: "0.875rem", md: "1rem" } }}
         >
-          {formatLocalPrice(taxes)}
+          {formatUSDPrice(taxes)} ({formatLocalPrice(taxes)})
         </Typography>
       </Box>
 
@@ -119,7 +121,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
           color="text.primary"
           sx={{ fontSize: { xs: "0.875rem", md: "1rem" } }}
         >
-          {formatLocalPrice(serviceCharge)}
+          {formatUSDPrice(serviceCharge)} ({formatLocalPrice(serviceCharge)})
         </Typography>
       </Box>
 
@@ -140,7 +142,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
           color="primary.main"
           sx={{ fontSize: { xs: "1.25rem", md: "1.75rem" } }}
         >
-          {formatLocalPrice(total)}
+          {formatUSDPrice(total)} ({formatLocalPrice(total)})
         </Typography>
       </Box>
     </Stack>

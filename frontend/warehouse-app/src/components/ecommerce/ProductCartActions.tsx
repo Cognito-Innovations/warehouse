@@ -28,8 +28,8 @@ export default function ProductCartActions({
 }: ProductCartActionsProps) {
     const router = useRouter();
     const { incrementCartQuantity, decrementCartQuantity, getItemQuantity, updatingProducts } = useCartStore();
-    const {currencyCode} = useDetectUserLocation();
-    const selectedCurrency = currencyCode;
+    const {currencyInfo} = useDetectUserLocation();
+    const selectedCurrency = currencyInfo.code;
 
     const cartQuantity = getItemQuantity(product.id);
     const isUpdating = updatingProducts[product.id] || false;

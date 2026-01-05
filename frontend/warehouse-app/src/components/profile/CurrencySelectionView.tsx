@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Search, ArrowBack } from "@mui/icons-material";
 import { getCurrencies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 import { toast } from "sonner";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 
 interface Currency {
     id: string;
@@ -34,8 +35,8 @@ interface CurrencySelectionViewProps {
 }
 
 export default function CurrencySelectionView({ onBack, showBackButton }: CurrencySelectionViewProps) {
-    //TODO P0: Implement userLocation by doing individual API calls
-    const userLocation = {}
+    const { currencyInfo } = useDetectUserLocation();
+    const currencyCode = currencyInfo.code;
     const { user } = useAuth();
     const [searchTerm, setSearchTerm] = useState("");
     const [currencies, setCurrencies] = useState<Currency[]>([]);
@@ -64,9 +65,9 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                 if (prefsData?.currency?.id) {
                     selectedId = prefsData.currency.id;
                 } 
-                else if (userLocation?.currency) {
+                else if (currencyCode) {
                     const localMatch = currenciesData.find(
-                        (c: Currency) => c.currency_symbol === userLocation.currency
+                        (c: Currency) => c.code === currencyCode
                     );
                     if (localMatch) selectedId = localMatch.id;
                 }
@@ -81,7 +82,7 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
         };
 
         fetchData();
-    }, [user?.id, userLocation?.currency]);
+    }, [user?.id, currencyCode]);
 
     const filteredCurrencies = currencies.filter(currency =>
         currency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

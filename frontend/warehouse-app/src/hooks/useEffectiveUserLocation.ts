@@ -1,40 +1,69 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserPreferences } from "@/lib/api.service";
+import { getCachedLocation, setCachedLocation } from "@/utils/cachedUtils";
+import { CACHE_GUEST_LOCATION_KEY, DEFAULT_CURRENCY_INFO } from "@/utils/constants";
 import { getUserCountryByIP } from "@/utils/getUserCountry";
-import { useEffect, useState } from "react";
 
 export function useDetectUserLocation() {
   const { user } = useAuth();
-  const [currencyCode, setCurrencyCode] = useState<string>("");
-  const [countryCode, setCountryCode] = useState<string>("");
-  const isLoggedIn = !!user;
+  
+  const [currencyInfo, setCurrencyInfo] = useState({
+    code: "",
+    symbol: "",
+    rate: 0,
+  });
+  const [countryCode, setCountryCode] = useState("");
+  const userId = user?.id;
 
-  const getCurrencyInfo = async () => {
+  const hasFetchedRef = useRef(false);
 
-    if (user?.id){
-      const preferenceData = await getUserPreferences(user?.id);
-      const userCurrency = preferenceData?.currency;
-      const userCountry = preferenceData?.courier?.country?.code;
-      setCountryCode(userCountry || "");
-      setCurrencyCode(userCurrency?.currency_code || "");
-    } else {
-      //TODO P0: Fetch and store in localstorage and if in localstorage not found then fetch from the getUserCountryByIP API call
-      const currencyInfo = await getUserCountryByIP();
-      setCountryCode(currencyInfo.countryCode || "");
-      setCurrencyCode(currencyInfo.currency || "");
+  const handleGuestLocation = async () => {
+    const cachedLocation = getCachedLocation(CACHE_GUEST_LOCATION_KEY);
+    if (cachedLocation) {
+      setCountryCode(cachedLocation.countryCode || "");
+      setCurrencyInfo(cachedLocation.currencyInfo);
+      return;
     }
+
+    const location = await getUserCountryByIP();
+    const countryCode = location.countryCode || "";
+
+    setCountryCode(countryCode);
+    setCurrencyInfo(DEFAULT_CURRENCY_INFO);
+
+    setCachedLocation(CACHE_GUEST_LOCATION_KEY, {
+      countryCode,
+      currencyInfo: DEFAULT_CURRENCY_INFO,
+    });
+  };
+
+  const handleUserLocation = async (userId: string) => {
+    const preferenceData = await getUserPreferences(userId);
+    const userCurrency = preferenceData?.currency;
+
+    setCountryCode(preferenceData?.courier?.country?.code || "");
+    setCurrencyInfo({
+      code: userCurrency?.currency_code || "",
+      symbol: userCurrency?.currency_symbol || "",
+      rate: userCurrency?.rate || 0,
+    });
   };
 
   useEffect(() => {
-    getCurrencyInfo();
-  }, [isLoggedIn]);
+    if (hasFetchedRef.current) return;
 
+    hasFetchedRef.current = true;
 
-  return {
-    currencyCode,
-    countryCode,
-  };
+    if (!userId) {
+      handleGuestLocation();
+    } else {
+      handleUserLocation(userId);
+    }
+  }, [userId]);
 
+  // TODO P0: Destructure values {currencyCode, rate, symbol, countryCode}
+  return { currencyInfo, countryCode };
 }

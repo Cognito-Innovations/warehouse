@@ -59,3 +59,11 @@ export const orderStatusPhrases: { [key: string]: string } = {
   shipped: "Shipped",
   pending: "Pending",
 };
+
+export const CACHE_GUEST_LOCATION_KEY = "guest_location";
+
+export const DEFAULT_CURRENCY_INFO = {
+  code: "INR",
+  symbol: "₹",
+  rate: 88.90,
+}

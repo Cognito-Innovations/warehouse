@@ -64,6 +64,7 @@ export interface CartItem {
   unit_price: number;
   total_price: number;
   discount_percentage: number;
+  discount_amount: number;
   created_at: string;
   updated_at: string;
 }
@@ -324,7 +325,7 @@ export interface CurrencyInfo {
   symbol: string;
   code: string;
   rate: number;
-  isBase: boolean;
+  // isBase: boolean;
 }
 
 export interface UserAddress {

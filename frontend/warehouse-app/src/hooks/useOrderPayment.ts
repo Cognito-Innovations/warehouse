@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { CartItem } from "@/types/ecommerce";
-import { CurrencyInfo } from "@/types/ecommerce";
 
 interface InitiateOrderData {
   shipping_address: string;
@@ -23,8 +22,6 @@ export const useOrderPayment = () => {
     async (
       items: CartItem[],
       shippingAddress: string,
-      selectedCurrency: string | undefined,
-      currencyInfo: CurrencyInfo
     ): Promise<PayPalPaymentConfig | null> => {
       if (!items.length || !shippingAddress) {
         toast.error("No items to checkout.");
@@ -44,7 +41,7 @@ export const useOrderPayment = () => {
 
         const orderData: InitiateOrderData = {
           shipping_address: shippingAddress,
-          currency: selectedCurrency,
+          currency: "USD", 
           product_ids: orderedProductIds,
         };
 
@@ -58,7 +55,7 @@ export const useOrderPayment = () => {
         return {
           orderId,
           paypalOrderId: paymentSessionId,
-          orderCurrency: currencyInfo.code,
+          orderCurrency: "USD",
         };
       } catch (err) {
         const errorMsg =

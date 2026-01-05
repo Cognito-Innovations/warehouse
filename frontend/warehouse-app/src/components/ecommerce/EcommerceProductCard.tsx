@@ -35,7 +35,8 @@ export default function EcommerceProductCard({
   const decrementCartQuantity = useCartStore((state) => state.decrementCartQuantity);
   const cartQuantity = useCartStore((state) => state.cartProducts.find((item) => item.product_id === product.id))?.quantity || 0;
 
-  const {currencyCode, countryCode} = useDetectUserLocation();
+  const {currencyInfo, countryCode} = useDetectUserLocation();
+  const currencyCode = currencyInfo.code;
 
   const rawPrice = product.price.price;
   const currency = product.price.currency;

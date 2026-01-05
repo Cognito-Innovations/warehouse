@@ -8,12 +8,14 @@ interface OrderItemsListProps {
   items: CartItem[];
   currencyInfo: CurrencyInfo;
   formatLocalPrice: (amount: number) => string;
+  formatUSDPrice: (amount: number) => string;
 }
 
 export const OrderItemsList: React.FC<OrderItemsListProps> = ({
   items,
   currencyInfo,
   formatLocalPrice,
+  formatUSDPrice,
 }) => {
   return (
     <Box sx={{ mb: 2, maxHeight: { xs: 250, md: 300 }, overflow: "auto" }}>
@@ -60,7 +62,7 @@ export const OrderItemsList: React.FC<OrderItemsListProps> = ({
                 color="text.secondary"
                 sx={{ fontSize: { xs: "0.75rem", md: "0.875rem" } }}
               >
-                {formatLocalPrice(pricing.discountedUnitPrice)} each
+                {formatUSDPrice(pricing.discountedUnitPrice)} each ({formatLocalPrice(pricing.discountedUnitPrice)} each)
               </Typography>
             </Box>
             <Typography
@@ -73,7 +75,7 @@ export const OrderItemsList: React.FC<OrderItemsListProps> = ({
                 fontSize: { xs: "0.875rem", md: "1rem" },
               }}
             >
-              {formatLocalPrice(pricing.lineTotal)}
+              {formatUSDPrice(pricing.lineTotal)} ({formatLocalPrice(pricing.lineTotal)})
             </Typography>
           </Box>
         );

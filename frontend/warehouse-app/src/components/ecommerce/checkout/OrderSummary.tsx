@@ -4,6 +4,7 @@ import React, { useState, useCallback } from "react";
 import { Card, CardContent, Stack, Typography, Box } from "@mui/material";
 import { Payment } from "@mui/icons-material";
 import { toast } from "sonner";
+import { getUSDFromLocal } from "@/utils/priceUtils";
 
 import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,6 +53,11 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const { loading: authLoading } = useAuth();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  const formatUSDPrice = useCallback((localAmount: number) => {
+    const usdAmount = getUSDFromLocal(localAmount, currencyInfo);
+    return `$${usdAmount.toFixed(2)}`;
+  }, [currencyInfo]);
+
   const { isProcessing, initiateOrder } = useOrderPayment();
   const { showPayPal, initializePayment, resetPayment } = usePayPalPayment({
     onSuccess: async () => {
@@ -75,12 +81,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
     resetPayment();
 
-    const paymentConfig = await initiateOrder(
-      items,
-      shippingAddress,
-      selectedCurrency,
-      currencyInfo
-    );
+    const paymentConfig = await initiateOrder(items, shippingAddress);
 
     if (paymentConfig) {
       initializePayment(paymentConfig);
@@ -88,8 +89,6 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   }, [
     items,
     shippingAddress,
-    selectedCurrency,
-    currencyInfo,
     authLoading,
     initiateOrder,
     initializePayment,
@@ -144,6 +143,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             items={items}
             currencyInfo={currencyInfo}
             formatLocalPrice={formatLocalPrice}
+            formatUSDPrice={formatUSDPrice}
           />
 
           <OrderTotals
@@ -154,6 +154,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             serviceCharge={totals.serviceCharge}
             total={totals.total}
             formatLocalPrice={formatLocalPrice}
+            formatUSDPrice={formatUSDPrice}
           />
         </CardContent>
       </Card>
@@ -168,6 +169,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             disabled={isButtonDisabled}
             total={totals.total}
             formatLocalPrice={formatLocalPrice}
+            formatUSDPrice={formatUSDPrice}
             onClick={handlePaymentAndOrder}
           />
         )}
