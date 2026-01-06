@@ -54,7 +54,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     title,
   };
 
-  const isEcommerceRoute = pathname.startsWith("/ecommerce");
+  const isEcommerceRoute = pathname === "/" || pathname.startsWith("/ecommerce");
   const renderedContent = isEcommerceRoute ? (
     <EcommerceWrapper
       isSidebarOpen={isSidebarOpen}

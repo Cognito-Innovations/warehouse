@@ -28,8 +28,19 @@ export default function CheckoutPage() {
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
-  
-  const {currencyCode, countryCode} = useDetectUserLocation();
+  const [isAddressDataReady, setIsAddressDataReady] = useState(false);
+
+  const { currencyCode, currencySymbol } = useDetectUserLocation();
+
+  const handleAddressFetchComplete = useCallback(() => {
+    setIsAddressDataReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setIsAddressDataReady(true);
+    }
+  }, [authLoading, user]);
 
   useEffect(() => {
     if (hasInitialized) return;
@@ -80,7 +91,7 @@ export default function CheckoutPage() {
 
   const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
   const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, currencyCode), [checkedOutItems, selectedIds, currencyCode]);
-  const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencyCode), [currencyCode]);
+  const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencySymbol), [currencySymbol]);
 
   const handleAddressSelect = useCallback((address: string) => {
     setShippingAddress(address);
@@ -90,10 +101,20 @@ export default function CheckoutPage() {
     setAddressLoading(isLoading);
   }, []);
 
-  if (authLoading) {
+  if (authLoading || (user && !isAddressDataReady)) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
         <CircularProgress />
+        {user && (
+           <Box sx={{ display: 'none' }}>
+             <DeliveryAddressCard 
+                userId={user.id}
+                onAddressSelect={handleAddressSelect}
+                onLoadingChange={handleAddressLoadingChange}
+                onAddressFetchComplete={handleAddressFetchComplete}
+             />
+           </Box>
+        )}
       </Box>
     );
   }
@@ -117,6 +138,7 @@ export default function CheckoutPage() {
                   userId={user?.id}
                   onAddressSelect={handleAddressSelect}
                   onLoadingChange={handleAddressLoadingChange}
+                  onAddressFetchComplete={handleAddressFetchComplete}
                 />
               </Grid>
 
@@ -132,8 +154,6 @@ export default function CheckoutPage() {
                 items={checkedOutItems}
                 totals={totals}
                 shippingAddress={shippingAddress}
-                selectedCurrency={currencyCode}
-                currencyInfo={{symbol: currencyCode, code: currencyCode, rate: 1, isBase: true}} //TODO: remove currencyinfo and inside order summary do individual api call
                 user={user}
                 formatLocalPrice={formatLocalPrice}
                 addressLoading={addressLoading}

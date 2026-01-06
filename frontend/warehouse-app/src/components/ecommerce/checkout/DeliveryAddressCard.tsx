@@ -21,12 +21,14 @@ interface DeliveryAddressCardProps {
   userId: string | undefined;
   onAddressSelect: (address: string) => void;
   onLoadingChange: (isLoading: boolean) => void;
+  onAddressFetchComplete?: () => void;
 }
 
 export default function DeliveryAddressCard({
   userId,
   onAddressSelect,
   onLoadingChange,
+  onAddressFetchComplete,
 }: DeliveryAddressCardProps) {
     const { loading: authLoading } = useAuth();
 
@@ -37,6 +39,7 @@ export default function DeliveryAddressCard({
     const fetchAddress = async () => {
       if (!userId) {
         setFetchedAddress(null);
+        if (onAddressFetchComplete) onAddressFetchComplete();
         return;
       }
 
@@ -73,14 +76,19 @@ export default function DeliveryAddressCard({
       } finally {
         setInternalLoading(false);
         onLoadingChange(false);
+        if (onAddressFetchComplete) {
+            onAddressFetchComplete();
+        }
       }
     };
 
     useEffect(() => {
       if (userId) {
         fetchAddress();
+      } else if (!authLoading) {
+        if (onAddressFetchComplete) onAddressFetchComplete();
       }
-    }, [userId]); 
+    }, [userId, authLoading]); 
 
     return (
         <Card 

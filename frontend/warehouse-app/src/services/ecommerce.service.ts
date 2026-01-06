@@ -215,4 +215,9 @@ export const ecommerceService = {
     const response = await api.put(`/ecommerce-orders/${id}/cancel`);
     return response.data;
   },
+
+  async getCurrencyByCode(code: string) {
+    const response = await api.get(`/currencies/by-code/${code}`);
+    return response.data;
+  },
 };

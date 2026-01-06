@@ -24,11 +24,16 @@ export default function CartPage() {
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [highlightAddressError, setHighlightAddressError] = useState(false);
-  const [isCartLoading, setIsCartLoading] = useState(false); 
+  const [isCartLoading, setIsCartLoading] = useState(true);
+  const [isAddressDataReady, setIsAddressDataReady] = useState(false);
 
-  const {currencyCode, countryCode} = useDetectUserLocation();
+  const { currencyCode } = useDetectUserLocation();
 
   const userId = (session?.user as any)?.user_id;
+
+  const handleAddressFetchComplete = useCallback(() => {
+    setIsAddressDataReady(true);
+  }, []);
 
   const initCart = useCallback(async () => {
     setIsCartLoading(true);
@@ -45,6 +50,8 @@ export default function CartPage() {
     if (status === "loading") return;
     if (!currencyCode) return;
 
+    if (userId && !isAddressDataReady) return;
+
     if (hydrated) {
       initCart();
     } else {
@@ -56,7 +63,7 @@ export default function CartPage() {
         clearTimeout(timer);
       };
     }
-  }, [currencyCode, status, initCart, hydrated]);
+  }, [currencyCode, status, initCart, hydrated, userId, isAddressDataReady]);
 
   useEffect(() => {
     if (hydrated && cartProducts.length > 0) {
@@ -76,7 +83,7 @@ export default function CartPage() {
     return <CartSkeletonLoader />;
   }
 
-  if (!cartProducts || cartProducts.length === 0) {
+  if (!isCartLoading && (!cartProducts || cartProducts.length === 0)) {
     return <EmptyCartState/>;
   }
 
@@ -92,9 +99,8 @@ export default function CartPage() {
             gap: 3,
           }}
         >
-          {/* TODO P0: Uncomment this when the cart items section is implemented */}
           {/* Cart Items Section */}
-          {/* <Box sx={{ flex: { md: "0 0 65%" }, width: { xs: "100%", md: "65%" } }}>
+          <Box sx={{ flex: { md: "0 0 65%" }, width: { xs: "100%", md: "65%" } }}>
             {!userId ? (
               <CartLoginState />
             ) : (
@@ -102,7 +108,7 @@ export default function CartPage() {
                 userId={userId}
                 onAddressChange={setSelectedAddress}
                 highlightAddressError={highlightAddressError}
-                refreshAddresses={locationData.refreshAddresses}
+                onAddressFetchComplete={handleAddressFetchComplete}
               />
             )}
             {isCartLoading ? (
@@ -111,29 +117,27 @@ export default function CartPage() {
               <CartItemsList
                 items={validItems}
                 selectedItems={new Set(checkoutProducts)}
-                currencyInfo={currencyInfo}
-                selectedCurrency={selectedCurrency}
+                selectedCurrency={currencyCode}
               />
             )}
 
             <ContinueShoppingCard />
-          </Box> */}
+          </Box>
 
           {/* Order Summary Section */}
-          {/* <Box sx={{ flex: { md: "0 0 35%" }, width: { xs: "100%", md: "35%" } }}>
+          <Box sx={{ flex: { md: "0 0 35%" }, width: { xs: "100%", md: "35%" } }}>
             {isCartLoading ? (
               <OrderSummarySkeleton />
             ) : (
               <OrderSummaryCard
                 userId={userId}
                 items={validItems}
-                selectedCurrency={selectedCurrency}
+                selectedCurrency={currencyCode}
                 selectedAddress={selectedAddress}
                 setHighlightAddressError={setHighlightAddressError}
-                currencyInfo={currencyInfo}
               />
             )}
-          </Box> */}
+          </Box>
         </Box>
       </Container>
     </Box>

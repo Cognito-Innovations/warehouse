@@ -4,18 +4,19 @@ import React, { useState, useCallback } from "react";
 import { Card, CardContent, Stack, Typography, Box } from "@mui/material";
 import { Payment } from "@mui/icons-material";
 import { toast } from "sonner";
+import { getUSDFromLocal } from "@/utils/priceUtils";
 
 import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { CartItem } from "@/types/ecommerce";
-import { CurrencyInfo } from "@/types/ecommerce";
-import { OrderSuccessModal } from "../OrderSuccessModal";
 import { usePayPalPayment } from "@/hooks/usePayPalPayment";
 import { useOrderPayment } from "@/hooks/useOrderPayment";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { OrderSuccessModal } from "../OrderSuccessModal";
 import { OrderItemsList } from "./OrderItemsList";
 import { OrderTotals } from "./OrderTotals";
 import { PaymentButton } from "./PaymentButton";
 import { PayPalButtonContainer } from "./PayPalButtonContainer";
+import { CartItem } from "@/types/ecommerce";
 
 interface OrderTotalsData {
   subtotal: number;
@@ -30,8 +31,6 @@ interface OrderSummaryProps {
   items: CartItem[];
   totals: OrderTotalsData;
   shippingAddress: string;
-  selectedCurrency?: string;
-  currencyInfo: CurrencyInfo;
   user: any;
   formatLocalPrice: (amount: number) => string;
   addressLoading: boolean;
@@ -42,15 +41,19 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   items,
   totals,
   shippingAddress,
-  selectedCurrency,
-  currencyInfo,
   formatLocalPrice,
   addressLoading,
   onOrderSuccess,
 }) => {
   const { removePurchasedProducts } = useCartStore();
   const { loading: authLoading } = useAuth();
+  const { currencyCode, currencyRate } = useDetectUserLocation();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const formatUSDPrice = useCallback((localAmount: number) => {
+    const usdAmount = getUSDFromLocal(localAmount, currencyCode, currencyRate);
+    return `$${usdAmount.toFixed(2)}`;
+  }, [currencyCode, currencyRate]);
 
   const { isProcessing, initiateOrder } = useOrderPayment();
   const { showPayPal, initializePayment, resetPayment } = usePayPalPayment({
@@ -75,12 +78,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
     resetPayment();
 
-    const paymentConfig = await initiateOrder(
-      items,
-      shippingAddress,
-      selectedCurrency,
-      currencyInfo
-    );
+    const paymentConfig = await initiateOrder(items, shippingAddress);
 
     if (paymentConfig) {
       initializePayment(paymentConfig);
@@ -88,8 +86,6 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   }, [
     items,
     shippingAddress,
-    selectedCurrency,
-    currencyInfo,
     authLoading,
     initiateOrder,
     initializePayment,
@@ -142,8 +138,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
           <OrderItemsList
             items={items}
-            currencyInfo={currencyInfo}
             formatLocalPrice={formatLocalPrice}
+            formatUSDPrice={formatUSDPrice}
           />
 
           <OrderTotals
@@ -154,6 +150,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             serviceCharge={totals.serviceCharge}
             total={totals.total}
             formatLocalPrice={formatLocalPrice}
+            formatUSDPrice={formatUSDPrice}
           />
         </CardContent>
       </Card>
@@ -168,6 +165,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             disabled={isButtonDisabled}
             total={totals.total}
             formatLocalPrice={formatLocalPrice}
+            formatUSDPrice={formatUSDPrice}
             onClick={handlePaymentAndOrder}
           />
         )}

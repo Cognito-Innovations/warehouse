@@ -1,40 +1,91 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserPreferences } from "@/lib/api.service";
+import { ecommerceService } from "@/services/ecommerce.service";
+import { getCachedLocation, setCachedLocation } from "@/utils/cachedUtils";
+import { CACHE_GUEST_LOCATION_KEY, DEFAULT_CURRENCY_INFO } from "@/utils/constants";
 import { getUserCountryByIP } from "@/utils/getUserCountry";
-import { useEffect, useState } from "react";
 
 export function useDetectUserLocation() {
   const { user } = useAuth();
-  const [currencyCode, setCurrencyCode] = useState<string>("");
-  const [countryCode, setCountryCode] = useState<string>("");
-  const isLoggedIn = !!user;
+  
+  const [currencyInfo, setCurrencyInfo] = useState({
+    code: "",
+    symbol: "",
+    rate: 0,
+  });
+  const [countryCode, setCountryCode] = useState("");
+  const userId = user?.id;
 
-  const getCurrencyInfo = async () => {
+  const hasFetchedRef = useRef(false);
 
-    if (user?.id){
-      const preferenceData = await getUserPreferences(user?.id);
-      const userCurrency = preferenceData?.currency;
-      const userCountry = preferenceData?.courier?.country?.code;
-      setCountryCode(userCountry || "");
-      setCurrencyCode(userCurrency?.currency_code || "");
-    } else {
-      //TODO P0: Fetch and store in localstorage and if in localstorage not found then fetch from the getUserCountryByIP API call
-      const currencyInfo = await getUserCountryByIP();
-      setCountryCode(currencyInfo.countryCode || "");
-      setCurrencyCode(currencyInfo.currency || "");
+  const handleGuestLocation = async () => {
+    const cachedLocation = getCachedLocation(CACHE_GUEST_LOCATION_KEY);
+    if (cachedLocation) {
+      setCountryCode(cachedLocation.countryCode || "");
+      setCurrencyInfo(cachedLocation.currencyInfo);
+      return;
     }
+
+    const location = await getUserCountryByIP();
+    const countryCode = location.countryCode || "";
+    const currencyCode = location.currency || "";
+
+    let currencyInfo = { ...DEFAULT_CURRENCY_INFO };
+
+    if (currencyCode) {
+      const currencyData = await ecommerceService
+        .getCurrencyByCode(currencyCode)
+        .catch(() => null);
+
+      if (currencyData) {
+        currencyInfo = {
+          code: currencyData.currency_code ?? currencyCode,
+          symbol: currencyData.currency_symbol ?? DEFAULT_CURRENCY_INFO.symbol,
+          rate: Number(currencyData.rate) ?? DEFAULT_CURRENCY_INFO.rate,
+        };
+      }
+    }
+
+    setCountryCode(countryCode);
+    setCurrencyInfo(currencyInfo);
+
+    setCachedLocation(CACHE_GUEST_LOCATION_KEY, {
+      countryCode,
+      currencyInfo,
+    });
+  };
+
+  const handleUserLocation = async (userId: string) => {
+    const preferenceData = await getUserPreferences(userId);
+    const userCurrency = preferenceData?.currency;
+
+    setCountryCode(preferenceData?.courier?.country?.code || "");
+    setCurrencyInfo({
+      code: userCurrency?.currency_code || DEFAULT_CURRENCY_INFO.code,
+      symbol: userCurrency?.currency_symbol || DEFAULT_CURRENCY_INFO.symbol,
+      rate: userCurrency?.rate ?? DEFAULT_CURRENCY_INFO.rate,
+    });
   };
 
   useEffect(() => {
-    getCurrencyInfo();
-  }, [isLoggedIn]);
+    if (hasFetchedRef.current) return;
 
+    hasFetchedRef.current = true;
 
-  return {
-    currencyCode,
+    if (!userId) {
+      handleGuestLocation();
+    } else {
+      handleUserLocation(userId);
+    }
+  }, [userId]);
+
+  return { 
+    currencyCode: currencyInfo.code,
+    currencySymbol: currencyInfo.symbol,
+    currencyRate: currencyInfo.rate,
     countryCode,
   };
-
 }

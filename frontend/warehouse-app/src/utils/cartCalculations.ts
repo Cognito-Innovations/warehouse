@@ -1,5 +1,5 @@
-import { getCartItemPricingSummary, roundCurrency } from "./priceUtils";
-import { CurrencyInfo } from "@/types/ecommerce";
+import { getCartItemPricingSummary } from "./priceUtils";
+import { INR_CURRENCY } from "./constants";
 
 export interface CartTotals {
     subtotal: number;
@@ -14,7 +14,7 @@ export const calculateCartTotals = (
     cartItems: any[],
     selectedItemIds: Set<string>,
     currency?: string,
-    currencyInfo?: CurrencyInfo,
+    currencySymbol?: string,
 ): CartTotals => {
     if (!cartItems || cartItems.length === 0)
         return emptyTotals();
@@ -32,7 +32,7 @@ export const calculateCartTotals = (
     let discount = 0;
 
     selectedItems.forEach((item) => {
-        const p = getCartItemPricingSummary(item, currencyInfo);
+        const p = getCartItemPricingSummary(item, currencySymbol);
 
         subtotal += p.originalUnitPrice * p.quantity;
         discount += p.discountTotal;
@@ -68,7 +68,7 @@ const emptyTotals = (): CartTotals => ({
 });
 
 const getThresholdAndFees = (currency?: string) => {
-    if (currency === 'INR')
+    if (currency === INR_CURRENCY.code)
         return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
     return { threshold: 20, deliveryFee: 5, serviceCharge: 1 }
 }

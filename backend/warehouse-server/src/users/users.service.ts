@@ -11,6 +11,9 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserPreferenceDto } from 'src/user-preferences/dto/create-user-preference.dto';
+import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+import { DEFAULT_USER_PREFERENCE } from 'src/shared/constants';
 
 @Injectable()
 export class UsersService {
@@ -18,6 +21,7 @@ export class UsersService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly mailerService: MailerService,
+    private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
   async getUsersCount(): Promise<number> {
@@ -73,6 +77,14 @@ export class UsersService {
       ...createUserDto,
     });
     const savedUser = await this.userRepository.save(user);
+
+    const createPreferenceDto: CreateUserPreferenceDto = {
+      user_id: savedUser.id,
+      courier_id: DEFAULT_USER_PREFERENCE.COURIER,
+      currency_id: DEFAULT_USER_PREFERENCE.CURRENCY,
+    };
+    await this.userPreferencesService.create(createPreferenceDto);
+
     (savedUser as any).password = undefined;
     return savedUser;
   }
