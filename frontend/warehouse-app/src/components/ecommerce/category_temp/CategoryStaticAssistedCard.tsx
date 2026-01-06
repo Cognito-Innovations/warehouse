@@ -1,21 +1,18 @@
 import { Box, Typography } from "@mui/material";
 import ShoppingBag from "@mui/icons-material/ShoppingBag";
 import { TW_COLORS } from "@/utils/colors";
-import useCategoryStore from "@/store/categoryStore";
 
-const CategoryStaticAssistedCard = () => {
-  const { selectedCategory, handleCategorySelect } = useCategoryStore();
+interface CategoryStaticAssistedCardProps {
+  onClick: () => void;
+  isSelected: boolean;
+}
+
+const CategoryStaticAssistedCard = ({ onClick, isSelected }: CategoryStaticAssistedCardProps) => {
   const iconBgColor = TW_COLORS.primary;
-
-  const isActive = selectedCategory === "assisted";
-
-  const handleClick = () => {
-    handleCategorySelect("assisted");
-  };
 
   return (
     <Box
-      onClick={handleClick}
+      onClick={onClick}
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -34,12 +31,12 @@ const CategoryStaticAssistedCard = () => {
           width: { xs: 44, sm: 52, md: 60 },
           height: { xs: 44, sm: 52, md: 60 },
           borderRadius: 2.5,
-          bgcolor: isActive ? iconBgColor : "#ede9fe",
+          bgcolor: isSelected ? iconBgColor : "#ede9fe",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           mb: 2.5,
-          boxShadow: isActive ? "0 2px 12px rgba(0,0,0,0.12)" : "none",
+          boxShadow: isSelected ? "0 2px 12px rgba(0,0,0,0.12)" : "none",
           transition: "all 0.2s ease-in-out",
           overflow: "hidden",
         }}
@@ -47,7 +44,7 @@ const CategoryStaticAssistedCard = () => {
         <ShoppingBag
           sx={{
             fontSize: { xs: 24, sm: 28, md: 32 },
-            color: isActive ? "white" : iconBgColor,
+            color: isSelected ? "white" : iconBgColor,
           }}
         />
       </Box>
@@ -55,7 +52,7 @@ const CategoryStaticAssistedCard = () => {
       <Typography
         variant="body2"
         sx={{
-          fontWeight: isActive ? 700 : 500,
+          fontWeight: isSelected ? 700 : 500,
           color: "#333",
           fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
           textAlign: "center",
@@ -67,7 +64,7 @@ const CategoryStaticAssistedCard = () => {
         Assisted Shopping
       </Typography>
 
-      {isActive && (
+      {isSelected && (
         <Box
           sx={{
             width: "110%",

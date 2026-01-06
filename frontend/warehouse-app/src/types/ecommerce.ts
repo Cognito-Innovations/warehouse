@@ -64,6 +64,7 @@ export interface CartItem {
   unit_price: number;
   total_price: number;
   discount_percentage: number;
+  discount_amount: number;
   created_at: string;
   updated_at: string;
 }
@@ -140,15 +141,6 @@ export interface CreateOrderRequest {
 }
 
 // Component Props Interfaces
-export interface EcommerceHeaderProps {
-  cartItemCount: number;
-  locationData: any;
-  onMenuClick?: () => void;
-  hideMenuButton?: boolean;
-  hideSearch?: boolean;
-  hideLocation?: boolean;
-}
-
 export interface EcommerceSearchBarProps {
   searchQuery: string;
   placeholder: string;
@@ -259,16 +251,14 @@ export interface DeliveryAddressCardProps {
 export interface CartItemCardProps {
   item: CartItem;
   isSelected: boolean;
-  currencyInfo: CurrencyInfo;
-  selectedCountry?: string;
+  selectedCurrency?: string;
 }
 
 export interface CartItemsListProps {
   items: CartItem[];
   loadingStates: Record<string, CartItemLoadingState>;
   selectedItems: Set<string>;
-  currencyInfo?: CurrencyInfo;
-  selectedCountry?: string;
+  selectedCurrency?: string;
 }
 
 export interface PaymentOffer {
@@ -294,10 +284,9 @@ export interface FreeDeliveryThresholdCardProps {
 export interface OrderSummaryCardProps {
   userId?: string;
   items: CartItem[];
-  selectedCountry?: string;
+  selectedCurrency?: string;
   selectedAddress: CartAddressData | null;
   setHighlightAddressError(value: boolean): void
-  currencyInfo: CurrencyInfo;
 }
 
 export interface EmptyCartStateProps {
@@ -327,13 +316,6 @@ export interface CartAddressData {
   phone_number?: string;
   email?: string;
   currency?: string;
-}
-
-export interface CurrencyInfo {
-  symbol: string;
-  code: string;
-  rate: number;
-  isBase: boolean;
 }
 
 export interface UserAddress {

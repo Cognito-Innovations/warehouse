@@ -15,7 +15,6 @@ export interface MenuConfig {
   label: string;
   path: string;
   requiresAuth?: boolean;
-  category?: string;
 }
 
 export const MENUS = {
@@ -23,26 +22,25 @@ export const MENUS = {
     {
       icon: Inventory2,
       label: "Packages",
-      path: ROUTES.DASHBOARD,
+      path: ROUTES.DASHBOARD + ROUTES.DASHBOARD_PACKAGES,
       requiresAuth: true,
     },
     {
       icon: LocalShipping,
       label: "Shipments",
-      path: `${ROUTES.DASHBOARD}?tab=shipments`,
+      path: ROUTES.DASHBOARD + ROUTES.DASHBOARD_SHIPMENTS,
       requiresAuth: true,
     },
     {
       icon: ShoppingBag,
       label: "Assisted Shopping",
-      path: ROUTES.ECOMMERCE,
-      category: "assisted",
+      path: ROUTES.ASSISTED_SHOPPING,
       requiresAuth: false,
     },
     {
       icon: AssignmentReturn,
       label: "Pickup Requests",
-      path: ROUTES.PICKUP_REQUEST,
+      path: ROUTES.DASHBOARD + ROUTES.PICKUP_REQUEST,
       requiresAuth: true,
     },
   ],
@@ -51,7 +49,7 @@ export const MENUS = {
     {
       icon: ListAlt,
       label: "My Orders",
-      path: ROUTES.ORDER,
+      path: ROUTES.ORDER_HISTORY,
       requiresAuth: true,
     },
     {

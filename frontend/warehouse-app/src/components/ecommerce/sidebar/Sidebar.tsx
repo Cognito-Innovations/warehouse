@@ -16,12 +16,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const { user } = useAuth();
   const router = useRouter();
 
-  const handleNavigation = (path: string, requiresAuth: boolean = true, category?: string) => {
+  const handleNavigation = (path: string, requiresAuth: boolean = true) => {
     let targetPath = path;
-    if (category) {
-      targetPath = `${path}?category=${encodeURIComponent(category)}`;
-    }
-
     if (requiresAuth && !user) {
       const callbackUrl = encodeURIComponent(targetPath);
       router.push(`/sign-in?callbackUrl=${callbackUrl}`);
@@ -35,7 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     menus.map((menu) => ({
       icon: <menu.icon />,
       label: menu.label,
-      onClick: () => handleNavigation(menu.path, menu.requiresAuth, menu.category),
+      onClick: () => handleNavigation(menu.path, menu.requiresAuth),
     }));
 
   const menuGroup1 = mapMenus(MENUS.GROUP_1);

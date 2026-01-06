@@ -1,17 +1,18 @@
 export enum ROUTES {
   SIGN_IN = "/sign-in",  
   DASHBOARD = "/dashboard",  
+  DASHBOARD_PACKAGES = "/packages",
+  DASHBOARD_SHIPMENTS = "/shipments",
   PROFILE = "/profile",
   PICKUP_REQUEST = "/pickup-request",
-  ORDER_HISTORY = "/order",
+  CREATE_PICKUP_REQUEST = "/pickup-request/create-request",
+  ORDER_HISTORY = "/ecommerce/orders",
   SHIPMENT = "/shipment",
   ECOMMERCE = "/ecommerce",
   PRODUCT = "/ecommerce/product",
   CART = "/ecommerce/cart",
   CHECKOUT = "/ecommerce/checkout",
-  ORDER = "/ecommerce/orders",
-  ASSISTED_SHOPPING = "/assisted-shopping",
-  ECOMMERCE_BUYING_ASSISTANT = "/ecommerce/buying-assistant/start",
+  ASSISTED_SHOPPING = "/ecommerce/assisted-shopping",
   CREATE_ASSISTED_SHOPPING = "/assisted-shopping/create-request"
 }
 
@@ -47,8 +48,6 @@ export const steps = [
 export const STORAGE_KEY = "warehouse:clientIdentifier";
 export const HEADER_KEY = "x-client-identifier";
 
-export const CF_SCRIPT_SRC = "https://sdk.cashfree.com/js/v3/cashfree.js";
-
 export const DEFAULT_IMG =
   "https://rukminim2.flixcart.com/fk-p-flap/108/108/image/eb75e5d9571bde1a.png?q=60";
 
@@ -60,3 +59,23 @@ export const orderStatusPhrases: { [key: string]: string } = {
   shipped: "Shipped",
   pending: "Pending",
 };
+
+export const CACHE_GUEST_LOCATION_KEY = "guest_location";
+
+export const DEFAULT_CURRENCY_INFO = {
+  code: "USD",
+  symbol: "$",
+  rate: 1.00,
+}
+
+export const INR_CURRENCY = {
+  code: 'INR',
+  symbol: '₹',
+  rate: 90.25,
+}
+
+export const ASSISTED_SHOPPING_STEPS = [
+  { number: 1, label: "LINK" },
+  { number: 2, label: "DETAILS" },
+  { number: 3, label: "COMPLETE" },
+];

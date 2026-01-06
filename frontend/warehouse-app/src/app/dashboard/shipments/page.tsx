@@ -5,5 +5,7 @@ export const metadata = {
 };
 
 export default function ShipmentsPage() {
-    return <ShipmentsContent />;
+    return <main className="min-h-screen bg-white">
+        <ShipmentsContent />
+    </main>;
 }

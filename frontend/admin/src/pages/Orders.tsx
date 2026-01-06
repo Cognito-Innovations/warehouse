@@ -4,7 +4,7 @@ import { Box, Typography } from "@mui/material";
 
 import { getOrders } from "../services/api.services";
 import TopNavbar from "../components/Layout/TopNavbar";
-import CommonTable from "../components/common/CommonTable";
+import OrdersTable from "../components/Orders/OrdersTable";
 import StatusChip from "../components/common/StatusChip";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatDateTime } from "../utils/formatDateTime";
@@ -116,16 +116,18 @@ const Orders: React.FC = () => {
         <ExportOrdersButton orders={orders} />
       </Box>
 
-      <CommonTable
-        rows={orders}
-        columns={columns}
-        loading={loading}
-        statusOptions={ORDER_STATUS_OPTIONS}
-        noDataMessage="No orders available"
-        onEdit={handleEditStatus}
-        getIdentifier={(row) => row.id}
-        getRowStatus={(row) => row.status}
-      />
+      <Box sx={{ px: { xs: 0, sm: 2 } }}>
+        <OrdersTable
+          rows={orders}
+          columns={columns}
+          loading={loading}
+          statusOptions={ORDER_STATUS_OPTIONS}
+          noDataMessage="No orders available"
+          onEdit={handleEditStatus}
+          getIdentifier={(row) => row.id}
+          getRowStatus={(row) => row.status}
+        />
+      </Box>
 
       <EditOrderStatusModal
         open={!!selectedOrder}

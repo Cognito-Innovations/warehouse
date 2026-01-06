@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useRef, useCallback, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useRef, useCallback, useEffect } from "react";
 import { Container, Alert } from "@mui/material";
 
 import useProductStore from "@/store/productStore";
 import useCategoryStore from "@/store/categoryStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout"; 
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout";
 import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
 import { debounce } from "@/utils/debounce";
@@ -19,16 +18,7 @@ import CategorySection from "@/components/ecommerce/category_temp/CategorySectio
 import AssistedShoppingLandingContent from "@/components/AssistedShopping/getting-started/AssistedShoppingLandingContent";
 
 export default function Ecommerce() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const locationData = useEffectiveUserLocation({
-    countryCode: undefined,
-    countryName: undefined,
-    city: "",
-    pincode: "",
-  });
-  const currency = locationData?.currencyInfo?.code || '';
-  const countryCode = locationData?.location?.countryCode || '';
+  const {currencyCode, countryCode} = useDetectUserLocation();
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -46,21 +36,11 @@ export default function Ecommerce() {
   } = useProductStore();
 
   const showAssisted = selectedCategory === "assisted";
-
-  const categoryFromUrl = searchParams.get('category');
-
   const hasFetched = useRef(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
   const prevSearchQueryRef = useRef(searchQuery);
   const prevCategoryRef = useRef<string | null>(selectedCategory);
-
-  useEffect(() => {
-    if (categoryFromUrl && categoryFromUrl !== selectedCategory) {
-      setCategory(categoryFromUrl);
-      router.replace('/ecommerce', { scroll: false });
-    }
-  }, [categoryFromUrl, selectedCategory, router]);
 
   const initializeEcommerceData = useCallback(async (curr?: string, cntCode?: string) => {
     if (!curr || hasFetched.current) return;
@@ -83,10 +63,10 @@ export default function Ecommerce() {
   }, [getCategories, fetchProducts, selectedCategory, userId]);
 
   useEffect(() => {
-    if (currency && countryCode) {
-      initializeEcommerceData(currency, countryCode);
+    if (currencyCode && countryCode) {
+      initializeEcommerceData(currencyCode, countryCode);
     }
-  }, [currency, countryCode, initializeEcommerceData]);
+  }, [currencyCode, countryCode, initializeEcommerceData]);
 
   const performSearch = useCallback((query: string, category: string | null, curr: string, cntCode: string) => {
     if (category === "assisted") return;
@@ -123,20 +103,20 @@ export default function Ecommerce() {
   }, []);
 
   useEffect(() => {
-    if (!currency || !countryCode) return;
+    if (!currencyCode || !countryCode) return;
     if (searchQuery === prevSearchQueryRef.current) return;
 
     if (searchQuery.trim() === "") {
       debouncedSearchRef.current?.cancel?.();
-      performSearchRef.current("", selectedCategory, currency, countryCode);
+      performSearchRef.current("", selectedCategory, currencyCode, countryCode);
     } else {
-      debouncedSearchRef.current?.(searchQuery, selectedCategory, currency, countryCode);
+      debouncedSearchRef.current?.(searchQuery, selectedCategory, currencyCode, countryCode);
     }
     prevSearchQueryRef.current = searchQuery;
-  }, [searchQuery, selectedCategory, currency, countryCode]);
+  }, [searchQuery, selectedCategory, currencyCode, countryCode]);
 
   useEffect(() => {
-    if (!currency || !countryCode) return;
+    if (!currencyCode || !countryCode) return;
 
     if (prevCategoryRef.current !== selectedCategory) {
       debouncedSearchRef.current?.cancel?.();
@@ -144,13 +124,13 @@ export default function Ecommerce() {
       performSearch(
         searchQuery,
         selectedCategory || null,
-        currency,
+        currencyCode,
         countryCode
       );
 
       prevCategoryRef.current = selectedCategory;
     }
-  }, [selectedCategory, currency, countryCode, searchQuery, performSearch]);
+  }, [selectedCategory, currencyCode, countryCode, searchQuery, performSearch]);
 
   useEffect(() => {
     if (!selectedCategory || !observerRef.current || !hasMore || loadingMore || isLoading) return;
@@ -159,7 +139,7 @@ export default function Ecommerce() {
       if (entries[0].isIntersecting && hasMore && !loadingMore && !isLoading) {
         fetchProducts({ 
           category: selectedCategory, 
-          currency,
+          currency: currencyCode,
           countryCode,
           searchTerm: searchQuery,
           userId 
@@ -172,18 +152,14 @@ export default function Ecommerce() {
     return () => {
       observer.current?.disconnect();
     };
-  }, [hasMore, loadingMore, isLoading, selectedCategory, currency, countryCode, searchQuery, fetchProducts, userId]);
+  }, [hasMore, loadingMore, isLoading, selectedCategory, currencyCode, countryCode, searchQuery, fetchProducts, userId]);
   const handleRefresh = () => {
     setError(null);
     hasFetched.current = false;
-    initializeEcommerceData(currency, countryCode);
+    initializeEcommerceData(currencyCode, countryCode);
   };
 
   const isNetworkError = error && (error.includes("Network Error") || error.includes("Failed to fetch") || error.includes("ECONNREFUSED") || error.includes("timeout"));
-  const layoutProps = {
-    locationData: locationData,
-    categories: categories,
-  };
   if (error && !isNetworkError) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -191,7 +167,7 @@ export default function Ecommerce() {
       </Container>
     );
   }
-
+  
   if (categories.length === 0 || (error && isNetworkError)) {
     return (
       <EcommerceSkeletonLoader
@@ -209,7 +185,7 @@ export default function Ecommerce() {
   const isSearchEmpty = !!searchQuery && products.length === 0 && !isLoading;
 
   return (
-    <EcommercePageLayout {...layoutProps} >
+    <EcommercePageLayout>
       <CategorySection />
       {showAssisted ? (
         <AssistedShoppingLandingContent />

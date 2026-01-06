@@ -105,8 +105,8 @@ export class ProductsService {
       });
     }
     if (category?.trim()) {
-      queryBuilder.andWhere('product.category_id = :categoryId', {
-        categoryId: category,
+      queryBuilder.andWhere('category.slug = :category', {
+        category,
       });
     }
 

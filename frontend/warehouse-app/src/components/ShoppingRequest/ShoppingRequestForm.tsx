@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
-import { useAddressAPI } from "@/hooks/useAddressAPI";
-import { ROUTES, ASSISTED_SHOPPING_PRODUCT_LINK_KEY } from "@/utils/constants";
+import { ASSISTED_SHOPPING_PRODUCT_LINK_KEY } from "@/utils/constants";
 
 interface ShoppingItem {
   id: string;
@@ -21,10 +19,12 @@ interface ShoppingItem {
   ifNotAvailableColor: string;
 }
 
-export default function ShoppingRequestForm() {
-  const router = useRouter();
+interface ShoppingRequestFormProps {
+  onSuccess?: () => void;
+}
+
+export default function ShoppingRequestForm({ onSuccess }: ShoppingRequestFormProps) {
   const { data: session } = useSession();
-  const { selectedAddress } = useAddressAPI();
 
   const [items, setItems] = useState<ShoppingItem[]>([
     {
@@ -96,10 +96,11 @@ export default function ShoppingRequestForm() {
 
     const userId = (session?.user as any)?.user_id;
 
+    //TODO: revert hardcoded values
     const shoppingRequest = {
       user_id: userId,
-      request_code: `SR/${selectedAddress.country_code.toUpperCase()}/${Date.now()}`,
-      courier_id: selectedAddress.id,
+      request_code: `SR/IN/${Date.now()}`,
+      courier_id: "0f502386-b904-4cb8-8861-6c32e900bd84",
       items_count: items.length,
       remarks,
       status: "REQUESTED",
@@ -125,7 +126,7 @@ export default function ShoppingRequestForm() {
         )
       );
 
-      router.push(ROUTES.ASSISTED_SHOPPING);
+      onSuccess?.();
     } catch (error) {
       console.error("Error creating shopping request:", error);
     } finally {

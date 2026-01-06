@@ -4,7 +4,6 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import {
     Menu,
-    MenuItem,
     Typography,
     Box,
     Button,
@@ -12,33 +11,33 @@ import {
 } from "@mui/material";
 import { LocationOn } from "@mui/icons-material";
 import { ROUTES } from "@/utils/constants";
-import { AddressData } from "../../contexts/AddressContext";
-import useLocationStore from "@/store/locationStore";
+
 
 interface HeaderLocationMenuProps {
+    user: any;
     locationAnchorEl: null | HTMLElement;
     isLocationMenuOpen: boolean;
     handleLocationClose: () => void;
-    selectedAddress: AddressData;
-    countryCode?: string;
+    countryCode: string;
 }
 
 const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
+    user,
     locationAnchorEl,
     isLocationMenuOpen,
     handleLocationClose,
-    selectedAddress,
     countryCode,
 }) => {
     const router = useRouter();
-    const { userLocation } = useLocationStore();
 
     const handleChangeLocation = () => {
         router.push(`${ROUTES.PROFILE}?view=country`);
         handleLocationClose();
     };
 
-    const displayCountry = selectedAddress?.country_name || countryCode || userLocation.countryName || "None";
+    const login = () => {
+        router.push(`${ROUTES.SIGN_IN}`);
+    };
 
     return (
         <Menu
@@ -74,38 +73,19 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                     <LocationOn fontSize="small" color="primary" />
                     <Typography variant="subtitle1" fontWeight="bold">
-                        Shipping to
+                        Shipping from
                     </Typography>
                 </Box>
                 <Divider sx={{ mb: 2 }} />
 
-                {selectedAddress?.id ? (
-                    <Box sx={{ mb: 2 }}>
-                        <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                            {selectedAddress.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {selectedAddress.address}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {selectedAddress.country_name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            {selectedAddress.phone_number}
-                        </Typography>
-                    </Box>
-                ) : (
-                    <Box sx={{ mb: 2 }}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                            Currently selected country:
-                        </Typography>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                            {displayCountry}
-                        </Typography>
-                    </Box>
-                )}
+                
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Currently selected country: <span className="font-bold">{countryCode === "AE" ? "UAE" : countryCode}</span>
+                    </Typography>
+                </Box>
 
-                <Button
+               { user ? <Button
                     variant="outlined"
                     fullWidth
                     size="small"
@@ -113,7 +93,15 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
                     sx={{ textTransform: "none" }}
                 >
                     Change Location
-                </Button>
+                </Button> : <Button
+                    variant="outlined"
+                    fullWidth
+                    size="small"
+                    onClick={login}
+                    sx={{ textTransform: "none" }}
+                >
+                    Login
+                </Button>}
             </Box>
         </Menu>
     );

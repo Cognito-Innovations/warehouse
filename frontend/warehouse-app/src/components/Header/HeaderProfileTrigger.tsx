@@ -2,13 +2,13 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { ROUTES } from "@/utils/constants";
 import { Person } from "@mui/icons-material";
 import ReactCountryFlag from "react-country-flag";
-import { useAddressAPI } from "@/hooks/useAddressAPI";
 import { Avatar, Box, IconButton, Button } from "@mui/material";
 
 interface HeaderProfileTriggerProps {
+  countryName: string;
+  countryCode: string;
   currentUser: any;
   open: boolean;
   handleProfileMenuOpen: (event: React.MouseEvent<HTMLElement>) => void;
@@ -16,39 +16,14 @@ interface HeaderProfileTriggerProps {
 }
 
 const HeaderProfileTrigger = ({
+  countryName,
+  countryCode,
   currentUser,
   open,
   handleProfileMenuOpen,
   handleLocationClick,
 }: HeaderProfileTriggerProps) => {
-  const { selectedAddress, selectedCountry, availableCountries } =
-    useAddressAPI();
 
-  const getCountryDetails = () => {
-    if (selectedAddress?.country_code) {
-      return {
-        countryName: selectedAddress.country_name,
-        countryCode: selectedAddress.country_code,
-      };
-    }
-
-    if (selectedCountry) {
-      const country = availableCountries.find(
-        (c) => c.name === selectedCountry
-      );
-      return {
-        countryName: selectedCountry,
-        countryCode: country?.code || "",
-      };
-    }
-
-    return {
-      countryName: "India",
-      countryCode: "IN",
-    };
-  };
-
-  const { countryName, countryCode } = getCountryDetails();
   const router = useRouter();
 
   const handleLogin = () => {
@@ -68,24 +43,28 @@ const HeaderProfileTrigger = ({
           mr: { xs: 0.5, sm: 1 },
         }}
       >
-        <span className="text-gray-900 text-sm opacity-80">
-          Ship from:
-        </span>
-        {countryCode && (
-          <span onClick={handleLocationClick || handleProfileMenuOpen} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
-            <ReactCountryFlag
-              countryCode={countryCode}
-              svg
-              style={{
-                width: "1.5em",
-                height: "1.5em",
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "1px solid rgba(0, 0, 0, 0.1)",
-              }}
-              title={countryName}
-            />
-          </span>
+
+        {countryCode && countryName && (
+          <>
+            <span className="text-gray-900 text-sm opacity-80">
+              Ship from:
+            </span>
+
+            <span onClick={handleLocationClick || handleProfileMenuOpen} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+              <ReactCountryFlag
+                countryCode={countryCode}
+                svg
+                style={{
+                  width: "1.5em",
+                  height: "1.5em",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "1px solid rgba(0, 0, 0, 0.1)",
+                }}
+                title={countryName}
+              />
+            </span>
+          </>
         )}
         <span className="hidden md:block text-gray-900 text-sm font-medium ml-1">
           {countryCode === "AE" ? "UAE" : countryCode}
