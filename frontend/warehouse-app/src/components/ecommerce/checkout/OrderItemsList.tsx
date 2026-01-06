@@ -7,14 +7,12 @@ import { CartItem } from "@/types/ecommerce";
 
 interface OrderItemsListProps {
   items: CartItem[];
-  formatLocalPrice: (amount: number) => string;
-  formatUSDPrice: (amount: number) => string;
+  formatPrice: (amount: number) => string;
 }
 
 export const OrderItemsList: React.FC<OrderItemsListProps> = ({
   items,
-  formatLocalPrice,
-  formatUSDPrice,
+  formatPrice,
 }) => {
   const { currencySymbol } = useDetectUserLocation();
 
@@ -63,7 +61,7 @@ export const OrderItemsList: React.FC<OrderItemsListProps> = ({
                 color="text.secondary"
                 sx={{ fontSize: { xs: "0.75rem", md: "0.875rem" } }}
               >
-                {formatUSDPrice(pricing.discountedUnitPrice)} each ({formatLocalPrice(pricing.discountedUnitPrice)} each)
+                {formatPrice(pricing.discountedUnitPrice)} each
               </Typography>
             </Box>
             <Typography
@@ -76,7 +74,7 @@ export const OrderItemsList: React.FC<OrderItemsListProps> = ({
                 fontSize: { xs: "0.875rem", md: "1rem" },
               }}
             >
-              {formatUSDPrice(pricing.lineTotal)} ({formatLocalPrice(pricing.lineTotal)})
+              {formatPrice(pricing.lineTotal)}
             </Typography>
           </Box>
         );

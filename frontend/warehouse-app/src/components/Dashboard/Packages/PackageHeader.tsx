@@ -19,7 +19,7 @@ const PackageHeader: React.FC<PackageHeaderProps> = ({
             <h2 className="text-lg sm:text-xl font-bold text-gray-800 leading-tight">
                 Ready to Send Packages
             </h2>
-            <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full sm:w-auto shrink-0">
+            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full sm:w-auto shrink-0">
                 {selectedCount > 0 && (
                     <button
                         onClick={onRequestShip}

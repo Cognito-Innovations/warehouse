@@ -12,7 +12,7 @@ import CategoryStaticAssistedCard from "./CategoryStaticAssistedCard";
 
 export default function CategorySection() {
   const router = useRouter();
-  const { selectedCategory, setCategory } = useCategoryStore();
+  const { selectedCategory } = useCategoryStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
@@ -40,12 +40,10 @@ export default function CategorySection() {
   };
 
   const handleAllClick = () => {
-    setCategory(null);
     router.push("/ecommerce");
   };
 
   const handleAssistedClick = () => {
-    setCategory("assisted");
     router.push("/ecommerce/assisted-shopping");
   };
 

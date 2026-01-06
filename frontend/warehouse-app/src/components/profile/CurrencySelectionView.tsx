@@ -18,9 +18,11 @@ import {
 } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
 import { Search, ArrowBack } from "@mui/icons-material";
-import { getCurrencies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 import { toast } from "sonner";
+
+import { useLocationStore } from "@/store/locationStore";
 import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { getCurrencies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 
 interface Currency {
     id: string;
@@ -37,6 +39,8 @@ interface CurrencySelectionViewProps {
 export default function CurrencySelectionView({ onBack, showBackButton }: CurrencySelectionViewProps) {
     const { currencyCode } = useDetectUserLocation();
     const { user } = useAuth();
+    const refreshLocation = useLocationStore((s) => s.refreshLocation);
+
     const [searchTerm, setSearchTerm] = useState("");
     const [currencies, setCurrencies] = useState<Currency[]>([]);
     const [currentCurrencyId, setCurrentCurrencyId] = useState<string>("");
@@ -107,6 +111,7 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                     user_id: user.id,
                     currency_id: currency.id
                 });
+                await refreshLocation(user.id);
             }
             toast.success(`Currency updated to ${currency.name}`);
         } catch (error) {
