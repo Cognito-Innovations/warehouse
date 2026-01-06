@@ -6,17 +6,17 @@ import { Add, Remove, Delete, LocationOn, Inventory } from "@mui/icons-material"
 import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { getOptimalImageSizing, handleImageLoad, ImageDimensions } from "@/utils/imageUtils";
-import { ROUTES } from "@/utils/constants";
+import { DEFAULT_CURRENCY_INFO, ROUTES } from "@/utils/constants";
 import { CartItemCardProps, EcommerceProduct } from "@/types/ecommerce";
 
 export default function CartItemCard({
   item,
   isSelected,
-  currencyInfo,
-  selectedCountry,
+  selectedCurrency,
 }: CartItemCardProps) {
   const router = useRouter();
   const {
@@ -26,6 +26,8 @@ export default function CartItemCard({
     setCartItemQuantity,
   } = useCartStore();
 
+  const { currencySymbol } = useDetectUserLocation();
+
   const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null);
 
   const handleProductClick = (e: React.MouseEvent, product: EcommerceProduct) => {
@@ -34,7 +36,7 @@ export default function CartItemCard({
     if (blocked.includes((e.target as HTMLElement).tagName)) return;
 
     router.push(`${ROUTES.PRODUCT}/${product.slug}`);
-  }
+  };
 
   const handleItemSelect = (itemId: string, isChecked: boolean) => {
     const isCurrentlySelected = checkoutProducts.includes(itemId);
@@ -44,12 +46,12 @@ export default function CartItemCard({
   };
 
   const handleQuantityChange = useCallback(async (identifier: string, newQuantity: number) => {
-    await setCartItemQuantity(identifier, newQuantity, selectedCountry);
-  }, [setCartItemQuantity, selectedCountry]);
+    await setCartItemQuantity(identifier, newQuantity, selectedCurrency);
+  }, [setCartItemQuantity, selectedCurrency]);
 
   const handleRemoveItem = useCallback(async (identifier: string) => {
-    await removeProductFromCart(identifier, selectedCountry);
-  }, [removeProductFromCart, selectedCountry]);
+    await removeProductFromCart(identifier, selectedCurrency);
+  }, [removeProductFromCart, selectedCurrency]);
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     handleImageLoad(e, setImageDimensions);
@@ -59,7 +61,7 @@ export default function CartItemCard({
 
   const effectiveId = item.product_id!;
 
-  const pricing = getCartItemPricingSummary(item, currencyInfo);
+  const pricing = getCartItemPricingSummary(item, currencySymbol);
   const unitPrice = pricing.discountedUnitPrice;
   const totalPrice = pricing.lineTotal;
   const originalPrice = pricing.originalUnitPrice;
@@ -74,7 +76,7 @@ export default function CartItemCard({
       : "In Stock"
     : "Out of Stock";
 
-  const currencyStr = currencyInfo?.symbol || '$';
+  const currencyStr = currencySymbol || DEFAULT_CURRENCY_INFO.symbol;
 
   const formatLocalPrice = (price: number) => formatPrice(price, currencyStr);
   return (
@@ -104,7 +106,7 @@ export default function CartItemCard({
         },
       }}
     >
-      <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
+      <Box sx={{ display: "flex", gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
         {/* Selection Checkbox */}
         <Box sx={{ display: "flex", alignItems: "flex-start", pt: 0.5 }}>
           <Checkbox
@@ -159,14 +161,14 @@ export default function CartItemCard({
       </Box>
 
       <Box sx={{ 
-        display: 'flex', 
+        display: "flex", 
         flexGrow: 1, 
         minWidth: 0, 
-        flexDirection: { xs: 'column', sm: 'row' } 
+        flexDirection: { xs: "column", sm: "row" } 
       }}>
         {/* Product Details */}
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, mb: 0.75, flexWrap: 'wrap' }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, mb: 0.75, flexWrap: "wrap" }}>
             <Typography
               variant="body1"
               fontWeight="bold"
@@ -378,7 +380,7 @@ export default function CartItemCard({
           {/* Price Section */}
           <Box sx={{ 
             textAlign: { xs: "left", sm: "right" },
-            width: '100%',
+            width: "100%",
           }}>
             {/* Original Unit Price */}
             {hasDiscount && (

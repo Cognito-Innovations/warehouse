@@ -14,7 +14,7 @@ const CategoryItems = () => {
 
         return (
           <Box
-            key={category.id}
+            key={`category-${category.slug}`}
             onClick={() => {
               handleCategorySelect(category.slug);
               router.push(`/ecommerce/category/${category.slug}`);

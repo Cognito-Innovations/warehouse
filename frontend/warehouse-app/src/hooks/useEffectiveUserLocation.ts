@@ -1,177 +1,91 @@
 "use client";
 
-import { useEffect, useCallback, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUserLocation } from "./useUserLocation";
-import useLocationStore from "@/store/locationStore";
-import { UserAddress } from "@/types/ecommerce";
-import { CurrencyInfo } from "@/types/ecommerce";
-import { EffectiveUserLocation } from "@/store/storeTypes";
+import { getUserPreferences } from "@/lib/api.service";
+import { ecommerceService } from "@/services/ecommerce.service";
+import { getCachedLocation, setCachedLocation } from "@/utils/cachedUtils";
+import { CACHE_GUEST_LOCATION_KEY, DEFAULT_CURRENCY_INFO } from "@/utils/constants";
+import { getUserCountryByIP } from "@/utils/getUserCountry";
 
-export interface UseEffectiveUserLocationReturn {
-  location: EffectiveUserLocation;
-  currencyInfo: CurrencyInfo;
-  isLoading: boolean;
-  error: string | null;
-  isLoggedIn: boolean;
-  hasValidAddress: boolean;
-  address: UserAddress | null;
-  refreshAddresses: () => Promise<void>;
-  geoHook: ReturnType<typeof useUserLocation>;
-}
-
-export function useEffectiveUserLocation(
-  defaults: { countryCode?: string; countryName?: string; city: string; pincode: string }
-): UseEffectiveUserLocationReturn {
+export function useDetectUserLocation() {
   const { user } = useAuth();
-  const isLoggedIn = !!user;
-
-  const geoHook = useUserLocation({
-    defaultCity: defaults.city,
-    defaultPincode: defaults.pincode,
-    enableGeolocation: true,
-    skipInit: false,
+  
+  const [currencyInfo, setCurrencyInfo] = useState({
+    code: "",
+    symbol: "",
+    rate: 0,
   });
+  const [countryCode, setCountryCode] = useState("");
+  const userId = user?.id;
 
-  const userAddress = useLocationStore((state) => state.userAddress);
-  const isLoadingAddress = useLocationStore((state) => state.isLoadingAddress);
-  const isLoadingLocation = useLocationStore((state) => state.isLoadingLocation);
-  const addressCache = useLocationStore((state) => state.addressCache); 
-  const globalError = useLocationStore((state) => state.error);
-  const userLocation = useLocationStore((state) => state.userLocation);
+  const hasFetchedRef = useRef(false);
 
-  const fetchUserAddress = useLocationStore((state) => state.fetchUserAddress);
-  const refreshUserAddress = useLocationStore((state) => state.refreshUserAddress);
-  const initializeLocation = useLocationStore((state) => state.initializeLocation);
-  const updateLocation = useLocationStore((state) => state.updateLocation);
-  const setUserAddress = useLocationStore((state) => state.setUserAddress);
-
-  const fetchInitiatedRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const userId = user?.id;
-
-    if (userId) {
-      if (fetchInitiatedRef.current !== userId) {
-        fetchInitiatedRef.current = userId;
-        fetchUserAddress(userId);
-      }
-    } else {
-      fetchInitiatedRef.current = null;
-      setUserAddress(null);
-    }
-  }, [user?.id, fetchUserAddress, setUserAddress]);
-
-  useEffect(() => {
-    if (isLoadingLocation) return;
-
-    if (!isLoggedIn) {
-       initializeLocation(defaults.city, defaults.pincode, true);
-       return;
-    }
-
-    const hasCheckedCache = user?.id && addressCache[user?.id] !== undefined;
-
-    if (isLoadingAddress || !hasCheckedCache) {
+  const handleGuestLocation = async () => {
+    const cachedLocation = getCachedLocation(CACHE_GUEST_LOCATION_KEY);
+    if (cachedLocation) {
+      setCountryCode(cachedLocation.countryCode || "");
+      setCurrencyInfo(cachedLocation.currencyInfo);
       return;
     }
 
-    const hasValid = !!userAddress?.city && !!userAddress?.zip_code;
-    const city = hasValid ? userAddress.city : defaults.city;
-    const pincode = hasValid ? userAddress.zip_code : defaults.pincode;
-    const countryName = userAddress?.country || defaults.countryName;
-    const countryCode = defaults.countryCode || geoHook.location.countryCode;
-    const currentCurrency = userLocation.currency;
+    const location = await getUserCountryByIP();
+    const countryCode = location.countryCode || "";
+    const currencyCode = location.currency || "";
 
-    updateLocation({
-      city,
-      pincode,
+    let currencyInfo = { ...DEFAULT_CURRENCY_INFO };
+
+    if (currencyCode) {
+      const currencyData = await ecommerceService
+        .getCurrencyByCode(currencyCode)
+        .catch(() => null);
+
+      if (currencyData) {
+        currencyInfo = {
+          code: currencyData.currency_code ?? currencyCode,
+          symbol: currencyData.currency_symbol ?? DEFAULT_CURRENCY_INFO.symbol,
+          rate: Number(currencyData.rate) ?? DEFAULT_CURRENCY_INFO.rate,
+        };
+      }
+    }
+
+    setCountryCode(countryCode);
+    setCurrencyInfo(currencyInfo);
+
+    setCachedLocation(CACHE_GUEST_LOCATION_KEY, {
       countryCode,
-      countryName,
-      currency: currentCurrency,
+      currencyInfo,
     });
-  }, [
-    userAddress, 
-    isLoggedIn, 
-    defaults.city, 
-    defaults.pincode, 
-    defaults.countryCode,
-    defaults.countryName,
-    initializeLocation, 
-    updateLocation,
-    isLoadingAddress,
-    isLoadingLocation,
-    addressCache,
-    user?.id,
-    geoHook.location.countryCode,
-    userLocation.currency
-  ]);
+  };
 
-  const refreshAddresses = useCallback(async () => {
-    if (user?.id) {
-      await refreshUserAddress(user.id);
+  const handleUserLocation = async (userId: string) => {
+    const preferenceData = await getUserPreferences(userId);
+    const userCurrency = preferenceData?.currency;
+
+    setCountryCode(preferenceData?.courier?.country?.code || "");
+    setCurrencyInfo({
+      code: userCurrency?.currency_code || DEFAULT_CURRENCY_INFO.code,
+      symbol: userCurrency?.currency_symbol || DEFAULT_CURRENCY_INFO.symbol,
+      rate: userCurrency?.rate ?? DEFAULT_CURRENCY_INFO.rate,
+    });
+  };
+
+  useEffect(() => {
+    if (hasFetchedRef.current) return;
+
+    hasFetchedRef.current = true;
+
+    if (!userId) {
+      handleGuestLocation();
+    } else {
+      handleUserLocation(userId);
     }
-  }, [user?.id, refreshUserAddress]);
+  }, [userId]);
 
-  const hasValidAddress = isLoggedIn && !!userAddress && !!userAddress.city && !!userAddress.zip_code;
-
-  const location: EffectiveUserLocation = useMemo(() => {
-    if (hasValidAddress) {
-      return {
-        countryCode: geoHook.location.countryCode, 
-        countryName: userAddress!.country,
-        city: userAddress!.city,
-        pincode: userAddress!.zip_code,
-        currency: geoHook.location.currency,
-      };
-    }
-    return {
-      countryCode: geoHook.location.countryCode,
-      countryName: geoHook.location.countryName,
-      city: geoHook.location.city,
-      pincode: geoHook.location.pincode,
-      currency: geoHook.location.currency,
-    };
-  }, [hasValidAddress, geoHook.location, userAddress]);
-
-  const currencyInfo: CurrencyInfo = useMemo(() => {
-    if (hasValidAddress && userAddress?.user?.preference?.currency?.currency_symbol) {
-      const curr = userAddress.user.preference.currency;
-      const code = curr.currency_code || 'INR';
-      const rate = parseFloat(curr.rate || '1');
-      return {
-        symbol: curr.currency_symbol,
-        code,
-        rate,
-        isBase: code === 'INR'
-      };
-    }
-    const fallbackCode = location.currency || 'USD';
-    const symbolMap: Record<string, string> = {
-      'USD': '$',
-      'INR': '₹',
-    };
-    const symbol = symbolMap[fallbackCode.toUpperCase()] || '$';
-    return {
-      symbol,
-      code: fallbackCode.toUpperCase(),
-      rate: 1,
-      isBase: fallbackCode.toUpperCase() === 'USD'
-    };
-  }, [hasValidAddress, userAddress?.user?.preference?.currency, location.currency]);
-
-  const isLoading = geoHook.isLoading || isLoadingAddress;
-  const error = geoHook.error || globalError;
-
-  return {
-    location,
-    currencyInfo,
-    isLoading,
-    error,
-    isLoggedIn,
-    hasValidAddress,
-    address: userAddress,
-    refreshAddresses,
-    geoHook,
+  return { 
+    currencyCode: currencyInfo.code,
+    currencySymbol: currencyInfo.symbol,
+    currencyRate: currencyInfo.rate,
+    countryCode,
   };
 }

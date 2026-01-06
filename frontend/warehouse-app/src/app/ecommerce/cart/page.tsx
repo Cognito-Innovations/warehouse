@@ -5,7 +5,7 @@ import { Box, Container } from "@mui/material";
 import { useSession } from "next-auth/react";
 
 import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
 import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
@@ -24,33 +24,33 @@ export default function CartPage() {
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [highlightAddressError, setHighlightAddressError] = useState(false);
-  const [isCartLoading, setIsCartLoading] = useState(false); 
+  const [isCartLoading, setIsCartLoading] = useState(true);
+  const [isAddressDataReady, setIsAddressDataReady] = useState(false);
 
-  const locationData = useEffectiveUserLocation({
-    countryCode: undefined,
-    countryName: undefined,
-    city: '',
-    pincode: '',
-  });
-  const selectedCurrency = locationData.currencyInfo.code;
-  const currencyInfo = locationData.currencyInfo;
+  const { currencyCode } = useDetectUserLocation();
 
   const userId = (session?.user as any)?.user_id;
+
+  const handleAddressFetchComplete = useCallback(() => {
+    setIsAddressDataReady(true);
+  }, []);
 
   const initCart = useCallback(async () => {
     setIsCartLoading(true);
     try {
-      await getCart(selectedCurrency);
+      await getCart(currencyCode);
     } catch (e) {
       console.error("Initialization error:", e);
     } finally {
       setIsCartLoading(false);
     }
-  }, [getCart, selectedCurrency]);
+  }, [getCart, currencyCode]);
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!selectedCurrency) return;
+    if (!currencyCode) return;
+
+    if (userId && !isAddressDataReady) return;
 
     if (hydrated) {
       initCart();
@@ -63,7 +63,7 @@ export default function CartPage() {
         clearTimeout(timer);
       };
     }
-  }, [selectedCurrency, status, initCart, hydrated]);
+  }, [currencyCode, status, initCart, hydrated, userId, isAddressDataReady]);
 
   useEffect(() => {
     if (hydrated && cartProducts.length > 0) {
@@ -83,7 +83,7 @@ export default function CartPage() {
     return <CartSkeletonLoader />;
   }
 
-  if (!cartProducts || cartProducts.length === 0) {
+  if (!isCartLoading && (!cartProducts || cartProducts.length === 0)) {
     return <EmptyCartState/>;
   }
 
@@ -108,7 +108,7 @@ export default function CartPage() {
                 userId={userId}
                 onAddressChange={setSelectedAddress}
                 highlightAddressError={highlightAddressError}
-                refreshAddresses={locationData.refreshAddresses}
+                onAddressFetchComplete={handleAddressFetchComplete}
               />
             )}
             {isCartLoading ? (
@@ -117,8 +117,7 @@ export default function CartPage() {
               <CartItemsList
                 items={validItems}
                 selectedItems={new Set(checkoutProducts)}
-                currencyInfo={currencyInfo}
-                selectedCurrency={selectedCurrency}
+                selectedCurrency={currencyCode}
               />
             )}
 
@@ -133,10 +132,9 @@ export default function CartPage() {
               <OrderSummaryCard
                 userId={userId}
                 items={validItems}
-                selectedCurrency={selectedCurrency}
+                selectedCurrency={currencyCode}
                 selectedAddress={selectedAddress}
                 setHighlightAddressError={setHighlightAddressError}
-                currencyInfo={currencyInfo}
               />
             )}
           </Box>

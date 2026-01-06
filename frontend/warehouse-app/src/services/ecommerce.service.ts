@@ -170,7 +170,7 @@ export const ecommerceService = {
 
   // Orders
   async initiateOrder(orderData: any): Promise<any> {
-    const response = await api.post('/ecommerce-orders/initiate', orderData);
+    const response = await api.post("/ecommerce-orders/initiate", orderData);
     return response.data;
   },
 
@@ -213,6 +213,11 @@ export const ecommerceService = {
 
   async cancelOrder(id: string): Promise<Order> {
     const response = await api.put(`/ecommerce-orders/${id}/cancel`);
+    return response.data;
+  },
+
+  async getCurrencyByCode(code: string) {
+    const response = await api.get(`/currencies/by-code/${code}`);
     return response.data;
   },
 };

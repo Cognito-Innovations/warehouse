@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { FastDeliveryBanner } from "@/components/ecommerce/checkout/FastDeliveryBanner";
 import { DeliveryInfoCard } from "@/components/ecommerce/checkout/DeliveryInfoCard";
 import { OrderSummary } from "@/components/ecommerce/checkout/OrderSummary";
@@ -28,15 +28,19 @@ export default function CheckoutPage() {
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
-  
-  const locationData = useEffectiveUserLocation({
-    countryCode: undefined,
-    countryName: undefined,
-    city: '',
-    pincode: '',
-  });
-  const selectedCurrency = locationData.currencyInfo.code;
-  const currencyInfo = locationData.currencyInfo;
+  const [isAddressDataReady, setIsAddressDataReady] = useState(false);
+
+  const { currencyCode, currencySymbol } = useDetectUserLocation();
+
+  const handleAddressFetchComplete = useCallback(() => {
+    setIsAddressDataReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setIsAddressDataReady(true);
+    }
+  }, [authLoading, user]);
 
   useEffect(() => {
     if (hasInitialized) return;
@@ -86,9 +90,8 @@ export default function CheckoutPage() {
   }, [checkedOutItems, router, itemsLoaded, orderPlaced]);
 
   const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
-  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, selectedCurrency, currencyInfo), [checkedOutItems, selectedIds, selectedCurrency, currencyInfo]);
-  
-  const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencyInfo.symbol), [currencyInfo.symbol]);
+  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, currencyCode), [checkedOutItems, selectedIds, currencyCode]);
+  const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencySymbol), [currencySymbol]);
 
   const handleAddressSelect = useCallback((address: string) => {
     setShippingAddress(address);
@@ -98,10 +101,20 @@ export default function CheckoutPage() {
     setAddressLoading(isLoading);
   }, []);
 
-  if (authLoading) {
+  if (authLoading || (user && !isAddressDataReady)) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
         <CircularProgress />
+        {user && (
+           <Box sx={{ display: 'none' }}>
+             <DeliveryAddressCard 
+                userId={user.id}
+                onAddressSelect={handleAddressSelect}
+                onLoadingChange={handleAddressLoadingChange}
+                onAddressFetchComplete={handleAddressFetchComplete}
+             />
+           </Box>
+        )}
       </Box>
     );
   }
@@ -112,17 +125,20 @@ export default function CheckoutPage() {
 
   return (
     <Box sx={{ bgcolor: "#fafafa", minHeight: "100vh" }}>
-      <Container maxWidth="lg" sx={{ py: { xs: 1, md: 3 }, px: { xs: 1, sm: 2 } }}>
-        <FastDeliveryBanner />
+      <Container maxWidth="lg" sx={{ py: { xs: 2, md: 3 }, px: { xs: 1.5, sm: 2, md: 3 } }}>
+        <Box sx={{ mb: { xs: 2, md: 3 } }}>
+          <FastDeliveryBanner />
+        </Box>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, md: 3 }}>
           <Grid size={{ xs: 12, lg: 8 }}>
-            <Grid container spacing={3}>
+            <Grid container spacing={{ xs: 2, md: 3 }}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <DeliveryAddressCard 
                   userId={user?.id}
                   onAddressSelect={handleAddressSelect}
                   onLoadingChange={handleAddressLoadingChange}
+                  onAddressFetchComplete={handleAddressFetchComplete}
                 />
               </Grid>
 
@@ -133,17 +149,17 @@ export default function CheckoutPage() {
           </Grid>
 
           <Grid size={{ xs: 12, lg: 4 }}>
-            <OrderSummary 
-              items={checkedOutItems}
-              totals={totals}
-              shippingAddress={shippingAddress}
-              selectedCurrency={selectedCurrency}
-              currencyInfo={currencyInfo}
-              user={user}
-              formatLocalPrice={formatLocalPrice}
-              addressLoading={addressLoading}
-              onOrderSuccess={() => setOrderPlaced(true)}
-            />
+            <Box sx={{ position: { lg: "sticky" }, top: { lg: 20 } }}>
+              <OrderSummary 
+                items={checkedOutItems}
+                totals={totals}
+                shippingAddress={shippingAddress}
+                user={user}
+                formatLocalPrice={formatLocalPrice}
+                addressLoading={addressLoading}
+                onOrderSuccess={() => setOrderPlaced(true)}
+              />
+            </Box>
           </Grid>
         </Grid>
       </Container>

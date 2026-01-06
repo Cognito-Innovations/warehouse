@@ -1,22 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, Stack, Typography, Box, Divider, Button, CircularProgress } from "@mui/material";
-import { Payment, DeliveryDining } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import React, { useState, useCallback } from "react";
+import { Card, CardContent, Stack, Typography, Box } from "@mui/material";
+import { Payment } from "@mui/icons-material";
 import { toast } from "sonner";
+import { getUSDFromLocal } from "@/utils/priceUtils";
 
 import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { launchPayPalPayment } from "@/services/paypal-payment.service";
-import { ecommerceService } from "@/services/ecommerce.service";
-import { ROUTES } from "@/utils/constants";
-import { getCartItemPricingSummary } from "@/utils/priceUtils";
-import { CartItem } from "@/types/ecommerce";
-import { CurrencyInfo } from "@/types/ecommerce";
+import { usePayPalPayment } from "@/hooks/usePayPalPayment";
+import { useOrderPayment } from "@/hooks/useOrderPayment";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { OrderSuccessModal } from "../OrderSuccessModal";
+import { OrderItemsList } from "./OrderItemsList";
+import { OrderTotals } from "./OrderTotals";
+import { PaymentButton } from "./PaymentButton";
+import { PayPalButtonContainer } from "./PayPalButtonContainer";
+import { CartItem } from "@/types/ecommerce";
 
-interface OrderTotals {
+interface OrderTotalsData {
   subtotal: number;
   discount: number;
   deliveryFee: number;
@@ -27,10 +29,8 @@ interface OrderTotals {
 
 interface OrderSummaryProps {
   items: CartItem[];
-  totals: OrderTotals;
+  totals: OrderTotalsData;
   shippingAddress: string;
-  selectedCurrency?: string;
-  currencyInfo: CurrencyInfo;
   user: any;
   formatLocalPrice: (amount: number) => string;
   addressLoading: boolean;
@@ -41,296 +41,142 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   items,
   totals,
   shippingAddress,
-  selectedCurrency,
-  currencyInfo,
-  user,
   formatLocalPrice,
   addressLoading,
   onOrderSuccess,
 }) => {
-  const router = useRouter();
   const { removePurchasedProducts } = useCartStore();
   const { loading: authLoading } = useAuth();
-  
-  const [processing, setProcessing] = useState(false);
+  const { currencyCode, currencyRate } = useDetectUserLocation();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showPaypal, setShowPaypal] = useState(false);
-  const [paypalConfig, setPaypalConfig] = useState<{ orderId: string; paypalOrderId: string; orderCurrency: string } | null>(null);
 
-  async function handlePaymentAndOrder() {
+  const formatUSDPrice = useCallback((localAmount: number) => {
+    const usdAmount = getUSDFromLocal(localAmount, currencyCode, currencyRate);
+    return `$${usdAmount.toFixed(2)}`;
+  }, [currencyCode, currencyRate]);
+
+  const { isProcessing, initiateOrder } = useOrderPayment();
+  const { showPayPal, initializePayment, resetPayment } = usePayPalPayment({
+    onSuccess: async () => {
+      try {
+        const purchasedIds = items.map((item) => item.product_id!);
+        removePurchasedProducts(purchasedIds);
+        onOrderSuccess?.();
+        setShowSuccessModal(true);
+        resetPayment();
+      } catch (error) {
+        toast.error("Order update error");
+      }
+    },
+  });
+
+  const handlePaymentAndOrder = useCallback(async () => {
     if (!items.length || !shippingAddress || authLoading) {
       toast.error("No items to checkout.");
       return;
     }
 
-    setProcessing(true);
-    setShowPaypal(false);
-    setPaypalConfig(null);
-    
-    try {
-      const orderedProductIds = items
-        .map((item) => item.product_id || item.product?.id)
-        .filter((id): id is string => !!id);
+    resetPayment();
 
-      const orderData = {
-        shipping_address: shippingAddress,
-        currency: selectedCurrency,
-        product_ids: orderedProductIds,
-      }
-      const initiateResponse = await ecommerceService.initiateOrder(orderData);
-      const { orderId, orderNumber, paymentSessionId, totalAmount } = initiateResponse;
+    const paymentConfig = await initiateOrder(items, shippingAddress);
 
-      if (!paymentSessionId) {
-        throw new Error('Failed to initiate payment');
-      }
-
-      const config = {
-        orderId,
-        paypalOrderId: paymentSessionId,
-        orderCurrency: currencyInfo.code,
-      };
-
-      setPaypalConfig(config);
-      setShowPaypal(true);
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to initiate checkout.";
-      toast.error(errorMsg);
-    } finally {
-      setProcessing(false);
+    if (paymentConfig) {
+      initializePayment(paymentConfig);
     }
-  }
-
-  useEffect(() => {
-    let isCancelled = false;
-
-    if (showPaypal && paypalConfig) {
-      launchPayPalPayment(
-        paypalConfig,
-        async () => {
-          if (isCancelled) return;
-          try {
-            const purchasedIds = items.map((item) => item.product_id!);
-            removePurchasedProducts(purchasedIds);
-            onOrderSuccess?.();
-            setShowSuccessModal(true);
-            setShowPaypal(false);
-            setPaypalConfig(null);
-          } catch (error) {
-            toast.error("Order update error");
-          }
-        },
-        (failData: any) => {
-          if (isCancelled) return;
-          console.error("Payment Failed:", failData);
-          toast.error(failData?.reason || "Payment cancelled");
-          setShowPaypal(false);
-          setPaypalConfig(null);
-          router.replace(ROUTES.CART);
-        }
-      ).catch((err) => {
-        if (isCancelled) return;
-        console.error("PayPal launch error:", err);
-        toast.error("Failed to initialize PayPal");
-        setShowPaypal(false);
-        setPaypalConfig(null);
-      });
-    }
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [showPaypal, paypalConfig, items, onOrderSuccess, removePurchasedProducts, router]);
+  }, [
+    items,
+    shippingAddress,
+    authLoading,
+    initiateOrder,
+    initializePayment,
+    resetPayment,
+  ]);
 
   const hasAddress = !!shippingAddress && shippingAddress.trim().length > 0;
   const isButtonDisabled =
-    processing ||
+    isProcessing ||
     !hasAddress ||
     authLoading ||
     addressLoading ||
     items.length === 0 ||
-    showPaypal;
+    showPayPal;
 
   return (
     <Box>
-      <Card 
-        variant="outlined" 
-        sx={{ 
-          mb: 3, 
-          borderRadius: 3, 
+      <Card
+        variant="outlined"
+        sx={{
+          mb: { xs: 2, md: 3 },
+          borderRadius: 3,
           border: "1px solid #e9ecef",
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
         <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-          <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
-            <Payment sx={{ color: "primary.main", fontSize: 28 }} />
-            <Typography variant="h6" fontWeight={600} color="text.primary">
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1.5}
+            mb={2}
+            sx={{ flexWrap: { xs: "wrap", sm: "nowrap" } }}
+          >
+            <Payment
+              sx={{
+                color: "primary.main",
+                fontSize: { xs: 24, md: 28 },
+              }}
+            />
+            <Typography
+              variant="h6"
+              fontWeight={600}
+              color="text.primary"
+              sx={{ fontSize: { xs: "1rem", md: "1.25rem" } }}
+            >
               Order Summary
             </Typography>
           </Stack>
 
-          <Box sx={{ mb: 2, maxHeight: 300, overflow: "auto" }}>
-            {items.map((item: CartItem) => {
-              const pricing = getCartItemPricingSummary(item, currencyInfo);
-              return (
-                <Box
-                  key={item.product_id}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    py: 1.5,
-                    borderBottom: "1px solid #f0f0f0",
-                    "&:last-child": { borderBottom: "none" }
-                  }}
-                >
-                  <Box sx={{ flex: 1, mr: 2 }}>
-                    <Typography variant="body1" fontWeight={500} sx={{ mb: 0.5, color: "text.primary" }}>
-                      {item.product.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                      Qty: {item.quantity}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {formatLocalPrice(pricing.discountedUnitPrice)} each
-                    </Typography>
-                  </Box>
-                  <Typography 
-                    variant="h6" 
-                    fontWeight={600} 
-                    color="primary.main"
-                    sx={{ minWidth: 60, textAlign: "right" }}
-                  >
-                    {formatLocalPrice(pricing.lineTotal)}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
+          <OrderItemsList
+            items={items}
+            formatLocalPrice={formatLocalPrice}
+            formatUSDPrice={formatUSDPrice}
+          />
 
-          <Divider sx={{ my: 2 }} />
-
-          <Stack spacing={1.5} sx={{ mb: 2 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body1" fontWeight={500} color="text.primary">Subtotal</Typography>
-              <Typography variant="body1" fontWeight={500} color="text.primary">
-                {formatLocalPrice(totals.subtotal)}
-              </Typography>
-            </Box>
-            
-            {totals.discount > 0 && (
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography variant="body1" color="success.main" fontWeight={500}>
-                  Item Discounts
-                </Typography>
-                <Typography variant="body1" color="success.main" fontWeight={500}>
-                  -{formatLocalPrice(totals.discount)}
-                </Typography>
-              </Box>
-            )}
-
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="body1" fontWeight={500} color="text.primary">Delivery</Typography>
-              <Stack direction="row" alignItems="center" spacing={0.5} color={totals.deliveryFee === 0 ? "success.main" : "text.primary"}>
-                <DeliveryDining sx={{ fontSize: 16 }} />
-                <Typography variant="body2" fontWeight={600}>
-                  {formatLocalPrice(totals.deliveryFee)}
-                </Typography>
-              </Stack>
-            </Box>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body1" fontWeight={500} color="text.primary">Taxes (2%)</Typography>
-              <Typography variant="body1" fontWeight={500} color="text.primary">
-                {formatLocalPrice(totals.taxes)}
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="body1" fontWeight={500} color="text.primary">Service Charge</Typography>
-              <Typography variant="body1" fontWeight={500} color="text.primary">
-                {formatLocalPrice(totals.serviceCharge)}
-              </Typography>
-            </Box>
-
-            <Divider />
-
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="h5" fontWeight={700} color="text.primary">Total</Typography>
-              <Typography 
-                variant="h5" 
-                fontWeight={700} 
-                color="primary.main"
-                sx={{ fontSize: { xs: "1.5rem", md: "1.75rem" } }}
-              >
-                {formatLocalPrice(totals.total)}
-              </Typography>
-            </Box>
-          </Stack>
+          <OrderTotals
+            subtotal={totals.subtotal}
+            discount={totals.discount}
+            deliveryFee={totals.deliveryFee}
+            taxes={totals.taxes}
+            serviceCharge={totals.serviceCharge}
+            total={totals.total}
+            formatLocalPrice={formatLocalPrice}
+            formatUSDPrice={formatUSDPrice}
+          />
         </CardContent>
       </Card>
 
-      {!showPaypal ? (
-        <Button
-          fullWidth
-          variant="contained"
-          size="large"
-          startIcon={<Payment />}
-          onClick={handlePaymentAndOrder}
-          disabled={isButtonDisabled}
-          sx={{
-            borderRadius: 3,
-            py: 2,
-            fontSize: "1.1rem",
-            fontWeight: 600,
-            textTransform: "none",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            transition: "all 0.2s ease",
-            bgcolor: "primary.main",
-            "&:hover": { 
-              bgcolor: "primary.dark",
-              boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
-              transform: "translateY(-1px)"
-            },
-            "&:disabled": {
-              bgcolor: "grey.300",
-              color: "grey.500",
-              boxShadow: "none",
-              transform: "none"
-            }
-          }}
-        >
-          {processing ? (
-            <Box display="flex" alignItems="center" gap={1}>
-              <CircularProgress size={24} color="inherit" />
-              <Typography>Processing Payment...</Typography>
-            </Box>
-          ) : addressLoading ? (
-            <Box display="flex" alignItems="center" gap={1}>
-              <CircularProgress size={24} color="inherit" />
-              <Typography>Fetching Address...</Typography>
-            </Box>
-          ) : (
-            `Pay & Place Order • ${formatLocalPrice(totals.total)}`
-          )}
-        </Button>
-      ) : (
-        <Box
-          id="paypal-button-container"
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            py: 2,
-            minHeight: "50px",
-            border: "1px solid #e9ecef",
-            borderRadius: 3,
-            bgcolor: "white"
-          }}
-        />
-      )}
+      <Box sx={{ mb: 2 }}>
+        {showPayPal ? (
+          <PayPalButtonContainer />
+        ) : (
+          <PaymentButton
+            processing={isProcessing}
+            addressLoading={addressLoading}
+            disabled={isButtonDisabled}
+            total={totals.total}
+            formatLocalPrice={formatLocalPrice}
+            formatUSDPrice={formatUSDPrice}
+            onClick={handlePaymentAndOrder}
+          />
+        )}
+      </Box>
 
-      <Box sx={{ mt: 2, textAlign: "center" }}>
-        <Typography variant="body2" color="text.secondary">
+      <Box sx={{ mt: { xs: 1.5, md: 2 }, textAlign: "center", px: { xs: 1, md: 0 } }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ fontSize: { xs: "0.75rem", md: "0.875rem" } }}
+        >
           By placing your order, you agree to our Terms of Service
         </Typography>
       </Box>

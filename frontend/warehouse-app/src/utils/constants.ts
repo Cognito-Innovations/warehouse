@@ -6,15 +6,13 @@ export enum ROUTES {
   PROFILE = "/profile",
   PICKUP_REQUEST = "/pickup-request",
   CREATE_PICKUP_REQUEST = "/pickup-request/create-request",
-  ORDER_HISTORY = "/order",
+  ORDER_HISTORY = "/ecommerce/orders",
   SHIPMENT = "/shipment",
   ECOMMERCE = "/ecommerce",
   PRODUCT = "/ecommerce/product",
   CART = "/ecommerce/cart",
   CHECKOUT = "/ecommerce/checkout",
-  ORDER = "/ecommerce/orders",
-  ASSISTED_SHOPPING = "/assisted-shopping",
-  ECOMMERCE_BUYING_ASSISTANT = "/ecommerce/buying-assistant/start",
+  ASSISTED_SHOPPING = "/ecommerce/assisted-shopping",
   CREATE_ASSISTED_SHOPPING = "/assisted-shopping/create-request"
 }
 
@@ -61,3 +59,23 @@ export const orderStatusPhrases: { [key: string]: string } = {
   shipped: "Shipped",
   pending: "Pending",
 };
+
+export const CACHE_GUEST_LOCATION_KEY = "guest_location";
+
+export const DEFAULT_CURRENCY_INFO = {
+  code: "USD",
+  symbol: "$",
+  rate: 1.00,
+}
+
+export const INR_CURRENCY = {
+  code: 'INR',
+  symbol: '₹',
+  rate: 90.25,
+}
+
+export const ASSISTED_SHOPPING_STEPS = [
+  { number: 1, label: "LINK" },
+  { number: 2, label: "DETAILS" },
+  { number: 3, label: "COMPLETE" },
+];

@@ -35,8 +35,6 @@ export default function EcommercePageLayout({
       >
         {children}
 
-        {/* TODO: Uncomment when functionality added */}
-        {/* <EcommerceBottomNavigation cartItemCount={cartProductQuantityCount()} /> */}
       </Container>
     </Box>
   );

@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useRef, useCallback, useEffect, useState } from "react";
-import { useRouter, useSearchParams, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Container, Alert } from "@mui/material";
 
 import useProductStore from "@/store/productStore";
 import useCategoryStore from "@/store/categoryStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout";
 import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
@@ -18,19 +18,10 @@ import { ecommerceData } from "@/data/ecommerceData";
 import { debounce } from "@/utils/debounce";
 
 export default function CategoryPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const params = useParams();
   const slug = params?.slug as string;
   
-  const locationData = useEffectiveUserLocation({
-    countryCode: undefined,
-    countryName: undefined,
-    city: "",
-    pincode: "",
-  });
-  const currency = locationData?.currencyInfo?.code || '';
-  const countryCode = locationData?.location?.countryCode || '';
+  const {currencyCode, countryCode} = useDetectUserLocation();
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -81,10 +72,10 @@ export default function CategoryPage() {
   }, [getCategories, fetchProducts, selectedCategory, userId, slug]);
 
   useEffect(() => {
-    if (currency && countryCode) {
-      initializeEcommerceData(currency, countryCode);
+    if (currencyCode && countryCode) {
+      initializeEcommerceData(currencyCode, countryCode);
     }
-  }, [currency, countryCode, initializeEcommerceData]);
+  }, [currencyCode, countryCode, initializeEcommerceData]);
 
   const performSearch = useCallback((query: string, category: string | null, curr: string, cntCode: string) => {
     if (category === "assisted") return;
@@ -121,30 +112,30 @@ export default function CategoryPage() {
   }, []);
 
   useEffect(() => {
-    if (!currency || !countryCode) return;
+    if (!currencyCode || !countryCode) return;
     if (searchQuery === prevSearchQueryRef.current) return;
     if (searchQuery.trim() === "") {
       debouncedSearchRef.current?.cancel?.();
-      performSearchRef.current("", selectedCategory, currency, countryCode);
+      performSearchRef.current("", selectedCategory, currencyCode, countryCode);
     } else {
-      debouncedSearchRef.current?.(searchQuery, selectedCategory, currency, countryCode);
+      debouncedSearchRef.current?.(searchQuery, selectedCategory, currencyCode  , countryCode);
     }
     prevSearchQueryRef.current = searchQuery;
-  }, [searchQuery, selectedCategory, currency, countryCode]);
+  }, [searchQuery, selectedCategory, currencyCode, countryCode]);
 
   useEffect(() => {
-    if (!currency || !countryCode) return;
+    if (!currencyCode || !countryCode) return;
     if (prevCategoryRef.current !== selectedCategory) {
       debouncedSearchRef.current?.cancel?.();
       performSearch(
         searchQuery,
         selectedCategory || null,
-        currency,
+        currencyCode,
         countryCode
       );
       prevCategoryRef.current = selectedCategory;
     }
-  }, [selectedCategory, currency, countryCode, searchQuery, performSearch]);
+  }, [selectedCategory, currencyCode, countryCode, searchQuery, performSearch]);
 
   useEffect(() => {
     if (!selectedCategory || !observerRef.current || !hasMore || loadingMore || isLoading) return;
@@ -154,7 +145,7 @@ export default function CategoryPage() {
       if (entries[0].isIntersecting && hasMore && !loadingMore && !isLoading) {
         fetchProducts({
           category: selectedCategory,
-          currency,
+          currency: currencyCode,
           countryCode,
           searchTerm: searchQuery,
           userId
@@ -168,12 +159,12 @@ export default function CategoryPage() {
     return () => {
       observer.current?.disconnect();
     };
-  }, [hasMore, loadingMore, isLoading, selectedCategory, currency, countryCode, searchQuery, fetchProducts, userId]);
+  }, [hasMore, loadingMore, isLoading, selectedCategory, currencyCode, countryCode, searchQuery, fetchProducts, userId]);
   
   const handleRefresh = () => {
     setError(null);
     hasFetched.current = false;
-    initializeEcommerceData(currency, countryCode);
+    initializeEcommerceData(currencyCode, countryCode);
   };
 
   const isNetworkError = error && (error.includes("Network Error") || error.includes("Failed to fetch") || error.includes("ECONNREFUSED") || error.includes("timeout"));

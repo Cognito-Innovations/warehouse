@@ -17,11 +17,10 @@ import {
     CircularProgress
 } from "@mui/material";
 import { useAuth } from "@/contexts/AuthContext";
-import useLocationStore from "@/store/locationStore";
-import { useAddressActions } from "@/contexts/AddressContext";
-import { Search, MonetizationOn, ArrowBack } from "@mui/icons-material";
+import { Search, ArrowBack } from "@mui/icons-material";
 import { getCurrencies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 import { toast } from "sonner";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 
 interface Currency {
     id: string;
@@ -36,9 +35,8 @@ interface CurrencySelectionViewProps {
 }
 
 export default function CurrencySelectionView({ onBack, showBackButton }: CurrencySelectionViewProps) {
+    const { currencyCode } = useDetectUserLocation();
     const { user } = useAuth();
-    const { refreshUserPreferences } = useAddressActions();
-    const { userLocation, setUserLocation } = useLocationStore();
     const [searchTerm, setSearchTerm] = useState("");
     const [currencies, setCurrencies] = useState<Currency[]>([]);
     const [currentCurrencyId, setCurrentCurrencyId] = useState<string>("");
@@ -49,7 +47,7 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
         const fetchData = async () => {
             try {
                 const currenciesPromise = getCurrencies();
-
+                
                 const prefsPromise = user?.id 
                     ? getUserPreferences(user.id) 
                     : Promise.resolve(null);
@@ -66,9 +64,9 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                 if (prefsData?.currency?.id) {
                     selectedId = prefsData.currency.id;
                 } 
-                else if (userLocation?.currency) {
+                else if (currencyCode) {
                     const localMatch = currenciesData.find(
-                        (c: Currency) => c.currency_symbol === userLocation.currency
+                        (c: Currency) => c.code === currencyCode
                     );
                     if (localMatch) selectedId = localMatch.id;
                 }
@@ -83,7 +81,7 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
         };
 
         fetchData();
-    }, [user?.id, userLocation?.currency]);
+    }, [user?.id, currencyCode]);
 
     const filteredCurrencies = currencies.filter(currency =>
         currency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -98,17 +96,17 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
         setCurrentCurrencyId(currency.id);
 
         try {
-            setUserLocation({
-                ...userLocation,
-                currency: currency.currency_symbol 
-            });
+            //TODO P0: Uncomment this when the currency selection view is implemented
+            // setUserLocation({
+            //     ...userLocation,
+            //     currency: currency.currency_symbol 
+            // });
 
             if (user?.id) {
                 await updatePreferences({
                     user_id: user.id,
                     currency_id: currency.id
                 });
-                await refreshUserPreferences();
             }
             toast.success(`Currency updated to ${currency.name}`);
         } catch (error) {
@@ -200,7 +198,7 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                                         </ListItemIcon>
                                         <ListItemText
                                             primary={currency.name}
-                                            secondary={`Global standard for price display`}
+                                            secondary={""}
                                             primaryTypographyProps={{
                                                 fontWeight: isSelected ? 600 : 500,
                                                 color: isSelected ? "primary.main" : "text.primary"

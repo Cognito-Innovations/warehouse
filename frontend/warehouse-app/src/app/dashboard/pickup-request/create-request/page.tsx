@@ -1,6 +1,6 @@
 "use client";
 
-import { createPickupRequest } from "@/lib/api.service";
+import { createPickupRequest, getUserPreferences } from "@/lib/api.service";
 import {
   Box,
   Typography,
@@ -10,10 +10,9 @@ import {
   Paper,
 } from "@mui/material";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react"; 
 import { useRouter } from "next/navigation";
-import { useAddressAPI } from "@/hooks/useAddressAPI";
 import AddressLayout from "@/providers/AddressLayout";
 import { ROUTES } from "@/utils/constants";
 import { TW_COLORS } from "@/utils/colors";
@@ -29,9 +28,19 @@ const FormLabel = ({ children, htmlFor }: { children: React.ReactNode; htmlFor: 
   </Typography>
 );
 
+interface UserPreferenceProps {
+  courier: {
+    country: {
+      name: string;
+      code: string;
+      id: string;
+    };
+  };
+}
+
 function CreatePickupRequestPageContent() {
   const [loading, setLoading] = useState(false);
-  const {selectedAddress} =  useAddressAPI();
+  const [countryId, setCountryId] = useState("");
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -50,6 +59,16 @@ function CreatePickupRequestPageContent() {
     setForm({ ...form, [e.target.id.replace("-", "_")]: e.target.value });
   };
 
+  useEffect(() => {
+    const fetchCountryId = async () => {
+      if (!session?.user?.id) return;
+      const data = await getUserPreferences(session?.user?.id) as UserPreferenceProps;
+      if (!data) return;
+      setCountryId(data?.courier?.country?.id);
+    };
+    fetchCountryId();
+  }, [session?.user?.id]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -64,7 +83,7 @@ function CreatePickupRequestPageContent() {
       await createPickupRequest({
         user_id,
         status: "requested",
-        country_id: selectedAddress?.country_id,
+        country_id: countryId,
         pickup_address: form.pickup_address,
         supplier_name: form.supplier_name,
         supplier_phone_number: form.supplier_phone_number,
@@ -85,7 +104,7 @@ function CreatePickupRequestPageContent() {
         pkg_details: "",
         remarks: "",
       });
-      router.push(ROUTES.PICKUP_REQUEST);
+      router.push(ROUTES.DASHBOARD + ROUTES.PICKUP_REQUEST);
     } catch (err: any) {
       console.error(err);
     } finally {

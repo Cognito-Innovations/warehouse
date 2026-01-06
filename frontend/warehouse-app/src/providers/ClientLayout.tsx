@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
 import EcommerceWrapper from "@/providers/EcommerceWrapper";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import Header from "@/components/Common/Header";
 
 interface ClientLayoutProps {
@@ -16,12 +16,11 @@ interface ClientLayoutProps {
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const locationData = useEffectiveUserLocation({ countryCode: undefined, countryName: undefined, city: "", pincode: "" });
   const { cartProductQuantityCount } = useCartStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { countryCode } = useDetectUserLocation();
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
-
   const hideHeader = pathname === "/sign-in";
 
   const isEcommercePath = pathname === "/" || pathname.startsWith("/ecommerce");
@@ -46,7 +45,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   }
 
   const headerProps = {
-    locationData,
+    locationData: { countryCode: countryCode },
     onMenuClick: toggleSidebar,
     hideMenuButton: !isEcommercePath || pathname.includes("/orders") || pathname.includes("/checkout"),
     hideSearch: !isEcommercePath || pathname.includes("/product"),
@@ -55,7 +54,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     title,
   };
 
-  const isEcommerceRoute = pathname.startsWith("/ecommerce");
+  const isEcommerceRoute = pathname === "/" || pathname.startsWith("/ecommerce");
   const renderedContent = isEcommerceRoute ? (
     <EcommerceWrapper
       isSidebarOpen={isSidebarOpen}
