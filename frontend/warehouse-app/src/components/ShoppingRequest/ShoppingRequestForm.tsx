@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
-import { ROUTES, ASSISTED_SHOPPING_PRODUCT_LINK_KEY } from "@/utils/constants";
+import { ASSISTED_SHOPPING_PRODUCT_LINK_KEY } from "@/utils/constants";
 
 interface ShoppingItem {
   id: string;
@@ -20,8 +19,11 @@ interface ShoppingItem {
   ifNotAvailableColor: string;
 }
 
-export default function ShoppingRequestForm() {
-  const router = useRouter();
+interface ShoppingRequestFormProps {
+  onSuccess?: () => void;
+}
+
+export default function ShoppingRequestForm({ onSuccess }: ShoppingRequestFormProps) {
   const { data: session } = useSession();
 
   const [items, setItems] = useState<ShoppingItem[]>([
@@ -124,7 +126,7 @@ export default function ShoppingRequestForm() {
         )
       );
 
-      router.push(ROUTES.ASSISTED_SHOPPING);
+      onSuccess?.();
     } catch (error) {
       console.error("Error creating shopping request:", error);
     } finally {

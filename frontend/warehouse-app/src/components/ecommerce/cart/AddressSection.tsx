@@ -12,14 +12,14 @@ interface AddressSectionProps {
   userId?: string;
   onAddressChange: (address: CartAddressData | null) => void;
   highlightAddressError: boolean;
-  refreshAddresses: () => Promise<void>;
+  onAddressFetchComplete?: () => void;
 }
 
 export default function AddressSection({
   userId,
   onAddressChange,
   highlightAddressError,
-  refreshAddresses,
+  onAddressFetchComplete,
 }: AddressSectionProps) {
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
@@ -55,8 +55,12 @@ export default function AddressSection({
       console.error("Failed to load addresses:", err);
       setSelectedAddress(null);
       onAddressChange(null);
+    } finally {
+      if (onAddressFetchComplete) {
+        onAddressFetchComplete();
+      }
     }
-  }, [onAddressChange]);
+  }, [onAddressChange, onAddressFetchComplete]);
 
   useEffect(() => {
     if (userId) {
@@ -65,8 +69,9 @@ export default function AddressSection({
     } else {
       setSelectedAddress(null);
       onAddressChange(null);
+      if (onAddressFetchComplete) onAddressFetchComplete();
     }
-  }, [userId, loadAddressesInternal, onAddressChange]);
+  }, [userId, loadAddressesInternal, onAddressChange, onAddressFetchComplete]);
 
   const handleSaveAddress = useCallback(async (addressData: Omit<CartAddressData, "id">) => {
     if (!userId) return;
@@ -90,12 +95,11 @@ export default function AddressSection({
       };
       setSelectedAddress(formattedAddress);
       onAddressChange(formattedAddress);
-      await refreshAddresses();
     } catch (err) {
       console.error("Failed to save address:", err);
       throw err;
     }
-  }, [userId, onAddressChange, refreshAddresses]);
+  }, [userId, onAddressChange]);
 
   const handleUpdateAddress = useCallback(async (addressId: string, addressData: Omit<CartAddressData, "id">) => {
     if (!userId) return;
@@ -120,12 +124,11 @@ export default function AddressSection({
       setSelectedAddress(formattedAddress);
       onAddressChange(formattedAddress);
       setEditAddress(null);
-      await refreshAddresses();
     } catch (err) {
       console.error("Failed to update address:", err);
       throw err;
     }
-  }, [userId, onAddressChange, refreshAddresses]);
+  }, [userId, onAddressChange]);
 
   const handleAddClick = () => {
     setAddAddressModalOpen(true);

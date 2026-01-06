@@ -14,7 +14,7 @@ import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('currencies')
 export class CurrenciesController {
-  constructor(private readonly currenciesService: CurrenciesService) { }
+  constructor(private readonly currenciesService: CurrenciesService) {}
 
   @Post()
   create(@Body() createCurrencyDto: CreateCurrencyDto) {
@@ -25,6 +25,12 @@ export class CurrenciesController {
   @Get()
   findAll() {
     return this.currenciesService.findAll();
+  }
+
+  @Public()
+  @Get('by-code/:code')
+  findByCode(@Param('code') code: string) {
+    return this.currenciesService.findByCode(code);
   }
 
   @Get(':id')

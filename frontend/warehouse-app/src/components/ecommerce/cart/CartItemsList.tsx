@@ -9,8 +9,7 @@ import { useCartStore } from "@/store/cartStore";
 export default function CartItemsList({
   items,
   selectedItems,
-  currencyInfo,
-  selectedCountry,
+  selectedCurrency,
 }: CartItemsListProps) {
 
   const {
@@ -78,8 +77,7 @@ export default function CartItemsList({
             key={key}
             item={item}
             isSelected={isItemSelected(item)}
-            currencyInfo={currencyInfo!}
-            selectedCountry={selectedCountry}
+            selectedCurrency={selectedCurrency}
           />
         );
       })}
