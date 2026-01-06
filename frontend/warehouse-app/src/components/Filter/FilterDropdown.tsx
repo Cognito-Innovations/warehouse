@@ -29,7 +29,7 @@ export default function FilterDropdown({ options, onSelect, buttonLabel = "Filte
     <div className={`relative inline-block text-left ${className}`} ref={ref}>
       <div>
         <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="true" aria-expanded={open} className="inline-flex w-full justify-center leading-5 rounded-md px-4 py-2 text-sm border-gray-300 border m-1 font-semibold text-gray-500 bg-white hover:bg-opacity-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75">
-          <ListFilterPlusIcon className="w-4 h-4 mx-1 mt-[0.1rem]"/>
+          <ListFilterPlusIcon className="w-4 h-4 mx-0.5 mt-[0.1rem]"/>
           {buttonLabel}
         </button>
       </div>

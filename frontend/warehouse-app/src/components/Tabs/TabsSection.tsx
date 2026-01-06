@@ -339,6 +339,7 @@ const TabsSection = () => {
 
       {/* Content Area */}
       <div className="bg-white border border-gray-200 rounded-lg min-h-[300px]">
+       
         <TabPanel value={value} index={0}>
           {packagesLoading ? (
             <div className="flex justify-center items-center py-8">

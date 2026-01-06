@@ -6,8 +6,7 @@ import { useParams } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import ProductDetailHeader from "@/components/ecommerce/ProductDetailHeader";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import ProductDetailImageSection from "@/components/ecommerce/ProductDetailImageSection";
 import ProductDetailInfoSection from "@/components/ecommerce/ProductDetailInfoSection";
 import ProductDetailLoadingState from "@/components/ecommerce/ProductDetailLoadingState";
@@ -18,7 +17,7 @@ import { EcommerceProduct } from "@/types/ecommerce";
 
 export default function ProductDetailPage() {
   const params = useParams();
-  
+
   const { 
     products,
     currentDetailProduct,
@@ -31,14 +30,7 @@ export default function ProductDetailPage() {
     setCurrentDetailProduct,
   } = useProductStore();
  
-  const locationData = useEffectiveUserLocation({
-    countryCode: undefined,
-    countryName: undefined,
-    city: '',
-    pincode: '',
-  });
-  const currency = locationData.currencyInfo.code;
-  const countryCode = locationData.location.countryCode;
+  const {currencyCode, countryCode} = useDetectUserLocation();
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -72,10 +64,10 @@ export default function ProductDetailPage() {
   }, [currentDetailProduct, products, productSlug]);
 
   useEffect(() => {
-    if (productSlug && currency) {
-      loadProductPageData(productSlug, currency, countryCode, userId);
+    if (productSlug && currencyCode) {
+      loadProductPageData(productSlug, currencyCode, countryCode, userId);
     }
-  }, [productSlug, currency, countryCode, loadProductPageData, userId]);
+  }, [productSlug, currencyCode, countryCode, loadProductPageData, userId]);
 
   const handleProductSelect = useCallback((selectedProduct: EcommerceProduct) => {
     selectionSlugRef.current = productSlug;
@@ -83,8 +75,8 @@ export default function ProductDetailPage() {
   }, [setCurrentDetailProduct]);
 
   const handleRefresh = () => {
-    if (productSlug && currency) {
-      loadProductPageData(productSlug, currency, countryCode, userId);
+    if (productSlug && currencyCode) {
+      loadProductPageData(productSlug, currencyCode , countryCode, userId);
     }
   };
 
@@ -121,8 +113,6 @@ export default function ProductDetailPage() {
 
   return (
     <Box sx={{ bgcolor: ecommerceData.ui.colors.productDetailBackground, minHeight: "100vh" }}>
-      <ProductDetailHeader />
-
       <Container maxWidth="lg" sx={{ py: 2 }}>
         <Box sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, gap: 3 }}>
           <ProductDetailImageSection

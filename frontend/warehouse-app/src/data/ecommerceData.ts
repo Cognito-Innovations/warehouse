@@ -97,8 +97,8 @@ export const ecommerceData = {
     },
     grid: {
       columns: {
-        xs: 1,
-        sm: 4,
+        xs: 2,
+        sm: 3,
         md: 4,
         lg: 5,
       },

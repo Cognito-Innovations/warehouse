@@ -6,7 +6,7 @@ import { Box, Typography } from "@mui/material";
 import useCategoryStore from "@/store/categoryStore";
 import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import EcommerceProductsGrid from "./EcommerceProductsGrid";
 
 export default function CategoryProductsByCategory() {
@@ -17,13 +17,7 @@ export default function CategoryProductsByCategory() {
   const categories = useCategoryStore(state=>state.categories);
   const hasInitiatedLoadRef = useRef(false);
 
-  const locationData = useEffectiveUserLocation({
-    countryCode: undefined,
-    countryName: undefined,
-    city: '',
-    pincode: '',
-  });
-  const countryCode = locationData.location.countryCode;
+  const { countryCode} = useDetectUserLocation();
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -59,7 +53,7 @@ export default function CategoryProductsByCategory() {
   }
 
   return (
-    <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
+    <Box sx={{ bgcolor: "white" }}>
       {productsByCategory.map(({ category, products: categoryProducts }) => (
         <Box key={category.id} sx={{ mb: 4 }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>

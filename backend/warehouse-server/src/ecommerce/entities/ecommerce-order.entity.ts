@@ -59,7 +59,7 @@ export class EcommerceOrder extends BaseTimestampEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total_amount: number;
 
-  @Column({ type: 'varchar', default: 'cashfree' })
+  @Column({ type: 'varchar', default: 'paypal' })
   payment_gateway: string;
 
   @Column({ type: 'varchar', default: 'UNKNOWN' })
@@ -72,13 +72,10 @@ export class EcommerceOrder extends BaseTimestampEntity {
   notes: string;
 
   @Column({ type: 'text', nullable: true })
-  cashfree_session_id: string;
+  gateway_order_id: string;
 
   @Column({ type: 'text', nullable: true })
-  cashfree_payment_id: string;
-
-  @Column({ type: 'text', nullable: true })
-  cfc_order_id: string;
+  gateway_transaction_id: string;
 
   @OneToMany(
     () => EcommerceOrderItem,

@@ -45,7 +45,7 @@ const createAuthenticatedApi = (): AxiosInstance => {
       } catch (error) {
         console.error("Error getting session for API request:", error);
       }
-      
+
       return config;
     },
     (error) => {
@@ -195,7 +195,7 @@ export const uploadPackageDocuments = async (packageId: string, files: File[]): 
   files.forEach(file => {
     formData.append("files", file);
   });
-  
+
   const response = await authenticatedApi.post(`/packages/${packageId}/documents/upload`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
@@ -207,13 +207,13 @@ export const uploadPackageDocuments = async (packageId: string, files: File[]): 
 export const updatePackageStatus = async (packageId: string, status: string) => {
   const session = await getSession();
   const userId = (session?.user as any)?.user_id;
-  
+
   if (!userId) {
     // Throw an error if the user ID is not available.
     throw new Error("No user ID found in session");
   }
-  
-  const res = await authenticatedApi.patch(`/packages/${packageId}/status`, { 
+
+  const res = await authenticatedApi.patch(`/packages/${packageId}/status`, {
     status: status,
     updated_by: userId
   });
@@ -249,8 +249,14 @@ export const getCountries = async () => {
   return res.data;
 };
 
+export const createUserPreferences = async (data: any) => {
+  const res = await authenticatedApi.post("/user-preferences", data);
+  return res.data;
+};
+
 export const updatePreferences = async (data: any) => {
-  const res = await authenticatedApi.patch(`/user-preferences/${data.user_id}`, data);
+  //  res = await authenticatedApi.patch(`/user-preferences/${data.user_id}`, data)
+  const res = await authenticatedApi.patch(`/user-preferences/by-user/${data.user_id}`, data);
   return res.data;
 };
 
