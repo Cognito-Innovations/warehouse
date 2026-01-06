@@ -35,8 +35,7 @@ interface CurrencySelectionViewProps {
 }
 
 export default function CurrencySelectionView({ onBack, showBackButton }: CurrencySelectionViewProps) {
-    const { currencyInfo } = useDetectUserLocation();
-    const currencyCode = currencyInfo.code;
+    const { currencyCode } = useDetectUserLocation();
     const { user } = useAuth();
     const [searchTerm, setSearchTerm] = useState("");
     const [currencies, setCurrencies] = useState<Currency[]>([]);

@@ -27,8 +27,7 @@ export default function CartPage() {
   const [isCartLoading, setIsCartLoading] = useState(true);
   const [isAddressDataReady, setIsAddressDataReady] = useState(false);
 
-  const { currencyInfo } = useDetectUserLocation();
-  const currencyCode = currencyInfo.code;
+  const { currencyCode } = useDetectUserLocation();
 
   const userId = (session?.user as any)?.user_id;
 
@@ -118,7 +117,6 @@ export default function CartPage() {
               <CartItemsList
                 items={validItems}
                 selectedItems={new Set(checkoutProducts)}
-                currencyInfo={currencyInfo}
                 selectedCurrency={currencyCode}
               />
             )}
@@ -137,7 +135,6 @@ export default function CartPage() {
                 selectedCurrency={currencyCode}
                 selectedAddress={selectedAddress}
                 setHighlightAddressError={setHighlightAddressError}
-                currencyInfo={currencyInfo}
               />
             )}
           </Box>

@@ -1,5 +1,5 @@
 import { CartItem, EcommerceProduct } from "@/types/ecommerce";
-import { CurrencyInfo } from "@/types/ecommerce";
+import { INR_CURRENCY } from "./constants";
 
 export interface PriceObject {
   price: number;
@@ -12,7 +12,10 @@ export interface ParsedPrice {
   currency: string;
 }
 
-export function parsePrice(priceInput: PriceObject | number | string, defaultCurrency = 'INR'): ParsedPrice {
+export function parsePrice(
+  priceInput: PriceObject | number | string,
+  defaultCurrency = INR_CURRENCY.code
+): ParsedPrice {
   let raw: number;
   let currency = defaultCurrency;
 
@@ -32,7 +35,7 @@ export function parsePrice(priceInput: PriceObject | number | string, defaultCur
   return { raw, formatted, currency };
 }
 
-export function formatPrice(rawPrice: number, currency_symbol = 'INR'): string {
+export function formatPrice(rawPrice: number, currency_symbol = INR_CURRENCY.symbol): string {
   return `${currency_symbol}${rawPrice?.toFixed(2)}`;
 }
 
@@ -52,17 +55,18 @@ export interface ProductPricingSummary {
 
 export const getProductPricingSummary = (
   product: Pick<EcommerceProduct, "price" | "discount_percentage">,
-  currencyInfo?: CurrencyInfo
+  currencyRate: number,
+  currencySymbol: string,
 ): ProductPricingSummary => {
   const parsed = parsePrice(product.price);
   let raw = parsed.raw;
   let currency = parsed.currency;
 
-  if (currencyInfo) {
-    raw = roundCurrency(raw * currencyInfo.rate);
-    currency = currencyInfo.symbol;
-  } else if (currencyInfo) {
-    currency = currencyInfo.symbol;
+  if (currencyRate && currencySymbol) {
+    raw = roundCurrency(raw * currencyRate);
+    currency = currencySymbol;
+  } else if (currencySymbol) {
+    currency = currencySymbol;
   }
 
   const discountPercent = Number(product.discount_percentage) || 0;
@@ -86,40 +90,49 @@ export interface CartItemPricingSummary extends ProductPricingSummary {
 
 export const getCartItemPricingSummary = (
   item: CartItem,
-  currencyInfo?: CurrencyInfo
+  currencySymbol?: string,
 ): CartItemPricingSummary => {
-  const unitPrice = roundCurrency(Number(item.unit_price) || 0);
+  const baseUnitPrice =
+    Number(item.unit_price) ||
+    Number((item as any)?.product?.price?.price) ||
+    Number((item as any)?.product?.price) ||
+    0;
+
   const quantity = item.quantity || 0;
   const discountAmount = roundCurrency(Number(item.discount_amount) || 0);
 
   const originalUnitPrice =
     discountAmount > 0
-      ? roundCurrency(unitPrice + discountAmount)
-      : unitPrice;
+      ? roundCurrency(baseUnitPrice + discountAmount)
+      : baseUnitPrice;
 
-  const discountPerUnit = roundCurrency(originalUnitPrice - unitPrice);
+  const discountPerUnit = roundCurrency(originalUnitPrice - baseUnitPrice);
 
   return {
-    currency: currencyInfo?.symbol ?? 'INR',
+    currency: currencySymbol ?? INR_CURRENCY.symbol,
     originalUnitPrice,
-    discountedUnitPrice: unitPrice,
+    discountedUnitPrice: baseUnitPrice,
     discountPercent:
       originalUnitPrice > 0
         ? roundCurrency((discountPerUnit / originalUnitPrice) * 100)
         : 0,
     discountPerUnit,
     quantity,
-    lineTotal: roundCurrency(unitPrice * quantity),
+    lineTotal: roundCurrency(baseUnitPrice * quantity),
     discountTotal: roundCurrency(discountPerUnit * quantity),
   };
 };
 
-export function getUSDFromLocal(localAmount: number, currencyInfo: CurrencyInfo): number {
-  if (!currencyInfo.rate) {
-    if (currencyInfo.code === 'INR') {
-      return roundCurrency(localAmount / 90.25);
+export function getUSDFromLocal(
+  localAmount: number,
+  currencyCode: string,
+  currencyRate: number,
+): number {
+  if (!currencyRate) {
+    if (currencyCode === INR_CURRENCY.code) {
+      return roundCurrency(localAmount / INR_CURRENCY.rate);
     }
     return roundCurrency(localAmount);
   }
-  return roundCurrency(localAmount / currencyInfo.rate);
+  return roundCurrency(localAmount / currencyRate);
 }

@@ -21,8 +21,7 @@ export default function CategoryPage() {
   const params = useParams();
   const slug = params?.slug as string;
   
-  const {currencyInfo, countryCode} = useDetectUserLocation();
-  const currencyCode = currencyInfo.code;
+  const {currencyCode, countryCode} = useDetectUserLocation();
 
   const { user } = useAuth();
   const userId = user?.id;

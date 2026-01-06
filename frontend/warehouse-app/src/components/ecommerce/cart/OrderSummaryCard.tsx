@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { calculateCartTotals } from "@/utils/cartCalculations";
 import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";
@@ -15,15 +16,15 @@ import { OrderSummaryCardProps } from "@/types/ecommerce";
 export default function OrderSummaryCard({
   userId,
   items,
-  selectedCountry,
+  selectedCurrency,
   selectedAddress,
   setHighlightAddressError,
-  currencyInfo,
 }: OrderSummaryCardProps) {
   const router = useRouter();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { checkoutProducts, cartProducts, isSyncing } = useCartStore();
+  const { currencySymbol } = useDetectUserLocation();
 
   useEffect(() => {
     return () => {
@@ -34,7 +35,7 @@ export default function OrderSummaryCard({
     };
   }, []);
 
-  const totals = calculateCartTotals(items, new Set(checkoutProducts), selectedCountry, currencyInfo);
+  const totals = calculateCartTotals(items, new Set(checkoutProducts), selectedCurrency, currencySymbol);
   
   const handleCheckout = useCallback(() => {
     if (isSyncing) {
@@ -96,7 +97,7 @@ export default function OrderSummaryCard({
             Subtotal
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {formatPrice(totals.subtotal, currencyInfo.symbol)}
+            {formatPrice(totals.subtotal, currencySymbol)}
           </Typography>
         </Box>
 
@@ -105,7 +106,7 @@ export default function OrderSummaryCard({
             Delivery Fee
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {formatPrice(totals.deliveryFee, currencyInfo.symbol)}
+            {formatPrice(totals.deliveryFee, currencySymbol)}
           </Typography>
         </Box>
 
@@ -114,7 +115,7 @@ export default function OrderSummaryCard({
             Taxes
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {formatPrice(totals.taxes, currencyInfo.symbol)}
+            {formatPrice(totals.taxes, currencySymbol)}
           </Typography>
         </Box>
         
@@ -124,7 +125,7 @@ export default function OrderSummaryCard({
               Discount
             </Typography>
             <Typography variant="body2" color="success.main" fontWeight={500}>
-              -{formatPrice(totals.discount, currencyInfo.symbol)}
+              -{formatPrice(totals.discount, currencySymbol)}
             </Typography>
           </Box>
         )}
@@ -134,7 +135,7 @@ export default function OrderSummaryCard({
             Service Charge
           </Typography>
           <Typography variant="body2" fontWeight={500}>
-            {formatPrice(totals.serviceCharge, currencyInfo.symbol)}
+            {formatPrice(totals.serviceCharge, currencySymbol)}
           </Typography>
         </Box>
 
@@ -145,7 +146,7 @@ export default function OrderSummaryCard({
             Grand Total
           </Typography>
           <Typography variant="h6" fontWeight="bold" color="primary.main">
-            {formatPrice(totals.total, currencyInfo.symbol)}
+            {formatPrice(totals.total, currencySymbol)}
           </Typography>
         </Box>
       </Box>

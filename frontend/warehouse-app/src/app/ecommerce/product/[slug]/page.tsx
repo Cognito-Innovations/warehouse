@@ -30,8 +30,7 @@ export default function ProductDetailPage() {
     setCurrentDetailProduct,
   } = useProductStore();
  
-  const {currencyInfo, countryCode} = useDetectUserLocation();
-  const currencyCode = currencyInfo.code;
+  const {currencyCode, countryCode} = useDetectUserLocation();
 
   const { user } = useAuth();
   const userId = user?.id;

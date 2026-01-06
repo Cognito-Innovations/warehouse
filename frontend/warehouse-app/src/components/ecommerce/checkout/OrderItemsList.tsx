@@ -1,26 +1,27 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
+
+import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { getCartItemPricingSummary } from "@/utils/priceUtils";
 import { CartItem } from "@/types/ecommerce";
-import { CurrencyInfo } from "@/types/ecommerce";
 
 interface OrderItemsListProps {
   items: CartItem[];
-  currencyInfo: CurrencyInfo;
   formatLocalPrice: (amount: number) => string;
   formatUSDPrice: (amount: number) => string;
 }
 
 export const OrderItemsList: React.FC<OrderItemsListProps> = ({
   items,
-  currencyInfo,
   formatLocalPrice,
   formatUSDPrice,
 }) => {
+  const { currencySymbol } = useDetectUserLocation();
+
   return (
     <Box sx={{ mb: 2, maxHeight: { xs: 250, md: 300 }, overflow: "auto" }}>
       {items.map((item: CartItem) => {
-        const pricing = getCartItemPricingSummary(item, currencyInfo);
+        const pricing = getCartItemPricingSummary(item, currencySymbol);
         return (
           <Box
             key={item.product_id}

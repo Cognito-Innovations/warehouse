@@ -18,8 +18,7 @@ import CategorySection from "@/components/ecommerce/category_temp/CategorySectio
 import AssistedShoppingLandingContent from "@/components/AssistedShopping/getting-started/AssistedShoppingLandingContent";
 
 export default function Ecommerce() {
-  const {currencyInfo, countryCode} = useDetectUserLocation();
-  const currencyCode = currencyInfo.code;
+  const {currencyCode, countryCode} = useDetectUserLocation();
 
   const { user } = useAuth();
   const userId = user?.id;

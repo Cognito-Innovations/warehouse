@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
+
 import { ecommerceService } from "@/services/ecommerce.service";
+import { DEFAULT_CURRENCY_INFO } from "../utils/constants";
 import { CartItem } from "@/types/ecommerce";
 
 interface InitiateOrderData {
@@ -41,7 +43,7 @@ export const useOrderPayment = () => {
 
         const orderData: InitiateOrderData = {
           shipping_address: shippingAddress,
-          currency: "USD", 
+          currency: DEFAULT_CURRENCY_INFO.code, 
           product_ids: orderedProductIds,
         };
 
@@ -55,7 +57,7 @@ export const useOrderPayment = () => {
         return {
           orderId,
           paypalOrderId: paymentSessionId,
-          orderCurrency: "USD",
+          orderCurrency: DEFAULT_CURRENCY_INFO.code,
         };
       } catch (err) {
         const errorMsg =

@@ -13,6 +13,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserPreferenceDto } from 'src/user-preferences/dto/create-user-preference.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+import { DEFAULT_USER_PREFERENCE } from 'src/shared/constants';
 
 @Injectable()
 export class UsersService {
@@ -79,8 +80,8 @@ export class UsersService {
 
     const createPreferenceDto: CreateUserPreferenceDto = {
       user_id: savedUser.id,
-      courier_id: '0f502386-b904-4cb8-8861-6c32e900bd84',
-      currency_id: '72e41d4a-c7dd-437c-8cd1-b26f0f4473b4',
+      courier_id: DEFAULT_USER_PREFERENCE.COURIER,
+      currency_id: DEFAULT_USER_PREFERENCE.CURRENCY,
     };
     await this.userPreferencesService.create(createPreferenceDto);
 

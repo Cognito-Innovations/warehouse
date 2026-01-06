@@ -30,9 +30,7 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [isAddressDataReady, setIsAddressDataReady] = useState(false);
 
-  const { currencyInfo } = useDetectUserLocation();
-  const currencyCode = currencyInfo.code;
-  const currencySymbol = currencyInfo.symbol;
+  const { currencyCode, currencySymbol } = useDetectUserLocation();
 
   const handleAddressFetchComplete = useCallback(() => {
     setIsAddressDataReady(true);
@@ -156,8 +154,6 @@ export default function CheckoutPage() {
                 items={checkedOutItems}
                 totals={totals}
                 shippingAddress={shippingAddress}
-                selectedCurrency={currencyCode}
-                currencyInfo={currencyInfo}
                 user={user}
                 formatLocalPrice={formatLocalPrice}
                 addressLoading={addressLoading}

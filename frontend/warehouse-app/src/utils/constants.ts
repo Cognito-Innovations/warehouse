@@ -63,7 +63,19 @@ export const orderStatusPhrases: { [key: string]: string } = {
 export const CACHE_GUEST_LOCATION_KEY = "guest_location";
 
 export const DEFAULT_CURRENCY_INFO = {
-  code: "INR",
-  symbol: "₹",
-  rate: 88.90,
+  code: "USD",
+  symbol: "$",
+  rate: 1.00,
 }
+
+export const INR_CURRENCY = {
+  code: 'INR',
+  symbol: '₹',
+  rate: 90.25,
+}
+
+export const ASSISTED_SHOPPING_STEPS = [
+  { number: 1, label: "LINK" },
+  { number: 2, label: "DETAILS" },
+  { number: 3, label: "COMPLETE" },
+];

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import "./globals.css";
 import { Geist, Geist_Mono } from "next/font/google";
 import ThemeProvider from "../providers/ThemeProvider";
@@ -23,9 +24,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
           <ThemeProvider>
+            <Suspense fallback={null}>
               <ClientLayout>
                 {children}
               </ClientLayout>
+            </Suspense>
           </ThemeProvider>
         </Providers>
       </body>
