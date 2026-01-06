@@ -1,19 +1,24 @@
 import { Box, Typography } from "@mui/material";
+import { useRouter } from "next/navigation";
 import useCategoryStore from "@/store/categoryStore";
 import { DEFAULT_IMG } from "@/utils/constants";
 
 const CategoryItems = () => {
+  const router = useRouter();
   const { categories, selectedCategory, handleCategorySelect } = useCategoryStore();
 
   return (
     <>
       {categories?.map((category: any) => {
-        const isActive = selectedCategory === category.id;
+        const isActive = selectedCategory === category.slug;
 
         return (
           <Box
-            key={category.id}
-            onClick={() => handleCategorySelect(category.id)}
+            key={`category-${category.slug}`}
+            onClick={() => {
+              handleCategorySelect(category.slug);
+              router.push(`/ecommerce/category/${category.slug}`);
+            }}
             sx={{
               display: "flex",
               flexDirection: "column",

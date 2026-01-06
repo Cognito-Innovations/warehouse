@@ -10,6 +10,7 @@ import {
 import { CurrenciesService } from './currencies.service';
 import { CreateCurrencyDto } from './dto/create-currency.dto';
 import { UpdateCurrencyDto } from './dto/update-currency.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('currencies')
 export class CurrenciesController {
@@ -20,9 +21,16 @@ export class CurrenciesController {
     return this.currenciesService.create(createCurrencyDto);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.currenciesService.findAll();
+  }
+
+  @Public()
+  @Get('by-code/:code')
+  findByCode(@Param('code') code: string) {
+    return this.currenciesService.findByCode(code);
   }
 
   @Get(':id')

@@ -14,17 +14,13 @@ import {
   FormControl,
   InputLabel,
   FormHelperText,
-  CircularProgress,
-  OutlinedInput,
-  InputAdornment,
 } from "@mui/material";
 import {
   Close,
 } from "@mui/icons-material";
 import { toast, Toaster } from "sonner";
-import { getCourierCompanies, getCurrencies, getUserPreferences, sendEmailOtp, updatePreferences, updateUser, verifyEmailOtp } from "@/lib/api.service";
+import { updateUser } from "@/lib/api.service";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAddressActions } from "@/contexts/AddressContext";
 import OtpVerification from "../PageComponents/OtpVerification";
 
 export interface ProfileData {
@@ -39,11 +35,6 @@ export interface ProfileData {
   email_verified: boolean;
 }
 
-interface PreferencesData {
-  currency_id: string;
-  courier_id: string;
-}
-
 interface EditProfileModalProps {
   open: boolean;
   onClose: () => void;
@@ -55,64 +46,42 @@ interface EditProfileModalProps {
 export default function EditProfileModal({ open, onClose, profileData, onProfileUpdate, loading }: EditProfileModalProps) {
 
   const { user } = useAuth();
-  const { refreshUserPreferences } = useAddressActions();
   const [formData, setFormData] = useState(profileData);
-  const [preferencesFormData, setPreferencesFormData] = useState<PreferencesData>({ courier_id: "", currency_id: "" });
-  const [courierCompanies, setCourierCompanies] = useState<any[]>([]);
-  const [currencies, setCurrencies] = useState<any[]>([]);
   const [isEmailVerified, setIsEmailVerified] = useState(profileData.email_verified);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loadingPreferences, setLoadingPreferences] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
-
-  const fetchCourierCompanies = async () => {
-    const results = await Promise.allSettled([getCourierCompanies(), getCurrencies()]);
-    const courierCompaniesData = results[0].status === "fulfilled" ? results[0].value : [];
-    const currenciesData = results[1].status === "fulfilled" ? results[1].value : [];
-    setCourierCompanies(courierCompaniesData);
-    setCurrencies(currenciesData);
-  };
 
   useEffect(() => {
     if (open) {
       fetchData();
       setIsEmailVerified(profileData.email_verified);
     }
-  }, [open]);
+  }, [open, profileData.email_verified]);
+
+  // Sync formData when profileData changes (e.g. after fetch completes in parent)
+  useEffect(() => {
+    if (profileData) {
+      setFormData(prev => ({
+        ...prev,
+        ...profileData,
+        dob: profileData.dob ? profileData.dob.split("T")[0] : prev.dob,
+      }));
+      setIsEmailVerified(profileData.email_verified);
+    }
+  }, [profileData]);
 
   useEffect(() => {
     setIsSaving(loading || false);
   }, [loading]);
 
   const fetchData = async () => {
-    setLoadingPreferences(true);
-    await fetchCourierCompanies();
     setFormData({
       ...profileData,
       dob: profileData.dob ? profileData.dob.split("T")[0] : "",
     });
-    await fetchUserPreferences();
     setErrors({});
-  };
-
-  const fetchUserPreferences = async () => {
-    try {
-      if (!user?.id) return;
-
-      const prefs = await getUserPreferences(user.id);
-      if (prefs) {
-        setPreferencesFormData({
-          courier_id: prefs.courier?.id || "",
-          currency_id: prefs.currency?.id || ""
-        });
-      }
-    } catch (error) {
-      console.error("Failed to load preferences", error);
-    } finally {
-      setLoadingPreferences(false);
-    }
   };
 
   const handleChange = (field: keyof ProfileData) => (event: any) => {
@@ -150,22 +119,6 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     }
   };
 
-  const handleChangePreferences = (field: keyof PreferencesData) => (event: any) => {
-    const { value } = event.target;
-    setPreferencesFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-
-    if (errors[field]) {
-      setErrors(prevErrors => {
-        const newErrors = { ...prevErrors };
-        delete (newErrors as any)[field];
-        return newErrors;
-      });
-    }
-  };
-
   const handleVerificationSuccess = () => {
     setIsEmailVerified(true);
     onProfileUpdate({ email_verified: true });
@@ -186,8 +139,6 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     setIsSaving(true);
 
     try {
-      await updatePreferences({ ...preferencesFormData, user_id: user?.id });
-
       const payload = {
         id_card_passport_no: formData.id_card_passport_no,
         name: formData.name,
@@ -200,12 +151,12 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
 
       await updateUser(user?.id!, payload);
 
-      await refreshUserPreferences();
-
+      toast.success("Profile updated successfully");
       onProfileUpdate(payload);
       onClose();
     } catch (error) {
       console.error("Failed to update profile", error);
+      toast.error("Failed to update profile. Please check your information and try again.");
     } finally {
       setIsSaving(false);
     }
@@ -220,9 +171,6 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     if (!formData.phone_code || !formData.phone_code.trim()) newErrors.phone_code = "Required";
     if (!formData.phone_number || !formData.phone_number.trim()) newErrors.phone_number = "Contact number is required";
     if (!formData.gender) newErrors.gender = "Gender is required";
-    if (!preferencesFormData.courier_id) newErrors.courier_id = "Courier is required";
-    if (!preferencesFormData.currency_id) newErrors.currency_id = "Currency is required";
-
     return newErrors;
   };
 
@@ -233,11 +181,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
     !formData.dob?.trim() ||
     !formData.phone_code?.trim() ||
     !formData.phone_number?.trim() ||
-    !formData.gender ||
-    !preferencesFormData.courier_id ||
-    !preferencesFormData.currency_id;
-
-  const EmptyIcon = () => null;
+    !formData.gender;
 
   return (
     <Dialog
@@ -337,7 +281,7 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
                 size="medium"
                 placeholder="+91"
               />
-      
+
               <TextField
                 label="Contact No"
                 type="tel"
@@ -401,81 +345,13 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             onVerificationSuccess={handleVerificationSuccess}
           />
           {errors.email && <FormHelperText error sx={{ mt: -2, ml: 2 }}>{errors.email}</FormHelperText>}
-
-
-          <p className="pb-2 font-semibold">
-            Preferences
-          </p>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            <FormControl fullWidth size="medium" error={!!errors.courier_id}>
-              <InputLabel>Courier</InputLabel>
-              <Select
-                value={preferencesFormData.courier_id}
-                onChange={handleChangePreferences("courier_id")}
-                label="Courier"
-                IconComponent={loadingPreferences ? EmptyIcon : undefined}
-                disabled={loadingPreferences}
-                input={
-                  <OutlinedInput
-                    label="Courier"
-                    endAdornment={
-                      loadingPreferences ? (
-                        <InputAdornment position="end">
-                          <CircularProgress size={18} />
-                        </InputAdornment>
-                      ) : null
-                    }
-                  />
-                }
-                sx={{ borderRadius: "8px" }}
-              >
-                {courierCompanies.map((courier: any) => (
-                  <MenuItem key={courier.id} value={courier.id}>
-                    {courier.name}, {courier.address}, {courier.country || courier.country?.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors.courier_id && <FormHelperText>{errors.courier_id}</FormHelperText>}
-            </FormControl>
-
-            <FormControl fullWidth size="medium" error={!!errors.currency_id}>
-              <InputLabel>Currency</InputLabel>
-              <Select
-                value={preferencesFormData.currency_id}
-                onChange={handleChangePreferences("currency_id")}
-                label="Currency"
-                IconComponent={loadingPreferences ? EmptyIcon : undefined}
-                disabled={loadingPreferences}
-                input={
-                  <OutlinedInput
-                    label="Currency"
-                    endAdornment={
-                      loadingPreferences ? (
-                        <InputAdornment position="end">
-                          <CircularProgress size={18} />
-                        </InputAdornment>
-                      ) : null
-                    }
-                  />
-                }
-                sx={{ borderRadius: "8px" }}
-              >
-                {currencies.map((currency: any) => (
-                  <MenuItem key={currency.id} value={currency.id}>
-                    {currency.name} ({currency.currency_symbol})
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors.currency_id && <FormHelperText>{errors.currency_id}</FormHelperText>}
-            </FormControl>
-          </Box>
         </>
       </DialogContent>
       <DialogActions sx={{ p: 3, pt: 1 }}>
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={isSaving || loadingPreferences || isFormInvalid}
+          disabled={isSaving || isFormInvalid}
           sx={{
             bgcolor: "primary.main",
             color: "white",
@@ -492,9 +368,9 @@ export default function EditProfileModal({ open, onClose, profileData, onProfile
             },
           }}
         >
-          {isSaving ? "Saving..." : loadingPreferences ? "Loading..." : "Save"}
+          {isSaving ? "Saving..." : "Save"}
         </Button>
       </DialogActions>
-    </Dialog>
+    </Dialog >
   );
 }

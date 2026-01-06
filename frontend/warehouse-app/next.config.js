@@ -1,10 +1,13 @@
 const nextConfig = {
-    eslint: {
-      ignoreDuringBuilds: true,
-    },
-    typescript: {
-        ignoreBuildErrors: true,
-      },
-  };
-  
-  module.exports = nextConfig;
+  experimental: {
+    outputFileTracing: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+};
+
+module.exports = nextConfig;

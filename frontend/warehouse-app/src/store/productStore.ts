@@ -38,9 +38,9 @@ const useProductStore = create<ProductStore>((set, get) => ({
     }
   },
 
-  getCategoryProducts: async (categoryId: string, currency?: string, countryCode?: string, limit = 5, userId?: string) => {
+  getCategoryProducts: async (categorySlug: string, currency?: string, countryCode?: string, limit = 5, userId?: string) => {
     try {
-      const products = await ecommerceService.getProducts(undefined, currency, categoryId, limit, undefined, userId, countryCode);
+      const products = await ecommerceService.getProducts(undefined, currency, categorySlug, limit, undefined, userId, countryCode);
       return products;
     } catch (error: any) {
       throw new Error(error.message || "Failed to fetch category products");
@@ -70,7 +70,6 @@ const useProductStore = create<ProductStore>((set, get) => ({
   fetchProducts: async (params: FetchProductsParams, reset = false) => {
     const state = get();
     if (!reset && state.loadingMore) return;
-    if (reset && state.isLoading) return;
 
     const { category, searchTerm, currency, countryCode, userId } = params;
 
@@ -219,20 +218,20 @@ const useProductStore = create<ProductStore>((set, get) => ({
       let categoryProducts: EcommerceProduct[] | null = null;
 
       try {
-        if (product.category) {
-          categoryProducts = await ecommerceService.getProducts(undefined, currency, product.category.id, 6, undefined, userId, countryCode);
+        if (product.category?.slug) {
+          categoryProducts = await ecommerceService.getProducts(undefined, currency, product.category.slug, 6, undefined, userId, countryCode);
           const sameCategory = categoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
           previewProducts = [product, ...sameCategory.slice(0, 2)];
         }
 
         // Fetch Related Data
-        if (product.sub_category) {
-          const subcategoryProducts = await ecommerceService.getProducts(undefined, currency, product.sub_category.id, 6, undefined, userId, countryCode);
+        if (product.sub_category?.slug) {
+          const subcategoryProducts = await ecommerceService.getProducts(undefined, currency, product.sub_category.slug, 6, undefined, userId, countryCode);
           const sameSubcategory = subcategoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
           if (sameSubcategory.length > 0) relatedProducts = sameSubcategory.slice(0, 5);
         }
 
-        if (relatedProducts.length === 0 && product.category && categoryProducts) {
+        if (relatedProducts.length === 0 && product.category?.slug && categoryProducts) {
           const sameCategory = categoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
           relatedProducts = sameCategory.slice(0, 5);
         }

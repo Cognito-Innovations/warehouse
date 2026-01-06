@@ -25,7 +25,7 @@ export default function GridSkeletonLoader({ count, hasTitle = false, titleWidth
             md: `repeat(${ecommerceData.ui.grid.columns.md}, 1fr)`,
             lg: `repeat(${ecommerceData.ui.grid.columns.lg}, 1fr)`,
           },
-          gap: 2,
+          gap: { xs: 1, sm: 2 },
         }}
       >
         {[...Array(count)].map((_, index) => (

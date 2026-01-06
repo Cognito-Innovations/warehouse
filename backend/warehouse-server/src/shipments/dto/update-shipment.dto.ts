@@ -1,21 +1,30 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsPositive } from 'class-validator';
+import { PieceDto } from './piece-dto';
 
 export class UpdateShipmentDto {
   @IsOptional()
   @IsNumber()
-  weight: number;
+  @IsPositive()
+  customs_value?: number;
 
   @IsOptional()
-  @IsNumber()
-  length: number;
+  @IsBoolean()
+  dangerous_good?: boolean;
 
   @IsOptional()
-  @IsNumber()
-  width: number;
-
-  @IsOptional()
-  @IsNumber()
-  height: number;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PieceDto)
+  pieces?: PieceDto[];
 
   @IsOptional()
   @IsString()

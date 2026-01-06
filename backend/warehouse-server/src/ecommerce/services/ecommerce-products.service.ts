@@ -81,22 +81,22 @@ export class ProductsService {
   ) {
     const isAdmin = role === 'admin' || role === 'super_admin';
 
-    const queryBuilder = this.productRepository.createQueryBuilder('product');
-
-    queryBuilder.leftJoinAndSelect('product.category', 'category');
+    const queryBuilder = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.countries', 'countries');
 
     if (isAdmin) {
       queryBuilder
         .leftJoinAndSelect('product.sub_category', 'sub_category')
         .leftJoinAndSelect('product.measurement', 'measurement')
-        .leftJoinAndSelect('product.cargo_option', 'cargo_option')
-        .leftJoinAndSelect('product.countries', 'countries');
+        .leftJoinAndSelect('product.cargo_option', 'cargo_option');
     }
 
     if (countryCode) {
-      queryBuilder
-        .innerJoinAndSelect('product.countries', 'countryFilter')
-        .andWhere('countryFilter.code = :countryCode', { countryCode });
+      queryBuilder.andWhere('countries.code = :countryCode', {
+        countryCode,
+      });
     }
 
     if (search?.trim()) {
@@ -105,8 +105,8 @@ export class ProductsService {
       });
     }
     if (category?.trim()) {
-      queryBuilder.andWhere('product.category_id = :categoryId', {
-        categoryId: category,
+      queryBuilder.andWhere('category.slug = :category', {
+        category,
       });
     }
 

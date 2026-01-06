@@ -55,23 +55,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loading = status === "loading";
 
   const logout = () => {
-    signOut({ callbackUrl: "/sign-in" });
+    signOut({ callbackUrl: "/" });
   };
 
   const value: AuthContextType = {
     user: user
       ? {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: (session?.user as any)?.role || "",
-          suite_no: (session?.user as any)?.suite_no,
-          country: (session?.user as any)?.country || "",
-          image: (session?.user as any)?.image,
-          is_logged_in: (session?.user as any)?.is_logged_in ?? true,
-          last_login: (session?.user as any)?.last_login,
-          verified: user.verified,
-        }
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: (session?.user as any)?.role || "",
+        suite_no: (session?.user as any)?.suite_no,
+        country: (session?.user as any)?.country || "",
+        image: (session?.user as any)?.image,
+        is_logged_in: (session?.user as any)?.is_logged_in ?? true,
+        last_login: (session?.user as any)?.last_login,
+        verified: user.verified,
+      }
       : null,
     token,
     loading,
@@ -139,13 +139,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (deltaMs <= 0) {
         // Already expired
-        signOut({ callbackUrl: "/sign-in" });
+        signOut({ callbackUrl: "/" });
         return;
       }
 
       // Schedule sign out slightly after expiry to avoid clock skews
       logoutTimerRef.current = setTimeout(() => {
-        signOut({ callbackUrl: "/sign-in" });
+        signOut({ callbackUrl: "/" });
       }, Math.max(1000, deltaMs + 500));
     } catch (_e) {
       // If token cannot be decoded, do nothing

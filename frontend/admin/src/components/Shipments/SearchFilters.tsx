@@ -16,9 +16,10 @@ interface SearchFiltersProps {
   status: string;
   setStatus: (newStatus: string) => void;
   shipments: any[];
+  loading: boolean;
 }
 
-const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus, shipments }) => {
+const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus, shipments, loading }) => {
   // const navigate = useNavigate();
 
   const handleStatusChange = (newStatus: string) => {
@@ -101,7 +102,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus, shipme
       </Box>
 
       <Box sx={{ display: 'flex', gap: 2 }}>
-        <ShipReportButton shipments={shipments} />
+        <ShipReportButton shipments={shipments} loading={loading}/>
 
         {/* TODO: Uncomment when functionality implemented */}
         {/* <Button

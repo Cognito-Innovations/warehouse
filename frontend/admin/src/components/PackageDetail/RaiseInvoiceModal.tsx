@@ -37,7 +37,7 @@ interface Shipment {
 }
 
 const availableCharges = [
-  { name: 'Dangerous Goods', amount: 0.00 },
+  { name: 'Dangerous Goods', amount: 5.00 },
   { name: 'Pickup Charge', amount: 0.00 },
   { name: 'DG Handling', amount: 0.00 },
   { name: 'Special Brand Handling', amount: 0.00 },
@@ -76,15 +76,18 @@ const RaiseInvoiceModal: React.FC<{
   const handleSelectChange = (e: any) => {
     const value = e.target.value as string;
     setSelectedCharge(value);
-    if (value) {
-      const existing = charges.find(
-        charge => charge.description === value && charge.category === 'Additional Services'
-      );
-      if (existing) {
-        setExtraChargeAmount(existing.amount.toFixed(2));
-      } else {
-        setExtraChargeAmount('');
-      }
+    if (!value) {
+      setExtraChargeAmount('');
+      return;
+    }
+    const selected = availableCharges.find(c => c.name === value);
+    const existing = charges.find(
+      charge => charge.description === value && charge.category === 'Additional Services'
+    );
+    if (existing) {
+      setExtraChargeAmount(existing.amount.toFixed(2));
+    } else if (selected && selected.amount > 0) {
+      setExtraChargeAmount(selected.amount.toFixed(2));
     } else {
       setExtraChargeAmount('');
     }
@@ -142,7 +145,6 @@ const RaiseInvoiceModal: React.FC<{
         <Table sx={{ minWidth: hasAdditionalCharges ? 650 : 550 }} aria-label="charges table">
           <TableHead>
             <TableRow sx={{ '& .MuiTableCell-root': { fontWeight: 600, bgcolor: '#f8fafc', color: '#475569' } }}>
-              <TableCell>#</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Description</TableCell>
               {hasAdditionalCharges && <TableCell>Action</TableCell>}
@@ -153,7 +155,6 @@ const RaiseInvoiceModal: React.FC<{
           <TableBody>
             {charges.map((row, index) => (
               <TableRow key={index}>
-                <TableCell component="th" scope="row">{index + 1}</TableCell>
                 <TableCell component="th" scope="row">{row.category}</TableCell>
                 <TableCell>{row.description}</TableCell>
                 {hasAdditionalCharges && (
@@ -170,7 +171,7 @@ const RaiseInvoiceModal: React.FC<{
               </TableRow>
             ))}
             <TableRow sx={{ bgcolor: '#f8fafc' }}>
-              <TableCell colSpan={hasAdditionalCharges ? 5 : 4} align="right" sx={{ fontWeight: 600, fontSize: '1rem', border: 0 }}>TOTAL</TableCell>
+              <TableCell colSpan={hasAdditionalCharges ? 4 : 3}sx={{ fontWeight: 600, fontSize: '1rem', border: 0 }}>TOTAL</TableCell>
               <TableCell align="right" sx={{ fontWeight: 700, fontSize: '1.2rem', border: 0 }}>${calculateTotal()}</TableCell>
             </TableRow>
           </TableBody>
@@ -195,7 +196,20 @@ const RaiseInvoiceModal: React.FC<{
             >
               {availableCharges.map((charge) => (
                 <MenuItem key={charge.name} value={charge.name}>
-                  {charge.name} - ${charge.amount.toFixed(2)}
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {charge.name}
+                    <Typography
+                      component="span"
+                      sx={{
+                        ml: 1,
+                        color: 'text.secondary',
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      ${charge.amount.toFixed(2)}
+                    </Typography>
+                  </Typography>
                 </MenuItem>
               ))}
             </Select>

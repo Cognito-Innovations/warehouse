@@ -36,31 +36,6 @@ export default function EcommerceSkeletonLoader({
           mx: "auto",
         }}
       >
-        {/* Header Skeleton - Matches EcommerceHeader layout */}
-        <AppBar position="sticky" elevation={0} sx={{ bgcolor: "white", color: "text.primary" }}>
-          <Toolbar sx={{ justifyContent: "space-around", gap: { xs: 1, sm: 2 }, flexWrap: { xs: "wrap", md: "nowrap" }, py: { xs: 1, sm: 1.5 } }}>
-            {/* Logo */}
-            <Skeleton variant="text" width={120} height={40} sx={{ fontSize: { xs: "1.5rem", sm: "2rem" } }} />
-
-            {/* Search Bar - Middle */}
-            <Box sx={{ flex: 1, order: { xs: 3, md: 2 }, width: { xs: "100%", md: "auto" }, maxWidth: { xs: "100%", sm: "400px", md: "500px" }, mx: { xs: 0, sm: 2 } }}>
-              <Skeleton
-                variant="rectangular"
-                width="100%"
-                height={40}
-                sx={{ borderRadius: ecommerceData.ui.spacing.searchBorderRadius }}
-              />
-            </Box>
-
-            {/* Location and Cart - Right */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, order: { xs: 2, md: 3 } }}>
-              <Skeleton variant="circular" width={24} height={24} />
-              <Skeleton variant="text" width={180} height={20} sx={{ display: { xs: "none", sm: "block" } }} />
-              <Skeleton variant="circular" width={40} height={40} />
-            </Box>
-          </Toolbar>
-        </AppBar>
-
         {/* Warning Banner - Only show when there's an error */}
         {networkError && refreshButtonLabel && onRefresh && (
           <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
@@ -83,26 +58,34 @@ export default function EcommerceSkeletonLoader({
           </Box>
         )}
 
-        {/* Promotional Cards Skeleton */}
+        {/* Category Navigation Skeleton */}
         <Box
           sx={{
             display: "flex",
             gap: { xs: 4, sm: 6, md: 8 },
-            flexWrap: "wrap",
+            flexWrap: "nowrap",
+            overflowX: "auto",
             borderBottom: "1px solid #d3d2d2",
-            pb: { xs: 2, sm: 2.5, md: 3 },
+            pb: { xs: 1, sm: 1.5 },
+            pt: { xs: 1.5, sm: 2 },
             mb: 2,
-            mt: 5,
+            mt: 0,
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
           }}
         >
-          {[...Array(5)].map((_, index) => (
+          {[...Array(8)].map((_, index) => (
             <Box
-              key={`promotional-card-${index}`}
+              key={`category-card-${index}`}
               sx={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 minWidth: { xs: "80px", sm: "100px", md: "120px" },
+                flexShrink: 0,
               }}
             >
               <Box
@@ -110,52 +93,52 @@ export default function EcommerceSkeletonLoader({
                   width: { xs: 44, sm: 52, md: 60 },
                   height: { xs: 44, sm: 52, md: 60 },
                   borderRadius: 2.5,
-                  bgcolor: "#ede9fe",
+                  bgcolor: index === 0 ? "#d5c4ff" : "#ede9fe",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   mb: 2.5,
+                  boxShadow: index === 0 ? "0 2px 12px rgba(0,0,0,0.12)" : "none",
+                  overflow: "hidden",
                 }}
               >
                 <Skeleton
-                  variant="rectangular"
+                  variant="circular"
                   width="70%"
                   height="70%"
-                  sx={{ borderRadius: 1 }}
                 />
               </Box>
 
               {/* Label */}
               <Skeleton
                 variant="text"
-                width={80}
-                height={20}
+                width={index === 0 ? 30 : 80}
+                height={16}
                 sx={{
-                  mb: 0.5,
-                  fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
+                  fontSize: { xs: "0.75rem", sm: "0.8125rem", md: "0.875rem" },
                 }}
               />
             </Box>
           ))}
         </Box>
 
-        {/* Section 1: Today's Deal Skeleton */ }
+        {/* Section 1: Today's Deal Skeleton */}
         <Box sx={{ bgcolor: "white", px: 2 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }} />
           <GridSkeletonLoader count={5} />
         </Box>
         <Box sx={{ borderBottom: `1px solid ${ecommerceData.ui.colors.borderColor}`, my: 2 }} />
 
-  {/* Section 2: Suggested for You Skeleton */ }
+        {/* Section 2: Suggested for You Skeleton */}
         <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
           <GridSkeletonLoader count={5} hasTitle={true} titleWidth={180} />
         </Box>
         <Box sx={{ borderBottom: `1px solid ${ecommerceData.ui.colors.borderColor}`, my: 2 }} />
-  {/* Section 3: Products by Category Skeleton */ }
+        {/* Section 3: Products by Category Skeleton */}
         <Box sx={{ bgcolor: "white", px: 2, py: 2 }}>
           <CategorySkeletonLoader numCategories={2} />
         </Box>
-  {/* Bottom Navigation Skeleton - Mobile Only */ }
+        {/* Bottom Navigation Skeleton - Mobile Only */}
         <Box
           sx={{
             position: "fixed",

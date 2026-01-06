@@ -4,7 +4,14 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, ILike, IsNull, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  FindOptionsWhere,
+  ILike,
+  IsNull,
+  Repository,
+} from 'typeorm';
 import { isUUID } from 'class-validator';
 
 import { CreatePackageDto, PackagePieceDto } from '../dto/create-package.dto';
@@ -20,6 +27,7 @@ import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { Rack } from 'src/racks/rack.entity';
 import { DocumentsService } from 'src/documents/documents.service';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
+import { PackageSequence } from '../entities/package-sequence.entity';
 
 @Injectable()
 export class PackagesService {
@@ -38,6 +46,7 @@ export class PackagesService {
     private readonly documentsService: DocumentsService,
     @InjectRepository(PackageCharge)
     private readonly packageChargeRepository: Repository<PackageCharge>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async getPackagesCount(): Promise<number> {
@@ -144,30 +153,44 @@ export class PackagesService {
 
     const countryId: string = userPreference.courier?.country?.id;
 
-    const package_id =
-      createPackageDto.package_id ||
-      (await this.generateCountryBasedpackage_id(countryId));
-
-    await this.ensurePackageAndTrackingUnique(
-      package_id,
-      createPackageDto.tracking_no,
-    );
-
-    const packageEntity = this.preparePackageEntity(
-      createPackageDto,
-      package_id,
-      countryId,
-    );
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
     try {
-      const savedPackage = await this.packageRepository.save(packageEntity);
+      const package_id =
+        createPackageDto.package_id ||
+        (await this.generateCountryBasedpackage_id(
+          countryId,
+          queryRunner.manager,
+        ));
 
-      await this.updateRackSlot(createPackageDto.rack_slot);
+      await this.ensurePackageAndTrackingUnique(
+        package_id,
+        createPackageDto.tracking_no,
+        queryRunner.manager,
+      );
+
+      const packageEntity = this.preparePackageEntity(
+        createPackageDto,
+        package_id,
+        countryId,
+      );
+
+      const savedPackage = await queryRunner.manager.save(packageEntity);
+
+      await this.updateRackSlot(
+        createPackageDto.rack_slot,
+        queryRunner.manager,
+      );
 
       await this.handlePackageMeasurements(
         savedPackage,
         createPackageDto.pieces || [],
+        queryRunner.manager,
       );
+
+      await queryRunner.commitTransaction();
 
       // Load the package with all relations before mapping to response DTO
       const packageWithRelations = await this.packageRepository.findOne({
@@ -181,6 +204,7 @@ export class PackagesService {
 
       return this.mapPackageToResponseDto(packageWithRelations);
     } catch (error: unknown) {
+      await queryRunner.rollbackTransaction();
       if (
         typeof error === 'object' &&
         error !== null &&
@@ -191,7 +215,7 @@ export class PackagesService {
 
         if (dbError.constraint?.includes('package_id')) {
           throw new BadRequestException(
-            `Package ID ${package_id} already exists`,
+            `Package ID ${createPackageDto.package_id || 'generated'} already exists`,
           );
         } else if (dbError.constraint?.includes('tracking_no')) {
           throw new BadRequestException(
@@ -200,21 +224,24 @@ export class PackagesService {
         }
       }
       throw error;
+    } finally {
+      await queryRunner.release();
     }
   }
 
   private async ensurePackageAndTrackingUnique(
     package_id: string,
     tracking_no: string,
+    manager: EntityManager,
   ) {
-    const existingPackage = await this.packageRepository.findOne({
+    const existingPackage = await manager.findOne(Package, {
       where: { package_id },
     });
     if (existingPackage) {
       throw new BadRequestException(`Package ID ${package_id} already exists`);
     }
 
-    const existingTracking = await this.packageRepository.findOne({
+    const existingTracking = await manager.findOne(Package, {
       where: { tracking_no },
     });
     if (existingTracking) {
@@ -259,20 +286,24 @@ export class PackagesService {
     return packageEntity;
   }
 
-  private async updateRackSlot(rack_slot_id: string | undefined) {
+  private async updateRackSlot(
+    rack_slot_id: string | undefined,
+    manager: EntityManager,
+  ) {
     if (!rack_slot_id) return;
-    const rack = await this.rackRepository.findOne({
+    const rack = await manager.findOne(Rack, {
       where: { id: rack_slot_id },
     });
     if (rack) {
       rack.count = (rack.count || 0) + 1;
-      await this.rackRepository.save(rack);
+      await manager.save(rack);
     }
   }
 
   private async handlePackageMeasurements(
     savedPackage: Package,
     pieces: PackagePieceDto[],
+    manager: EntityManager,
   ): Promise<void> {
     if (!pieces || pieces.length === 0) return;
 
@@ -310,7 +341,7 @@ export class PackagesService {
 
       totalVolumetricWeight += volumetricWeight;
 
-      const measurement = this.packageMeasurementRepository.create({
+      const measurement = manager.create(PackageMeasurement, {
         packageId: savedPackage.id,
         piece_number: i + 1,
         weight: parseFloat(weight.toFixed(3)),
@@ -325,13 +356,13 @@ export class PackagesService {
       measurements.push(measurement);
     }
 
-    await this.packageMeasurementRepository.save(measurements);
+    await manager.save(measurements);
 
     savedPackage.total_weight = parseFloat(totalWeight.toFixed(3));
     savedPackage.total_volumetric_weight = parseFloat(
       totalVolumetricWeight.toFixed(3),
     );
-    await this.packageRepository.save(savedPackage);
+    await manager.save(savedPackage);
   }
 
   async getAllPackages(): Promise<PackageResponseDto[]> {
@@ -492,74 +523,55 @@ export class PackagesService {
 
   private async generateCountryBasedpackage_id(
     countryId: string,
+    manager: EntityManager,
   ): Promise<string> {
-    try {
-      // Get country code from country ID
-      const country = await this.packageRepository.manager
-        .createQueryBuilder()
-        .select('countries.code', 'code')
-        .from('countries', 'countries')
-        .where('countries.id = :countryId', { countryId })
-        .getRawOne<{ code: string }>();
+    const year = new Date().getFullYear();
 
-      if (!country) {
-        throw new BadRequestException('Invalid country ID');
-      }
-
-      const countryCode = country.code.substring(0, 3).toUpperCase();
-
-      // Get the next sequence number for this country
-      const lastPackage = await this.packageRepository
-        .createQueryBuilder('package')
-        .where('package.package_id LIKE :pattern', {
-          pattern: `${countryCode}-%`,
-        })
-        .orderBy('package.package_id', 'DESC')
-        .getOne();
-
-      let nextNumber = 1;
-      if (lastPackage && lastPackage.package_id) {
-        const parts = lastPackage.package_id.split('-');
-        if (parts.length > 1) {
-          const lastNumber = parseInt(parts[1]);
-          if (!isNaN(lastNumber)) {
-            nextNumber = lastNumber + 1;
-          }
-        }
-      }
-
-      // Format: COUNTRY-XXXXXXXX (8 digits with leading zeros)
-      const package_id = `${countryCode}-${nextNumber.toString().padStart(8, '0')}`;
-
-      return package_id;
-    } catch (error) {
-      // Fallback to regular package ID generation if country-based fails
-      console.warn(
-        'Country-based package ID generation failed, using fallback:',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        error.message,
-      );
-      return this.generatepackage_id();
-    }
-  }
-
-  private async generatepackage_id(): Promise<string> {
-    const prefix = 'PKG';
-    const timestamp = Date.now().toString().slice(-8);
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const package_id = `${prefix}${timestamp}${random}`;
-
-    // Check if this custom ID already exists
-    const existingPackage = await this.packageRepository.findOne({
-      where: { package_id: package_id },
+    const country = await manager.findOne(Country, {
+      where: { id: countryId },
+      select: { code: true },
     });
 
-    if (existingPackage) {
-      // If exists, generate a new one recursively
-      return this.generatepackage_id();
+    if (!country) {
+      throw new BadRequestException('Invalid country ID');
     }
 
-    return package_id;
+    const countryCode = country.code.substring(0, 3).toUpperCase();
+
+    let sequence = await manager.findOne(PackageSequence, {
+      where: { country_code: countryCode, year },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    if (!sequence) {
+      try {
+        const newSequence = manager.create(PackageSequence, {
+          country_code: countryCode,
+          year,
+          last_value: 0,
+        });
+        sequence = await manager.save(newSequence);
+      } catch (error) {
+        console.error('Error creating package sequence, retrying...', error);
+        sequence = await manager.findOne(PackageSequence, {
+          where: { country_code: countryCode, year },
+          lock: { mode: 'pessimistic_write' },
+        });
+
+        if (!sequence) {
+          throw new Error(
+            `Failed to generate package sequence for ${countryCode}-${year}`,
+          );
+        }
+      }
+    }
+
+    sequence.last_value += 1;
+    await manager.save(sequence);
+
+    const padded = String(sequence.last_value).padStart(4, '0');
+
+    return `${countryCode}${year}${padded}`;
   }
 
   //TODO: Need to improve this function

@@ -5,6 +5,7 @@ import Inventory2Icon from "@mui/icons-material/Inventory2";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import CancelIcon from "@mui/icons-material/Cancel";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
 import { SvgIconComponent } from "@mui/icons-material";
 
 export const getStatusProps = (status: string): { IconComponent: SvgIconComponent; colorClassName: string } => {
@@ -12,14 +13,21 @@ export const getStatusProps = (status: string): { IconComponent: SvgIconComponen
 
   switch (normalizedStatus) {
     case "ship_request":
+    case "ready to send":
       return {
         IconComponent: LocalShippingIcon,
         colorClassName: "text-blue-500",
       };
     case "payment_pending":
+    case "action required":  
       return {
         IconComponent: HourglassBottomIcon,
         colorClassName: "text-yellow-500",
+      };
+    case "in review":
+      return {
+        IconComponent: FactCheckIcon,
+        colorClassName: "text-indigo-500",
       };
     case "payment_approved":
       return {

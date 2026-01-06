@@ -3,13 +3,13 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
 import { generateSequentialSuiteNumber } from "../../../../utils/auth.utils";
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001";
 
 const handler = NextAuth({
   // Explicitly set the URL for production
   // TODO: 'url' does not exist in type 'AuthOptions'
   // url: process.env.NEXTAUTH_URL,
+
   debug: false,
   cookies: {
     sessionToken: {
@@ -69,7 +69,7 @@ const handler = NextAuth({
           });
 
           const { access_token, user } = response.data;
-          
+
           if (access_token && user) {
             return {
               id: user.id,
@@ -84,7 +84,7 @@ const handler = NextAuth({
         } catch (error) {
           console.error("Login error:", error);
         }
-        
+
         return null;
       }
     }),
@@ -95,7 +95,7 @@ const handler = NextAuth({
       if (account?.provider === "google") {
         try {
           const suiteNumber = generateSequentialSuiteNumber();
-          
+
           const res = await fetch(`${API_BASE_URL}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -105,14 +105,18 @@ const handler = NextAuth({
               role: "user",
               suite_no: suiteNumber,
               identifier: "google",
+              // Default Country
+              // country: "IN",
+              // Default Currency 
+              // currency: selectedCurrency
             }),
           });
-          
+
           if (!res.ok) {
             console.error("Backend registration failed:", res.status, res.statusText);
             return false;
           }
-          
+
           const data = await res.json();
           (user as any).user_id = data.id;
           (user as any).access_token = data.access_token;
@@ -158,7 +162,7 @@ const handler = NextAuth({
           identifier: token.identifier as string,
         };
         (session as any).access_token = token.access_token;
-      } 
+      }
       return session;
     },
 
@@ -166,12 +170,12 @@ const handler = NextAuth({
       if (url.startsWith(baseUrl)) {
         return url;
       }
-      
+
       // If url is relative, make it absolute
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
       }
-      
+
       // If url is on the same origin, allow it
       try {
         const urlObj = new URL(url);
@@ -181,7 +185,7 @@ const handler = NextAuth({
       } catch (e) {
         console.error("Invalid URL in redirect:", url);
       }
-      
+
       // Default to dashboard
       return `${baseUrl}/dashboard`;
     },

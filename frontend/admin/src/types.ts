@@ -181,6 +181,7 @@ export interface PackageItem {
 
 export interface PackageData {
   id: string;
+  package_id: string;
   user?: {
     name: string;
     suite_no?: string;

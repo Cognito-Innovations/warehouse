@@ -40,56 +40,57 @@ const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ shipments, isDisc
   }
 
   const processedMeasurements = useMemo(() => {
-    if (!shipments) {
-      return [];
-    }
+    if (!shipments) return [];
 
-    let volumetricWeightDisplay: React.ReactNode;
+    const pieces = shipments.pieces || [];
 
-    if (shipments.total_volumetric_weight) {
-      const volWeight = parseFloat(shipments.total_volumetric_weight).toFixed(2);
-      
-      let dimensions = '';
-      if (shipments.length && shipments.width && shipments.height) {
-        dimensions = `(${formatDimensions(shipments.length)}cm x ${formatDimensions(shipments.width)}cm x ${formatDimensions(shipments.height)}cm)`;
+    if (pieces.length === 0 && shipments.total_weight) {
+      let volumetricWeightDisplay: React.ReactNode;
+      if (shipments.total_volumetric_weight) {
+        const volWeight = parseFloat(shipments.total_volumetric_weight).toFixed(2);
+        let dimensions = '';
+        if (shipments.length && shipments.width && shipments.height) {
+          dimensions = `(${formatDimensions(shipments.length)}cm x ${formatDimensions(shipments.width)}cm x ${formatDimensions(shipments.height)}cm)`;
+        }
+        volumetricWeightDisplay = (
+          <Typography component="span" sx={{ color: '#1e293b' }}>
+            {volWeight} kg{dimensions && <Typography component="span" sx={{ color: '#64748b', ml: 0.5, fontSize: '0.875rem' }}>{dimensions}</Typography>}
+          </Typography>
+        );
+      } else {
+        volumetricWeightDisplay = (
+          <Box component="span">
+            <Typography component="span" sx={{ color: '#1e293b', fontWeight: 600 }}>-</Typography>
+            <Typography component="span" sx={{ color: '#ef4444', fontWeight: 600, ml: 0.5 }}>(no measurements)</Typography>
+          </Box>
+        );
       }
 
-      volumetricWeightDisplay = (
-        <Typography component="span" sx={{ color: '#1e293b' }}>
-          {volWeight} kg
-          {dimensions && (
-            <Typography component="span" sx={{ color: '#64748b', ml: 0.5, fontSize: '0.875rem' }}>
-              {dimensions}
-            </Typography>
-          )}
-        </Typography>
-      );
-    } else {
-      volumetricWeightDisplay = (
-        <Box component="span">
-          <Typography
-            component="span"
-            sx={{ color: '#1e293b', fontWeight: 600 }}
-          >
-            -
-          </Typography>
-          <Typography
-            component="span"
-            sx={{ color: '#ef4444', fontWeight: 600, ml: 0.5 }}
-          >
-            (no measurements)
-          </Typography>
-        </Box>
-      );
-    }
-
-    return [
-      {
+      return [{
         pieceNumber: 1,
         weight: shipments.total_weight ? `${shipments.total_weight} Kg` : '-',
         volumetricWeightDisplay,
-      },
-    ];
+      }];
+    }
+
+    return pieces.map((piece: any) => {
+      const volWeight = parseFloat(piece.volumetric_weight).toFixed(2);
+      const dimensions = `(${formatDimensions(piece.length)}cm x ${formatDimensions(piece.width)}cm x ${formatDimensions(piece.height)}cm)`;
+      const volumetricWeightDisplay = (
+        <Typography component="span" sx={{ color: '#1e293b' }}>
+          {volWeight} kg
+          <Typography component="span" sx={{ color: '#64748b', ml: 0.5, fontSize: '0.875rem' }}>
+            {dimensions}
+          </Typography>
+        </Typography>
+      );
+
+      return {
+        pieceNumber: piece.piece_number,
+        weight: `${piece.weight} Kg`,
+        volumetricWeightDisplay,
+      };
+    });
   }, [shipments]);
 
   const getLabel = (trackingNo?: string) => {
@@ -101,7 +102,7 @@ const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ shipments, isDisc
   return (
     <Box sx={{ mt: 3 }}>
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#1e293b' }}>
-        {processedMeasurements?.length || 0} Piece Measurements
+        {processedMeasurements?.length} Piece Measurements
       </Typography>
 
       {processedMeasurements && processedMeasurements.length > 0 ? (

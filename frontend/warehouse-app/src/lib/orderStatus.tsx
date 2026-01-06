@@ -34,3 +34,13 @@ export const STATUS_ICONS: Record<
     Icon: RefundedIcon,
   },
 };
+
+export const getStatusColor = (status: string) => {
+  switch (status) {
+    case "delivered": return "text-green-500";
+    case "cancelled": return "text-red-500";
+    case "shipped": return "text-blue-500";
+    case "pending": return "text-yellow-500";
+    default: return "text-gray-500";
+  }
+};

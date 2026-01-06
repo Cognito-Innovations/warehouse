@@ -85,7 +85,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
     try {
       setLoading(true);
       if (initialData?.id) {
-        await updateCategory(initialData.id, formData);
+        const { id, ...updatePayload } = formData;
+        await updateCategory(id!, updatePayload);
       } else {
         await createCategory(formData);
       }
