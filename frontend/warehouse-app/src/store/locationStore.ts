@@ -9,11 +9,11 @@ import { CACHE_GUEST_LOCATION_KEY, DEFAULT_CURRENCY_INFO } from "@/utils/constan
 
 export const useLocationStore = create<LocationStore>((set, get) => {
   
-  const loadLocation = async (userId?: string, force = false) => {
-    if (!force && get().isLoaded) return;
+  const loadLocation = async (userId?: string, skipCache = false) => {
+    if (!skipCache && get().isLoaded) return;
 
     if (!userId) {
-      if (!force) {
+      if (!skipCache) {
         const cached = getCachedLocation(CACHE_GUEST_LOCATION_KEY);
         if (cached) {
           set({
@@ -75,6 +75,15 @@ export const useLocationStore = create<LocationStore>((set, get) => {
     });
   };
 
+  const fetchLocation = async (userId?: string) => {
+    await loadLocation(userId, false);
+  };
+
+  const refreshLocation = async (userId?: string) => {
+    set({ isLoaded: false });
+    await loadLocation(userId, true);
+  };
+
   return {
     currencyCode: "",
     currencySymbol: "",
@@ -82,13 +91,7 @@ export const useLocationStore = create<LocationStore>((set, get) => {
     countryCode: "",
     isLoaded: false,
 
-    fetchLocation: async (userId?: string) => {
-      await loadLocation(userId, false);
-    },
-
-    refreshLocation: async (userId?: string) => {
-      set({ isLoaded: false });
-      await loadLocation(userId, true);
-    },
+    fetchLocation,
+    refreshLocation,
   };
 });

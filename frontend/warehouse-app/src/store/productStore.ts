@@ -40,7 +40,7 @@ const useProductStore = create<ProductStore>((set, get) => ({
 
   getCategoryProducts: async (categorySlug: string, currency?: string, countryCode?: string, limit = 5, userId?: string) => {
     try {
-      const products = await ecommerceService.getProducts(undefined, currency, categorySlug, limit, undefined, userId, countryCode);
+      const products = await ecommerceService.getProducts(currency, categorySlug, limit, undefined, userId, countryCode);
       return products;
     } catch (error: any) {
       throw new Error(error.message || "Failed to fetch category products");
@@ -51,7 +51,6 @@ const useProductStore = create<ProductStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const products = await ecommerceService.getProducts(
-        searchTerm,
         currency,
         category,
         limit,
@@ -101,15 +100,23 @@ const useProductStore = create<ProductStore>((set, get) => ({
     }
 
     try {
-      const fetchedProducts: EcommerceProduct[] = await ecommerceService.getProducts(
-        searchTerm,
-        currency,
-        category || undefined, 
-        20, 
-        currentOffset,
-        userId,
-        countryCode
-      );
+      const fetchedProducts: EcommerceProduct[] = searchTerm
+        ? await ecommerceService.searchProducts(
+            searchTerm,
+            currency,
+            userId,
+            countryCode,
+            20,
+            currentOffset
+          )
+        : await ecommerceService.getProducts(
+            currency,
+            category,
+            20,
+            currentOffset,
+            userId,
+            countryCode
+          );
 
       set((prevState) => {
         const newProducts = reset ? fetchedProducts : [...prevState.products, ...fetchedProducts];
@@ -219,14 +226,14 @@ const useProductStore = create<ProductStore>((set, get) => ({
 
       try {
         if (product.category?.slug) {
-          categoryProducts = await ecommerceService.getProducts(undefined, currency, product.category.slug, 6, undefined, userId, countryCode);
+          categoryProducts = await ecommerceService.getProducts(currency, product.category.slug, 6, undefined, userId, countryCode);
           const sameCategory = categoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
           previewProducts = [product, ...sameCategory.slice(0, 2)];
         }
 
         // Fetch Related Data
         if (product.sub_category?.slug) {
-          const subcategoryProducts = await ecommerceService.getProducts(undefined, currency, product.sub_category.slug, 6, undefined, userId, countryCode);
+          const subcategoryProducts = await ecommerceService.getProducts(currency, product.sub_category.slug, 6, undefined, userId, countryCode);
           const sameSubcategory = subcategoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
           if (sameSubcategory.length > 0) relatedProducts = sameSubcategory.slice(0, 5);
         }

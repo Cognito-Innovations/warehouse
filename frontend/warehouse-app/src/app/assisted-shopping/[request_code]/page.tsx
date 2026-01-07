@@ -109,7 +109,7 @@ export default function ViewShoppingRequestPage() {
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-screen-xl mx-auto">
         <p className="text-sm text-gray-500 mb-4">
-          <Link href="/assisted-shopping" className="text-purple-600 hover:underline">
+          <Link href={ROUTES.ASSISTED_SHOPPING} className="text-purple-600 hover:underline">
             Shopping Requests
           </Link>
           <span className="mx-2">/</span>

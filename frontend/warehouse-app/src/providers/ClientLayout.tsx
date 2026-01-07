@@ -41,15 +41,16 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       pathname.includes("/cart") ? "My Cart" :
       pathname.includes("/packages") ? "Packages" :
       pathname.includes("/shipments") ? "Shipments" :
+      pathname.includes("/history") ? "Assisted Shopping History" :
       undefined;
   }
 
   const headerProps = {
     locationData: { countryCode: countryCode },
     onMenuClick: toggleSidebar,
-    hideMenuButton: !isEcommercePath || pathname.includes("/orders") || pathname.includes("/checkout"),
-    hideSearch: !isEcommercePath || pathname.includes("/product"),
-    hideLocation: pathname.includes("/cart") || pathname.includes("/orders") || pathname.includes("/checkout"),
+    hideMenuButton: !isEcommercePath || pathname.includes("/orders") || pathname.includes("/checkout") || pathname.includes("/history"),
+    hideSearch: !isEcommercePath || pathname.includes("/product") || pathname.includes("/history"),
+    hideLocation: pathname.includes("/cart") || pathname.includes("/orders") || pathname.includes("/checkout") || pathname.includes("/history"),
     itemCount: pathname.includes("/checkout") ? cartProductQuantityCount() : undefined,
     title,
   };

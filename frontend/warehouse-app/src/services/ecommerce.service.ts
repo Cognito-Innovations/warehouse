@@ -73,7 +73,6 @@ export const ecommerceService = {
 
   // Products
   async getProducts(
-    searchTerm?: string,
     currency?: string,
     category?: string,
     limit?: number,
@@ -82,9 +81,6 @@ export const ecommerceService = {
     countryCode?: string
   ): Promise<EcommerceProduct[]> {
     const params: any = {};
-    if (searchTerm) {
-      params.search = searchTerm;
-    }
     if (currency) {
       params.currency = currency;
     }
@@ -122,8 +118,24 @@ export const ecommerceService = {
     return response.data;
   },
 
-  async searchProducts(query: string): Promise<EcommerceProduct[]> {
-    const response = await api.get(`/ecommerce-products?search=${encodeURIComponent(query)}`);
+  async searchProducts(
+    searchTerm: string,
+    currency?: string,
+    userId?: string,
+    countryCode?: string,
+    limit?: number,
+    offset?: number
+  ): Promise<EcommerceProduct[]> {
+    const params: any = {
+      searchTerm: searchTerm,
+      currency,
+      user_id: userId,
+      countryCode,
+      limit,
+      offset,
+    };
+
+    const response = await api.get("/ecommerce-products/search", { params });
     return response.data;
   },
 

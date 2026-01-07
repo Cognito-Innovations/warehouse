@@ -71,7 +71,6 @@ export class ProductsService {
 
   async findAll(
     currency?: string,
-    search?: string,
     category?: string,
     userId?: string,
     role?: string,
@@ -99,11 +98,6 @@ export class ProductsService {
       });
     }
 
-    if (search?.trim()) {
-      queryBuilder.andWhere('product.name ILIKE :search', {
-        search: `%${search.trim()}%`,
-      });
-    }
     if (category?.trim()) {
       queryBuilder.andWhere('category.slug = :category', {
         category,
@@ -125,6 +119,52 @@ export class ProductsService {
         },
       }));
     }
+
+    const currencyInfo = await this.getCurrencyInfo(currency, userId);
+    const { symbol, rate, code } = currencyInfo;
+
+    return products.map((product) => {
+      const basePrice = Number(product.price);
+      const convertedPrice = Math.round(basePrice * rate * 100) / 100;
+
+      return {
+        ...product,
+        price: {
+          price: convertedPrice,
+          currency:
+            code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
+        },
+      };
+    });
+  }
+
+  async searchProducts(
+    searchTerm: string,
+    currency?: string,
+    userId?: string,
+    countryCode?: string,
+    limit = 20,
+    offset = 0,
+  ) {
+    if (!searchTerm?.trim()) return [];
+
+    const queryBuilder = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.countries', 'countries')
+      .where('product.name ILIKE :query', {
+        query: `%${searchTerm.trim()}%`,
+      });
+
+    if (countryCode) {
+      queryBuilder.andWhere('countries.code = :countryCode', { countryCode });
+    }
+
+    const products = await queryBuilder
+      .skip(offset)
+      .take(limit)
+      .orderBy('product.created_at', 'DESC')
+      .getMany();
 
     const currencyInfo = await this.getCurrencyInfo(currency, userId);
     const { symbol, rate, code } = currencyInfo;

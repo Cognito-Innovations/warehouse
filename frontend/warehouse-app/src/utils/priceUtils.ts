@@ -123,16 +123,16 @@ export const getCartItemPricingSummary = (
   };
 };
 
-export function getUSDFromLocal(
-  localAmount: number,
+export function convertToUSD(
+  amount: number,
   currencyCode: string,
   currencyRate: number,
 ): number {
   if (!currencyRate) {
     if (currencyCode === INR_CURRENCY.code) {
-      return roundCurrency(localAmount / INR_CURRENCY.rate);
+      return roundCurrency(amount / INR_CURRENCY.rate);
     }
-    return roundCurrency(localAmount);
+    return roundCurrency(amount);
   }
-  return roundCurrency(localAmount / currencyRate);
+  return roundCurrency(amount / currencyRate);
 }

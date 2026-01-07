@@ -4,7 +4,6 @@ import React, { useState, useCallback } from "react";
 import { Card, CardContent, Stack, Typography, Box } from "@mui/material";
 import { Payment } from "@mui/icons-material";
 import { toast } from "sonner";
-import { getUSDFromLocal } from "@/utils/priceUtils";
 
 import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +16,7 @@ import { OrderTotals } from "./OrderTotals";
 import { PaymentButton } from "./PaymentButton";
 import { PayPalButtonContainer } from "./PayPalButtonContainer";
 import { CartItem } from "@/types/ecommerce";
+import { convertToUSD } from "@/utils/priceUtils";
 import { DEFAULT_CURRENCY_INFO } from "@/utils/constants";
 
 interface OrderTotalsData {
@@ -51,18 +51,16 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const { currencyCode, currencyRate } = useDetectUserLocation();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const formatPriceWithOptionalLocal = useCallback((localAmount: number) => {
-      const usdAmount = getUSDFromLocal(localAmount, currencyCode, currencyRate);
-      const usdText = `$${usdAmount.toFixed(2)}`;
+  const formatPriceWithOptionalLocal = useCallback((amount: number) => {
+    const usdAmount = convertToUSD(amount, currencyCode, currencyRate);
+    const usdText = `$${usdAmount.toFixed(2)}`;
     
-      if (currencyCode === DEFAULT_CURRENCY_INFO.code) {
-        return usdText;
-      }
+    if (currencyCode === DEFAULT_CURRENCY_INFO.code) {
+      return usdText;
+    }
 
-      return `${usdText} (${formatLocalPrice(localAmount)})`;
-    },
-    [currencyCode, currencyRate]
-  );
+    return `${usdText} (${formatLocalPrice(amount)})`;
+  }, [currencyCode, currencyRate]);
 
   const { isProcessing, initiateOrder } = useOrderPayment();
   const { showPayPal, initializePayment, resetPayment } = usePayPalPayment({

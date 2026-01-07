@@ -14,6 +14,7 @@ import ProductsGridView from "@/components/ecommerce/product/ProductsGridView";
 import CategorySection from "@/components/ecommerce/category_temp/CategorySection";
 import AssistedShoppingLandingContent from "@/components/AssistedShopping/getting-started/AssistedShoppingLandingContent";
 import GridSkeletonLoader from "./skeleton-loader/GridSkeletonLoader";
+import { debounce } from "@/utils/debounce";
 import { ecommerceData } from "@/data/ecommerceData";
 
 interface EcommerceContentProps {
@@ -42,6 +43,11 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
   const requestIdRef = useRef(0);
+  const debouncedSearchRef = useRef<
+    (((value: string) => void) & { cancel?: () => void }) | null
+  >(null);
+
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState(searchQuery);
 
   const showAssisted = selectedCategory === "assisted";
 
@@ -60,13 +66,17 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   const fetchCategoryProducts = useCallback(async () => {
     if (!isLoaded || showAssisted) return;
 
-    const requestId = ++requestIdRef.current;
+    // Increment the global request counter to represent a new fetch cycle
+    requestIdRef.current += 1;
+
+    // capture the request ID for the specific fetch call
+    const requestId = requestIdRef.current;
 
     try {
       await fetchProducts(
         {
           category: selectedCategory || undefined,
-          searchTerm: searchQuery || undefined,
+          searchTerm: debouncedSearchQuery || undefined,
           currency: currencyCode,
           countryCode,
           userId,
@@ -80,7 +90,7 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
     isLoaded,
     showAssisted,
     selectedCategory,
-    searchQuery,
+    debouncedSearchQuery,
     currencyCode,
     countryCode,
     userId,
@@ -106,7 +116,7 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
         fetchProducts(
           {
             category: selectedCategory || undefined,
-            searchTerm: searchQuery || undefined,
+            searchTerm: debouncedSearchQuery || undefined,
             currency: currencyCode,
             countryCode,
             userId,
@@ -124,20 +134,38 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
     isLoading,
     showAssisted,
     selectedCategory,
-    searchQuery,
+    debouncedSearchQuery,
     currencyCode,
     countryCode,
     userId,
     fetchProducts,
   ]);
 
-  useEffect(syncCategoryWithSlug, [syncCategoryWithSlug]);
+  useEffect(() => {
+    syncCategoryWithSlug();
+  }, [syncCategoryWithSlug]);
 
-  useEffect(fetchCategoryList, [fetchCategoryList]);
+  useEffect(() => {
+    fetchCategoryList();
+  }, [fetchCategoryList]);
 
   useEffect(() => {
     fetchCategoryProducts();
   }, [fetchCategoryProducts]);
+
+  useEffect(() => {
+    debouncedSearchRef.current = debounce((value: string) => {
+      setDebouncedSearchQuery(value);
+    }, 400);
+
+    return () => {
+      debouncedSearchRef.current?.cancel?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    debouncedSearchRef.current?.(searchQuery);
+  }, [searchQuery]);
 
   useEffect(() => {
     setupIntersectionObserver();
@@ -179,7 +207,7 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   }
 
   const showInitialLoader = isLoading && products.length === 0 && !showAssisted;
-  const isSearchEmpty = !!searchQuery && products.length === 0 && !isLoading;
+  const isSearchEmpty = !!debouncedSearchQuery && products.length === 0 && !isLoading;
 
   return (
     <EcommercePageLayout>
