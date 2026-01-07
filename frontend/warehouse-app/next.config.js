@@ -1,6 +1,5 @@
 const nextConfig = {
   experimental: {
-    outputFileTracing: false,
   },
   eslint: {
     ignoreDuringBuilds: true,
