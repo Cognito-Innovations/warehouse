@@ -1,6 +1,7 @@
 import React from "react";
-import { Box, Typography, Fade } from "@mui/material";
+import { Box, Typography, Fade, Link } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { ROUTES } from "@/utils/constants";
 
 export default function SuccessScreen() {
   return (
@@ -62,6 +63,16 @@ export default function SuccessScreen() {
           }}
         >
           Thank you! Our team will process your request shortly. You'll receive an update soon.
+        </Typography>
+        <Typography 
+          variant="body1" 
+          sx={{ 
+            color: "text.secondary",
+            mt: 2,
+            fontSize: { xs: "0.875rem", md: "1rem" }
+          }}
+        >
+          To see all the shopping requests, <Link href={ROUTES.ASSISTED_SHOPPING_HISTORY} underline="hover">click here</Link>.
         </Typography>
       </Box>
     </Fade>

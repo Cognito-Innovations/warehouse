@@ -68,7 +68,7 @@ const ShoppingRequestCardMobile: React.FC<ShoppingRequestCardMobileProps> = ({
           />
         </div>
 
-        <div className="flex-1 min-w-0"
+        <div className="flex-1 min-w-0">
           <div className="mb-4">
             <div className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1.5">
               Request Code / ID
