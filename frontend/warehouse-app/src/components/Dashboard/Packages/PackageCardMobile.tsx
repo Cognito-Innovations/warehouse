@@ -66,6 +66,9 @@ const PackageCardMobile: React.FC<PackageCardMobileProps> = ({
                             <IconComponent className="text-[14px]" />
                             <span className="uppercase text-[10px] tracking-wider">{status}</span>
                         </div>
+                        {pkg.discard_comment && (
+                            <p className="mt-1.5 text-xs text-red-600 font-medium">{pkg.discard_comment}</p>
+                        )}
                     </div>
 
                     {/* Customer - Secondary Info */}

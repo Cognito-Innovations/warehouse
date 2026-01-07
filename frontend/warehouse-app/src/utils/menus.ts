@@ -35,7 +35,7 @@ export const MENUS = {
     {
       icon: AssignmentReturn,
       label: "Share OTP",
-      path: ROUTES.SHARE_OTP,
+      path: ROUTES.DASHBOARD + ROUTES.DASHBOARD_SHARE_OTP,
       requiresAuth: true,
     },
     {
@@ -52,7 +52,7 @@ export const MENUS = {
       children: [
         {
           icon: History,
-          label: "Assisted Shopping History",
+          label: "History",
           path: ROUTES.ASSISTED_SHOPPING_HISTORY,
           requiresAuth: true,
         },

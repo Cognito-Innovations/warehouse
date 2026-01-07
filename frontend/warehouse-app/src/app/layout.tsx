@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import ThemeProvider from "../providers/ThemeProvider";
 import ClientLayout from "../providers/ClientLayout";
 import Providers from "./providers";
+import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
           <ThemeProvider>
-            <Suspense fallback={null}>
+            <Suspense fallback={<EcommerceSkeletonLoader/>}>
               <ClientLayout>
                 {children}
               </ClientLayout>

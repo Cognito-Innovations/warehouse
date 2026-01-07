@@ -24,6 +24,7 @@ const useProductStore = create<ProductStore>((set, get) => ({
   arePreviewsLoading: true,
   detailError: null,
   isLoadingSlug: null,
+  activeRequestKey: null as string | null,
 
   handleProductSelect: (productId: string) => set({ selectedProduct: productId }),
   setSearchQuery: (query: string) => set({ searchQuery: query }),
@@ -67,9 +68,6 @@ const useProductStore = create<ProductStore>((set, get) => ({
   },
 
   fetchProducts: async (params: FetchProductsParams, reset = false) => {
-    const state = get();
-    if (!reset && state.loadingMore) return;
-
     const { category, searchTerm, currency, countryCode, userId } = params;
 
     const cacheKey = JSON.stringify({
@@ -80,9 +78,23 @@ const useProductStore = create<ProductStore>((set, get) => ({
       userId
     });
 
-    const currentOffset = reset ? 0 : state.offset;
+    const state = get();
+    if (!reset && (state.loadingMore || state.isLoading)) return;
+    
+    set({
+      activeRequestKey: cacheKey,
+      products: reset ? [] : get().products,
+      offset: reset ? 0 : get().offset,
+      hasMore: reset ? true : get().hasMore,
+    });
+
+    const currentOffset = reset || get().activeRequestKey !== cacheKey ? 0 : get().offset;
+
+    if (get().activeRequestKey !== cacheKey) return;
 
     if (reset) {
+      if (get().activeRequestKey !== cacheKey) return;
+
       if (state.cache[cacheKey]) {
         const cachedData = state.cache[cacheKey];
         set({
@@ -90,11 +102,12 @@ const useProductStore = create<ProductStore>((set, get) => ({
           hasMore: cachedData.hasMore,
           offset: cachedData.offset,
           isLoading: false,
+          loadingMore: false,
           error: null
         });
         return; 
       }
-      set({ isLoading: true, products: [], offset: 0, hasMore: true, error: null });
+      set({ isLoading: true, loadingMore: false, products: [], offset: 0, hasMore: true, error: null });
     } else {
       set({ loadingMore: true, error: null });
     }
@@ -118,13 +131,26 @@ const useProductStore = create<ProductStore>((set, get) => ({
             countryCode
           );
 
+      if (get().activeRequestKey !== cacheKey) {
+        return;
+      }
+
       set((prevState) => {
-        const newProducts = reset ? fetchedProducts : [...prevState.products, ...fetchedProducts];
+        if (get().activeRequestKey !== cacheKey) return prevState;
+
+        const mergedProducts = reset
+          ? fetchedProducts
+          : [...prevState.products, ...fetchedProducts];
+
+        const uniqueProducts = Array.from(
+          new Map(mergedProducts.map(p => [p.id, p])).values()
+        );
+
         const newHasMore = fetchedProducts.length === 20;
         const newOffset = currentOffset + 20;
 
         const newCacheEntry: ProductCacheData = {
-          products: newProducts,
+          products: uniqueProducts,
           hasMore: newHasMore,
           offset: newOffset
         };
@@ -136,14 +162,15 @@ const useProductStore = create<ProductStore>((set, get) => ({
 
         return reset 
           ? {
-            products: newProducts,
+            products: uniqueProducts,
             isLoading: false,
             hasMore: newHasMore,
+            loadingMore: false,
             offset: newOffset,
             cache: updatedCache
           }
           : {
-            products: newProducts,
+            products: uniqueProducts,
             loadingMore: false,
             hasMore: newHasMore,
             offset: newOffset,

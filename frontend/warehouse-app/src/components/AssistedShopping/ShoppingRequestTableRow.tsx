@@ -38,7 +38,7 @@ const ShoppingRequestTableRow: React.FC<ShoppingRequestTableRowProps> = ({
         isSelected ? "bg-purple-50/50" : "hover:bg-gray-50/80"
       }`}
     >
-      <td className="px-4 sm:px-6 py-4 whitespace-nowrap w-4">
+      <td className="pl-4 py-4 whitespace-nowrap">
         <input
           type="checkbox"
           className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded cursor-pointer"
@@ -47,21 +47,21 @@ const ShoppingRequestTableRow: React.FC<ShoppingRequestTableRowProps> = ({
         />
       </td>
 
-      <td className="px-4 sm:px-6 py-4">
+      <td className="px-4 py-4">
         <div className="flex flex-col">
           <Link
             href={`/assisted-shopping/${encodeURIComponent(request.request_code)}`}
-            className="text-sm font-bold text-gray-900 hover:text-purple-600 transition-colors cursor-pointer"
+            className="text-sm font-bold text-gray-900 hover:text-purple-600 transition-colors cursor-pointer truncate"
           >
             {request.request_code}
           </Link>
-          <span className="text-[11px] text-gray-400 font-mono mt-0.5">
+          <span className="text-[11px] text-gray-400 font-mono mt-0.5 truncate max-w-[220px]">
             {request.id}
           </span>
         </div>
       </td>
 
-      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+      <td className="px-4 py-4 whitespace-nowrap">
         <div
           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${getStatusColor(
             request.status
@@ -74,7 +74,7 @@ const ShoppingRequestTableRow: React.FC<ShoppingRequestTableRowProps> = ({
         </div>
       </td>
 
-      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+      <td className="px-4 py-4 whitespace-nowrap">
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-gray-700">
             {request.items_count} {request.items_count === 1 ? "Item" : "Items"}
@@ -85,7 +85,7 @@ const ShoppingRequestTableRow: React.FC<ShoppingRequestTableRowProps> = ({
         </div>
       </td>
 
-      <td className="px-4 sm:px-6 py-4 text-right whitespace-nowrap">
+      <td className="pr-4 py-4 text-right whitespace-nowrap">
         <div className="flex items-center justify-end gap-2">
           <Link href={`/assisted-shopping/${encodeURIComponent(request.request_code)}`}>
             <Tooltip title="View Details">

@@ -19,6 +19,7 @@ export type ProductStore = {
   hasMore: boolean;
   cache: Record<string, ProductCacheData>;
 
+  activeRequestKey: string | null;
   currentDetailProduct: EcommerceProduct | null;
   detailPreviewProducts: EcommerceProduct[];
   detailRelatedProducts: EcommerceProduct[];

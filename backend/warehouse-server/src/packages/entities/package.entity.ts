@@ -134,4 +134,7 @@ export class Package extends BaseTimestampEntity {
   })
   @JoinColumn({ name: 'shipment_id' })
   shipment: Shipment;
+
+  @Column({ type: 'text', nullable: true })
+  discard_comment: string | null;
 }

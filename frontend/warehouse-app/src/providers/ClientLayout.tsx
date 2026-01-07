@@ -42,6 +42,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       pathname.includes("/packages") ? "Packages" :
       pathname.includes("/shipments") ? "Shipments" :
       pathname.includes("/history") ? "Assisted Shopping History" :
+      pathname.includes("/share-otp") ? "Share OTP History" :
       undefined;
   }
 

@@ -61,6 +61,9 @@ const PackageTableRow: React.FC<PackageTableRowProps> = ({
                                 {status}
                             </span>
                         </div>
+                        {pkg.discard_comment && (
+                            <span className="text-xs text-red-600 font-medium">{pkg.discard_comment}</span>
+                        )}
                         <span className="text-sm text-gray-600 font-medium">
                             {pkg.customer_name || pkg.user?.name}
                         </span>

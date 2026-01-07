@@ -15,7 +15,7 @@ export enum ROUTES {
   ASSISTED_SHOPPING = "/ecommerce/assisted-shopping",
   CREATE_ASSISTED_SHOPPING = "/assisted-shopping/create-request",
   ASSISTED_SHOPPING_HISTORY = "/ecommerce/assisted-shopping/history",
-  SHARE_OTP = "/ecommerce/share-otp"
+  DASHBOARD_SHARE_OTP = "/share-otp"
 }
 
 export const IMAGE_FILE_REGEX = /\.(jpeg|jpg|png|gif|webp)$/i;

@@ -96,8 +96,8 @@ export default function AssistedShopping() {
   });
 
   return (
-    <div className="min-h-screen bg-white w-screen overflow-x-hidden">
-      <div className="w-full px-6 py-4 border-b border-gray-100">
+    <div className="min-h-screen bg-white w-full"> 
+      <div className="w-full px-4 py-4 border-b border-gray-100">
         <div className="max-w-md">
           <SearchBar
             searchTerm={searchTerm}
@@ -127,10 +127,10 @@ export default function AssistedShopping() {
             </div>
 
             <div className="hidden md:block w-full overflow-x-auto">
-              <table className="w-full border-separate border-spacing-0">
+              <table className="w-full table-fixed border-separate border-spacing-0">
                 <thead className="bg-gray-50/95">
                   <tr>
-                    <th scope="col" className="px-6 py-4 text-left border-b border-gray-200 w-4">
+                    <th scope="col" className="w-12 pl-4 py-4 text-left border-b border-gray-200">
                       <input
                         type="checkbox"
                         className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded cursor-pointer"
@@ -141,16 +141,16 @@ export default function AssistedShopping() {
                         onChange={() => toggleSelectAll(filteredRequests)}
                       />
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                    <th scope="col" className="w-[35%] px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
                       Request Code / ID
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                    <th scope="col" className="w-[20%] px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
                       Status
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                    <th scope="col" className="w-[20%] px-4 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
                       Items / Date
                     </th>
-                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                    <th scope="col" className="w-[15%] pr-4 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
                       Actions
                     </th>
                   </tr>

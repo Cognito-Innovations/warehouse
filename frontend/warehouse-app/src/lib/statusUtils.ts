@@ -13,6 +13,7 @@ export const getStatusProps = (status: string): { IconComponent: SvgIconComponen
 
   switch (normalizedStatus) {
     case "ship_request":
+    case "request ship":
     case "ready to send":
       return {
         IconComponent: LocalShippingIcon,

@@ -42,7 +42,7 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
 
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
-  const requestIdRef = useRef(0);
+  const lastCategoryRef = useRef<string | null>(null);
   const debouncedSearchRef = useRef<
     (((value: string) => void) & { cancel?: () => void }) | null
   >(null);
@@ -66,11 +66,8 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   const fetchCategoryProducts = useCallback(async () => {
     if (!isLoaded || showAssisted) return;
 
-    // Increment the global request counter to represent a new fetch cycle
-    requestIdRef.current += 1;
-
-    // capture the request ID for the specific fetch call
-    const requestId = requestIdRef.current;
+    const isCategoryChanged = lastCategoryRef.current !== selectedCategory;
+    lastCategoryRef.current = selectedCategory;
 
     try {
       await fetchProducts(
@@ -81,10 +78,8 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
           countryCode,
           userId,
         },
-        true
+        isCategoryChanged
       );
-
-      if (requestId !== requestIdRef.current) return;
     } catch (err) {}
   }, [
     isLoaded,
@@ -142,6 +137,10 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   ]);
 
   useEffect(() => {
+    observer.current?.disconnect();
+  }, [selectedCategory, debouncedSearchQuery]);
+
+  useEffect(() => {
     syncCategoryWithSlug();
   }, [syncCategoryWithSlug]);
 
@@ -174,7 +173,6 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
 
   const handleRefresh = () => {
     setError(null);
-    requestIdRef.current++;
   };
 
   const isNetworkError =

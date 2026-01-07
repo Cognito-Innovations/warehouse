@@ -146,20 +146,22 @@ export class PackagesController {
       type: 'object',
       properties: {
         status: { type: 'string', example: 'DELIVERED' },
-        updated_by: { type: 'string', example: 'admin-user-id' },
+        discard_comment: { type: 'string', example: 'Package damaged' },
       },
-      required: ['status', 'updated_by'],
+      required: ['status'],
     },
   })
   @ApiOkResponse({ type: PackageResponseDto })
   async updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: string; updated_by: string },
+    @Body() body: { status: string; discard_comment?: string },
+    @Request() req: AuthenticatedRequest,
   ): Promise<PackageResponseDto> {
     return this.packagesService.updatePackageStatus(
       id,
       body.status,
-      body.updated_by,
+      req.user.id,
+      body.discard_comment,
     );
   }
 

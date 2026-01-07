@@ -6,17 +6,18 @@ import { filterOptions } from "@/data/filterOptionsData";
 interface SearchAndFilterProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  selectedFilter: string;
-  onFilterChange: (value: string) => void;
   placeholder: string;
+  showFilter?: boolean;
+  selectedFilter?: string;
+  onFilterChange?: (value: string) => void;
 }
 
 const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
   searchTerm,
   onSearchChange,
-  selectedFilter,
+  placeholder,
+  showFilter = true,
   onFilterChange,
-  placeholder
 }) => {
   return (
     <div className="flex items-center gap-2 sm:gap-3 my-2 sm:my-4">
@@ -27,14 +28,19 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
           onChange={onSearchChange}
         />
       </div>
-      <div className="hidden sm:block flex-1" />
-      <div className="flex-shrink-0">
-        <FilterDropdown
-          options={filterOptions}
-          buttonLabel="Filter"
-          onSelect={(opt) => onFilterChange(opt.value)}
-        />
-      </div>
+
+      {showFilter && onFilterChange && (
+        <>
+          <div className="hidden sm:block flex-1" />
+          <div className="flex-shrink-0">
+            <FilterDropdown
+              options={filterOptions}
+              buttonLabel="Filter"
+              onSelect={(opt) => onFilterChange(opt.value)}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };
