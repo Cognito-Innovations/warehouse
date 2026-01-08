@@ -119,17 +119,15 @@ const Category: React.FC = () => {
       width: "25%",
     },
     {
-      header: "Description",
+      header: "Countries",
       cell: (row) => (
         <Typography variant="body2">
-          {row?.description
-            ? row.description.length > 100
-              ? `${row.description.slice(0, 100)}...`
-              : row.description
+          {row.countries && row.countries.length > 0
+            ? row.countries.map((country) => country.name).join(", ")
             : "N/A"}
         </Typography>
-      ),      
-      width: "15%",
+      ),
+      width: "20%",
     },
     {
       header: "Slug",

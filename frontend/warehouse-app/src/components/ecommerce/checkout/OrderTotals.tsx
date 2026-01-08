@@ -30,7 +30,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
           color="text.primary"
           sx={{ fontSize: { xs: "0.875rem", md: "1rem" } }}
         >
-          Subtotal
+          Original Price
         </Typography>
         <Typography
           variant="body1"
