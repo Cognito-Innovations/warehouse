@@ -24,6 +24,7 @@ const useProductStore = create<ProductStore>((set, get) => ({
   arePreviewsLoading: true,
   detailError: null,
   isLoadingSlug: null,
+  activeRequestKey: null as string | null,
 
   handleProductSelect: (productId: string) => set({ selectedProduct: productId }),
   setSearchQuery: (query: string) => set({ searchQuery: query }),
@@ -40,7 +41,7 @@ const useProductStore = create<ProductStore>((set, get) => ({
 
   getCategoryProducts: async (categorySlug: string, currency?: string, countryCode?: string, limit = 5, userId?: string) => {
     try {
-      const products = await ecommerceService.getProducts(undefined, currency, categorySlug, limit, undefined, userId, countryCode);
+      const products = await ecommerceService.getProducts(currency, categorySlug, limit, undefined, userId, countryCode);
       return products;
     } catch (error: any) {
       throw new Error(error.message || "Failed to fetch category products");
@@ -51,7 +52,6 @@ const useProductStore = create<ProductStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const products = await ecommerceService.getProducts(
-        searchTerm,
         currency,
         category,
         limit,
@@ -68,9 +68,6 @@ const useProductStore = create<ProductStore>((set, get) => ({
   },
 
   fetchProducts: async (params: FetchProductsParams, reset = false) => {
-    const state = get();
-    if (!reset && state.loadingMore) return;
-
     const { category, searchTerm, currency, countryCode, userId } = params;
 
     const cacheKey = JSON.stringify({
@@ -81,9 +78,23 @@ const useProductStore = create<ProductStore>((set, get) => ({
       userId
     });
 
-    const currentOffset = reset ? 0 : state.offset;
+    const state = get();
+    if (!reset && (state.loadingMore || state.isLoading)) return;
+    
+    set({
+      activeRequestKey: cacheKey,
+      products: reset ? [] : get().products,
+      offset: reset ? 0 : get().offset,
+      hasMore: reset ? true : get().hasMore,
+    });
+
+    const currentOffset = reset || get().activeRequestKey !== cacheKey ? 0 : get().offset;
+
+    if (get().activeRequestKey !== cacheKey) return;
 
     if (reset) {
+      if (get().activeRequestKey !== cacheKey) return;
+
       if (state.cache[cacheKey]) {
         const cachedData = state.cache[cacheKey];
         set({
@@ -91,33 +102,55 @@ const useProductStore = create<ProductStore>((set, get) => ({
           hasMore: cachedData.hasMore,
           offset: cachedData.offset,
           isLoading: false,
+          loadingMore: false,
           error: null
         });
         return; 
       }
-      set({ isLoading: true, products: [], offset: 0, hasMore: true, error: null });
+      set({ isLoading: true, loadingMore: false, products: [], offset: 0, hasMore: true, error: null });
     } else {
       set({ loadingMore: true, error: null });
     }
 
     try {
-      const fetchedProducts: EcommerceProduct[] = await ecommerceService.getProducts(
-        searchTerm,
-        currency,
-        category || undefined, 
-        20, 
-        currentOffset,
-        userId,
-        countryCode
-      );
+      const fetchedProducts: EcommerceProduct[] = searchTerm
+        ? await ecommerceService.searchProducts(
+            searchTerm,
+            currency,
+            userId,
+            countryCode,
+            20,
+            currentOffset
+          )
+        : await ecommerceService.getProducts(
+            currency,
+            category,
+            20,
+            currentOffset,
+            userId,
+            countryCode
+          );
+
+      if (get().activeRequestKey !== cacheKey) {
+        return;
+      }
 
       set((prevState) => {
-        const newProducts = reset ? fetchedProducts : [...prevState.products, ...fetchedProducts];
+        if (get().activeRequestKey !== cacheKey) return prevState;
+
+        const mergedProducts = reset
+          ? fetchedProducts
+          : [...prevState.products, ...fetchedProducts];
+
+        const uniqueProducts = Array.from(
+          new Map(mergedProducts.map(p => [p.id, p])).values()
+        );
+
         const newHasMore = fetchedProducts.length === 20;
         const newOffset = currentOffset + 20;
 
         const newCacheEntry: ProductCacheData = {
-          products: newProducts,
+          products: uniqueProducts,
           hasMore: newHasMore,
           offset: newOffset
         };
@@ -129,14 +162,15 @@ const useProductStore = create<ProductStore>((set, get) => ({
 
         return reset 
           ? {
-            products: newProducts,
+            products: uniqueProducts,
             isLoading: false,
             hasMore: newHasMore,
+            loadingMore: false,
             offset: newOffset,
             cache: updatedCache
           }
           : {
-            products: newProducts,
+            products: uniqueProducts,
             loadingMore: false,
             hasMore: newHasMore,
             offset: newOffset,
@@ -219,14 +253,14 @@ const useProductStore = create<ProductStore>((set, get) => ({
 
       try {
         if (product.category?.slug) {
-          categoryProducts = await ecommerceService.getProducts(undefined, currency, product.category.slug, 6, undefined, userId, countryCode);
+          categoryProducts = await ecommerceService.getProducts(currency, product.category.slug, 6, undefined, userId, countryCode);
           const sameCategory = categoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
           previewProducts = [product, ...sameCategory.slice(0, 2)];
         }
 
         // Fetch Related Data
         if (product.sub_category?.slug) {
-          const subcategoryProducts = await ecommerceService.getProducts(undefined, currency, product.sub_category.slug, 6, undefined, userId, countryCode);
+          const subcategoryProducts = await ecommerceService.getProducts(currency, product.sub_category.slug, 6, undefined, userId, countryCode);
           const sameSubcategory = subcategoryProducts.filter((p: EcommerceProduct) => p.id !== product.id);
           if (sameSubcategory.length > 0) relatedProducts = sameSubcategory.slice(0, 5);
         }

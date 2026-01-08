@@ -72,25 +72,32 @@ export default function Invoices({ request, onUpdate }: { request: any, onUpdate
   return (
     <>
       <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-semibold text-gray-900">{number}</p>
-            <p className="text-sm text-gray-500"> {amount}</p> 
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <p className="font-semibold text-gray-900 break-all">{number}</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+              <p className="font-medium text-gray-700"> {amount}</p>
+              <span className="text-gray-300 sm:hidden">|</span>
+              <p className="text-gray-500 sm:hidden">{formatDateTime(date)}</p>
+            </div>
           </div>
-          <p className="text-sm text-gray-500">{formatDateTime(date)}</p>
-          <span
-            className={`px-2 py-1 text-xs rounded text-white ${
-              isPaid ? "bg-green-500" : "bg-red-500"
-            }`}
-          >
-            {isPaid ? "Paid" : "Unpaid"}
-          </span>
-          <button 
-            className="px-3 py-1 border rounded-md text-sm text-gray-700 hover:bg-gray-100"
-             onClick={() => generateInvoicePDF(request)}
-          >
-            View
-          </button>
+
+          <p className="hidden sm:block text-sm text-gray-500">{formatDateTime(date)}</p>
+          <div className="flex items-center gap-3">
+            <span
+              className={`px-2 py-1 text-xs rounded text-white ${
+                isPaid ? "bg-green-500" : "bg-red-500"
+              }`}
+            >
+              {isPaid ? "Paid" : "Unpaid"}
+            </span>
+            <button 
+              className="px-3 py-1 border rounded-md text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap"
+              onClick={() => generateInvoicePDF(request)}
+            >
+              View
+            </button>
+          </div>
         </div>
 
         <div className="mt-6">

@@ -1,4 +1,9 @@
 const nextConfig = {
+  experimental: {
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

@@ -3,9 +3,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Paper, Typography, IconButton } from "@mui/material";
 import { Edit } from "@mui/icons-material";
-import AddressSectionSkeletonLoader from "../skeleton-loader/AddressSectionSkeletonLoader";
+
+import { useLocationStore } from "@/store/locationStore";
 import { fetchUserAddresses, createUserAddress, updateUserAddress } from "@/lib/api.service";
 import AddAddressModal from "./AddAddressModal";
+import AddressSectionSkeletonLoader from "../skeleton-loader/AddressSectionSkeletonLoader";
 import { CartAddressData } from "@/types/ecommerce";
 
 interface AddressSectionProps {
@@ -21,6 +23,8 @@ export default function AddressSection({
   highlightAddressError,
   onAddressFetchComplete,
 }: AddressSectionProps) {
+  const refreshLocation = useLocationStore((s) => s.refreshLocation);
+
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
   const [editAddress, setEditAddress] = useState<CartAddressData | null>(null);
@@ -47,6 +51,7 @@ export default function AddressSection({
           phone_code: addressData.user.phone_code,
           phone_number: addressData.user.phone_number,
           email: addressData.user.email,
+          currency: addressData.user?.preference?.currency?.id || "",
         };
       }
       setSelectedAddress(formattedAddress);
@@ -89,6 +94,7 @@ export default function AddressSection({
         currency: addressData.currency,
       };
       const newAddress = await createUserAddress(apiData);
+      await refreshLocation(userId);
       const formattedAddress: CartAddressData = {
         id: newAddress.id,
         ...addressData,
@@ -117,6 +123,7 @@ export default function AddressSection({
         currency: addressData.currency,
       };
       await updateUserAddress(addressId, apiData);
+      await refreshLocation(userId);
       const formattedAddress: CartAddressData = {
         id: addressId,
         ...addressData,

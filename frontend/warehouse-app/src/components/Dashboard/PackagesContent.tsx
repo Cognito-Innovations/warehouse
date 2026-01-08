@@ -12,19 +12,13 @@ import {
     updatePackageStatus,
     createShipment,
 } from "@/lib/api.service";
-import { formatDateTime } from "@/lib/utils";
 import EmptyState from "../Tabs/EmptyState";
 import SearchAndFilter from "../Tabs/SearchAndFilter";
-import PrePackageArrivalOTPModal from "../Modals/PrePackageArrivalOTPModal/PrePackageArrivalOTPModal";
-import PreArrivalPopup from "../Modals/PrePackageArrivalOTPModal/PreArrivalPopup";
-import usePreArrival from "@/hooks/usePreArrival";
-import { useAuth } from "@/contexts/AuthContext";
 import PackageHeader from "./Packages/PackageHeader";
 import PackageCardMobile from "./Packages/PackageCardMobile";
 import PackageTableRow from "./Packages/PackageTableRow";
 
 const PackagesContent = () => {
-    const { user } = useAuth();
     const { data: session } = useSession();
     const [packages, setPackages] = useState<any[]>([]);
     const [packagesLoading, setPackagesLoading] = useState(false);
@@ -36,17 +30,7 @@ const PackagesContent = () => {
     const [packageFilter, setPackageFilter] = useState("all");
 
     // OTP Modal State
-    const [isOTPModalOpen, setIsOTPModalOpen] = useState(false);
-    const [isPreArrivalPopupOpen, setIsPreArrivalPopupOpen] = useState(false);
-    const [newPreArrival, setNewPreArrival] = useState<any | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
     const [uploadingPackageId, setUploadingPackageId] = useState<string | null>(null);
-    const [uploadedPackageIds, setUploadedPackageIds] = useState<string[]>([]);
-    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-
-    const { submitPreArrival, loading: submitting } = usePreArrival({
-        userId: user?.id,
-    });
 
     const userId = (session?.user as any)?.user_id;
 
@@ -56,11 +40,7 @@ const PackagesContent = () => {
         setPackagesLoading(true);
         try {
             const pkgs = await getPackagesByUser(userId);
-            // Filter only relevant for dash
-            const relevantPackages = pkgs.filter(
-                (pkg: any) => ["Action Required", "In Review", "Ready To Send", "READY_TO_SHIP"].includes(pkg.status?.value || pkg.status)
-            );
-            setPackages(relevantPackages);
+            setPackages(pkgs);
         } catch (error) {
             toast.error("Failed to fetch packages");
         } finally {
@@ -132,7 +112,6 @@ const PackagesContent = () => {
                     await updatePackageStatus(pkgId, "In Review");
 
                     toast.success("Document uploaded successfully and under review.");
-                    setUploadedPackageIds((prev) => [...prev, pkgId]);
                     fetchData();
                 } catch (err) {
                     console.error("Upload failed:", err);
@@ -159,37 +138,12 @@ const PackagesContent = () => {
         });
     };
 
-    const handleOTPSubmit = async (data: any) => {
-        setFormErrors({});
-        try {
-            const createdOTP = await submitPreArrival(data);
-            setNewPreArrival(createdOTP);
-            setIsPreArrivalPopupOpen(true);
-            setIsOTPModalOpen(false);
-            toast.success("OTP sent successfully!");
-        } catch (err: any) {
-            if (err.response?.data?.message) {
-                const errorMessage = err.response.data.message;
-                const parsedErrors: Record<string, string> = {};
-                const errorParts = errorMessage.split(", ");
-                errorParts.forEach((part: string) => {
-                    if (part.toLowerCase().includes("otp")) parsedErrors.otp = part;
-                    if (part.toLowerCase().includes("tracking number")) parsedErrors.trackingNumber = part;
-                });
-                setFormErrors(parsedErrors);
-            } else {
-                toast.error("Failed to send OTP");
-            }
-        }
-    };
-
     return (
         <div className="min-h-screen bg-white border border-gray-200 rounded-lg shadow-sm">
             <PackageHeader
                 selectedCount={selectedPackageIds.length}
                 isRequestingShip={isRequestingShip}
                 onRequestShip={handleRequestShip}
-                onShareOTP={() => setIsOTPModalOpen(true)}
             />
 
             {/* Search and Filter */}
@@ -287,46 +241,6 @@ const PackagesContent = () => {
                     </tbody>
                 </table>
             </div>
-
-            <PrePackageArrivalOTPModal
-                isOpen={isOTPModalOpen}
-                onClose={() => setIsOTPModalOpen(false)}
-                onSubmit={handleOTPSubmit}
-                isLoading={submitting}
-                errors={formErrors}
-            />
-
-            <PreArrivalPopup
-                isOpen={isPreArrivalPopupOpen}
-                onClose={() => setIsPreArrivalPopupOpen(false)}
-                onDelete={async () => {
-                    if (!newPreArrival?.id) return;
-                    setIsDeleting(true);
-                    try {
-                        const { deletePreArrival } = await import("@/lib/api.service");
-                        await deletePreArrival(newPreArrival.id);
-                        toast.success("Pre-arrival deleted successfully!");
-                        setIsPreArrivalPopupOpen(false);
-                    } catch (err) {
-                        toast.error("Failed to delete pre-arrival");
-                    } finally {
-                        setIsDeleting(false);
-                    }
-                }}
-                onCreateNew={() => {
-                    setIsPreArrivalPopupOpen(false);
-                    setIsOTPModalOpen(true);
-                }}
-                preArrivalData={newPreArrival ? {
-                    otp: newPreArrival.otp,
-                    eta: newPreArrival.estimate_arrival_time,
-                    trackingNo: newPreArrival.tracking_no,
-                    requestedAt: formatDateTime(newPreArrival.created_at),
-                    status: newPreArrival.status,
-                    details: newPreArrival.details || ""
-                } : null}
-                isDeleting={isDeleting}
-            />
         </div>
     );
 };

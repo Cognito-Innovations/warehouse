@@ -19,6 +19,7 @@ export type ProductStore = {
   hasMore: boolean;
   cache: Record<string, ProductCacheData>;
 
+  activeRequestKey: string | null;
   currentDetailProduct: EcommerceProduct | null;
   detailPreviewProducts: EcommerceProduct[];
   detailRelatedProducts: EcommerceProduct[];
@@ -106,49 +107,12 @@ export type CartStore = {
   removePurchasedProducts: (purchasedProductIds: string[]) => void;
 }
 
-export interface UserLocation {
-  city: string;
-  pincode: string;
-  countryCode?: string;
-  countryName?: string;
-  currency?: string;
-}
-
-export interface EffectiveUserLocation {
-  countryCode?: string;
-  countryName?: string;
-  city?: string;
-  pincode?: string;
-  currency?: string;
-}
-
 export type LocationStore = {
-  userLocation: UserLocation;
-  userAddress: UserAddress | null;
-  addressCache: Record<string, UserAddress | null>;
-  isLoadingLocation: boolean;
-  isLoadingAddress: boolean;
-  hasInitialized: boolean;
-  error: string | null;
-
-  setUserLocation: (location: UserLocation) => void;
-  setUserAddress: (address: UserAddress | null) => void;
-  setLoadingLocation: (loading: boolean) => void;
-  setLoadingAddress: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  initializeLocation: (
-    defaultCity: string,
-    defaultPincode: string,
-    enableGeolocation?: boolean
-  ) => Promise<void>;
-  fetchCountryFromIP: (
-    defaultCity: string,
-    defaultPincode: string,
-    enableGeolocation?: boolean
-  ) => Promise<void>;
-  fetchUserAddress: (userId: string) => Promise<void>;
-  refreshUserAddress: (userId: string) => Promise<void>;
-  requestLocation: (enableGeolocation?: boolean) => void;
-  updateLocation: (newLocation: UserLocation) => void;
-  clearLocation: () => void;
+  currencyCode: string;
+  currencySymbol: string;
+  currencyRate: number;
+  countryCode: string;
+  isLoaded: boolean;
+  fetchLocation: (userId?: string) => Promise<void>;
+  refreshLocation: (userId?: string) => Promise<void>;
 }

@@ -63,9 +63,15 @@ export default function OrdersContent({ userId }: OrdersContentProps) {
         </div>
       ) : orders.length > 0 ? (
         <div className="space-y-6">
-          {orders.map((order) => (
-            <OrderCard key={`ecommerce-order-card-${order.id}`} order={order} />
-          ))}
+          {orders.flatMap((order) =>
+            order.items.map((item) => (
+              <OrderCard
+                key={`order-${order.id}-item-${item.id}`}
+                order={order}
+                item={item}
+              />
+            ))
+          )}
         </div>
       ) : (
         <EmptyState

@@ -57,7 +57,8 @@ export default function Header({
 
   const count = cartProductQuantityCount();
 
-  const isEcommerce = (pathname === "/" || pathname.startsWith("/ecommerce")) && !["/ecommerce/orders", "/ecommerce/checkout", "/ecommerce/product", "/ecommerce/cart"].some(p => pathname.startsWith(p));
+  const isEcommerce = (pathname === "/" || pathname.startsWith("/ecommerce")) && 
+    !["/ecommerce/orders", "/ecommerce/checkout", "/ecommerce/product", "/ecommerce/cart", "/ecommerce/assisted-shopping/history"].some(p => pathname.startsWith(p));
   const isOrders = pathname.startsWith("/ecommerce/orders");
   const isPickupRequest = pathname.startsWith("/dashboard/pickup-request");
   const isCheckout = pathname.startsWith("/ecommerce/checkout");

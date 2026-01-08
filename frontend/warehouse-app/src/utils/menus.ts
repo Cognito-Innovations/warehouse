@@ -6,6 +6,7 @@ import {
   ListAlt,
   ShoppingCart,
   Person,
+  History,
   SvgIconComponent,
 } from "@mui/icons-material";
 import { ROUTES } from "@/utils/constants";
@@ -15,6 +16,12 @@ export interface MenuConfig {
   label: string;
   path: string;
   requiresAuth?: boolean;
+  children?: Array<{
+    icon?: SvgIconComponent;
+    label: string;
+    path: string;
+    requiresAuth?: boolean;
+  }>;
 }
 
 export const MENUS = {
@@ -23,6 +30,12 @@ export const MENUS = {
       icon: Inventory2,
       label: "Packages",
       path: ROUTES.DASHBOARD + ROUTES.DASHBOARD_PACKAGES,
+      requiresAuth: true,
+    },
+    {
+      icon: AssignmentReturn,
+      label: "Share OTP",
+      path: ROUTES.DASHBOARD + ROUTES.DASHBOARD_SHARE_OTP,
       requiresAuth: true,
     },
     {
@@ -36,6 +49,14 @@ export const MENUS = {
       label: "Assisted Shopping",
       path: ROUTES.ASSISTED_SHOPPING,
       requiresAuth: false,
+      children: [
+        {
+          icon: History,
+          label: "History",
+          path: ROUTES.ASSISTED_SHOPPING_HISTORY,
+          requiresAuth: true,
+        },
+      ],
     },
     {
       icon: AssignmentReturn,

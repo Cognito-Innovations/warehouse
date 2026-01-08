@@ -73,6 +73,7 @@ export class PackagesService {
       measurements,
       items,
       charges: pkgCharges,
+      discard_comment,
       ...restOfPkg
     } = pkg;
 
@@ -136,6 +137,7 @@ export class PackagesService {
         items?.map((item) => ({
           ...item,
         })) || [],
+      discard_comment,
     };
   }
 
@@ -490,7 +492,8 @@ export class PackagesService {
   async updatePackageStatus(
     id: string,
     status: string,
-    updated_by: string,
+    updated_by_id: string,
+    discard_comment?: string,
   ): Promise<PackageResponseDto> {
     // Check if the input is a UUID format
     const isUUID =
@@ -514,7 +517,10 @@ export class PackagesService {
 
     // Update the status
     packageEntity.status = status;
-    packageEntity.updated_by = updated_by as unknown as User;
+    if (discard_comment && status === 'Discarded') {
+      packageEntity.discard_comment = discard_comment;
+    }
+    packageEntity.updated_by = { id: updated_by_id } as User;
 
     const updatedPackage = await this.packageRepository.save(packageEntity);
 

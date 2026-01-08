@@ -13,7 +13,9 @@ export enum ROUTES {
   CART = "/ecommerce/cart",
   CHECKOUT = "/ecommerce/checkout",
   ASSISTED_SHOPPING = "/ecommerce/assisted-shopping",
-  CREATE_ASSISTED_SHOPPING = "/assisted-shopping/create-request"
+  CREATE_ASSISTED_SHOPPING = "/assisted-shopping/create-request",
+  ASSISTED_SHOPPING_HISTORY = "/ecommerce/assisted-shopping/history",
+  DASHBOARD_SHARE_OTP = "/share-otp"
 }
 
 export const IMAGE_FILE_REGEX = /\.(jpeg|jpg|png|gif|webp)$/i;

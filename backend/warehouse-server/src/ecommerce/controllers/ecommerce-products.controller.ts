@@ -26,7 +26,6 @@ export class ProductsController {
   @Get()
   findAll(
     @Query('currency') currency?: string,
-    @Query('search') search?: string,
     @Query('category') category?: string,
     @Query('user_id') userId?: string,
     @Query('role') role?: string,
@@ -38,10 +37,32 @@ export class ProductsController {
     const parsedOffset = offset ? parseInt(offset, 10) : 0;
     return this.productsService.findAll(
       currency,
-      search,
       category,
       userId,
       role,
+      countryCode,
+      parsedLimit,
+      parsedOffset,
+    );
+  }
+
+  @Public()
+  @Get('search')
+  search(
+    @Query('searchTerm') searchTerm: string,
+    @Query('currency') currency?: string,
+    @Query('user_id') userId?: string,
+    @Query('countryCode') countryCode?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : 20;
+    const parsedOffset = offset ? parseInt(offset, 10) : 0;
+
+    return this.productsService.searchProducts(
+      searchTerm,
+      currency,
+      userId,
       countryCode,
       parsedLimit,
       parsedOffset,

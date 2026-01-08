@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Box, Container } from "@mui/material";
+import { Box } from "@mui/material";
 import Sidebar from "@/components/ecommerce/sidebar/Sidebar";
 import { ecommerceData } from "@/data/ecommerceData";
 
@@ -21,15 +21,17 @@ export default function EcommerceWrapper({
     <Box sx={{ bgcolor: ecommerceData.ui.colors.background, minHeight: "100vh" }}>
       <Sidebar open={isSidebarOpen} onClose={onSidebarClose} />
 
-      <Container
-        maxWidth="xl"
+      <Box
+        component="main"
         sx={{
-          maxWidth: { xs: "100%", sm: "100%", md: "100%", lg: "100%", xl: ecommerceData.ui.spacing.containerMaxWidth },
+          width: "100%",
+          maxWidth: "100%",
           mx: "auto",
+          p: 0, 
         }}
       >
         {children}
-      </Container>
+      </Box>
     </Box>
   );
 }

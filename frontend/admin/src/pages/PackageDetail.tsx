@@ -18,6 +18,7 @@ export interface PackageType {
   created_at: string | number;
   created_by?: { name?: string };
   items?: any[];
+  discard_comment?: string;
 }
 
 const PackageDetail: React.FC = () => {
@@ -153,7 +154,7 @@ const PackageDetail: React.FC = () => {
   const isDiscarded = packageData.status.value === 'Discarded';
   const showDiscardedMessage = isDiscarded && (
     <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
-      This package has been discarded. No further actions can be taken.
+      This package has been discarded. {packageData.discard_comment ? `Reason: ${packageData.discard_comment}` : 'No further actions can be taken.'}
     </Alert>
   );
 

@@ -17,6 +17,8 @@ async function bootstrap() {
       'https://palakart.vercel.app',
       'https://palakart-admin.web.app',
       'https://nasa-believed-opponents-cakes.trycloudflare.com',
+      'https://palakart.com',
+      'http://palakart.com'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

@@ -2,7 +2,6 @@ import React from "react";
 import { Drawer, Box, Typography, Divider, Avatar, Button } from "@mui/material";
 import { AccountCircle, Login } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-
 import { useAuth } from "@/contexts/AuthContext";
 import SidebarMenu, { MenuItem } from "./SidebarMenu";
 import { MenuConfig, MENUS } from "@/utils/menus";
@@ -31,7 +30,14 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     menus.map((menu) => ({
       icon: <menu.icon />,
       label: menu.label,
+      path: menu.path,
       onClick: () => handleNavigation(menu.path, menu.requiresAuth),
+      children: menu.children?.map((child) => ({
+        icon: child.icon ? <child.icon /> : undefined,
+        label: child.label,
+        path: child.path,
+        onClick: () => handleNavigation(child.path, child.requiresAuth),
+      })),
     }));
 
   const menuGroup1 = mapMenus(MENUS.GROUP_1);

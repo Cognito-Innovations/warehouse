@@ -1,11 +1,12 @@
 import { Box, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
+
 import useCategoryStore from "@/store/categoryStore";
 import { DEFAULT_IMG } from "@/utils/constants";
 
 const CategoryItems = () => {
   const router = useRouter();
-  const { categories, selectedCategory, handleCategorySelect } = useCategoryStore();
+  const { categories, selectedCategory } = useCategoryStore();
 
   return (
     <>
@@ -16,7 +17,6 @@ const CategoryItems = () => {
           <Box
             key={`category-${category.slug}`}
             onClick={() => {
-              handleCategorySelect(category.slug);
               router.push(`/ecommerce/category/${category.slug}`);
             }}
             sx={{

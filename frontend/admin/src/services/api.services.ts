@@ -79,8 +79,8 @@ export const searchPackages = async (query: string): Promise<Package[]> => {
   return response.data;
 }
 
-export const updatePackageStatus = async (id: string, status: string): Promise<Package> => {
-  const response = await api.patch<Package>(`/packages/${id}/status`, { status });
+export const updatePackageStatus = async (id: string, status: string, discard_comment?: string): Promise<Package> => {
+  const response = await api.patch<Package>(`/packages/${id}/status`, { status, discard_comment });
   return response.data;
 };
 

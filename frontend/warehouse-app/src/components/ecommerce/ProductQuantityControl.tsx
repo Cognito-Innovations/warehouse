@@ -23,11 +23,11 @@ export default function ProductQuantityControl({
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 0.5,
+        gap: 0,
         border: `1px solid ${theme.palette.primary.main}`,
         borderRadius: 1,
         height: 32,
-        width: { xs: "100%", sm: "auto" },
+        width: { xs: "auto", sm: "auto" },
         justifyContent: "space-between",
         ml: 1
       }}

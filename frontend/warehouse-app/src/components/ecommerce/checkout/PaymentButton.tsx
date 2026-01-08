@@ -7,8 +7,7 @@ interface PaymentButtonProps {
   addressLoading: boolean;
   disabled: boolean;
   total: number;
-  formatLocalPrice: (amount: number) => string;
-  formatUSDPrice: (amount: number) => string;
+  formatPrice: (amount: number) => string;
   onClick: () => void;
 }
 
@@ -17,8 +16,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   addressLoading,
   disabled,
   total,
-  formatLocalPrice,
-  formatUSDPrice,
+  formatPrice,
   onClick,
 }) => {
   return (
@@ -66,7 +64,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
           </Typography>
         </Box>
       ) : (
-        `Pay & Place Order • ${formatUSDPrice(total)} (${formatLocalPrice(total)})`
+        `Pay & Place Order • ${formatPrice(total)}`
       )}
     </Button>
   );
