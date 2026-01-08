@@ -24,14 +24,14 @@ function SignInContent() {
     }
   }, [user, loading, router, isRedirecting, callbackUrl]);
 
-  if (loading || isRedirecting) {
+  if (loading || isRedirecting || user) {
     return (
-      <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
+      <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center", bgcolor: "#fff" }}>
         <Box sx={{ textAlign: "center" }}>
-          <CircularProgress />
-          <Box sx={{ mt: 2, color: "text.secondary" }}>
-            {isRedirecting 
-              ? `Redirecting${callbackUrl ? ' back...' : ' to dashboard...'}`
+          <CircularProgress size={40} thickness={4} sx={{ color: "#7C3AED" }} />
+          <Box sx={{ mt: 3, color: "text.secondary", fontWeight: 500 }}>
+            {isRedirecting || user 
+              ? `Taking you ${callbackUrl ? 'back' : 'to dashboard'}...`
               : "Loading..."}
           </Box>
         </Box>
@@ -39,29 +39,18 @@ function SignInContent() {
     );
   }
 
-  if (user) {
-    return (
-       <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
-        <Box sx={{ textAlign: "center" }}>
-          <CircularProgress />
-          <Box sx={{ mt: 2, color: "text.secondary" }}>
-            {`Redirecting${callbackUrl ? ' back...' : ' to dashboard...'}`}
-          </Box>
-        </Box>
-       </Box>
-    );
-  }
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#fff" }}>
       <Box
         sx={{
-          flex: { xs: "1 1 100%", sm: "1 1 50%", md: "1 1 30%" },
+          flex: { xs: "1 1 100%", md: "1 1 40%", lg: "1 1 35%" },
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          p: { xs: 2, sm: 4 },
-          overflow: "visible",
+          p: { xs: 3, sm: 6 },
+          zIndex: 1,
+          bgcolor: "#fff"
         }}
       >
         <SignInForm callbackUrl={callbackUrl} />
@@ -69,12 +58,12 @@ function SignInContent() {
 
       <Box
         sx={{
-          flex: { xs: "0 0 0%", sm: "1 1 50%", md: "1 1 70%" },
+          flex: { xs: "0 0 0%", md: "1 1 60%", lg: "1 1 65%" },
+          display: { xs: "none", md: "block" },
           backgroundImage: "url(/palakart-login.png)",
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: "center center",
           backgroundRepeat: "no-repeat",
-          backgroundColor: "#000000"
         }}
       />
     </Box>

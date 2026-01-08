@@ -1,7 +1,5 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials";
-import axios from "axios";
 import { generateSequentialSuiteNumber } from "../../../../utils/auth.utils";
 const API_BASE_URL = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001";
 
@@ -51,43 +49,6 @@ const handler = NextAuth({
         }
       }
     }),
-    CredentialsProvider({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
-
-        try {
-          const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-            email: credentials.email,
-            password: credentials.password,
-          });
-
-          const { access_token, user } = response.data;
-
-          if (access_token && user) {
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image,
-              access_token,
-              user_id: user.id,
-              verified: user.verified,
-            };
-          }
-        } catch (error) {
-          console.error("Login error:", error);
-        }
-
-        return null;
-      }
-    }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
@@ -105,10 +66,6 @@ const handler = NextAuth({
               role: "user",
               suite_no: suiteNumber,
               identifier: "google",
-              // Default Country
-              // country: "IN",
-              // Default Currency 
-              // currency: selectedCurrency
             }),
           });
 

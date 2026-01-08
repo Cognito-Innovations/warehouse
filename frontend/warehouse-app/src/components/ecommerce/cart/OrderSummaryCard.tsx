@@ -94,7 +94,7 @@ export default function OrderSummaryCard({
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
           <Typography variant="body2" color="text.secondary">
-            Subtotal
+            Original Price
           </Typography>
           <Typography variant="body2" fontWeight={500}>
             {formatPrice(totals.subtotal, currencySymbol)}
