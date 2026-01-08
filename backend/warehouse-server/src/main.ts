@@ -8,18 +8,27 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
+  const isDev = process.env.NODE_ENV === 'development';
+
   // Enable CORS
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3002',
-      'http://localhost:5173',
-      'https://palakart.vercel.app',
-      'https://palakart-admin.web.app',
-      'https://nasa-believed-opponents-cakes.trycloudflare.com',
-      'https://palakart.com',
-      'http://palakart.com'
-    ],
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Dev mode
+      if (isDev && origin === 'http://localhost:3000') {
+        return callback(null, true);
+      }
+
+      // Prod mode
+      if (!isDev && origin === 'https://palakart.com') {
+        return callback(null, true);
+      }
+
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [

@@ -7,27 +7,16 @@ import { CreateUserPreferenceDto } from './dto/create-user-preference.dto';
 import { UserPreference } from './user-preference.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { ExternalCurrencyService } from 'src/shared/external-currency.service';
 import { Currency } from 'src/currencies/currency.entity';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
-import {
-  BASE_EXCHANGE_CURRENCY,
-  CURRENCY_SYMBOL_MAP,
-  DEFAULT_CURRENCY,
-  EXCHANGE_RATE_URL,
-} from '../shared/constants';
+import { DEFAULT_CURRENCY } from '../shared/constants';
 
 interface CurrencyInfo {
   code: string;
   symbol: string;
   rate: number;
-}
-
-interface ExchangeRateResponse {
-  rates: Record<string, number>;
 }
 
 @Injectable()
@@ -36,8 +25,7 @@ export class UserPreferencesService {
     @InjectRepository(UserPreference)
     private readonly userPreferenceRepository: Repository<UserPreference>,
     private externalCurrencyService: ExternalCurrencyService,
-    private httpService: HttpService,
-  ) { }
+  ) {}
 
   async create(createUserPreferenceDto: CreateUserPreferenceDto) {
     const existingPreference = await this.userPreferenceRepository.findOne({
@@ -181,10 +169,13 @@ export class UserPreferencesService {
       relations: { currency: true },
     });
     if (!pref || !pref.currency) return null;
+    const latestInfo = await this.externalCurrencyService.getCurrencyInfoByCode(
+      pref.currency.currency_code,
+    );
     return {
       code: pref.currency.currency_code,
       symbol: pref.currency.currency_symbol,
-      rate: pref.currency.rate,
+      rate: latestInfo.rate,
     };
   }
 
@@ -193,31 +184,7 @@ export class UserPreferencesService {
   }
 
   async getCurrencyInfoByCode(currencyCode: string): Promise<CurrencyInfo> {
-    const code = currencyCode.toUpperCase();
-    const symbol = CURRENCY_SYMBOL_MAP[code] || DEFAULT_CURRENCY.symbol;
-    let rate: number = DEFAULT_CURRENCY.rate;
-    try {
-      if (code === BASE_EXCHANGE_CURRENCY) {
-        rate = 1;
-      } else {
-        const rateResponse = await firstValueFrom(
-          this.httpService.get<ExchangeRateResponse>(
-            `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
-          ),
-        );
-        const rateData = rateResponse.data;
-
-        if (!rateData.rates || typeof rateData.rates[code] !== 'number') {
-          throw new Error(`No exchange rate found for ${code}`);
-        }
-        rate = rateData.rates[code];
-      }
-    } catch (error) {
-      console.error(`Failed to fetch rate for ${code}:`, error);
-      rate = 1;
-    }
-
-    return { code, symbol, rate };
+    return this.externalCurrencyService.getCurrencyInfoByCode(currencyCode);
   }
 
   async getFormattedConvertedPriceByCurrency(
