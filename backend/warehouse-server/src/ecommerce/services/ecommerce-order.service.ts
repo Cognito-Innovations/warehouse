@@ -105,7 +105,7 @@ export class OrderService {
 
   private generateOrderNumber(): string {
     // last 3 digits of timestamp
-    const timeBasedSuffix = Date.now().toString().slice(-3);
+    const timeBasedSuffix = Date.now().toString().slice(-3); //TODO P0: Date with time or convert into iso timstamp and take that generated one
 
     // 3-character alphanumeric (A-Z, 0-9)
     const randomAlphaNumeric = Math.random()
@@ -142,6 +142,8 @@ export class OrderService {
     let savedOrder: EcommerceOrder | null = null;
 
     try {
+      //TODO P0: Create a one util, just pass productid and necesary details, get final prices and pass into create order db and reuse below
+
       // Get user's active cart
       const cart = await this.cartRepository.findOne({
         where: { user_id: userId, status: CartStatus.ACTIVE },
@@ -179,7 +181,7 @@ export class OrderService {
       let subtotalLocal = 0;
       let totalDiscountLocal = 0;
 
-      for (const item of itemsToProcess) {
+      for (const item of itemsToProcess) { //TODO P0: Can you log and check and send me this logged data into cliq and check to reuse, instead of recalculating 
         const basePrice = Number(item.product?.price || 0);
         const localPrice = this.roundCurrency(basePrice * sourceInfo.rate);
         const discountPerc = Number(item.product?.discount_percentage || 0);
@@ -279,6 +281,7 @@ export class OrderService {
 
       return this.findOne(savedOrder.id);
     } catch (paypalErr: unknown) {
+      //TODO P0: Remove it here
       // Rollback on PayPal failure
       if (savedOrder?.id) {
         await this.orderRepository.delete(savedOrder.id);

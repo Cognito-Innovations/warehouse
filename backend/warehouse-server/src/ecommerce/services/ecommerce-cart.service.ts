@@ -79,7 +79,7 @@ export class CartService {
 
     if (existingItem) {
       // Update quantity
-      existingItem.quantity += quantity;
+      existingItem.quantity += quantity; //TODO P0: Check the stock quantity of product before adding quantity
       await this.cartItemRepository.save(existingItem);
     } else {
       // Add new item
