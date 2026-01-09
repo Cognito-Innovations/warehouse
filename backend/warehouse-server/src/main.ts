@@ -8,6 +8,8 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   const isDev = process.env.NODE_ENV === 'development';
 
   // Enable CORS

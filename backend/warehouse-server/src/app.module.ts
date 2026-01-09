@@ -6,7 +6,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { join } from 'path';
 import { databaseConfig } from './config/database.config';
 import { GlobalAuthGuard } from './auth/guards/global-auth.guard';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 import { SharedModule } from './shared/shared.module';
 import { ClientIdentifierMiddleware } from './shared/middleware/client-identifier.middleware';
@@ -44,6 +44,7 @@ import { EcommerceModule } from './ecommerce/ecommerce.module';
 import { ShipmentsModule } from './shipments/shipments.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AnalyticsController } from './analytics/analytics.controller';
+import { CustomThrottlerGuard } from './shared/guards/custom-throttler.guard';
 
 @Module({
   imports: [
@@ -113,7 +114,7 @@ import { AnalyticsController } from './analytics/analytics.controller';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: CustomThrottlerGuard,
     },
     {
       provide: APP_GUARD,

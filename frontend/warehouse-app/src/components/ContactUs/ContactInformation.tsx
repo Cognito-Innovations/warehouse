@@ -41,13 +41,22 @@ export default function ContactInformation() {
               Email Address
             </Typography>
             <MuiLink
-              href="mailto:palakart@gmail.com"
-              underline="hover"
-              sx={{
+              href="https://mail.google.com/mail/?view=cm&fs=1&to=palakart@gmail.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="none"
+               sx={{
                 color: "primary.main",
                 fontWeight: 600,
                 fontSize: "1.1rem",
-                "&:hover": { color: "primary.dark" },
+                display: "inline-block",
+                px: 0.5,
+                borderRadius: 0.5,
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  color: "primary.dark",
+                },
               }}
             >
               palakart@gmail.com
@@ -67,9 +76,29 @@ export default function ContactInformation() {
             <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 500, mb: 0.5 }}>
               Phone Number
             </Typography>
-            <Typography sx={{ fontWeight: 600, fontSize: "1.1rem", color: "#1a1a1a" }}>
+            <MuiLink
+              href="https://wa.me/919994126566"
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="none"
+              sx={{
+                fontWeight: 600,
+                fontSize: "1.1rem",
+                color: "#1a1a1a",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.5,
+                px: 0.5,
+                borderRadius: 0.5,
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  backgroundColor: alpha("#25D366", 0.12),
+                  color: "#128C7E",
+                },
+              }}
+            >
               +91 99941 26566
-            </Typography>
+            </MuiLink>
           </Box>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 4 }}>

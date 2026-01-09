@@ -2,6 +2,8 @@ import { Box, Container, Typography, Link as MuiLink } from "@mui/material";
 import NextLink from "next/link";
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <Box
       component="footer"
@@ -43,11 +45,11 @@ export default function Footer() {
             <MuiLink component={NextLink} href="/privacy-policy" color="inherit" underline="hover">
               Privacy
             </MuiLink>{" "}
-            | © 2025-2026 Palakart.com
+            | © 2025–{currentYear} Palakart.com
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Need help?{" "}
-            <MuiLink component={NextLink} href="/contact-us" color="inherit" underline="hover">
+            <MuiLink component={NextLink} href="/contact-us" color="inherit" underline="always">
               Contact Us
             </MuiLink>
           </Typography>

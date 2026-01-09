@@ -40,6 +40,16 @@ interface PayPalOrderResponse {
 interface PayPalCaptureResponse {
   id: string;
   status: string;
+  payment_source?: {
+    paypal?: {
+      email_address?: string;
+      account_id?: string;
+    };
+    card?: {
+      brand?: string;
+      last_digits?: string;
+    };
+  };
   purchase_units: Array<{
     payments: {
       captures: Array<{
@@ -104,16 +114,107 @@ export class OrderService {
   }
 
   private generateOrderNumber(): string {
-    // last 3 digits of timestamp
-    const timeBasedSuffix = Date.now().toString().slice(-3); //TODO P0: Date with time or convert into iso timstamp and take that generated one
+    // Last 6 digits of epoch milliseconds
+    const timeBasedSuffix = (Date.now() % 1_000_000)
+      .toString()
+      .padStart(6, '0');
 
-    // 3-character alphanumeric (A-Z, 0-9)
+    // 4-character alphanumeric (A-Z, 0-9)
     const randomAlphaNumeric = Math.random()
       .toString(36)
-      .substring(2, 5)
+      .substring(2, 6)
       .toUpperCase();
 
     return `ORD-${timeBasedSuffix}-${randomAlphaNumeric}`;
+  }
+
+  private calculateOrderPricing(
+    items: EcommerceCartItem[],
+    currencyInfo: CurrencyInfo,
+  ) {
+    const { rate, code: currencyCode } = currencyInfo;
+    let subtotalLocal = 0;
+    let totalDiscountLocal = 0;
+
+    // Calculate details for each item
+    const itemDetails = items.map((item) => {
+      const basePrice = Number(item.product?.price || 0);
+      const localPrice = this.roundCurrency(basePrice * rate);
+      const discountPerc = Number(item.product?.discount_percentage || 0);
+
+      const discountPerUnitLocal = this.roundCurrency(
+        localPrice * (discountPerc / 100),
+      );
+
+      const discountedUnitLocal = this.roundCurrency(
+        localPrice - discountPerUnitLocal,
+      );
+
+      if (isNaN(discountedUnitLocal) || localPrice <= 0) {
+        throw new BadRequestException(
+          `Invalid price for product ${item.product_id}`,
+        );
+      }
+
+      const discountedUnitUSD = this.roundCurrency(discountedUnitLocal / rate);
+
+      // Accumulate totals for this item
+      const itemSubtotalLocal = localPrice * item.quantity;
+      const itemTotalDiscountLocal = discountPerUnitLocal * item.quantity;
+      const itemTotalUSD = this.roundCurrency(
+        discountedUnitUSD * item.quantity,
+      );
+
+      return {
+        product_id: item.product_id || item.product?.id,
+        quantity: item.quantity,
+        discountPerc,
+        discountedUnitUSD,
+        totalUSD: itemTotalUSD,
+        subtotalLocal: itemSubtotalLocal,
+        totalDiscountLocal: itemTotalDiscountLocal,
+      };
+    });
+
+    // Aggregate totals
+    for (const detail of itemDetails) {
+      subtotalLocal += detail.subtotalLocal;
+      totalDiscountLocal += detail.totalDiscountLocal;
+    }
+
+    const discountedSubtotalLocal = this.roundCurrency(
+      subtotalLocal - totalDiscountLocal,
+    );
+
+    if (isNaN(discountedSubtotalLocal) || discountedSubtotalLocal < 0) {
+      throw new BadRequestException('Invalid order amount');
+    }
+
+    // Calculate Fees and Taxes
+    const {
+      threshold,
+      deliveryFee: deliveryBaseLocal,
+      serviceCharge: serviceBaseLocal,
+    } = this.getThresholdAndFees(currencyCode);
+
+    const deliveryFeeLocal =
+      discountedSubtotalLocal >= threshold ? 0 : deliveryBaseLocal;
+    const taxesLocal = this.roundCurrency(discountedSubtotalLocal * 0.02); // 2% Tax
+    const serviceChargeLocal = serviceBaseLocal;
+
+    const finalLocalTotal = this.roundCurrency(
+      discountedSubtotalLocal +
+        deliveryFeeLocal +
+        taxesLocal +
+        serviceChargeLocal,
+    );
+
+    const finalUSDTotal = this.roundCurrency(finalLocalTotal / rate);
+
+    return {
+      finalUSDTotal,
+      itemDetails,
+    };
   }
 
   private async getAccessToken(): Promise<string> {
@@ -135,6 +236,23 @@ export class OrderService {
     return response.data.access_token;
   }
 
+  private async decreaseProductStock(order: EcommerceOrder): Promise<void> {
+    for (const item of order.items) {
+      const product = item.product;
+
+      if (!product) continue;
+
+      if (product.stock_quantity < item.quantity) {
+        throw new BadRequestException(
+          `Insufficient stock for product ${product.id}`,
+        );
+      }
+
+      product.stock_quantity -= item.quantity;
+      await this.cartItemRepository.manager.save(product);
+    }
+  }
+
   async createOrder(
     userId: string,
     createOrderDto: CreateOrderDto,
@@ -142,8 +260,6 @@ export class OrderService {
     let savedOrder: EcommerceOrder | null = null;
 
     try {
-      //TODO P0: Create a one util, just pass productid and necesary details, get final prices and pass into create order db and reuse below
-
       // Get user's active cart
       const cart = await this.cartRepository.findOne({
         where: { user_id: userId, status: CartStatus.ACTIVE },
@@ -170,64 +286,16 @@ export class OrderService {
         await this.userPreferenceService.getUserPreferredCurrency(userId);
 
       const sourceInfo: CurrencyInfo = userCurrencyInfo || DEFAULT_CURRENCY;
-      const sourceCurrency = sourceInfo.code;
 
       if (!sourceInfo.rate) {
         throw new BadRequestException(
-          `Currency rate missing for ${sourceCurrency}`,
+          `Currency rate missing for ${sourceInfo.code}`,
         );
       }
 
-      let subtotalLocal = 0;
-      let totalDiscountLocal = 0;
-
-      for (const item of itemsToProcess) { //TODO P0: Can you log and check and send me this logged data into cliq and check to reuse, instead of recalculating 
-        const basePrice = Number(item.product?.price || 0);
-        const localPrice = this.roundCurrency(basePrice * sourceInfo.rate);
-        const discountPerc = Number(item.product?.discount_percentage || 0);
-        const discountPerUnitLocal = this.roundCurrency(
-          localPrice * (discountPerc / 100),
-        );
-        const discountedUnitLocal = this.roundCurrency(
-          localPrice - discountPerUnitLocal,
-        );
-
-        if (isNaN(discountedUnitLocal) || localPrice <= 0) {
-          throw new BadRequestException('Invalid cart item price');
-        }
-
-        subtotalLocal += localPrice * item.quantity;
-        totalDiscountLocal += discountPerUnitLocal * item.quantity;
-      }
-
-      const discountedSubtotalLocal = this.roundCurrency(
-        subtotalLocal - totalDiscountLocal,
-      );
-
-      if (isNaN(discountedSubtotalLocal) || discountedSubtotalLocal < 0) {
-        throw new BadRequestException('Invalid order amount');
-      }
-
-      const {
-        threshold,
-        deliveryFee: deliveryBaseLocal,
-        serviceCharge: serviceBaseLocal,
-      } = this.getThresholdAndFees(sourceCurrency);
-
-      const deliveryFeeLocal =
-        discountedSubtotalLocal >= threshold ? 0 : deliveryBaseLocal;
-      const taxesLocal = this.roundCurrency(discountedSubtotalLocal * 0.02);
-      const serviceChargeLocal = serviceBaseLocal;
-
-      const finalLocalTotal = this.roundCurrency(
-        discountedSubtotalLocal +
-          deliveryFeeLocal +
-          taxesLocal +
-          serviceChargeLocal,
-      );
-
-      const finalUSDTotal = this.roundCurrency(
-        finalLocalTotal / sourceInfo.rate,
+      const { finalUSDTotal, itemDetails } = this.calculateOrderPricing(
+        itemsToProcess,
+        sourceInfo,
       );
 
       // Generate order number
@@ -247,27 +315,14 @@ export class OrderService {
 
       savedOrder = await this.orderRepository.save(order);
 
-      const orderItems = itemsToProcess.map((item) => {
-        const basePrice = Number(item.product?.price || 0);
-        const localPrice = this.roundCurrency(basePrice * sourceInfo.rate);
-        const discountPerc = Number(item.product?.discount_percentage || 0);
-        const discountPerUnitLocal = this.roundCurrency(
-          localPrice * (discountPerc / 100),
-        );
-        const discountedUnitLocal = this.roundCurrency(
-          localPrice - discountPerUnitLocal,
-        );
-        const discountedUnitUSD = this.roundCurrency(
-          discountedUnitLocal / sourceInfo.rate,
-        );
-
+      const orderItems = itemDetails.map((detail) => {
         return this.orderItemRepository.create({
           order_id: savedOrder!.id,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price: discountedUnitUSD,
-          total_price: this.roundCurrency(discountedUnitUSD * item.quantity),
-          discount_percentage: discountPerc,
+          product_id: detail.product_id,
+          quantity: detail.quantity,
+          unit_price: detail.discountedUnitUSD,
+          total_price: detail.totalUSD,
+          discount_percentage: detail.discountPerc,
         });
       });
 
@@ -533,6 +588,8 @@ export class OrderService {
     const captureData = await this.capturePayPalPayment(order);
     this.applyPayPalToOrder(order, captureData);
 
+    await this.decreaseProductStock(order);
+
     await this.cleanupCartItems(order);
 
     return this.orderRepository.save(order);
@@ -574,10 +631,20 @@ export class OrderService {
     order: EcommerceOrder,
     captureData: PayPalCaptureResponse,
   ): void {
+    const capture = captureData.purchase_units[0].payments.captures[0];
+
     order.payment_status = PaymentStatus.PAID;
-    order.gateway_transaction_id =
-      captureData.purchase_units[0].payments.captures[0].id;
-    order.payment_mode = PAYMENT_GATEWAY.PAYPAL;
+    order.gateway_transaction_id = capture.id;
+
+    const paymentSource = captureData.payment_source;
+
+    if (paymentSource?.paypal) {
+      order.payment_mode = 'PAYPAL_BALANCE';
+    } else if (paymentSource?.card) {
+      order.payment_mode = `CARD_${paymentSource.card.brand ?? 'UNKNOWN'}`;
+    } else {
+      order.payment_mode = 'UNKNOWN';
+    }
   }
 
   private async cleanupCartItems(order: EcommerceOrder): Promise<void> {
