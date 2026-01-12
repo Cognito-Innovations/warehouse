@@ -12,6 +12,14 @@ async function bootstrap() {
 
   const isDev = process.env.NODE_ENV === 'development';
 
+  const devAllowedOrigins = ['http://localhost:3000', 'http://localhost:5173']
+
+  const prodAllowedOrigins = [
+    'https://palakart.com',
+    'https://www.palakart.com',
+    'https://palakart-admin-54309.web.app',
+  ];
+
   // Enable CORS
   app.enableCors({
     origin: (origin, callback) => {
@@ -20,16 +28,16 @@ async function bootstrap() {
       }
 
       // Dev mode
-      if (isDev && origin === 'http://localhost:3000') {
+      if (isDev && devAllowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
       // Prod mode
-      if (!isDev && origin === 'https://palakart.com') {
+      if (!isDev && prodAllowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      callback(new Error(`CORS blocked for origin: ${origin}`));
+      return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
