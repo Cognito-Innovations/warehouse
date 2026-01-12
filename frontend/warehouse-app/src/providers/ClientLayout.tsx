@@ -43,6 +43,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       pathname.includes("/shipments") ? "Shipments" :
       pathname.includes("/history") ? "Assisted Shopping History" :
       pathname.includes("/share-otp") ? "Share OTP History" :
+
+      pathname.includes("/returns-policy") ? "Returns Policy" :
+      pathname.includes("/terms-conditions") ? "Terms & Conditions" :
+      pathname.includes("/security") ? "Security Policy" :
+      pathname.includes("/privacy-policy") ? "Privacy Policy" :
+      pathname.includes("/contact-us") ? "Contact Us" :
       undefined;
   }
 

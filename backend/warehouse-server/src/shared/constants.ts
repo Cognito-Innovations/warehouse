@@ -23,6 +23,8 @@ export const CURRENCY_SYMBOL_MAP: Record<string, string> = {
 };
 
 export const REST_COUNTRIES_URL = 'https://restcountries.com/v3.1/name';
+export const REST_COUNTRIES_CURRENCY_URL =
+  'https://restcountries.com/v3.1/currency';
 export const EXCHANGE_RATE_URL = 'https://api.frankfurter.app/latest';
 export const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 export const CACHE_TTL_SECONDS = 25 * 60 * 60; // Slightly more than 24h

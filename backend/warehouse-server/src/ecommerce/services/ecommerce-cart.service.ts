@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ComputedCart, EcommerceCart } from '../entities/ecommerce-cart.entity';
 import {
   ComputedCartItem,
@@ -41,6 +45,34 @@ export class CartService {
     });
   }
 
+  private validateProductAndStock(
+    product: EcommerceProduct | null,
+    requestedQuantity: number,
+    existingQuantity = 0,
+  ) {
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (!product.is_active) {
+      throw new BadRequestException('This product is currently unavailable');
+    }
+
+    const totalRequested = existingQuantity + requestedQuantity;
+
+    if (totalRequested > product.stock_quantity) {
+      if (existingQuantity > 0) {
+        throw new BadRequestException(
+          `Only ${product.stock_quantity} item(s) available in stock. You already have ${existingQuantity} in your cart.`,
+        );
+      }
+
+      throw new BadRequestException(
+        `Only ${product.stock_quantity} item(s) available in stock.`,
+      );
+    }
+  }
+
   async createCart(userId: string): Promise<EcommerceCart> {
     const cart = this.cartRepository.create({
       user_id: userId,
@@ -57,6 +89,10 @@ export class CartService {
   ): Promise<ComputedCart> {
     const { product_id, quantity } = addToCartDto;
 
+    if (quantity <= 0) {
+      throw new BadRequestException('Quantity must be greater than zero');
+    }
+
     // Get or create cart
     let cart = await this.findActiveCart(userId);
     if (!cart) {
@@ -68,18 +104,17 @@ export class CartService {
       where: { id: product_id },
     });
 
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
-
     // Check if product is already in cart
     const existingItem = await this.cartItemRepository.findOne({
       where: { cart_id: cart.id, product_id },
     });
 
+    const existingQuantity = existingItem?.quantity ?? 0;
+    this.validateProductAndStock(product, quantity, existingQuantity);
+
     if (existingItem) {
       // Update quantity
-      existingItem.quantity += quantity;
+      existingItem.quantity = existingQuantity + quantity;
       await this.cartItemRepository.save(existingItem);
     } else {
       // Add new item
@@ -101,6 +136,12 @@ export class CartService {
     updateCartItemDto: UpdateCartItemDto,
     currency?: string,
   ): Promise<ComputedCart> {
+    const { quantity } = updateCartItemDto;
+
+    if (quantity <= 0) {
+      throw new BadRequestException('Quantity must be greater than zero');
+    }
+
     let cart = await this.findActiveCart(userId);
     if (!cart) {
       cart = await this.createCart(userId);
@@ -108,13 +149,18 @@ export class CartService {
 
     const cartItem = await this.cartItemRepository.findOne({
       where: { id: itemId, cart_id: cart.id },
+      relations: ['product'],
     });
 
     if (!cartItem) {
       throw new NotFoundException('Cart item not found');
     }
 
-    cartItem.quantity = updateCartItemDto.quantity;
+    const product = cartItem.product;
+
+    this.validateProductAndStock(product, quantity);
+
+    cartItem.quantity = quantity;
 
     await this.cartItemRepository.save(cartItem);
 

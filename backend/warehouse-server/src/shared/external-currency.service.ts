@@ -12,8 +12,10 @@ import { CurrenciesService } from 'src/currencies/currencies.service';
 import {
   BASE_EXCHANGE_CURRENCY,
   CACHE_TTL_SECONDS,
+  CURRENCY_SYMBOL_MAP,
   DEFAULT_CURRENCY,
   EXCHANGE_RATE_URL,
+  REST_COUNTRIES_CURRENCY_URL,
   REST_COUNTRIES_URL,
   TWENTY_FOUR_HOURS_MS,
 } from './constants';
@@ -46,7 +48,7 @@ export class ExternalCurrencyService {
     @InjectRepository(Country)
     private countryRepository: Repository<Country>,
     private currenciesService: CurrenciesService,
-  ) { }
+  ) {}
 
   async getCurrencyInfo(countryName: string): Promise<CurrencyInfo> {
     const trimmedCountryName = countryName.trim();
@@ -137,6 +139,71 @@ export class ExternalCurrencyService {
 
     // Update DB
     await this.updateCurrencyRecord(code, symbol, rate, currencyName);
+
+    return currencyInfo;
+  }
+
+  async getCurrencyInfoByCode(currencyCode: string): Promise<CurrencyInfo> {
+    const code = currencyCode.toUpperCase();
+    const cacheKey = `currency_code:${code.toLowerCase()}`;
+    const cached = await this.cacheManager.get<CurrencyInfo>(cacheKey);
+    const now = Date.now();
+    if (cached && now - cached.timestamp < TWENTY_FOUR_HOURS_MS) {
+      return cached;
+    }
+    let symbol = '';
+    let name = '';
+    let rate: number = DEFAULT_CURRENCY.rate;
+
+    try {
+      // Fetch symbol and name from REST Countries by currency
+      const countryResponse = await firstValueFrom(
+        this.httpService.get<RestCountry[]>(
+          `${REST_COUNTRIES_CURRENCY_URL}/${code}`,
+        ),
+      );
+      const countries = countryResponse.data;
+      if (countries && countries.length > 0) {
+        const currInfo = countries[0].currencies?.[code];
+        if (currInfo) {
+          symbol = currInfo.symbol ?? '';
+          name = currInfo.name ?? '';
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to fetch symbol/name for ${code}:`, error);
+    }
+
+    try {
+      // Fetch exchange rate
+      if (code === BASE_EXCHANGE_CURRENCY) {
+        rate = 1;
+      } else {
+        const rateResponse = await firstValueFrom(
+          this.httpService.get<ExchangeRateResponse>(
+            `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
+          ),
+        );
+        const rateData = rateResponse.data;
+        if (rateData.rates && typeof rateData.rates[code] === 'number') {
+          rate = rateData.rates[code];
+        } else {
+          throw new Error(`No exchange rate found for ${code}`);
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to fetch rate for ${code}:`, error);
+    }
+
+    // Fallbacks
+    symbol = symbol || (CURRENCY_SYMBOL_MAP[code] ?? DEFAULT_CURRENCY.symbol);
+    name = name || (code === DEFAULT_CURRENCY.code ? 'US Dollar' : 'Unknown');
+
+    const currencyInfo: CurrencyInfo = { code, symbol, rate, timestamp: now };
+    await this.cacheManager.set(cacheKey, currencyInfo, CACHE_TTL_SECONDS);
+
+    // Update DB
+    await this.updateCurrencyRecord(code, symbol, rate, name);
 
     return currencyInfo;
   }
