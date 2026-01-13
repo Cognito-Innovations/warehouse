@@ -83,9 +83,9 @@ const useProductStore = create<ProductStore>((set, get) => ({
     
     set({
       activeRequestKey: cacheKey,
-      products: reset ? [] : get().products,
-      offset: reset ? 0 : get().offset,
-      hasMore: reset ? true : get().hasMore,
+      products: reset ? [] : state.products,
+      offset: reset ? 0 : state.offset,
+      hasMore: reset ? true : state.hasMore,
     });
 
     const currentOffset = reset || get().activeRequestKey !== cacheKey ? 0 : get().offset;
@@ -301,7 +301,15 @@ const useProductStore = create<ProductStore>((set, get) => ({
         isLoadingSlug: null
       });
     }
-  }
+  },
+
+  clearProductCache: () => set({
+    products: [],
+    cache: {},
+    offset: 0,
+    hasMore: true,
+    activeRequestKey: null
+  }),
 }));
 
 export default useProductStore;

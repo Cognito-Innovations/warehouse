@@ -5,6 +5,7 @@ import { Paper, Typography, IconButton } from "@mui/material";
 import { Edit } from "@mui/icons-material";
 
 import { useLocationStore } from "@/store/locationStore";
+import { useCartStore } from "@/store/cartStore";
 import { fetchUserAddresses, createUserAddress, updateUserAddress } from "@/lib/api.service";
 import AddAddressModal from "./AddAddressModal";
 import AddressSectionSkeletonLoader from "../skeleton-loader/AddressSectionSkeletonLoader";
@@ -24,6 +25,7 @@ export default function AddressSection({
   onAddressFetchComplete,
 }: AddressSectionProps) {
   const refreshLocation = useLocationStore((s) => s.refreshLocation);
+  const getCart = useCartStore(s => s.getCart);
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
@@ -95,6 +97,8 @@ export default function AddressSection({
       };
       const newAddress = await createUserAddress(apiData);
       await refreshLocation(userId);
+      const { currencyCode } = useLocationStore.getState();
+      await getCart(currencyCode);
       const formattedAddress: CartAddressData = {
         id: newAddress.id,
         ...addressData,
@@ -124,6 +128,8 @@ export default function AddressSection({
       };
       await updateUserAddress(addressId, apiData);
       await refreshLocation(userId);
+      const { currencyCode } = useLocationStore.getState();
+      await getCart(currencyCode);
       const formattedAddress: CartAddressData = {
         id: addressId,
         ...addressData,

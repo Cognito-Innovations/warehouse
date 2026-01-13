@@ -18,3 +18,7 @@ export const setCachedLocation = (
 ) => {
     localStorage.setItem(cacheKey, JSON.stringify(data));
 }
+
+export const clearCachedLocation = (cacheKey: string) => {
+  localStorage.removeItem(cacheKey);
+};

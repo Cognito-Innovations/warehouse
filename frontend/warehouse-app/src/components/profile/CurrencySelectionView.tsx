@@ -22,6 +22,7 @@ import { toast } from "sonner";
 
 import { useLocationStore } from "@/store/locationStore";
 import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import useProductStore from "@/store/productStore";
 import { getCurrencies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 
 interface Currency {
@@ -40,6 +41,8 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
     const { currencyCode } = useDetectUserLocation();
     const { user } = useAuth();
     const refreshLocation = useLocationStore((s) => s.refreshLocation);
+    const clearProductCache = useProductStore(s => s.clearProductCache);
+    const fetchProducts = useProductStore(s => s.fetchProducts);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [currencies, setCurrencies] = useState<Currency[]>([]);
@@ -112,6 +115,14 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                     currency_id: currency.id
                 });
                 await refreshLocation(user.id);
+
+                const state = useLocationStore.getState();
+                clearProductCache();
+                fetchProducts({
+                  currency: state.currencyCode,
+                  countryCode: state.countryCode,
+                  userId: user.id
+                }, true);
             }
             toast.success(`Currency updated to ${currency.name}`);
         } catch (error) {

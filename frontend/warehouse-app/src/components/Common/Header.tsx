@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge, Chip, CircularProgress } from "@mui/material";
 import { ArrowBack, Search, ShoppingCart, Menu as MenuIcon, Share } from "@mui/icons-material";
 
+import { useLocationStore } from "@/store/locationStore";
 import { useCartStore } from "@/store/cartStore";
 import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +41,7 @@ export default function Header({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, logout } = useAuth();
+  const { countryCode, refreshLocation, fetchLocation } = useLocationStore();
   const { searchQuery, setSearchQuery } = useProductStore();
   const { loading: cartLoading, cartProductQuantityCount } = useCartStore();
   
@@ -80,13 +82,22 @@ export default function Header({
   const handleLocationClose = () => setLocationAnchorEl(null);
 
   const [countryName, setCountryName] = useState<string>("");
-  const [countryCode, setCountryCode] = useState<string>("");
+
+  useEffect(() => {
+    const syncLocation = async () => {
+      if (user?.id) {
+        await refreshLocation(user.id);
+      } else {
+        await refreshLocation(undefined); 
+      }
+    };
+    syncLocation();
+  }, [user?.id, refreshLocation]);
 
   useEffect(() => {
     if (user?.id){
       const fetchCountryDetails = async () => {
-        const userPreferences = await getUserPreferences(user?.id);
-        setCountryCode(userPreferences?.courier?.country?.code || "");
+        const userPreferences = await getUserPreferences(user.id);
         setCountryName(userPreferences?.courier?.country?.name || "");
       };
       fetchCountryDetails();
@@ -124,6 +135,12 @@ export default function Header({
         return;
       }
     }
+
+    if (isCart) {
+      router.push("/");
+      return;
+    }
+
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
