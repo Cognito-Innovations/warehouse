@@ -65,7 +65,7 @@ export default function SignInForm({ callbackUrl }: SignInFormProps) {
     >
       <Box 
         sx={{ 
-          mb: 4, 
+          mb: 1, 
           display: "flex", 
           justifyContent: "center", 
           width: "100%",
@@ -76,7 +76,7 @@ export default function SignInForm({ callbackUrl }: SignInFormProps) {
           src="/palakart-text-logo.png"
           alt="Palakart"
           style={{ 
-            maxWidth: 220, 
+            maxWidth: 200, 
             height: "auto", 
             display: "block",
             backgroundColor: "transparent"
