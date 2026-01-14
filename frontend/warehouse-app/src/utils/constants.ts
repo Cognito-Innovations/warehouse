@@ -54,6 +54,7 @@ export const DEFAULT_IMG =
   "https://rukminim2.flixcart.com/fk-p-flap/108/108/image/eb75e5d9571bde1a.png?q=60";
 
 export const ASSISTED_SHOPPING_PRODUCT_LINK_KEY = "assisted_shopping_product_link";
+export const ASSISTED_SHOPPING_VIRTUAL_ADDRESS_KEY = "assisted_shopping_virtual_address";
 
 export const orderStatusPhrases: { [key: string]: string } = {
   delivered: "Delivered",
@@ -68,6 +69,11 @@ export const DEFAULT_CURRENCY_INFO = {
   code: "USD",
   symbol: "$",
   rate: 1.00,
+}
+
+export const DEFAULT_LOCATION = {
+  countryName: "United States of Ameria",
+  countryCode: "US"
 }
 
 export const INR_CURRENCY = {

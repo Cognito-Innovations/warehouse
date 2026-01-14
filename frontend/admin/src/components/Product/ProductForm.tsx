@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
+import { Box, TextField, MenuItem, Stack, Button, CircularProgress,
+  // Chip
+} from "@mui/material";
 
-import { createProduct, getCargoOptions, getCategories, getCountries, getMeasurements, getSubCategories, updateEcommerceProduct } from "../../services/api.services";
+import { createProduct, getCargoOptions, getCategories,
+  // getCountries,
+  getMeasurements, getSubCategories, updateEcommerceProduct } from "../../services/api.services";
 import ImageUpload from "../common/ImageUpload";
-import { arraysEqual } from "../../utils/arrayEqual";
+// import { arraysEqual } from "../../utils/arrayEqual";
 import { statusOptions } from "../../utils/constants";
-import type { CargoOption, Country, ProductPayload } from "../../types";
+import type { CargoOption,
+  // Country,
+  ProductPayload } from "../../types";
 
 export interface Category { id: string; name: string; }
 interface SubCategoryItem { id: string; name: string; category: { id: string }; }
@@ -29,7 +35,7 @@ const defaultFormData: ProductPayload = {
   discount_percentage: 0,
   unit_value: 0,
   measurement_id: "",
-  country_ids: [],
+  // country_ids: [],
   cargo_option_id: "",
   stock_quantity: 0,
   is_active: true,
@@ -40,7 +46,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
   const [categories, setCategories] = useState<Category[]>([]);
   const [allSubCategories, setAllSubCategories] = useState<SubCategoryItem[]>([]);
   const [filteredSubCategories, setFilteredSubCategories] = useState<SubCategoryItem[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
+  // const [countries, setCountries] = useState<Country[]>([]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [cargoOptions, setCargoOptions] = useState<CargoOption[]>([]);
 
@@ -50,17 +56,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
   const fetchDropdownData = async () => {
     try {
       setFetching(true);
-      const [catData, subCatData, countryData, measurementData, cargoOptionsData] =
+      const [catData, subCatData,
+        // countryData,
+        measurementData, cargoOptionsData] =
         await Promise.all([
           getCategories(),
           getSubCategories(),
-          getCountries(),
+          // getCountries(),
           getMeasurements(),
           getCargoOptions(),
         ]);
       setCategories(catData);
       setAllSubCategories(subCatData);
-      setCountries(countryData);
+      // setCountries(countryData);
       setMeasurements(measurementData);
       setCargoOptions(cargoOptionsData);
     } catch (err) {
@@ -107,9 +115,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleCountryDelete = (countryId: string) => {
-    handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
-  };
+  // const handleCountryDelete = (countryId: string) => {
+  //   handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
+  // };
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.slug || !formData.image_url) return;
@@ -118,9 +126,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
       const hasChanged = Object.keys(defaultFormData).some((key) => {
         const k = key as keyof ProductPayload;
 
-        if (k === "country_ids") {
-          return !arraysEqual(initialData.country_ids || [], formData.country_ids);
-        }
+        // if (k === "country_ids") {
+        //   return !arraysEqual(initialData.country_ids || [], formData.country_ids);
+        // }
 
         if (k === "id") return false;
 
@@ -166,7 +174,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
     formData.unit_value > 0 &&
     formData.measurement_id &&
     formData.cargo_option_id &&
-    formData.country_ids.length > 0 &&
+    // formData.country_ids.length > 0 &&
     formData.stock_quantity > 0;
 
   const loaderBox = (
@@ -349,7 +357,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
       </Box>
 
       <Box sx={{ display: 'flex', gap: 2.5, mb: 2.5, flexDirection: { xs: 'column', sm: 'row' } }}>
-        <TextField
+        {/* TODO: Uncomment the country selection when it's required */}
+        {/* <TextField
           label="Countries"
           select
           value={formData.country_ids}
@@ -399,7 +408,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
               {c.name}
             </MenuItem>
           ))}
-        </TextField>
+        </TextField> */}
 
         <TextField
           label="Cargo Type"

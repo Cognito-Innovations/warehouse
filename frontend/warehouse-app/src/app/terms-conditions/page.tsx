@@ -404,7 +404,7 @@ export default function TermsConditionsPage() {
         </Typography>
         <Box component="ul" sx={{ pl: 4 }}>
           <Typography component="li" variant="body1">
-            Email: <MuiLink href="mailto:palakart@gmail.com">palakart@gmail.com</MuiLink>
+            Email: <MuiLink href="mailto: team.palakart@gmail.com"> team.palakart@gmail.com</MuiLink>
           </Typography>
           <Typography component="li" variant="body1">Phone: +919994126566</Typography>
         </Box>

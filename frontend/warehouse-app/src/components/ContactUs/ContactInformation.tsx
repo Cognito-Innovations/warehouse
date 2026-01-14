@@ -41,7 +41,7 @@ export default function ContactInformation() {
               Email Address
             </Typography>
             <MuiLink
-              href="https://mail.google.com/mail/?view=cm&fs=1&to=palakart@gmail.com"
+              href="https://mail.google.com/mail/?view=cm&fs=1&to= team.palakart@gmail.com"
               target="_blank"
               rel="noopener noreferrer"
               underline="none"
@@ -59,7 +59,7 @@ export default function ContactInformation() {
                 },
               }}
             >
-              palakart@gmail.com
+              team.palakart@gmail.com
             </MuiLink>
           </Box>
         </Box>

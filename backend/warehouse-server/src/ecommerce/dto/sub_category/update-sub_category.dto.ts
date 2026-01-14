@@ -1,10 +1,10 @@
 import {
-  IsArray,
+  // IsArray,
   IsBoolean,
   IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
+  // IsUUID,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -20,10 +20,11 @@ export class UpdateEcommerceSubCategoryDto {
   @IsOptional()
   slug?: string;
 
-  @IsArray()
-  @IsUUID('all', { each: true })
-  @IsOptional()
-  country_ids?: string[];
+  // TODO: Uncomment the country filtering when it's required
+  // @IsArray()
+  // @IsUUID('all', { each: true })
+  // @IsOptional()
+  // country_ids?: string[];
 
   @Type(() => Number)
   @IsNumber()

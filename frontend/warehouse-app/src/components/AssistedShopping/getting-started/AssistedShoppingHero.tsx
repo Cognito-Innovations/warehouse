@@ -57,7 +57,7 @@ export const AssistedShoppingHero = () => {
             lineHeight: 1.6
           }}
         >
-          Paste a product link from any store below and click "Search" to get started.
+          Choose a virtual address or paste a product link below to get started.
         </Typography>
       </Container>
     </Box>

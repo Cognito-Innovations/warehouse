@@ -249,6 +249,11 @@ export const getCountries = async () => {
   return res.data;
 };
 
+export const getSupportedCountries = async () => {
+  const res = await authenticatedApi.get("/supported-countries");
+  return res.data;
+};
+
 export const createUserPreferences = async (data: any) => {
   const res = await authenticatedApi.post("/user-preferences", data);
   return res.data;

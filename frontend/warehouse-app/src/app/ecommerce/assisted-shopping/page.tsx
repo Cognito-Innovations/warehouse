@@ -5,8 +5,8 @@ import React, { useRef, useCallback, useEffect } from "react";
 import useCategoryStore from "@/store/categoryStore";
 import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout";
-import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
-import { ecommerceData } from "@/data/ecommerceData";
+// import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
+// import { ecommerceData } from "@/data/ecommerceData";
 
 import CategorySection from "@/components/ecommerce/category_temp/CategorySection";
 import AssistedShoppingLandingContent from "@/components/AssistedShopping/getting-started/AssistedShoppingLandingContent";
@@ -36,25 +36,25 @@ export default function AssistedShoppingPage() {
     }
   }, [currencyCode, countryCode, initializeEcommerceData]);
 
-  const handleRefresh = () => {
-    hasFetched.current = false;
-    initializeEcommerceData(currencyCode, countryCode);
-  };
+  // const handleRefresh = () => {
+  //   hasFetched.current = false;
+  //   initializeEcommerceData(currencyCode, countryCode);
+  // };
 
   const layoutProps = {
     locationData: { countryCode: countryCode },
     categories: categories,
   };
 
-  if (categories.length === 0) {
-    return (
-      <EcommerceSkeletonLoader
-        networkError={ecommerceData.messages.networkError}
-        refreshButtonLabel={ecommerceData.messages.refreshButton}
-        onRefresh={handleRefresh}
-      />
-    );
-  }
+  // if (categories.length === 0) {
+  //   return (
+  //     <EcommerceSkeletonLoader
+  //       networkError={ecommerceData.messages.networkError}
+  //       refreshButtonLabel={ecommerceData.messages.refreshButton}
+  //       onRefresh={handleRefresh}
+  //     />
+  //   );
+  // }
 
   return (
     <EcommercePageLayout {...layoutProps}>

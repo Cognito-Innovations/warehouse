@@ -11,14 +11,16 @@ import Modal from "../components/common/Modal";
 import CategoryForm from "../components/Category/CategoryForm";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import type { ColumnDefinition } from "../types/table";
-import type { CategoryPayload, Country } from "../types";
+import type { CategoryPayload,
+  // Country
+} from "../types";
 
 interface CategoryRow {
   id: string;
   name: string;
   slug: string;
   discount_percentage: number,
-  countries: Country[],
+  // countries: Country[],
   products: number;
   image_url: string;
   description: string;
@@ -43,7 +45,7 @@ const Category: React.FC = () => {
         name: item.name,
         slug: item.slug,
         discount_percentage: parseFloat(item.discount_percentage),
-        countries: item.countries || [],
+        // countries: item.countries || [],
         products: item.products_count ?? 0,
         image_url: item.image_url || "",
         description: item.description || "",
@@ -70,7 +72,7 @@ const Category: React.FC = () => {
       name: category.name,
       slug: category.slug,
       discount_percentage: category.discount_percentage,
-      country_ids: category.countries.map((country: Country) => country.id),
+      // country_ids: category.countries.map((country: Country) => country.id),
       is_active: category.status === "Active",
       image_url: category.image_url || "",
       description: category.description || "",
@@ -118,17 +120,18 @@ const Category: React.FC = () => {
       cell: (row) => <Typography variant="body2">{row.name}</Typography>,
       width: "25%",
     },
-    {
-      header: "Countries",
-      cell: (row) => (
-        <Typography variant="body2">
-          {row.countries && row.countries.length > 0
-            ? row.countries.map((country) => country.name).join(", ")
-            : "N/A"}
-        </Typography>
-      ),
-      width: "20%",
-    },
+    // TODO: Uncomment the country selection when it's required
+    // {
+    //   header: "Countries",
+    //   cell: (row) => (
+    //     <Typography variant="body2">
+    //       {row.countries && row.countries.length > 0
+    //         ? row.countries.map((country) => country.name).join(", ")
+    //         : "N/A"}
+    //     </Typography>
+    //   ),
+    //   width: "20%",
+    // },
     {
       header: "Slug",
       cell: (row) => <Typography variant="body2">{row.slug}</Typography>,

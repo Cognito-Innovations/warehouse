@@ -5,7 +5,7 @@ import {
   IsPositive,
   Min,
   IsBoolean,
-  IsArray,
+  // IsArray,
   IsOptional,
 } from 'class-validator';
 
@@ -30,10 +30,11 @@ export class UpdateEcommerceProductDto {
   @IsOptional()
   sub_category_id?: string;
 
-  @IsArray()
-  @IsUUID('all', { each: true })
-  @IsOptional()
-  country_ids?: string[];
+  // TODO: Uncomment the country filtering when it's required
+  // @IsArray()
+  // @IsUUID('all', { each: true })
+  // @IsOptional()
+  // country_ids?: string[];
 
   @IsString()
   @IsOptional()

@@ -33,7 +33,7 @@ export default function PrivacyPolicyPage() {
             Registered address: Building No./Flat No. 4/224, Perumagoundampatti, Moolakkadai, Elampillai Post, Salem Taluk, Ilampillai, Salem, Tamil Nadu 637502
           </Typography>
           <Typography component="li" variant="body1">
-            Privacy contact: <MuiLink href="mailto:palakart@gmail.com">palakart@gmail.com</MuiLink>
+            Privacy contact: <MuiLink href="mailto: team.palakart@gmail.com"> team.palakart@gmail.com</MuiLink>
           </Typography>
         </Box>
       </Box>
@@ -280,10 +280,10 @@ export default function PrivacyPolicyPage() {
         </Typography>
         <Box component="ul" sx={{ pl: 4 }}>
           <Typography component="li" variant="body1">
-            Privacy requests: <MuiLink href="mailto:palakart@gmail.com">palakart@gmail.com</MuiLink>
+            Privacy requests: <MuiLink href="mailto: team.palakart@gmail.com"> team.palakart@gmail.com</MuiLink>
           </Typography>
           <Typography component="li" variant="body1">
-            By email: <MuiLink href="mailto:palakart@gmail.com">palakart@gmail.com</MuiLink>
+            By email: <MuiLink href="mailto: team.palakart@gmail.com"> team.palakart@gmail.com</MuiLink>
           </Typography>
           <Typography component="li" variant="body1">By phone number: +919994126566</Typography>
         </Box>

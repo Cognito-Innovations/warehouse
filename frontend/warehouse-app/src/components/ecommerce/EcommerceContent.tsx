@@ -190,7 +190,9 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
     );
   }
 
-  if (categories.length === 0 || (error && isNetworkError)) {
+  if (
+    // categories.length === 0 || 
+    (error && isNetworkError)) {
     return (
       <EcommerceSkeletonLoader
         {...(error && isNetworkError

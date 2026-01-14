@@ -196,7 +196,8 @@ export interface CategoryPayload {
   name: string;
   slug: string;
   discount_percentage: number,
-  country_ids: string[],
+  // TODO: Uncomment the country selection when it's required
+  // country_ids: string[],
   is_active: boolean;
   image_url: string;
   description: string;
@@ -209,7 +210,8 @@ export interface SubCategoryPayload {
   slug: string;
   // image_url: string;
   discount_percentage: number,
-  country_ids: string[],
+  // TODO: Uncomment the country selection when it's required
+  // country_ids: string[],
   is_active: boolean;
 };
 
@@ -225,7 +227,8 @@ export interface ProductPayload {
   image_url: string;
   unit_value: number;
   measurement_id: string;
-  country_ids: string[],
+  // TODO: Uncomment the country selection when it's required
+  // country_ids: string[],
   cargo_option_id: string;
   stock_quantity: number;
   is_active: boolean;
