@@ -22,8 +22,9 @@ export enum CartStatus {
 export interface ComputedCart {
   items: ComputedCartItem[];
   total_amount: number;
-  discount_amount: number;
+  // discount_amount: number;
   final_amount: number;
+  total_delivery_fee?: number;
 }
 
 @Entity('ecommerce_carts')

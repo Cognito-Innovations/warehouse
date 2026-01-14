@@ -3,10 +3,10 @@ import { INR_CURRENCY } from "./constants";
 
 export interface CartTotals {
     subtotal: number;
-    discount: number;
+    // discount: number;
     deliveryFee: number;
-    taxes: number;
-    serviceCharge: number;
+    // taxes: number;
+    // serviceCharge: number;
     total: number;
 }
 
@@ -26,32 +26,37 @@ export const calculateCartTotals = (
     if (selectedItems.length === 0)
         return emptyTotals();
 
-    let { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } = getThresholdAndFees(currency);
+    // const { threshold, deliveryFee: deliveryBase,
+    //     // serviceCharge: serviceBase
+    // } = getThresholdAndFees(currency);
 
     let subtotal = 0;
-    let discount = 0;
+    // let discount = 0;
+    let deliveryFee = 0;
 
     selectedItems.forEach((item) => {
         const p = getCartItemPricingSummary(item, currencySymbol);
 
         subtotal += p.originalUnitPrice * p.quantity;
-        discount += p.discountTotal;
+        // discount += p.discountTotal;
+        deliveryFee += item.delivery_fee || 0;
     });
 
-    const discountedSubTotal = subtotal - discount;
+    const discountedSubTotal = subtotal;
 
-    const deliveryFee = discountedSubTotal >= threshold ? 0 : deliveryBase;
-    const taxes = discountedSubTotal * 0.02; // 2% tax
-    const serviceCharge = serviceBase;
+    // const deliveryFee = discountedSubTotal >= threshold ? 0 : deliveryBase;
+    // const taxes = discountedSubTotal * 0.02; 2% tax
+    // const serviceCharge = serviceBase;
 
-    const total = discountedSubTotal + deliveryFee + taxes + serviceCharge;
+    const total = discountedSubTotal + deliveryFee
+    //  + taxes + serviceCharge;
 
     return {
         subtotal: round(subtotal),
-        discount: round(discount),
+        // discount: round(discount),
         deliveryFee: round(deliveryFee),
-        taxes: round(taxes),
-        serviceCharge: round(serviceCharge),
+        // taxes: round(taxes),
+        // serviceCharge: round(serviceCharge),
         total: round(total),
     };
 };
@@ -60,10 +65,10 @@ const round = (value: number) => Number(value.toFixed(2));
 
 const emptyTotals = (): CartTotals => ({
     subtotal: 0,
-    discount: 0,
+    // discount: 0,
     deliveryFee: 0,
-    taxes: 0,
-    serviceCharge: 0,
+    // taxes: 0,
+    // serviceCharge: 0,
     total: 0,
 });
 

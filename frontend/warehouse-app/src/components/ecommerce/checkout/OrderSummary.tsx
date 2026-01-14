@@ -15,16 +15,17 @@ import { OrderItemsList } from "./OrderItemsList";
 import { OrderTotals } from "./OrderTotals";
 import { PaymentButton } from "./PaymentButton";
 import { PayPalButtonContainer } from "./PayPalButtonContainer";
+import { ProcessingPaymentDialog } from "./ProcessingPaymentDialog";
 import { CartItem } from "@/types/ecommerce";
 import { convertToUSD } from "@/utils/priceUtils";
 import { DEFAULT_CURRENCY_INFO } from "@/utils/constants";
 
 interface OrderTotalsData {
   subtotal: number;
-  discount: number;
+  // discount: number;
   deliveryFee: number;
-  taxes: number;
-  serviceCharge: number;
+  // taxes: number;
+  // serviceCharge: number;
   total: number;
 }
 
@@ -48,8 +49,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 }) => {
   const { removePurchasedProducts } = useCartStore();
   const { loading: authLoading } = useAuth();
-  const { currencyCode, currencyRate } = useDetectUserLocation();
+  const { currencyCode, countryCode, currencyRate } = useDetectUserLocation();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isFinalizingPayment, setIsFinalizingPayment] = useState(false);
 
   const formatPriceWithOptionalLocal = useCallback((amount: number) => {
     const usdAmount = convertToUSD(amount, currencyCode, currencyRate);
@@ -66,6 +68,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const { showPayPal, initializePayment, resetPayment } = usePayPalPayment({
     onSuccess: async () => {
       try {
+        setIsFinalizingPayment(true);
+
         const purchasedIds = items.map((item) => item.product_id!);
         removePurchasedProducts(purchasedIds);
         onOrderSuccess?.();
@@ -73,6 +77,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
         resetPayment();
       } catch (error) {
         toast.error("Order update error");
+      } finally {
+        setIsFinalizingPayment(false);
       }
     },
   });
@@ -85,7 +91,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
     resetPayment();
 
-    const paymentConfig = await initiateOrder(items, shippingAddress);
+    const paymentConfig = await initiateOrder(items, shippingAddress, countryCode);
 
     if (paymentConfig) {
       initializePayment(paymentConfig);
@@ -150,10 +156,10 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
           <OrderTotals
             subtotal={totals.subtotal}
-            discount={totals.discount}
+            // discount={totals.discount}
             deliveryFee={totals.deliveryFee}
-            taxes={totals.taxes}
-            serviceCharge={totals.serviceCharge}
+            // taxes={totals.taxes}
+            // serviceCharge={totals.serviceCharge}
             total={totals.total}
             formatPrice={formatPriceWithOptionalLocal}
           />
@@ -190,6 +196,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
         onContinueShopping={() => setShowSuccessModal(false)}
         onViewOrders={() => setShowSuccessModal(false)}
       />
+
+      <ProcessingPaymentDialog open={isFinalizingPayment} />
     </Box>
   );
 };

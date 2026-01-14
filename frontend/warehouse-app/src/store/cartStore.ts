@@ -61,12 +61,12 @@ export const useCartStore = create<CartStore>()(
         return item?.quantity || 0;
       },
 
-      getLineId: async (productId: string, currency?: string) => {
+      getLineId: async (productId: string, currency?: string, countryCode?: string) => {
         const token = getAuthToken();
         if (!token) return undefined;
 
         try {
-          const serverCart: any = await ecommerceService.getCart(currency);
+          const serverCart: any = await ecommerceService.getCart(currency, countryCode);
           const serverItem = (serverCart.items ?? []).find((i: any) => i.product_id === productId);
           return serverItem?.id || undefined;
         } catch (error) {
@@ -75,12 +75,12 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      refreshCart: async (currency?: string) => {
+      refreshCart: async (currency?: string, countryCode?: string) => {
         const token = getAuthToken();
         if (!token) return get().cartProducts;
 
         try {
-          const serverCart: any = await ecommerceService.getCart(currency);
+          const serverCart: any = await ecommerceService.getCart(currency, countryCode);
           const serverItems = serverCart.items ?? [];
           const currentState = get();
           const mergedItems = serverItems.map((serverItem: any) => {
@@ -100,7 +100,7 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      getCart: async (currency?: string) => {
+      getCart: async (currency?: string, countryCode?: string) => {
         const token = getAuthToken();
         const state = get();
 
@@ -109,9 +109,9 @@ export const useCartStore = create<CartStore>()(
             const hasLocalItemsToSync = state.cartProducts.length > 0;
 
             if (hasLocalItemsToSync && state.hasUnsyncedChanges) {
-              await state.syncCart(currency);
+              await state.syncCart(currency, countryCode);
             } else {
-              await state.refreshCart(currency);
+              await state.refreshCart(currency, countryCode);
             }
 
             return get().cartProducts;
@@ -119,7 +119,7 @@ export const useCartStore = create<CartStore>()(
           } catch (error) {
             console.error("Failed to fetch/sync cart:", error);
             try {
-              await state.refreshCart(currency);
+              await state.refreshCart(currency, countryCode);
               return get().cartProducts;
             } catch (innerError) {
               console.error("Fallback failed:", innerError);
@@ -156,14 +156,14 @@ export const useCartStore = create<CartStore>()(
         return [];
       },
 
-      syncCart: async (currency?: string) => {
+      syncCart: async (currency?: string, countryCode?: string) => {
         const token = getAuthToken();
         if (!token) return;
         
         set({ isSyncing: true });
 
         try {
-          const serverCart: any = await ecommerceService.getCart(currency);
+          const serverCart: any = await ecommerceService.getCart(currency, countryCode);
           const serverItems: LocalCartItem[] = serverCart.items ?? [];
           const localCart = get().cartProducts;
 
@@ -199,7 +199,7 @@ export const useCartStore = create<CartStore>()(
             await Promise.allSettled(toAdd.map(async (item) => {
               if (item.product_id) {
                 try {
-                  await ecommerceService.addToCart({ product_id: item.product_id, quantity: item.quantity }, currency);
+                  await ecommerceService.addToCart({ product_id: item.product_id, quantity: item.quantity }, currency, countryCode);
                 } catch (e) {
                   console.warn(`Failed to sync add item ${item.product_id}`, e);
                 }
@@ -214,7 +214,7 @@ export const useCartStore = create<CartStore>()(
                 if (item.id) {
                   lineId = item.id;
                 } else {
-                  const fetchedId = await get().getLineId(item.product_id, currency);
+                  const fetchedId = await get().getLineId(item.product_id, currency, countryCode);
                   if (!fetchedId) {
                     console.warn(`Skipping sync update for ${item.product_id}: no line ID found`);
                     return;
@@ -225,7 +225,8 @@ export const useCartStore = create<CartStore>()(
                   await ecommerceService.updateCartItem(
                     lineId, 
                     { quantity: item.quantity }, 
-                    currency
+                    currency,
+                    countryCode
                   );
                 } catch (e) {
                   console.warn(`Failed to sync update item ${item.product_id}`, e);
@@ -238,7 +239,7 @@ export const useCartStore = create<CartStore>()(
             await Promise.allSettled(toRemove.map(async (item: any) => {
               if (item.id) {
                 try {
-                  await ecommerceService.removeFromCart(item.id, currency);
+                  await ecommerceService.removeFromCart(item.id, currency, countryCode);
                 } catch (e) {
                   console.warn(`Failed to sync remove item ${item.product_id}`, e);
                 }
@@ -246,10 +247,10 @@ export const useCartStore = create<CartStore>()(
             }));
           }
 
-          await get().refreshCart(currency);
+          await get().refreshCart(currency, countryCode);
         } catch (error) {
           console.error("Sync Cart General Error:", error);
-          await get().refreshCart(currency);
+          await get().refreshCart(currency, countryCode);
         } finally {
           set({ isSyncing: false });
         }
@@ -262,6 +263,7 @@ export const useCartStore = create<CartStore>()(
         product: EcommerceProduct,
         quantity: number,
         currency?: string,
+        countryCode?: string,
       ) => {
         // Add or Increase the quantity of product to cart
         if (quantity <= 0) {
@@ -319,7 +321,7 @@ export const useCartStore = create<CartStore>()(
             if (oldItem?.id) {
               lineId = oldItem.id;
             } else {
-              const fetchedLineId = await get().getLineId(product_id, currency);
+              const fetchedLineId = await get().getLineId(product_id, currency, countryCode);
               if (!fetchedLineId) {
                 set((s) => {
                   const cart = [...s.cartProducts];
@@ -337,12 +339,14 @@ export const useCartStore = create<CartStore>()(
             await ecommerceService.updateCartItem(
               lineId, 
               { quantity: updatedCart[existingIndex].quantity }, 
-              currency
+              currency,
+              countryCode
             );
           } else {
             await ecommerceService.addToCart(
               { product_id, quantity }, 
-              currency
+              currency,
+              countryCode
             );
           }
         } catch (error) {
@@ -374,7 +378,8 @@ export const useCartStore = create<CartStore>()(
       decreaseProductQty: async (
         product: EcommerceProduct,
         quantity: number,
-        currency?: string
+        currency?: string,
+        countryCode?: string,
       ) => {
         // Decrease the quantity of the product from the cart
         if (quantity <= 0) return;
@@ -393,7 +398,7 @@ export const useCartStore = create<CartStore>()(
         const newQuantity = oldQuantity - quantity;
 
         if (newQuantity <= 0) {
-          await state.removeProductFromCart(product_id, currency);
+          await state.removeProductFromCart(product_id, currency, countryCode);
           return;
         }
 
@@ -409,7 +414,7 @@ export const useCartStore = create<CartStore>()(
         if (existing.id) {
           lineId = existing.id;
         } else {
-          const fetchedLineId = await get().getLineId(product_id, currency);
+          const fetchedLineId = await get().getLineId(product_id, currency, countryCode);
           if (!fetchedLineId) {
             set((s) => {
               const cart = [...s.cartProducts];
@@ -429,7 +434,8 @@ export const useCartStore = create<CartStore>()(
            await ecommerceService.updateCartItem(
              lineId, 
              { quantity: newQuantity }, 
-             currency
+             currency,
+             countryCode
            );
         } catch (error) {
           console.error("Decrease cart qty failed", error);
@@ -449,7 +455,7 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      removeProductFromCart: async (product_id: string, currency?: string) => {
+      removeProductFromCart: async (product_id: string, currency?: string, countryCode?: string) => {
         // Completely remove product from the cart
         const token = getAuthToken();
 
@@ -471,7 +477,7 @@ export const useCartStore = create<CartStore>()(
         if (item.id) {
           lineId = item.id;
         } else {
-          const fetchedLineId = await get().getLineId(product_id, currency);
+          const fetchedLineId = await get().getLineId(product_id, currency, countryCode);
           if (!fetchedLineId) {
             set({ cartProducts: [...updatedCart, item], hasUnsyncedChanges: false });
             toast.error("Failed to remove item from cart. Please try again.");
@@ -481,7 +487,7 @@ export const useCartStore = create<CartStore>()(
         }
 
         try {
-          await ecommerceService.removeFromCart(lineId, currency);
+          await ecommerceService.removeFromCart(lineId, currency, countryCode);
         } catch (error) {
           console.error("Failed to remove from server:", error);
           toast.error("Failed to remove item from cart. Please try again.");
@@ -492,33 +498,33 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      incrementCartQuantity: async (product: EcommerceProduct, currency?: string) => {
+      incrementCartQuantity: async (product: EcommerceProduct, currency?: string, countryCode?: string) => {
         // Increments the quantity of a product in the cart by 1 but only if the current quantity is below the available stock
         const state = get();
         const currentQuantity = state.getItemQuantity(product.id);
         if (currentQuantity >= product.stock_quantity) {
           return;
         }
-        await state.addOrIncreaseQty(product, 1, currency);
+        await state.addOrIncreaseQty(product, 1, currency, countryCode);
       },
 
-      decrementCartQuantity: async (product: EcommerceProduct, currency?: string) => {
+      decrementCartQuantity: async (product: EcommerceProduct, currency?: string, countryCode?: string) => {
         // Decrements the quantity of a product in the cart by 1 but only if the current quantity is greater than 0
         const state = get();
         const currentQuantity = state.getItemQuantity(product.id);
         if (currentQuantity <= 0) {
           return;
         }
-        await state.decreaseProductQty(product, 1, currency);
+        await state.decreaseProductQty(product, 1, currency, countryCode);
       },
 
-      setCartItemQuantity: async (productId: string, quantity: number, currency?: string) => {
+      setCartItemQuantity: async (productId: string, quantity: number, currency?: string, countryCode?: string) => {
         // Sets the exact quantity for a specific product in the cart to the provided value
         // If the new quantity is <= 0 it removes the item entirely
         // If the item isn't found in the cart, it logs warning
         const state = get();
         if (quantity <= 0) {
-          await state.removeProductFromCart(productId, currency);
+          await state.removeProductFromCart(productId, currency, countryCode);
           return;
         }
 
@@ -540,7 +546,7 @@ export const useCartStore = create<CartStore>()(
         if (existing.id) {
           lineId = existing.id;
         } else {
-          const fetchedLineId = await get().getLineId(productId, currency);
+          const fetchedLineId = await get().getLineId(productId, currency, countryCode);
           if (!fetchedLineId) {
             set((s) => {
               const cart = [...s.cartProducts];
@@ -559,7 +565,8 @@ export const useCartStore = create<CartStore>()(
           await ecommerceService.updateCartItem(
             lineId, 
             { quantity }, 
-            currency
+            currency,
+            countryCode
           );
         } catch (error) {
           console.error("Failed to set cart quantity:", error);

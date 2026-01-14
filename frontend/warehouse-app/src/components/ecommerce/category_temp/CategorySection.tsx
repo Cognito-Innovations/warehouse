@@ -77,6 +77,7 @@ export default function CategorySection() {
         <IconButton
           onClick={handleScroll}
           sx={{
+            display: { xs: "none", md: "flex" }, 
             position: "absolute",
             right: { xs: -10, md: -20 },
             top: { xs: "50%", md: "20px" },

@@ -24,6 +24,7 @@ export const useOrderPayment = () => {
     async (
       items: CartItem[],
       shippingAddress: string,
+      countryCode?: string,
     ): Promise<PayPalPaymentConfig | null> => {
       if (!items.length || !shippingAddress) {
         toast.error("No items to checkout.");
@@ -47,7 +48,7 @@ export const useOrderPayment = () => {
           product_ids: orderedProductIds,
         };
 
-        const initiateResponse = await ecommerceService.initiateOrder(orderData);
+        const initiateResponse = await ecommerceService.initiateOrder(orderData, countryCode);
         const { orderId, paymentSessionId } = initiateResponse;
 
         if (!paymentSessionId) {

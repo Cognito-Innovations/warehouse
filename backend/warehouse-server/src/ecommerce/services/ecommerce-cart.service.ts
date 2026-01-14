@@ -17,6 +17,7 @@ import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { DEFAULT_CURRENCY } from '../../shared/constants.js';
+import { DeliveryFeeService } from 'src/shared/get-delivery-fee.service';
 
 @Injectable()
 export class CartService {
@@ -28,12 +29,19 @@ export class CartService {
     @InjectRepository(EcommerceProduct)
     private readonly productRepository: Repository<EcommerceProduct>,
     private readonly userPreferencesService: UserPreferencesService,
+    private readonly deliveryFeeService: DeliveryFeeService,
   ) {}
 
   private async findActiveCart(userId: string): Promise<EcommerceCart | null> {
     return await this.cartRepository.findOne({
       where: { user_id: userId, status: CartStatus.ACTIVE },
-      relations: ['items', 'items.product', 'items.product.category', 'user'],
+      relations: [
+        'items',
+        'items.product',
+        'items.product.category',
+        'items.product.measurement',
+        'user',
+      ],
       select: {
         user: {
           id: true,
@@ -86,6 +94,7 @@ export class CartService {
     userId: string,
     addToCartDto: AddToCartDto,
     currency?: string,
+    countryCode?: string,
   ): Promise<ComputedCart> {
     const { product_id, quantity } = addToCartDto;
 
@@ -102,6 +111,7 @@ export class CartService {
     // Check if product exists
     const product = await this.productRepository.findOne({
       where: { id: product_id },
+      select: ['id', 'price', 'stock_quantity', 'is_active'],
     });
 
     // Check if product is already in cart
@@ -127,7 +137,7 @@ export class CartService {
       await this.cartItemRepository.save(cartItem);
     }
 
-    return this.getCart(userId, currency);
+    return this.getCart(userId, currency, countryCode);
   }
 
   async updateCartItem(
@@ -135,6 +145,7 @@ export class CartService {
     itemId: string,
     updateCartItemDto: UpdateCartItemDto,
     currency?: string,
+    countryCode?: string,
   ): Promise<ComputedCart> {
     const { quantity } = updateCartItemDto;
 
@@ -164,13 +175,14 @@ export class CartService {
 
     await this.cartItemRepository.save(cartItem);
 
-    return this.getCart(userId, currency);
+    return this.getCart(userId, currency, countryCode);
   }
 
   async removeFromCart(
     userId: string,
     itemId: string,
     currency?: string,
+    countryCode?: string,
   ): Promise<ComputedCart> {
     let cart = await this.findActiveCart(userId);
     if (!cart) {
@@ -182,12 +194,12 @@ export class CartService {
 
     // If item doesn't exist, it might have been already deleted (idempotent operation)
     if (!cartItem) {
-      return this.getCart(userId, currency);
+      return this.getCart(userId, currency, countryCode);
     }
 
     await this.cartItemRepository.remove(cartItem);
 
-    return this.getCart(userId, currency);
+    return this.getCart(userId, currency, countryCode);
   }
 
   async clearCart(userId: string): Promise<void> {
@@ -201,38 +213,46 @@ export class CartService {
   async getCart(
     userId: string,
     currency?: string,
+    countryCode?: string,
   ): Promise<ComputedCart & { currency?: string }> {
     let cart = await this.findActiveCart(userId);
     if (!cart) cart = await this.createCart(userId);
 
-    const items: ComputedCartItem[] = (cart.items ?? []).map((item) => {
-      const price = Number(item.product?.price ?? 0);
-      const discountPerc = Number(item.product?.discount_percentage ?? 0);
+    const items: ComputedCartItem[] = await Promise.all(
+      (cart.items ?? []).map(async (item) => {
+        const price = Number(item.product?.price ?? 0);
+        const weightPerUnit = this.deliveryFeeService.getWeightInKg(
+          Number(item.product?.unit_value ?? 0),
+          item.product?.measurement?.label ?? 'kg',
+        );
+        const totalWeight = weightPerUnit * item.quantity;
+        const delivery_fee = await this.deliveryFeeService.getDeliveryFee(
+          totalWeight,
+          countryCode!,
+        );
 
-      const discountPerUnit = (price * discountPerc) / 100;
-      const unitPrice = price - discountPerUnit;
-
-      return {
-        ...item,
-        unit_price: unitPrice,
-        total_price: unitPrice * item.quantity,
-        discount_amount: discountPerUnit * item.quantity,
-        product: item.product ?? null,
-      };
-    });
+        return {
+          ...item,
+          unit_price: price,
+          total_price: price * item.quantity,
+          delivery_fee,
+          product: item.product ?? null,
+        };
+      }),
+    );
 
     const totalAmount = items.reduce((sum, it) => sum + it.total_price, 0);
-    const totalDiscount = items.reduce(
-      (sum, it) => sum + it.discount_amount,
+    const totalDeliveryFee = items.reduce(
+      (sum, it) => sum + it.delivery_fee,
       0,
     );
-    const finalAmount = totalAmount - totalDiscount;
+    const finalAmount = totalAmount + totalDeliveryFee;
 
     const computedCart: ComputedCart = {
       items,
       total_amount: totalAmount,
-      discount_amount: totalDiscount,
       final_amount: finalAmount,
+      total_delivery_fee: totalDeliveryFee,
     };
 
     return this.applyCurrencyConversion(
@@ -267,7 +287,7 @@ export class CartService {
           ...item,
           unit_price: await convert(item.unit_price),
           total_price: await convert(item.total_price),
-          discount_amount: await convert(item.discount_amount),
+          delivery_fee: await convert(item.delivery_fee ?? 0),
           product,
         } as ComputedCartItem;
       }),
@@ -276,8 +296,8 @@ export class CartService {
     return {
       ...cart,
       total_amount: await convert(cart.total_amount),
-      discount_amount: await convert(cart.discount_amount),
       final_amount: await convert(cart.final_amount),
+      total_delivery_fee: await convert(cart.total_delivery_fee ?? 0),
       items: convertedItems,
     };
   }

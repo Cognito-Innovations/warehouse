@@ -63,7 +63,7 @@ export const AssistedShoppingOptions = ({
       const storedLink = sessionStorage.getItem(ASSISTED_SHOPPING_PRODUCT_LINK_KEY);
       if (storedLink) {
         setLink(storedLink);
-        setActiveTab(1); // Switch to product link tab
+        setActiveTab(0); // Switch to product link tab
         onLinkSubmit?.();
       }
     }
@@ -274,17 +274,6 @@ export const AssistedShoppingOptions = ({
           >
             <Tab
               icon={
-                <LocationOnIcon 
-                  sx={{ 
-                    fontSize: { xs: 18, sm: 20, md: 22 },
-                  }} 
-                />
-              }
-              iconPosition="top"
-              label="Virtual Address"
-            />
-            <Tab
-              icon={
                 <LinkIcon 
                   sx={{ 
                     fontSize: { xs: 18, sm: 20, md: 22 },
@@ -294,11 +283,128 @@ export const AssistedShoppingOptions = ({
               iconPosition="top"
               label="Product Link"
             />
+            <Tab
+              icon={
+                <LocationOnIcon 
+                  sx={{ 
+                    fontSize: { xs: 18, sm: 20, md: 22 },
+                  }} 
+                />
+              }
+              iconPosition="top"
+              label="Virtual Address"
+            />
           </Tabs>
         </Box>
 
         <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 4 }, "&:last-child": { pb: { xs: 2, sm: 2.5, md: 4 } } }}>
           {activeTab === 0 ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: { xs: 2, sm: 2.5, md: 3 },
+              }}
+            >
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    mb: { xs: 0.75, md: 1 },
+                    fontSize: { xs: "0.9375rem", sm: "1rem", md: "1.125rem" },
+                    color: "text.primary",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  Paste Product Link
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    mb: { xs: 2, sm: 2.5, md: 3 },
+                    fontSize: { xs: "0.75rem", sm: "0.8125rem", md: "0.875rem" },
+                    lineHeight: { xs: 1.4, md: 1.5 },
+                  }}
+                >
+                  Paste a product link from any store and we'll help you purchase it
+                </Typography>
+
+                <TextField
+                  fullWidth
+                  placeholder="Paste product link (e.g., https://amazon.com/...)"
+                  value={link}
+                  onChange={(e) => {
+                    setLink(e.target.value);
+                    if (error) setError(false);
+                  }}
+                  onKeyPress={handleKeyPress}
+                  error={error}
+                  helperText={
+                    error ? "Please enter a valid URL" : ""
+                  }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon 
+                          sx={{ fontSize: { xs: 18, md: 20 } }} 
+                          color="action" 
+                        />
+                      </InputAdornment>
+                    ),
+                    sx: {
+                      bgcolor: "#f9fafb",
+                      borderRadius: 1,
+                      fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
+                      py: { xs: 0.5, md: 0 },
+                    },
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      "&:hover fieldset": {
+                        borderColor: "primary.main",
+                      },
+                    },
+                    "& .MuiFormHelperText-root": {
+                      fontSize: { xs: "0.75rem", md: "0.8125rem" },
+                      mx: 0,
+                    },
+                  }}
+                />
+              </Box>
+
+              <Divider sx={{ my: { xs: 0.5, md: 1 } }} />
+
+              <Button
+                variant="contained"
+                onClick={handleLinkSubmit}
+                disabled={!link.trim() || isLoading || status === "loading"}
+                fullWidth
+                sx={{
+                  bgcolor: "#fccb00",
+                  color: "#000",
+                  fontWeight: "bold",
+                  py: { xs: 1.25, sm: 1.5, md: 1.75 },
+                  px: { xs: 2, md: 3 },
+                  boxShadow: "none",
+                  "&:hover": {
+                    bgcolor: "#e3b600",
+                    boxShadow: "0 4px 12px rgba(252, 203, 0, 0.3)",
+                  },
+                  "&:disabled": { bgcolor: "#fcefa8", color: "#888" },
+                  fontSize: { xs: "0.8125rem", sm: "0.875rem", md: "0.9375rem" },
+                  textTransform: "none",
+                }}
+              >
+                {isLoading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  "Search"
+                )}
+              </Button>
+            </Box>
+          ) : (
             <Box
               sx={{
                 display: "flex",
@@ -734,112 +840,6 @@ export const AssistedShoppingOptions = ({
                   </Box>
                 )}
               </Box>
-            </Box>
-          ) : (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: { xs: 2, sm: 2.5, md: 3 },
-              }}
-            >
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 600,
-                    mb: { xs: 0.75, md: 1 },
-                    fontSize: { xs: "0.9375rem", sm: "1rem", md: "1.125rem" },
-                    color: "text.primary",
-                    lineHeight: 1.3,
-                  }}
-                >
-                  Paste Product Link
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "text.secondary",
-                    mb: { xs: 2, sm: 2.5, md: 3 },
-                    fontSize: { xs: "0.75rem", sm: "0.8125rem", md: "0.875rem" },
-                    lineHeight: { xs: 1.4, md: 1.5 },
-                  }}
-                >
-                  Paste a product link from any store and we'll help you purchase it
-                </Typography>
-
-                <TextField
-                  fullWidth
-                  placeholder="Paste product link (e.g., https://amazon.com/...)"
-                  value={link}
-                  onChange={(e) => {
-                    setLink(e.target.value);
-                    if (error) setError(false);
-                  }}
-                  onKeyPress={handleKeyPress}
-                  error={error}
-                  helperText={
-                    error ? "Please enter a valid URL" : ""
-                  }
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon 
-                          sx={{ fontSize: { xs: 18, md: 20 } }} 
-                          color="action" 
-                        />
-                      </InputAdornment>
-                    ),
-                    sx: {
-                      bgcolor: "#f9fafb",
-                      borderRadius: 1,
-                      fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
-                      py: { xs: 0.5, md: 0 },
-                    },
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "&:hover fieldset": {
-                        borderColor: "primary.main",
-                      },
-                    },
-                    "& .MuiFormHelperText-root": {
-                      fontSize: { xs: "0.75rem", md: "0.8125rem" },
-                      mx: 0,
-                    },
-                  }}
-                />
-              </Box>
-
-              <Divider sx={{ my: { xs: 0.5, md: 1 } }} />
-
-              <Button
-                variant="contained"
-                onClick={handleLinkSubmit}
-                disabled={!link.trim() || isLoading || status === "loading"}
-                fullWidth
-                sx={{
-                  bgcolor: "#fccb00",
-                  color: "#000",
-                  fontWeight: "bold",
-                  py: { xs: 1.25, sm: 1.5, md: 1.75 },
-                  px: { xs: 2, md: 3 },
-                  boxShadow: "none",
-                  "&:hover": {
-                    bgcolor: "#e3b600",
-                    boxShadow: "0 4px 12px rgba(252, 203, 0, 0.3)",
-                  },
-                  "&:disabled": { bgcolor: "#fcefa8", color: "#888" },
-                  fontSize: { xs: "0.8125rem", sm: "0.875rem", md: "0.9375rem" },
-                  textTransform: "none",
-                }}
-              >
-                {isLoading ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  "Search"
-                )}
-              </Button>
             </Box>
           )}
         </CardContent>

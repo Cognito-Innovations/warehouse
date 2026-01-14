@@ -64,8 +64,8 @@ export default function CartItemCard({
   const pricing = getCartItemPricingSummary(item, currencySymbol);
   const unitPrice = pricing.discountedUnitPrice;
   const totalPrice = pricing.lineTotal;
-  const originalPrice = pricing.originalUnitPrice;
-  const hasDiscount = pricing.discountPerUnit > 0;  
+  // const originalPrice = pricing.originalUnitPrice;
+  // const hasDiscount = pricing.discountPerUnit > 0;  
   const unitValue = item.product.unit_value || 0;
   const measurementLabel = item.product.measurement?.label || "";
   const placeholderImage = `https://placehold.co/160x160?text=${item.product.name}`;
@@ -184,7 +184,7 @@ export default function CartItemCard({
             >
               {item.product.name}
             </Typography>
-            {hasDiscount && (
+            {/* {hasDiscount && (
               <Chip
                 label={formatDiscountPercentage(item.product.discount_percentage, "OFF")}
                 size="small"
@@ -196,7 +196,7 @@ export default function CartItemCard({
                   height: 22,
                 }}
               />
-            )}
+            )} */}
             {/* Stock Status */}
             <Chip
               label={stockStatus}
@@ -383,7 +383,7 @@ export default function CartItemCard({
             width: "100%",
           }}>
             {/* Original Unit Price */}
-            {hasDiscount && (
+            {/* {hasDiscount && (
               <Typography
                 variant="caption"
                 sx={{
@@ -396,13 +396,13 @@ export default function CartItemCard({
               >
                 {formatLocalPrice(originalPrice)}/unit
               </Typography>
-            )}
+            )} */}
 
             {/* Discounted Unit Price */}
             <Typography
               variant="body2"
               sx={{
-                color: hasDiscount ? "primary.main" : "text.primary",
+                color: "text.primary",
                 fontSize: "0.875rem",
                 fontWeight: 500,
                 display: "block",

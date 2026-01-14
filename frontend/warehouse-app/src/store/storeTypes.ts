@@ -95,16 +95,16 @@ export type CartStore = {
   setHasHydrated: (value: boolean) => void;
   setUpdating: (productId: string, isUpdating: boolean) => void;
   getItemQuantity: (productId: string) => number;
-  getLineId: (productId: string, currency?: string) => Promise<string | undefined>;
-  refreshCart: (currency?: string) => Promise<LocalCartItem[]>;
-  syncCart: (currency?: string) => Promise<void>;
-  getCart: (currency?: string) => Promise<LocalCartItem[]>;
-  addOrIncreaseQty: (product: EcommerceProduct, quantity: number, currency?: string) => Promise<void>;
-  decreaseProductQty: (product: EcommerceProduct, quantity: number, currency?: string) => Promise<void>;
-  removeProductFromCart: (productId: string, currency?: string) => Promise<void>;
-  incrementCartQuantity: (product: EcommerceProduct, currency?: string) => Promise<void>;
-  decrementCartQuantity: (product: EcommerceProduct, currency?: string) => Promise<void>;
-  setCartItemQuantity: (productId: string, quantity: number, currency?: string) => Promise<void>;
+  getLineId: (productId: string, currency?: string, countryCode?: string) => Promise<string | undefined>;
+  refreshCart: (currency?: string, countryCode?: string) => Promise<LocalCartItem[]>;
+  syncCart: (currency?: string, countryCode?: string) => Promise<void>;
+  getCart: (currency?: string, countryCode?: string) => Promise<LocalCartItem[]>;
+  addOrIncreaseQty: (product: EcommerceProduct, quantity: number, currency?: string, countryCode?: string) => Promise<void>;
+  decreaseProductQty: (product: EcommerceProduct, quantity: number, currency?: string, countryCode?: string) => Promise<void>;
+  removeProductFromCart: (productId: string, currency?: string, countryCode?: string) => Promise<void>;
+  incrementCartQuantity: (product: EcommerceProduct, currency?: string, countryCode?: string) => Promise<void>;
+  decrementCartQuantity: (product: EcommerceProduct, currency?: string, countryCode?: string) => Promise<void>;
+  setCartItemQuantity: (productId: string, quantity: number, currency?: string, countryCode?: string) => Promise<void>;
   removePurchasedProducts: (purchasedProductIds: string[]) => void;
 }
 

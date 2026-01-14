@@ -97,8 +97,8 @@ export default function AddressSection({
       };
       const newAddress = await createUserAddress(apiData);
       await refreshLocation(userId);
-      const { currencyCode } = useLocationStore.getState();
-      await getCart(currencyCode);
+      const { currencyCode, countryCode } = useLocationStore.getState();
+      await getCart(currencyCode, countryCode);
       const formattedAddress: CartAddressData = {
         id: newAddress.id,
         ...addressData,
@@ -128,8 +128,8 @@ export default function AddressSection({
       };
       await updateUserAddress(addressId, apiData);
       await refreshLocation(userId);
-      const { currencyCode } = useLocationStore.getState();
-      await getCart(currencyCode);
+      const { currencyCode, countryCode } = useLocationStore.getState();
+      await getCart(currencyCode, countryCode);
       const formattedAddress: CartAddressData = {
         id: addressId,
         ...addressData,

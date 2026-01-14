@@ -17,7 +17,7 @@ export interface ComputedCartItem {
   product: EcommerceProduct | null;
   unit_price: number;
   total_price: number;
-  discount_amount: number;
+  delivery_fee: number;
   created_at: number;
   updated_at: number;
 }

@@ -110,16 +110,16 @@ export default function OrderSummaryCard({
           </Typography>
         </Box>
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
+        {/* <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
           <Typography variant="body2" color="text.secondary">
             Taxes
           </Typography>
           <Typography variant="body2" fontWeight={500}>
             {formatPrice(totals.taxes, currencySymbol)}
           </Typography>
-        </Box>
+        </Box> */}
         
-        {totals.discount > 0 && (
+        {/* {totals.discount > 0 && (
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
             <Typography variant="body2" color="success.main">
               Discount
@@ -128,16 +128,16 @@ export default function OrderSummaryCard({
               -{formatPrice(totals.discount, currencySymbol)}
             </Typography>
           </Box>
-        )}
+        )} */}
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
+        {/* <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
           <Typography variant="body2" color="text.secondary">
             Service Charge
           </Typography>
           <Typography variant="body2" fontWeight={500}>
             {formatPrice(totals.serviceCharge, currencySymbol)}
           </Typography>
-        </Box>
+        </Box> */}
 
         <Divider sx={{ my: 2 }} />
 

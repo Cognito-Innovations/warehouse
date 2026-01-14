@@ -22,6 +22,7 @@ import { Country } from '../Countries/country.entity';
 import { Currency } from '../currencies/currency.entity';
 import { CurrenciesService } from '../currencies/currencies.service';
 import { ExternalCurrencyService } from './external-currency.service';
+import { DeliveryFeeService } from './get-delivery-fee.service';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { ExternalCurrencyService } from './external-currency.service';
     ClientIdentifierService,
     CurrenciesService,
     ExternalCurrencyService,
+    DeliveryFeeService,
   ],
   exports: [
     HttpModule,
@@ -79,6 +81,7 @@ import { ExternalCurrencyService } from './external-currency.service';
     ClientIdentifierService,
     CurrenciesService,
     ExternalCurrencyService,
+    DeliveryFeeService,
   ],
 })
 export class SharedModule {}

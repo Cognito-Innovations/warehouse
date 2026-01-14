@@ -140,37 +140,49 @@ export const ecommerceService = {
   },
 
   // Cart
-  async getCart(currency?: string): Promise<Cart> {
+  async getCart(currency?: string, countryCode?: string): Promise<Cart> {
     let params: any = {};
     if (currency) {
       params.currency = currency;
+    }
+    if (countryCode) {
+      params.countryCode = countryCode;
     }
     const response = await api.get("/ecommerce-cart", { params });
     return response.data;
   },
 
-  async addToCart(data: AddToCartRequest, currency?: string): Promise<Cart> {
+  async addToCart(data: AddToCartRequest, currency?: string, countryCode?: string): Promise<Cart> {
     let params: any = {};
     if (currency) {
       params.currency = currency;
+    }
+    if (countryCode) {
+      params.countryCode = countryCode;
     }
     const response = await api.post("/ecommerce-cart/add", data, { params });
     return response.data;
   },
 
-  async updateCartItem(itemId: string, data: UpdateCartItemRequest, currency?: string): Promise<Cart> {
+  async updateCartItem(itemId: string, data: UpdateCartItemRequest, currency?: string, countryCode?: string): Promise<Cart> {
     let params: any = {};
     if (currency) {
       params.currency = currency;
+    }
+    if (countryCode) {
+      params.countryCode = countryCode;
     }
     const response = await api.put(`/ecommerce-cart/items/${itemId}`, data, { params });
     return response.data;
   },
 
-  async removeFromCart(itemId: string, currency?: string): Promise<Cart> {
+  async removeFromCart(itemId: string, currency?: string, countryCode?: string): Promise<Cart> {
     let params: any = {};
     if (currency) {
       params.currency = currency;
+    }
+    if (countryCode) {
+      params.countryCode = countryCode;
     }
     const response = await api.delete(`/ecommerce-cart/items/${itemId}`, {params});
     return response.data;
@@ -179,10 +191,14 @@ export const ecommerceService = {
   async clearCart(): Promise<void> {
     await api.delete("/ecommerce-cart/clear");
   },
-
+  
   // Orders
-  async initiateOrder(orderData: any): Promise<any> {
-    const response = await api.post("/ecommerce-orders/initiate", orderData);
+  async initiateOrder(orderData: any, countryCode?: string): Promise<any> {
+    let params: any = {};
+    if (countryCode) {
+      params.countryCode = countryCode;
+    }
+    const response = await api.post("/ecommerce-orders/initiate", orderData, { params });
     return response.data;
   },
 

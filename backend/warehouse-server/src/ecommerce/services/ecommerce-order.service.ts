@@ -16,6 +16,7 @@ import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
 import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { DEFAULT_CURRENCY, PAYMENT_GATEWAY } from '../../shared/constants.js';
+import { DeliveryFeeService } from 'src/shared/get-delivery-fee.service';
 
 interface CurrencyInfo {
   code: string;
@@ -87,6 +88,7 @@ export class OrderService {
     private readonly cartItemRepository: Repository<EcommerceCartItem>,
     private readonly userPreferenceService: UserPreferencesService,
     private readonly httpService: HttpService,
+    private readonly deliveryFeeService: DeliveryFeeService,
   ) {
     this.clientId = process.env.PAYPAL_CLIENT_ID!;
     this.secretKey = process.env.PAYPAL_SECRET_KEY!;
@@ -106,13 +108,6 @@ export class OrderService {
     return Math.round((value + Number.EPSILON) * 100) / 100;
   }
 
-  private getThresholdAndFees(currency: string) {
-    if (currency === 'INR') {
-      return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
-    }
-    return { threshold: 20, deliveryFee: 5, serviceCharge: 1 };
-  }
-
   private generateOrderNumber(): string {
     // Last 6 digits of epoch milliseconds
     const timeBasedSuffix = (Date.now() % 1_000_000)
@@ -128,88 +123,55 @@ export class OrderService {
     return `ORD-${timeBasedSuffix}-${randomAlphaNumeric}`;
   }
 
-  private calculateOrderPricing(
+  private async calculateOrderPricing(
     items: EcommerceCartItem[],
     currencyInfo: CurrencyInfo,
+    countryCode?: string,
   ) {
-    const { rate, code: currencyCode } = currencyInfo;
+    const { rate } = currencyInfo;
     let subtotalLocal = 0;
-    let totalDiscountLocal = 0;
+    let totalDeliveryUSD = 0;
 
     // Calculate details for each item
-    const itemDetails = items.map((item) => {
-      const basePrice = Number(item.product?.price || 0);
-      const localPrice = this.roundCurrency(basePrice * rate);
-      const discountPerc = Number(item.product?.discount_percentage || 0);
+    const itemDetails = await Promise.all(
+      items.map(async (item) => {
+        const basePrice = Number(item.product?.price || 0);
+        const localPrice = this.roundCurrency(basePrice * rate);
 
-      const discountPerUnitLocal = this.roundCurrency(
-        localPrice * (discountPerc / 100),
-      );
+        // Accumulate totals for this item
+        const itemSubtotalLocal = localPrice * item.quantity;
+        const itemTotalUSD = this.roundCurrency(itemSubtotalLocal / rate);
 
-      const discountedUnitLocal = this.roundCurrency(
-        localPrice - discountPerUnitLocal,
-      );
-
-      if (isNaN(discountedUnitLocal) || localPrice <= 0) {
-        throw new BadRequestException(
-          `Invalid price for product ${item.product_id}`,
+        const weightPerUnit = this.deliveryFeeService.getWeightInKg(
+          Number(item.product?.unit_value ?? 0),
+          item.product?.measurement?.label ?? 'kg',
         );
-      }
+        const totalWeight = weightPerUnit * item.quantity;
+        const deliveryUSD = await this.deliveryFeeService.getDeliveryFee(
+          totalWeight,
+          countryCode!,
+        );
+        totalDeliveryUSD += deliveryUSD;
 
-      const discountedUnitUSD = this.roundCurrency(discountedUnitLocal / rate);
-
-      // Accumulate totals for this item
-      const itemSubtotalLocal = localPrice * item.quantity;
-      const itemTotalDiscountLocal = discountPerUnitLocal * item.quantity;
-      const itemTotalUSD = this.roundCurrency(
-        discountedUnitUSD * item.quantity,
-      );
-
-      return {
-        product_id: item.product_id || item.product?.id,
-        quantity: item.quantity,
-        discountPerc,
-        discountedUnitUSD,
-        totalUSD: itemTotalUSD,
-        subtotalLocal: itemSubtotalLocal,
-        totalDiscountLocal: itemTotalDiscountLocal,
-      };
-    });
+        return {
+          product_id: item.product_id || item.product?.id,
+          quantity: item.quantity,
+          unitPriceUSD: basePrice,
+          totalUSD: itemTotalUSD,
+          subtotalLocal: itemSubtotalLocal,
+        };
+      }),
+    );
 
     // Aggregate totals
     for (const detail of itemDetails) {
       subtotalLocal += detail.subtotalLocal;
-      totalDiscountLocal += detail.totalDiscountLocal;
     }
 
-    const discountedSubtotalLocal = this.roundCurrency(
-      subtotalLocal - totalDiscountLocal,
-    );
+    const finalLocalTotal = this.roundCurrency(subtotalLocal);
 
-    if (isNaN(discountedSubtotalLocal) || discountedSubtotalLocal < 0) {
-      throw new BadRequestException('Invalid order amount');
-    }
-
-    // Calculate Fees and Taxes
-    const {
-      threshold,
-      deliveryFee: deliveryBaseLocal,
-      serviceCharge: serviceBaseLocal,
-    } = this.getThresholdAndFees(currencyCode);
-
-    const deliveryFeeLocal =
-      discountedSubtotalLocal >= threshold ? 0 : deliveryBaseLocal;
-    const taxesLocal = this.roundCurrency(discountedSubtotalLocal * 0.02); // 2% Tax
-    const serviceChargeLocal = serviceBaseLocal;
-
-    const finalLocalTotal = this.roundCurrency(
-      discountedSubtotalLocal +
-        deliveryFeeLocal +
-        taxesLocal +
-        serviceChargeLocal,
-    );
-
-    const finalUSDTotal = this.roundCurrency(finalLocalTotal / rate);
+    const finalUSDTotal =
+      this.roundCurrency(finalLocalTotal / rate) + totalDeliveryUSD;
 
     return {
       finalUSDTotal,
@@ -256,6 +218,7 @@ export class OrderService {
   async createOrder(
     userId: string,
     createOrderDto: CreateOrderDto,
+    countryCode?: string,
   ): Promise<EcommerceOrder> {
     let savedOrder: EcommerceOrder | null = null;
 
@@ -263,7 +226,12 @@ export class OrderService {
       // Get user's active cart
       const cart = await this.cartRepository.findOne({
         where: { user_id: userId, status: CartStatus.ACTIVE },
-        relations: ['items', 'items.product', 'user'],
+        relations: [
+          'items',
+          'items.product',
+          'items.product.measurement',
+          'user',
+        ],
       });
 
       if (!cart || cart.items.length === 0) {
@@ -293,9 +261,10 @@ export class OrderService {
         );
       }
 
-      const { finalUSDTotal, itemDetails } = this.calculateOrderPricing(
+      const { finalUSDTotal, itemDetails } = await this.calculateOrderPricing(
         itemsToProcess,
         sourceInfo,
+        countryCode,
       );
 
       // Generate order number
@@ -320,9 +289,9 @@ export class OrderService {
           order_id: savedOrder!.id,
           product_id: detail.product_id,
           quantity: detail.quantity,
-          unit_price: detail.discountedUnitUSD,
+          unit_price: detail.unitPriceUSD,
           total_price: detail.totalUSD,
-          discount_percentage: detail.discountPerc,
+          // discount_percentage: detail.discountPerc,
         });
       });
 

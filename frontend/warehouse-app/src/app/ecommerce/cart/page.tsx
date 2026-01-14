@@ -20,7 +20,7 @@ import { CartAddressData } from "@/types/ecommerce";
 export default function CartPage() {
   const { data: session, status } = useSession();
   const hydrated = useCartHasHydrated();
-  const { currencyCode, isLoaded: locationLoaded } = useLocationStore();
+  const { currencyCode, countryCode, isLoaded: locationLoaded } = useLocationStore();
   const { cartProducts, getCart, checkoutProducts, setCheckoutProducts } = useCartStore();
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
@@ -38,7 +38,7 @@ export default function CartPage() {
   const initCart = useCallback(async () => {
     setIsCartLoading(true);
     try {
-      await getCart(currencyCode);
+      await getCart(currencyCode, countryCode);
     } catch (e) {
       console.error("Initialization error:", e);
     } finally {
