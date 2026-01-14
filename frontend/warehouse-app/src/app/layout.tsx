@@ -21,6 +21,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <head>
         <meta name="emotion-insertion-point" content="" />
+        <meta name="google-site-verification" content="5HRhy9e2CK058UpxqRyeI6J05-j2dSG4SrOlC8GFsV8" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
