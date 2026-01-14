@@ -147,6 +147,100 @@ export const AssistedShoppingOptions = ({
           bgcolor: "#ffffff",
         }}
       >
+        <Box
+          sx={{
+            position: "relative",
+            overflow: "hidden",
+            bgcolor: "#f9fafb",
+            borderBottom: "1px solid #e5e7eb",
+            py: { xs: 1, sm: 1.25, md: 1.5 },
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "50px",
+              height: "100%",
+              background: "linear-gradient(to right, #f9fafb, transparent)",
+              zIndex: 1,
+            },
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              right: 0,
+              width: "50px",
+              height: "100%",
+              background: "linear-gradient(to left, #f9fafb, transparent)",
+              zIndex: 1,
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              width: "max-content",
+              animation: "marqueeScroll 25s linear infinite",
+              "@keyframes marqueeScroll": {
+                "0%": {
+                  transform: "translateX(0)",
+                },
+                "100%": {
+                  transform: "translateX(-50%)",
+                },
+              },
+              "&:hover": {
+                animationPlayState: "paused",
+              },
+            }}
+          >
+            {/* Duplicate content for seamless loop */}
+            {[...Array(2)].map((_, index) => (
+              <Box
+                key={index}
+                component="span"
+                sx={{
+                  fontSize: { xs: "0.75rem", sm: "0.8125rem", md: "0.875rem" },
+                  color: "text.secondary",
+                  fontWeight: 400,
+                  whiteSpace: "nowrap",
+                  px: { xs: 2, sm: 3, md: 4 },
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: { xs: 0.75, sm: 1, md: 1.5 },
+                  flexShrink: 0,
+                }}
+              >
+                <Box component="span" sx={{ color: "primary.main", fontWeight: 500 }}>
+                  Supported categories:
+                </Box>
+                <Box component="span" sx={{ color: "text.secondary" }}>
+                  Medicines
+                </Box>
+                <Box component="span" sx={{ color: "text.secondary" }}>•</Box>
+                <Box component="span">Grocery</Box>
+                <Box component="span" sx={{ color: "text.secondary" }}>•</Box>
+                <Box component="span">Garments</Box>
+                <Box component="span" sx={{ color: "text.secondary" }}>•</Box>
+                <Box component="span">Jewellery</Box>
+                <Box component="span" sx={{ color: "text.secondary" }}>•</Box>
+                <Box component="span">Cosmetics</Box>
+                <Box component="span" sx={{ color: "text.secondary" }}>•</Box>
+                <Box component="span">Automobile</Box>
+                <Box component="span" sx={{ color: "text.secondary" }}>•</Box>
+                <Box component="span">Gadgets (Non-Battery)</Box>
+                <Box component="span" sx={{ mx: { xs: 0.5, md: 1 }, color: "text.secondary" }}>|</Box>
+                <Box component="span">Ship From Origin</Box>
+                <Box component="span" sx={{ mx: { xs: 0.5, md: 1 }, color: "text.secondary" }}>|</Box>
+                <Box component="span" sx={{ color: "text.secondary", fontSize: { xs: "0.7rem", md: "0.8125rem" } }}>
+                  T&C Apply
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
             value={activeTab}
