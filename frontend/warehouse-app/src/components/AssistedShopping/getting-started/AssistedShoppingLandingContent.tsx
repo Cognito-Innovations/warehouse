@@ -5,10 +5,12 @@ import { useSession } from "next-auth/react";
 
 import { AssistedShoppingHero } from "./AssistedShoppingHero";
 import { AssistedShoppingSteps } from "./AssistedShoppingSteps";
-import { AssistedShoppingSearchForm } from "./AssistedShoppingSearchForm";
+import { AssistedShoppingOptions } from "./AssistedShoppingOptions";
 import ShoppingRequestForm from "@/components/ShoppingRequest/ShoppingRequestForm";
 import SuccessScreen from "./SuccessScreen";
-import { ASSISTED_SHOPPING_PRODUCT_LINK_KEY } from "@/utils/constants";
+import { 
+  ASSISTED_SHOPPING_PRODUCT_LINK_KEY
+} from "@/utils/constants";
 
 export default function AssistedShoppingLandingContent() {
   const { status } = useSession();
@@ -18,6 +20,7 @@ export default function AssistedShoppingLandingContent() {
   useEffect(() => {
     if (typeof window !== "undefined" && status !== "loading") {
       const productLink = sessionStorage.getItem(ASSISTED_SHOPPING_PRODUCT_LINK_KEY);
+      
       if (productLink) {
         setHasSubmittedLink(true);
       } else {
@@ -53,7 +56,9 @@ export default function AssistedShoppingLandingContent() {
               <ShoppingRequestForm onSuccess={handleFormSubmit} />
             </Box>
           ) : (
-            <AssistedShoppingSearchForm onLinkSubmit={handleLinkSubmit} />
+            <AssistedShoppingOptions 
+              onLinkSubmit={handleLinkSubmit}
+            />
           )}
         </Box>
       </Container>
