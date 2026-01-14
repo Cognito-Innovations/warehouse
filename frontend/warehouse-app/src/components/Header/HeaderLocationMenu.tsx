@@ -31,7 +31,7 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
     const router = useRouter();
 
     const handleChangeLocation = () => {
-        router.push(`${ROUTES.PROFILE}?view=country`);
+        router.push(`${ROUTES.PROFILE}`);
         handleLocationClose();
     };
 
@@ -92,7 +92,7 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
                     onClick={handleChangeLocation}
                     sx={{ textTransform: "none" }}
                 >
-                    Change Location
+                    Change Location or Currency
                 </Button> : <Button
                     variant="outlined"
                     fullWidth

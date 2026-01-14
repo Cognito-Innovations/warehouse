@@ -19,13 +19,16 @@ export default function ProfileMobileMenu({ onNavigate }: ProfileMobileMenuProps
             <Paper
                 elevation={0}
                 sx={{
-                    p: 2,
+                    p: 2.5,
                     mb: 3,
                     borderRadius: "12px",
-                    bgcolor: "primary.50",
+                    bgcolor: "white",
                     display: "flex",
                     alignItems: "center",
-                    gap: 2
+                    gap: 2,
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
                 }}
             >
                 <Avatar
@@ -36,16 +39,39 @@ export default function ProfileMobileMenu({ onNavigate }: ProfileMobileMenuProps
                         bgcolor: "primary.main",
                         width: 56,
                         height: 56,
-                        fontSize: "1.5rem"
+                        fontSize: "1.5rem",
+                        flexShrink: 0,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
                     }}
                 >
                     {user?.name ? user.name.charAt(0).toUpperCase() : <AccountCircle fontSize="large" />}
                 </Avatar>
-                <Box>
-                    <Typography variant="subtitle1" fontWeight="bold">
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography 
+                        variant="subtitle1" 
+                        fontWeight="bold"
+                        sx={{
+                            fontSize: { xs: "1rem", sm: "1.0625rem" },
+                            color: "text.primary",
+                            mb: 0.25,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap"
+                        }}
+                    >
                         {user?.name || "User"}
                     </Typography>
-                    <Typography variant="subtitle2" fontWeight="bold">
+                    <Typography 
+                        variant="body2" 
+                        sx={{
+                            fontSize: { xs: "0.875rem", sm: "0.9375rem" },
+                            color: "text.secondary",
+                            fontWeight: 500,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap"
+                        }}
+                    >
                         {user?.email || "user@example.com"}
                     </Typography>
                 </Box>
