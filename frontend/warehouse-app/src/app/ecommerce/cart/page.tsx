@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Box, Container } from "@mui/material";
 import { useSession } from "next-auth/react";
 
+import { useLocationStore } from "@/store/locationStore";
 import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
 import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
@@ -20,6 +20,7 @@ import { CartAddressData } from "@/types/ecommerce";
 export default function CartPage() {
   const { data: session, status } = useSession();
   const hydrated = useCartHasHydrated();
+  const { currencyCode, isLoaded: locationLoaded } = useLocationStore();
   const { cartProducts, getCart, checkoutProducts, setCheckoutProducts } = useCartStore();
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
@@ -27,7 +28,6 @@ export default function CartPage() {
   const [isCartLoading, setIsCartLoading] = useState(true);
   const [isAddressDataReady, setIsAddressDataReady] = useState(false);
 
-  const { currencyCode } = useDetectUserLocation();
 
   const userId = (session?.user as any)?.user_id;
 
@@ -50,7 +50,7 @@ export default function CartPage() {
     if (status === "loading") return;
     if (!currencyCode) return;
 
-    if (userId && !isAddressDataReady) return;
+    if (!locationLoaded) return;
 
     if (hydrated) {
       initCart();
@@ -63,7 +63,7 @@ export default function CartPage() {
         clearTimeout(timer);
       };
     }
-  }, [currencyCode, status, initCart, hydrated, userId, isAddressDataReady]);
+  }, [currencyCode, status, initCart, hydrated, userId, locationLoaded]);
 
   useEffect(() => {
     if (hydrated && cartProducts.length > 0) {

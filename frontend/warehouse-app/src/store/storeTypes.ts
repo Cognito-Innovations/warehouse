@@ -44,6 +44,7 @@ export type ProductStore = {
   loadProductPageData: (slug: string, currency: string, countryCode?: string, userId?: string) => Promise<void>;
   setCurrentDetailProduct: (product: EcommerceProduct) => void;
   resetDetailState: () => void;
+  clearProductCache: () => void;
 }
 
 export type ProductCacheData = {

@@ -4,13 +4,14 @@ import { getUserPreferences } from "@/lib/api.service";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { LocationStore } from "./storeTypes";
 import { getUserCountryByIP } from "@/utils/getUserCountry";
-import { getCachedLocation, setCachedLocation } from "@/utils/cachedUtils";
+import { clearCachedLocation, getCachedLocation, setCachedLocation } from "@/utils/cachedUtils";
 import { CACHE_GUEST_LOCATION_KEY, DEFAULT_CURRENCY_INFO } from "@/utils/constants";
 
 export const useLocationStore = create<LocationStore>((set, get) => {
   
   const loadLocation = async (userId?: string, skipCache = false) => {
-    if (!skipCache && get().isLoaded) return;
+    const state = get();
+    if (!skipCache && state.isLoaded) return;
 
     if (!userId) {
       if (!skipCache) {
@@ -63,16 +64,25 @@ export const useLocationStore = create<LocationStore>((set, get) => {
       return;
     }
 
-    const preferenceData = await getUserPreferences(userId);
-    const userCurrency = preferenceData?.currency;
+    if (userId) {
+      try {
+        const preferenceData = await getUserPreferences(userId);
+        const userCurrency = preferenceData?.currency;
 
-    set({
-      countryCode: preferenceData?.courier?.country?.code || "",
-      currencyCode: userCurrency?.currency_code || DEFAULT_CURRENCY_INFO.code,
-      currencySymbol: userCurrency?.currency_symbol || DEFAULT_CURRENCY_INFO.symbol,
-      currencyRate: userCurrency?.rate ?? DEFAULT_CURRENCY_INFO.rate,
-      isLoaded: true,
-    });
+        const resolvedCountryCode = preferenceData?.courier?.country?.code || state.countryCode || "";
+        
+        set({
+          countryCode: resolvedCountryCode,
+          currencyCode: userCurrency?.currency_code || DEFAULT_CURRENCY_INFO.code,
+          currencySymbol: userCurrency?.currency_symbol || DEFAULT_CURRENCY_INFO.symbol,
+          currencyRate: userCurrency?.rate ?? DEFAULT_CURRENCY_INFO.rate,
+          isLoaded: true,
+        });
+      } catch (error) {
+        console.error("Error loading user location preferences", error);
+        set({ isLoaded: true }); 
+      }
+    }
   };
 
   const fetchLocation = async (userId?: string) => {
@@ -81,13 +91,16 @@ export const useLocationStore = create<LocationStore>((set, get) => {
 
   const refreshLocation = async (userId?: string) => {
     set({ isLoaded: false });
+    if (!userId) {
+      clearCachedLocation(CACHE_GUEST_LOCATION_KEY);
+    }
     await loadLocation(userId, true);
   };
 
   return {
-    currencyCode: "",
-    currencySymbol: "",
-    currencyRate: 0,
+    currencyCode: DEFAULT_CURRENCY_INFO.code,
+    currencySymbol: DEFAULT_CURRENCY_INFO.symbol,
+    currencyRate: DEFAULT_CURRENCY_INFO.rate,
     countryCode: "",
     isLoaded: false,
 
