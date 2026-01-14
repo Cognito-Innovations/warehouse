@@ -8,7 +8,7 @@ import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto.js'
 import { UserPreferencesService } from '../../user-preferences/user-preferences.service.js';
 import { EcommerceCargoOption } from '../entities/cargo-options.entity.js';
 import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
-import { Country, CountryCode } from 'src/Countries/country.entity.js';
+// import { Country, CountryCode } from 'src/Countries/country.entity.js';
 import { EcommerceMeasurement } from '../entities/measurement.entity.js';
 import { DEFAULT_CURRENCY } from '../../shared/constants.js';
 
@@ -52,7 +52,7 @@ export class ProductsService {
     const {
       category_id,
       sub_category_id,
-      country_ids,
+      // country_ids,
       measurement_id,
       cargo_option_id,
       ...rest
@@ -62,7 +62,7 @@ export class ProductsService {
       ...rest,
       category: { id: category_id },
       sub_category: { id: sub_category_id },
-      countries: country_ids.map((id) => ({ id }) as Country),
+      // countries: country_ids.map((id) => ({ id }) as Country),
       measurement: { id: measurement_id },
       cargo_option: { id: cargo_option_id } as EcommerceCargoOption,
     });
@@ -82,8 +82,9 @@ export class ProductsService {
 
     const queryBuilder = this.productRepository
       .createQueryBuilder('product')
-      .leftJoinAndSelect('product.category', 'category')
-      .leftJoinAndSelect('product.countries', 'countries');
+      .leftJoinAndSelect('product.category', 'category');
+    // TODO: Uncomment the country filter when it's required
+    // .leftJoinAndSelect('product.countries', 'countries');
 
     if (isAdmin) {
       queryBuilder
@@ -92,11 +93,12 @@ export class ProductsService {
         .leftJoinAndSelect('product.cargo_option', 'cargo_option');
     }
 
-    if (countryCode) {
-      queryBuilder.andWhere('countries.code = :countryCode', {
-        countryCode,
-      });
-    }
+    // TODO: Uncomment the country filter when it's required
+    // if (countryCode) {
+    //   queryBuilder.andWhere('countries.code = :countryCode', {
+    //     countryCode,
+    //   });
+    // }
 
     if (category?.trim()) {
       queryBuilder.andWhere('category.slug = :category', {
@@ -151,14 +153,16 @@ export class ProductsService {
     const queryBuilder = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
-      .leftJoinAndSelect('product.countries', 'countries')
+      // TODO: Uncomment the country filter when it's required
+      // .leftJoinAndSelect('product.countries', 'countries')
       .where('product.name ILIKE :query', {
         query: `%${searchTerm.trim()}%`,
       });
 
-    if (countryCode) {
-      queryBuilder.andWhere('countries.code = :countryCode', { countryCode });
-    }
+    // TODO: Uncomment the country filter when it's required
+    // if (countryCode) {
+    //   queryBuilder.andWhere('countries.code = :countryCode', { countryCode });
+    // }
 
     const products = await queryBuilder
       .skip(offset)
@@ -192,21 +196,26 @@ export class ProductsService {
   ) {
     const product = await this.productRepository.findOne({
       where: { slug: slug },
-      relations: ['category', 'countries'],
+      relations: [
+        'category',
+        // TODO: Uncomment the country filter when it's required
+        // 'countries',
+      ],
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    if (
-      countryCode &&
-      !product.countries.some(
-        (c: Country) => c.code === (countryCode as CountryCode),
-      )
-    ) {
-      throw new NotFoundException('Product not available in this country');
-    }
+    // TODO: Uncomment the country filter when it's required
+    // if (
+    //   countryCode &&
+    //   !product.countries.some(
+    //     (c: Country) => c.code === (countryCode as CountryCode),
+    //   )
+    // ) {
+    //   throw new NotFoundException('Product not available in this country');
+    // }
 
     const currencyInfo = await this.getCurrencyInfo(currency, userId);
     const { symbol, rate, code } = currencyInfo;
@@ -237,7 +246,7 @@ export class ProductsService {
     const {
       category_id,
       sub_category_id,
-      country_ids,
+      // country_ids,
       measurement_id,
       cargo_option_id,
       ...rest
@@ -251,9 +260,10 @@ export class ProductsService {
     if (sub_category_id) {
       product.sub_category = { id: sub_category_id } as EcommerceSubCategory;
     }
-    if (country_ids) {
-      product.countries = country_ids.map((id) => ({ id }) as Country);
-    }
+    // TODO: Uncomment the country filtering when it's required
+    // if (country_ids) {
+    //   product.countries = country_ids.map((id) => ({ id }) as Country);
+    // }
     if (measurement_id) {
       product.measurement = { id: measurement_id } as EcommerceMeasurement;
     }

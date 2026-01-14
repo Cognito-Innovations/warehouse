@@ -2,11 +2,11 @@ import {
   IsBoolean,
   IsString,
   IsOptional,
-  ValidateIf,
+  // ValidateIf,
   IsNumber,
   Min,
-  IsArray,
-  IsUUID,
+  // IsArray,
+  // IsUUID,
 } from 'class-validator';
 
 export class UpdateCategoryDto {
@@ -22,11 +22,12 @@ export class UpdateCategoryDto {
   @IsOptional()
   image_url?: string;
 
-  @ValidateIf((o, v) => v !== null)
-  @IsArray()
-  @IsUUID('all', { each: true })
-  @IsOptional()
-  country_ids?: string[];
+  // TODO: Uncomment the country filtering when it's required
+  // @ValidateIf((o, v) => v !== null)
+  // @IsArray()
+  // @IsUUID('all', { each: true })
+  // @IsOptional()
+  // country_ids?: string[];
 
   @IsNumber()
   @IsOptional()

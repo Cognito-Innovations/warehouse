@@ -17,12 +17,14 @@ export class SubCategoriesService {
   async create(
     createSubCategoryDto: CreateEcommerceSubCategoryDto,
   ): Promise<EcommerceSubCategory> {
-    const { country_ids, category_id, ...rest } = createSubCategoryDto;
+    const {
+      // country_ids,
+      category_id, ...rest } = createSubCategoryDto;
 
     const subCategoryPayload: Partial<EcommerceSubCategory> = {
       ...rest,
       category: { id: category_id } as EcommerceCategory,
-      countries: country_ids.map((id) => ({ id }) as Country),
+      // countries: country_ids.map((id) => ({ id }) as Country),
     };
 
     const subCategory = this.subCategoryRepository.create(subCategoryPayload);
@@ -32,25 +34,31 @@ export class SubCategoriesService {
   findAll(countryCode?: string) {
     const queryBuilder = this.subCategoryRepository
       .createQueryBuilder('subCategory')
-      .leftJoinAndSelect('subCategory.countries', 'countries')
+      // TODO: Uncomment the country filter when it's required
+      // .leftJoinAndSelect('subCategory.countries', 'countries')
       .leftJoinAndSelect('subCategory.category', 'category')
       .loadRelationCountAndMap(
         'subCategory.products_count',
         'subCategory.products',
       );
 
-    if (countryCode) {
-      queryBuilder
-        .innerJoinAndSelect('subCategory.countries', 'countryFilter')
-        .andWhere('countryFilter.code = :countryCode', { countryCode });
-    }
+    // TODO: Uncomment the country filter when it's required
+    // if (countryCode) {
+    //   queryBuilder
+    //     .innerJoinAndSelect('subCategory.countries', 'countryFilter')
+    //     .andWhere('countryFilter.code = :countryCode', { countryCode });
+    // }
 
     return queryBuilder.getMany();
   }
 
   async findOne(id: string, countryCode?: string) {
     const where: { id: string } = { id };
-    const relations = ['countries', 'category'];
+    const relations = [
+      // TODO: Uncomment the country filter when it's required
+      // 'countries',
+      'category',
+    ];
 
     const subCategory = await this.subCategoryRepository.findOne({
       where,
@@ -61,14 +69,15 @@ export class SubCategoriesService {
       throw new NotFoundException('Sub category not found');
     }
 
-    if (
-      countryCode &&
-      !subCategory.countries.some(
-        (c: Country) => c.code === (countryCode as CountryCode),
-      )
-    ) {
-      throw new NotFoundException('Sub category not available in this country');
-    }
+    // TODO: Uncomment the country filter when it's required
+    // if (
+    //   countryCode &&
+    //   !subCategory.countries.some(
+    //     (c: Country) => c.code === (countryCode as CountryCode),
+    //   )
+    // ) {
+    //   throw new NotFoundException('Sub category not available in this country');
+    // }
 
     return subCategory;
   }
@@ -77,7 +86,9 @@ export class SubCategoriesService {
     id: string,
     updateSubCategoryDto: UpdateEcommerceSubCategoryDto,
   ): Promise<EcommerceSubCategory> {
-    const { country_ids, category_id, ...rest } = updateSubCategoryDto;
+    const {
+      // country_ids,
+      category_id, ...rest } = updateSubCategoryDto;
 
     const subCategory = await this.subCategoryRepository.findOne({
       where: {
@@ -89,9 +100,9 @@ export class SubCategoriesService {
 
     subCategory.category = { id: category_id } as EcommerceCategory;
 
-    if (country_ids) {
-      subCategory.countries = country_ids.map((id) => ({ id }) as Country);
-    }
+    // if (country_ids) {
+    //   subCategory.countries = country_ids.map((id) => ({ id }) as Country);
+    // }
 
     return await this.subCategoryRepository.save(subCategory);
   }

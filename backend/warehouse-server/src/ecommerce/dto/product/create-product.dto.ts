@@ -6,8 +6,8 @@ import {
   IsPositive,
   Min,
   IsBoolean,
-  IsArray,
-  ArrayMinSize,
+  // IsArray,
+  // ArrayMinSize,
 } from 'class-validator';
 
 export class CreateEcommerceProductDto {
@@ -31,10 +31,11 @@ export class CreateEcommerceProductDto {
   @IsNotEmpty()
   sub_category_id: string;
 
-  @IsArray()
-  @IsUUID('all', { each: true })
-  @ArrayMinSize(1)
-  country_ids: string[];
+  // TODO: Uncomment the country filtering when it's required
+  // @IsArray()
+  // @IsUUID('all', { each: true })
+  // @ArrayMinSize(1)
+  // country_ids: string[];
 
   @IsString()
   image_url: string;

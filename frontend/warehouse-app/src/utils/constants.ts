@@ -71,6 +71,11 @@ export const DEFAULT_CURRENCY_INFO = {
   rate: 1.00,
 }
 
+export const DEFAULT_LOCATION = {
+  countryName: "United States of Ameria",
+  countryCode: "US"
+}
+
 export const INR_CURRENCY = {
   code: 'INR',
   symbol: '₹',

@@ -27,7 +27,7 @@ export default function ReturnsPolicyPage() {
           RETURN PROCESS
         </Typography>
         <Typography variant="body1" paragraph>
-          To return an item, please email customer service at palakart@gmail.com to obtain a Return Merchandise Authorization (RMA) number. After receiving a RMA number, place the item securely in its original packaging and include your proof of purchase, and mail your return to the following address:
+          To return an item, please email customer service at  team.palakart@gmail.com to obtain a Return Merchandise Authorization (RMA) number. After receiving a RMA number, place the item securely in its original packaging and include your proof of purchase, and mail your return to the following address:
         </Typography>
         <Typography variant="body1" paragraph sx={{ pl: 4 }}>
           Palakart<br />
@@ -86,7 +86,7 @@ export default function ReturnsPolicyPage() {
         </Typography>
         <Box component="ul" sx={{ pl: 4 }}>
           <Typography component="li" variant="body1">+919994126566</Typography>
-          <Typography component="li" variant="body1">palakart@gmail.com</Typography>
+          <Typography component="li" variant="body1"> team.palakart@gmail.com</Typography>
         </Box>
       </Box>
     </Container>
