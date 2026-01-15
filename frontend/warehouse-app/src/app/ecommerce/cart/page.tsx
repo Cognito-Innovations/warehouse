@@ -194,17 +194,8 @@ export default function CartPage() {
       case 2:
         return (
           <>
-            {isCartLoading ? (
-              <CartItemsSkeleton />
-            ) : (
-              <CartItemsList
-                items={validItems as any}
-                loadingStates={{}}
-                selectedItems={new Set(checkoutProducts)}
-                selectedCurrency={currencyCode}
-              />
-            )}
-            <ContinueShoppingCard />
+            {/* Order Summary step - no cart items list to prevent editing during checkout */}
+            {/* Users can go back to previous steps if they need to modify cart */}
           </>
         );
       default:
