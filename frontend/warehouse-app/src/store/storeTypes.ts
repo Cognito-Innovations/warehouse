@@ -1,4 +1,4 @@
-import { EcommerceCategory, EcommerceProduct, LocalCartItem, UserAddress } from "@/types/ecommerce";
+import { EcommerceCategory, EcommerceProduct, LocalCartItem, UserAddress, DeliveryOption } from "@/types/ecommerce";
 
 export type CategoryStore = {
   selectedCategory: string | null;
@@ -87,7 +87,9 @@ export type CartStore = {
   _hasHydrated: boolean;
   hasUnsyncedChanges: boolean;
   checkoutProducts: string[];
+  selectedDeliveryOption: DeliveryOption | null;
   setCheckoutProducts: (productIds: string[]) => void;
+  setSelectedDeliveryOption: (option: DeliveryOption | null) => void;
   toggleCartItemSelection: (productIds: string | string[]) => void;
   setCartProducts: (products: any[]) => void;
   clearCheckoutProducts: () => void;

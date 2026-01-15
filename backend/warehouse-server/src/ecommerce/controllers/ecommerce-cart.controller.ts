@@ -15,6 +15,7 @@ import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ComputedCart } from '../entities/ecommerce-cart.entity';
+import { DeliveryOption } from 'src/shared/get-delivery-fee.service';
 
 interface AuthenticatedRequest {
   user: {
@@ -93,5 +94,17 @@ export class CartController {
   ): Promise<{ message: string }> {
     await this.cartService.clearCart(req.user.id);
     return { message: 'Cart cleared successfully' };
+  }
+
+  @Get('delivery-rates')
+  async getDeliveryRates(
+    @Request() req: AuthenticatedRequest,
+    @Query('countryCode') countryCode?: string,
+  ): Promise<DeliveryOption[]> {
+    const userId = req.user?.id;
+    if (!userId || !countryCode) {
+      return [];
+    }
+    return this.cartService.getDeliveryRates(userId, countryCode);
   }
 }

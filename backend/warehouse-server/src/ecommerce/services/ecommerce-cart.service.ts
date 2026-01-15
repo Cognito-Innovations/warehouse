@@ -17,7 +17,7 @@ import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { DEFAULT_CURRENCY } from '../../shared/constants.js';
-import { DeliveryFeeService } from 'src/shared/get-delivery-fee.service';
+import { DeliveryFeeService, DeliveryOption } from 'src/shared/get-delivery-fee.service';
 
 @Injectable()
 export class CartService {
@@ -258,6 +258,35 @@ export class CartService {
     return this.applyCurrencyConversion(
       computedCart,
       currency ?? DEFAULT_CURRENCY.code,
+    );
+  }
+
+  async getDeliveryRates(
+    userId: string,
+    countryCode?: string,
+  ): Promise<DeliveryOption[]> {
+    const cart = await this.findActiveCart(userId);
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return [];
+    }
+
+    // Calculate total weight from all cart items
+    let totalWeight = 0;
+    for (const item of cart.items) {
+      const weightPerUnit = this.deliveryFeeService.getWeightInKg(
+        Number(item.product?.unit_value ?? 0),
+        item.product?.measurement?.label ?? 'kg',
+      );
+      totalWeight += weightPerUnit * item.quantity;
+    }
+
+    if (totalWeight <= 0 || !countryCode) {
+      return [];
+    }
+
+    return await this.deliveryFeeService.getDeliveryOptions(
+      totalWeight,
+      countryCode,
     );
   }
 

@@ -191,6 +191,15 @@ export const ecommerceService = {
   async clearCart(): Promise<void> {
     await api.delete("/ecommerce-cart/clear");
   },
+
+  async getDeliveryRates(countryCode?: string): Promise<any[]> {
+    const params: any = {};
+    if (countryCode) {
+      params.countryCode = countryCode;
+    }
+    const response = await api.get("/ecommerce-cart/delivery-rates", { params });
+    return response.data;
+  },
   
   // Orders
   async initiateOrder(orderData: any, countryCode?: string): Promise<any> {

@@ -286,7 +286,10 @@ export interface OrderSummaryCardProps {
   items: CartItem[];
   selectedCurrency?: string;
   selectedAddress: CartAddressData | null;
-  setHighlightAddressError(value: boolean): void
+  setHighlightAddressError(value: boolean): void;
+  selectedDeliveryOption?: DeliveryOption | null;
+  onBackToDelivery?: () => void;
+  onEditAddress?: () => void;
 }
 
 export interface EmptyCartStateProps {
@@ -316,6 +319,13 @@ export interface CartAddressData {
   phone_number?: string;
   email?: string;
   currency?: string;
+}
+
+export interface DeliveryOption {
+  service_name: string;
+  total_amount: number;
+  estimated_days?: string;
+  description?: string;
 }
 
 export interface UserAddress {

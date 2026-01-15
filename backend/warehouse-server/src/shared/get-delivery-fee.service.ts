@@ -2,6 +2,18 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
+export interface DeliveryOption {
+  service_name: string;
+  total_amount: number;
+  estimated_days?: string;
+  description?: string;
+}
+
+export interface DeliveryRatesResponse {
+  success: boolean;
+  data: DeliveryOption[];
+}
+
 @Injectable()
 export class DeliveryFeeService {
   constructor(private readonly httpService: HttpService) {}
@@ -21,31 +33,58 @@ export class DeliveryFeeService {
   }
 
   async getDeliveryFee(weight: number, country_code: string): Promise<number> {
-    // const username = process.env.UGFLASH_USERNAME;
-    // const password = process.env.UGFLASH_PASSWORD;
+    const options = await this.getDeliveryOptions(weight, country_code);
+    if (options.length > 0) {
+      return options[0].total_amount;
+    }
+    return 2; // Fallback default
+  }
 
-    // if (!username || !password) {
-    //   throw new BadRequestException('Shipment credentials not configured');
-    // }
+  async getDeliveryOptions(
+    weight: number,
+    country_code: string,
+  ): Promise<DeliveryOption[]> {
+    const username = process.env.UGFLASH_USERNAME || 'UGAA01';
+    const password = process.env.UGFLASH_PASSWORD || 'Ugflash@2022';
 
-    // const response = await firstValueFrom(
-    //   this.httpService.post<{
-    //     success: boolean;
-    //     data: { total_amount: number }[];
-    //   }>('https://ugflash.com/api/shipment/rates/list', {
-    //     username,
-    //     password,
-    //     country_code,
-    //     weight,
-    //   }),
-    // );
+    if (!username || !password) {
+      throw new BadRequestException('Shipment credentials not configured');
+    }
 
-    // if (response.data.success && response.data.data.length > 0) {
-    //   return response.data.data[0].total_amount;
-    // } else {
-    //   throw new BadRequestException('Failed to get delivery fee');
-    // }
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post<DeliveryRatesResponse>(
+          'https://ugflash.com/api/shipment/rates/list',
+          {
+            username,
+            password,
+            country_code,
+            weight,
+          },
+        ),
+      );
 
-    return 2;
+      if (response.data.success && response.data.data.length > 0) {
+        return response.data.data.map((item) => ({
+          service_name: item.service_name || 'Standard Delivery',
+          total_amount: item.total_amount || 0,
+          estimated_days: item.estimated_days,
+          description: item.description,
+        }));
+      } else {
+        throw new BadRequestException('No delivery options available');
+      }
+    } catch (error) {
+      console.error('Failed to fetch delivery options:', error);
+      // Return fallback options if API fails
+      return [
+        {
+          service_name: 'Standard Delivery',
+          total_amount: 2,
+          estimated_days: '10-15 days',
+          description: 'Standard shipping',
+        },
+      ];
+    }
   }
 }

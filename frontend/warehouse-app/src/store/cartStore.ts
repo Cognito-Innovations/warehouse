@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { getAuthToken } from "@/utils/getAuthToken";
 import { CartStore } from "./storeTypes";
-import { EcommerceProduct, LocalCartItem } from "@/types/ecommerce";
+import { EcommerceProduct, LocalCartItem, DeliveryOption } from "@/types/ecommerce";
 
 export const useCartStore = create<CartStore>()(
   persist(
@@ -13,11 +13,13 @@ export const useCartStore = create<CartStore>()(
       cartProducts: [],
       updatingProducts: {},
       checkoutProducts: [],
+      selectedDeliveryOption: null,
       loading: false,
       isSyncing: false,
       _hasHydrated: false,
       hasUnsyncedChanges: false,
       setHasHydrated: (value: boolean) => set({ _hasHydrated: value }),
+      setSelectedDeliveryOption: (option: DeliveryOption | null) => set({ selectedDeliveryOption: option }),
 
       setLoading: (value: boolean) => set({ loading: value }),
 
@@ -61,6 +63,7 @@ export const useCartStore = create<CartStore>()(
         return item?.quantity || 0;
       },
 
+      //TODO P0: Renmae this fn name to correct one
       getLineId: async (productId: string, currency?: string, countryCode?: string) => {
         const token = getAuthToken();
         if (!token) return undefined;
@@ -608,7 +611,8 @@ export const useCartStore = create<CartStore>()(
       partialize: (state) => ({
         cartProducts: state.cartProducts,
         checkoutProducts: state.checkoutProducts,
-        hasUnsyncedChanges: state.hasUnsyncedChanges
+        hasUnsyncedChanges: state.hasUnsyncedChanges,
+        selectedDeliveryOption: state.selectedDeliveryOption,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
