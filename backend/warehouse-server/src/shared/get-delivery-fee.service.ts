@@ -1,6 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 export interface DeliveryOption {
   service_name: string;
@@ -16,7 +23,34 @@ export interface DeliveryRatesResponse {
 
 @Injectable()
 export class DeliveryFeeService {
-  constructor(private readonly httpService: HttpService) {}
+  private readonly logger = new Logger(DeliveryFeeService.name);
+
+  constructor(
+    private readonly httpService: HttpService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
+
+  private async getFromCache<T>(key: string): Promise<T | null> {
+    try {
+      const value = await this.cacheManager.get<T>(key);
+      return value ?? null;
+    } catch (error) {
+      this.logger.warn(`Redis cache read failed for ${key}`, error);
+      return null;
+    }
+  }
+
+  private async setInCache<T>(
+    key: string,
+    value: T,
+    ttlSeconds = 60 * 60 * 48, // 2 days
+  ): Promise<void> {
+    try {
+      await this.cacheManager.set(key, value, ttlSeconds);
+    } catch (error) {
+      this.logger.warn(`Redis cache write failed for ${key}`, error);
+    }
+  }
 
   getWeightInKg(unit_value: number, label: string): number {
     const lowerLabel = label.toLowerCase();
@@ -51,6 +85,13 @@ export class DeliveryFeeService {
       throw new BadRequestException('Shipment credentials not configured');
     }
 
+    const cacheKey = `delivery_rates:${country_code}:${weight}`;
+
+    const cachedRates = await this.getFromCache<DeliveryOption[]>(cacheKey);
+    if (cachedRates && cachedRates.length > 0) {
+      return cachedRates;
+    }
+
     try {
       const response = await firstValueFrom(
         this.httpService.post<DeliveryRatesResponse>(
@@ -65,17 +106,21 @@ export class DeliveryFeeService {
       );
 
       if (response.data.success && response.data.data.length > 0) {
-        return response.data.data.map((item) => ({
+        const options = response.data.data.map((item) => ({
           service_name: item.service_name || 'Standard Delivery',
           total_amount: item.total_amount || 0,
           estimated_days: item.estimated_days,
           description: item.description,
         }));
-      } else {
-        throw new BadRequestException('No delivery options available');
+
+        await this.setInCache(cacheKey, options);
+
+        return options;
       }
+
+      throw new BadRequestException('No delivery options available');
     } catch (error) {
-      console.error('Failed to fetch delivery options:', error);
+      this.logger.error('Failed to fetch delivery options', error);
       // Return fallback options if API fails
       return [
         {
