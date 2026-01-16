@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef } from "react";
 import { Paper, Box, Typography, Button, Divider, CircularProgress, Chip } from "@mui/material";
-import { ArrowForward, Login, ArrowBack, Edit } from "@mui/icons-material";
+import { ArrowForward, Login, ArrowBack } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -145,23 +145,8 @@ export default function OrderSummaryCard({
             >
               Deliver to:
             </Typography>
-            {(onEditAddress || onBackToDelivery) && (
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<Edit />}
-                onClick={onEditAddress || onBackToDelivery}
-                sx={{
-                  textTransform: "none",
-                  fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                  py: 0.5,
-                  px: { xs: 0.75, sm: 1 },
-                  minWidth: "auto",
-                }}
-              >
-                Change
-              </Button>
-            )}
+            {/* Address is read-only in Order Summary - removed Change button */}
+            {/* Users must go back to previous steps to edit address */}
           </Box>
           <Box sx={{ 
             display: "flex", 

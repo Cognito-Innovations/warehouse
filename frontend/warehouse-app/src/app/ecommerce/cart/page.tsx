@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Container } from "@mui/material";
+import { Box, Container, Button } from "@mui/material";
+import { ArrowForward } from "@mui/icons-material";
 import { useSession } from "next-auth/react";
 
 import { useLocationStore } from "@/store/locationStore";
@@ -17,6 +18,7 @@ import OrderSummarySkeleton from "@/components/ecommerce/skeleton-loader/OrderSu
 import CartItemsSkeleton from "@/components/ecommerce/skeleton-loader/CartItemsSkeleton";
 import CartStepper from "@/components/ecommerce/cart/CartStepper";
 import DeliveryModelSelection from "@/components/ecommerce/cart/DeliveryModelSelection";
+import ReadOnlyCartItems from "@/components/ecommerce/cart/ReadOnlyCartItems";
 import { CartAddressData, DeliveryOption } from "@/types/ecommerce";
 
 type CartStep = 0 | 1 | 2;
@@ -49,9 +51,7 @@ export default function CartPage() {
 
   const handleAddressSelect = useCallback((address: CartAddressData | null) => {
     setSelectedAddress(address);
-    if (address) {
-      setActiveStep(1); // Move to delivery selection step
-    }
+    // Don't auto-advance - let user manually proceed to next step
   }, []);
 
   const handleDeliveryOptionSelect = useCallback((option: DeliveryOption) => {
@@ -147,13 +147,17 @@ export default function CartPage() {
             {!userId ? (
               <CartLoginState />
             ) : (
-              <AddressSection
-                userId={userId}
-                onAddressChange={handleAddressSelect}
-                highlightAddressError={highlightAddressError}
-                onAddressFetchComplete={handleAddressFetchComplete}
-                initialAddress={selectedAddress}
-              />
+              <>
+                <AddressSection
+                  userId={userId}
+                  onAddressChange={handleAddressSelect}
+                  highlightAddressError={highlightAddressError}
+                  onAddressFetchComplete={handleAddressFetchComplete}
+                  initialAddress={selectedAddress}
+                />
+                {/* Continue button to proceed to delivery step */}
+               
+              </>
             )}
             {isCartLoading ? (
               <CartItemsSkeleton />
@@ -165,12 +169,48 @@ export default function CartPage() {
                 selectedCurrency={currencyCode}
               />
             )}
-            <ContinueShoppingCard />
+            {/* Action buttons at bottom */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column-reverse", sm: "row" },
+                justifyContent: { xs: "flex-start", sm: "space-between" },
+                alignItems: { xs: "stretch", sm: "center" },
+                gap: { xs: 1.5, sm: 2 },
+                mt: 2,
+                mb: { xs: 1, sm: 0 },
+              }}
+            >
+              <ContinueShoppingCard />
+              {selectedAddress && (
+                <Button
+                  variant="contained"
+                  endIcon={<ArrowForward />}
+                  onClick={() => setActiveStep(1)}
+                  fullWidth={false}
+                  sx={{
+                    textTransform: "none",
+                    bgcolor: "primary.main",
+                    px: { xs: 2, sm: 3 },
+                    py: { xs: 1, sm: 1.25 },
+                    fontSize: { xs: "0.875rem", sm: "1rem" },
+                    minWidth: { xs: "auto", sm: 180 },
+                    flex: { xs: "1 1 auto", sm: "0 0 auto" },
+                    "&:hover": {
+                      bgcolor: "primary.dark",
+                    },
+                  }}
+                >
+                  Continue to Delivery
+                </Button>
+              )}
+            </Box>
           </>
         );
       case 1:
         return (
           <>
+            {/* Step 1: Delivery Selection - NO cart items shown */}
             <DeliveryModelSelection
               countryCode={countryCode}
               selectedOption={selectedDeliveryOption}
@@ -178,24 +218,22 @@ export default function CartPage() {
               onBack={handleBackToAddress}
               onContinue={handleContinueToReview}
             />
-            {isCartLoading ? (
-              <CartItemsSkeleton />
-            ) : (
-              <CartItemsList
-                items={validItems as any}
-                loadingStates={{}}
-                selectedItems={new Set(checkoutProducts)}
-                selectedCurrency={currencyCode}
-              />
-            )}
-            <ContinueShoppingCard />
+            {/* Cart items removed from this step - users can't edit during delivery selection */}
           </>
         );
       case 2:
         return (
           <>
-            {/* Order Summary step - no cart items list to prevent editing during checkout */}
-            {/* Users can go back to previous steps if they need to modify cart */}
+            {/* Step 2: Order Summary - Show read-only cart items for final review */}
+            {isCartLoading ? (
+              <CartItemsSkeleton />
+            ) : (
+              <ReadOnlyCartItems
+                items={validItems as any}
+                selectedCurrency={currencyCode}
+              />
+            )}
+            {/* Note: Order Summary card is shown on the right side */}
           </>
         );
       default:
@@ -217,42 +255,44 @@ export default function CartPage() {
         <Box
           sx={{
             display: "flex",
-            flexDirection: { xs: "column", md: "row" },
+            flexDirection: { xs: "column", md: activeStep === 2 ? "row" : "column" },
             gap: { xs: 2, sm: 3 },
             alignItems: { xs: "stretch", md: "flex-start" },
           }}
         >
-          {/* Cart Items Section */}
+          {/* Main Content Section */}
           <Box sx={{ 
-            flex: { md: "0 0 65%" }, 
-            width: { xs: "100%", md: "65%" },
+            flex: { md: activeStep === 2 ? "0 0 65%" : "1" }, 
+            width: { xs: "100%", md: activeStep === 2 ? "65%" : "100%" },
             minWidth: 0, // Prevents overflow
           }}>
             {renderStepContent()}
           </Box>
 
-          {/* Order Summary Section */}
-          <Box sx={{ 
-            flex: { md: "0 0 35%" }, 
-            width: { xs: "100%", md: "35%" },
-            minWidth: 0, // Prevents overflow
-            order: { xs: -1, md: 0 }, // Show summary first on mobile for better UX
-          }}>
-            {isCartLoading ? (
-              <OrderSummarySkeleton />
-            ) : (
-              <OrderSummaryCard
-                userId={userId}
-                items={validItems as any}
-                selectedCurrency={currencyCode}
-                selectedAddress={selectedAddress}
-                setHighlightAddressError={setHighlightAddressError}
-                selectedDeliveryOption={selectedDeliveryOption}
-                onBackToDelivery={activeStep === 2 ? handleBackToDelivery : undefined}
-                onEditAddress={activeStep === 2 ? handleEditAddress : undefined}
-              />
-            )}
-          </Box>
+          {/* Order Summary Section - Only show in step 2 (Order Summary) */}
+          {activeStep === 2 && (
+            <Box sx={{ 
+              flex: { md: "0 0 35%" }, 
+              width: { xs: "100%", md: "35%" },
+              minWidth: 0, // Prevents overflow
+              order: { xs: -1, md: 0 }, // Show summary first on mobile for better UX
+            }}>
+              {isCartLoading ? (
+                <OrderSummarySkeleton />
+              ) : (
+                <OrderSummaryCard
+                  userId={userId}
+                  items={validItems as any}
+                  selectedCurrency={currencyCode}
+                  selectedAddress={selectedAddress}
+                  setHighlightAddressError={setHighlightAddressError}
+                  selectedDeliveryOption={selectedDeliveryOption}
+                  onBackToDelivery={handleBackToDelivery}
+                  onEditAddress={handleEditAddress}
+                />
+              )}
+            </Box>
+          )}
         </Box>
       </Container>
     </Box>
