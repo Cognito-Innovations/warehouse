@@ -14,22 +14,19 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EcommerceCategory } from './entities/ecommerce-category.entity';
 import { EcommerceSubCategory } from './entities/ecommerce-sub-category.entity';
 import { EcommerceProduct } from './entities/ecommerce-product.entity';
-import { EcommerceCart } from './entities/ecommerce-cart.entity';
-import { EcommerceCartItem } from './entities/ecommerce-cart-item.entity';
-import { EcommerceOrder } from './entities/ecommerce-order.entity';
-import { EcommerceOrderItem } from './entities/ecommerce-order-item.entity';
 import { EcommerceMeasurement } from './entities/measurement.entity';
 import { MeasurementController } from './controllers/measurement.controller';
 import { MeasurementService } from './services/measurement.service';
 import { Country } from 'src/Countries/country.entity';
-import { SeedController } from './seed/seed.controller';
-import { SeedService } from './seed/seed.service';
 import { EcommerceCargoOption } from './entities/cargo-options.entity';
 import { CargoOptionsController } from './controllers/cargoOptions.controller';
 import { CargoOptionsService } from './services/cargo-options.service';
 import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 import { Currency } from 'src/currencies/currency.entity';
 import { SharedModule } from 'src/shared/shared.module';
+import { EcommerceUserItem } from './entities/ecommerce-user-items.entity';
+import { EcommercePayment } from './entities/ecommerce-payments.entity';
+import { EcommerceOrderReference } from './entities/ecommerce-order-references.entity';
 
 @Module({
   imports: [
@@ -38,12 +35,10 @@ import { SharedModule } from 'src/shared/shared.module';
       EcommerceCategory,
       EcommerceSubCategory,
       EcommerceProduct,
-      EcommerceCart,
-      EcommerceCartItem,
-      EcommerceOrder,
-      EcommerceOrderItem,
+      EcommerceUserItem,
+      EcommercePayment,
+      EcommerceOrderReference,
       EcommerceMeasurement,
-      EcommerceCartItem,
       Country,
       EcommerceCargoOption,
       Currency,
@@ -58,7 +53,6 @@ import { SharedModule } from 'src/shared/shared.module';
     CartController,
     OrderController,
     MeasurementController,
-    SeedController,
     CargoOptionsController,
   ],
   providers: [
@@ -68,7 +62,6 @@ import { SharedModule } from 'src/shared/shared.module';
     CartService,
     OrderService,
     MeasurementService,
-    SeedService,
     CargoOptionsService,
   ],
 })

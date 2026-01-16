@@ -15,7 +15,7 @@ interface OrderRow {
   payment_mode: string;
   created_at: string;
   status: string;
-  payment_status: string;
+  // payment_status: string;
 }
 
 interface ExportOrdersButtonProps {
@@ -42,7 +42,7 @@ const ExportOrdersButton: React.FC<ExportOrdersButtonProps> = ({ orders }) => {
         "Payment Method": order.payment_mode || 'Unknown',
         "Order Date": order.created_at ? formatDateTime(timestampMs) : '-',
         "Status": order.status,
-        "Payment Status": order.payment_status,
+        // "Payment Status": order.payment_status,
       };
     });
 

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Country, CountryPhoneCode } from './country.entity';
+import { Country } from './country.entity';
 import { CreateCountryDto } from './dto/create-country.dto';
 import { CountryResponseDto } from './dto/countries-response.dto';
 import { UpdateCountryDto } from './dto/update-country.dto';
@@ -37,7 +37,7 @@ export class CountriesService {
         code: savedCountry.code,
         name: savedCountry.name,
         image: savedCountry.image,
-        phone_code: savedCountry.phone_code as CountryPhoneCode,
+        phone_code: savedCountry.phone_code,
         created_at: savedCountry.created_at,
         updated_at: savedCountry.updated_at,
       };
@@ -76,7 +76,7 @@ export class CountriesService {
 
       return countries.map((country) => ({
         ...country,
-        phone_code: country.phone_code as CountryPhoneCode,
+        phone_code: country.phone_code,
       }));
     } catch (error) {
       const message =

@@ -3,20 +3,29 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { EcommerceOrder } from '../entities/ecommerce-order.entity';
-import { EcommerceOrderItem } from '../entities/ecommerce-order-item.entity';
-import { EcommerceCart } from '../entities/ecommerce-cart.entity';
-import { EcommerceCartItem } from '../entities/ecommerce-cart-item.entity';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
-import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
-import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { DEFAULT_CURRENCY, PAYMENT_GATEWAY } from '../../shared/constants.js';
 import { DeliveryFeeService } from 'src/shared/get-delivery-fee.service';
+import {
+  EcommercePayment,
+  Status,
+} from '../entities/ecommerce-payments.entity';
+import { EcommerceOrderReference } from '../entities/ecommerce-order-references.entity';
+import {
+  EcommerceUserItem,
+  UserItemStatus,
+} from '../entities/ecommerce-user-items.entity';
+import { EcommerceProduct } from '../entities/ecommerce-product.entity';
+
+export interface OrderWithDetails extends EcommercePayment {
+  total_amount: number;
+  display_currency: string;
+}
 
 interface CurrencyInfo {
   code: string;
@@ -78,14 +87,14 @@ export class OrderService {
   private readonly baseUrl: string;
 
   constructor(
-    @InjectRepository(EcommerceOrder)
-    private readonly orderRepository: Repository<EcommerceOrder>,
-    @InjectRepository(EcommerceOrderItem)
-    private readonly orderItemRepository: Repository<EcommerceOrderItem>,
-    @InjectRepository(EcommerceCart)
-    private readonly cartRepository: Repository<EcommerceCart>,
-    @InjectRepository(EcommerceCartItem)
-    private readonly cartItemRepository: Repository<EcommerceCartItem>,
+    @InjectRepository(EcommercePayment)
+    private readonly paymentRepository: Repository<EcommercePayment>,
+    @InjectRepository(EcommerceOrderReference)
+    private readonly orderReferenceRepository: Repository<EcommerceOrderReference>,
+    @InjectRepository(EcommerceUserItem)
+    private readonly userItemRepository: Repository<EcommerceUserItem>,
+    @InjectRepository(EcommerceProduct)
+    private readonly productRepository: Repository<EcommerceProduct>,
     private readonly userPreferenceService: UserPreferencesService,
     private readonly httpService: HttpService,
     private readonly deliveryFeeService: DeliveryFeeService,
@@ -124,7 +133,7 @@ export class OrderService {
   }
 
   private async calculateOrderPricing(
-    items: EcommerceCartItem[],
+    items: EcommerceUserItem[],
     currencyInfo: CurrencyInfo,
     countryCode?: string,
   ) {
@@ -135,7 +144,11 @@ export class OrderService {
     // Calculate details for each item
     const itemDetails = await Promise.all(
       items.map(async (item) => {
-        const basePrice = Number(item.product?.price || 0);
+        const product = await this.productRepository.findOne({
+          where: { id: item.product_id },
+          relations: ['measurement'],
+        });
+        const basePrice = Number(product?.price || 0);
         const localPrice = this.roundCurrency(basePrice * rate);
 
         // Accumulate totals for this item
@@ -143,8 +156,8 @@ export class OrderService {
         const itemTotalUSD = this.roundCurrency(itemSubtotalLocal / rate);
 
         const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-          Number(item.product?.unit_value ?? 0),
-          item.product?.measurement?.label ?? 'kg',
+          Number(product?.unit_value ?? 0),
+          product?.measurement?.label ?? 'kg',
         );
         const totalWeight = weightPerUnit * item.quantity;
         const deliveryUSD = await this.deliveryFeeService.getDeliveryFee(
@@ -154,11 +167,12 @@ export class OrderService {
         totalDeliveryUSD += deliveryUSD;
 
         return {
-          product_id: item.product_id || item.product?.id,
+          product_id: item.product_id,
           quantity: item.quantity,
           unitPriceUSD: basePrice,
           totalUSD: itemTotalUSD,
           subtotalLocal: itemSubtotalLocal,
+          deliveryUSD,
         };
       }),
     );
@@ -198,20 +212,21 @@ export class OrderService {
     return response.data.access_token;
   }
 
-  private async decreaseProductStock(order: EcommerceOrder): Promise<void> {
-    for (const item of order.items) {
+  private async decreaseProductStock(payment: EcommercePayment): Promise<void> {
+    for (const item of payment.items) {
       const product = item.product;
+      const quantity = item.user_item?.quantity || 0;
 
       if (!product) continue;
 
-      if (product.stock_quantity < item.quantity) {
+      if (product.stock_quantity < quantity) {
         throw new BadRequestException(
           `Insufficient stock for product ${product.id}`,
         );
       }
 
-      product.stock_quantity -= item.quantity;
-      await this.cartItemRepository.manager.save(product);
+      product.stock_quantity -= quantity;
+      await this.productRepository.save(product);
     }
   }
 
@@ -219,32 +234,23 @@ export class OrderService {
     userId: string,
     createOrderDto: CreateOrderDto,
     countryCode?: string,
-  ): Promise<EcommerceOrder> {
-    let savedOrder: EcommerceOrder | null = null;
+  ): Promise<OrderWithDetails> {
+    let savedPayment: EcommercePayment | null = null;
 
     try {
-      // Get user's active cart
-      const cart = await this.cartRepository.findOne({
-        where: { user_id: userId, status: CartStatus.ACTIVE },
-        relations: [
-          'items',
-          'items.product',
-          'items.product.measurement',
-          'user',
-        ],
+      const cartItems = await this.userItemRepository.find({
+        where: { user_id: userId, status: UserItemStatus.CART },
       });
 
-      if (!cart || cart.items.length === 0) {
+      if (!cartItems || cartItems.length === 0) {
         throw new BadRequestException('Cart is empty');
       }
 
       const itemsToProcess = createOrderDto.product_ids?.length
-        ? cart.items.filter((item) =>
-            createOrderDto.product_ids!.includes(
-              item.product_id || item.product?.id,
-            ),
+        ? cartItems.filter((item) =>
+            createOrderDto.product_ids!.includes(item.product_id),
           )
-        : cart.items;
+        : cartItems;
 
       if (!itemsToProcess.length) {
         throw new BadRequestException('No valid items to order');
@@ -271,44 +277,39 @@ export class OrderService {
       const orderNumber = this.generateOrderNumber();
 
       // Create order
-      const order = this.orderRepository.create({
+      const payment = this.paymentRepository.create({
         order_number: orderNumber,
-        user_id: userId,
-        status: OrderStatus.PENDING,
-        payment_status: PaymentStatus.PENDING,
-        total_amount: finalUSDTotal,
+        status: Status.PENDING,
         payment_gateway: PAYMENT_GATEWAY.PAYPAL,
         payment_mode: 'UNKNOWN',
-        notes: createOrderDto.notes,
       });
 
-      savedOrder = await this.orderRepository.save(order);
+      savedPayment = await this.paymentRepository.save(payment);
 
-      const orderItems = itemDetails.map((detail) => {
-        return this.orderItemRepository.create({
-          order_id: savedOrder!.id,
+      const orderReferences = itemDetails.map((detail) => {
+        const correspondingUserItem = itemsToProcess.find(
+          (i) => i.product_id === detail.product_id,
+        )!;
+
+        return this.orderReferenceRepository.create({
+          payment_id: savedPayment!.id,
+          user_item_id: correspondingUserItem.id,
           product_id: detail.product_id,
-          quantity: detail.quantity,
-          unit_price: detail.unitPriceUSD,
-          total_price: detail.totalUSD,
-          // discount_percentage: detail.discountPerc,
         });
       });
 
-      await this.orderItemRepository.save(orderItems);
+      await this.orderReferenceRepository.save(orderReferences);
 
       await this.createPayPalPaymentSession(
-        savedOrder,
+        savedPayment,
         orderNumber,
         finalUSDTotal,
       );
 
-      return this.findOne(savedOrder.id);
+      return this.findOne(savedPayment.id);
     } catch (paypalErr: unknown) {
-      //TODO P0: Remove it here
-      // Rollback on PayPal failure
-      if (savedOrder?.id) {
-        await this.orderRepository.delete(savedOrder.id);
+      if (savedPayment?.id) {
+        await this.paymentRepository.delete(savedPayment.id);
       }
 
       console.error('PayPal error:', paypalErr);
@@ -339,7 +340,7 @@ export class OrderService {
   }
 
   private async createPayPalPaymentSession(
-    order: EcommerceOrder,
+    payment: EcommercePayment,
     orderNumber: string,
     usdAmount: number,
   ): Promise<void> {
@@ -382,197 +383,238 @@ export class OrderService {
       throw new Error('PayPal order creation failed');
     }
 
-    order.gateway_order_id = response.data.id;
-    await this.orderRepository.save(order);
+    payment.gateway_order_id = response.data.id;
+    await this.paymentRepository.save(payment);
   }
 
-  async findAll(userId: string): Promise<EcommerceOrder[]> {
-    const orders = await this.orderRepository.find({
-      where: { user_id: userId },
-      relations: ['items', 'items.product', 'user'],
-      order: { created_at: 'DESC' },
-    });
+  async findAll(userId: string): Promise<OrderWithDetails[]> {
+    const payments = await this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoinAndSelect('payment.items', 'ref')
+      .innerJoinAndSelect('ref.user_item', 'user_item')
+      .innerJoinAndSelect('ref.product', 'product')
+      .where('user_item.user_id = :userId', { userId })
+      .andWhere('user_item.status = :itemStatus', {
+        itemStatus: UserItemStatus.ORDERED,
+      })
+      .andWhere('payment.status = :paymentStatus', {
+        paymentStatus: Status.PAID,
+      })
+      .orderBy('payment.created_at', 'DESC')
+      .getMany();
 
     const userCurrency =
       await this.userPreferenceService.getUserPreferredCurrency(userId);
     const displayCurrency = userCurrency?.symbol || DEFAULT_CURRENCY.symbol;
 
-    return orders.map((order) => ({
-      ...order,
+    return payments.map((payment) => ({
+      ...payment,
+      items: payment.items,
+      total_amount: payment.items.reduce(
+        (sum, ref) =>
+          sum + Number(ref.product.price) * (ref.user_item?.quantity || 0),
+        0,
+      ),
       display_currency: displayCurrency,
-    })) as unknown as EcommerceOrder[];
+    })) as OrderWithDetails[];
   }
 
   async getAllOrders(): Promise<any[]> {
-    const queryBuilder = this.orderRepository
-      .createQueryBuilder('order')
-      .leftJoin('order.user', 'user')
-      .leftJoin('order.items', 'items')
+    return this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoin('payment.items', 'ref')
+      .innerJoin('ref.user_item', 'user_item')
+      .innerJoin('ref.product', 'product')
+      .innerJoin('users', 'u', 'u.id::text = user_item.user_id')
       .select([
-        'order.id AS "id"',
-        'order.order_number AS "order_number"',
-        'order.status AS "status"',
-        'order.payment_status AS "payment_status"',
-        'order.total_amount AS "total_amount"',
-        'order.payment_mode AS "payment_mode"',
-        'order.created_at AS "created_at"',
-        'order.gateway_transaction_id AS "gateway_transaction_id"',
-        'COUNT(items.id) AS "items_count"',
+        'payment.id AS "id"',
+        'payment.order_number AS "order_number"',
+        'payment.status AS "status"',
+        'payment.payment_mode AS "payment_mode"',
+        'payment.created_at AS "created_at"',
+        'payment.gateway_transaction_id AS "gateway_transaction_id"',
+        'COUNT(ref.id) AS "items_count"',
+        'SUM(product.price * user_item.quantity) AS "total_amount"',
+        'user_item.user_id AS "user_id"',
+        'u.name AS "user_name"',
       ])
-      .addSelect('COALESCE(user.name, \'Unknown\') AS "user_name"')
+      .where('payment.status = :paymentStatus', {
+        paymentStatus: Status.PAID,
+      })
+      .andWhere('user_item.status = :itemStatus', {
+        itemStatus: UserItemStatus.ORDERED,
+      })
       .groupBy(
-        'order.id, order.order_number, order.status, order.payment_status, order.total_amount, order.payment_mode, order.created_at, order.gateway_transaction_id, user.name',
+        `
+        payment.id,
+        payment.order_number,
+        payment.status,
+        payment.payment_mode,
+        payment.created_at,
+        payment.gateway_transaction_id,
+        user_item.user_id,
+        u.name
+        `,
       )
-      .orderBy('order.created_at', 'DESC');
-
-    const results = await queryBuilder.getRawMany();
-    return results;
+      .orderBy('payment.created_at', 'DESC')
+      .getRawMany();
   }
 
-  async findOne(id: string): Promise<EcommerceOrder> {
-    const order = await this.orderRepository
-      .createQueryBuilder('order')
-      .select('order')
-      .leftJoinAndSelect('order.items', 'items')
-      .leftJoinAndSelect('items.product', 'product')
-      .leftJoin('order.user', 'user')
-      .addSelect(['user.id', 'user.name', 'user.email', 'user.phone_number'])
-      .where('order.id = :id', { id })
+  async findOne(id: string): Promise<OrderWithDetails> {
+    const payment = await this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoinAndSelect('payment.items', 'ref')
+      .innerJoinAndSelect('ref.user_item', 'user_item')
+      .innerJoinAndSelect('ref.product', 'product')
+      .where('payment.id = :id', { id })
+      .andWhere('payment.status = :paymentStatus', {
+        paymentStatus: Status.PAID,
+      })
+      .andWhere('user_item.status = :itemStatus', {
+        itemStatus: UserItemStatus.ORDERED,
+      })
       .getOne();
 
-    if (!order) {
+    if (!payment) {
       throw new NotFoundException('Order not found');
     }
 
-    const userCurrency =
-      await this.userPreferenceService.getUserPreferredCurrency(order.user_id);
-    const displayCurrency = userCurrency?.symbol || DEFAULT_CURRENCY.symbol;
-
-    return {
-      ...order,
-      display_currency: displayCurrency,
-    } as unknown as EcommerceOrder;
-  }
-
-  async getOrdersByUser(userId: string): Promise<EcommerceOrder[]> {
-    const orders = await this.orderRepository.find({
-      where: { user_id: userId },
-      relations: ['items', 'items.product'],
-      order: { created_at: 'DESC' },
-    });
-
-    if (orders.length === 0) {
-      return [];
-    }
+    const userId = payment.items[0]?.user_item?.user_id;
 
     const userCurrency =
       await this.userPreferenceService.getUserPreferredCurrency(userId);
-    let targetInfo: CurrencyInfo;
-    if (!userCurrency) {
-      targetInfo = {
-        code: DEFAULT_CURRENCY.code,
-        symbol: DEFAULT_CURRENCY.symbol,
-        rate: DEFAULT_CURRENCY.rate,
-      };
-    } else {
-      targetInfo = userCurrency;
-    }
+    const displayCurrency = userCurrency?.symbol || DEFAULT_CURRENCY.symbol;
+
+    const total_amount = payment.items.reduce(
+      (sum, ref) =>
+        sum + Number(ref.product.price) * (ref.user_item?.quantity || 0),
+      0,
+    );
+
+    return {
+      ...payment,
+      items: payment.items,
+      total_amount,
+      display_currency: displayCurrency,
+    } as OrderWithDetails;
+  }
+
+  async getOrdersByUser(userId: string): Promise<OrderWithDetails[]> {
+    const payments = await this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoinAndSelect('payment.items', 'ref')
+      .innerJoinAndSelect('ref.user_item', 'user_item')
+      .innerJoinAndSelect('ref.product', 'product')
+      .where('user_item.user_id = :userId', { userId })
+      .andWhere('user_item.status = :itemStatus', {
+        itemStatus: UserItemStatus.ORDERED,
+      })
+      .andWhere('payment.status = :paymentStatus', {
+        paymentStatus: Status.PAID,
+      })
+      .orderBy('payment.created_at', 'DESC')
+      .getMany();
+
+    if (!payments.length) return [];
+
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+
+    const targetInfo: CurrencyInfo = userCurrency || DEFAULT_CURRENCY;
 
     const origCurrency =
       await this.userPreferenceService.getCurrencyInfoByCode('USD');
 
-    if (!origCurrency) {
-      return orders.map((order) => ({
-        ...order,
-        display_currency: targetInfo.symbol,
-      })) as unknown as EcommerceOrder[];
-    }
+    const conversionFactor = origCurrency
+      ? targetInfo.rate / origCurrency.rate
+      : 1;
 
-    const origRate = origCurrency.rate;
-    const conversionFactor = targetInfo.rate / origRate;
-
-    const convertedOrders = orders.map((order) => ({
-      ...order,
-      total_amount: this.roundCurrency(order.total_amount * conversionFactor),
+    return payments.map((payment) => ({
+      ...payment,
+      items: payment.items,
+      total_amount: this.roundCurrency(
+        payment.items.reduce(
+          (sum, ref) =>
+            sum + Number(ref.product.price) * (ref.user_item?.quantity || 0),
+          0,
+        ) * conversionFactor,
+      ),
       display_currency: targetInfo.symbol,
-    })) as unknown as EcommerceOrder[];
-
-    return convertedOrders;
+    })) as OrderWithDetails[];
   }
 
-  async findByOrderNumber(orderNumber: string): Promise<EcommerceOrder> {
-    const order = await this.orderRepository
-      .createQueryBuilder('order')
-      .select('order')
-      .leftJoinAndSelect('order.items', 'items')
+  async findByOrderNumber(orderNumber: string): Promise<EcommercePayment> {
+    const payment = await this.paymentRepository
+      .createQueryBuilder('payment')
+      .select('payment')
+      .leftJoinAndSelect('payment.items', 'items')
       .leftJoinAndSelect('items.product', 'product')
-      .leftJoin('order.user', 'user')
-      .addSelect(['user.id', 'user.name', 'user.email', 'user.phone_number'])
-      .where('order.order_number = :orderNumber', { orderNumber })
+      .leftJoinAndSelect('items.user_item', 'user_item')
+      .where('payment.order_number = :orderNumber', { orderNumber })
       .getOne();
 
-    if (!order) {
+    if (!payment) {
       throw new NotFoundException('Order not found');
     }
 
-    return order;
+    return payment;
   }
 
   async updateOrderStatus(
     id: string,
-    status: OrderStatus,
+    status: Status,
     comment?: string,
-  ): Promise<EcommerceOrder> {
-    const order = await this.findOne(id);
-    order.status = status;
+  ): Promise<EcommercePayment> {
+    const payment = (await this.findOne(id)) as EcommercePayment;
+    payment.status = status;
 
-    if (comment) {
-      order.comment = comment;
-    }
-
-    return this.orderRepository.save(order);
+    return this.paymentRepository.save(payment);
   }
 
   async processOrderPayment(
     orderId: string,
     paypalOrderId?: string,
-  ): Promise<EcommerceOrder> {
-    const order = await this.findOne(orderId);
+  ): Promise<EcommercePayment> {
+    const payment = (await this.findOne(orderId)) as EcommercePayment;
 
-    if (order.payment_status === PaymentStatus.PAID) {
-      await this.cleanupCartItems(order);
-      return order;
+    if (payment.status === Status.PAID) {
+      return payment;
     }
 
-    if (order.payment_status !== PaymentStatus.PENDING) {
+    if (payment.status !== Status.PENDING) {
       throw new BadRequestException(
         'Payment already processed or invalid status',
       );
     }
 
-    if (paypalOrderId && order.gateway_order_id !== paypalOrderId) {
+    if (paypalOrderId && payment.gateway_order_id !== paypalOrderId) {
       throw new BadRequestException('Invalid PayPal order ID');
     }
 
-    const captureData = await this.capturePayPalPayment(order);
-    this.applyPayPalToOrder(order, captureData);
+    const captureData = await this.capturePayPalPayment(payment);
+    this.applyPayPalToOrder(payment, captureData);
 
-    await this.decreaseProductStock(order);
+    await this.decreaseProductStock(payment);
 
-    await this.cleanupCartItems(order);
+    const userItemIds = payment.items.map((item) => item.user_item_id);
 
-    return this.orderRepository.save(order);
+    await this.userItemRepository.update(
+      { id: In(userItemIds) },
+      { status: UserItemStatus.ORDERED },
+    );
+
+    return this.paymentRepository.save(payment);
   }
 
   private async capturePayPalPayment(
-    order: EcommerceOrder,
+    payment: EcommercePayment,
   ): Promise<PayPalCaptureResponse> {
     try {
       const token = await this.getAccessToken();
 
       const captureResponse = await firstValueFrom(
         this.httpService.post<PayPalCaptureResponse>(
-          `${this.baseUrl}/v2/checkout/orders/${order.gateway_order_id}/capture`,
+          `${this.baseUrl}/v2/checkout/orders/${payment.gateway_order_id}/capture`,
           {},
           {
             headers: {
@@ -597,66 +639,36 @@ export class OrderService {
   }
 
   private applyPayPalToOrder(
-    order: EcommerceOrder,
+    payment: EcommercePayment,
     captureData: PayPalCaptureResponse,
   ): void {
     const capture = captureData.purchase_units[0].payments.captures[0];
 
-    order.payment_status = PaymentStatus.PAID;
-    order.gateway_transaction_id = capture.id;
+    payment.status = Status.PAID;
+    payment.gateway_transaction_id = capture.id;
 
     const paymentSource = captureData.payment_source;
 
     if (paymentSource?.paypal) {
-      order.payment_mode = 'PAYPAL_BALANCE';
+      payment.payment_mode = 'PAYPAL_BALANCE';
     } else if (paymentSource?.card) {
-      order.payment_mode = `CARD_${paymentSource.card.brand ?? 'UNKNOWN'}`;
+      payment.payment_mode = `CARD_${paymentSource.card.brand ?? 'UNKNOWN'}`;
     } else {
-      order.payment_mode = 'UNKNOWN';
+      payment.payment_mode = 'UNKNOWN';
     }
   }
 
-  private async cleanupCartItems(order: EcommerceOrder): Promise<void> {
-    const orderProductIds = order.items.map((item) => item.product_id);
-
-    const cart = await this.cartRepository.findOne({
-      where: {
-        user_id: order.user.id,
-        status: CartStatus.ACTIVE,
-      },
-      relations: ['items', 'items.product'],
-    });
-
-    if (!cart || cart.items.length === 0) return;
-
-    const itemsToRemove = cart.items.filter((item) => {
-      const cartItemId = item.product_id || item.product?.id;
-      return orderProductIds.includes(cartItemId);
-    });
-
-    if (itemsToRemove.length === 0) return;
-
-    await this.cartItemRepository.delete(itemsToRemove.map((i) => i.id));
-
-    const remainingItemsCount = cart.items.length - itemsToRemove.length;
-    if (remainingItemsCount <= 0) {
-      cart.status = CartStatus.CHECKED_OUT;
-      cart.items = [];
-      await this.cartRepository.save(cart);
-    }
-  }
-
-  async cancelOrder(id: string): Promise<EcommerceOrder> {
-    const order = await this.findOne(id);
+  async cancelOrder(id: string): Promise<EcommercePayment> {
+    const payment = (await this.findOne(id)) as EcommercePayment;
 
     if (
-      order.status === OrderStatus.DELIVERED ||
-      order.status === OrderStatus.CANCELLED
+      payment.status === Status.DELIVERED ||
+      payment.status === Status.CANCELLED
     ) {
       throw new BadRequestException('Cannot cancel this order');
     }
 
-    order.status = OrderStatus.CANCELLED;
-    return this.orderRepository.save(order);
+    payment.status = Status.CANCELLED;
+    return this.paymentRepository.save(payment);
   }
 }

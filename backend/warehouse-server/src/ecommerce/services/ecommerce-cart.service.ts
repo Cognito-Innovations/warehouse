@@ -3,55 +3,52 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ComputedCart, EcommerceCart } from '../entities/ecommerce-cart.entity';
-import {
-  ComputedCartItem,
-  EcommerceCartItem,
-} from '../entities/ecommerce-cart-item.entity';
 import { EcommerceProduct } from '../entities/ecommerce-product.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
-
-import { CartStatus } from '../entities/ecommerce-cart.entity';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { DEFAULT_CURRENCY } from '../../shared/constants.js';
-import { DeliveryFeeService, DeliveryOption } from 'src/shared/get-delivery-fee.service';
+import {
+  DeliveryFeeService,
+  DeliveryOption,
+} from 'src/shared/get-delivery-fee.service';
+import {
+  EcommerceUserItem,
+  UserItemStatus,
+} from '../entities/ecommerce-user-items.entity';
+
+export interface ComputedCartItem {
+  id: string;
+  cart_id: string;
+  product_id: string;
+  quantity: number;
+  product: EcommerceProduct | null;
+  unit_price: number;
+  total_price: number;
+  delivery_fee: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface ComputedCart {
+  items: ComputedCartItem[];
+  total_amount: number;
+  final_amount: number;
+  total_delivery_fee?: number;
+}
 
 @Injectable()
 export class CartService {
   constructor(
-    @InjectRepository(EcommerceCart)
-    private readonly cartRepository: Repository<EcommerceCart>,
-    @InjectRepository(EcommerceCartItem)
-    private readonly cartItemRepository: Repository<EcommerceCartItem>,
+    @InjectRepository(EcommerceUserItem)
+    private readonly userItemRepository: Repository<EcommerceUserItem>,
     @InjectRepository(EcommerceProduct)
     private readonly productRepository: Repository<EcommerceProduct>,
     private readonly userPreferencesService: UserPreferencesService,
     private readonly deliveryFeeService: DeliveryFeeService,
   ) {}
-
-  private async findActiveCart(userId: string): Promise<EcommerceCart | null> {
-    return await this.cartRepository.findOne({
-      where: { user_id: userId, status: CartStatus.ACTIVE },
-      relations: [
-        'items',
-        'items.product',
-        'items.product.category',
-        'items.product.measurement',
-        'user',
-      ],
-      select: {
-        user: {
-          id: true,
-          name: true,
-          email: true,
-          suite_no: true,
-        },
-      },
-    });
-  }
 
   private validateProductAndStock(
     product: EcommerceProduct | null,
@@ -81,15 +78,6 @@ export class CartService {
     }
   }
 
-  async createCart(userId: string): Promise<EcommerceCart> {
-    const cart = this.cartRepository.create({
-      user_id: userId,
-      status: CartStatus.ACTIVE,
-    });
-
-    return await this.cartRepository.save(cart);
-  }
-
   async addToCart(
     userId: string,
     addToCartDto: AddToCartDto,
@@ -102,12 +90,6 @@ export class CartService {
       throw new BadRequestException('Quantity must be greater than zero');
     }
 
-    // Get or create cart
-    let cart = await this.findActiveCart(userId);
-    if (!cart) {
-      cart = await this.createCart(userId);
-    }
-
     // Check if product exists
     const product = await this.productRepository.findOne({
       where: { id: product_id },
@@ -115,8 +97,8 @@ export class CartService {
     });
 
     // Check if product is already in cart
-    const existingItem = await this.cartItemRepository.findOne({
-      where: { cart_id: cart.id, product_id },
+    const existingItem = await this.userItemRepository.findOne({
+      where: { user_id: userId, product_id, status: UserItemStatus.CART },
     });
 
     const existingQuantity = existingItem?.quantity ?? 0;
@@ -125,16 +107,17 @@ export class CartService {
     if (existingItem) {
       // Update quantity
       existingItem.quantity = existingQuantity + quantity;
-      await this.cartItemRepository.save(existingItem);
+      await this.userItemRepository.save(existingItem);
     } else {
       // Add new item
-      const cartItem = this.cartItemRepository.create({
-        cart_id: cart.id,
+      const cartItem = this.userItemRepository.create({
+        user_id: userId,
         product_id,
         quantity,
+        status: UserItemStatus.CART,
       });
 
-      await this.cartItemRepository.save(cartItem);
+      await this.userItemRepository.save(cartItem);
     }
 
     return this.getCart(userId, currency, countryCode);
@@ -153,27 +136,23 @@ export class CartService {
       throw new BadRequestException('Quantity must be greater than zero');
     }
 
-    let cart = await this.findActiveCart(userId);
-    if (!cart) {
-      cart = await this.createCart(userId);
-    }
-
-    const cartItem = await this.cartItemRepository.findOne({
-      where: { id: itemId, cart_id: cart.id },
-      relations: ['product'],
+    const cartItem = await this.userItemRepository.findOne({
+      where: { id: itemId, user_id: userId, status: UserItemStatus.CART },
     });
 
     if (!cartItem) {
-      throw new NotFoundException('Cart item not found');
+      throw new NotFoundException('Cart item not found or cannot be updated');
     }
 
-    const product = cartItem.product;
+    const product = await this.productRepository.findOne({
+      where: { id: cartItem.product_id },
+    });
 
     this.validateProductAndStock(product, quantity);
 
     cartItem.quantity = quantity;
 
-    await this.cartItemRepository.save(cartItem);
+    await this.userItemRepository.save(cartItem);
 
     return this.getCart(userId, currency, countryCode);
   }
@@ -184,30 +163,23 @@ export class CartService {
     currency?: string,
     countryCode?: string,
   ): Promise<ComputedCart> {
-    let cart = await this.findActiveCart(userId);
-    if (!cart) {
-      cart = await this.createCart(userId);
-    }
-    const cartItem = await this.cartItemRepository.findOne({
-      where: { id: itemId, cart_id: cart.id },
+    const cartItem = await this.userItemRepository.findOne({
+      where: { id: itemId, user_id: userId, status: UserItemStatus.CART },
     });
 
     // If item doesn't exist, it might have been already deleted (idempotent operation)
-    if (!cartItem) {
-      return this.getCart(userId, currency, countryCode);
+    if (cartItem) {
+      await this.userItemRepository.remove(cartItem);
     }
-
-    await this.cartItemRepository.remove(cartItem);
 
     return this.getCart(userId, currency, countryCode);
   }
 
   async clearCart(userId: string): Promise<void> {
-    let cart = await this.findActiveCart(userId);
-    if (!cart) {
-      cart = await this.createCart(userId);
-    }
-    await this.cartItemRepository.delete({ cart_id: cart.id });
+    await this.userItemRepository.delete({
+      user_id: userId,
+      status: UserItemStatus.CART,
+    });
   }
 
   async getCart(
@@ -215,15 +187,20 @@ export class CartService {
     currency?: string,
     countryCode?: string,
   ): Promise<ComputedCart & { currency?: string }> {
-    let cart = await this.findActiveCart(userId);
-    if (!cart) cart = await this.createCart(userId);
+    const itemsFromDb = await this.userItemRepository.find({
+      where: { user_id: userId, status: UserItemStatus.CART },
+    });
 
     const items: ComputedCartItem[] = await Promise.all(
-      (cart.items ?? []).map(async (item) => {
-        const price = Number(item.product?.price ?? 0);
+      (itemsFromDb ?? []).map(async (item) => {
+        const product = await this.productRepository.findOne({
+          where: { id: item.product_id },
+          relations: ['category', 'measurement'],
+        });
+        const price = Number(product?.price ?? 0);
         const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-          Number(item.product?.unit_value ?? 0),
-          item.product?.measurement?.label ?? 'kg',
+          Number(product?.unit_value ?? 0),
+          product?.measurement?.label ?? 'kg',
         );
         const totalWeight = weightPerUnit * item.quantity;
         const delivery_fee = await this.deliveryFeeService.getDeliveryFee(
@@ -232,11 +209,16 @@ export class CartService {
         );
 
         return {
-          ...item,
+          id: item.id,
+          cart_id: userId,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          product: product ?? null,
           unit_price: price,
           total_price: price * item.quantity,
           delivery_fee,
-          product: item.product ?? null,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
         };
       }),
     );
@@ -265,17 +247,23 @@ export class CartService {
     userId: string,
     countryCode?: string,
   ): Promise<DeliveryOption[]> {
-    const cart = await this.findActiveCart(userId);
-    if (!cart || !cart.items || cart.items.length === 0) {
+    const items = await this.userItemRepository.find({
+      where: { user_id: userId, status: UserItemStatus.CART },
+    });
+    if (!items || items.length === 0) {
       return [];
     }
 
     // Calculate total weight from all cart items
     let totalWeight = 0;
-    for (const item of cart.items) {
+    for (const item of items) {
+      const product = await this.productRepository.findOne({
+        where: { id: item.product_id },
+        relations: ['measurement'],
+      });
       const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-        Number(item.product?.unit_value ?? 0),
-        item.product?.measurement?.label ?? 'kg',
+        Number(product?.unit_value ?? 0),
+        product?.measurement?.label ?? 'kg',
       );
       totalWeight += weightPerUnit * item.quantity;
     }

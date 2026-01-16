@@ -11,11 +11,12 @@ interface PayPalConfig {
 }
 
 interface UsePayPalPaymentOptions {
+  onProcessing?: () => void;
   onSuccess?: () => void;
   onFailure?: (reason: string) => void;
 }
 
-export const usePayPalPayment = ({ onSuccess, onFailure }: UsePayPalPaymentOptions = {}) => {
+export const usePayPalPayment = ({ onProcessing, onSuccess, onFailure }: UsePayPalPaymentOptions = {}) => {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPayPal, setShowPayPal] = useState(false);
@@ -45,6 +46,11 @@ export const usePayPalPayment = ({ onSuccess, onFailure }: UsePayPalPaymentOptio
     };
   }, [showPayPal, paypalConfig]);
 
+  const handleProcessing = useCallback(() => {
+    if (!isMountedRef.current) return;
+    onProcessing?.();
+  }, [onProcessing]);
+
   const handleSuccess = useCallback(async () => {
     if (!isMountedRef.current) return;
     try {
@@ -60,7 +66,9 @@ export const usePayPalPayment = ({ onSuccess, onFailure }: UsePayPalPaymentOptio
   const handleFailure = useCallback((reason: string) => {
     if (!isMountedRef.current) return;
     console.error("Payment Failed:", reason);
-    toast.error(reason || "Payment cancelled");
+    if (reason !== "cancelled") {
+      toast.error(reason || "Payment cancelled");
+    }
     setShowPayPal(false);
     setPaypalConfig(null);
     if (reason !== "cancelled") {
@@ -82,6 +90,11 @@ export const usePayPalPayment = ({ onSuccess, onFailure }: UsePayPalPaymentOptio
 
     launchPayPalPayment(
       paypalConfig,
+      () => {
+        if (!isCancelled && isMountedRef.current) {
+          handleProcessing();
+        }
+      },
       () => {
         if (!isCancelled && isMountedRef.current) {
           handleSuccess();
@@ -108,7 +121,7 @@ export const usePayPalPayment = ({ onSuccess, onFailure }: UsePayPalPaymentOptio
     return () => {
       isCancelled = true;
     };
-  }, [showPayPal, paypalConfig, handleSuccess, handleFailure]);
+  }, [showPayPal, paypalConfig, handleProcessing, handleSuccess, handleFailure]);
 
   const initializePayment = useCallback((config: PayPalConfig) => {
     if (!isMountedRef.current) return;

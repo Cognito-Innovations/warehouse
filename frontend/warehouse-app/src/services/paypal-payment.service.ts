@@ -60,6 +60,7 @@ function loadPayPalScript(currency: string): Promise<any> {
 
 export async function launchPayPalPayment(
   paymentConfig: PayPalConfig,
+  onProcessing: () => void,
   onSuccess: () => void,
   onFailure: (failData: any) => void
 ): Promise<any> {
@@ -90,6 +91,7 @@ export async function launchPayPalPayment(
       createOrder: () => Promise.resolve(paymentConfig.paypalOrderId),
       onApprove: async (data: { orderID: string }) => {
         try {
+          onProcessing(); 
           await ecommerceService.captureOrder(paymentConfig.orderId, data.orderID);
           toast.success("Payment completed successfully!");
           onSuccess();

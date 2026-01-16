@@ -36,17 +36,16 @@ import { UserAddress } from 'src/user_address/user_address.entity';
 import { EcommerceSubCategory } from 'src/ecommerce/entities/ecommerce-sub-category.entity';
 import { EcommerceCategory } from 'src/ecommerce/entities/ecommerce-category.entity';
 import { EcommerceProduct } from 'src/ecommerce/entities/ecommerce-product.entity';
-import { EcommerceOrder } from 'src/ecommerce/entities/ecommerce-order.entity';
-import { EcommerceOrderItem } from 'src/ecommerce/entities/ecommerce-order-item.entity';
 import { EcommerceMeasurement } from 'src/ecommerce/entities/measurement.entity';
 import { Shipment } from 'src/shipments/shipment.entity';
 import { InvoiceCharge } from 'src/invoice/entities/invoice-charge.entity';
-import { EcommerceCart } from 'src/ecommerce/entities/ecommerce-cart.entity';
-import { EcommerceCartItem } from 'src/ecommerce/entities/ecommerce-cart-item.entity';
 import { EcommerceCargoOption } from 'src/ecommerce/entities/cargo-options.entity';
 import { ShipmentPiece } from 'src/shipments/shipment-piece.entity';
 import { ShipmentSequence } from 'src/shipments/shipment-sequence.entity';
 import { PackageSequence } from 'src/packages/entities/package-sequence.entity';
+import { EcommerceUserItem } from 'src/ecommerce/entities/ecommerce-user-items.entity';
+import { EcommercePayment } from 'src/ecommerce/entities/ecommerce-payments.entity';
+import { EcommerceOrderReference } from 'src/ecommerce/entities/ecommerce-order-references.entity';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -90,11 +89,10 @@ export const databaseConfig: TypeOrmModuleOptions = {
     EcommerceCategory,
     EcommerceSubCategory,
     EcommerceProduct,
-    EcommerceOrder,
-    EcommerceOrderItem,
+    EcommerceUserItem,
+    EcommercePayment,
+    EcommerceOrderReference,
     EcommerceMeasurement,
-    EcommerceCart,
-    EcommerceCartItem,
     Shipment,
     ShipmentPiece,
     InvoiceCharge,
@@ -105,5 +103,5 @@ export const databaseConfig: TypeOrmModuleOptions = {
   synchronize: false, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],
   migrationsRun: false,
-  logging: process.env.NODE_ENV === 'development',
+  logging: false,
 };

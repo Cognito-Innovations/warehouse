@@ -19,10 +19,12 @@ interface OrderRow {
 
 interface OrderCardMobileProps {
   order: OrderRow;
-  onEdit?: (id: string | number) => void;
+  // onEdit?: (id: string | number) => void;
 }
 
-const OrderCardMobile: React.FC<OrderCardMobileProps> = ({ order, onEdit }) => {
+const OrderCardMobile: React.FC<OrderCardMobileProps> = ({ order,
+  // onEdit
+}) => {
   const itemsCount = parseInt(order.items_count || "0", 10);
   const totalAmount = Number(order.total_amount || "0");
 

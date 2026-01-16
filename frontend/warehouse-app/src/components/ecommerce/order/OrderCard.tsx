@@ -41,12 +41,12 @@ export default function OrderCard({ order, item }: OrderCardProps) {
 
           <div className="mt-2 flex items-center gap-3 flex-wrap">
             <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-              Qty: {item.quantity}
+              Qty: {item.user_item.quantity}
             </span>
 
             <span className="text-sm sm:text-base font-bold text-gray-900">
               {currency}
-              {item.unit_price?.toLocaleString("en-IN", {
+              {item.product.price?.toLocaleString("en-IN", {
                 maximumFractionDigits: 2,
               })}
             </span>

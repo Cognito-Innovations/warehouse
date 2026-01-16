@@ -120,6 +120,15 @@ export default function CartPage() {
     }
   }, [hydrated, cartProducts, checkoutProducts, setCheckoutProducts]);
 
+  // Auto-advance step based on selections
+  useEffect(() => {
+    if (activeStep === 0 && selectedAddress && userId) {
+      // Don't auto-advance, let user click continue
+    } else if (activeStep === 1 && selectedDeliveryOption) {
+      // Don't auto-advance, let user click continue
+    }
+  }, [activeStep, selectedAddress, selectedDeliveryOption, userId]);
+  
   if (status === "loading" || !hydrated) {
     return <CartSkeletonLoader />;
   }
@@ -129,15 +138,6 @@ export default function CartPage() {
   }
 
   const validItems = cartProducts.filter(item => item && item.product);
-
-  // Auto-advance step based on selections
-  useEffect(() => {
-    if (activeStep === 0 && selectedAddress && userId) {
-      // Don't auto-advance, let user click continue
-    } else if (activeStep === 1 && selectedDeliveryOption) {
-      // Don't auto-advance, let user click continue
-    }
-  }, [activeStep, selectedAddress, selectedDeliveryOption, userId]);
 
   const renderStepContent = () => {
     switch (activeStep) {

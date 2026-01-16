@@ -10,11 +10,10 @@ import {
   Request,
   Query,
 } from '@nestjs/common';
-import { CartService } from '../services/ecommerce-cart.service';
+import { CartService, ComputedCart } from '../services/ecommerce-cart.service';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { ComputedCart } from '../entities/ecommerce-cart.entity';
 import { DeliveryOption } from 'src/shared/get-delivery-fee.service';
 
 interface AuthenticatedRequest {

@@ -66,10 +66,11 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   const { isProcessing, initiateOrder } = useOrderPayment();
   const { showPayPal, initializePayment, resetPayment } = usePayPalPayment({
+    onProcessing: () => {
+      setIsFinalizingPayment(true);
+    },
     onSuccess: async () => {
       try {
-        setIsFinalizingPayment(true);
-
         const purchasedIds = items.map((item) => item.product_id!);
         removePurchasedProducts(purchasedIds);
         onOrderSuccess?.();
@@ -81,6 +82,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
         setIsFinalizingPayment(false);
       }
     },
+    onFailure: () => {
+        setIsFinalizingPayment(false);
+    }
   });
 
   const handlePaymentAndOrder = useCallback(async () => {
