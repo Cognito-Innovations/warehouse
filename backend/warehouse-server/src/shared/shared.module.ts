@@ -42,9 +42,15 @@ import { DeliveryFeeService } from './get-delivery-fee.service';
     CacheModule.registerAsync({
       isGlobal: false,
       useFactory: async () => {
-        const redisConfig = { url: process.env.REDIS_URL };
+        const redisUrl = process.env.REDIS_URL;
         try {
-          const store = await redisStore(redisConfig);
+          const store: any = await redisStore({
+            url: redisUrl,
+            socket: {
+              connectTimeout: 10_000,
+            },
+          });
+          console.log('[Redis] Store initialized successfully!');
           return {
             store,
             keyPrefix: 'palakart:',
