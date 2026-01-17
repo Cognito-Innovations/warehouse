@@ -3,7 +3,7 @@ name: Deploy Pipeline AWS EB
 on:
   push:
     branches:
-      - fix/bugs-pipeline
+      - revamp/delivery-steps
   workflow_dispatch:
 
 concurrency:
