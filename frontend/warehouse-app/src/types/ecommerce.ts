@@ -322,10 +322,9 @@ export interface CartAddressData {
 }
 
 export interface DeliveryOption {
-  service_name: string;
+  delivery_platform: string;
   total_amount: number;
-  estimated_days?: string;
-  description?: string;
+  estimated_time?: string;
 }
 
 export interface UserAddress {

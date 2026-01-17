@@ -148,6 +148,7 @@ export class OrderService {
           where: { id: item.product_id },
           relations: ['measurement'],
         });
+
         const basePrice = Number(product?.price || 0);
         const localPrice = this.roundCurrency(basePrice * rate);
 
@@ -261,7 +262,7 @@ export class OrderService {
 
       const sourceInfo: CurrencyInfo = userCurrencyInfo || DEFAULT_CURRENCY;
 
-      if (!sourceInfo.rate) {
+      if (!sourceInfo?.rate) {
         throw new BadRequestException(
           `Currency rate missing for ${sourceInfo.code}`,
         );
@@ -275,7 +276,6 @@ export class OrderService {
 
       // Generate order number
       const orderNumber = this.generateOrderNumber();
-
       // Create order
       const payment = this.paymentRepository.create({
         order_number: orderNumber,
@@ -283,14 +283,11 @@ export class OrderService {
         payment_gateway: PAYMENT_GATEWAY.PAYPAL,
         payment_mode: 'UNKNOWN',
       });
-
       savedPayment = await this.paymentRepository.save(payment);
-
       const orderReferences = itemDetails.map((detail) => {
         const correspondingUserItem = itemsToProcess.find(
           (i) => i.product_id === detail.product_id,
         )!;
-
         return this.orderReferenceRepository.create({
           payment_id: savedPayment!.id,
           user_item_id: correspondingUserItem.id,
@@ -467,12 +464,6 @@ export class OrderService {
       .innerJoinAndSelect('ref.user_item', 'user_item')
       .innerJoinAndSelect('ref.product', 'product')
       .where('payment.id = :id', { id })
-      .andWhere('payment.status = :paymentStatus', {
-        paymentStatus: Status.PAID,
-      })
-      .andWhere('user_item.status = :itemStatus', {
-        itemStatus: UserItemStatus.ORDERED,
-      })
       .getOne();
 
     if (!payment) {

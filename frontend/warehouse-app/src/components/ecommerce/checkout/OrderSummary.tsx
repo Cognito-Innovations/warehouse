@@ -74,6 +74,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
         const purchasedIds = items.map((item) => item.product_id!);
         removePurchasedProducts(purchasedIds);
         onOrderSuccess?.();
+        setIsFinalizingPayment(false);
         setShowSuccessModal(true);
         resetPayment();
       } catch (error) {

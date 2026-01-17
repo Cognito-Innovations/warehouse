@@ -10,9 +10,9 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 
 export interface DeliveryOption {
-  service_name: string;
+  delivery_platform: string;
   total_amount: number;
-  estimated_days?: string;
+  estimated_time?: string;
   description?: string;
 }
 
@@ -107,10 +107,9 @@ export class DeliveryFeeService {
 
       if (response.data.success && response.data.data.length > 0) {
         const options = response.data.data.map((item) => ({
-          service_name: item.service_name || 'Standard Delivery',
+          delivery_platform: item.delivery_platform || 'Standard Delivery',
           total_amount: item.total_amount || 0,
-          estimated_days: item.estimated_days,
-          description: item.description,
+          estimated_time: item.estimated_time,
         }));
 
         await this.setInCache(cacheKey, options);
@@ -122,12 +121,12 @@ export class DeliveryFeeService {
     } catch (error) {
       this.logger.error('Failed to fetch delivery options', error);
       // Return fallback options if API fails
+      //TODO P0: fetch from redis and if redis also fails then we need to calculate avg and construct the structure and return it
       return [
         {
-          service_name: 'Standard Delivery',
+          delivery_platform: 'Standard Delivery',
           total_amount: 2,
-          estimated_days: '10-15 days',
-          description: 'Standard shipping',
+          estimated_time: '10-15 days',
         },
       ];
     }

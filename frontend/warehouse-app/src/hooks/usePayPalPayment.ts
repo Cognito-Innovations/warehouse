@@ -52,13 +52,19 @@ export const usePayPalPayment = ({ onProcessing, onSuccess, onFailure }: UsePayP
   }, [onProcessing]);
 
   const handleSuccess = useCallback(async () => {
-    if (!isMountedRef.current) return;
+    if (!isMountedRef.current) {
+      return;
+    }
     try {
       setShowPayPal(false);
       setPaypalConfig(null);
-      onSuccess?.();
+      if (onSuccess) {
+        await onSuccess();
+      } else {
+        console.log('[usePayPalPayment] No onSuccess callback provided');
+      }
     } catch (error) {
-      console.error("Success handler error:", error);
+      console.error("[usePayPalPayment] Success handler error:", error);
       toast.error("Order update error");
     }
   }, [onSuccess]);
@@ -95,9 +101,12 @@ export const usePayPalPayment = ({ onProcessing, onSuccess, onFailure }: UsePayP
           handleProcessing();
         }
       },
-      () => {
+      async () => {
+        console.log('[usePayPalPayment] Success callback invoked, isCancelled:', isCancelled, 'isMounted:', isMountedRef.current);
         if (!isCancelled && isMountedRef.current) {
-          handleSuccess();
+          await handleSuccess();
+        } else {
+          console.log('[usePayPalPayment] Success callback skipped due to cancellation or unmount');
         }
       },
       (failData: any) => {

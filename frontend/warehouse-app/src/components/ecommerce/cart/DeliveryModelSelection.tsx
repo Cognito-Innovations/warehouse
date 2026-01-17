@@ -189,7 +189,7 @@ export default function DeliveryModelSelection({
       <Box sx={{ mb: 3 }}>
         {deliveryOptions.map((option, index) => {
           const isSelected =
-            selectedOption?.service_name === option.service_name;
+            selectedOption?.delivery_platform === option.delivery_platform;
           return (
             <Paper
               key={index}
@@ -230,9 +230,9 @@ export default function DeliveryModelSelection({
                       fontSize: { xs: "0.95rem", sm: "1rem" },
                     }}
                   >
-                    {option.service_name}
+                    {option.delivery_platform}
                   </Typography>
-                  {option.estimated_days && (
+                  {option.estimated_time && (
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -241,17 +241,7 @@ export default function DeliveryModelSelection({
                         fontSize: { xs: "0.8rem", sm: "0.875rem" },
                       }}
                     >
-                      {formatDeliveryDays(option.estimated_days)}
-                      {option.description && ` (${option.description})`}
-                    </Typography>
-                  )}
-                  {option.description && !option.estimated_days && (
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
-                    >
-                      {option.description}
+                      {formatDeliveryDays(option.estimated_time)}
                     </Typography>
                   )}
                 </Box>
