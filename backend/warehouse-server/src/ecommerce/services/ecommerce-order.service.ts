@@ -239,6 +239,10 @@ export class OrderService {
     let savedPayment: EcommercePayment | null = null;
 
     try {
+      if (!userId) {
+        throw new BadRequestException('User not found');
+      }
+
       const cartItems = await this.userItemRepository.find({
         where: { user_id: userId, status: UserItemStatus.CART },
       });
@@ -247,14 +251,16 @@ export class OrderService {
         throw new BadRequestException('Cart is empty');
       }
 
-      const itemsToProcess = createOrderDto.product_ids?.length
-        ? cartItems.filter((item) =>
-            createOrderDto.product_ids!.includes(item.product_id),
-          )
-        : cartItems;
+      if (!createOrderDto.product_ids.length) {
+        throw new BadRequestException('No product IDs provided');
+      }
 
-      if (!itemsToProcess.length) {
-        throw new BadRequestException('No valid items to order');
+      const placeOrderProducts = cartItems.filter((item) =>
+        createOrderDto.product_ids.includes(item.product_id),
+      );
+
+      if (!placeOrderProducts?.length) {
+        throw new BadRequestException('No valid products to order');
       }
 
       const userCurrencyInfo =
@@ -269,7 +275,7 @@ export class OrderService {
       }
 
       const { finalUSDTotal, itemDetails } = await this.calculateOrderPricing(
-        itemsToProcess,
+        placeOrderProducts,
         sourceInfo,
         countryCode,
       );
@@ -283,9 +289,13 @@ export class OrderService {
         payment_gateway: PAYMENT_GATEWAY.PAYPAL,
         payment_mode: 'UNKNOWN',
       });
+
+      //TODO P0: Create a seperate service file called payment and in this file only order related one, and payment and those code and calculation will be in those files
+      //TODO P0: Below code is needs to be restructure, please think and restructure it
+      //TODO P0: I couldn't able to see transactions, here, we need to start db transaction and once payment is saved then only commit the order related transactions
       savedPayment = await this.paymentRepository.save(payment);
       const orderReferences = itemDetails.map((detail) => {
-        const correspondingUserItem = itemsToProcess.find(
+        const correspondingUserItem = placeOrderProducts.find(
           (i) => i.product_id === detail.product_id,
         )!;
         return this.orderReferenceRepository.create({

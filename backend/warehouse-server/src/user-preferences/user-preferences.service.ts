@@ -168,6 +168,7 @@ export class UserPreferencesService {
       where: { user: { id: userId } },
       relations: { currency: true },
     });
+    //TODO P0: Handle this case properly, don't return null return default currency
     if (!pref || !pref.currency) return null;
     const latestInfo = await this.externalCurrencyService.getCurrencyInfoByCode(
       pref.currency.currency_code,

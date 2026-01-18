@@ -78,13 +78,15 @@ export class DeliveryFeeService {
     weight: number,
     country_code: string,
   ): Promise<DeliveryOption[]> {
-    const username = process.env.UGFLASH_USERNAME || 'UGAA01';
-    const password = process.env.UGFLASH_PASSWORD || 'Ugflash@2022';
+    //TODO P0: Here country code, we need to create a dedicated map, between {country_code: 2 letter country code} then updated country code pass into it
+    const username = process.env.UGFLASH_USERNAME;
+    const password = process.env.UGFLASH_PASSWORD;
 
     if (!username || !password) {
       throw new BadRequestException('Shipment credentials not configured');
     }
-
+    //TODO P0: This should move, always directly hit to external api fail & then only fails then hit & get from cache (as fallback), also in catch block also get from cache, 
+    //TODO P0: Cache also might fail, so if cache fails then we need to get from db, already we will be saving a copy into db with table_name of "cache_delivery_rates"
     const cacheKey = `delivery_rates:${country_code}:${weight}`;
 
     const cachedRates = await this.getFromCache<DeliveryOption[]>(cacheKey);

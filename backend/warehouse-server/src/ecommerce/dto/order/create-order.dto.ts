@@ -28,6 +28,5 @@ export class CreateOrderDto {
 
   @IsArray()
   @IsString({ each: true })
-  @IsOptional()
-  product_ids?: string[];
+  product_ids: string[];
 }
