@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-store';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { DocumentUploadService } from './document-upload.service';
 import { DocumentUploadController } from './document-upload.controller';
@@ -24,6 +25,13 @@ import { CurrenciesService } from '../currencies/currencies.service';
 import { ExternalCurrencyService } from './external-currency.service';
 import { DeliveryFeeService } from './get-delivery-fee.service';
 
+const cacheModuleFactory = (configService: ConfigService) => ({
+  store: redisStore,
+  host: configService.get<string>('REDIS_HOST'),
+  port: configService.get<number>('REDIS_PORT'),
+  keyPrefix: configService.get<string>('REDIS_KEY_PREFIX'),
+});
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -40,34 +48,9 @@ import { DeliveryFeeService } from './get-delivery-fee.service';
       Currency,
     ]),
     CacheModule.registerAsync({
-      isGlobal: false,
-      useFactory: async () => {
-        const redisUrl = process.env.REDIS_URL;
-        try {
-          const store: any = await redisStore({
-            url: redisUrl,
-            socket: {
-              connectTimeout: 10_000,
-            },
-          });
-          console.log('[Redis] Store initialized successfully!');
-          return {
-            store,
-            keyPrefix: 'palakart:',
-            ttl: 0,
-          };
-        } catch (error) {
-          console.warn(
-            'Redis connection failed, falling back to in-memory cache:',
-            error,
-          );
-          return {
-            store: 'memory',
-            keyPrefix: 'palakart:',
-            ttl: 0,
-          };
-        }
-      },
+      imports: [ConfigModule],
+      useFactory: cacheModuleFactory,
+      inject: [ConfigService],
     }),
     HttpModule,
   ],
