@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback } from "react";
-import { Container, Alert } from "@mui/material";
+import React, { useEffect, useRef, useCallback, useState } from "react";
+import { Container, Alert, useTheme, Box } from "@mui/material";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 import useProductStore from "@/store/productStore";
 import useCategoryStore from "@/store/categoryStore";
@@ -16,6 +17,7 @@ import AssistedShoppingLandingContent from "@/components/AssistedShopping/gettin
 import GridSkeletonLoader from "./skeleton-loader/GridSkeletonLoader";
 import { debounce } from "@/utils/debounce";
 import { ecommerceData } from "@/data/ecommerceData";
+import ProductCardSkeletonLoader from "./skeleton-loader/ProductCardSkeletonLoader";
 
 interface EcommerceContentProps {
   slug?: string;
@@ -47,9 +49,19 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
     (((value: string) => void) & { cancel?: () => void }) | null
   >(null);
 
+  const categoryRef = useRef<HTMLDivElement | null>(null);
+  const skeletonRef = useRef<HTMLDivElement | null>(null);
+
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState(searchQuery);
+  const [skeletonCount, setSkeletonCount] = useState(5);
+  const [rowHeight, setRowHeight] = useState(300);
 
   const showAssisted = selectedCategory === "assisted";
+
+  const theme = useTheme();
+  const isSm = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
+  const isLg = useMediaQuery(theme.breakpoints.up('lg'));
 
   const syncCategoryWithSlug = useCallback(() => {
     const nextCategory = slug ?? null;
@@ -171,6 +183,51 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
     return () => observer.current?.disconnect();
   }, [setupIntersectionObserver]);
 
+  useEffect(() => {
+    const measureRowHeight = () => {
+      if (skeletonRef.current) {
+        const cardHeight = skeletonRef.current.getBoundingClientRect().height;
+        const gap = parseFloat(theme.spacing(isSm ? 2 : 1));
+        setRowHeight(cardHeight + gap);
+      }
+    };
+
+    const timer = setTimeout(measureRowHeight, 0);
+    return () => clearTimeout(timer);
+  }, [isSm, isMd, isLg, theme]);
+
+  useEffect(() => {
+    const calculateSkeletonCount = () => {
+      let columns;
+      if (isLg) columns = ecommerceData.ui.grid.columns.lg;
+      else if (isMd) columns = ecommerceData.ui.grid.columns.md;
+      else if (isSm) columns = ecommerceData.ui.grid.columns.sm;
+      else columns = ecommerceData.ui.grid.columns.xs;
+
+      let categoryBottom = 100;
+      if (categoryRef.current) {
+        categoryBottom = categoryRef.current.getBoundingClientRect().bottom;
+      }
+      const padding = 32;
+      const availableHeight = window.innerHeight - categoryBottom - padding;
+
+      const rows = Math.ceil(availableHeight / rowHeight) + 1;
+
+      const count = columns * rows;
+      setSkeletonCount(Math.max(count, 4));
+    };
+
+    calculateSkeletonCount();
+
+    const handleResize = debounce(calculateSkeletonCount, 200);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      handleResize.cancel?.();
+    };
+  }, [isSm, isMd, isLg, rowHeight]);
+
   const handleRefresh = () => {
     setError(null);
   };
@@ -211,12 +268,18 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
 
   return (
     <EcommercePageLayout>
-      <CategorySection />
+      <Box sx={{ display: 'none' }}>
+        <ProductCardSkeletonLoader ref={skeletonRef} />
+      </Box>
+
+      <div ref={categoryRef}>
+        <CategorySection />
+      </div>
 
       {showAssisted ? (
         <AssistedShoppingLandingContent />
       ) : showInitialLoader ? (
-        <GridSkeletonLoader count={5} />
+        <GridSkeletonLoader count={skeletonCount} />
       ) : isSearchEmpty ? (
         <SearchEmptyState />
       ) : (

@@ -187,6 +187,7 @@ export default function CartPage() {
                   variant="contained"
                   endIcon={<ArrowForward />}
                   onClick={() => setActiveStep(1)}
+                  disabled={!selectedAddress || !isAddressDataReady || isCartLoading}
                   fullWidth={false}
                   sx={{
                     textTransform: "none",
@@ -198,6 +199,10 @@ export default function CartPage() {
                     flex: { xs: "1 1 auto", sm: "0 0 auto" },
                     "&:hover": {
                       bgcolor: "primary.dark",
+                    },
+                    "&.Mui-disabled": {
+                      bgcolor: "grey.400",
+                      color: "grey.700",
                     },
                   }}
                 >
@@ -213,6 +218,7 @@ export default function CartPage() {
             {/* Step 1: Delivery Selection - NO cart items shown */}
             <DeliveryModelSelection
               countryCode={countryCode}
+              currencyCode={currencyCode}
               selectedOption={selectedDeliveryOption}
               onSelectOption={handleDeliveryOptionSelect}
               onBack={handleBackToAddress}

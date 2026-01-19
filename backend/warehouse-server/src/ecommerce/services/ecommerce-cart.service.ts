@@ -15,9 +15,9 @@ import {
   DeliveryOption,
 } from 'src/shared/get-delivery-fee.service';
 import {
-  EcommerceUserItem,
-  UserItemStatus,
-} from '../entities/ecommerce-user-items.entity';
+  EcommerceUserProductStatus,
+  UserProductStatus,
+} from '../entities/ecommerce_user_products_status.entity';
 
 export interface ComputedCartItem {
   id: string;
@@ -42,8 +42,8 @@ export interface ComputedCart {
 @Injectable()
 export class CartService {
   constructor(
-    @InjectRepository(EcommerceUserItem)
-    private readonly userItemRepository: Repository<EcommerceUserItem>,
+    @InjectRepository(EcommerceUserProductStatus)
+    private readonly userItemRepository: Repository<EcommerceUserProductStatus>,
     @InjectRepository(EcommerceProduct)
     private readonly productRepository: Repository<EcommerceProduct>,
     private readonly userPreferencesService: UserPreferencesService,
@@ -78,6 +78,21 @@ export class CartService {
     }
   }
 
+  private async getExistingCartCargo(userId: string): Promise<string | null> {
+    const items = await this.userItemRepository.find({
+      where: { user_id: userId, status: UserProductStatus.CART },
+    });
+
+    if (!items.length) return null;
+
+    const product = await this.productRepository.findOne({
+      where: { id: items[0].product_id },
+      relations: ['cargo_option'],
+    });
+
+    return product?.cargo_option?.label?.toLowerCase() ?? null;
+  }
+
   async addToCart(
     userId: string,
     addToCartDto: AddToCartDto,
@@ -98,11 +113,27 @@ export class CartService {
 
     // Check if product is already in cart
     const existingItem = await this.userItemRepository.findOne({
-      where: { user_id: userId, product_id, status: UserItemStatus.CART },
+      where: { user_id: userId, product_id, status: UserProductStatus.CART },
     });
 
     const existingQuantity = existingItem?.quantity ?? 0;
     this.validateProductAndStock(product, quantity, existingQuantity);
+
+    const existingCargo = await this.getExistingCartCargo(userId);
+
+    if (existingCargo) {
+      const incomingProduct = await this.productRepository.findOne({
+        where: { id: product_id },
+        relations: ['cargo_option'],
+      });
+    
+      const incomingCargo =
+        incomingProduct?.cargo_option?.label?.toLowerCase() ?? null;
+    
+      if (incomingCargo && incomingCargo !== existingCargo) {
+        await this.clearCart(userId);
+      }
+    }
 
     if (existingItem) {
       // Update quantity
@@ -114,7 +145,7 @@ export class CartService {
         user_id: userId,
         product_id,
         quantity,
-        status: UserItemStatus.CART,
+        status: UserProductStatus.CART,
       });
 
       await this.userItemRepository.save(cartItem);
@@ -137,7 +168,7 @@ export class CartService {
     }
 
     const cartItem = await this.userItemRepository.findOne({
-      where: { id: itemId, user_id: userId, status: UserItemStatus.CART },
+      where: { id: itemId, user_id: userId, status: UserProductStatus.CART },
     });
 
     if (!cartItem) {
@@ -164,7 +195,7 @@ export class CartService {
     countryCode?: string,
   ): Promise<ComputedCart> {
     const cartItem = await this.userItemRepository.findOne({
-      where: { id: itemId, user_id: userId, status: UserItemStatus.CART },
+      where: { id: itemId, user_id: userId, status: UserProductStatus.CART },
     });
 
     // If item doesn't exist, it might have been already deleted (idempotent operation)
@@ -178,7 +209,7 @@ export class CartService {
   async clearCart(userId: string): Promise<void> {
     await this.userItemRepository.delete({
       user_id: userId,
-      status: UserItemStatus.CART,
+      status: UserProductStatus.CART,
     });
   }
 
@@ -188,7 +219,7 @@ export class CartService {
     countryCode?: string,
   ): Promise<ComputedCart & { currency?: string }> {
     const itemsFromDb = await this.userItemRepository.find({
-      where: { user_id: userId, status: UserItemStatus.CART },
+      where: { user_id: userId, status: UserProductStatus.CART },
     });
 
     const items: ComputedCartItem[] = await Promise.all(
@@ -206,6 +237,7 @@ export class CartService {
         const delivery_fee = await this.deliveryFeeService.getDeliveryFee(
           totalWeight,
           countryCode!,
+          currency!,
         );
 
         return {
@@ -246,35 +278,51 @@ export class CartService {
   async getDeliveryRates(
     userId: string,
     countryCode?: string,
+    currencyCode?: string,
   ): Promise<DeliveryOption[]> {
     const items = await this.userItemRepository.find({
-      where: { user_id: userId, status: UserItemStatus.CART },
+      where: { user_id: userId, status: UserProductStatus.CART },
     });
     if (!items || items.length === 0) {
       return [];
     }
 
-    // Calculate total weight from all cart items
-    let totalWeight = 0;
+    const cargoWeightMap = new Map<string, number>();
+
     for (const item of items) {
       const product = await this.productRepository.findOne({
         where: { id: item.product_id },
-        relations: ['measurement'],
+        relations: ['measurement', 'cargo_option'],
       });
+      if (!product) continue;
+
+      const cargoLabel =
+        product.cargo_option?.label?.toLowerCase() ?? 'general';
+
       const weightPerUnit = this.deliveryFeeService.getWeightInKg(
         Number(product?.unit_value ?? 0),
         product?.measurement?.label ?? 'kg',
       );
-      totalWeight += weightPerUnit * item.quantity;
+
+      const totalWeight = weightPerUnit * item.quantity;
+
+      cargoWeightMap.set(
+        cargoLabel,
+        (cargoWeightMap.get(cargoLabel) ?? 0) + totalWeight,
+      );
     }
 
-    if (totalWeight <= 0 || !countryCode) {
+    // Only ONE cargo type should exist
+    const [[_, totalWeight]] = [...cargoWeightMap.entries()];
+
+    if (!totalWeight || totalWeight <= 0) {
       return [];
     }
 
     return await this.deliveryFeeService.getDeliveryOptions(
       totalWeight,
-      countryCode,
+      countryCode!,
+      currencyCode!,
     );
   }
 

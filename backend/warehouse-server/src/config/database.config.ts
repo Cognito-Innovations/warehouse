@@ -43,9 +43,12 @@ import { EcommerceCargoOption } from 'src/ecommerce/entities/cargo-options.entit
 import { ShipmentPiece } from 'src/shipments/shipment-piece.entity';
 import { ShipmentSequence } from 'src/shipments/shipment-sequence.entity';
 import { PackageSequence } from 'src/packages/entities/package-sequence.entity';
-import { EcommerceUserItem } from 'src/ecommerce/entities/ecommerce-user-items.entity';
+import { EcommerceUserProductStatus } from 'src/ecommerce/entities/ecommerce_user_products_status.entity';
 import { EcommercePayment } from 'src/ecommerce/entities/ecommerce-payments.entity';
 import { EcommerceOrderReference } from 'src/ecommerce/entities/ecommerce-order-references.entity';
+import { CurrencyCache } from 'src/shared/entities/cache/currency-cache.entity';
+import { DeliveryCache } from 'src/shared/entities/cache/delivery-cache.entity';
+import { DeliveryOptionCache } from 'src/shared/entities/cache/delivery-option-cache.entity';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -89,7 +92,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     EcommerceCategory,
     EcommerceSubCategory,
     EcommerceProduct,
-    EcommerceUserItem,
+    EcommerceUserProductStatus,
     EcommercePayment,
     EcommerceOrderReference,
     EcommerceMeasurement,
@@ -99,6 +102,9 @@ export const databaseConfig: TypeOrmModuleOptions = {
     EcommerceCargoOption,
     ShipmentSequence,
     PackageSequence,
+    CurrencyCache,
+    DeliveryCache,
+    DeliveryOptionCache,
   ],
   synchronize: false, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],

@@ -1,13 +1,12 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { Cache } from 'cache-manager';
+import { CacheManagerService } from './cache-manager.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, ILike } from 'typeorm';
+import { COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP } from './constants';
+import { DeliveryCache } from './entities/cache/delivery-cache.entity';
+import { ExternalCurrencyService } from './external-currency.service';
 
 export interface DeliveryOption {
   delivery_platform: string;
@@ -27,47 +26,55 @@ export class DeliveryFeeService {
 
   constructor(
     private readonly httpService: HttpService,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly cacheService: CacheManagerService,
+    @InjectRepository(DeliveryCache)
+    private readonly deliveryCacheRepo: Repository<DeliveryCache>,
+    private readonly externalCurrencyService: ExternalCurrencyService,
   ) {}
-
-  private async getFromCache<T>(key: string): Promise<T | null> {
-    try {
-      const value = await this.cacheManager.get<T>(key);
-      return value ?? null;
-    } catch (error) {
-      this.logger.warn(`Redis cache read failed for ${key}`, error);
-      return null;
-    }
-  }
-
-  private async setInCache<T>(
-    key: string,
-    value: T,
-    ttlSeconds = 60 * 60 * 48, // 2 days
-  ): Promise<void> {
-    try {
-      await this.cacheManager.set(key, value, ttlSeconds);
-    } catch (error) {
-      this.logger.warn(`Redis cache write failed for ${key}`, error);
-    }
-  }
 
   getWeightInKg(unit_value: number, label: string): number {
     const lowerLabel = label.toLowerCase();
-    if (lowerLabel === 'kg') return unit_value;
-    if (lowerLabel === 'g') return unit_value / 1000;
-    if (lowerLabel === 'mg') return unit_value / 1000000;
-    if (lowerLabel === 'lb' || lowerLabel === 'pound')
-      return unit_value * 0.453592;
-    if (lowerLabel === 'oz' || lowerLabel === 'ounce')
-      return unit_value * 0.0283495;
-    if (lowerLabel === 'ltr' || lowerLabel === 'liter') return unit_value;
-    if (lowerLabel === 'ml') return unit_value / 1000;
-    return unit_value;
+
+    switch (lowerLabel) {
+      case 'kg':
+        return unit_value;
+
+      case 'g':
+        return unit_value / 1000;
+
+      case 'mg':
+        return unit_value / 1_000_000;
+
+      case 'lb':
+      case 'pound':
+        return unit_value * 0.453592;
+
+      case 'oz':
+      case 'ounce':
+        return unit_value * 0.0283495;
+
+      case 'ltr':
+      case 'liter':
+        return unit_value * 1;
+
+      case 'ml':
+        return unit_value / 1000;
+
+      default:
+        return unit_value;
+    }
   }
 
-  async getDeliveryFee(weight: number, country_code: string): Promise<number> {
-    const options = await this.getDeliveryOptions(weight, country_code);
+  async getDeliveryFee(
+    weight: number,
+    country_code: string,
+    currency: string,
+  ): Promise<number> {
+    const options = await this.getDeliveryOptions(
+      weight,
+      country_code,
+      currency,
+    );
     if (options.length > 0) {
       return options[0].total_amount;
     }
@@ -77,22 +84,32 @@ export class DeliveryFeeService {
   async getDeliveryOptions(
     weight: number,
     country_code: string,
+    currency_code: string,
   ): Promise<DeliveryOption[]> {
-    //TODO P0: Here country code, we need to create a dedicated map, between {country_code: 2 letter country code} then updated country code pass into it
+    let standardized_country_code = country_code.toUpperCase();
+    if (
+      standardized_country_code.length === 3 &&
+      COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP[standardized_country_code]
+    ) {
+      standardized_country_code =
+        COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP[standardized_country_code];
+    }
+
     const username = process.env.UGFLASH_USERNAME;
     const password = process.env.UGFLASH_PASSWORD;
 
     if (!username || !password) {
       throw new BadRequestException('Shipment credentials not configured');
     }
-    //TODO P0: This should move, always directly hit to external api fail & then only fails then hit & get from cache (as fallback), also in catch block also get from cache, 
-    //TODO P0: Cache also might fail, so if cache fails then we need to get from db, already we will be saving a copy into db with table_name of "cache_delivery_rates"
-    const cacheKey = `delivery_rates:${country_code}:${weight}`;
 
-    const cachedRates = await this.getFromCache<DeliveryOption[]>(cacheKey);
-    if (cachedRates && cachedRates.length > 0) {
-      return cachedRates;
-    }
+    const cacheKey = `delivery_rates:${standardized_country_code}:${weight}`;
+
+    const convertAmount = async (amount: number): Promise<number> => {
+      if (!currency_code) {
+        return amount;
+      }
+      return this.externalCurrencyService.convertFromINR(amount, currency_code);
+    };
 
     try {
       const response = await firstValueFrom(
@@ -101,7 +118,7 @@ export class DeliveryFeeService {
           {
             username,
             password,
-            country_code,
+            country_code: standardized_country_code,
             weight,
           },
         ),
@@ -114,20 +131,60 @@ export class DeliveryFeeService {
           estimated_time: item.estimated_time,
         }));
 
-        await this.setInCache(cacheKey, options);
+        await this.cacheService.create(cacheKey, options, 60 * 60 * 48);
 
-        return options;
+        const convertedOptions = await Promise.all(
+          options.map(async (option) => ({
+            ...option,
+            total_amount: await convertAmount(option.total_amount),
+          })),
+        );
+
+        return convertedOptions;
       }
 
       throw new BadRequestException('No delivery options available');
     } catch (error) {
       this.logger.error('Failed to fetch delivery options', error);
-      // Return fallback options if API fails
-      //TODO P0: fetch from redis and if redis also fails then we need to calculate avg and construct the structure and return it
+
+      const cachedRates =
+        await this.cacheService.get<DeliveryOption[]>(cacheKey);
+      if (cachedRates && cachedRates.length > 0) {
+        const convertedCached = await Promise.all(
+          cachedRates.map(async (option) => ({
+            ...option,
+            total_amount: await convertAmount(option.total_amount),
+          })),
+        );
+        return convertedCached;
+      }
+
+      // Calculate average from similar entries in DB
+      const likeKey = `delivery_rates:${standardized_country_code}:%`;
+      const entries = await this.deliveryCacheRepo.find({
+        where: { key: ILike(likeKey) },
+        relations: ['options'],
+      });
+
+      let sum = 0;
+      let count = 0;
+      const now = Date.now();
+      for (const entry of entries) {
+        if (!entry.expiry || now < entry.expiry) {
+          if (entry.options && entry.options.length > 0) {
+            sum += entry.options[0].total_amount;
+            count++;
+          }
+        }
+      }
+
+      const avg = count > 0 ? sum / count : 2;
+      const convertedAvg = await convertAmount(avg);
+
       return [
         {
           delivery_platform: 'Standard Delivery',
-          total_amount: 2,
+          total_amount: convertedAvg,
           estimated_time: '10-15 days',
         },
       ];

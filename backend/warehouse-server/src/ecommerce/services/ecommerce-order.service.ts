@@ -3,24 +3,22 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { Repository, In } from 'typeorm';
+import { Repository, In, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { DEFAULT_CURRENCY, PAYMENT_GATEWAY } from '../../shared/constants.js';
 import { DeliveryFeeService } from 'src/shared/get-delivery-fee.service';
-import {
-  EcommercePayment,
-  Status,
-} from '../entities/ecommerce-payments.entity';
+import { Status } from '../entities/ecommerce-payments.entity';
+import { EcommercePayment } from '../entities/ecommerce-payments.entity';
 import { EcommerceOrderReference } from '../entities/ecommerce-order-references.entity';
 import {
-  EcommerceUserItem,
-  UserItemStatus,
-} from '../entities/ecommerce-user-items.entity';
+  EcommerceUserProductStatus,
+  UserProductStatus,
+} from '../entities/ecommerce_user_products_status.entity';
 import { EcommerceProduct } from '../entities/ecommerce-product.entity';
+import { PaymentService } from './payment.service';
 
 export interface OrderWithDetails extends EcommercePayment {
   total_amount: number;
@@ -31,43 +29,6 @@ interface CurrencyInfo {
   code: string;
   symbol: string;
   rate: number;
-}
-
-interface PayPalAccessTokenResponse {
-  access_token: string;
-  token_type: string;
-  app_id: string;
-  expires_in: number;
-  scope: string;
-  nonce: string;
-}
-
-interface PayPalOrderResponse {
-  id: string;
-  status: string;
-}
-
-interface PayPalCaptureResponse {
-  id: string;
-  status: string;
-  payment_source?: {
-    paypal?: {
-      email_address?: string;
-      account_id?: string;
-    };
-    card?: {
-      brand?: string;
-      last_digits?: string;
-    };
-  };
-  purchase_units: Array<{
-    payments: {
-      captures: Array<{
-        id: string;
-        status: string;
-      }>;
-    };
-  }>;
 }
 
 interface PayPalHttpError {
@@ -81,37 +42,20 @@ interface PayPalHttpError {
 
 @Injectable()
 export class OrderService {
-  private readonly clientId: string;
-  private readonly secretKey: string;
-  private readonly mode: string;
-  private readonly baseUrl: string;
-
   constructor(
     @InjectRepository(EcommercePayment)
     private readonly paymentRepository: Repository<EcommercePayment>,
     @InjectRepository(EcommerceOrderReference)
     private readonly orderReferenceRepository: Repository<EcommerceOrderReference>,
-    @InjectRepository(EcommerceUserItem)
-    private readonly userItemRepository: Repository<EcommerceUserItem>,
+    @InjectRepository(EcommerceUserProductStatus)
+    private readonly userItemRepository: Repository<EcommerceUserProductStatus>,
     @InjectRepository(EcommerceProduct)
     private readonly productRepository: Repository<EcommerceProduct>,
     private readonly userPreferenceService: UserPreferencesService,
-    private readonly httpService: HttpService,
     private readonly deliveryFeeService: DeliveryFeeService,
-  ) {
-    this.clientId = process.env.PAYPAL_CLIENT_ID!;
-    this.secretKey = process.env.PAYPAL_SECRET_KEY!;
-    this.mode = process.env.PAYPAL_MODE || 'sandbox';
-
-    if (!this.clientId || !this.secretKey) {
-      throw new BadRequestException('PayPal credentials not configured');
-    }
-
-    this.baseUrl =
-      this.mode === 'live'
-        ? 'https://api-m.paypal.com'
-        : 'https://api-m.sandbox.paypal.com';
-  }
+    private readonly paymentService: PaymentService,
+    @InjectDataSource() private dataSource: DataSource,
+  ) {}
 
   private roundCurrency(value: number): number {
     return Math.round((value + Number.EPSILON) * 100) / 100;
@@ -133,11 +77,11 @@ export class OrderService {
   }
 
   private async calculateOrderPricing(
-    items: EcommerceUserItem[],
+    items: EcommerceUserProductStatus[],
     currencyInfo: CurrencyInfo,
     countryCode?: string,
   ) {
-    const { rate } = currencyInfo;
+    const { rate, code } = currencyInfo;
     let subtotalLocal = 0;
     let totalDeliveryUSD = 0;
 
@@ -164,6 +108,7 @@ export class OrderService {
         const deliveryUSD = await this.deliveryFeeService.getDeliveryFee(
           totalWeight,
           countryCode!,
+          code,
         );
         totalDeliveryUSD += deliveryUSD;
 
@@ -192,25 +137,6 @@ export class OrderService {
       finalUSDTotal,
       itemDetails,
     };
-  }
-
-  private async getAccessToken(): Promise<string> {
-    const auth = Buffer.from(`${this.clientId}:${this.secretKey}`).toString(
-      'base64',
-    );
-    const response = await firstValueFrom(
-      this.httpService.post<PayPalAccessTokenResponse>(
-        `${this.baseUrl}/v1/oauth2/token`,
-        'grant_type=client_credentials',
-        {
-          headers: {
-            Authorization: `Basic ${auth}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        },
-      ),
-    );
-    return response.data.access_token;
   }
 
   private async decreaseProductStock(payment: EcommercePayment): Promise<void> {
@@ -244,7 +170,7 @@ export class OrderService {
       }
 
       const cartItems = await this.userItemRepository.find({
-        where: { user_id: userId, status: UserItemStatus.CART },
+        where: { user_id: userId, status: UserProductStatus.CART },
       });
 
       if (!cartItems || cartItems.length === 0) {
@@ -290,24 +216,35 @@ export class OrderService {
         payment_mode: 'UNKNOWN',
       });
 
-      //TODO P0: Create a seperate service file called payment and in this file only order related one, and payment and those code and calculation will be in those files
-      //TODO P0: Below code is needs to be restructure, please think and restructure it
-      //TODO P0: I couldn't able to see transactions, here, we need to start db transaction and once payment is saved then only commit the order related transactions
-      savedPayment = await this.paymentRepository.save(payment);
-      const orderReferences = itemDetails.map((detail) => {
-        const correspondingUserItem = placeOrderProducts.find(
-          (i) => i.product_id === detail.product_id,
-        )!;
-        return this.orderReferenceRepository.create({
-          payment_id: savedPayment!.id,
-          user_item_id: correspondingUserItem.id,
-          product_id: detail.product_id,
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+        savedPayment = await queryRunner.manager.save(payment);
+
+        const orderReferences = itemDetails.map((detail) => {
+          const correspondingUserItem = placeOrderProducts.find(
+            (i) => i.product_id === detail.product_id,
+          )!;
+          return this.orderReferenceRepository.create({
+            payment_id: savedPayment!.id,
+            user_item_id: correspondingUserItem.id,
+            product_id: detail.product_id,
+          });
         });
-      });
 
-      await this.orderReferenceRepository.save(orderReferences);
+        await queryRunner.manager.save(orderReferences);
 
-      await this.createPayPalPaymentSession(
+        await queryRunner.commitTransaction();
+      } catch (err) {
+        await queryRunner.rollbackTransaction();
+        throw err;
+      } finally {
+        await queryRunner.release();
+      }
+
+      await this.paymentService.createPayPalPaymentSession(
         savedPayment,
         orderNumber,
         finalUSDTotal,
@@ -346,54 +283,6 @@ export class OrderService {
     }
   }
 
-  private async createPayPalPaymentSession(
-    payment: EcommercePayment,
-    orderNumber: string,
-    usdAmount: number,
-  ): Promise<void> {
-    const token = await this.getAccessToken();
-
-    const paypalOrderRequest = {
-      intent: 'CAPTURE',
-      purchase_units: [
-        {
-          amount: {
-            currency_code: 'USD',
-            value: usdAmount.toFixed(2),
-          },
-          description: `Order ${orderNumber}`,
-        },
-      ],
-      application_context: {
-        return_url: `${process.env.FRONTEND_URL}/order`,
-        cancel_url: `${process.env.FRONTEND_URL}/cart`,
-        shipping_preference: 'NO_SHIPPING',
-        user_action: 'PAY_NOW',
-      },
-    };
-
-    const response = await firstValueFrom(
-      this.httpService.post<PayPalOrderResponse>(
-        `${this.baseUrl}/v2/checkout/orders`,
-        paypalOrderRequest,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'PayPal-Request-Id': orderNumber,
-          },
-        },
-      ),
-    );
-
-    if (response.data.status !== 'CREATED') {
-      throw new Error('PayPal order creation failed');
-    }
-
-    payment.gateway_order_id = response.data.id;
-    await this.paymentRepository.save(payment);
-  }
-
   async findAll(userId: string): Promise<OrderWithDetails[]> {
     const payments = await this.paymentRepository
       .createQueryBuilder('payment')
@@ -402,7 +291,7 @@ export class OrderService {
       .innerJoinAndSelect('ref.product', 'product')
       .where('user_item.user_id = :userId', { userId })
       .andWhere('user_item.status = :itemStatus', {
-        itemStatus: UserItemStatus.ORDERED,
+        itemStatus: UserProductStatus.ORDERED,
       })
       .andWhere('payment.status = :paymentStatus', {
         paymentStatus: Status.PAID,
@@ -445,11 +334,14 @@ export class OrderService {
         'user_item.user_id AS "user_id"',
         'u.name AS "user_name"',
       ])
-      .where('payment.status = :paymentStatus', {
+      .where('payment.payment_gateway = :paymentGateway', {
+        paymentGateway: PAYMENT_GATEWAY.PAYPAL,
+      })
+      .andWhere('payment.status = :paymentStatus', {
         paymentStatus: Status.PAID,
       })
       .andWhere('user_item.status = :itemStatus', {
-        itemStatus: UserItemStatus.ORDERED,
+        itemStatus: UserProductStatus.ORDERED,
       })
       .groupBy(
         `
@@ -508,7 +400,7 @@ export class OrderService {
       .innerJoinAndSelect('ref.product', 'product')
       .where('user_item.user_id = :userId', { userId })
       .andWhere('user_item.status = :itemStatus', {
-        itemStatus: UserItemStatus.ORDERED,
+        itemStatus: UserProductStatus.ORDERED,
       })
       .andWhere('payment.status = :paymentStatus', {
         paymentStatus: Status.PAID,
@@ -592,71 +484,35 @@ export class OrderService {
       throw new BadRequestException('Invalid PayPal order ID');
     }
 
-    const captureData = await this.capturePayPalPayment(payment);
-    this.applyPayPalToOrder(payment, captureData);
+    const captureData = await this.paymentService.capturePayPalPayment(payment);
+    this.paymentService.applyPayPalToOrder(payment, captureData);
 
-    await this.decreaseProductStock(payment);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    const userItemIds = payment.items.map((item) => item.user_item_id);
-
-    await this.userItemRepository.update(
-      { id: In(userItemIds) },
-      { status: UserItemStatus.ORDERED },
-    );
-
-    return this.paymentRepository.save(payment);
-  }
-
-  private async capturePayPalPayment(
-    payment: EcommercePayment,
-  ): Promise<PayPalCaptureResponse> {
     try {
-      const token = await this.getAccessToken();
+      await this.decreaseProductStock(payment);
 
-      const captureResponse = await firstValueFrom(
-        this.httpService.post<PayPalCaptureResponse>(
-          `${this.baseUrl}/v2/checkout/orders/${payment.gateway_order_id}/capture`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        ),
+      const userItemIds = payment.items.map((item) => item.user_item_id);
+
+      await queryRunner.manager.update(
+        EcommerceUserProductStatus,
+        { id: In(userItemIds) },
+        { status: UserProductStatus.ORDERED },
       );
 
-      const captureData = captureResponse.data;
+      await queryRunner.manager.save(payment);
 
-      if (captureData.status !== 'COMPLETED') {
-        throw new BadRequestException('PayPal capture failed');
-      }
-
-      return captureData;
-    } catch (captureError: unknown) {
-      console.error('Error capturing PayPal payment:', captureError);
-      throw new BadRequestException('Failed to capture payment');
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-  }
 
-  private applyPayPalToOrder(
-    payment: EcommercePayment,
-    captureData: PayPalCaptureResponse,
-  ): void {
-    const capture = captureData.purchase_units[0].payments.captures[0];
-
-    payment.status = Status.PAID;
-    payment.gateway_transaction_id = capture.id;
-
-    const paymentSource = captureData.payment_source;
-
-    if (paymentSource?.paypal) {
-      payment.payment_mode = 'PAYPAL_BALANCE';
-    } else if (paymentSource?.card) {
-      payment.payment_mode = `CARD_${paymentSource.card.brand ?? 'UNKNOWN'}`;
-    } else {
-      payment.payment_mode = 'UNKNOWN';
-    }
+    return payment;
   }
 
   async cancelOrder(id: string): Promise<EcommercePayment> {

@@ -17,6 +17,7 @@ import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 
 interface DeliveryModelSelectionProps {
   countryCode?: string;
+  currencyCode?: string;
   selectedOption: DeliveryOption | null;
   onSelectOption: (option: DeliveryOption) => void;
   onBack: () => void;
@@ -25,6 +26,7 @@ interface DeliveryModelSelectionProps {
 
 export default function DeliveryModelSelection({
   countryCode,
+  currencyCode,
   selectedOption,
   onSelectOption,
   onBack,
@@ -46,7 +48,7 @@ export default function DeliveryModelSelection({
       try {
         setLoading(true);
         setError(null);
-        const options = await ecommerceService.getDeliveryRates(countryCode);
+        const options = await ecommerceService.getDeliveryRates(countryCode, currencyCode);
         setDeliveryOptions(options);
         
         // Auto-select first option if none selected

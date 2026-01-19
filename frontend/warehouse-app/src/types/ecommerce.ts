@@ -52,6 +52,9 @@ export interface EcommerceProduct {
     id: string;
     name: string;
   };
+  cargo_option: {
+    label: string;
+  };
   created_at: string;
   updated_at: string;
 }

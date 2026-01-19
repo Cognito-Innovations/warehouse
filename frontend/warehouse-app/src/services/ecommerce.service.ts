@@ -192,10 +192,13 @@ export const ecommerceService = {
     await api.delete("/ecommerce-cart/clear");
   },
 
-  async getDeliveryRates(countryCode?: string): Promise<any[]> {
+  async getDeliveryRates(countryCode?: string, currencyCode?: string): Promise<any[]> {
     const params: any = {};
     if (countryCode) {
       params.countryCode = countryCode;
+    }
+    if (currencyCode) {
+      params.currencyCode = currencyCode;
     }
     const response = await api.get("/ecommerce-cart/delivery-rates", { params });
     return response.data;

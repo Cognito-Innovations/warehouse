@@ -35,7 +35,7 @@ export class CartController {
   ) {
     const userId = req.user?.id;
     if (!userId) {
-      return { items: [], final_amount: 0 };
+      return { items: [], final_amount: 0 }; 
     }
     return this.cartService.getCart(userId, currency, countryCode);
   }
@@ -99,11 +99,12 @@ export class CartController {
   async getDeliveryRates(
     @Request() req: AuthenticatedRequest,
     @Query('countryCode') countryCode?: string,
+    @Query('currencyCode') currencyCode?: string,
   ): Promise<DeliveryOption[]> {
     const userId = req.user?.id;
     if (!userId || !countryCode) {
       return [];
     }
-    return this.cartService.getDeliveryRates(userId, countryCode);
+    return this.cartService.getDeliveryRates(userId, countryCode, currencyCode);
   }
 }
