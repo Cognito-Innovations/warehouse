@@ -5,7 +5,16 @@ export interface UserData {
   email: string;
   name: string;
   image?: string;
-  role?: UserRole
+  role?: UserRole;
+  preference?: {
+    courier?: {
+      country?: {
+        id: string;
+        name: string;
+        code: string;
+      };
+    };
+  };
 }
 
 export interface User {

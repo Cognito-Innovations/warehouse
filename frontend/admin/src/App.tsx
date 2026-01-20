@@ -39,6 +39,7 @@ import Products from './pages/Products';
 import Orders from './pages/Orders';
 import ShipmentDetail from './pages/ShipmentDetail';
 import CreateShipment from './pages/CreateShipment';
+import UsersPage from './pages/UsersPage';
 
 function App() {
   const { user } = useAuth()
@@ -56,9 +57,15 @@ function App() {
       return newItem;
     })
     .filter(item => {
-      const isParentVisible = !item.roles || item.roles.includes(user?.role as UserRole);
+      const isParentAllowed = !item.roles || item.roles.includes(user?.role as UserRole);
+      
+      if (!isParentAllowed) {
+        return false;
+      }
+
       const hasVisibleChildren = item.subMenu && item.subMenu.length > 0;
-      return isParentVisible || hasVisibleChildren;
+      
+      return !!item.path || hasVisibleChildren;
     });
 
   return (
@@ -115,6 +122,7 @@ function App() {
                   <Route path="/settings/countries" element={<CountriesPage />} />
                   <Route path="/settings/currencies" element={<CurrenciesPage />} />
                   <Route path="/settings/couriers" element={<CouriersPage />} />
+                  <Route path="/settings/users" element={<UsersPage />} />
                 </Routes>
               </Box>
             </ProtectedRoute>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Paper,
   Box,
@@ -10,6 +10,7 @@ import {
   Alert,
 } from "@mui/material";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
+import { useCartStore } from "@/store/cartStore";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { DeliveryOption } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
@@ -17,7 +18,6 @@ import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 
 interface DeliveryModelSelectionProps {
   countryCode?: string;
-  currencyCode?: string;
   selectedOption: DeliveryOption | null;
   onSelectOption: (option: DeliveryOption) => void;
   onBack: () => void;
@@ -26,7 +26,6 @@ interface DeliveryModelSelectionProps {
 
 export default function DeliveryModelSelection({
   countryCode,
-  currencyCode,
   selectedOption,
   onSelectOption,
   onBack,
@@ -35,7 +34,8 @@ export default function DeliveryModelSelection({
   const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { currencySymbol } = useDetectUserLocation();
+  const { currencyCode, currencySymbol } = useDetectUserLocation();
+  const { getCart } = useCartStore();
 
   useEffect(() => {
     const fetchDeliveryOptions = async () => {
@@ -48,7 +48,7 @@ export default function DeliveryModelSelection({
       try {
         setLoading(true);
         setError(null);
-        const options = await ecommerceService.getDeliveryRates(countryCode, currencyCode);
+        const options = await ecommerceService.getDeliveryRates(countryCode);
         setDeliveryOptions(options);
         
         // Auto-select first option if none selected
@@ -66,6 +66,19 @@ export default function DeliveryModelSelection({
     fetchDeliveryOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countryCode]); // Only depend on countryCode to avoid infinite loops
+
+  const handleDeliveryOptionClick = useCallback(
+    async (option: DeliveryOption) => {
+      onSelectOption(option);
+      try {
+        await ecommerceService.selectDeliveryOption(option);
+        await getCart(currencyCode, countryCode);
+      } catch (err) {
+        console.error("Failed to save delivery option:", err);
+      }
+    },
+    [onSelectOption, getCart, currencyCode, countryCode]
+  );
 
   const formatDeliveryDays = (days?: string) => {
     if (!days) return "";
@@ -196,7 +209,7 @@ export default function DeliveryModelSelection({
             <Paper
               key={index}
               elevation={0}
-              onClick={() => onSelectOption(option)}
+              onClick={() => handleDeliveryOptionClick(option)}
               sx={{
                 p: { xs: 2, sm: 2.5 },
                 mb: 2,

@@ -49,6 +49,7 @@ import { EcommerceOrderReference } from 'src/ecommerce/entities/ecommerce-order-
 import { CurrencyCache } from 'src/shared/entities/cache/currency-cache.entity';
 import { DeliveryCache } from 'src/shared/entities/cache/delivery-cache.entity';
 import { DeliveryOptionCache } from 'src/shared/entities/cache/delivery-option-cache.entity';
+import { EcommerceUserDeliverySelection } from 'src/ecommerce/entities/ecommerce_user_delivery_selections.entity';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -105,6 +106,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     CurrencyCache,
     DeliveryCache,
     DeliveryOptionCache,
+    EcommerceUserDeliverySelection,
   ],
   synchronize: false, // Disable schema synchronization to prevent modifying existing database
   migrations: ['dist/migrations/*.js'],

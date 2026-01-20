@@ -10,6 +10,7 @@ import { IsEmail, MinLength } from 'class-validator';
 import { UserPreference } from 'src/user-preferences/user-preference.entity';
 import { PreArrival } from 'src/pre-arrivals/pre-arrival.entity';
 import { UserAddress } from 'src/user_address/user_address.entity';
+import { EcommerceUserDeliverySelection } from 'src/ecommerce/entities/ecommerce_user_delivery_selections.entity';
 
 export enum Gender {
   Male = 'male',
@@ -49,11 +50,11 @@ export class User extends BaseTimestampEntity {
   @Column({ type: 'enum', enum: Role, default: Role.User })
   role: Role;
 
-  @Column()
+  @Column({ nullable: true })
   @MinLength(6)
   suite_no: string;
 
-  @Column()
+  @Column({ default: Identifier.Email })
   identifier: Identifier;
 
   @Column({ nullable: true })
@@ -94,4 +95,7 @@ export class User extends BaseTimestampEntity {
 
   @OneToMany(() => UserAddress, (address) => address.user)
   address: UserAddress[];
+
+  @OneToOne(() => EcommerceUserDeliverySelection, (selection) => selection.user)
+  deliverySelection: EcommerceUserDeliverySelection;
 }

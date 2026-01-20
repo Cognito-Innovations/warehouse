@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, FindOptionsWhere } from 'typeorm';
 import { PickupRequest, PickupRequestStatus } from './pickup-request.entity';
 import { CreatePickupRequestDto } from './dto/create-pickup-request.dto';
 import { PickupRequestResponseDto } from './dto/pickup-request-response.dto';
@@ -25,8 +25,14 @@ export class PickupRequestsService {
     private readonly trackingRequestsService: TrackingRequestsService,
   ) {}
 
-  async getPickupRequestsCount(): Promise<number> {
-    return this.pickupRequestRepository.count();
+  async getPickupRequestsCount(countryId?: string): Promise<number> {
+    const where: FindOptionsWhere<PickupRequest> = {};
+
+    if (countryId) {
+      where.country = { id: countryId };
+    }
+
+    return this.pickupRequestRepository.count({ where });
   }
 
   async createPickupRequest(
@@ -92,9 +98,18 @@ export class PickupRequestsService {
     }
   }
 
-  async getAllPickupRequests(): Promise<PickupRequestResponseDto[]> {
+  async getAllPickupRequests(
+    countryId?: string,
+  ): Promise<PickupRequestResponseDto[]> {
     try {
+      const where: FindOptionsWhere<PickupRequest> = {};
+
+      if (countryId) {
+        where.country = { id: countryId };
+      }
+
       const pickupRequests = await this.pickupRequestRepository.find({
+        where: where,
         order: { created_at: 'DESC' },
         relations: ['user', 'country'],
       });

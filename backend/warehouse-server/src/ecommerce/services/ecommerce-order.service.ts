@@ -19,6 +19,7 @@ import {
 } from '../entities/ecommerce_user_products_status.entity';
 import { EcommerceProduct } from '../entities/ecommerce-product.entity';
 import { PaymentService } from './payment.service';
+import { CartService } from './ecommerce-cart.service';
 
 export interface OrderWithDetails extends EcommercePayment {
   total_amount: number;
@@ -54,6 +55,7 @@ export class OrderService {
     private readonly userPreferenceService: UserPreferencesService,
     private readonly deliveryFeeService: DeliveryFeeService,
     private readonly paymentService: PaymentService,
+    private readonly cartService: CartService,
     @InjectDataSource() private dataSource: DataSource,
   ) {}
 
@@ -81,7 +83,7 @@ export class OrderService {
     currencyInfo: CurrencyInfo,
     countryCode?: string,
   ) {
-    const { rate, code } = currencyInfo;
+    const { rate } = currencyInfo;
     let subtotalLocal = 0;
     let totalDeliveryUSD = 0;
 
@@ -108,7 +110,6 @@ export class OrderService {
         const deliveryUSD = await this.deliveryFeeService.getDeliveryFee(
           totalWeight,
           countryCode!,
-          code,
         );
         totalDeliveryUSD += deliveryUSD;
 
@@ -503,6 +504,11 @@ export class OrderService {
       );
 
       await queryRunner.manager.save(payment);
+
+      const userId = payment.items[0]?.user_item?.user_id;
+      if (userId) {
+        await this.cartService.clearSelectedDeliveryOption(userId);
+      }
 
       await queryRunner.commitTransaction();
     } catch (err) {

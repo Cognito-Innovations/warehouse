@@ -42,26 +42,31 @@ export class ShipmentsController {
   }
 
   @Get()
-  async findAll() {
-    return this.shipmentsService.getAllShipments();
+  async findAll(@Query('country_id') countryId?: string) {
+    return this.shipmentsService.getAllShipments(countryId);
   }
 
   @Get('by-status')
-  async getByStatus(@Query('status') status?: string) {
+  async getByStatus(
+    @Query('status') status?: string,
+    @Query('country_id') countryId?: string,
+  ) {
     if (!status) {
       throw new BadRequestException('Status query parameter is required');
     }
-    return this.shipmentsService.getShipmentsByStatus(status);
+    return this.shipmentsService.getShipmentsByStatus(status, countryId);
   }
 
   @Get('/search')
   async searchShipment(
     @Query('shipmentNumber') shipmentNumber: string,
     @Query('status') status: ShipmentStatus,
+    @Query('country_id') countryId?: string,
   ): Promise<ShipmentResponseDto> {
     return this.shipmentsService.findByShipmentNumberAndStatus(
       shipmentNumber,
       status,
+      countryId,
     );
   }
 

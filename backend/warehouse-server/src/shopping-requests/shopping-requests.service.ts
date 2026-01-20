@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import {
   ShoppingRequest,
   ShoppingRequestStatus,
@@ -34,10 +34,30 @@ export class ShoppingRequestsService {
     private readonly usersService: UsersService,
   ) {}
 
+  private buildShoppingRequestQB(
+    countryId?: string,
+  ): SelectQueryBuilder<ShoppingRequest> {
+    const qb = this.shoppingRequestRepository
+      .createQueryBuilder('shoppingRequest')
+      .leftJoinAndSelect('shoppingRequest.courier', 'courier')
+      .leftJoinAndSelect('courier.country', 'country');
+
+    if (countryId) {
+      qb.andWhere('country.id = :countryId', { countryId });
+    }
+
+    return qb;
+  }
+
   async getShoppingRequestsCountByStatus(
     status: ShoppingRequestStatus,
+    countryId?: string,
   ): Promise<number> {
-    return this.shoppingRequestRepository.count({ where: { status } });
+    const qb = this.buildShoppingRequestQB(countryId);
+
+    qb.andWhere('shoppingRequest.status = :status', { status });
+
+    return qb.getCount();
   }
 
   async createShoppingRequest(
@@ -77,13 +97,15 @@ export class ShoppingRequestsService {
     };
   }
 
-  async getAllShoppingRequests() {
-    const shoppingRequests = await this.shoppingRequestRepository.find({
-      order: { created_at: 'DESC' },
-      relations: ['user', 'courier'],
-    });
+  async getAllShoppingRequests(countryId?: string) {
+    const qb = this.buildShoppingRequestQB(countryId);
 
-    return shoppingRequests;
+    qb.leftJoinAndSelect('shoppingRequest.user', 'user').orderBy(
+      'shoppingRequest.created_at',
+      'DESC',
+    );
+
+    return qb.getMany();
   }
 
   async getShoppingRequestsByUser(

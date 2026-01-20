@@ -28,6 +28,7 @@ import { EcommerceUserProductStatus } from './entities/ecommerce_user_products_s
 import { EcommercePayment } from './entities/ecommerce-payments.entity';
 import { EcommerceOrderReference } from './entities/ecommerce-order-references.entity';
 import { PaymentService } from './services/payment.service';
+import { EcommerceUserDeliverySelection } from './entities/ecommerce_user_delivery_selections.entity';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { PaymentService } from './services/payment.service';
       Country,
       EcommerceCargoOption,
       Currency,
+      EcommerceUserDeliverySelection,
     ]),
     UserPreferencesModule,
     SharedModule,

@@ -80,6 +80,7 @@ export const menuItems: MenuItem[] = [
         { text: 'Countries', icon: CountriesIcon, path: '/settings/countries' },
         { text: 'Currencies', icon: CurrenciesIcon, path: '/settings/currencies' },
         { text: 'Couriers', icon: CouriersIcon, path: '/settings/couriers' },
+        { text: 'Users', icon: CustomersIcon, path: '/settings/users' },
     ],
   },
 ];

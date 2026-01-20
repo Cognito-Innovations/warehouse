@@ -18,6 +18,7 @@ import {
   EcommerceUserProductStatus,
   UserProductStatus,
 } from '../entities/ecommerce_user_products_status.entity';
+import { EcommerceUserDeliverySelection } from '../entities/ecommerce_user_delivery_selections.entity';
 
 export interface ComputedCartItem {
   id: string;
@@ -46,6 +47,8 @@ export class CartService {
     private readonly userItemRepository: Repository<EcommerceUserProductStatus>,
     @InjectRepository(EcommerceProduct)
     private readonly productRepository: Repository<EcommerceProduct>,
+    @InjectRepository(EcommerceUserDeliverySelection)
+    private readonly deliverySelectionRepository: Repository<EcommerceUserDeliverySelection>,
     private readonly userPreferencesService: UserPreferencesService,
     private readonly deliveryFeeService: DeliveryFeeService,
   ) {}
@@ -93,6 +96,49 @@ export class CartService {
     return product?.cargo_option?.label?.toLowerCase() ?? null;
   }
 
+  async setSelectedDeliveryOption(
+    userId: string,
+    option: DeliveryOption,
+  ): Promise<void> {
+    let selection = await this.deliverySelectionRepository.findOne({
+      where: { user_id: userId },
+    });
+    if (!selection) {
+      selection = this.deliverySelectionRepository.create({
+        user_id: userId,
+        delivery_platform: option.delivery_platform,
+        total_amount: option.total_amount,
+        estimated_time: option.estimated_time,
+        description: option.description,
+      });
+    } else {
+      selection.delivery_platform = option.delivery_platform;
+      selection.total_amount = option.total_amount;
+      selection.estimated_time = option.estimated_time!;
+      selection.description = option.description!;
+    }
+    await this.deliverySelectionRepository.save(selection);
+  }
+
+  async getSelectedDeliveryOption(
+    userId: string,
+  ): Promise<DeliveryOption | null> {
+    const selection = await this.deliverySelectionRepository.findOne({
+      where: { user_id: userId },
+    });
+    if (!selection) return null;
+    return {
+      delivery_platform: selection.delivery_platform,
+      total_amount: selection.total_amount,
+      estimated_time: selection.estimated_time,
+      description: selection.description,
+    };
+  }
+
+  async clearSelectedDeliveryOption(userId: string): Promise<void> {
+    await this.deliverySelectionRepository.delete({ user_id: userId });
+  }
+
   async addToCart(
     userId: string,
     addToCartDto: AddToCartDto,
@@ -126,10 +172,10 @@ export class CartService {
         where: { id: product_id },
         relations: ['cargo_option'],
       });
-    
+
       const incomingCargo =
         incomingProduct?.cargo_option?.label?.toLowerCase() ?? null;
-    
+
       if (incomingCargo && incomingCargo !== existingCargo) {
         await this.clearCart(userId);
       }
@@ -222,7 +268,7 @@ export class CartService {
       where: { user_id: userId, status: UserProductStatus.CART },
     });
 
-    const items: ComputedCartItem[] = await Promise.all(
+    const preparedItems = await Promise.all(
       (itemsFromDb ?? []).map(async (item) => {
         const product = await this.productRepository.findOne({
           where: { id: item.product_id },
@@ -233,11 +279,24 @@ export class CartService {
           Number(product?.unit_value ?? 0),
           product?.measurement?.label ?? 'kg',
         );
-        const totalWeight = weightPerUnit * item.quantity;
+        const itemWeight = weightPerUnit * item.quantity;
+
+        return {
+          item,
+          product,
+          price,
+          itemWeight,
+        };
+      }),
+    );
+
+    const items: ComputedCartItem[] = await Promise.all(
+      preparedItems.map(async (data) => {
+        const { item, product, price, itemWeight } = data;
+
         const delivery_fee = await this.deliveryFeeService.getDeliveryFee(
-          totalWeight,
+          itemWeight,
           countryCode!,
-          currency!,
         );
 
         return {
@@ -278,7 +337,6 @@ export class CartService {
   async getDeliveryRates(
     userId: string,
     countryCode?: string,
-    currencyCode?: string,
   ): Promise<DeliveryOption[]> {
     const items = await this.userItemRepository.find({
       where: { user_id: userId, status: UserProductStatus.CART },
@@ -322,7 +380,6 @@ export class CartService {
     return await this.deliveryFeeService.getDeliveryOptions(
       totalWeight,
       countryCode!,
-      currencyCode!,
     );
   }
 

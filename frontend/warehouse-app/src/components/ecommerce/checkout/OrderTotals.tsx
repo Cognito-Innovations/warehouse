@@ -130,7 +130,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
           variant="h5"
           fontWeight={700}
           color="text.primary"
-          sx={{ fontSize: { xs: "1.125rem", md: "1.5rem" } }}
+          sx={{ fontSize: { xs: "0.9rem", md: "1.1rem" } }}
         >
           Total
         </Typography>
@@ -138,7 +138,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
           variant="h5"
           fontWeight={700}
           color="primary.main"
-          sx={{ fontSize: { xs: "1.25rem", md: "1.75rem" } }}
+          sx={{ fontSize: { xs: "0.9rem", md: "1.1rem" } }}
         >
           {formatPrice(total)}
         </Typography>

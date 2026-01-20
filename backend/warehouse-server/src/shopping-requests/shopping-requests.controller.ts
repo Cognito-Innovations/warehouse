@@ -8,6 +8,7 @@ import {
   UseGuards,
   Req,
   Delete,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -78,8 +79,8 @@ export class ShoppingRequestsController {
     description: 'List of all shopping requests',
     type: [ShoppingRequestResponseDto],
   })
-  async findAll() {
-    return this.shoppingRequestsService.getAllShoppingRequests();
+  async findAll(@Query('country_id') countryId?: string) {
+    return this.shoppingRequestsService.getAllShoppingRequests(countryId);
   }
 
   @Get(':userId')

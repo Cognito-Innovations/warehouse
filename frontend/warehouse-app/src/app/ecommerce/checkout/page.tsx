@@ -14,7 +14,8 @@ import DeliveryAddressCard from "@/components/ecommerce/checkout/DeliveryAddress
 import { ROUTES } from "@/utils/constants";
 import { calculateCartTotals } from "@/utils/cartCalculations";
 import { formatPrice } from "@/utils/priceUtils";
-import { CartItem } from "@/types/ecommerce";
+import { CartItem, ComputedCart } from "@/types/ecommerce";
+import { ecommerceService } from "@/services/ecommerce.service";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [isAddressDataReady, setIsAddressDataReady] = useState(false);
 
-  const { currencyCode, currencySymbol } = useDetectUserLocation();
+  const { currencyCode, currencySymbol, countryCode } = useDetectUserLocation();
 
   const handleAddressFetchComplete = useCallback(() => {
     setIsAddressDataReady(true);
@@ -41,6 +42,28 @@ export default function CheckoutPage() {
       setIsAddressDataReady(true);
     }
   }, [authLoading, user]);
+
+  const loadCheckoutData = async () => {
+    try {
+      const checkoutData: ComputedCart = await ecommerceService.getCheckout(currencyCode, countryCode);
+      useCartStore.getState().setCartProducts(checkoutData.items);
+      const selected = checkoutData.items.filter(item => checkoutProducts.includes(item.product_id!));
+      setCheckedOutItems(selected as CartItem[]);
+      const itemProductIds = selected.map(item => item.product_id!);
+      useCartStore.getState().toggleCartItemSelection(itemProductIds);
+      setHasInitialized(true);
+      setItemsLoaded(true);
+    } catch (e) {
+      console.error(e);
+      router.replace(ROUTES.CART);
+    }
+  };
+
+  useEffect(() => {
+    if (!authLoading && currencyCode && !hasInitialized) {
+      loadCheckoutData();
+    }
+  }, [authLoading, currencyCode, countryCode, hasInitialized, router, checkoutProducts]);
 
   useEffect(() => {
     if (hasInitialized) return;

@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { CartService, ComputedCart } from '../services/ecommerce-cart.service';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
@@ -35,7 +36,7 @@ export class CartController {
   ) {
     const userId = req.user?.id;
     if (!userId) {
-      return { items: [], final_amount: 0 }; 
+      return { items: [], final_amount: 0 };
     }
     return this.cartService.getCart(userId, currency, countryCode);
   }
@@ -53,6 +54,18 @@ export class CartController {
       currency,
       countryCode,
     );
+  }
+
+  @Post('select-delivery-option')
+  async selectDeliveryOption(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { delivery_option: DeliveryOption },
+  ): Promise<{ success: boolean }> {
+    await this.cartService.setSelectedDeliveryOption(
+      req.user.id,
+      body.delivery_option,
+    );
+    return { success: true };
   }
 
   @Put('items/:itemId')
@@ -99,12 +112,29 @@ export class CartController {
   async getDeliveryRates(
     @Request() req: AuthenticatedRequest,
     @Query('countryCode') countryCode?: string,
-    @Query('currencyCode') currencyCode?: string,
   ): Promise<DeliveryOption[]> {
     const userId = req.user?.id;
     if (!userId || !countryCode) {
       return [];
     }
-    return this.cartService.getDeliveryRates(userId, countryCode, currencyCode);
+    return this.cartService.getDeliveryRates(userId, countryCode);
+  }
+
+  @Get('checkout')
+  async getCheckout(
+    @Request() req: AuthenticatedRequest,
+    @Query('currency') currency?: string,
+    @Query('countryCode') countryCode?: string,
+  ): Promise<ComputedCart> {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new BadRequestException('User not authenticated');
+    }
+    const cartData = await this.cartService.getCart(
+      userId,
+      currency,
+      countryCode,
+    );
+    return cartData;
   }
 }

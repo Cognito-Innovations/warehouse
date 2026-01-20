@@ -330,6 +330,27 @@ export interface DeliveryOption {
   estimated_time?: string;
 }
 
+export interface ComputedCartItem {
+  id: string;
+  cart_id: string;
+  product_id: string;
+  quantity: number;
+  product: EcommerceProduct | null;
+  unit_price: number;
+  total_price: number;
+  delivery_fee: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface ComputedCart {
+  items: ComputedCartItem[];
+  total_amount: number;
+  final_amount: number;
+  total_delivery_fee?: number;
+  currency?: string;
+}
+
 export interface UserAddress {
   id: string;
   city: string;

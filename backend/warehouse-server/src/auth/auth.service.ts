@@ -12,6 +12,7 @@ import {
 import { AuthResponseDto } from './dto/AuthResponseDto';
 import { UsersService } from 'src/users/users.service';
 import { Identifier, Gender } from 'src/users/dto/create-user.dto';
+import { Role } from 'src/users/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -45,6 +46,7 @@ export class AuthService {
           await this.usersService.update(existingUser.id, {
             password: hashedPassword,
             identifier: Identifier.Email,
+            shouldHashPassword: false,
           });
           const user = await this.usersService.findById(existingUser.id);
           const payload = { email: user?.email, sub: user?.id };
@@ -73,6 +75,7 @@ export class AuthService {
 
     const newUser = await this.usersService.create({
       ...registerDto,
+      role: registerDto.role as Role,
       password: hashedPassword!,
       verified: registerDto.verified ?? false,
       identifier:
@@ -80,6 +83,7 @@ export class AuthService {
           ? Identifier.Google
           : Identifier.Email,
       gender: registerDto.gender as Gender,
+      shouldHashPassword: false,
     });
 
     const payload = { email: newUser.email, sub: newUser.id };

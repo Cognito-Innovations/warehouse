@@ -8,6 +8,8 @@ import {
   AddToCartRequest,
   UpdateCartItemRequest,
   CreateOrderRequest,
+  DeliveryOption,
+  ComputedCart,
 } from "../types/ecommerce";
 import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
 import { getAuthTokenWithFallback } from "@/utils/getAuthToken";
@@ -192,15 +194,24 @@ export const ecommerceService = {
     await api.delete("/ecommerce-cart/clear");
   },
 
-  async getDeliveryRates(countryCode?: string, currencyCode?: string): Promise<any[]> {
+  async getDeliveryRates(countryCode?: string): Promise<any[]> {
     const params: any = {};
     if (countryCode) {
       params.countryCode = countryCode;
     }
-    if (currencyCode) {
-      params.currencyCode = currencyCode;
-    }
     const response = await api.get("/ecommerce-cart/delivery-rates", { params });
+    return response.data;
+  },
+
+  async selectDeliveryOption(option: DeliveryOption): Promise<void> {
+    await api.post('/ecommerce-cart/select-delivery-option', { delivery_option: option });
+  },
+
+  async getCheckout(currency?: string, countryCode?: string): Promise<ComputedCart> {
+    const params: any = {};
+    if (currency) params.currency = currency;
+    if (countryCode) params.countryCode = countryCode;
+    const response = await api.get('/ecommerce-cart/checkout', { params });
     return response.data;
   },
   

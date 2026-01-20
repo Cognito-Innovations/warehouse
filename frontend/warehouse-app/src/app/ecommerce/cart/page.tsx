@@ -20,6 +20,7 @@ import CartStepper from "@/components/ecommerce/cart/CartStepper";
 import DeliveryModelSelection from "@/components/ecommerce/cart/DeliveryModelSelection";
 import ReadOnlyCartItems from "@/components/ecommerce/cart/ReadOnlyCartItems";
 import { CartAddressData, DeliveryOption } from "@/types/ecommerce";
+import { ecommerceService } from "@/services/ecommerce.service";
 
 type CartStep = 0 | 1 | 2;
 
@@ -54,9 +55,15 @@ export default function CartPage() {
     // Don't auto-advance - let user manually proceed to next step
   }, []);
 
-  const handleDeliveryOptionSelect = useCallback((option: DeliveryOption) => {
+  const handleDeliveryOptionSelect = useCallback(async (option: DeliveryOption) => {
     setSelectedDeliveryOption(option);
-  }, [setSelectedDeliveryOption]);
+    try {
+      await ecommerceService.selectDeliveryOption(option);
+      await getCart(currencyCode, countryCode);
+    } catch (err) {
+      console.error('Failed to save delivery option:', err);
+    }
+  }, [setSelectedDeliveryOption, getCart, currencyCode, countryCode]);
 
   const handleBackToAddress = useCallback(() => {
     setActiveStep(0);
@@ -218,7 +225,6 @@ export default function CartPage() {
             {/* Step 1: Delivery Selection - NO cart items shown */}
             <DeliveryModelSelection
               countryCode={countryCode}
-              currencyCode={currencyCode}
               selectedOption={selectedDeliveryOption}
               onSelectOption={handleDeliveryOptionSelect}
               onBack={handleBackToAddress}
