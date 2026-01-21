@@ -107,6 +107,7 @@ export class CacheManagerService {
       console.warn(`Cache set failed for ${key}:`, error);
     }
 
+    //TODO P0: Why can't we update it everytime, because delivery rates can change anytime as per feeback i got
     if (key.startsWith('currency:') || key.startsWith('currency_code:')) {
       const currencyValue = value as CurrencyInfo;
       let entity = await this.currencyCacheRepo.findOne({ where: { key } });

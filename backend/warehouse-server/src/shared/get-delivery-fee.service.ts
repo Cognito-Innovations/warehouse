@@ -81,11 +81,13 @@ export class DeliveryFeeService {
     return 2; // Fallback default
   }
 
+  //TODO P0: refactor this function to make it more readable and maintainable
   async getDeliveryOptions(
     weight: number,
     country_code: string,
     currency_code: string,
   ): Promise<DeliveryOption[]> {
+    //TODO P0: in frontend or backend sometimes we are passing country code null, make sure some default fallbackcode
     let standardized_country_code = country_code?.toUpperCase() || '';
     if (
       standardized_country_code.length === 3 &&
@@ -130,7 +132,6 @@ export class DeliveryFeeService {
           total_amount: item.total_amount || 0,
           estimated_time: item.estimated_time,
         }));
-
         await this.cacheService.create(cacheKey, options, 60 * 60 * 48);
 
         const convertedOptions = await Promise.all(
