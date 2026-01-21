@@ -110,6 +110,22 @@ export default function EcommerceProductCard({
             }}
           />
         )} */}
+        {isOutOfStock && (
+          <Chip
+            label="Out of Stock"
+            size="small"
+            sx={{
+              position: "absolute",
+              top: { xs: 6, sm: 8 },
+              right: { xs: 6, sm: 8 },
+              bgcolor: "red",
+              color: "white",
+              fontSize: { xs: "0.65rem", sm: "0.7rem" },
+              height: { xs: 18, sm: 20 },
+              fontWeight: 600,
+            }}
+          />
+        )}
       </Box>
 
       <CardContent sx={{ p: { xs: 1, sm: 1.25 }, pb: { xs: 0.75, sm: 1 }, pt: { xs: 1.5, sm: 1.25 }, "&:last-child": { pb: { xs: 0.75, sm: 1 } } }}>

@@ -65,8 +65,16 @@ export class DeliveryFeeService {
     }
   }
 
-  async getDeliveryFee(weight: number, country_code: string): Promise<number> {
-    const options = await this.getDeliveryOptions(weight, country_code);
+  async getDeliveryFee(
+    weight: number,
+    country_code: string,
+    currency: string,
+  ): Promise<number> {
+    const options = await this.getDeliveryOptions(
+      weight,
+      country_code,
+      currency,
+    );
     if (options.length > 0) {
       return options[0].total_amount;
     }
@@ -76,6 +84,7 @@ export class DeliveryFeeService {
   async getDeliveryOptions(
     weight: number,
     country_code: string,
+    currency_code: string,
   ): Promise<DeliveryOption[]> {
     let standardized_country_code = country_code.toUpperCase();
     if (
@@ -96,7 +105,10 @@ export class DeliveryFeeService {
     const cacheKey = `delivery_rates:${standardized_country_code}:${weight}`;
 
     const convertAmount = async (amount: number): Promise<number> => {
-      return this.externalCurrencyService.convertFromINR(amount);
+      if (!currency_code) {
+        return amount;
+      }
+      return this.externalCurrencyService.convertFromINR(amount, currency_code);
     };
 
     try {

@@ -8,6 +8,7 @@ import useProductStore from "@/store/productStore";
 import useCategoryStore from "@/store/categoryStore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useGridSkeletonCount } from "@/hooks/useGridSkeletonCount";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout";
 import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
@@ -53,15 +54,19 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   const skeletonRef = useRef<HTMLDivElement | null>(null);
 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState(searchQuery);
-  const [skeletonCount, setSkeletonCount] = useState(5);
   const [rowHeight, setRowHeight] = useState(300);
+  const [categoryBottom, setCategoryBottom] = useState(100);
 
   const showAssisted = selectedCategory === "assisted";
 
   const theme = useTheme();
   const isSm = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMd = useMediaQuery(theme.breakpoints.up('md'));
-  const isLg = useMediaQuery(theme.breakpoints.up('lg'));
+
+  const skeletonCount = useGridSkeletonCount({
+    itemHeight: rowHeight,
+    offsetY: categoryBottom + 32,
+    minCount: 4
+  });
 
   const syncCategoryWithSlug = useCallback(() => {
     const nextCategory = slug ?? null;
@@ -184,49 +189,27 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   }, [setupIntersectionObserver]);
 
   useEffect(() => {
-    const measureRowHeight = () => {
+    const measureLayout = () => {
       if (skeletonRef.current) {
         const cardHeight = skeletonRef.current.getBoundingClientRect().height;
         const gap = parseFloat(theme.spacing(isSm ? 2 : 1));
         setRowHeight(cardHeight + gap);
       }
-    };
-
-    const timer = setTimeout(measureRowHeight, 0);
-    return () => clearTimeout(timer);
-  }, [isSm, isMd, isLg, theme]);
-
-  useEffect(() => {
-    const calculateSkeletonCount = () => {
-      let columns;
-      if (isLg) columns = ecommerceData.ui.grid.columns.lg;
-      else if (isMd) columns = ecommerceData.ui.grid.columns.md;
-      else if (isSm) columns = ecommerceData.ui.grid.columns.sm;
-      else columns = ecommerceData.ui.grid.columns.xs;
-
-      let categoryBottom = 100;
       if (categoryRef.current) {
-        categoryBottom = categoryRef.current.getBoundingClientRect().bottom;
+         setCategoryBottom(categoryRef.current.getBoundingClientRect().bottom);
       }
-      const padding = 32;
-      const availableHeight = window.innerHeight - categoryBottom - padding;
-
-      const rows = Math.ceil(availableHeight / rowHeight) + 1;
-
-      const count = columns * rows;
-      setSkeletonCount(Math.max(count, 4));
     };
 
-    calculateSkeletonCount();
-
-    const handleResize = debounce(calculateSkeletonCount, 200);
+    const timer = setTimeout(measureLayout, 0);
+    // Add resize listener specific to layout shifts
+    const handleResize = debounce(measureLayout, 200);
     window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-      handleResize.cancel?.();
+        clearTimeout(timer);
+        window.removeEventListener("resize", handleResize);
     };
-  }, [isSm, isMd, isLg, rowHeight]);
+  }, [isSm, theme]);
 
   const handleRefresh = () => {
     setError(null);

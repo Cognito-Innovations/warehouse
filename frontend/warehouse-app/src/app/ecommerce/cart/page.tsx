@@ -58,7 +58,7 @@ export default function CartPage() {
   const handleDeliveryOptionSelect = useCallback(async (option: DeliveryOption) => {
     setSelectedDeliveryOption(option);
     try {
-      await ecommerceService.selectDeliveryOption(option);
+      await ecommerceService.selectDeliveryOption(option, currencyCode);
       await getCart(currencyCode, countryCode);
     } catch (err) {
       console.error('Failed to save delivery option:', err);
@@ -225,6 +225,7 @@ export default function CartPage() {
             {/* Step 1: Delivery Selection - NO cart items shown */}
             <DeliveryModelSelection
               countryCode={countryCode}
+              currencyCode={currencyCode}
               selectedOption={selectedDeliveryOption}
               onSelectOption={handleDeliveryOptionSelect}
               onBack={handleBackToAddress}

@@ -9,7 +9,6 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { DEFAULT_CURRENCY, PAYMENT_GATEWAY } from '../../shared/constants.js';
-import { DeliveryFeeService } from 'src/shared/get-delivery-fee.service';
 import { Status } from '../entities/ecommerce-payments.entity';
 import { EcommercePayment } from '../entities/ecommerce-payments.entity';
 import { EcommerceOrderReference } from '../entities/ecommerce-order-references.entity';
@@ -20,6 +19,7 @@ import {
 import { EcommerceProduct } from '../entities/ecommerce-product.entity';
 import { PaymentService } from './payment.service';
 import { CartService } from './ecommerce-cart.service';
+import { EcommerceUserDeliverySelection } from '../entities/ecommerce_user_delivery_selections.entity';
 
 export interface OrderWithDetails extends EcommercePayment {
   total_amount: number;
@@ -52,8 +52,9 @@ export class OrderService {
     private readonly userItemRepository: Repository<EcommerceUserProductStatus>,
     @InjectRepository(EcommerceProduct)
     private readonly productRepository: Repository<EcommerceProduct>,
+    @InjectRepository(EcommerceUserDeliverySelection)
+    private readonly deliverySelectionRepository: Repository<EcommerceUserDeliverySelection>,
     private readonly userPreferenceService: UserPreferencesService,
-    private readonly deliveryFeeService: DeliveryFeeService,
     private readonly paymentService: PaymentService,
     private readonly cartService: CartService,
     @InjectDataSource() private dataSource: DataSource,
@@ -81,11 +82,10 @@ export class OrderService {
   private async calculateOrderPricing(
     items: EcommerceUserProductStatus[],
     currencyInfo: CurrencyInfo,
-    countryCode?: string,
+    deliveryFeeUSD: number,
   ) {
     const { rate } = currencyInfo;
     let subtotalLocal = 0;
-    let totalDeliveryUSD = 0;
 
     // Calculate details for each item
     const itemDetails = await Promise.all(
@@ -96,43 +96,37 @@ export class OrderService {
         });
 
         const basePrice = Number(product?.price || 0);
+
+        const itemTotalUSDRaw = basePrice * item.quantity;
+
         const localPrice = this.roundCurrency(basePrice * rate);
-
-        // Accumulate totals for this item
         const itemSubtotalLocal = localPrice * item.quantity;
-        const itemTotalUSD = this.roundCurrency(itemSubtotalLocal / rate);
 
-        const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-          Number(product?.unit_value ?? 0),
-          product?.measurement?.label ?? 'kg',
-        );
-        const totalWeight = weightPerUnit * item.quantity;
-        const deliveryUSD = await this.deliveryFeeService.getDeliveryFee(
-          totalWeight,
-          countryCode!,
-        );
-        totalDeliveryUSD += deliveryUSD;
+        const itemTotalUSDRounded = this.roundCurrency(itemTotalUSDRaw);
 
         return {
           product_id: item.product_id,
           quantity: item.quantity,
           unitPriceUSD: basePrice,
-          totalUSD: itemTotalUSD,
+          totalUSD: itemTotalUSDRounded,
+          rawTotalUSD: itemTotalUSDRaw,
           subtotalLocal: itemSubtotalLocal,
-          deliveryUSD,
         };
       }),
     );
 
     // Aggregate totals
+    let totalItemsUSDRaw = 0;
     for (const detail of itemDetails) {
       subtotalLocal += detail.subtotalLocal;
+      totalItemsUSDRaw += detail.rawTotalUSD;
     }
 
-    const finalLocalTotal = this.roundCurrency(subtotalLocal);
+    const roundedDeliveryFeeUSD = this.roundCurrency(deliveryFeeUSD);
 
-    const finalUSDTotal =
-      this.roundCurrency(finalLocalTotal / rate) + totalDeliveryUSD;
+    const finalUSDTotal = this.roundCurrency(
+      totalItemsUSDRaw + roundedDeliveryFeeUSD,
+    );
 
     return {
       finalUSDTotal,
@@ -201,10 +195,18 @@ export class OrderService {
         );
       }
 
+      const selectedDelivery = await this.deliverySelectionRepository.findOne({
+        where: { user_id: userId },
+      });
+
+      const deliveryFeeUSD = selectedDelivery
+        ? Number(selectedDelivery.total_amount)
+        : 0;
+
       const { finalUSDTotal, itemDetails } = await this.calculateOrderPricing(
         placeOrderProducts,
         sourceInfo,
-        countryCode,
+        deliveryFeeUSD,
       );
 
       // Generate order number
@@ -503,7 +505,7 @@ export class OrderService {
         { status: UserProductStatus.ORDERED },
       );
 
-      await queryRunner.manager.save(payment);
+      await queryRunner.manager.save(EcommercePayment, payment);
 
       const userId = payment.items[0]?.user_item?.user_id;
       if (userId) {

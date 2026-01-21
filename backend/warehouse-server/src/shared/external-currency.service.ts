@@ -223,11 +223,18 @@ export class ExternalCurrencyService {
     return currencyInfo;
   }
 
-  async convertFromINR(amountInINR: number): Promise<number> {
+  async convertFromINR(
+    amountInINR: number,
+    targetCurrencyCode: string,
+  ): Promise<number> {
+    const upperCode = targetCurrencyCode.toUpperCase();
+
+    if (upperCode === INR_CURRENCY_CODE) {
+      return amountInINR;
+    }
+
     try {
-      const usdCurrencyInfo = await this.getCurrencyInfoByCode(
-        DEFAULT_CURRENCY.code,
-      );
+      const targetCurrencyInfo = await this.getCurrencyInfoByCode(upperCode);
 
       const inrCurrencyInfo =
         await this.getCurrencyInfoByCode(INR_CURRENCY_CODE);
@@ -240,11 +247,14 @@ export class ExternalCurrencyService {
       }
 
       const amountInBase = amountInINR / inrCurrencyInfo.rate;
-      const convertedAmount = amountInBase * usdCurrencyInfo.rate;
+      const convertedAmount = amountInBase * targetCurrencyInfo.rate;
 
       return parseFloat(convertedAmount.toFixed(2));
     } catch (error) {
-      console.error(`Currency conversion error from INR to USD:`, error);
+      console.error(
+        `Currency conversion error from INR to ${upperCode}:`,
+        error,
+      );
       return amountInINR;
     }
   }

@@ -15,6 +15,7 @@ export const calculateCartTotals = (
     selectedItemIds: Set<string>,
     currency?: string,
     currencySymbol?: string,
+    totalDeliveryFee: number = 0
 ): CartTotals => {
     if (!cartItems || cartItems.length === 0)
         return emptyTotals();
@@ -32,14 +33,14 @@ export const calculateCartTotals = (
 
     let subtotal = 0;
     // let discount = 0;
-    let deliveryFee = 0;
+    // let deliveryFee = 0;
 
     selectedItems.forEach((item) => {
         const p = getCartItemPricingSummary(item, currencySymbol);
 
         subtotal += p.originalUnitPrice * p.quantity;
         // discount += p.discountTotal;
-        deliveryFee += item.delivery_fee || 0;
+        // deliveryFee += item.delivery_fee || 0;
     });
 
     const discountedSubTotal = subtotal;
@@ -48,13 +49,13 @@ export const calculateCartTotals = (
     // const taxes = discountedSubTotal * 0.02; 2% tax
     // const serviceCharge = serviceBase;
 
-    const total = discountedSubTotal + deliveryFee
+    const total = discountedSubTotal + totalDeliveryFee
     //  + taxes + serviceCharge;
 
     return {
         subtotal: round(subtotal),
         // discount: round(discount),
-        deliveryFee: round(deliveryFee),
+        deliveryFee: round(totalDeliveryFee),
         // taxes: round(taxes),
         // serviceCharge: round(serviceCharge),
         total: round(total),

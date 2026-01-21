@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { EcommerceProduct } from '../entities/ecommerce-product.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
@@ -96,28 +96,49 @@ export class CartService {
     return product?.cargo_option?.label?.toLowerCase() ?? null;
   }
 
+  private async getExchangeRate(currency: string): Promise<number> {
+    if (!currency || currency === DEFAULT_CURRENCY.code) {
+      return 1;
+    }
+    const result =
+      await this.userPreferencesService.getFormattedConvertedPriceByCurrency(
+        currency,
+        1,
+      );
+    return typeof result === 'number' ? result : Number(result.price);
+  }
+
   async setSelectedDeliveryOption(
     userId: string,
     option: DeliveryOption,
+    currencyCode: string,
   ): Promise<void> {
-    let selection = await this.deliverySelectionRepository.findOne({
-      where: { user_id: userId },
-    });
-    if (!selection) {
-      selection = this.deliverySelectionRepository.create({
+    const exchangeRate = await this.getExchangeRate(currencyCode);
+
+    const totalAmountInUsd = option.total_amount / exchangeRate;
+
+    await this.deliverySelectionRepository
+      .createQueryBuilder()
+      .insert()
+      .into(EcommerceUserDeliverySelection)
+      .values({
         user_id: userId,
         delivery_platform: option.delivery_platform,
-        total_amount: option.total_amount,
+        total_amount: totalAmountInUsd,
         estimated_time: option.estimated_time,
         description: option.description,
-      });
-    } else {
-      selection.delivery_platform = option.delivery_platform;
-      selection.total_amount = option.total_amount;
-      selection.estimated_time = option.estimated_time!;
-      selection.description = option.description!;
-    }
-    await this.deliverySelectionRepository.save(selection);
+      })
+      .onConflict(
+        `
+        ("user_id")
+        DO UPDATE SET
+          delivery_platform = EXCLUDED.delivery_platform,
+          total_amount = EXCLUDED.total_amount,
+          estimated_time = EXCLUDED.estimated_time,
+          description = EXCLUDED.description
+        `,
+      )
+      .execute();
   }
 
   async getSelectedDeliveryOption(
@@ -297,6 +318,7 @@ export class CartService {
         const delivery_fee = await this.deliveryFeeService.getDeliveryFee(
           itemWeight,
           countryCode!,
+          currency!,
         );
 
         return {
@@ -334,9 +356,99 @@ export class CartService {
     );
   }
 
+  async getCheckoutData(
+    userId: string,
+    productIds: string[],
+    currency?: string,
+    countryCode?: string,
+  ): Promise<ComputedCart> {
+    if (!productIds || productIds.length === 0) {
+      return {
+        items: [],
+        total_amount: 0,
+        final_amount: 0,
+        total_delivery_fee: 0,
+      };
+    }
+
+    const selectedDelivery = await this.deliverySelectionRepository.findOne({
+      where: { user_id: userId },
+    });
+
+    const itemsFromDb = await this.userItemRepository.find({
+      where: {
+        user_id: userId,
+        status: UserProductStatus.CART,
+        product_id: In(productIds),
+      },
+    });
+
+    const preparedItems = await Promise.all(
+      (itemsFromDb ?? []).map(async (item) => {
+        const product = await this.productRepository.findOne({
+          where: { id: item.product_id },
+          relations: ['category', 'measurement'],
+        });
+
+        const price = Number(product?.price ?? 0);
+
+        const weightPerUnit = this.deliveryFeeService.getWeightInKg(
+          Number(product?.unit_value ?? 0),
+          product?.measurement?.label ?? 'kg',
+        );
+        const itemWeight = weightPerUnit * item.quantity;
+
+        return {
+          item,
+          product,
+          price,
+          itemWeight,
+        };
+      }),
+    );
+
+    const items: ComputedCartItem[] = preparedItems.map((data) => {
+      const { item, product, price } = data;
+
+      return {
+        id: item.id,
+        cart_id: userId,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        product: product ?? null,
+        unit_price: price,
+        total_price: price * item.quantity,
+        delivery_fee: 0,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      };
+    });
+
+    const totalAmount = items.reduce((sum, it) => sum + it.total_price, 0);
+
+    const totalDeliveryFee = selectedDelivery
+      ? Number(selectedDelivery.total_amount)
+      : 0;
+
+    const finalAmount = totalAmount + totalDeliveryFee;
+
+    const computedCart: ComputedCart = {
+      items,
+      total_amount: totalAmount,
+      final_amount: finalAmount,
+      total_delivery_fee: totalDeliveryFee,
+    };
+
+    return this.applyCurrencyConversion(
+      computedCart,
+      currency ?? DEFAULT_CURRENCY.code,
+    );
+  }
+
   async getDeliveryRates(
     userId: string,
     countryCode?: string,
+    currencyCode?: string,
   ): Promise<DeliveryOption[]> {
     const items = await this.userItemRepository.find({
       where: { user_id: userId, status: UserProductStatus.CART },
@@ -380,6 +492,7 @@ export class CartService {
     return await this.deliveryFeeService.getDeliveryOptions(
       totalWeight,
       countryCode!,
+      currencyCode!,
     );
   }
 

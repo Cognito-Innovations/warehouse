@@ -60,10 +60,12 @@ export class CartController {
   async selectDeliveryOption(
     @Request() req: AuthenticatedRequest,
     @Body() body: { delivery_option: DeliveryOption },
+    @Query('currencyCode') currencyCode: string,
   ): Promise<{ success: boolean }> {
     await this.cartService.setSelectedDeliveryOption(
       req.user.id,
       body.delivery_option,
+      currencyCode,
     );
     return { success: true };
   }
@@ -112,12 +114,13 @@ export class CartController {
   async getDeliveryRates(
     @Request() req: AuthenticatedRequest,
     @Query('countryCode') countryCode?: string,
+    @Query('currencyCode') currencyCode?: string,
   ): Promise<DeliveryOption[]> {
     const userId = req.user?.id;
     if (!userId || !countryCode) {
       return [];
     }
-    return this.cartService.getDeliveryRates(userId, countryCode);
+    return this.cartService.getDeliveryRates(userId, countryCode, currencyCode);
   }
 
   @Get('checkout')
@@ -125,16 +128,21 @@ export class CartController {
     @Request() req: AuthenticatedRequest,
     @Query('currency') currency?: string,
     @Query('countryCode') countryCode?: string,
+    @Query('product_ids') productIds?: string,
   ): Promise<ComputedCart> {
     const userId = req.user?.id;
     if (!userId) {
       throw new BadRequestException('User not authenticated');
     }
-    const cartData = await this.cartService.getCart(
+
+    const selectedProductIds = productIds ? productIds.split(',') : [];
+
+    const checkoutData = await this.cartService.getCheckoutData(
       userId,
+      selectedProductIds,
       currency,
       countryCode,
     );
-    return cartData;
+    return checkoutData;
   }
 }

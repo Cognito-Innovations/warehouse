@@ -178,6 +178,8 @@ export const useCartStore = create<CartStore>()(
       },
 
       syncCart: async (currency?: string, countryCode?: string) => {
+        if (get().isSyncing) return;
+
         const token = getAuthToken();
         if (!token) return;
         

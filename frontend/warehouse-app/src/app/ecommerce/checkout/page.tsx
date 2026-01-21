@@ -30,6 +30,7 @@ export default function CheckoutPage() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [isAddressDataReady, setIsAddressDataReady] = useState(false);
+  const [totalDeliveryFee, setTotalDeliveryFee] = useState(0);
 
   const { currencyCode, currencySymbol, countryCode } = useDetectUserLocation();
 
@@ -45,12 +46,20 @@ export default function CheckoutPage() {
 
   const loadCheckoutData = async () => {
     try {
-      const checkoutData: ComputedCart = await ecommerceService.getCheckout(currencyCode, countryCode);
+      const checkoutData: ComputedCart = await ecommerceService.getCheckout(
+        currencyCode, 
+        countryCode,
+        checkoutProducts
+      );
+
       useCartStore.getState().setCartProducts(checkoutData.items);
-      const selected = checkoutData.items.filter(item => checkoutProducts.includes(item.product_id!));
-      setCheckedOutItems(selected as CartItem[]);
-      const itemProductIds = selected.map(item => item.product_id!);
+      
+      setCheckedOutItems(checkoutData.items as CartItem[]);
+      setTotalDeliveryFee(checkoutData.total_delivery_fee ?? 0);
+      
+      const itemProductIds = checkoutData.items.map(item => item.product_id!);
       useCartStore.getState().toggleCartItemSelection(itemProductIds);
+      
       setHasInitialized(true);
       setItemsLoaded(true);
     } catch (e) {
@@ -113,7 +122,15 @@ export default function CheckoutPage() {
   }, [checkedOutItems, router, itemsLoaded, orderPlaced]);
 
   const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
-  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, currencyCode), [checkedOutItems, selectedIds, currencyCode]);
+  const totals = useMemo(
+    () => 
+      calculateCartTotals(
+        checkedOutItems,
+        selectedIds,
+        currencyCode,
+        currencySymbol,
+        totalDeliveryFee
+      ), [checkedOutItems, selectedIds, currencyCode, totalDeliveryFee]);
   const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencySymbol), [currencySymbol]);
 
   const handleAddressSelect = useCallback((address: string) => {
