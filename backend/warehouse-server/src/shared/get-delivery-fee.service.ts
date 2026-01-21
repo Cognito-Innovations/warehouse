@@ -86,7 +86,7 @@ export class DeliveryFeeService {
     country_code: string,
     currency_code: string,
   ): Promise<DeliveryOption[]> {
-    let standardized_country_code = country_code.toUpperCase();
+    let standardized_country_code = country_code?.toUpperCase() || '';
     if (
       standardized_country_code.length === 3 &&
       COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP[standardized_country_code]

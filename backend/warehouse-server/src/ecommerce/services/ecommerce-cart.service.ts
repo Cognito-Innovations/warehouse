@@ -108,15 +108,23 @@ export class CartService {
     return typeof result === 'number' ? result : Number(result.price);
   }
 
+  //TODO P0: Add try catch block here
   async setSelectedDeliveryOption(
     userId: string,
     option: DeliveryOption,
     currencyCode: string,
   ): Promise<void> {
+    if (!currencyCode) {
+      throw new BadRequestException('Currency code is required');
+    }
     const exchangeRate = await this.getExchangeRate(currencyCode);
 
-    const totalAmountInUsd = option.total_amount / exchangeRate;
+    const totalAmountInUsd = (
+      Number(option.total_amount) / Number(exchangeRate)
+    ).toFixed(2);
 
+    //TODO P0: Here we are using createQueryBuilder to insert the data into the database. We should use the repository to insert the data.
+    //Because of that, it might not able to pickit up the created_at and updated_at values.
     await this.deliverySelectionRepository
       .createQueryBuilder()
       .insert()
@@ -124,9 +132,11 @@ export class CartService {
       .values({
         user_id: userId,
         delivery_platform: option.delivery_platform,
-        total_amount: totalAmountInUsd,
+        total_amount: Number(totalAmountInUsd),
         estimated_time: option.estimated_time,
         description: option.description,
+        created_at: Math.floor(Date.now() / 1000),
+        updated_at: Math.floor(Date.now() / 1000),
       })
       .onConflict(
         `

@@ -72,7 +72,7 @@ export default function DeliveryModelSelection({
     async (option: DeliveryOption) => {
       onSelectOption(option);
       try {
-        await ecommerceService.selectDeliveryOption(option);
+        await ecommerceService.selectDeliveryOption(option, currencyCode);
         await getCart(currencyCode, countryCode);
       } catch (err) {
         console.error("Failed to save delivery option:", err);
