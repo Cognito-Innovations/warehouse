@@ -134,7 +134,7 @@ export class CartController {
     if (!userId) {
       throw new BadRequestException('User not authenticated');
     }
-
+    //TODO P0: You should do POST call, in that freely pass array, don't trouble yourself theese split cause more problems in future
     const selectedProductIds = productIds ? productIds.split(',') : [];
 
     const checkoutData = await this.cartService.getCheckoutData(

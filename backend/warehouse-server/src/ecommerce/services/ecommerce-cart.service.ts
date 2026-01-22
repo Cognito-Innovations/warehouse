@@ -238,6 +238,7 @@ export class CartService {
     currency?: string,
     countryCode?: string,
   ): Promise<ComputedCart> {
+    //TODO P0: Are you checking is it presiable or not ?
     const { quantity } = updateCartItemDto;
 
     if (quantity <= 0) {
@@ -295,6 +296,7 @@ export class CartService {
     currency?: string,
     countryCode?: string,
   ): Promise<ComputedCart & { currency?: string }> {
+    //TODO P0: Here also you need to verify all products are related to one category like perisable or other catgeory 
     const itemsFromDb = await this.userItemRepository.find({
       where: { user_id: userId, status: UserProductStatus.CART },
     });
@@ -381,6 +383,7 @@ export class CartService {
       };
     }
 
+    //TODO P0: Pull from the cache manager directly by passing key
     const selectedDelivery = await this.deliverySelectionRepository.findOne({
       where: { user_id: userId },
     });
@@ -400,10 +403,10 @@ export class CartService {
           relations: ['category', 'measurement'],
         });
 
-        const price = Number(product?.price ?? 0);
+        const price = Number(product?.price ?? 0); //TODO P0: It can't be 0, if it 0, then throw error
 
         const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-          Number(product?.unit_value ?? 0),
+          Number(product?.unit_value ?? 0), //TODO P0: It can't be 0, if it 0, then throw error
           product?.measurement?.label ?? 'kg',
         );
         const itemWeight = weightPerUnit * item.quantity;
@@ -477,7 +480,8 @@ export class CartService {
       if (!product) continue;
 
       const cargoLabel =
-        product.cargo_option?.label?.toLowerCase() ?? 'general';
+        product.cargo_option?.label?.toLowerCase() ?? 'general'; //TODO P0: If product is not belongs to any category, don't allow, remove that product
+      //there wont be any default 'general' writing manually
 
       const weightPerUnit = this.deliveryFeeService.getWeightInKg(
         Number(product?.unit_value ?? 0),
