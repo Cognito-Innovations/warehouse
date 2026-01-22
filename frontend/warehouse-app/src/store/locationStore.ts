@@ -86,7 +86,7 @@ export const useLocationStore = create<LocationStore>((set, get) => {
   };
 
   const fetchLocation = async (userId?: string) => {
-    await loadLocation(userId, false);
+    await loadLocation(userId, false); //TODO P0: Why again you are passing into different function ?
   };
 
   const refreshLocation = async (userId?: string) => {
@@ -101,7 +101,7 @@ export const useLocationStore = create<LocationStore>((set, get) => {
     currencyCode: DEFAULT_CURRENCY_INFO.code,
     currencySymbol: DEFAULT_CURRENCY_INFO.symbol,
     currencyRate: DEFAULT_CURRENCY_INFO.rate,
-    countryCode: "",
+    countryCode: "", //TODO P0: try to add default country code, which you get from global constants
     isLoaded: false,
 
     fetchLocation,

@@ -40,8 +40,8 @@ export default function Header({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, logout } = useAuth();
-  const { countryCode, refreshLocation, fetchLocation } = useLocationStore();
+  const { user, logout } = useAuth(); //TODO P0: Get the userloader, if it true then in ui we show loading whole page, and once it false then only we should actual location and currency code
+  const { countryCode, refreshLocation } = useLocationStore();
   const { searchQuery, setSearchQuery } = useProductStore();
   const { loading: cartLoading, cartProductQuantityCount } = useCartStore();
   

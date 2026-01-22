@@ -38,6 +38,7 @@ export class CacheManagerService {
     try {
       cached = await this.cacheManager.get<T>(key);
     } catch (error) {
+      //TODO P0: Pull from db cache_{dbname} table
       console.warn(`Cache get failed for ${key}:`, error);
     }
 
@@ -48,7 +49,7 @@ export class CacheManagerService {
     const now = Date.now();
     let dbValue: any;
     let expiry: number | undefined;
-
+    //TODO P0: Move this out
     if (key.startsWith('currency:') || key.startsWith('currency_code:')) {
       const entry = await this.currencyCacheRepo.findOne({ where: { key } });
       if (entry && (!entry.expiry || now < entry.expiry)) {
