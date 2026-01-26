@@ -6,7 +6,7 @@ import { Box, Typography } from "@mui/material";
 import useCategoryStore from "@/store/categoryStore";
 import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import EcommerceProductsGrid from "./EcommerceProductsGrid";
 
 export default function CategoryProductsByCategory() {

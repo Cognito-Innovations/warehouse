@@ -63,7 +63,7 @@ export const orderStatusPhrases: { [key: string]: string } = {
   pending: "Pending",
 };
 
-export const CACHE_GUEST_LOCATION_KEY = "guest_location";
+export const GUEST_LOCATION_STORAGE_KEY = "guest_location";
 
 export const DEFAULT_CURRENCY_INFO = {
   code: "USD",

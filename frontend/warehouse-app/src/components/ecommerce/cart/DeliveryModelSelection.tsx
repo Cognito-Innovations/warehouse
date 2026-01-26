@@ -14,7 +14,7 @@ import { useCartStore } from "@/store/cartStore";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { DeliveryOption } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 
 interface DeliveryModelSelectionProps {
   countryCode?: string;

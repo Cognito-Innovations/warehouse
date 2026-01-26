@@ -9,7 +9,7 @@ import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePayPalPayment } from "@/hooks/usePayPalPayment";
 import { useOrderPayment } from "@/hooks/useOrderPayment";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import { OrderSuccessModal } from "../OrderSuccessModal";
 import { OrderItemsList } from "./OrderItemsList";
 import { OrderTotals } from "./OrderTotals";

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Paper, Box, Typography, Chip } from "@mui/material";
 import { CheckCircle } from "@mui/icons-material";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { getOptimalImageSizing, handleImageLoad, ImageDimensions } from "@/utils/imageUtils";
 import { DEFAULT_CURRENCY_INFO } from "@/utils/constants";

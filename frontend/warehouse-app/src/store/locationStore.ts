@@ -3,9 +3,9 @@ import { create } from "zustand";
 import { getUserPreferences } from "@/lib/api.service";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { LocationStore } from "./storeTypes";
-import { getUserCountryByIP } from "@/utils/getUserCountry";
-import { clearCachedLocation, getCachedLocation, setCachedLocation } from "@/utils/cachedUtils";
-import { CACHE_GUEST_LOCATION_KEY, DEFAULT_CURRENCY_INFO } from "@/utils/constants";
+import { fetchUserCountryByIP } from "@/utils/getUserCountry";
+import { clearDataFromLocalStorage, getDataFromLocalStorage, setDataInLocalStorage } from "@/utils/localStorageUtils";
+import { GUEST_LOCATION_STORAGE_KEY, DEFAULT_CURRENCY_INFO } from "@/utils/constants";
 
 export const useLocationStore = create<LocationStore>((set, get) => {
   
@@ -15,7 +15,7 @@ export const useLocationStore = create<LocationStore>((set, get) => {
 
     if (!userId) {
       if (!skipCache) {
-        const cached = getCachedLocation(CACHE_GUEST_LOCATION_KEY);
+        const cached = getDataFromLocalStorage(GUEST_LOCATION_STORAGE_KEY);
         if (cached) {
           set({
             countryCode: cached.countryCode,
@@ -28,7 +28,7 @@ export const useLocationStore = create<LocationStore>((set, get) => {
         }
       }
 
-      const location = await getUserCountryByIP();
+      const location = await fetchUserCountryByIP();
       const countryCode = location.countryCode || "";
       const currencyCode = location.currency || "";
 
@@ -48,7 +48,7 @@ export const useLocationStore = create<LocationStore>((set, get) => {
         }
       }
 
-      setCachedLocation(CACHE_GUEST_LOCATION_KEY, {
+      setDataInLocalStorage(GUEST_LOCATION_STORAGE_KEY, {
         countryCode,
         currencyInfo,
       });
@@ -73,8 +73,8 @@ export const useLocationStore = create<LocationStore>((set, get) => {
         
         set({
           countryCode: resolvedCountryCode,
-          currencyCode: userCurrency?.currency_code || DEFAULT_CURRENCY_INFO.code,
-          currencySymbol: userCurrency?.currency_symbol || DEFAULT_CURRENCY_INFO.symbol,
+          currencyCode: userCurrency?.currency_code,
+          currencySymbol: userCurrency?.currency_symbol,
           currencyRate: userCurrency?.rate ?? DEFAULT_CURRENCY_INFO.rate,
           isLoaded: true,
         });
@@ -92,7 +92,7 @@ export const useLocationStore = create<LocationStore>((set, get) => {
   const refreshLocation = async (userId?: string) => {
     set({ isLoaded: false });
     if (!userId) {
-      clearCachedLocation(CACHE_GUEST_LOCATION_KEY);
+      clearDataFromLocalStorage(GUEST_LOCATION_STORAGE_KEY);
     }
     await loadLocation(userId, true);
   };

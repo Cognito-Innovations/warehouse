@@ -21,7 +21,7 @@ import { Search, ArrowBack } from "@mui/icons-material";
 import { toast } from "sonner";
 
 import { useLocationStore } from "@/store/locationStore";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import useProductStore from "@/store/productStore";
 import { getCurrencies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 

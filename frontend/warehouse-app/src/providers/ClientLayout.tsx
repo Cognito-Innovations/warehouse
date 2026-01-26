@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
 import EcommerceWrapper from "@/providers/EcommerceWrapper";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import Header from "@/components/Common/Header";
 
 interface ClientLayoutProps {

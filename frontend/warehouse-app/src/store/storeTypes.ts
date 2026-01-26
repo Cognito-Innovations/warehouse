@@ -5,7 +5,7 @@ export type CategoryStore = {
   categories: EcommerceCategory[];
   setCategory: (categorySlug: string | null) => void;
   handleCategorySelect: (categorySlug: string | null) => void;
-  getCategories: (countryCode?: string) => Promise<EcommerceCategory[]>;
+  getCategories: (countryCode: string) => Promise<EcommerceCategory[]>;
 };
 
 export type ProductStore = {

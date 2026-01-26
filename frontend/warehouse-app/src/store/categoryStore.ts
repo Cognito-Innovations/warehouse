@@ -15,7 +15,7 @@ const useCategoryStore = create<CategoryStore>()(
       handleCategorySelect: (categorySlug: string | null) =>
         set({ selectedCategory: categorySlug }),
 
-      getCategories: async (countryCode?: string) => {
+      getCategories: async (countryCode: string) => {
         const currentCategories = get().categories;
         if (currentCategories.length > 0) {
           return currentCategories;

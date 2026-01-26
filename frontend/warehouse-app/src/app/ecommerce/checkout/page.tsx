@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import { FastDeliveryBanner } from "@/components/ecommerce/checkout/FastDeliveryBanner";
 import { DeliveryInfoCard } from "@/components/ecommerce/checkout/DeliveryInfoCard";
 import { OrderSummary } from "@/components/ecommerce/checkout/OrderSummary";

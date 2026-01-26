@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import ProductDetailImageSection from "@/components/ecommerce/ProductDetailImageSection";
 import ProductDetailInfoSection from "@/components/ecommerce/ProductDetailInfoSection";
 import ProductDetailLoadingState from "@/components/ecommerce/ProductDetailLoadingState";

@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
 import { useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import ProductQuantityControl from "./ProductQuantityControl";
 import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
