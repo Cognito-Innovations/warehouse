@@ -5,7 +5,6 @@ import CategorySection from "../ecommerce/category_temp/CategorySection";
 import useCategoryStore from "@/store/categoryStore";
 import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 
-//TODO P0: Review this component and recorrect it properly
 const Category = ({ slug }: { slug: string | undefined }) => {
     const { countryCode } = useDetectUserLocation();
     const theme = useTheme();

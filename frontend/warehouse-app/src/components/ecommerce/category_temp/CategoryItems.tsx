@@ -2,11 +2,17 @@ import { Box, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 
 import useCategoryStore from "@/store/categoryStore";
+import CategorySkeletonLoader from "../skeleton-loader/CategorySkeletonLoader";
 import { DEFAULT_IMG } from "@/utils/constants";
 
 const CategoryItems = () => {
   const router = useRouter();
-  const { categories, selectedCategory } = useCategoryStore();
+  const { categories, selectedCategory, loading } = useCategoryStore();
+
+  if (loading) {
+    return <CategorySkeletonLoader numCategories={4} />
+  }
+
   return (
     <>
       {categories?.map((category: any) => {

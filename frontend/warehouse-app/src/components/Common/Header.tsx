@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import HeaderProfileTrigger from "../Header/HeaderProfileTrigger"; 
 import HeaderProfileMenu from "../Header/HeaderProfileMenu";
 import HeaderLocationMenu from "../Header/HeaderLocationMenu";
-import { ROUTES } from "@/utils/constants";
+import { ROUTES, ECOMMERCE_EXCLUDED_PATHS } from "@/utils/constants";
 import { ecommerceData } from "@/data/ecommerceData";
 import { getUserPreferences } from "@/lib/api.service";
 
@@ -40,7 +40,7 @@ export default function Header({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, logout } = useAuth(); //TODO P0: Get the userloader, if it true then in ui we show loading whole page, and once it false then only we should actual location and currency code
+  const { user, logout } = useAuth();
   const { countryCode, refreshLocation } = useLocationStore();
   const { searchQuery, setSearchQuery } = useProductStore();
   const { loading: cartLoading, cartProductQuantityCount } = useCartStore();
@@ -59,8 +59,10 @@ export default function Header({
 
   const count = cartProductQuantityCount();
 
-  const isEcommerce = (pathname === "/" || pathname.startsWith("/ecommerce")) && 
-    !["/ecommerce/orders", "/ecommerce/checkout", "/ecommerce/product", "/ecommerce/cart", "/ecommerce/assisted-shopping/history"].some(p => pathname.startsWith(p));
+  const isEcommerce =
+    (pathname === ROUTES.ROOT || pathname.startsWith(ROUTES.ECOMMERCE)) &&
+    !ECOMMERCE_EXCLUDED_PATHS.some(p => pathname.startsWith(p));
+
   const isOrders = pathname.startsWith("/ecommerce/orders");
   const isPickupRequest = pathname.startsWith("/dashboard/pickup-request");
   const isCheckout = pathname.startsWith("/ecommerce/checkout");

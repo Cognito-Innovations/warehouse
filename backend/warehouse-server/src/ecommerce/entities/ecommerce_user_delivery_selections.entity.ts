@@ -13,7 +13,7 @@ export class EcommerceUserDeliverySelection extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', unique: true })
   user_id: string;
 
   @OneToOne(() => User, (user) => user.deliverySelection, {

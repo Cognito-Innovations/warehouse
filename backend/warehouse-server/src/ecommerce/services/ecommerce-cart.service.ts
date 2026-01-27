@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { EcommerceProduct } from '../entities/ecommerce-product.entity';
@@ -9,7 +10,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
-import { DEFAULT_CURRENCY } from '../../shared/constants.js';
+import {
+  CACHE_KEY,
+  DEFAULT_COUNTRY_CODE,
+  DEFAULT_CURRENCY,
+} from '../../shared/constants.js';
 import {
   DeliveryFeeService,
   DeliveryOption,
@@ -19,6 +24,7 @@ import {
   UserProductStatus,
 } from '../entities/ecommerce_user_products_status.entity';
 import { EcommerceUserDeliverySelection } from '../entities/ecommerce_user_delivery_selections.entity';
+import { CacheManagerService } from 'src/shared/cache-manager.service';
 
 export interface ComputedCartItem {
   id: string;
@@ -51,6 +57,7 @@ export class CartService {
     private readonly deliverySelectionRepository: Repository<EcommerceUserDeliverySelection>,
     private readonly userPreferencesService: UserPreferencesService,
     private readonly deliveryFeeService: DeliveryFeeService,
+    private readonly cacheManagerService: CacheManagerService,
   ) {}
 
   private validateProductAndStock(
@@ -108,47 +115,42 @@ export class CartService {
     return typeof result === 'number' ? result : Number(result.price);
   }
 
-  //TODO P0: Add try catch block here
   async setSelectedDeliveryOption(
     userId: string,
     option: DeliveryOption,
     currencyCode: string,
   ): Promise<void> {
-    if (!currencyCode) {
-      throw new BadRequestException('Currency code is required');
+    try {
+      if (!currencyCode) {
+        throw new BadRequestException('Currency code is required');
+      }
+      const exchangeRate = await this.getExchangeRate(currencyCode);
+
+      const totalAmountInUsd = (
+        Number(option.total_amount) / Number(exchangeRate)
+      ).toFixed(2);
+
+      await this.deliverySelectionRepository.upsert(
+        {
+          user_id: userId,
+          delivery_platform: option.delivery_platform,
+          total_amount: Number(totalAmountInUsd),
+          estimated_time: option.estimated_time,
+          description: option.description,
+        },
+        {
+          conflictPaths: ['user_id'],
+        },
+      );
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Failed to set selected delivery option',
+      );
     }
-    const exchangeRate = await this.getExchangeRate(currencyCode);
-
-    const totalAmountInUsd = (
-      Number(option.total_amount) / Number(exchangeRate)
-    ).toFixed(2);
-
-    //TODO P0: Here we are using createQueryBuilder to insert the data into the database. We should use the repository to insert the data.
-    //Because of that, it might not able to pickit up the created_at and updated_at values.
-    await this.deliverySelectionRepository
-      .createQueryBuilder()
-      .insert()
-      .into(EcommerceUserDeliverySelection)
-      .values({
-        user_id: userId,
-        delivery_platform: option.delivery_platform,
-        total_amount: Number(totalAmountInUsd),
-        estimated_time: option.estimated_time,
-        description: option.description,
-        created_at: Math.floor(Date.now() / 1000),
-        updated_at: Math.floor(Date.now() / 1000),
-      })
-      .onConflict(
-        `
-        ("user_id")
-        DO UPDATE SET
-          delivery_platform = EXCLUDED.delivery_platform,
-          total_amount = EXCLUDED.total_amount,
-          estimated_time = EXCLUDED.estimated_time,
-          description = EXCLUDED.description
-        `,
-      )
-      .execute();
   }
 
   async getSelectedDeliveryOption(
@@ -238,7 +240,6 @@ export class CartService {
     currency?: string,
     countryCode?: string,
   ): Promise<ComputedCart> {
-    //TODO P0: Are you checking is it presiable or not ?
     const { quantity } = updateCartItemDto;
 
     if (quantity <= 0) {
@@ -255,9 +256,19 @@ export class CartService {
 
     const product = await this.productRepository.findOne({
       where: { id: cartItem.product_id },
+      relations: ['cargo_option'],
     });
 
     this.validateProductAndStock(product, quantity);
+
+    const existingCargo = await this.getExistingCartCargo(userId);
+    const currentCargo = product?.cargo_option?.label?.toLowerCase() ?? null;
+
+    if (existingCargo && currentCargo && existingCargo !== currentCargo) {
+      throw new BadRequestException(
+        'All items in the cart must belong to the same category',
+      );
+    }
 
     cartItem.quantity = quantity;
 
@@ -296,17 +307,29 @@ export class CartService {
     currency?: string,
     countryCode?: string,
   ): Promise<ComputedCart & { currency?: string }> {
-    //TODO P0: Here also you need to verify all products are related to one category like perisable or other catgeory 
     const itemsFromDb = await this.userItemRepository.find({
       where: { user_id: userId, status: UserProductStatus.CART },
     });
+
+    const cargoSet = new Set<string>();
 
     const preparedItems = await Promise.all(
       (itemsFromDb ?? []).map(async (item) => {
         const product = await this.productRepository.findOne({
           where: { id: item.product_id },
-          relations: ['category', 'measurement'],
+          relations: ['category', 'measurement', 'cargo_option'],
         });
+
+        const cargo = product?.cargo_option?.label?.toLowerCase() ?? null;
+
+        if (!cargo) {
+          throw new BadRequestException(
+            'Product does not belong to a valid category',
+          );
+        }
+
+        cargoSet.add(cargo);
+
         const price = Number(product?.price ?? 0);
         const weightPerUnit = this.deliveryFeeService.getWeightInKg(
           Number(product?.unit_value ?? 0),
@@ -322,6 +345,12 @@ export class CartService {
         };
       }),
     );
+
+    if (cargoSet.size > 1) {
+      throw new BadRequestException(
+        'All items in the cart must belong to the same category',
+      );
+    }
 
     const items: ComputedCartItem[] = await Promise.all(
       preparedItems.map(async (data) => {
@@ -383,11 +412,6 @@ export class CartService {
       };
     }
 
-    //TODO P0: Pull from the cache manager directly by passing key
-    const selectedDelivery = await this.deliverySelectionRepository.findOne({
-      where: { user_id: userId },
-    });
-
     const itemsFromDb = await this.userItemRepository.find({
       where: {
         user_id: userId,
@@ -396,6 +420,8 @@ export class CartService {
       },
     });
 
+    let totalWeight = 0;
+
     const preparedItems = await Promise.all(
       (itemsFromDb ?? []).map(async (item) => {
         const product = await this.productRepository.findOne({
@@ -403,13 +429,30 @@ export class CartService {
           relations: ['category', 'measurement'],
         });
 
-        const price = Number(product?.price ?? 0); //TODO P0: It can't be 0, if it 0, then throw error
+        if (!product) {
+          throw new BadRequestException('Product not found');
+        }
+
+        const price = Number(product?.price);
+        if (!price || price <= 0) {
+          throw new BadRequestException(
+            `Invalid price for product ${product.id}`,
+          );
+        }
+
+        const unitValue = Number(product.unit_value);
+        if (!unitValue || unitValue <= 0) {
+          throw new BadRequestException(
+            `Invalid unit value for product ${product.id}`,
+          );
+        }
 
         const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-          Number(product?.unit_value ?? 0), //TODO P0: It can't be 0, if it 0, then throw error
+          unitValue,
           product?.measurement?.label ?? 'kg',
         );
         const itemWeight = weightPerUnit * item.quantity;
+        totalWeight += itemWeight;
 
         return {
           item,
@@ -420,6 +463,16 @@ export class CartService {
       }),
     );
 
+    const normalizedCountry =
+      countryCode?.toUpperCase() || DEFAULT_COUNTRY_CODE;
+
+    const cacheKey = `${CACHE_KEY.DELIVERY}:${normalizedCountry}:${totalWeight}`;
+
+    const cachedDeliveryOptions =
+      await this.cacheManagerService.get<DeliveryOption[]>(cacheKey);
+
+    const selectedDelivery = cachedDeliveryOptions?.[0];
+
     const items: ComputedCartItem[] = preparedItems.map((data) => {
       const { item, product, price } = data;
 
@@ -428,7 +481,7 @@ export class CartService {
         cart_id: userId,
         product_id: item.product_id,
         quantity: item.quantity,
-        product: product ?? null,
+        product,
         unit_price: price,
         total_price: price * item.quantity,
         delivery_fee: 0,
@@ -479,12 +532,18 @@ export class CartService {
       });
       if (!product) continue;
 
-      const cargoLabel =
-        product.cargo_option?.label?.toLowerCase() ?? 'general'; //TODO P0: If product is not belongs to any category, don't allow, remove that product
-      //there wont be any default 'general' writing manually
+      const cargoLabel = product.cargo_option?.label?.toLowerCase();
+      if (!cargoLabel) continue;
+
+      const unitValue = Number(product.unit_value);
+      if (!unitValue || unitValue <= 0) {
+        throw new BadRequestException(
+          `Invalid unit value for product ${product.id}`,
+        );
+      }
 
       const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-        Number(product?.unit_value ?? 0),
+        unitValue,
         product?.measurement?.label ?? 'kg',
       );
 
@@ -505,8 +564,8 @@ export class CartService {
 
     return await this.deliveryFeeService.getDeliveryOptions(
       totalWeight,
-      countryCode!,
-      currencyCode!,
+      countryCode,
+      currencyCode,
     );
   }
 

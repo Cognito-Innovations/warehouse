@@ -4,8 +4,8 @@ import { getUserPreferences } from "@/lib/api.service";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { LocationStore } from "./storeTypes";
 import { fetchUserCountryByIP } from "@/utils/getUserCountry";
-import { clearDataFromLocalStorage, getDataFromLocalStorage, setDataInLocalStorage } from "@/utils/localStorageUtils";
-import { GUEST_LOCATION_STORAGE_KEY, DEFAULT_CURRENCY_INFO } from "@/utils/constants";
+import { getDataFromLocalStorage, setDataInLocalStorage } from "@/utils/localStorageUtils";
+import { GUEST_LOCATION_STORAGE_KEY, DEFAULT_CURRENCY_INFO, DEFAULT_LOCATION } from "@/utils/constants";
 
 export const useLocationStore = create<LocationStore>((set, get) => {
   
@@ -85,15 +85,8 @@ export const useLocationStore = create<LocationStore>((set, get) => {
     }
   };
 
-  const fetchLocation = async (userId?: string) => {
-    await loadLocation(userId, false); //TODO P0: Why again you are passing into different function ?
-  };
-
   const refreshLocation = async (userId?: string) => {
     set({ isLoaded: false });
-    if (!userId) {
-      clearDataFromLocalStorage(GUEST_LOCATION_STORAGE_KEY);
-    }
     await loadLocation(userId, true);
   };
 
@@ -101,10 +94,10 @@ export const useLocationStore = create<LocationStore>((set, get) => {
     currencyCode: DEFAULT_CURRENCY_INFO.code,
     currencySymbol: DEFAULT_CURRENCY_INFO.symbol,
     currencyRate: DEFAULT_CURRENCY_INFO.rate,
-    countryCode: "", //TODO P0: try to add default country code, which you get from global constants
+    countryCode: DEFAULT_LOCATION.countryCode,
     isLoaded: false,
 
-    fetchLocation,
     refreshLocation,
+    loadLocation,
   };
 });

@@ -1,4 +1,5 @@
 export enum ROUTES {
+  ROOT = "/",
   SIGN_IN = "/sign-in",  
   DASHBOARD = "/dashboard",  
   DASHBOARD_PACKAGES = "/packages",
@@ -86,4 +87,12 @@ export const ASSISTED_SHOPPING_STEPS = [
   { number: 1, label: "LINK" },
   { number: 2, label: "DETAILS" },
   { number: 3, label: "COMPLETE" },
+];
+
+export const ECOMMERCE_EXCLUDED_PATHS = [
+  ROUTES.ORDER_HISTORY,
+  ROUTES.CHECKOUT,
+  ROUTES.PRODUCT,
+  ROUTES.CART,
+  ROUTES.ASSISTED_SHOPPING_HISTORY,
 ];

@@ -4,7 +4,6 @@ import { CourierCompany } from 'src/courier_companies/courier_company.entity';
 import { Currency } from 'src/currencies/currency.entity';
 import { User } from 'src/users/user.entity';
 
-//TODO P0: Here or in service we need to create the default user preference if not exists for the user
 @Entity('user_preferences')
 export class UserPreference extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')

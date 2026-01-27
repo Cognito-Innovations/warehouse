@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, ReactNode, useMemo } from "react";
 import { signOut } from "next-auth/react";
+import { useLocationSync } from "@/hooks/useLocationSync";
 
 interface User {
   id: string;
@@ -19,7 +20,6 @@ interface User {
 interface AuthContextType {
   user: User | {};
   token: string | null;
-  loading: boolean;
   isAuthenticated: boolean;
   logout: () => void;
 }
@@ -75,13 +75,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session })
 
   const token = session ? (session as any).access_token || null : null;
   const isAuthenticated = !!(session?.user && ((session.user as any).user_id || session.user.email));
-  const loading = false;
+
+  useLocationSync(isAuthenticated, (user as User).id);
 
   const logout = () => {
     signOut({ callbackUrl: "/" });
   };
 
-  const value: AuthContextType = { user, token, loading, isAuthenticated, logout };
+  const value: AuthContextType = { user, token, isAuthenticated, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef } from "react";
 import { Container, Alert, Box } from "@mui/material";
 
 
@@ -22,17 +22,13 @@ import Category from "../Category/Category";
 interface EcommerceContentProps {
   slug?: string;
 }
-
-//TODO P0: catagory should be seperate component
-//TODO P0: remove search as of now
 export default function EcommerceContent({ slug }: EcommerceContentProps) {
-  const { currencyCode, countryCode, isLoaded, fetchLocationBasedOnUser } = useDetectUserLocation();
+  const { isLoaded, fetchLocationBasedOnUser } = useDetectUserLocation();
   const { user } = useAuth();
   const {
     products,
     isLoading,
     error,
-    fetchProducts,
     setError,
   } = useProductStore();
 
@@ -45,33 +41,9 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
     minCount: 4
   });
 
-  const fetchCategoryProducts = useCallback(async () => {
-    if (!isLoaded || showAssisted) return;
-  
-    try {
-      await fetchProducts(
-        {
-          category: undefined,
-          searchTerm: undefined,
-          currency: currencyCode,
-          countryCode,
-          userId: (user as any).id,
-        },
-        false
-      );
-    } catch (err) {}
-  }, [
-    isLoaded,
-    showAssisted,
-    currencyCode,
-    countryCode,
-    (user as any).id,
-    fetchProducts,
-  ]);
-
   useEffect(() => {
-    fetchCategoryProducts();
-  }, []);
+    fetchLocationBasedOnUser((user as any)?.id);
+  }, [user, fetchLocationBasedOnUser]);
 
 
   const handleRefresh = () => {
@@ -93,9 +65,9 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
     );
   }
 
-  useEffect(() => {
-    fetchLocationBasedOnUser((user as any)?.id);
-  }, []);
+  if (!isLoaded && !error) {
+    return <EcommerceSkeletonLoader />;
+  }
 
   if (
     (error && isNetworkError)) {
