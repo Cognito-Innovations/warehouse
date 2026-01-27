@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback, useState } from "react";
-import { Container, Alert, useTheme, Box } from "@mui/material";
+import React, { useEffect, useRef, useCallback } from "react";
+import { Container, Alert, Box } from "@mui/material";
 
 
 import useProductStore from "@/store/productStore";
-import useCategoryStore from "@/store/categoryStore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import { useGridSkeletonCount } from "@/hooks/useGridSkeletonCount";
@@ -26,26 +25,19 @@ interface EcommerceContentProps {
 
 //TODO P0: catagory should be seperate component
 //TODO P0: remove search as of now
-//TODO P0: <EcommerceSkeletonLoader with network tab, logic incorrect, needs to fix it correct it properly
 export default function EcommerceContent({ slug }: EcommerceContentProps) {
   const { currencyCode, countryCode, isLoaded, fetchLocationBasedOnUser } = useDetectUserLocation();
   const { user } = useAuth();
-  const { categories, getCategories, selectedCategory, setCategory } = useCategoryStore();
   const {
     products,
     isLoading,
-    loadingMore,
-    hasMore,
     error,
     fetchProducts,
     setError,
-    searchQuery,
   } = useProductStore();
 
-  const lastCategoryRef = useRef<string | null>(null);
   const skeletonRef = useRef<HTMLDivElement | null>(null);
-
-  const showAssisted = selectedCategory === "assisted";
+  const showAssisted = false; //selectedCategory === "assisted";
 
   const skeletonCount = useGridSkeletonCount({
     itemHeight: 10,
@@ -53,57 +45,33 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
     minCount: 4
   });
 
-  const syncCategoryWithSlug = useCallback(() => {
-    const nextCategory = slug ?? null;
-    if (nextCategory !== selectedCategory) {
-      setCategory(nextCategory);
-    }
-  }, [slug, selectedCategory, setCategory]);
-
-  const fetchCategoryList = useCallback(() => {
-    if (!countryCode) return [];
-    getCategories(countryCode);
-  }, [countryCode, getCategories]);
-
   const fetchCategoryProducts = useCallback(async () => {
     if (!isLoaded || showAssisted) return;
-
-    const isCategoryChanged = lastCategoryRef.current !== selectedCategory;
-    lastCategoryRef.current = selectedCategory;
-
+  
     try {
       await fetchProducts(
         {
-          category: selectedCategory || undefined,
+          category: undefined,
           searchTerm: undefined,
           currency: currencyCode,
           countryCode,
-          userId: user.id,
+          userId: (user as any).id,
         },
-        isCategoryChanged
+        false
       );
     } catch (err) {}
   }, [
     isLoaded,
     showAssisted,
-    selectedCategory,
     currencyCode,
     countryCode,
-    user.id,
+    (user as any).id,
     fetchProducts,
   ]);
 
   useEffect(() => {
-    syncCategoryWithSlug();
-  }, [syncCategoryWithSlug]);
-
-  useEffect(() => {
-    fetchCategoryList();
-  }, [fetchCategoryList]);
-
-  useEffect(() => {
     fetchCategoryProducts();
-  }, [fetchCategoryProducts]);
+  }, []);
 
 
   const handleRefresh = () => {
@@ -130,7 +98,6 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   }, []);
 
   if (
-    // categories.length === 0 || 
     (error && isNetworkError)) {
     return (
       <EcommerceSkeletonLoader
@@ -153,10 +120,8 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
       <Box sx={{ display: 'none' }}>
         <ProductCardSkeletonLoader ref={skeletonRef} />
       </Box>
-
-      <div>
-        <Category />
-      </div>
+  
+      <Category slug={slug} />
 
       {showAssisted ? (
         <AssistedShoppingLandingContent />

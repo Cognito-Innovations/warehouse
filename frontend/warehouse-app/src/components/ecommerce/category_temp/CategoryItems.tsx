@@ -7,7 +7,6 @@ import { DEFAULT_IMG } from "@/utils/constants";
 const CategoryItems = () => {
   const router = useRouter();
   const { categories, selectedCategory } = useCategoryStore();
-
   return (
     <>
       {categories?.map((category: any) => {

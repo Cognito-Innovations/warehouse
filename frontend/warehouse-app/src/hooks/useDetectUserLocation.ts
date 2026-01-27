@@ -13,12 +13,12 @@ export const useDetectUserLocation = create<any>((set) => {
     if (userId) {
       const preferenceData = await getUserPreferences(userId);
       const countryWithCurrencyDetails = destructUserPreferenceData(preferenceData)
-      set(countryWithCurrencyDetails);
+      set({...countryWithCurrencyDetails, isLoaded: true});
     }
     else if (localStorage.getItem(GUEST_LOCATION_STORAGE_KEY)) {
       const data = getDataFromLocalStorage(GUEST_LOCATION_STORAGE_KEY);
       const countryWithCurrencyDetails = destructLocationData(data)
-      set(countryWithCurrencyDetails);
+      set({...countryWithCurrencyDetails, isLoaded: true});
     }
     else{
       const {countryCode, currencyInfo} = await fetchCurrencyAndCodeByIp()

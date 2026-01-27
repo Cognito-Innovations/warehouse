@@ -56,7 +56,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     locationData: { countryCode: countryCode },
     onMenuClick: toggleSidebar,
     hideMenuButton: !isEcommercePath || pathname.includes("/orders") || pathname.includes("/checkout") || pathname.includes("/history"),
-    hideSearch: !isEcommercePath || pathname.includes("/product") || pathname.includes("/history"),
+    hideSearch: true, //TODO P0: !isEcommercePath || pathname.includes("/product") || pathname.includes("/history") Uncomment wih this code when it fully functional
     hideLocation: pathname.includes("/cart") || pathname.includes("/orders") || pathname.includes("/checkout") || pathname.includes("/history"),
     itemCount: pathname.includes("/checkout") ? cartProductQuantityCount() : undefined,
     title,
