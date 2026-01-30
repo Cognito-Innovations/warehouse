@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { Add, Remove } from "@mui/icons-material";
 import { useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { EcommerceProduct } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";

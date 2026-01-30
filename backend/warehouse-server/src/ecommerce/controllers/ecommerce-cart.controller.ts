@@ -16,6 +16,7 @@ import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { DeliveryOption } from 'src/shared/get-delivery-fee.service';
+import { CheckoutDto } from '../dto/cart/checkout.dto';
 
 interface AuthenticatedRequest {
   user: {
@@ -123,26 +124,23 @@ export class CartController {
     return this.cartService.getDeliveryRates(userId, countryCode, currencyCode);
   }
 
-  @Get('checkout')
-  async getCheckout(
+  @Post('checkout')
+  async postCheckout(
     @Request() req: AuthenticatedRequest,
-    @Query('currency') currency?: string,
-    @Query('countryCode') countryCode?: string,
-    @Query('product_ids') productIds?: string,
+    @Body() body: CheckoutDto,
   ): Promise<ComputedCart> {
     const userId = req.user?.id;
     if (!userId) {
       throw new BadRequestException('User not authenticated');
     }
-    //TODO P0: You should do POST call, in that freely pass array, don't trouble yourself theese split cause more problems in future
-    const selectedProductIds = productIds ? productIds.split(',') : [];
 
-    const checkoutData = await this.cartService.getCheckoutData(
+    const { productIds, currency, countryCode } = body;
+
+    return this.cartService.getCheckoutData(
       userId,
-      selectedProductIds,
+      productIds,
       currency,
       countryCode,
     );
-    return checkoutData;
   }
 }

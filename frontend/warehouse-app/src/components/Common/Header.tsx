@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AppBar, Toolbar, Typography, Box, IconButton, TextField, InputAdornment, Badge, Chip, CircularProgress } from "@mui/material";
 import { ArrowBack, Search, ShoppingCart, Menu as MenuIcon, Share } from "@mui/icons-material";
 
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCartStore } from "@/store/cartStore";
 import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,7 +41,7 @@ export default function Header({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, logout } = useAuth();
-  const { countryCode, refreshLocation } = useLocationStore();
+  const { countryCode, refreshLocation } = useDetectUserLocation();
   const { searchQuery, setSearchQuery } = useProductStore();
   const { loading: cartLoading, cartProductQuantityCount } = useCartStore();
   
@@ -221,11 +221,9 @@ export default function Header({
                 </IconButton>
               </>
             )}
-            {/*
-            TODO P0: giving error, please correct it
              {isCheckout && itemCount && itemCount > 0 && (
               <Chip label={itemCount} size="small" color="primary" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 600 }} />
-            )} */}
+            )}
             {isProductDetail && (
               <>
                 {onShareClick && <IconButton color="inherit" onClick={onShareClick}><Share /></IconButton>}

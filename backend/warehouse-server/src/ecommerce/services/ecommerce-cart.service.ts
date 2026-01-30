@@ -11,7 +11,6 @@ import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import {
-  CACHE_KEY,
   DEFAULT_COUNTRY_CODE,
   DEFAULT_CURRENCY,
 } from '../../shared/constants.js';
@@ -25,6 +24,10 @@ import {
 } from '../entities/ecommerce_user_products_status.entity';
 import { EcommerceUserDeliverySelection } from '../entities/ecommerce_user_delivery_selections.entity';
 import { CacheManagerService } from 'src/shared/cache-manager.service';
+import {
+  CartCargoState,
+  CartCargoStatus,
+} from '../entities/cargo-options.entity';
 
 export interface ComputedCartItem {
   id: string;
@@ -88,31 +91,72 @@ export class CartService {
     }
   }
 
-  private async getExistingCartCargo(userId: string): Promise<string | null> {
-    const items = await this.userItemRepository.find({
-      where: { user_id: userId, status: UserProductStatus.CART },
-    });
+  private async getCartCargoStatus(userId: string): Promise<CartCargoState> {
+    try {
+      const rows = await this.userItemRepository
+        .createQueryBuilder('uip')
+        .innerJoin(EcommerceProduct, 'p', 'p.id = uip.product_id')
+        .innerJoin('p.cargo_option', 'cargo')
+        .select('LOWER(cargo.label)', 'cargo')
+        .where('uip.user_id = :userId', { userId })
+        .andWhere('uip.status = :status', {
+          status: UserProductStatus.CART,
+        })
+        .groupBy('LOWER(cargo.label)')
+        .getRawMany<{ cargo: string }>();
 
-    if (!items.length) return null;
+      if (!rows.length) {
+        return { status: CartCargoStatus.EMPTY, cargoLabel: null };
+      }
 
-    const product = await this.productRepository.findOne({
-      where: { id: items[0].product_id },
-      relations: ['cargo_option'],
-    });
+      if (rows.length > 1) {
+        return { status: CartCargoStatus.MIXED, cargoLabel: null };
+      }
 
-    return product?.cargo_option?.label?.toLowerCase() ?? null;
+      return { status: CartCargoStatus.SINGLE, cargoLabel: rows[0].cargo };
+    } catch (error) {
+      console.error(
+        `Failed to get cart cargo status for user ${userId}`,
+        error,
+      );
+
+      throw new InternalServerErrorException(
+        'Unable to determine cart cargo status',
+      );
+    }
   }
 
   private async getExchangeRate(currency: string): Promise<number> {
-    if (!currency || currency === DEFAULT_CURRENCY.code) {
-      return 1;
+    if (currency === DEFAULT_CURRENCY.code) {
+      return DEFAULT_CURRENCY.rate;
     }
+
     const result =
-      await this.userPreferencesService.getFormattedConvertedPriceByCurrency(
+      (await this.userPreferencesService.getFormattedConvertedPriceByCurrency(
         currency,
-        1,
+        DEFAULT_CURRENCY.rate,
+      )) as { price: string | number };
+
+    const rate = Number(result?.price);
+
+    if (!rate || Number.isNaN(rate)) {
+      throw new BadRequestException('Failed to get exchange rate');
+    }
+
+    return rate;
+  }
+
+  private normalizeToBaseCurrency(
+    amount: number,
+    exchangeRate: number,
+  ): number {
+    if (!exchangeRate || exchangeRate === 0) {
+      throw new BadRequestException(
+        'Invalid exchange rate for currency conversion',
       );
-    return typeof result === 'number' ? result : Number(result.price);
+    }
+
+    return Number((amount / exchangeRate).toFixed(2));
   }
 
   async setSelectedDeliveryOption(
@@ -121,55 +165,92 @@ export class CartService {
     currencyCode: string,
   ): Promise<void> {
     try {
-      if (!currencyCode) {
-        throw new BadRequestException('Currency code is required');
+      if (
+        !currencyCode ||
+        !option?.delivery_platform ||
+        !option?.total_amount ||
+        !userId
+      ) {
+        throw new BadRequestException(
+          'Currency code, delivery platform, total amount, or user id is required',
+        );
       }
       const exchangeRate = await this.getExchangeRate(currencyCode);
 
-      const totalAmountInUsd = (
-        Number(option.total_amount) / Number(exchangeRate)
-      ).toFixed(2);
+      const totalAmountInUsd = this.normalizeToBaseCurrency(
+        Number(option.total_amount),
+        Number(exchangeRate),
+      );
+
+      const now = Math.floor(Date.now() / 1000);
 
       await this.deliverySelectionRepository.upsert(
         {
           user_id: userId,
           delivery_platform: option.delivery_platform,
-          total_amount: Number(totalAmountInUsd),
+          total_amount: totalAmountInUsd,
           estimated_time: option.estimated_time,
           description: option.description,
+          created_at: now,
+          updated_at: now,
         },
         {
           conflictPaths: ['user_id'],
         },
       );
     } catch (error) {
+      console.error('setSelectedDeliveryOption error:', error);
+
       if (error instanceof BadRequestException) {
         throw error;
       }
 
-      throw new InternalServerErrorException(
-        'Failed to set selected delivery option',
-      );
+      throw new InternalServerErrorException(error.message);
     }
   }
 
   async getSelectedDeliveryOption(
     userId: string,
   ): Promise<DeliveryOption | null> {
-    const selection = await this.deliverySelectionRepository.findOne({
-      where: { user_id: userId },
-    });
-    if (!selection) return null;
-    return {
-      delivery_platform: selection.delivery_platform,
-      total_amount: selection.total_amount,
-      estimated_time: selection.estimated_time,
-      description: selection.description,
-    };
+    try {
+      if (!userId) {
+        throw new BadRequestException('User ID is required');
+      }
+
+      const selection = await this.deliverySelectionRepository.findOne({
+        where: { user_id: userId },
+      });
+      if (!selection) return null;
+      return {
+        delivery_platform: selection.delivery_platform,
+        total_amount: selection.total_amount,
+        estimated_time: selection.estimated_time,
+        description: selection.description,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Failed to get selected delivery option',
+      );
+    }
   }
 
   async clearSelectedDeliveryOption(userId: string): Promise<void> {
-    await this.deliverySelectionRepository.delete({ user_id: userId });
+    try {
+      if (!userId) {
+        throw new BadRequestException('User ID is required');
+      }
+      await this.deliverySelectionRepository.delete({ user_id: userId });
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Failed to clear selected delivery option',
+      );
+    }
   }
 
   async addToCart(
@@ -179,6 +260,12 @@ export class CartService {
     countryCode?: string,
   ): Promise<ComputedCart> {
     const { product_id, quantity } = addToCartDto;
+
+    if (!userId || !product_id || !quantity) {
+      throw new BadRequestException(
+        'User ID, product ID, and quantity are required',
+      );
+    }
 
     if (quantity <= 0) {
       throw new BadRequestException('Quantity must be greater than zero');
@@ -191,16 +278,25 @@ export class CartService {
     });
 
     // Check if product is already in cart
-    const existingItem = await this.userItemRepository.findOne({
+    let existingItem = await this.userItemRepository.findOne({
       where: { user_id: userId, product_id, status: UserProductStatus.CART },
     });
 
     const existingQuantity = existingItem?.quantity ?? 0;
+    if (!product?.name) {
+      throw new NotFoundException('Product not found');
+    }
     this.validateProductAndStock(product, quantity, existingQuantity);
 
-    const existingCargo = await this.getExistingCartCargo(userId);
+    const cartState = await this.getCartCargoStatus(userId);
+    let cartWasCleared = false;
 
-    if (existingCargo) {
+    if (cartState.status === CartCargoStatus.MIXED) {
+      await this.clearCart(userId);
+      cartWasCleared = true;
+    }
+
+    if (cartState.status === CartCargoStatus.SINGLE) {
       const incomingProduct = await this.productRepository.findOne({
         where: { id: product_id },
         relations: ['cargo_option'],
@@ -209,9 +305,14 @@ export class CartService {
       const incomingCargo =
         incomingProduct?.cargo_option?.label?.toLowerCase() ?? null;
 
-      if (incomingCargo && incomingCargo !== existingCargo) {
+      if (incomingCargo && incomingCargo !== cartState.cargoLabel) {
         await this.clearCart(userId);
+        cartWasCleared = true;
       }
+    }
+
+    if (cartWasCleared) {
+      existingItem = null;
     }
 
     if (existingItem) {
@@ -261,10 +362,20 @@ export class CartService {
 
     this.validateProductAndStock(product, quantity);
 
-    const existingCargo = await this.getExistingCartCargo(userId);
+    const cartState = await this.getCartCargoStatus(userId);
     const currentCargo = product?.cargo_option?.label?.toLowerCase() ?? null;
 
-    if (existingCargo && currentCargo && existingCargo !== currentCargo) {
+    if (cartState.status === CartCargoStatus.MIXED) {
+      throw new BadRequestException(
+        'All items in the cart must belong to the same category',
+      );
+    }
+
+    if (
+      cartState.status === CartCargoStatus.SINGLE &&
+      currentCargo &&
+      cartState.cargoLabel !== currentCargo
+    ) {
       throw new BadRequestException(
         'All items in the cart must belong to the same category',
       );
@@ -466,12 +577,17 @@ export class CartService {
     const normalizedCountry =
       countryCode?.toUpperCase() || DEFAULT_COUNTRY_CODE;
 
-    const cacheKey = `${CACHE_KEY.DELIVERY}:${normalizedCountry}:${totalWeight}`;
-
-    const cachedDeliveryOptions =
-      await this.cacheManagerService.get<DeliveryOption[]>(cacheKey);
-
-    const selectedDelivery = cachedDeliveryOptions?.[0];
+    let totalDeliveryFee = 0;
+    try {
+      totalDeliveryFee = await this.deliveryFeeService.getDeliveryFee(
+        totalWeight,
+        normalizedCountry,
+        DEFAULT_CURRENCY.code,
+      );
+    } catch (error) {
+      console.warn('Failed to calculate delivery fee for checkout', error);
+      totalDeliveryFee = 0;
+    }
 
     const items: ComputedCartItem[] = preparedItems.map((data) => {
       const { item, product, price } = data;
@@ -491,10 +607,6 @@ export class CartService {
     });
 
     const totalAmount = items.reduce((sum, it) => sum + it.total_price, 0);
-
-    const totalDeliveryFee = selectedDelivery
-      ? Number(selectedDelivery.total_amount)
-      : 0;
 
     const finalAmount = totalAmount + totalDeliveryFee;
 

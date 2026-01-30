@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { calculateCartTotals } from "@/utils/cartCalculations";
 import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";

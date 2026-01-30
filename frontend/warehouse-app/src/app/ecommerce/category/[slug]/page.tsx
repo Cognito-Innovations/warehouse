@@ -4,8 +4,8 @@ import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import EcommerceContent from "@/components/ecommerce/EcommerceContent";
 
 export default function CategoryPage() {

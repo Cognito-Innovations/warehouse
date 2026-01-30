@@ -6,7 +6,7 @@ import { Add, Remove, Delete, LocationOn, Inventory } from "@mui/icons-material"
 import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { getOptimalImageSizing, handleImageLoad, ImageDimensions } from "@/utils/imageUtils";
