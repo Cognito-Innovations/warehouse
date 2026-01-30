@@ -221,11 +221,9 @@ export default function Header({
                 </IconButton>
               </>
             )}
-            {/*
-            TODO P0: giving error, please correct it
              {isCheckout && itemCount && itemCount > 0 && (
               <Chip label={itemCount} size="small" color="primary" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 600 }} />
-            )} */}
+            )}
             {isProductDetail && (
               <>
                 {onShareClick && <IconButton color="inherit" onClick={onShareClick}><Share /></IconButton>}

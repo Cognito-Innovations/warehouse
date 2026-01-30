@@ -3,12 +3,12 @@ import React, { useEffect } from "react";
 
 import useProductStore from "@/store/productStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import EcommerceContent from "@/components/ecommerce/EcommerceContent";
+import { useLocationStore } from "@/store/locationStore";
 
 export default function Ecommerce() {
   const { user } = useAuth();
-  const { currencyCode, countryCode, isLoaded } = useDetectUserLocation();
+  const { currencyCode, countryCode, isLoaded } = useLocationStore();
   const { fetchProducts } = useProductStore();
 
   useEffect(() => {

@@ -5,8 +5,8 @@ import { Container, Alert, Box } from "@mui/material";
 
 
 import useProductStore from "@/store/productStore";
+import { useLocationStore } from "@/store/locationStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import { useGridSkeletonCount } from "@/hooks/useGridSkeletonCount";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout";
 import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
@@ -23,7 +23,7 @@ interface EcommerceContentProps {
   slug?: string;
 }
 export default function EcommerceContent({ slug }: EcommerceContentProps) {
-  const { isLoaded, fetchLocationBasedOnUser } = useDetectUserLocation();
+  const { isLoaded, loadLocation } = useLocationStore();
   const { user } = useAuth();
   const {
     products,
@@ -42,8 +42,8 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   });
 
   useEffect(() => {
-    fetchLocationBasedOnUser((user as any)?.id);
-  }, [user, fetchLocationBasedOnUser]);
+    loadLocation((user as any)?.id);
+  }, [user, loadLocation]);
 
 
   const handleRefresh = () => {

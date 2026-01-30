@@ -5,8 +5,8 @@ import { Box, Typography } from "@mui/material";
 
 import useCategoryStore from "@/store/categoryStore";
 import useProductStore from "@/store/productStore";
+import { useLocationStore } from "@/store/locationStore";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import EcommerceProductsGrid from "./EcommerceProductsGrid";
 
 export default function CategoryProductsByCategory() {
@@ -17,7 +17,7 @@ export default function CategoryProductsByCategory() {
   const categories = useCategoryStore(state=>state.categories);
   const hasInitiatedLoadRef = useRef(false);
 
-  const { countryCode, currencyCode } = useDetectUserLocation();
+  const { countryCode, currencyCode } = useLocationStore();
 
   const { user } = useAuth();
   const userId = user?.id;

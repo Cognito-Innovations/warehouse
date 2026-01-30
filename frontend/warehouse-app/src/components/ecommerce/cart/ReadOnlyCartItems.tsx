@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { Paper, Box, Typography, Chip } from "@mui/material";
 import { CheckCircle } from "@mui/icons-material";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
+
+import { useLocationStore } from "@/store/locationStore";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { getOptimalImageSizing, handleImageLoad, ImageDimensions } from "@/utils/imageUtils";
 import { DEFAULT_CURRENCY_INFO } from "@/utils/constants";
@@ -18,7 +19,7 @@ export default function ReadOnlyCartItems({
   items,
   selectedCurrency,
 }: ReadOnlyCartItemsProps) {
-  const { currencySymbol } = useDetectUserLocation();
+  const { currencySymbol } = useLocationStore();
   const currencyStr = currencySymbol || DEFAULT_CURRENCY_INFO.symbol;
 
   if (!items || items.length === 0) {

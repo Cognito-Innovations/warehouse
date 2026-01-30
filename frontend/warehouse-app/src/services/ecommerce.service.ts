@@ -326,27 +326,20 @@ export const ecommerceService = {
     }
   },
 
-  async getCheckout(
+  async postCheckout(
     currency?: string, 
     countryCode?: string, 
     productIds?: string[]
   ): Promise<ComputedCart> {
     try {
-      const params: any = {};
-      if (currency) params.currency = currency;
-      if (countryCode) params.countryCode = countryCode;
-
-      if (productIds && productIds.length > 0) {
-        params.product_ids = productIds.join(',');
-      }
-
-      const response = await api.get('/ecommerce-cart/checkout', { params });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to get checkout data!');
-      }
+      const response = await api.post('/ecommerce-cart/checkout', {
+        currency,
+        countryCode,
+        productIds,
+      });
       return response.data;
     } catch (error) {
-      console.error('Failed to get checkout data:', error);
+      console.error('Failed to post checkout data:', error);
       throw error;
     }  
   },

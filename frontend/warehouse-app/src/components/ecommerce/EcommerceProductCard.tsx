@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
 import { useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
+import { useLocationStore } from "@/store/locationStore";
 import ProductQuantityControl from "./ProductQuantityControl";
 import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
@@ -36,7 +36,7 @@ export default function EcommerceProductCard({
   const decrementCartQuantity = useCartStore((state) => state.decrementCartQuantity);
   const cartQuantity = useCartStore((state) => state.cartProducts.find((item) => item.product_id === product.id))?.quantity || 0;
 
-  const { currencyCode, countryCode } = useDetectUserLocation();
+  const { currencyCode, countryCode } = useLocationStore();
 
   const rawPrice = product.price.price;
   const currency = product.price.currency;

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
+import { useLocationStore } from "@/store/locationStore";
 import { calculateCartTotals } from "@/utils/cartCalculations";
 import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";
@@ -27,7 +27,7 @@ export default function OrderSummaryCard({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { checkoutProducts, cartProducts, isSyncing } = useCartStore();
-  const { currencySymbol } = useDetectUserLocation();
+  const { currencySymbol } = useLocationStore();
 
   useEffect(() => {
     return () => {

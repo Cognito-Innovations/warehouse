@@ -21,7 +21,6 @@ import { Search, ArrowBack } from "@mui/icons-material";
 import { toast } from "sonner";
 
 import { useLocationStore } from "@/store/locationStore";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import useProductStore from "@/store/productStore";
 import { getCurrencies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 
@@ -38,7 +37,7 @@ interface CurrencySelectionViewProps {
 }
 
 export default function CurrencySelectionView({ onBack, showBackButton }: CurrencySelectionViewProps) {
-    const { currencyCode } = useDetectUserLocation();
+    const { currencyCode } = useLocationStore();
     const { user } = useAuth();
     const refreshLocation = useLocationStore((s) => s.refreshLocation);
     const fetchProducts = useProductStore(s => s.fetchProducts);
