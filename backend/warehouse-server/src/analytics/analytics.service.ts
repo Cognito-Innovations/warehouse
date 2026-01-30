@@ -32,49 +32,58 @@ export class AnalyticsService {
     private readonly shoppingRequestsService: ShoppingRequestsService,
   ) {}
 
-  async getDashboardMetrics(): Promise<DashboardMetrics> {
+  async getDashboardMetrics(countryId?: string): Promise<DashboardMetrics> {
     const totalCustomers = await this.usersService.getUsersCount();
 
-    const totalPackages = await this.packagesService.getPackagesCount();
+    const totalPackages =
+      await this.packagesService.getPackagesCount(countryId);
 
     const actionRequiredPackages =
-      await this.packagesService.getActionRequiredPackagesCount();
+      await this.packagesService.getActionRequiredPackagesCount(countryId);
 
     const shipRequestShipments =
       await this.shipmentsService.getShipmentsCountByStatus(
         ShipmentStatus.SHIP_REQUEST,
+        countryId,
       );
     const paymentPendingShipments =
       await this.shipmentsService.getShipmentsCountByStatus(
         ShipmentStatus.PAYMENT_PENDING,
+        countryId,
       );
     const paymentApprovalShipments =
       await this.shipmentsService.getShipmentsCountByStatus(
         ShipmentStatus.PAYMENT_APPROVED,
+        countryId,
       );
     const readyToShipShipments =
       await this.shipmentsService.getShipmentsCountByStatus(
         ShipmentStatus.READY_TO_SHIP,
+        countryId,
       );
     const shippedShipments =
       await this.shipmentsService.getShipmentsCountByStatus(
         ShipmentStatus.DEPARTED,
+        countryId,
       );
 
     const pickupRequested =
-      await this.pickupRequestsService.getPickupRequestsCount();
+      await this.pickupRequestsService.getPickupRequestsCount(countryId);
 
     const shoppingRequested =
       await this.shoppingRequestsService.getShoppingRequestsCountByStatus(
         ShoppingRequestStatus.REQUESTED,
+        countryId,
       );
     const quotationConfirm =
       await this.shoppingRequestsService.getShoppingRequestsCountByStatus(
         ShoppingRequestStatus.QUOTATION_READY,
+        countryId,
       );
     const assistPaymentApproval =
       await this.shoppingRequestsService.getShoppingRequestsCountByStatus(
         ShoppingRequestStatus.PAYMENT_APPROVED,
+        countryId,
       );
 
     return {

@@ -1,6 +1,8 @@
 import React from "react";
-import { TableCell, TableRow, Typography, IconButton, Box, Chip } from "@mui/material";
-import { EditIcon } from "lucide-react";
+import { TableCell, TableRow, Typography,
+  // IconButton,
+  Box, Chip } from "@mui/material";
+// import { EditIcon } from "lucide-react";
 import StatusChip from "../common/StatusChip";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { formatDateTime } from "../../utils/formatDateTime";
@@ -20,10 +22,12 @@ interface OrderRow {
 
 interface OrderTableRowProps {
   order: OrderRow;
-  onEdit?: (id: string | number) => void;
+  // onEdit?: (id: string | number) => void;
 }
 
-const OrderTableRow: React.FC<OrderTableRowProps> = ({ order, onEdit }) => {
+const OrderTableRow: React.FC<OrderTableRowProps> = ({ order, 
+  // onEdit
+}) => {
   const itemsCount = parseInt(order.items_count || "0", 10);
   const totalAmount = Number(order.total_amount || "0");
 
@@ -163,7 +167,7 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({ order, onEdit }) => {
       </TableCell>
 
       {/* Payment Status */}
-      <TableCell
+      {/* <TableCell
         align="center"
         sx={{
           py: 2.5,
@@ -174,7 +178,7 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({ order, onEdit }) => {
         <Box sx={{ display: "flex", justifyContent: "center" }}>
           <StatusChip status={order.payment_status} />
         </Box>
-      </TableCell>
+      </TableCell> */}
 
       {/* Order Status */}
       <TableCell
@@ -190,8 +194,9 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({ order, onEdit }) => {
         </Box>
       </TableCell>
 
+      {/* TODO: Uncomment Actions column when order edit functionality is enabled */}
       {/* Actions */}
-      {onEdit && (
+      {/* {onEdit && (
         <TableCell
           align="right"
           sx={{
@@ -216,7 +221,7 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({ order, onEdit }) => {
             <EditIcon size={18} strokeWidth={1.7} />
           </IconButton>
         </TableCell>
-      )}
+      )} */}
     </TableRow>
   );
 };

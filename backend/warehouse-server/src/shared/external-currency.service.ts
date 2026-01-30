@@ -1,20 +1,18 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { Cache } from 'cache-manager';
+import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
+import { CacheManagerService } from './cache-manager.service';
 import { Country } from '../Countries/country.entity';
-import { CreateCurrencyDto } from 'src/currencies/dto/create-currency.dto';
-import { UpdateCurrencyDto } from 'src/currencies/dto/update-currency.dto';
-import { CurrenciesService } from 'src/currencies/currencies.service';
 import {
   BASE_EXCHANGE_CURRENCY,
+  CACHE_KEY,
   CACHE_TTL_SECONDS,
   CURRENCY_SYMBOL_MAP,
   DEFAULT_CURRENCY,
   EXCHANGE_RATE_URL,
+  INR_CURRENCY_CODE,
   REST_COUNTRIES_CURRENCY_URL,
   REST_COUNTRIES_URL,
   TWENTY_FOUR_HOURS_MS,
@@ -43,29 +41,108 @@ interface CurrencyInfo {
 @Injectable()
 export class ExternalCurrencyService {
   constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private httpService: HttpService,
     @InjectRepository(Country)
     private countryRepository: Repository<Country>,
-    private currenciesService: CurrenciesService,
+    private cacheService: CacheManagerService,
   ) {}
+
+  private async isCountrySupported(countryName: string): Promise<boolean> {
+    const supportedCountry = await this.countryRepository.findOne({
+      where: { name: ILike(countryName) },
+    });
+    return !!supportedCountry;
+  }
+
+  private async fetchCountryCurrencyData(
+    countryName: string,
+  ): Promise<{ code: string; symbol: string; name: string }> {
+    const countryResponse = await firstValueFrom(
+      this.httpService.get<RestCountry[]>(
+        `${REST_COUNTRIES_URL}/${encodeURIComponent(countryName)}?fullText=true`,
+      ),
+    );
+    const countryData = countryResponse.data;
+    if (!countryData || countryData.length === 0) {
+      throw new Error(`No data found for country: ${countryName}`);
+    }
+
+    const currenciesObj = countryData[0].currencies;
+    if (!currenciesObj || Object.keys(currenciesObj).length === 0) {
+      throw new Error(`No currencies found for ${countryName}`);
+    }
+
+    const code = Object.keys(currenciesObj)[0];
+    const currInfo = currenciesObj[code];
+    return {
+      code,
+      symbol: currInfo?.symbol ?? '',
+      name: currInfo?.name ?? '',
+    };
+  }
+
+  private async fetchCurrencyDetailsByCode(
+    code: string,
+  ): Promise<{ symbol: string; name: string }> {
+    const countryResponse = await firstValueFrom(
+      this.httpService.get<RestCountry[]>(
+        `${REST_COUNTRIES_CURRENCY_URL}/${code}`,
+      ),
+    );
+    const countries = countryResponse.data;
+    if (countries && countries.length > 0) {
+      const currInfo = countries[0].currencies?.[code];
+      if (currInfo) {
+        return {
+          symbol: currInfo.symbol ?? '',
+          name: currInfo.name ?? '',
+        };
+      }
+    }
+    throw new Error(`No details found for currency: ${code}`);
+  }
+
+  private async fetchExchangeRate(code: string): Promise<number> {
+    if (code === BASE_EXCHANGE_CURRENCY) {
+      return 1;
+    }
+    const rateResponse = await firstValueFrom(
+      this.httpService.get<ExchangeRateResponse>(
+        `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
+      ),
+    );
+    const rateData = rateResponse.data;
+    if (!rateData.rates || typeof rateData.rates[code] !== 'number') {
+      throw new Error(`No exchange rate found for ${code}`);
+    }
+    return rateData.rates[code];
+  }
+
+  private getFallbackCurrencyInfo(): {
+    code: string;
+    symbol: string;
+    rate: number;
+    name: string;
+  } {
+    return {
+      code: DEFAULT_CURRENCY.code,
+      symbol: DEFAULT_CURRENCY.symbol,
+      rate: DEFAULT_CURRENCY.rate,
+      name: 'US Dollar',
+    };
+  }
 
   async getCurrencyInfo(countryName: string): Promise<CurrencyInfo> {
     const trimmedCountryName = countryName.trim();
-    const cacheKey = `currency:${trimmedCountryName.toLowerCase()}`;
+    const cacheKey = `${CACHE_KEY.CURRENCY}:${trimmedCountryName.toLowerCase()}`;
 
-    // Check cache first
-    const cached = await this.cacheManager.get<CurrencyInfo>(cacheKey);
+    const cached = await this.cacheService.get<CurrencyInfo>(cacheKey);
     const now = Date.now();
     if (cached && now - cached.timestamp < TWENTY_FOUR_HOURS_MS) {
       return cached;
     }
 
-    // Check if country is supported
-    const supportedCountry = await this.countryRepository.findOne({
-      where: { name: ILike(trimmedCountryName) },
-    });
-    const isSupported = !!supportedCountry;
+    const isSupported = await this.isCountrySupported(trimmedCountryName);
 
     let code: string;
     let symbol: string;
@@ -73,58 +150,31 @@ export class ExternalCurrencyService {
     let currencyName: string;
 
     if (!isSupported) {
-      // Fallback to USD
-      code = DEFAULT_CURRENCY.code;
-      symbol = DEFAULT_CURRENCY.symbol;
-      rate = DEFAULT_CURRENCY.rate;
-      currencyName = 'US Dollar';
+      ({
+        code,
+        symbol,
+        rate,
+        name: currencyName,
+      } = this.getFallbackCurrencyInfo());
     } else {
       try {
-        // Fetch currency code, symbol and name from REST Countries
-        const countryResponse = await firstValueFrom(
-          this.httpService.get<RestCountry[]>(
-            `${REST_COUNTRIES_URL}/${encodeURIComponent(trimmedCountryName)}?fullText=true`,
-          ),
-        );
-        const countryData = countryResponse.data;
-        if (!countryData || countryData.length === 0) {
-          throw new Error(`No data found for country: ${trimmedCountryName}`);
-        }
-
-        const currenciesObj = countryData[0].currencies;
-        if (!currenciesObj || Object.keys(currenciesObj).length === 0) {
-          throw new Error(`No currencies found for ${trimmedCountryName}`);
-        }
-
-        const currCode = Object.keys(currenciesObj)[0];
-        code = currCode;
-        const currInfo = currenciesObj[currCode];
-        symbol = currInfo?.symbol ?? '';
-        currencyName = currInfo?.name ?? '';
-
-        // Fetch exchange rate (local currency units per USD)
-        if (code === BASE_EXCHANGE_CURRENCY) {
-          rate = 1;
-        } else {
-          const rateResponse = await firstValueFrom(
-            this.httpService.get<ExchangeRateResponse>(
-              `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
-            ),
-          );
-          const rateData = rateResponse.data;
-
-          if (!rateData.rates || typeof rateData.rates[code] !== 'number') {
-            throw new Error(`No exchange rate found for ${code}`);
-          }
-          rate = rateData.rates[code]; // Local per USD
-        }
+        const {
+          code: fetchedCode,
+          symbol: fetchedSymbol,
+          name: fetchedName,
+        } = await this.fetchCountryCurrencyData(trimmedCountryName);
+        code = fetchedCode;
+        symbol = fetchedSymbol;
+        currencyName = fetchedName;
+        rate = await this.fetchExchangeRate(code);
       } catch (error) {
         console.log('Fallback to USD:', error);
-        // Fallback to USD
-        code = DEFAULT_CURRENCY.code;
-        symbol = DEFAULT_CURRENCY.symbol;
-        rate = DEFAULT_CURRENCY.rate;
-        currencyName = 'US Dollar';
+        ({
+          code,
+          symbol,
+          rate,
+          name: currencyName,
+        } = this.getFallbackCurrencyInfo());
       }
     }
 
@@ -134,20 +184,17 @@ export class ExternalCurrencyService {
       rate,
       timestamp: now,
     };
-    // Store in Redis
-    await this.cacheManager.set(cacheKey, currencyInfo, CACHE_TTL_SECONDS);
-
-    // Update DB
-    await this.updateCurrencyRecord(code, symbol, rate, currencyName);
+    await this.cacheService.create(cacheKey, currencyInfo, CACHE_TTL_SECONDS);
 
     return currencyInfo;
   }
 
   async getCurrencyInfoByCode(currencyCode: string): Promise<CurrencyInfo> {
     const code = currencyCode.toUpperCase();
-    const cacheKey = `currency_code:${code.toLowerCase()}`;
-    const cached = await this.cacheManager.get<CurrencyInfo>(cacheKey);
+    const cacheKey = `${CACHE_KEY.CURRENCY_CODE}:${code.toLowerCase()}`;
+    const cached = await this.cacheService.get<CurrencyInfo>(cacheKey);
     const now = Date.now();
+    //TODO P0: This might be incorrrect, add this into doc, will discuss on it
     if (cached && now - cached.timestamp < TWENTY_FOUR_HOURS_MS) {
       return cached;
     }
@@ -156,41 +203,13 @@ export class ExternalCurrencyService {
     let rate: number = DEFAULT_CURRENCY.rate;
 
     try {
-      // Fetch symbol and name from REST Countries by currency
-      const countryResponse = await firstValueFrom(
-        this.httpService.get<RestCountry[]>(
-          `${REST_COUNTRIES_CURRENCY_URL}/${code}`,
-        ),
-      );
-      const countries = countryResponse.data;
-      if (countries && countries.length > 0) {
-        const currInfo = countries[0].currencies?.[code];
-        if (currInfo) {
-          symbol = currInfo.symbol ?? '';
-          name = currInfo.name ?? '';
-        }
-      }
+      ({ symbol, name } = await this.fetchCurrencyDetailsByCode(code));
     } catch (error) {
       console.error(`Failed to fetch symbol/name for ${code}:`, error);
     }
 
     try {
-      // Fetch exchange rate
-      if (code === BASE_EXCHANGE_CURRENCY) {
-        rate = 1;
-      } else {
-        const rateResponse = await firstValueFrom(
-          this.httpService.get<ExchangeRateResponse>(
-            `${EXCHANGE_RATE_URL}?from=${BASE_EXCHANGE_CURRENCY}&to=${code}`,
-          ),
-        );
-        const rateData = rateResponse.data;
-        if (rateData.rates && typeof rateData.rates[code] === 'number') {
-          rate = rateData.rates[code];
-        } else {
-          throw new Error(`No exchange rate found for ${code}`);
-        }
-      }
+      rate = await this.fetchExchangeRate(code);
     } catch (error) {
       console.error(`Failed to fetch rate for ${code}:`, error);
     }
@@ -200,41 +219,44 @@ export class ExternalCurrencyService {
     name = name || (code === DEFAULT_CURRENCY.code ? 'US Dollar' : 'Unknown');
 
     const currencyInfo: CurrencyInfo = { code, symbol, rate, timestamp: now };
-    await this.cacheManager.set(cacheKey, currencyInfo, CACHE_TTL_SECONDS);
-
-    // Update DB
-    await this.updateCurrencyRecord(code, symbol, rate, name);
+    await this.cacheService.create(cacheKey, currencyInfo, CACHE_TTL_SECONDS);
 
     return currencyInfo;
   }
 
-  private async updateCurrencyRecord(
-    code: string,
-    symbol: string,
-    rate: number,
-    name: string,
-  ): Promise<void> {
+  async convertFromINR(
+    amountInINR: number,
+    targetCurrencyCode: string,
+  ): Promise<number> {
+    const upperCode = targetCurrencyCode.toUpperCase();
+
+    if (upperCode === INR_CURRENCY_CODE) {
+      return amountInINR;
+    }
+
     try {
-      const existing = await this.currenciesService.findByCode(code);
-      if (existing) {
-        const updateDto: UpdateCurrencyDto = {
-          name,
-          currency_symbol: symbol,
-          currency_code: code,
-          rate,
-        };
-        await this.currenciesService.update(existing.id, updateDto);
-      } else {
-        const createDto: CreateCurrencyDto = {
-          name,
-          currency_symbol: symbol,
-          currency_code: code,
-          rate,
-        };
-        await this.currenciesService.create(createDto);
+      const targetCurrencyInfo = await this.getCurrencyInfoByCode(upperCode);
+
+      const inrCurrencyInfo =
+        await this.getCurrencyInfoByCode(INR_CURRENCY_CODE);
+
+      if (!inrCurrencyInfo || !inrCurrencyInfo.rate) {
+        console.error(
+          `Conversion failed: Unable to fetch rate for ${INR_CURRENCY_CODE}`,
+        );
+        return amountInINR;
       }
-    } catch (err) {
-      console.error(`Background DB update failed for currency ${code}:`, err);
+
+      const amountInBase = amountInINR / inrCurrencyInfo.rate;
+      const convertedAmount = amountInBase * targetCurrencyInfo.rate;
+
+      return parseFloat(convertedAmount.toFixed(2));
+    } catch (error) {
+      console.error(
+        `Currency conversion error from INR to ${upperCode}:`,
+        error,
+      );
+      return amountInINR;
     }
   }
 }

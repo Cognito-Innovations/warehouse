@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Container, CircularProgress, Grid } from "@mui/material";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Box, Container, CircularProgress, Grid, Alert } from "@mui/material";
 import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { FastDeliveryBanner } from "@/components/ecommerce/checkout/FastDeliveryBanner";
 import { DeliveryInfoCard } from "@/components/ecommerce/checkout/DeliveryInfoCard";
 import { OrderSummary } from "@/components/ecommerce/checkout/OrderSummary";
@@ -14,83 +14,88 @@ import DeliveryAddressCard from "@/components/ecommerce/checkout/DeliveryAddress
 import { ROUTES } from "@/utils/constants";
 import { calculateCartTotals } from "@/utils/cartCalculations";
 import { formatPrice } from "@/utils/priceUtils";
-import { CartItem } from "@/types/ecommerce";
+import { CartItem, ComputedCart } from "@/types/ecommerce";
+import { ecommerceService } from "@/services/ecommerce.service";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { checkoutProducts, cartProducts } = useCartStore();
-  const toggleCartItemSelection = useCartStore.getState().toggleCartItemSelection;
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
 
   const [shippingAddress, setShippingAddress] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
   const [checkedOutItems, setCheckedOutItems] = useState<CartItem[]>([]);
-  const [itemsLoaded, setItemsLoaded] = useState(false);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const [itemsLoaded, setItemsLoaded] = useState(false); 
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [isAddressDataReady, setIsAddressDataReady] = useState(false);
+  const [totalDeliveryFee, setTotalDeliveryFee] = useState(0);
+  const [hasError, setHasError] = useState(false);
 
-  const { currencyCode, currencySymbol } = useDetectUserLocation();
+  const initializationStarted = useRef(false);
 
-  const handleAddressFetchComplete = useCallback(() => {
-    setIsAddressDataReady(true);
-  }, []);
+  const { currencyCode, currencySymbol, countryCode } = useDetectUserLocation();
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      setIsAddressDataReady(true);
-    }
-  }, [authLoading, user]);
+  const loadCheckoutData = async () => {
+    const currentCheckoutProducts = useCartStore.getState().checkoutProducts;
 
-  useEffect(() => {
-    if (hasInitialized) return;
-
-    const cached = localStorage.getItem("checkoutSelectedItems");
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        let parsedItems: CartItem[] = [];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          if (typeof parsed[0] === 'string') {
-            const ids = parsed as string[];
-            parsedItems = cartProducts.filter((item) => ids.includes(item.id!));
-          } else {
-            parsedItems = parsed as CartItem[];
-          }
-        }
-        if (parsedItems.length === 0) {
-          throw new Error('No valid items');
-        }
-        setCheckedOutItems(parsedItems);
-        const itemProductIds = parsedItems.map(item => item.product_id!);
-        toggleCartItemSelection(itemProductIds);
-      } catch (err) {
-        console.error("Failed to parse cached items:", err);
-        setCheckedOutItems([]);
-      }
-      setHasInitialized(true);
+    if (!currentCheckoutProducts || currentCheckoutProducts.length === 0) {
+      console.warn("No checkout products found in store.");
       setItemsLoaded(true);
       return;
     }
 
-    const selected = cartProducts.filter(i =>
-      checkoutProducts.includes(i.product_id!)
-    );
-    setCheckedOutItems(selected);
-    const itemProductIds = selected.map(i => i.product_id!);
-    toggleCartItemSelection(itemProductIds);
-    setHasInitialized(true);
-    setItemsLoaded(true);
-  }, [cartProducts, checkoutProducts, toggleCartItemSelection, hasInitialized]);
+    try {
+      const checkoutData: ComputedCart = await ecommerceService.postCheckout(
+        currencyCode, 
+        countryCode,
+        currentCheckoutProducts
+      );
+
+      if (checkoutData && checkoutData.items && checkoutData.items.length > 0) {
+        setCheckedOutItems(checkoutData.items as CartItem[]);
+        setTotalDeliveryFee(checkoutData.total_delivery_fee ?? 0);
+
+        try {
+          useCartStore.getState().setCartProducts(checkoutData.items);
+          const itemProductIds = checkoutData.items.map(item => item.product_id!);
+          useCartStore.getState().toggleCartItemSelection(itemProductIds);
+        } catch (storeError) {
+          console.warn("Failed to sync with store", storeError);
+        }
+
+        setItemsLoaded(true);
+      } else {
+        console.error("Checkout API returned no items", checkoutData);
+        setItemsLoaded(true);
+      }
+    } catch (e) {
+      console.error("Checkout load failed", e);
+      setHasError(true);
+      setItemsLoaded(true); 
+    }
+  };
 
   useEffect(() => {
-    if (itemsLoaded && checkedOutItems.length === 0 && !orderPlaced) {
+    if (currencyCode && !initializationStarted.current) {
+      initializationStarted.current = true;
+      loadCheckoutData();
+    }
+  }, [currencyCode, countryCode]); 
+
+  useEffect(() => {
+    if (itemsLoaded && checkedOutItems.length === 0 && !orderPlaced && !hasError) {
       router.replace(ROUTES.CART);
     }
-  }, [checkedOutItems, router, itemsLoaded, orderPlaced]);
+  }, [checkedOutItems, router, itemsLoaded, orderPlaced, hasError]);
 
   const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
-  const totals = useMemo(() => calculateCartTotals(checkedOutItems, selectedIds, currencyCode), [checkedOutItems, selectedIds, currencyCode]);
+  const totals = useMemo(
+    () => 
+      calculateCartTotals(
+        checkedOutItems,
+        selectedIds,
+        currencyCode,
+        currencySymbol,
+        totalDeliveryFee
+      ), [checkedOutItems, selectedIds, currencyCode, totalDeliveryFee]);
   const formatLocalPrice = useCallback((amount: number) => formatPrice(amount, currencySymbol), [currencySymbol]);
 
   const handleAddressSelect = useCallback((address: string) => {
@@ -101,25 +106,25 @@ export default function CheckoutPage() {
     setAddressLoading(isLoading);
   }, []);
 
-  if (authLoading || (user && !isAddressDataReady)) {
+  if (hasError) {
+    return (
+      <Container sx={{ py: 4 }}>
+        <Alert severity="error">
+          Unable to load checkout details. Please try again or return to cart.
+        </Alert>
+      </Container>
+    );
+  }
+
+  if (!itemsLoaded) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
         <CircularProgress />
-        {user && (
-           <Box sx={{ display: 'none' }}>
-             <DeliveryAddressCard 
-                userId={user.id}
-                onAddressSelect={handleAddressSelect}
-                onLoadingChange={handleAddressLoadingChange}
-                onAddressFetchComplete={handleAddressFetchComplete}
-             />
-           </Box>
-        )}
       </Box>
     );
   }
 
-  if ((!checkedOutItems || checkedOutItems.length === 0) && itemsLoaded && !orderPlaced) {
+  if ((!checkedOutItems || checkedOutItems.length === 0) && !orderPlaced) {
     return null;
   }
 
@@ -138,7 +143,6 @@ export default function CheckoutPage() {
                   userId={user?.id}
                   onAddressSelect={handleAddressSelect}
                   onLoadingChange={handleAddressLoadingChange}
-                  onAddressFetchComplete={handleAddressFetchComplete}
                 />
               </Grid>
 

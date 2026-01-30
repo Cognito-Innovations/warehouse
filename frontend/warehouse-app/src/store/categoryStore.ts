@@ -9,20 +9,24 @@ const useCategoryStore = create<CategoryStore>()(
     (set, get) => ({
       selectedCategory: null,
       categories: [],
+      loading: true,
 
       setCategory: (categorySlug: string | null) => set({ selectedCategory: categorySlug }),
 
       handleCategorySelect: (categorySlug: string | null) =>
         set({ selectedCategory: categorySlug }),
 
-      getCategories: async (countryCode?: string) => {
+      getCategories: async (countryCode: string) => {
         const currentCategories = get().categories;
         if (currentCategories.length > 0) {
+          set({ loading: false });
           return currentCategories;
         }
 
+        set({ loading: true });
+
         const categories: EcommerceCategory[] = await ecommerceService.getCategories(countryCode);
-        set({ categories });
+        set({ categories, loading: false });
         return categories;
       },
     }),

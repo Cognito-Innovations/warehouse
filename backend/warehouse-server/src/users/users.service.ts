@@ -62,6 +62,8 @@ export class UsersService {
     return this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.preference', 'preference')
+      .leftJoinAndSelect('preference.courier', 'courier')
+      .leftJoinAndSelect('courier.country', 'country')
       .leftJoinAndSelect('user.address', 'address')
       .where('user.email = :email', { email })
       .addSelect('user.password')
@@ -73,14 +75,23 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+    let passwordToSave = createUserDto.password;
+
+    const shouldHash = (createUserDto as any).shouldHashPassword !== false;
+    if (shouldHash && passwordToSave) {
+      const salt = await bcrypt.genSalt();
+      passwordToSave = await bcrypt.hash(passwordToSave, salt);
+    }
+
     const user = this.userRepository.create({
       ...createUserDto,
+      password: passwordToSave,
     });
     const savedUser = await this.userRepository.save(user);
 
     const createPreferenceDto: CreateUserPreferenceDto = {
       user_id: savedUser.id,
-      courier_id: DEFAULT_USER_PREFERENCE.COURIER,
+      courier_id: (createUserDto as any).courier_id || DEFAULT_USER_PREFERENCE.COURIER,
       currency_id: DEFAULT_USER_PREFERENCE.CURRENCY,
     };
     await this.userPreferencesService.create(createPreferenceDto);
@@ -115,6 +126,8 @@ export class UsersService {
       const user = await this.userRepository
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.preference', 'preference')
+        .leftJoinAndSelect('preference.courier', 'courier')
+        .leftJoinAndSelect('courier.country', 'country')
         .leftJoinAndSelect('user.address', 'address')
         .where('user.id = :id', { id })
         .addSelect('user.password')
@@ -187,6 +200,8 @@ export class UsersService {
     const user = await this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.preference', 'preference')
+      .leftJoinAndSelect('preference.courier', 'courier')
+      .leftJoinAndSelect('courier.country', 'country')
       .leftJoinAndSelect('user.address', 'address')
       .where('user.id = :id', { id: userId })
       .addSelect('user.otp')

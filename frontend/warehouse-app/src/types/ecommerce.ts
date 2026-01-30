@@ -52,6 +52,9 @@ export interface EcommerceProduct {
     id: string;
     name: string;
   };
+  cargo_option: {
+    label: string;
+  };
   created_at: string;
   updated_at: string;
 }
@@ -286,7 +289,10 @@ export interface OrderSummaryCardProps {
   items: CartItem[];
   selectedCurrency?: string;
   selectedAddress: CartAddressData | null;
-  setHighlightAddressError(value: boolean): void
+  setHighlightAddressError(value: boolean): void;
+  selectedDeliveryOption?: DeliveryOption | null;
+  onBackToDelivery?: () => void;
+  onEditAddress?: () => void;
 }
 
 export interface EmptyCartStateProps {
@@ -315,6 +321,33 @@ export interface CartAddressData {
   phone_code?: string;
   phone_number?: string;
   email?: string;
+  currency?: string;
+}
+
+export interface DeliveryOption {
+  delivery_platform: string;
+  total_amount: number;
+  estimated_time?: string;
+}
+
+export interface ComputedCartItem {
+  id: string;
+  cart_id: string;
+  product_id: string;
+  quantity: number;
+  product: EcommerceProduct | null;
+  unit_price: number;
+  total_price: number;
+  delivery_fee: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface ComputedCart {
+  items: ComputedCartItem[];
+  total_amount: number;
+  final_amount: number;
+  total_delivery_fee?: number;
   currency?: string;
 }
 

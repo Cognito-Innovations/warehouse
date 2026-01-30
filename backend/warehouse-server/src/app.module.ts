@@ -59,12 +59,12 @@ import { CustomThrottlerGuard } from './shared/guards/custom-throttler.guard';
         host: 'smtp.gmail.com',
         secure: false,
         auth: {
-          user: 'saurabhpingale93@gmail.com',
-          pass: 'umca lcon axee phdf',
+          user: process.env.USERNAME,
+          pass: process.env.PASSWORD,
         },
       },
       defaults: {
-        from: '"No Reply" <saurabhpingale93@gmail.com>',
+        from: `"No Reply" <${process.env.USERNAME}>`,
       },
       template: {
         dir: join(__dirname, '..', 'src', 'users'),

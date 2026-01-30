@@ -1,4 +1,5 @@
 import type { StatusOption } from "../components/Orders/EditOrderStatusModal";
+import type { UserRole } from "../data/menuItems";
 
 export const PromiseStatus = {
   Fulfilled: 'fulfilled',
@@ -48,4 +49,10 @@ export const ORDER_STATUS_OPTIONS: StatusOption[] = [
   { value: 'DELIVERED', label: 'Delivered' },
   { value: 'CANCELLED', label: 'Cancelled' },
   { value: 'REFUNDED', label: 'Refunded' },
+];
+
+export const ROLES: { value: UserRole; label: string }[] = [
+  { value: 'user', label: 'User' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'super_admin', label: 'Super Admin' },
 ];

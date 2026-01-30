@@ -18,12 +18,13 @@ export default function ContinueShoppingCard() {
     <Paper 
       elevation={0}
       sx={{ 
-        p: 2, 
-        mb: 2, 
+        p: { xs: 1.5, sm: 2 }, 
         borderRadius: 2,
         border: `1px solid #e0e0e0`,
         bgcolor: "white",
         cursor: "pointer",
+        flex: { xs: "1 1 auto", sm: "0 0 auto" },
+        minWidth: { xs: "auto", sm: 180 },
         "&:hover": {
           bgcolor: "action.hover",
         },
@@ -31,10 +32,17 @@ export default function ContinueShoppingCard() {
       onClick={handleContinueShopping}
     >
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Typography variant="body1" color="text.primary" sx={{ fontWeight: 500 }}>
-          Continue Shopping
+        <Typography 
+          variant="body1" 
+          color="text.primary" 
+          sx={{ 
+            fontWeight: 500,
+            fontSize: { xs: "0.875rem", sm: "1rem" },
+          }}
+        >
+          Back to Shopping
         </Typography>
-        <ArrowForward sx={{ color: "primary.main" }} />
+        <ArrowForward sx={{ color: "primary.main", fontSize: { xs: 18, sm: 24 } }} />
       </Box>
     </Paper>
   );

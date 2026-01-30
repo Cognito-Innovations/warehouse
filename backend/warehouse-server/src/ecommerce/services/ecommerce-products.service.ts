@@ -82,7 +82,9 @@ export class ProductsService {
 
     const queryBuilder = this.productRepository
       .createQueryBuilder('product')
-      .leftJoinAndSelect('product.category', 'category');
+      .leftJoin('product.category', 'category')
+      .addSelect(['category.id', 'category.slug', 'category.name'])
+      .leftJoinAndSelect('product.cargo_option', 'cargo_option');
     // TODO: Uncomment the country filter when it's required
     // .leftJoinAndSelect('product.countries', 'countries');
 
@@ -90,7 +92,6 @@ export class ProductsService {
       queryBuilder
         .leftJoinAndSelect('product.sub_category', 'sub_category')
         .leftJoinAndSelect('product.measurement', 'measurement')
-        .leftJoinAndSelect('product.cargo_option', 'cargo_option');
     }
 
     // TODO: Uncomment the country filter when it's required
@@ -106,11 +107,14 @@ export class ProductsService {
       });
     }
 
-    const products = await queryBuilder
-      .skip(offset)
-      .take(limit)
-      .orderBy('product.created_at', 'DESC')
-      .getMany();
+    const [products, currencyInfo] = await Promise.all([
+      queryBuilder
+        .orderBy('product.created_at', 'DESC')
+        .skip(offset)
+        .take(limit)
+        .getMany(),
+      isAdmin ? Promise.resolve(null) : this.getCurrencyInfo(currency, userId),
+    ]);
 
     if (isAdmin) {
       return products.map((product) => ({
@@ -122,8 +126,7 @@ export class ProductsService {
       }));
     }
 
-    const currencyInfo = await this.getCurrencyInfo(currency, userId);
-    const { symbol, rate, code } = currencyInfo;
+    const { symbol, rate, code } = currencyInfo!;
 
     return products.map((product) => {
       const basePrice = Number(product.price);
@@ -153,6 +156,7 @@ export class ProductsService {
     const queryBuilder = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.cargo_option', 'cargo_option')
       // TODO: Uncomment the country filter when it's required
       // .leftJoinAndSelect('product.countries', 'countries')
       .where('product.name ILIKE :query', {
@@ -198,6 +202,7 @@ export class ProductsService {
       where: { slug: slug },
       relations: [
         'category',
+        'cargo_option',
         // TODO: Uncomment the country filter when it's required
         // 'countries',
       ],

@@ -9,7 +9,7 @@ import StatusChip from "../components/common/StatusChip";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatDateTime } from "../utils/formatDateTime";
 import type { ColumnDefinition } from "../types/table";
-import EditOrderStatusModal from "../components/Orders/EditOrderStatusModal";
+// import EditOrderStatusModal from "../components/Orders/EditOrderStatusModal";
 import ExportOrdersButton from "../components/Orders/ExportOrderButton";
 import { ORDER_STATUS_OPTIONS } from "../utils/constants";
 
@@ -29,7 +29,7 @@ interface OrderRow {
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+  // const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -84,11 +84,11 @@ const Orders: React.FC = () => {
       cell: (row) => <Typography variant="body2">{formatDateTime(row.created_at)}</Typography>,
       width: "12%",
     },
-    {
-      header: "Payment",
-      cell: (row) => <StatusChip status={row.payment_status} />,
-      width: "10%",
-    },
+    // {
+    //   header: "Payment",
+    //   cell: (row) => <StatusChip status={row.payment_status} />,
+    //   width: "10%",
+    // },
     {
       header: "Status",
       cell: (row) => <StatusChip status={row.status} />,
@@ -96,17 +96,18 @@ const Orders: React.FC = () => {
     },
   ];
 
-  const handleEditStatus = useCallback((id: string | number) => {
-    const idStr = typeof id === 'string' ? id : id.toString();
-    const row = orders.find((r) => r.id === idStr);
-    if (row) {
-      setSelectedOrder(row);
-    }
-  }, [orders]);
+  // TODO: Uncomment when order status edit action is enabled
+  // const handleEditStatus = useCallback((id: string | number) => {
+  //   const idStr = typeof id === 'string' ? id : id.toString();
+  //   const row = orders.find((r) => r.id === idStr);
+  //   if (row) {
+  //     setSelectedOrder(row);
+  //   }
+  // }, [orders]);
 
-  const handleCloseModal = useCallback(() => {
-    setSelectedOrder(null);
-  }, []);
+  // const handleCloseModal = useCallback(() => {
+  //   setSelectedOrder(null);
+  // }, []);
 
   return (
     <Box>
@@ -123,13 +124,14 @@ const Orders: React.FC = () => {
           loading={loading}
           statusOptions={ORDER_STATUS_OPTIONS}
           noDataMessage="No orders available"
-          onEdit={handleEditStatus}
+          // onEdit={handleEditStatus}
           getIdentifier={(row) => row.id}
           getRowStatus={(row) => row.status}
         />
       </Box>
 
-      <EditOrderStatusModal
+      {/* TODO: Uncomment when order status edit flow is finalized */}
+      {/* <EditOrderStatusModal
         open={!!selectedOrder}
         onClose={handleCloseModal}
         orderId={selectedOrder?.id || ''}
@@ -137,7 +139,7 @@ const Orders: React.FC = () => {
         currentStatus={selectedOrder?.status || ''}
         statusOptions={ORDER_STATUS_OPTIONS}
         onOrderUpdated={fetchOrders}
-      />
+      /> */}
     </Box>
   );
 };

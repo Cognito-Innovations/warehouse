@@ -5,7 +5,10 @@ import { toast } from "sonner";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { getAuthToken } from "@/utils/getAuthToken";
 import { CartStore } from "./storeTypes";
-import { EcommerceProduct, LocalCartItem } from "@/types/ecommerce";
+import { EcommerceProduct, LocalCartItem, DeliveryOption } from "@/types/ecommerce";
+
+const getCargoLabel = (product?: EcommerceProduct) =>
+  product?.cargo_option?.label?.toLowerCase() ?? null;
 
 export const useCartStore = create<CartStore>()(
   persist(
@@ -13,11 +16,13 @@ export const useCartStore = create<CartStore>()(
       cartProducts: [],
       updatingProducts: {},
       checkoutProducts: [],
+      selectedDeliveryOption: null,
       loading: false,
       isSyncing: false,
       _hasHydrated: false,
       hasUnsyncedChanges: false,
       setHasHydrated: (value: boolean) => set({ _hasHydrated: value }),
+      setSelectedDeliveryOption: (option: DeliveryOption | null) => set({ selectedDeliveryOption: option }),
 
       setLoading: (value: boolean) => set({ loading: value }),
 
@@ -61,7 +66,7 @@ export const useCartStore = create<CartStore>()(
         return item?.quantity || 0;
       },
 
-      getLineId: async (productId: string, currency?: string, countryCode?: string) => {
+      getServerCartItemId: async (productId: string, currency?: string, countryCode?: string) => {
         const token = getAuthToken();
         if (!token) return undefined;
 
@@ -92,6 +97,22 @@ export const useCartStore = create<CartStore>()(
               ...(localItem && !serverItem.product ? { product: localItem.product } : {}),
             };
           });
+
+          const cargos = new Set(
+            mergedItems
+              .map(item => getCargoLabel(item.product))
+              .filter(Boolean)
+          );
+          
+          if (cargos.size > 1) {
+            const [firstCargo] = cargos;
+            const cleaned = mergedItems.filter(
+              item => getCargoLabel(item.product) === firstCargo
+            );
+            set({ cartProducts: cleaned, hasUnsyncedChanges: true });
+            return cleaned;
+          }
+
           set({ cartProducts: mergedItems as LocalCartItem[], hasUnsyncedChanges: false });       
           return mergedItems as LocalCartItem[];
         } catch (error) {
@@ -157,6 +178,8 @@ export const useCartStore = create<CartStore>()(
       },
 
       syncCart: async (currency?: string, countryCode?: string) => {
+        if (get().isSyncing) return;
+
         const token = getAuthToken();
         if (!token) return;
         
@@ -166,6 +189,16 @@ export const useCartStore = create<CartStore>()(
           const serverCart: any = await ecommerceService.getCart(currency, countryCode);
           const serverItems: LocalCartItem[] = serverCart.items ?? [];
           const localCart = get().cartProducts;
+
+          const cargos = new Set(
+            localCart.map(item => getCargoLabel(item.product)).filter(Boolean)
+          );
+
+          if (cargos.size > 1) {
+            console.warn("Mixed cargo detected locally during sync. Aborting sync.");
+            set({ isSyncing: false });
+            return;
+          }
 
           const toAdd = localCart.filter((local: LocalCartItem) =>
             !serverItems.some((server: LocalCartItem) => server.product_id === local.product_id)
@@ -214,7 +247,7 @@ export const useCartStore = create<CartStore>()(
                 if (item.id) {
                   lineId = item.id;
                 } else {
-                  const fetchedId = await get().getLineId(item.product_id, currency, countryCode);
+                  const fetchedId = await get().getServerCartItemId(item.product_id, currency, countryCode);
                   if (!fetchedId) {
                     console.warn(`Skipping sync update for ${item.product_id}: no line ID found`);
                     return;
@@ -281,7 +314,37 @@ export const useCartStore = create<CartStore>()(
           return;
         }
 
-        const updatedCart = [...state.cartProducts];
+        let didClearCart = false; 
+
+        const incomingCargo = getCargoLabel(product);
+
+        if (incomingCargo) {
+          const filteredCart = state.cartProducts.filter((item) => {
+            const existingCargo = getCargoLabel(item.product);
+
+            return (
+              !existingCargo ||
+              existingCargo === incomingCargo
+            );
+          });
+
+          if (filteredCart.length !== state.cartProducts.length) {
+            set({
+              cartProducts: filteredCart,
+              hasUnsyncedChanges: false,
+              selectedDeliveryOption: null,
+              checkoutProducts: [],
+            });
+          
+            if (token) {
+              await ecommerceService.clearCart();
+              didClearCart = true;
+            }
+          }
+        }
+
+        const latestState = get();
+        const updatedCart = [...latestState.cartProducts];
         const existingIndex = updatedCart.findIndex(
           (item: LocalCartItem) => item.product_id === product_id
         );
@@ -316,12 +379,12 @@ export const useCartStore = create<CartStore>()(
         get().setUpdating(product_id, true);
 
         try {
-          if (isUpdateOperation) {
+          if (isUpdateOperation && !didClearCart) {
             let lineId: string;
             if (oldItem?.id) {
               lineId = oldItem.id;
             } else {
-              const fetchedLineId = await get().getLineId(product_id, currency, countryCode);
+              const fetchedLineId = await get().getServerCartItemId(product_id, currency, countryCode);
               if (!fetchedLineId) {
                 set((s) => {
                   const cart = [...s.cartProducts];
@@ -414,7 +477,7 @@ export const useCartStore = create<CartStore>()(
         if (existing.id) {
           lineId = existing.id;
         } else {
-          const fetchedLineId = await get().getLineId(product_id, currency, countryCode);
+          const fetchedLineId = await get().getServerCartItemId(product_id, currency, countryCode);
           if (!fetchedLineId) {
             set((s) => {
               const cart = [...s.cartProducts];
@@ -477,7 +540,7 @@ export const useCartStore = create<CartStore>()(
         if (item.id) {
           lineId = item.id;
         } else {
-          const fetchedLineId = await get().getLineId(product_id, currency, countryCode);
+          const fetchedLineId = await get().getServerCartItemId(product_id, currency, countryCode);
           if (!fetchedLineId) {
             set({ cartProducts: [...updatedCart, item], hasUnsyncedChanges: false });
             toast.error("Failed to remove item from cart. Please try again.");
@@ -546,7 +609,7 @@ export const useCartStore = create<CartStore>()(
         if (existing.id) {
           lineId = existing.id;
         } else {
-          const fetchedLineId = await get().getLineId(productId, currency, countryCode);
+          const fetchedLineId = await get().getServerCartItemId(productId, currency, countryCode);
           if (!fetchedLineId) {
             set((s) => {
               const cart = [...s.cartProducts];
@@ -608,7 +671,8 @@ export const useCartStore = create<CartStore>()(
       partialize: (state) => ({
         cartProducts: state.cartProducts,
         checkoutProducts: state.checkoutProducts,
-        hasUnsyncedChanges: state.hasUnsyncedChanges
+        hasUnsyncedChanges: state.hasUnsyncedChanges,
+        selectedDeliveryOption: state.selectedDeliveryOption,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

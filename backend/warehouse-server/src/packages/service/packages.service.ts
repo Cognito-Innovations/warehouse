@@ -49,14 +49,26 @@ export class PackagesService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async getPackagesCount(): Promise<number> {
-    return this.packageRepository.count();
+  async getPackagesCount(countryId?: string): Promise<number> {
+    const where: FindOptionsWhere<Package> = {};
+
+    if (countryId) {
+      where.country = { id: countryId };
+    }
+
+    return this.packageRepository.count({ where });
   }
 
-  async getActionRequiredPackagesCount(): Promise<number> {
-    return this.packageRepository.count({
-      where: { status: 'Action Required' },
-    });
+  async getActionRequiredPackagesCount(countryId?: string): Promise<number> {
+    const where: FindOptionsWhere<Package> = {
+      status: 'Action Required',
+    };
+
+    if (countryId) {
+      where.country = { id: countryId };
+    }
+
+    return this.packageRepository.count({ where });
   }
 
   private async mapPackageToResponseDto(
@@ -367,9 +379,16 @@ export class PackagesService {
     await manager.save(savedPackage);
   }
 
-  async getAllPackages(): Promise<PackageResponseDto[]> {
+  async getAllPackages(countryId?: string): Promise<PackageResponseDto[]> {
+    const where: FindOptionsWhere<Package> = {};
+
+    if (countryId) {
+      where.country = { id: countryId };
+    }
+
     const packages = await this.packageRepository.find({
-      relations: ['measurements', 'items', 'user'],
+      where: where,
+      relations: ['measurements', 'items', 'user', 'country'],
       order: { created_at: 'DESC' },
     });
 
@@ -446,7 +465,10 @@ export class PackagesService {
     return this.mapPackageToResponseDto(packageEntity);
   }
 
-  async searchPackages(searchTerm: string): Promise<PackageResponseDto[]> {
+  async searchPackages(
+    searchTerm: string,
+    countryId?: string,
+  ): Promise<PackageResponseDto[]> {
     const whereConditions: FindOptionsWhere<Package>[] = [
       { package_id: searchTerm },
       { tracking_no: ILike(`%${searchTerm}%`) },
@@ -456,9 +478,15 @@ export class PackagesService {
       whereConditions.push({ id: searchTerm });
     }
 
+    if (countryId) {
+      whereConditions.forEach((condition) => {
+        condition.country = { id: countryId };
+      });
+    }
+
     const packages = await this.packageRepository.find({
       where: whereConditions,
-      relations: ['measurements', 'items', 'user'],
+      relations: ['measurements', 'items', 'user', 'country'],
       order: { created_at: 'DESC' },
     });
 

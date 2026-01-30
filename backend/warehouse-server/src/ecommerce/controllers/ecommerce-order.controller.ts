@@ -13,8 +13,8 @@ import {
 import { OrderService } from '../services/ecommerce-order.service';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
 import { CaptureOrderDto } from '../dto/order/capture-order.dto';
-import { OrderStatus } from '../entities/ecommerce-order.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Status } from '../entities/ecommerce-payments.entity';
 
 interface AuthenticatedRequest {
   user: {
@@ -88,7 +88,7 @@ export class OrderController {
   @Patch(':id/status')
   async updateOrderStatus(
     @Param('id') id: string,
-    @Body('status') status: OrderStatus,
+    @Body('status') status: Status,
     @Body('comment') comment?: string,
   ) {
     return this.orderService.updateOrderStatus(id, status, comment);

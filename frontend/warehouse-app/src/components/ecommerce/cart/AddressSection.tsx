@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Paper, Typography, IconButton } from "@mui/material";
 import { Edit } from "@mui/icons-material";
 
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCartStore } from "@/store/cartStore";
 import { fetchUserAddresses, createUserAddress, updateUserAddress } from "@/lib/api.service";
 import AddAddressModal from "./AddAddressModal";
@@ -16,6 +16,7 @@ interface AddressSectionProps {
   onAddressChange: (address: CartAddressData | null) => void;
   highlightAddressError: boolean;
   onAddressFetchComplete?: () => void;
+  initialAddress?: CartAddressData | null;
 }
 
 export default function AddressSection({
@@ -23,11 +24,12 @@ export default function AddressSection({
   onAddressChange,
   highlightAddressError,
   onAddressFetchComplete,
+  initialAddress,
 }: AddressSectionProps) {
-  const refreshLocation = useLocationStore((s) => s.refreshLocation);
+  const refreshLocation = useDetectUserLocation((s) => s.refreshLocation);
   const getCart = useCartStore(s => s.getCart);
 
-  const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(initialAddress || null);
   const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
   const [editAddress, setEditAddress] = useState<CartAddressData | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -69,16 +71,33 @@ export default function AddressSection({
     }
   }, [onAddressChange, onAddressFetchComplete]);
 
+  // Update selectedAddress when initialAddress changes
+  useEffect(() => {
+    if (initialAddress) {
+      setSelectedAddress(initialAddress);
+      onAddressChange(initialAddress);
+      if (onAddressFetchComplete) onAddressFetchComplete();
+    }
+  }, [initialAddress, onAddressChange, onAddressFetchComplete]);
+
   useEffect(() => {
     if (userId) {
-      setIsLoading(true);
-      loadAddressesInternal(userId).finally(() => setIsLoading(false));
+      // Only load if we don't already have an address selected (from initialAddress or state)
+      if (!selectedAddress && !initialAddress) {
+        setIsLoading(true);
+        loadAddressesInternal(userId).finally(() => setIsLoading(false));
+      } else {
+        // If address is already selected, just mark as ready
+        setIsLoading(false);
+        if (onAddressFetchComplete) onAddressFetchComplete();
+      }
     } else {
       setSelectedAddress(null);
       onAddressChange(null);
       if (onAddressFetchComplete) onAddressFetchComplete();
     }
-  }, [userId, loadAddressesInternal, onAddressChange, onAddressFetchComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]); // Only depend on userId to avoid unnecessary reloads
 
   const handleSaveAddress = useCallback(async (addressData: Omit<CartAddressData, "id">) => {
     if (!userId) return;
@@ -97,7 +116,7 @@ export default function AddressSection({
       };
       const newAddress = await createUserAddress(apiData);
       await refreshLocation(userId);
-      const { currencyCode, countryCode } = useLocationStore.getState();
+      const { currencyCode, countryCode } = useDetectUserLocation.getState();
       await getCart(currencyCode, countryCode);
       const formattedAddress: CartAddressData = {
         id: newAddress.id,
@@ -128,7 +147,7 @@ export default function AddressSection({
       };
       await updateUserAddress(addressId, apiData);
       await refreshLocation(userId);
-      const { currencyCode, countryCode } = useLocationStore.getState();
+      const { currencyCode, countryCode } = useDetectUserLocation.getState();
       await getCart(currencyCode, countryCode);
       const formattedAddress: CartAddressData = {
         id: addressId,
@@ -201,7 +220,7 @@ export default function AddressSection({
       <Paper
         elevation={0}
         sx={{
-          p: 2.5,
+          p: { xs: 2, sm: 2.5 },
           mb: 2,
           borderRadius: 2,
           border: "1px solid #e0e0e0",
@@ -218,8 +237,8 @@ export default function AddressSection({
           onClick={handleEditClick}
           sx={{
             position: "absolute",
-            top: 8,
-            right: 8,
+            top: { xs: 4, sm: 8 },
+            right: { xs: 4, sm: 8 },
             color: "text.secondary",
             "&:hover": {
               color: "primary.main",
@@ -229,13 +248,26 @@ export default function AddressSection({
         >
           <Edit />
         </IconButton>
-        <Typography variant="body2" fontWeight={600} sx={{ fontSize: "0.95rem", mb: 1.5 }}>
+        <Typography 
+          variant="body2" 
+          fontWeight={600} 
+          sx={{ 
+            fontSize: { xs: "0.9rem", sm: "0.95rem" }, 
+            mb: 1.5,
+            pr: { xs: 4, sm: 5 },
+          }}
+        >
           Delivery Address
         </Typography>
         <Typography
           variant="body1"
           fontWeight={600}
-          sx={{ mb: 0.5, color: "text.primary" }}
+          sx={{ 
+            mb: 0.5, 
+            color: "text.primary",
+            fontSize: { xs: "0.95rem", sm: "1rem" },
+            pr: { xs: 4, sm: 5 },
+          }}
         >
           {selectedAddress.name}
         </Typography>
@@ -244,20 +276,33 @@ export default function AddressSection({
           sx={{
             mb: 0.5,
             color: "text.secondary",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            fontSize: { xs: "0.8rem", sm: "0.875rem" },
+            wordBreak: "break-word",
+            pr: { xs: 4, sm: 5 },
           }}
         >
           {formatAddress(selectedAddress)}
         </Typography>
         {selectedAddress.phone_number && (
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.25 }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: "text.secondary", 
+              mb: 0.25,
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
+            }}
+          >
             Phone: {selectedAddress.phone_number}
           </Typography>
         )}
         {selectedAddress.email && (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: "text.secondary",
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
+            }}
+          >
             Email: {selectedAddress.email}
           </Typography>
         )}

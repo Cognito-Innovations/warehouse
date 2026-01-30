@@ -2,14 +2,21 @@
 
 import React from "react";
 import { Box } from "@mui/material";
-import { EcommerceProduct, EcommerceProductsGridProps } from "@/types/ecommerce";
+
+import { useGridSkeletonCount } from "@/hooks/useGridSkeletonCount";
 import EcommerceProductCard from "./EcommerceProductCard";
 import ProductCardSkeletonLoader from "./skeleton-loader/ProductCardSkeletonLoader";
+import { EcommerceProduct, EcommerceProductsGridProps } from "@/types/ecommerce";
 
 export default function EcommerceProductsGrid({
   products,
   loading = false,
 }: EcommerceProductsGridProps) {
+  const skeletonCount = useGridSkeletonCount({
+    itemHeight: 320,
+    minCount: 4
+  });
+
   return (
     <Box
       sx={{
@@ -31,9 +38,10 @@ export default function EcommerceProductsGrid({
           />
         );
       })}
+      
       {loading && (
         <>
-          {[...Array(4)].map((_, index) => (
+          {[...Array(skeletonCount)].map((_, index) => (
             <ProductCardSkeletonLoader key={`skeleton-${index}`} />
           ))}
         </>
