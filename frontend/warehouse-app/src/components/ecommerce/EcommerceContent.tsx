@@ -1,215 +1,50 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback, useState } from "react";
-import { Container, Alert, useTheme, Box } from "@mui/material";
-import useMediaQuery from "@mui/material/useMediaQuery";
+import React, { useEffect, useRef } from "react";
+import { Container, Alert, Box } from "@mui/material";
+
 
 import useProductStore from "@/store/productStore";
-import useCategoryStore from "@/store/categoryStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { useGridSkeletonCount } from "@/hooks/useGridSkeletonCount";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout";
 import SearchEmptyState from "@/components/ecommerce/SearchEmptyState";
 import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
 import ProductsGridView from "@/components/ecommerce/product/ProductsGridView";
-import CategorySection from "@/components/ecommerce/category_temp/CategorySection";
 import AssistedShoppingLandingContent from "@/components/AssistedShopping/getting-started/AssistedShoppingLandingContent";
 import GridSkeletonLoader from "./skeleton-loader/GridSkeletonLoader";
-import { debounce } from "@/utils/debounce";
+
 import { ecommerceData } from "@/data/ecommerceData";
 import ProductCardSkeletonLoader from "./skeleton-loader/ProductCardSkeletonLoader";
+import Category from "../Category/Category";
 
 interface EcommerceContentProps {
   slug?: string;
 }
-
 export default function EcommerceContent({ slug }: EcommerceContentProps) {
-  const { currencyCode, countryCode, isLoaded } = useDetectUserLocation();
+  const { isLoaded, loadLocation } = useDetectUserLocation();
   const { user } = useAuth();
-  const userId = user?.id;
-
-  const { categories, getCategories, selectedCategory, setCategory } =
-    useCategoryStore();
-
   const {
     products,
     isLoading,
-    loadingMore,
-    hasMore,
     error,
-    fetchProducts,
     setError,
-    searchQuery,
   } = useProductStore();
 
-  const observerRef = useRef<HTMLDivElement | null>(null);
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastCategoryRef = useRef<string | null>(null);
-  const debouncedSearchRef = useRef<
-    (((value: string) => void) & { cancel?: () => void }) | null
-  >(null);
-
-  const categoryRef = useRef<HTMLDivElement | null>(null);
   const skeletonRef = useRef<HTMLDivElement | null>(null);
-
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState(searchQuery);
-  const [rowHeight, setRowHeight] = useState(300);
-  const [categoryBottom, setCategoryBottom] = useState(100);
-
-  const showAssisted = selectedCategory === "assisted";
-
-  const theme = useTheme();
-  const isSm = useMediaQuery(theme.breakpoints.up('sm'));
+  const showAssisted = false; //selectedCategory === "assisted";
 
   const skeletonCount = useGridSkeletonCount({
-    itemHeight: rowHeight,
-    offsetY: categoryBottom + 32,
+    itemHeight: 10,
+    offsetY: 1 + 32,
     minCount: 4
   });
 
-  const syncCategoryWithSlug = useCallback(() => {
-    const nextCategory = slug ?? null;
-    if (nextCategory !== selectedCategory) {
-      setCategory(nextCategory);
-    }
-  }, [slug, selectedCategory, setCategory]);
-
-  const fetchCategoryList = useCallback(() => {
-    if (!countryCode) return;
-    getCategories(countryCode);
-  }, [countryCode, getCategories]);
-
-  const fetchCategoryProducts = useCallback(async () => {
-    if (!isLoaded || showAssisted) return;
-
-    const isCategoryChanged = lastCategoryRef.current !== selectedCategory;
-    lastCategoryRef.current = selectedCategory;
-
-    try {
-      await fetchProducts(
-        {
-          category: selectedCategory || undefined,
-          searchTerm: debouncedSearchQuery || undefined,
-          currency: currencyCode,
-          countryCode,
-          userId,
-        },
-        isCategoryChanged
-      );
-    } catch (err) {}
-  }, [
-    isLoaded,
-    showAssisted,
-    selectedCategory,
-    debouncedSearchQuery,
-    currencyCode,
-    countryCode,
-    userId,
-    fetchProducts,
-  ]);
-
-  const setupIntersectionObserver = useCallback(() => {
-    if (
-      !observerRef.current ||
-      !hasMore ||
-      loadingMore ||
-      isLoading ||
-      showAssisted
-    )
-      return;
-
-    observer.current?.disconnect();
-
-    observer.current = new IntersectionObserver(
-      (entries) => {
-        if (!entries[0].isIntersecting) return;
-
-        fetchProducts(
-          {
-            category: selectedCategory || undefined,
-            searchTerm: debouncedSearchQuery || undefined,
-            currency: currencyCode,
-            countryCode,
-            userId,
-          },
-          false
-        );
-      },
-      { rootMargin: "300px" }
-    );
-
-    observer.current.observe(observerRef.current);
-  }, [
-    hasMore,
-    loadingMore,
-    isLoading,
-    showAssisted,
-    selectedCategory,
-    debouncedSearchQuery,
-    currencyCode,
-    countryCode,
-    userId,
-    fetchProducts,
-  ]);
-
   useEffect(() => {
-    observer.current?.disconnect();
-  }, [selectedCategory, debouncedSearchQuery]);
+    loadLocation((user as any)?.id);
+  }, [user, loadLocation]);
 
-  useEffect(() => {
-    syncCategoryWithSlug();
-  }, [syncCategoryWithSlug]);
-
-  useEffect(() => {
-    fetchCategoryList();
-  }, [fetchCategoryList]);
-
-  useEffect(() => {
-    fetchCategoryProducts();
-  }, [fetchCategoryProducts]);
-
-  useEffect(() => {
-    debouncedSearchRef.current = debounce((value: string) => {
-      setDebouncedSearchQuery(value);
-    }, 400);
-
-    return () => {
-      debouncedSearchRef.current?.cancel?.();
-    };
-  }, []);
-
-  useEffect(() => {
-    debouncedSearchRef.current?.(searchQuery);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    setupIntersectionObserver();
-    return () => observer.current?.disconnect();
-  }, [setupIntersectionObserver]);
-
-  useEffect(() => {
-    const measureLayout = () => {
-      if (skeletonRef.current) {
-        const cardHeight = skeletonRef.current.getBoundingClientRect().height;
-        const gap = parseFloat(theme.spacing(isSm ? 2 : 1));
-        setRowHeight(cardHeight + gap);
-      }
-      if (categoryRef.current) {
-         setCategoryBottom(categoryRef.current.getBoundingClientRect().bottom);
-      }
-    };
-
-    const timer = setTimeout(measureLayout, 0);
-    // Add resize listener specific to layout shifts
-    const handleResize = debounce(measureLayout, 200);
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-        clearTimeout(timer);
-        window.removeEventListener("resize", handleResize);
-    };
-  }, [isSm, theme]);
 
   const handleRefresh = () => {
     setError(null);
@@ -230,8 +65,11 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
     );
   }
 
+  if (!isLoaded && !error) {
+    return <EcommerceSkeletonLoader />;
+  }
+
   if (
-    // categories.length === 0 || 
     (error && isNetworkError)) {
     return (
       <EcommerceSkeletonLoader
@@ -247,17 +85,15 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   }
 
   const showInitialLoader = isLoading && products.length === 0 && !showAssisted;
-  const isSearchEmpty = !!debouncedSearchQuery && products.length === 0 && !isLoading;
+  const isSearchEmpty = false  // products.length === 0 && !isLoading; fix it 
 
   return (
     <EcommercePageLayout>
       <Box sx={{ display: 'none' }}>
         <ProductCardSkeletonLoader ref={skeletonRef} />
       </Box>
-
-      <div ref={categoryRef}>
-        <CategorySection />
-      </div>
+  
+      <Category slug={slug} />
 
       {showAssisted ? (
         <AssistedShoppingLandingContent />
@@ -269,7 +105,6 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
         <ProductsGridView />
       )}
 
-      {!showAssisted && <div ref={observerRef} style={{ height: 10 }} />}
     </EcommercePageLayout>
   );
 }

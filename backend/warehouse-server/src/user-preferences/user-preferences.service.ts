@@ -193,11 +193,19 @@ export class UserPreferencesService {
   ) {
     const currencyInfo = await this.getCurrencyInfoByCode(currencyCode);
     const { code, symbol, rate } = currencyInfo;
-
+    if (!code || !symbol || !rate) {
+      throw new BadRequestException(
+        'Currency code, symbol, or rate is missing',
+      );
+    }
     const convertedPrice =
       code === DEFAULT_CURRENCY.code ? Number(price) : Number(price) * rate;
+
+    if (typeof convertedPrice !== 'number') {
+      throw new BadRequestException('Failed to get converted price');
+    }
     return {
-      price: convertedPrice,
+      price: convertedPrice.toFixed(2),
       currency:
         code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
     };

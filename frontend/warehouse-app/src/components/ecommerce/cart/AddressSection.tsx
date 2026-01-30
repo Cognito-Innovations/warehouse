@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Paper, Typography, IconButton } from "@mui/material";
 import { Edit } from "@mui/icons-material";
 
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCartStore } from "@/store/cartStore";
 import { fetchUserAddresses, createUserAddress, updateUserAddress } from "@/lib/api.service";
 import AddAddressModal from "./AddAddressModal";
@@ -26,7 +26,7 @@ export default function AddressSection({
   onAddressFetchComplete,
   initialAddress,
 }: AddressSectionProps) {
-  const refreshLocation = useLocationStore((s) => s.refreshLocation);
+  const refreshLocation = useDetectUserLocation((s) => s.refreshLocation);
   const getCart = useCartStore(s => s.getCart);
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(initialAddress || null);
@@ -116,7 +116,7 @@ export default function AddressSection({
       };
       const newAddress = await createUserAddress(apiData);
       await refreshLocation(userId);
-      const { currencyCode, countryCode } = useLocationStore.getState();
+      const { currencyCode, countryCode } = useDetectUserLocation.getState();
       await getCart(currencyCode, countryCode);
       const formattedAddress: CartAddressData = {
         id: newAddress.id,
@@ -147,7 +147,7 @@ export default function AddressSection({
       };
       await updateUserAddress(addressId, apiData);
       await refreshLocation(userId);
-      const { currencyCode, countryCode } = useLocationStore.getState();
+      const { currencyCode, countryCode } = useDetectUserLocation.getState();
       await getCart(currencyCode, countryCode);
       const formattedAddress: CartAddressData = {
         id: addressId,

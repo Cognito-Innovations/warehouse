@@ -11,10 +11,10 @@ import {
 } from "@mui/material";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import { useCartStore } from "@/store/cartStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { DeliveryOption } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 
 interface DeliveryModelSelectionProps {
   countryCode?: string;
@@ -54,7 +54,7 @@ export default function DeliveryModelSelection({
         
         // Auto-select first option if none selected
         if (options.length > 0 && !selectedOption) {
-          onSelectOption(options[0]);
+          onSelectOption({ ...options[0] });
         }
       } catch (err: any) {
         console.error("Failed to fetch delivery options:", err);

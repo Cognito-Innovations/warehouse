@@ -7,6 +7,7 @@ import { CacheManagerService } from './cache-manager.service';
 import { Country } from '../Countries/country.entity';
 import {
   BASE_EXCHANGE_CURRENCY,
+  CACHE_KEY,
   CACHE_TTL_SECONDS,
   CURRENCY_SYMBOL_MAP,
   DEFAULT_CURRENCY,
@@ -133,7 +134,7 @@ export class ExternalCurrencyService {
 
   async getCurrencyInfo(countryName: string): Promise<CurrencyInfo> {
     const trimmedCountryName = countryName.trim();
-    const cacheKey = `currency:${trimmedCountryName.toLowerCase()}`;
+    const cacheKey = `${CACHE_KEY.CURRENCY}:${trimmedCountryName.toLowerCase()}`;
 
     const cached = await this.cacheService.get<CurrencyInfo>(cacheKey);
     const now = Date.now();
@@ -190,7 +191,7 @@ export class ExternalCurrencyService {
 
   async getCurrencyInfoByCode(currencyCode: string): Promise<CurrencyInfo> {
     const code = currencyCode.toUpperCase();
-    const cacheKey = `currency_code:${code.toLowerCase()}`;
+    const cacheKey = `${CACHE_KEY.CURRENCY_CODE}:${code.toLowerCase()}`;
     const cached = await this.cacheService.get<CurrencyInfo>(cacheKey);
     const now = Date.now();
     //TODO P0: This might be incorrrect, add this into doc, will discuss on it

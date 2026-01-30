@@ -6,10 +6,9 @@ import { Payment } from "@mui/icons-material";
 import { toast } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
-import { useAuth } from "@/contexts/AuthContext";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { usePayPalPayment } from "@/hooks/usePayPalPayment";
 import { useOrderPayment } from "@/hooks/useOrderPayment";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
 import { OrderSuccessModal } from "../OrderSuccessModal";
 import { OrderItemsList } from "./OrderItemsList";
 import { OrderTotals } from "./OrderTotals";
@@ -48,7 +47,6 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   onOrderSuccess,
 }) => {
   const { removePurchasedProducts } = useCartStore();
-  const { loading: authLoading } = useAuth();
   const { currencyCode, countryCode, currencyRate } = useDetectUserLocation();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isFinalizingPayment, setIsFinalizingPayment] = useState(false);
@@ -89,7 +87,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   });
 
   const handlePaymentAndOrder = useCallback(async () => {
-    if (!items.length || !shippingAddress || authLoading) {
+    if (!items.length || !shippingAddress) {
       toast.error("No items to checkout.");
       return;
     }
@@ -104,7 +102,6 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   }, [
     items,
     shippingAddress,
-    authLoading,
     initiateOrder,
     initializePayment,
     resetPayment,
@@ -114,7 +111,6 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const isButtonDisabled =
     isProcessing ||
     !hasAddress ||
-    authLoading ||
     addressLoading ||
     items.length === 0 ||
     showPayPal;

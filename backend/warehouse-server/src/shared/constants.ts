@@ -11,6 +11,8 @@ export const DEFAULT_CURRENCY_SYMBOL = '$';
 
 export const DEFAULT_CURRENCY_RATE = 1;
 
+export const DEFAULT_COUNTRY_CODE = 'US';
+
 export const DEFAULT_CURRENCY = {
   code: DEFAULT_CURRENCY_CODE,
   symbol: DEFAULT_CURRENCY_SYMBOL,
@@ -34,6 +36,12 @@ export const CACHE_TTL_SECONDS = 25 * 60 * 60; // Slightly more than 24h
 export const DEFAULT_USER_PREFERENCE = {
   COURIER: '0f502386-b904-4cb8-8861-6c32e900bd84',
   CURRENCY: '72e41d4a-c7dd-437c-8cd1-b26f0f4473b4',
+};
+
+export const CACHE_KEY = {
+  DELIVERY: 'delivery_rates',
+  CURRENCY: 'currency',
+  CURRENCY_CODE: 'currency_code',
 };
 
 export const COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP: Record<string, string> = {

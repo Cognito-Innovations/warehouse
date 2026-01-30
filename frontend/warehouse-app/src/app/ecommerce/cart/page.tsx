@@ -5,7 +5,7 @@ import { Box, Container, Button } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 import { useSession } from "next-auth/react";
 
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
 import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
@@ -27,7 +27,7 @@ type CartStep = 0 | 1 | 2;
 export default function CartPage() {
   const { data: session, status } = useSession();
   const hydrated = useCartHasHydrated();
-  const { currencyCode, countryCode, isLoaded: locationLoaded } = useLocationStore();
+  const { currencyCode, countryCode, isLoaded: locationLoaded } = useDetectUserLocation();
   const { 
     cartProducts, 
     getCart, 
