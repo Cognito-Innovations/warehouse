@@ -89,18 +89,27 @@ export class CartService {
   }
 
   private async getExistingCartCargo(userId: string): Promise<string | null> {
-    const items = await this.userItemRepository.find({
-      where: { user_id: userId, status: UserProductStatus.CART },
-    });
+    try {
+      const items = await this.userItemRepository.find({
+        where: { user_id: userId, status: UserProductStatus.CART },
+      });
 
-    if (!items.length) return null;
+      if (!items.length) return null;
 
-    const product = await this.productRepository.findOne({
-      where: { id: items[0].product_id },
-      relations: ['cargo_option'],
-    });
+      const product = await this.productRepository.findOne({
+        where: { id: items[0].product_id },
+        relations: ['cargo_option'],
+      });
 
-    return product?.cargo_option?.label?.toLowerCase() ?? null;
+      return product?.cargo_option?.label?.toLowerCase() ?? null;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Failed to get existing cart cargo',
+      );
+    }
   }
 
   private async getExchangeRate(currency: string): Promise<number> {
@@ -169,23 +178,20 @@ export class CartService {
     }
   }
 
-  async getSelectedDeliveryOption(
-    userId: string,
-  ): Promise<DeliveryOption | null> {
-    const selection = await this.deliverySelectionRepository.findOne({
-      where: { user_id: userId },
-    });
-    if (!selection) return null;
-    return {
-      delivery_platform: selection.delivery_platform,
-      total_amount: selection.total_amount,
-      estimated_time: selection.estimated_time,
-      description: selection.description,
-    };
-  }
-
   async clearSelectedDeliveryOption(userId: string): Promise<void> {
-    await this.deliverySelectionRepository.delete({ user_id: userId });
+    try {
+      if (!userId) {
+        throw new BadRequestException('User ID is required');
+      }
+      await this.deliverySelectionRepository.delete({ user_id: userId });
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Failed to clear selected delivery option',
+      );
+    }
   }
 
   async addToCart(
@@ -195,6 +201,12 @@ export class CartService {
     countryCode?: string,
   ): Promise<ComputedCart> {
     const { product_id, quantity } = addToCartDto;
+
+    if (!userId || !product_id || !quantity) {
+      throw new BadRequestException(
+        'User ID, product ID, and quantity are required',
+      );
+    }
 
     if (quantity <= 0) {
       throw new BadRequestException('Quantity must be greater than zero');
@@ -212,6 +224,9 @@ export class CartService {
     });
 
     const existingQuantity = existingItem?.quantity ?? 0;
+    if (!product?.name) {
+      throw new NotFoundException('Product not found');
+    }
     this.validateProductAndStock(product, quantity, existingQuantity);
 
     const existingCargo = await this.getExistingCartCargo(userId);
