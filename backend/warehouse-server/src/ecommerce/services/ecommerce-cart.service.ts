@@ -104,15 +104,23 @@ export class CartService {
   }
 
   private async getExchangeRate(currency: string): Promise<number> {
-    if (!currency || currency === DEFAULT_CURRENCY.code) {
-      return 1;
+    if (currency === DEFAULT_CURRENCY.code) {
+      return DEFAULT_CURRENCY.rate;
     }
+
     const result =
-      await this.userPreferencesService.getFormattedConvertedPriceByCurrency(
+      (await this.userPreferencesService.getFormattedConvertedPriceByCurrency(
         currency,
-        1,
-      );
-    return typeof result === 'number' ? result : Number(result.price);
+        DEFAULT_CURRENCY.rate,
+      )) as { price: string | number };
+
+    const rate = Number(result?.price);
+
+    if (!rate || Number.isNaN(rate)) {
+      throw new BadRequestException('Failed to get exchange rate');
+    }
+
+    return rate;
   }
 
   async setSelectedDeliveryOption(
@@ -121,11 +129,19 @@ export class CartService {
     currencyCode: string,
   ): Promise<void> {
     try {
-      if (!currencyCode) {
-        throw new BadRequestException('Currency code is required');
+      if (
+        !currencyCode ||
+        !option?.delivery_platform ||
+        !option?.total_amount ||
+        !userId
+      ) {
+        throw new BadRequestException(
+          'Currency code, delivery platform, total amount, or user id is required',
+        );
       }
       const exchangeRate = await this.getExchangeRate(currencyCode);
 
+      //TODO P0: If we are using in many places, keep it in a separate function and resuse it
       const totalAmountInUsd = (
         Number(option.total_amount) / Number(exchangeRate)
       ).toFixed(2);

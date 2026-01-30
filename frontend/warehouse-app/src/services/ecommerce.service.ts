@@ -323,7 +323,7 @@ export const ecommerceService = {
     } catch (error) {
       console.error('Failed to store delivery option:', error);
       throw error;
-    }  
+    }
   },
 
   async getCheckout(
