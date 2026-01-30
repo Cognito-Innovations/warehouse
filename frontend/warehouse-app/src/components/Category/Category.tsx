@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {useMediaQuery, useTheme } from "@mui/material";
 
 import useCategoryStore from "@/store/categoryStore";
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import CategorySection from "../ecommerce/category_temp/CategorySection";
 import { debounce } from "@/utils/debounce";
 
 const Category = ({ slug }: { slug: string | undefined }) => {
-    const { countryCode } = useLocationStore();
+    const { countryCode } = useDetectUserLocation();
     const theme = useTheme();
     const skeletonRef = useRef<HTMLDivElement | null>(null);
     const [rowHeight, setRowHeight] = useState(300);

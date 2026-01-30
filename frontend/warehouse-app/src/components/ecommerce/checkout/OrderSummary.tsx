@@ -6,7 +6,7 @@ import { Payment } from "@mui/icons-material";
 import { toast } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { usePayPalPayment } from "@/hooks/usePayPalPayment";
 import { useOrderPayment } from "@/hooks/useOrderPayment";
 import { OrderSuccessModal } from "../OrderSuccessModal";
@@ -47,7 +47,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   onOrderSuccess,
 }) => {
   const { removePurchasedProducts } = useCartStore();
-  const { currencyCode, countryCode, currencyRate } = useLocationStore();
+  const { currencyCode, countryCode, currencyRate } = useDetectUserLocation();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isFinalizingPayment, setIsFinalizingPayment] = useState(false);
 

@@ -5,7 +5,7 @@ import { Box, Container, Alert } from "@mui/material";
 import { useParams } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useAuth } from "@/contexts/AuthContext";
 import ProductDetailImageSection from "@/components/ecommerce/ProductDetailImageSection";
 import ProductDetailInfoSection from "@/components/ecommerce/ProductDetailInfoSection";
@@ -30,7 +30,7 @@ export default function ProductDetailPage() {
     setCurrentDetailProduct,
   } = useProductStore();
  
-  const {currencyCode, countryCode} = useLocationStore();
+  const {currencyCode, countryCode} = useDetectUserLocation();
 
   const { user } = useAuth();
   const userId = user?.id;

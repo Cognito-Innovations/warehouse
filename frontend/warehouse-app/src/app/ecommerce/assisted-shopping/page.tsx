@@ -3,7 +3,7 @@
 import React, { useRef, useCallback, useEffect } from "react";
 
 import useCategoryStore from "@/store/categoryStore";
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout";
 // import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
 // import { ecommerceData } from "@/data/ecommerceData";
@@ -12,7 +12,7 @@ import CategorySection from "@/components/ecommerce/category_temp/CategorySectio
 import AssistedShoppingLandingContent from "@/components/AssistedShopping/getting-started/AssistedShoppingLandingContent";
 
 export default function AssistedShoppingPage() {
-  const {currencyCode, countryCode} = useLocationStore();
+  const {currencyCode, countryCode} = useDetectUserLocation();
   const { categories, getCategories, setCategory } = useCategoryStore();
   const hasFetched = useRef(false);
 

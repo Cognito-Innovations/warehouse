@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Toaster } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import EcommerceWrapper from "@/providers/EcommerceWrapper";
 import Header from "@/components/Common/Header";
 
@@ -18,7 +18,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const searchParams = useSearchParams();
   const { cartProductQuantityCount } = useCartStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { countryCode } = useLocationStore();
+  const { countryCode } = useDetectUserLocation();
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
   const hideHeader = pathname === "/sign-in";

@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { clearDataFromLocalStorage } from "@/utils/localStorageUtils";
 import { GUEST_LOCATION_STORAGE_KEY } from "@/utils/constants";
 
 export const useLocationSync = (isAuthenticated: boolean, userId?: string) => {
-  const { loadLocation, refreshLocation } = useLocationStore();
+  const { loadLocation, refreshLocation } = useDetectUserLocation();
   const isMounted = useRef(false);
 
   const syncLocation = async () => {

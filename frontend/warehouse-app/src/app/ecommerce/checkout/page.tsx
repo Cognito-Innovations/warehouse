@@ -5,7 +5,7 @@ import { Box, Container, CircularProgress, Grid, Alert } from "@mui/material";
 import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useAuth } from "@/contexts/AuthContext";
 import { FastDeliveryBanner } from "@/components/ecommerce/checkout/FastDeliveryBanner";
 import { DeliveryInfoCard } from "@/components/ecommerce/checkout/DeliveryInfoCard";
@@ -31,7 +31,7 @@ export default function CheckoutPage() {
 
   const initializationStarted = useRef(false);
 
-  const { currencyCode, currencySymbol, countryCode } = useLocationStore();
+  const { currencyCode, currencySymbol, countryCode } = useDetectUserLocation();
 
   const loadCheckoutData = async () => {
     const currentCheckoutProducts = useCartStore.getState().checkoutProducts;

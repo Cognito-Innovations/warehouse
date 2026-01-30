@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { Add, Remove } from "@mui/icons-material";
 import { useCartStore } from "@/store/cartStore";
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { EcommerceProduct } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";
@@ -28,7 +28,7 @@ export default function ProductCartActions({
 }: ProductCartActionsProps) {
     const router = useRouter();
     const { incrementCartQuantity, decrementCartQuantity, getItemQuantity, updatingProducts } = useCartStore();
-    const { currencyCode, countryCode } = useLocationStore();
+    const { currencyCode, countryCode } = useDetectUserLocation();
 
     const cartQuantity = getItemQuantity(product.id);
     const isUpdating = updatingProducts[product.id] || false;

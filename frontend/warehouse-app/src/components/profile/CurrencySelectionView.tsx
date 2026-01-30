@@ -20,7 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Search, ArrowBack } from "@mui/icons-material";
 import { toast } from "sonner";
 
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import useProductStore from "@/store/productStore";
 import { getCurrencies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 
@@ -37,9 +37,9 @@ interface CurrencySelectionViewProps {
 }
 
 export default function CurrencySelectionView({ onBack, showBackButton }: CurrencySelectionViewProps) {
-    const { currencyCode } = useLocationStore();
+    const { currencyCode } = useDetectUserLocation();
     const { user } = useAuth();
-    const refreshLocation = useLocationStore((s) => s.refreshLocation);
+    const refreshLocation = useDetectUserLocation((s) => s.refreshLocation);
     const fetchProducts = useProductStore(s => s.fetchProducts);
 
     const [searchTerm, setSearchTerm] = useState("");
@@ -114,7 +114,7 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                 });
                 await refreshLocation(user.id);
 
-                const state = useLocationStore.getState();
+                const state = useDetectUserLocation.getState();
                 fetchProducts({
                   currency: state.currencyCode,
                   countryCode: state.countryCode,

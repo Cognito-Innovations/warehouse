@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useAuth } from "@/contexts/AuthContext";
 import EcommerceContent from "@/components/ecommerce/EcommerceContent";
 
@@ -12,7 +12,7 @@ export default function CategoryPage() {
   const params = useParams();
   const slug = params?.slug as string;
   const { user } = useAuth();
-  const { currencyCode, countryCode, isLoaded } = useLocationStore();
+  const { currencyCode, countryCode, isLoaded } = useDetectUserLocation();
   const { fetchProducts } = useProductStore();
 
   useEffect(() => {

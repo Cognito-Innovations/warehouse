@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import { useCartStore } from "@/store/cartStore";
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { DeliveryOption } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
@@ -35,7 +35,7 @@ export default function DeliveryModelSelection({
   const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { currencyCode, currencySymbol } = useLocationStore();
+  const { currencyCode, currencySymbol } = useDetectUserLocation();
   const { getCart } = useCartStore();
 
   useEffect(() => {

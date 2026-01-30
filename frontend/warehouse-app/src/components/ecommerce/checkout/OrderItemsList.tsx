@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { getCartItemPricingSummary } from "@/utils/priceUtils";
 import { CartItem } from "@/types/ecommerce";
 
@@ -14,7 +14,7 @@ export const OrderItemsList: React.FC<OrderItemsListProps> = ({
   items,
   formatPrice,
 }) => {
-  const { currencySymbol } = useLocationStore();
+  const { currencySymbol } = useDetectUserLocation();
 
   return (
     <Box sx={{ mb: 2, maxHeight: { xs: 250, md: 300 }, overflow: "auto" }}>

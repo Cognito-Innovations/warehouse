@@ -5,7 +5,7 @@ import { Container, Alert, Box } from "@mui/material";
 
 
 import useProductStore from "@/store/productStore";
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGridSkeletonCount } from "@/hooks/useGridSkeletonCount";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout";
@@ -23,7 +23,7 @@ interface EcommerceContentProps {
   slug?: string;
 }
 export default function EcommerceContent({ slug }: EcommerceContentProps) {
-  const { isLoaded, loadLocation } = useLocationStore();
+  const { isLoaded, loadLocation } = useDetectUserLocation();
   const { user } = useAuth();
   const {
     products,
