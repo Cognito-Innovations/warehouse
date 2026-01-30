@@ -3,6 +3,7 @@ import { EcommerceCategory, EcommerceProduct, LocalCartItem, UserAddress, Delive
 export type CategoryStore = {
   selectedCategory: string | null;
   categories: EcommerceCategory[];
+  loading: boolean;
   setCategory: (categorySlug: string | null) => void;
   handleCategorySelect: (categorySlug: string | null) => void;
   getCategories: (countryCode: string) => Promise<EcommerceCategory[]>;
@@ -17,13 +18,10 @@ export type ProductStore = {
   error: string | null;
   offset: number;
   hasMore: boolean;
-  cache: Record<string, ProductCacheData>;
-
   activeRequestKey: string | null;
   currentDetailProduct: EcommerceProduct | null;
   detailPreviewProducts: EcommerceProduct[];
   detailRelatedProducts: EcommerceProduct[];
-  detailCache: Record<string, ProductDetailCache>;
 
   isDetailLoading: boolean;
   arePreviewsLoading: boolean;
@@ -32,43 +30,13 @@ export type ProductStore = {
 
   setError: (error: string | null) => void;
   setSearchQuery: (query: string) => void;
-  getProducts: (params?: GetProductsParams) => Promise<EcommerceProduct[]>;
   fetchProductBySlug: (slug: string, currency?: string, userId?: string, countryCode?: string) => Promise<EcommerceProduct>;
   getCategoryProducts: (categorySlug: string, currency?: string, countryCode?: string, limit?: number, userId?: string) => Promise<EcommerceProduct[]>;
   handleProductSelect: (productId: string) => void;
-  fetchProducts: (
-    params: FetchProductsParams,
-    reset?: boolean
-  ) => Promise<void>;
-
+  fetchProducts: (params: FetchProductsParams) => Promise<void>;
   loadProductPageData: (slug: string, currency: string, countryCode?: string, userId?: string) => Promise<void>;
   setCurrentDetailProduct: (product: EcommerceProduct) => void;
-  resetDetailState: () => void;
-  clearProductCache: () => void;
 }
-
-export type ProductCacheData = {
-  products: EcommerceProduct[];
-  hasMore: boolean;
-  offset: number;
-};
-
-export interface ProductDetailCache {
-  product: EcommerceProduct;
-  previews: EcommerceProduct[];
-  related: EcommerceProduct[];
-  timestamp: number;
-}
-
-export type GetProductsParams = {
-  searchTerm?: string;
-  currency?: string;
-  category?: string;
-  countryCode?: string;
-  limit?: number;
-  offset?: number;
-  userId?: string;
-};
 
 export type FetchProductsParams = {
   category?: string;
@@ -116,6 +84,6 @@ export type LocationStore = {
   currencyRate: number;
   countryCode: string;
   isLoaded: boolean;
-  fetchLocation: (userId?: string) => Promise<void>;
   refreshLocation: (userId?: string) => Promise<void>;
+  loadLocation: (userId?: string, skipCache?: boolean) => Promise<void>;
 }

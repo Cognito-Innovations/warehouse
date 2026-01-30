@@ -4,7 +4,11 @@ import { firstValueFrom } from 'rxjs';
 import { CacheManagerService } from './cache-manager.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
-import { COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP } from './constants';
+import {
+  CACHE_KEY,
+  COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP,
+  DEFAULT_COUNTRY_CODE,
+} from './constants';
 import { DeliveryCache } from './entities/cache/delivery-cache.entity';
 import { ExternalCurrencyService } from './external-currency.service';
 
@@ -81,22 +85,67 @@ export class DeliveryFeeService {
     return 2; // Fallback default
   }
 
-  //TODO P0: refactor this function to make it more readable and maintainable
   async getDeliveryOptions(
     weight: number,
-    country_code: string,
-    currency_code: string,
+    countryCode?: string,
+    currencyCode?: string,
   ): Promise<DeliveryOption[]> {
-    //TODO P0: in frontend or backend sometimes we are passing country code null, make sure some default fallbackcode
-    let standardized_country_code = country_code?.toUpperCase() || '';
-    if (
-      standardized_country_code.length === 3 &&
-      COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP[standardized_country_code]
-    ) {
-      standardized_country_code =
-        COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP[standardized_country_code];
+    const normalizedCountry = this.normalizeCountryCode(countryCode);
+    const cacheKey = this.buildCacheKey(normalizedCountry, weight);
+
+    const convertAmount = (amount: number) =>
+      this.convertCurrency(amount, currencyCode);
+
+    try {
+      const options = await this.fetchFromExternalApi(
+        normalizedCountry,
+        weight,
+      );
+
+      await this.cacheService.create(cacheKey, options, 60 * 60 * 48);
+
+      return Promise.all(
+        options.map(async (opt) => ({
+          ...opt,
+          total_amount: await convertAmount(opt.total_amount),
+        })),
+      );
+    } catch (error) {
+      this.logger.error('Failed to fetch delivery options', error);
+      return this.getFallbackOptions(
+        cacheKey,
+        normalizedCountry,
+        convertAmount,
+      );
+    }
+  }
+
+  private normalizeCountryCode(countryCode?: string): string {
+    let code = countryCode?.toUpperCase() || DEFAULT_COUNTRY_CODE;
+
+    if (code.length === 3 && COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP[code]) {
+      code = COUNTRY_CODE_ALPHA3_TO_ALPHA2_MAP[code];
     }
 
+    return code;
+  }
+
+  private buildCacheKey(countryCode: string, weight: number): string {
+    return `${CACHE_KEY.DELIVERY}:${countryCode}:${weight}`;
+  }
+
+  private async convertCurrency(
+    amount: number,
+    currencyCode?: string,
+  ): Promise<number> {
+    if (!currencyCode) return amount;
+    return this.externalCurrencyService.convertFromINR(amount, currencyCode);
+  }
+
+  private async fetchFromExternalApi(
+    countryCode: string,
+    weight: number,
+  ): Promise<DeliveryOption[]> {
     const username = process.env.UGFLASH_USERNAME;
     const password = process.env.UGFLASH_PASSWORD;
 
@@ -104,91 +153,76 @@ export class DeliveryFeeService {
       throw new BadRequestException('Shipment credentials not configured');
     }
 
-    const cacheKey = `delivery_rates:${standardized_country_code}:${weight}`;
+    const response = await firstValueFrom(
+      this.httpService.post<DeliveryRatesResponse>(
+        'https://ugflash.com/api/shipment/rates/list',
+        {
+          username,
+          password,
+          country_code: countryCode,
+          weight,
+        },
+      ),
+    );
 
-    const convertAmount = async (amount: number): Promise<number> => {
-      if (!currency_code) {
-        return amount;
-      }
-      return this.externalCurrencyService.convertFromINR(amount, currency_code);
-    };
-
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post<DeliveryRatesResponse>(
-          'https://ugflash.com/api/shipment/rates/list',
-          {
-            username,
-            password,
-            country_code: standardized_country_code,
-            weight,
-          },
-        ),
-      );
-
-      if (response.data.success && response.data.data.length > 0) {
-        const options = response.data.data.map((item) => ({
-          delivery_platform: item.delivery_platform || 'Standard Delivery',
-          total_amount: item.total_amount || 0,
-          estimated_time: item.estimated_time,
-        }));
-        await this.cacheService.create(cacheKey, options, 60 * 60 * 48);
-
-        const convertedOptions = await Promise.all(
-          options.map(async (option) => ({
-            ...option,
-            total_amount: await convertAmount(option.total_amount),
-          })),
-        );
-
-        return convertedOptions;
-      }
-
+    if (!response.data.success || response.data.data.length === 0) {
       throw new BadRequestException('No delivery options available');
-    } catch (error) {
-      this.logger.error('Failed to fetch delivery options', error);
+    }
 
-      const cachedRates =
-        await this.cacheService.get<DeliveryOption[]>(cacheKey);
-      if (cachedRates && cachedRates.length > 0) {
-        const convertedCached = await Promise.all(
-          cachedRates.map(async (option) => ({
-            ...option,
-            total_amount: await convertAmount(option.total_amount),
-          })),
-        );
-        return convertedCached;
-      }
+    return response.data.data.map((item) => ({
+      delivery_platform: item.delivery_platform || 'Standard Delivery',
+      total_amount: item.total_amount || 0,
+      estimated_time: item.estimated_time,
+    }));
+  }
 
-      // Calculate average from similar entries in DB
-      const likeKey = `delivery_rates:${standardized_country_code}:%`;
-      const entries = await this.deliveryCacheRepo.find({
-        where: { key: ILike(likeKey) },
-        relations: ['options'],
-      });
+  private async getFallbackOptions(
+    cacheKey: string,
+    countryCode: string,
+    convertAmount: (n: number) => Promise<number>,
+  ): Promise<DeliveryOption[]> {
+    const cached = await this.cacheService.get<DeliveryOption[]>(cacheKey);
 
-      let sum = 0;
-      let count = 0;
-      const now = Date.now();
-      for (const entry of entries) {
-        if (!entry.expiry || now < entry.expiry) {
-          if (entry.options && entry.options.length > 0) {
-            sum += entry.options[0].total_amount;
-            count++;
-          }
+    if (cached?.length) {
+      return Promise.all(
+        cached.map(async (opt) => ({
+          ...opt,
+          total_amount: await convertAmount(opt.total_amount),
+        })),
+      );
+    }
+
+    const avg = await this.calculateAverageFromDb(countryCode);
+    const convertedAvg = await convertAmount(avg);
+
+    return [
+      {
+        delivery_platform: 'Standard Delivery',
+        total_amount: convertedAvg,
+        estimated_time: '10-15 days',
+      },
+    ];
+  }
+
+  private async calculateAverageFromDb(countryCode: string): Promise<number> {
+    const likeKey = `${CACHE_KEY.DELIVERY}:${countryCode}:%`;
+    const entries = await this.deliveryCacheRepo.find({
+      where: { key: ILike(likeKey) },
+      relations: ['options'],
+    });
+
+    let sum = 0;
+    let count = 0;
+    const now = Date.now();
+    for (const entry of entries) {
+      if (!entry.expiry || now < entry.expiry) {
+        if (entry.options?.length) {
+          sum += entry.options[0].total_amount;
+          count++;
         }
       }
-
-      const avg = count > 0 ? sum / count : 2;
-      const convertedAvg = await convertAmount(avg);
-
-      return [
-        {
-          delivery_platform: 'Standard Delivery',
-          total_amount: convertedAvg,
-          estimated_time: '10-15 days',
-        },
-      ];
     }
+
+    return count > 0 ? sum / count : 2;
   }
 }

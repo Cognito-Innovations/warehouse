@@ -3,7 +3,7 @@
 import React, { useRef, useCallback, useEffect } from "react";
 
 import useCategoryStore from "@/store/categoryStore";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout";
 // import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
 // import { ecommerceData } from "@/data/ecommerceData";
@@ -20,11 +20,11 @@ export default function AssistedShoppingPage() {
     setCategory("assisted");
   }, [setCategory]);
 
-  const initializeEcommerceData = useCallback(async (curr?: string, cntCode?: string) => {
-    if (!curr || hasFetched.current) return;
+  const initializeEcommerceData = useCallback(async () => {
+    if (!currencyCode || hasFetched.current) return;
     try {
       hasFetched.current = true;
-      await getCategories(cntCode);
+      await getCategories(countryCode);
     } catch (err) {
       console.error("Init failed", err);
     }
@@ -32,7 +32,7 @@ export default function AssistedShoppingPage() {
 
   useEffect(() => {
     if (currencyCode && countryCode) {
-      initializeEcommerceData(currencyCode, countryCode);
+      initializeEcommerceData();
     }
   }, [currencyCode, countryCode, initializeEcommerceData]);
 
@@ -46,15 +46,6 @@ export default function AssistedShoppingPage() {
     categories: categories,
   };
 
-  // if (categories.length === 0) {
-  //   return (
-  //     <EcommerceSkeletonLoader
-  //       networkError={ecommerceData.messages.networkError}
-  //       refreshButtonLabel={ecommerceData.messages.refreshButton}
-  //       onRefresh={handleRefresh}
-  //     />
-  //   );
-  // }
 
   return (
     <EcommercePageLayout {...layoutProps}>

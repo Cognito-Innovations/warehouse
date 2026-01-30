@@ -20,8 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Search, ArrowBack } from "@mui/icons-material";
 import { toast } from "sonner";
 
-import { useLocationStore } from "@/store/locationStore";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import useProductStore from "@/store/productStore";
 import { getCurrencies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 
@@ -40,8 +39,7 @@ interface CurrencySelectionViewProps {
 export default function CurrencySelectionView({ onBack, showBackButton }: CurrencySelectionViewProps) {
     const { currencyCode } = useDetectUserLocation();
     const { user } = useAuth();
-    const refreshLocation = useLocationStore((s) => s.refreshLocation);
-    const clearProductCache = useProductStore(s => s.clearProductCache);
+    const refreshLocation = useDetectUserLocation((s) => s.refreshLocation);
     const fetchProducts = useProductStore(s => s.fetchProducts);
 
     const [searchTerm, setSearchTerm] = useState("");
@@ -116,13 +114,12 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                 });
                 await refreshLocation(user.id);
 
-                const state = useLocationStore.getState();
-                clearProductCache();
+                const state = useDetectUserLocation.getState();
                 fetchProducts({
                   currency: state.currencyCode,
                   countryCode: state.countryCode,
                   userId: user.id
-                }, true);
+                });
             }
             toast.success(`Currency updated to ${currency.name}`);
         } catch (error) {

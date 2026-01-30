@@ -34,23 +34,24 @@ export class CacheManagerService {
   ) {}
 
   async get<T>(key: string): Promise<T | undefined> {
-    let cached: T | undefined;
     try {
-      cached = await this.cacheManager.get<T>(key);
+      const cached = await this.cacheManager.get<T>(key);
+      if (cached !== undefined) {
+        return cached;
+      }
     } catch (error) {
-      //TODO P0: Pull from db cache_{dbname} table
-      console.warn(`Cache get failed for ${key}:`, error);
+      console.warn(`Cache get failed for ${key}, falling back to DB`, error);
     }
 
-    if (cached !== undefined) {
-      return cached;
-    }
+    return this.getFromDb<T>(key);
+  }
 
+  private async getFromDb<T>(key: string): Promise<T | undefined> {
     const now = Date.now();
     let dbValue: any;
     let expiry: number | undefined;
-    //TODO P0: Move this out
-    if (key.startsWith('currency:') || key.startsWith('currency_code:')) {
+
+    if (this.isCurrencyKey(key)) {
       const entry = await this.currencyCacheRepo.findOne({ where: { key } });
       if (entry && (!entry.expiry || now < entry.expiry)) {
         dbValue = {
@@ -61,7 +62,7 @@ export class CacheManagerService {
         };
         expiry = entry.expiry;
       }
-    } else if (key.startsWith('delivery_rates:')) {
+    } else if (this.isDeliveryKey(key)) {
       const entry = await this.deliveryCacheRepo.findOne({
         where: { key },
         relations: ['options'],
@@ -80,22 +81,18 @@ export class CacheManagerService {
       return undefined;
     }
 
-    if (dbValue) {
-      const remainingMs = expiry ? expiry - now : 0;
+    if (!dbValue) return undefined;
 
-      if (remainingMs > 0) {
-        const remainingSeconds = Math.floor(remainingMs / 1000);
-        try {
-          await this.cacheManager.set(key, dbValue, remainingSeconds);
-        } catch (error) {
-          console.warn(`Cache set failed for ${key}:`, error);
-        }
+    if (expiry && expiry > now) {
+      const remainingSeconds = Math.floor((expiry - now) / 1000);
+      try {
+        await this.cacheManager.set(key, dbValue, remainingSeconds);
+      } catch (error) {
+        console.warn(`Cache set failed for ${key}:`, error);
       }
-
-      return dbValue as T;
     }
 
-    return undefined;
+    return dbValue as T;
   }
 
   async create<T>(key: string, value: T, ttlSeconds: number): Promise<void> {
@@ -108,49 +105,72 @@ export class CacheManagerService {
       console.warn(`Cache set failed for ${key}:`, error);
     }
 
-    //TODO P0: Why can't we update it everytime, because delivery rates can change anytime as per feeback i got
-    if (key.startsWith('currency:') || key.startsWith('currency_code:')) {
-      const currencyValue = value as CurrencyInfo;
-      let entity = await this.currencyCacheRepo.findOne({ where: { key } });
-      if (!entity) {
-        entity = new CurrencyCache();
-      }
-      entity.key = key;
-      entity.code = currencyValue.code;
-      entity.symbol = currencyValue.symbol;
-      entity.rate = currencyValue.rate;
-      entity.timestamp = currencyValue.timestamp;
-      entity.expiry = expiry;
-      await this.currencyCacheRepo.save(entity);
-    } else if (key.startsWith('delivery_rates:')) {
-      let entity = await this.deliveryCacheRepo.findOne({
-        where: { key },
-        relations: ['options'],
-      });
-      if (!entity) {
-        entity = new DeliveryCache();
-        entity.key = key;
-      }
-      entity.expiry = expiry;
-      await this.deliveryCacheRepo.save(entity);
-
-      if (entity.options && entity.options.length > 0) {
-        await this.deliveryOptionRepo.remove(entity.options);
-      }
-
-      const deliveryValue = value as DeliveryOption[];
-      const newOptions = deliveryValue.map((opt) => {
-        const optionEntity = new DeliveryOptionCache();
-        optionEntity.deliveryCache = entity;
-        optionEntity.delivery_platform = opt.delivery_platform;
-        optionEntity.total_amount = opt.total_amount;
-        optionEntity.estimated_time = opt.estimated_time ?? '';
-        optionEntity.description = opt.description ?? '';
-        return optionEntity;
-      });
-      await this.deliveryOptionRepo.save(newOptions);
+    if (this.isCurrencyKey(key)) {
+      await this.saveCurrencyCache(key, value as CurrencyInfo, expiry);
+    } else if (this.isDeliveryKey(key)) {
+      await this.saveDeliveryCache(key, value as DeliveryOption[], expiry);
     } else {
       console.warn(`Unsupported cache key for create: ${key}`);
     }
+  }
+
+  private isCurrencyKey(key: string): boolean {
+    return key.startsWith('currency:') || key.startsWith('currency_code:');
+  }
+
+  private isDeliveryKey(key: string): boolean {
+    return key.startsWith('delivery_rates:');
+  }
+
+  private async saveCurrencyCache(
+    key: string,
+    value: CurrencyInfo,
+    expiry: number,
+  ): Promise<void> {
+    let entity = await this.currencyCacheRepo.findOne({ where: { key } });
+    if (!entity) {
+      entity = new CurrencyCache();
+    }
+
+    entity.key = key;
+    entity.code = value.code;
+    entity.symbol = value.symbol;
+    entity.rate = value.rate;
+    entity.timestamp = value.timestamp;
+    entity.expiry = expiry;
+
+    await this.currencyCacheRepo.save(entity);
+  }
+
+  private async saveDeliveryCache(
+    key: string,
+    options: DeliveryOption[],
+    expiry: number,
+  ): Promise<void> {
+    let entity = await this.deliveryCacheRepo.findOne({
+      where: { key },
+      relations: ['options'],
+    });
+    if (!entity) {
+      entity = new DeliveryCache();
+      entity.key = key;
+    }
+    entity.expiry = expiry;
+    await this.deliveryCacheRepo.save(entity);
+
+    if (entity.options?.length) {
+      await this.deliveryOptionRepo.remove(entity.options);
+    }
+
+    const newOptions = options.map((opt) => {
+      const optionEntity = new DeliveryOptionCache();
+      optionEntity.deliveryCache = entity;
+      optionEntity.delivery_platform = opt.delivery_platform;
+      optionEntity.total_amount = opt.total_amount;
+      optionEntity.estimated_time = opt.estimated_time ?? '';
+      optionEntity.description = opt.description ?? '';
+      return optionEntity;
+    });
+    await this.deliveryOptionRepo.save(newOptions);
   }
 }

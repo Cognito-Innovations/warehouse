@@ -70,7 +70,12 @@ export const menuItems: MenuItem[] = [
     ],
   },
   { text: 'My Suite', icon: SuiteIcon, path: '/suite' },
-  { text: 'Customers', icon: CustomersIcon, path: '/customers' },
+  {
+    text: 'Customers',
+    icon: CustomersIcon,
+    path: '/customers',
+    roles: ['super_admin'],
+  },
   {
     text: 'Settings',
     icon: SettingsIcon,

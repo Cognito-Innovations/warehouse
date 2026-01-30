@@ -195,9 +195,8 @@ export class OrderService {
         );
       }
 
-      const selectedDelivery = await this.deliverySelectionRepository.findOne({
-        where: { user_id: userId },
-      });
+      const selectedDelivery =
+        await this.cartService.getSelectedDeliveryOption(userId);
 
       const deliveryFeeUSD = selectedDelivery
         ? Number(selectedDelivery.total_amount)

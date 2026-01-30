@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { GUEST_LOCATION_STORAGE_KEY } from "@/utils/constants";
+import { DEFAULT_CURRENCY_INFO, DEFAULT_LOCATION, GUEST_LOCATION_STORAGE_KEY } from "@/utils/constants";
 import { getDataFromLocalStorage, setDataInLocalStorage } from "@/utils/localStorageUtils";
 import { getUserPreferences } from "@/lib/api.service";
 import { destructLocationData, destructUserPreferenceData } from "@/utils/preferences.utils";
@@ -38,11 +38,11 @@ export const useDetectUserLocation = create<any>((set) => {
   }
 
   return {
-    countryCode: "",
-    currencyCode: "",
-    currencySymbol: "",
-    currencyRate: "",
+    countryCode: DEFAULT_LOCATION.countryCode,
+    currencyCode: DEFAULT_CURRENCY_INFO.code,
+    currencySymbol: DEFAULT_CURRENCY_INFO.symbol,
+    currencyRate: DEFAULT_CURRENCY_INFO.rate,
     isLoaded: false,
     fetchLocationBasedOnUser,
   };
-}); 
+});

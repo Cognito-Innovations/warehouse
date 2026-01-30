@@ -5,19 +5,19 @@ import { Box, Typography } from "@mui/material";
 
 import useCategoryStore from "@/store/categoryStore";
 import useProductStore from "@/store/productStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import EcommerceProductsGrid from "./EcommerceProductsGrid";
 
 export default function CategoryProductsByCategory() {
-  const getProducts = useProductStore(state=>state.getProducts);
+  const fetchProducts = useProductStore(state=>state.fetchProducts);
   const products = useProductStore(state=>state.products);
   const isLoading = useProductStore(state=>state.isLoading);
   const getCategories = useCategoryStore(state=>state.getCategories);
   const categories = useCategoryStore(state=>state.categories);
   const hasInitiatedLoadRef = useRef(false);
 
-  const { countryCode} = useDetectUserLocation();
+  const { countryCode, currencyCode } = useDetectUserLocation();
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -33,7 +33,7 @@ export default function CategoryProductsByCategory() {
       getCategories(countryCode);
     }
     if (currentProducts.length === 0 && !currentIsLoading) {
-      getProducts({ userId, countryCode });
+      fetchProducts({ userId, countryCode, currency: currencyCode });
     }
     
     hasInitiatedLoadRef.current = true;
