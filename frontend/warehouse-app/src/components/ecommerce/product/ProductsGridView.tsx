@@ -1,16 +1,21 @@
 import { Box} from "@mui/material";
 
 import useProductStore from "@/store/productStore";
+import { useGridSkeletonCount } from "@/hooks/useGridSkeletonCount";
 import EcommerceProductsGrid from "../EcommerceProductsGrid";
 import GridSkeletonLoader from "../skeleton-loader/GridSkeletonLoader";
 
 const ProductsGridView = () => {
     const { products, isLoading, loadingMore } = useProductStore();
 
+    const initialSkeletonCount = useGridSkeletonCount({ minCount: 10 });
+    
+    const loadMoreSkeletonCount = useGridSkeletonCount({ singleRow: true });
+
     if (isLoading && products.length === 0) {
         return (
             <Box sx={{ py: 2, px: 2, bgcolor: "white" }}>
-                <GridSkeletonLoader count={10} />
+                <GridSkeletonLoader count={initialSkeletonCount} />
             </Box>
         );
     }
@@ -23,7 +28,7 @@ const ProductsGridView = () => {
             />
             {loadingMore && (
                  <Box sx={{ py: 2 }}>
-                    <GridSkeletonLoader count={4} />
+                    <GridSkeletonLoader count={loadMoreSkeletonCount} />
                  </Box>
             )}
         </Box>

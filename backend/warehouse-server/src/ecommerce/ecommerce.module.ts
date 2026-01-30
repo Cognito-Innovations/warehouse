@@ -24,9 +24,11 @@ import { CargoOptionsService } from './services/cargo-options.service';
 import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 import { Currency } from 'src/currencies/currency.entity';
 import { SharedModule } from 'src/shared/shared.module';
-import { EcommerceUserItem } from './entities/ecommerce-user-items.entity';
+import { EcommerceUserProductStatus } from './entities/ecommerce_user_products_status.entity';
 import { EcommercePayment } from './entities/ecommerce-payments.entity';
 import { EcommerceOrderReference } from './entities/ecommerce-order-references.entity';
+import { PaymentService } from './services/payment.service';
+import { EcommerceUserDeliverySelection } from './entities/ecommerce_user_delivery_selections.entity';
 
 @Module({
   imports: [
@@ -35,13 +37,14 @@ import { EcommerceOrderReference } from './entities/ecommerce-order-references.e
       EcommerceCategory,
       EcommerceSubCategory,
       EcommerceProduct,
-      EcommerceUserItem,
+      EcommerceUserProductStatus,
       EcommercePayment,
       EcommerceOrderReference,
       EcommerceMeasurement,
       Country,
       EcommerceCargoOption,
       Currency,
+      EcommerceUserDeliverySelection,
     ]),
     UserPreferencesModule,
     SharedModule,
@@ -63,6 +66,7 @@ import { EcommerceOrderReference } from './entities/ecommerce-order-references.e
     OrderService,
     MeasurementService,
     CargoOptionsService,
+    PaymentService,
   ],
 })
 export class EcommerceModule {}

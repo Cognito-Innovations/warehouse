@@ -5,7 +5,7 @@ import { Box, Container, Button } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 import { useSession } from "next-auth/react";
 
-import { useLocationStore } from "@/store/locationStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
 import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
@@ -20,13 +20,14 @@ import CartStepper from "@/components/ecommerce/cart/CartStepper";
 import DeliveryModelSelection from "@/components/ecommerce/cart/DeliveryModelSelection";
 import ReadOnlyCartItems from "@/components/ecommerce/cart/ReadOnlyCartItems";
 import { CartAddressData, DeliveryOption } from "@/types/ecommerce";
+import { ecommerceService } from "@/services/ecommerce.service";
 
 type CartStep = 0 | 1 | 2;
 
 export default function CartPage() {
   const { data: session, status } = useSession();
   const hydrated = useCartHasHydrated();
-  const { currencyCode, countryCode, isLoaded: locationLoaded } = useLocationStore();
+  const { currencyCode, countryCode, isLoaded: locationLoaded } = useDetectUserLocation();
   const { 
     cartProducts, 
     getCart, 
@@ -54,9 +55,15 @@ export default function CartPage() {
     // Don't auto-advance - let user manually proceed to next step
   }, []);
 
-  const handleDeliveryOptionSelect = useCallback((option: DeliveryOption) => {
+  const handleDeliveryOptionSelect = useCallback(async (option: DeliveryOption) => {
     setSelectedDeliveryOption(option);
-  }, [setSelectedDeliveryOption]);
+    try {
+      await ecommerceService.selectDeliveryOption(option, currencyCode);
+      await getCart(currencyCode, countryCode);
+    } catch (err) {
+      console.error('Failed to save delivery option:', err);
+    }
+  }, [setSelectedDeliveryOption, getCart, currencyCode, countryCode]);
 
   const handleBackToAddress = useCallback(() => {
     setActiveStep(0);
@@ -187,6 +194,7 @@ export default function CartPage() {
                   variant="contained"
                   endIcon={<ArrowForward />}
                   onClick={() => setActiveStep(1)}
+                  disabled={!selectedAddress || !isAddressDataReady || isCartLoading}
                   fullWidth={false}
                   sx={{
                     textTransform: "none",
@@ -198,6 +206,10 @@ export default function CartPage() {
                     flex: { xs: "1 1 auto", sm: "0 0 auto" },
                     "&:hover": {
                       bgcolor: "primary.dark",
+                    },
+                    "&.Mui-disabled": {
+                      bgcolor: "grey.400",
+                      color: "grey.700",
                     },
                   }}
                 >
@@ -213,6 +225,7 @@ export default function CartPage() {
             {/* Step 1: Delivery Selection - NO cart items shown */}
             <DeliveryModelSelection
               countryCode={countryCode}
+              currencyCode={currencyCode}
               selectedOption={selectedDeliveryOption}
               onSelectOption={handleDeliveryOptionSelect}
               onBack={handleBackToAddress}

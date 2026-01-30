@@ -85,11 +85,12 @@ export class PackagesController {
   @ApiOkResponse({ type: [PackageResponseDto] })
   async findAll(
     @Query('search') search?: string,
+    @Query('country_id') countryId?: string,
   ): Promise<PackageResponseDto[]> {
     if (search) {
-      return this.packagesService.searchPackages(search);
+      return this.packagesService.searchPackages(search, countryId);
     }
-    return this.packagesService.getAllPackages();
+    return this.packagesService.getAllPackages(countryId);
   }
 
   @Get('debug/all')

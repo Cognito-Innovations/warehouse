@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
 
@@ -11,7 +11,7 @@ export class AnalyticsController {
   @ApiOkResponse({
     description: 'Retrives all dashboard and analytics data.',
   })
-  async getDashboardMetrics() {
-    return this.analyticsService.getDashboardMetrics();
+  async getDashboardMetrics(@Query('country_id') countryId?: string) {
+    return this.analyticsService.getDashboardMetrics(countryId);
   }
 }

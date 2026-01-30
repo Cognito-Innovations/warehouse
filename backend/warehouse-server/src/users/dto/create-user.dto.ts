@@ -6,7 +6,9 @@ import {
   IsDateString,
   MinLength,
   IsNumber,
+  IsEnum,
 } from 'class-validator';
+import { Role } from '../user.entity';
 
 export enum Identifier {
   Google = 'google',
@@ -32,6 +34,7 @@ export class CreateUserDto {
   @IsString()
   name?: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(6)
   suite_no?: string;
@@ -60,10 +63,23 @@ export class CreateUserDto {
   @IsDateString()
   dob?: Date;
 
+  @IsOptional()
   @IsBoolean()
-  verified: boolean;
+  verified?: boolean;
 
   @IsOptional()
   @IsNumber()
   last_logout?: number;
+
+  @IsOptional()
+  @IsEnum(Role)
+  role?: Role;
+
+  @IsOptional()
+  @IsString()
+  courier_id?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  shouldHashPassword?: boolean;
 }

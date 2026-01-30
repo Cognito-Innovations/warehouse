@@ -24,6 +24,10 @@ import { Currency } from '../currencies/currency.entity';
 import { CurrenciesService } from '../currencies/currencies.service';
 import { ExternalCurrencyService } from './external-currency.service';
 import { DeliveryFeeService } from './get-delivery-fee.service';
+import { CacheManagerService } from './cache-manager.service';
+import { CurrencyCache } from './entities/cache/currency-cache.entity';
+import { DeliveryCache } from './entities/cache/delivery-cache.entity';
+import { DeliveryOptionCache } from './entities/cache/delivery-option-cache.entity';
 
 const cacheModuleFactory = (configService: ConfigService) => ({
   store: redisStore,
@@ -46,6 +50,9 @@ const cacheModuleFactory = (configService: ConfigService) => ({
       ClientIdentifier,
       Country,
       Currency,
+      CurrencyCache,
+      DeliveryCache,
+      DeliveryOptionCache,
     ]),
     CacheModule.registerAsync({
       imports: [ConfigModule],
@@ -62,6 +69,7 @@ const cacheModuleFactory = (configService: ConfigService) => ({
     CurrenciesService,
     ExternalCurrencyService,
     DeliveryFeeService,
+    CacheManagerService,
   ],
   exports: [
     HttpModule,
@@ -71,6 +79,7 @@ const cacheModuleFactory = (configService: ConfigService) => ({
     CurrenciesService,
     ExternalCurrencyService,
     DeliveryFeeService,
+    CacheManagerService,
   ],
 })
 export class SharedModule {}

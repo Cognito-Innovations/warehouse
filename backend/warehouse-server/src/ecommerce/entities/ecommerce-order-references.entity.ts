@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { EcommerceProduct } from './ecommerce-product.entity';
 import { EcommercePayment } from './ecommerce-payments.entity';
-import { EcommerceUserItem } from './ecommerce-user-items.entity';
+import { EcommerceUserProductStatus } from './ecommerce_user_products_status.entity';
 
 @Entity('ecommerce_order_references')
 export class EcommerceOrderReference extends BaseTimestampEntity {
@@ -27,9 +27,9 @@ export class EcommerceOrderReference extends BaseTimestampEntity {
   @Column()
   user_item_id: string;
 
-  @ManyToOne(() => EcommerceUserItem, { onDelete: 'CASCADE' })
+  @ManyToOne(() => EcommerceUserProductStatus, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_item_id' })
-  user_item: EcommerceUserItem;
+  user_item: EcommerceUserProductStatus;
 
   @Column()
   product_id: string;

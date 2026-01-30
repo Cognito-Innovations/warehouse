@@ -39,7 +39,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const userData: UserData = {
               id: storedUser.user.id,
               email: storedUser.user.email,
-              name: storedUser.user.name,
+              name: storedUser.user.name?? '',
+              role: storedUser.user.role,
+              preference: storedUser.user.preference,
             };
             setUser(userData);
           } else {
@@ -69,7 +71,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userData: UserData = {
         id: loginResponse.user.id,
         email: loginResponse.user.email,
-        name: loginResponse.user.name || '',
+        name: loginResponse.user.name ?? '',
+        role: loginResponse.user.role,
+        preference: loginResponse.user.preference,
         image: undefined,
       };
       setUser(userData);

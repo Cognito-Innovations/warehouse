@@ -1,5 +1,5 @@
 import { CartItem, EcommerceProduct } from "@/types/ecommerce";
-import { INR_CURRENCY } from "./constants";
+import { DEFAULT_CURRENCY_INFO, INR_CURRENCY } from "./constants";
 
 export interface PriceObject {
   price: number;
@@ -35,7 +35,7 @@ export function parsePrice(
   return { raw, formatted, currency };
 }
 
-export function formatPrice(rawPrice: number, currency_symbol = INR_CURRENCY.symbol): string {
+export function formatPrice(rawPrice: number, currency_symbol = DEFAULT_CURRENCY_INFO.symbol): string {
   return `${currency_symbol}${rawPrice?.toFixed(2)}`;
 }
 

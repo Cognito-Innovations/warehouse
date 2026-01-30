@@ -1,6 +1,6 @@
-export const getCachedLocation = (
-    cacheKey: string
-): { countryCode: string; currencyInfo: { code: string; symbol: string; rate: number } } | undefined => {
+interface LocationData { countryCode: string; currencyInfo: { code: string; symbol: string; rate: number } }
+
+export const getDataFromLocalStorage = (cacheKey: string): LocationData | undefined => {
     const cached = localStorage.getItem(cacheKey);
     if (!cached) return undefined;
 
@@ -12,13 +12,13 @@ export const getCachedLocation = (
     }
 };
 
-export const setCachedLocation = (
+export const setDataInLocalStorage = (
     cacheKey: string,
-    data: { countryCode: string; currencyInfo: { code: string; symbol: string; rate: number } }
+    data: LocationData
 ) => {
     localStorage.setItem(cacheKey, JSON.stringify(data));
 }
 
-export const clearCachedLocation = (cacheKey: string) => {
+export const clearDataFromLocalStorage = (cacheKey: string) => {
   localStorage.removeItem(cacheKey);
 };

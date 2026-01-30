@@ -1,5 +1,5 @@
-import { UserPreference } from 'src/user-preferences/user-preference.entity';
-import { UserAddress } from 'src/user_address/user_address.entity';
+import { UserPreferenceResponseDto } from 'src/user-preferences/dto/user-preference-response.dto';
+import { UserAddressResponseDto } from 'src/user_address/dto/user-address-response.dto';
 
 export class UserResponseDto {
   id: string;
@@ -10,11 +10,11 @@ export class UserResponseDto {
   suite_no: string;
   phone_code?: string;
   phone_number?: string;
-  alternate_phone_number: string;
+  alternate_phone_number?: string;
   gender?: string;
   dob?: Date;
-  preference?: UserPreference;
-  address?: UserAddress[];
+  preference?: UserPreferenceResponseDto;
+  address?: UserAddressResponseDto[];
   identifier: string;
   verified: boolean;
   email_verified: boolean;
