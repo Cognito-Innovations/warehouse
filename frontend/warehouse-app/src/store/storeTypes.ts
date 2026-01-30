@@ -64,7 +64,7 @@ export type CartStore = {
   setLoading: (value: boolean) => void;
   setHasHydrated: (value: boolean) => void;
   setUpdating: (productId: string, isUpdating: boolean) => void;
-  getItemQuantity: (productId: string) => number;
+  getProductQuantity: (productId: string) => number;
   getServerCartItemId: (productId: string, currency?: string, countryCode?: string) => Promise<string | undefined>;
   refreshCart: (currency?: string, countryCode?: string) => Promise<LocalCartItem[]>;
   syncCart: (currency?: string, countryCode?: string) => Promise<void>;
@@ -84,6 +84,5 @@ export type LocationStore = {
   currencyRate: number;
   countryCode: string;
   isLoaded: boolean;
-  refreshLocation: (userId?: string) => Promise<void>;
-  loadLocation: (userId?: string, skipCache?: boolean) => Promise<void>;
+  fetchLocationBasedOnUser: (userId?: string) => Promise<void>;
 }

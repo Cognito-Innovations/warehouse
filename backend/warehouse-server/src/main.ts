@@ -12,8 +12,10 @@ async function bootstrap() {
 
   const isDev = process.env.NODE_ENV === 'development';
 
+  //TODO P0: move to .env
   const devAllowedOrigins = ['http://localhost:3000', 'http://localhost:5173']
 
+  //TODO P0: move to .env
   const prodAllowedOrigins = [
     'https://palakart.com',
     'https://www.palakart.com',

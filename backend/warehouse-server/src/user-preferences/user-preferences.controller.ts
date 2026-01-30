@@ -15,7 +15,7 @@ import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 export class UserPreferencesController {
   constructor(
     private readonly userPreferencesService: UserPreferencesService,
-  ) { }
+  ) {}
 
   @Post()
   create(@Body() createUserPreferenceDto: CreateUserPreferenceDto) {

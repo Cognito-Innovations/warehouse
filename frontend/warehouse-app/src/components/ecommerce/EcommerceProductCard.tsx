@@ -8,7 +8,6 @@ import {
   Typography,
   Box,
   Chip,
-  IconButton,
   Button,
   useTheme,
 } from "@mui/material";
@@ -168,7 +167,7 @@ export default function EcommerceProductCard({
             // minHeight: { xs: 19.2, sm: "auto" },
           }}
         >
-          {product.name}
+          {product.name || ""}
         </Typography>
         <Typography
           variant="caption"
@@ -207,7 +206,9 @@ export default function EcommerceProductCard({
             >
               {formattedOriginal}
             </Typography>
-            {/* {discountPercent > 0 && (
+            {/* 
+            TODO P0: Revert these discount changes and discount should work
+            {discountPercent > 0 && (
               <Typography
                 variant="caption"
                 sx={{

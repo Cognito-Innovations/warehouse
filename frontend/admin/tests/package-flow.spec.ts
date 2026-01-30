@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 //  BEFORE RUNNING THIS TEST:
-//  1. Replace the reference tracking number: Search and update: 111234512359
+//  1. Replace the reference tracking number: Search and update: 111234512351239
 //  2. Replace the tracking number: Search and update: S20251558IN
 //  3. Replace the shipment number wherever used: Search and update: S20251558IN
 
@@ -42,7 +42,7 @@ test('End-to-end workflow: register package, add items, upload documents, raise 
   await page.getByRole('combobox').nth(1).click();
   await expect(page.getByRole('option', { name: 'bin in' })).toBeVisible();
   await page.getByRole('option', { name: 'bin in' }).click();
-  await page.getByRole('textbox', { name: 'Reference Tracking' }).fill('111234512359');
+  await page.getByRole('textbox', { name: 'Reference Tracking' }).fill('111234512351239');
   await page.getByRole('combobox').nth(2).click();
   await expect(page.getByRole('option', { name: 'amazon, India' })).toBeVisible();
   await page.getByRole('option', { name: 'amazon, India' }).click();
@@ -51,9 +51,9 @@ test('End-to-end workflow: register package, add items, upload documents, raise 
   await page.getByRole('button', { name: 'Register' }).click();
   
   await page.waitForLoadState('networkidle');
-  await expect(page.getByText('111234512359')).toBeVisible({ timeout: 60000 });
+  await expect(page.getByText('111234512351239')).toBeVisible({ timeout: 60000 });
 
-  await page.locator('tr:has-text("111234512359")').locator('.MuiIconButton-root').first().click();
+  await page.locator('tr:has-text("111234512351239")').locator('.MuiIconButton-root').first().click();
   await page.waitForLoadState('networkidle');
 
   await page.getByRole('button', { name: 'Add Item' }).click({ timeout: 60000 });

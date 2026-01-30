@@ -61,7 +61,7 @@ export const useCartStore = create<CartStore>()(
       cartProductQuantityCount: () =>
         get().cartProducts.reduce((sum, item) => sum + item.quantity, 0),
 
-      getItemQuantity: (productId: string) => {
+      getProductQuantity: (productId: string) => {
         const item = get().cartProducts.find((item) => item.product_id === productId);
         return item?.quantity || 0;
       },
@@ -564,7 +564,7 @@ export const useCartStore = create<CartStore>()(
       incrementCartQuantity: async (product: EcommerceProduct, currency?: string, countryCode?: string) => {
         // Increments the quantity of a product in the cart by 1 but only if the current quantity is below the available stock
         const state = get();
-        const currentQuantity = state.getItemQuantity(product.id);
+        const currentQuantity = state.getProductQuantity(product.id);
         if (currentQuantity >= product.stock_quantity) {
           return;
         }
@@ -574,7 +574,7 @@ export const useCartStore = create<CartStore>()(
       decrementCartQuantity: async (product: EcommerceProduct, currency?: string, countryCode?: string) => {
         // Decrements the quantity of a product in the cart by 1 but only if the current quantity is greater than 0
         const state = get();
-        const currentQuantity = state.getItemQuantity(product.id);
+        const currentQuantity = state.getProductQuantity(product.id);
         if (currentQuantity <= 0) {
           return;
         }

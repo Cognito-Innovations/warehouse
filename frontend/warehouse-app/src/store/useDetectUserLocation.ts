@@ -16,25 +16,27 @@ export const useDetectUserLocation = create<any>((set) => {
       const countryWithCurrencyDetails = destructUserPreferenceData(preferenceData)
       set({...countryWithCurrencyDetails, isLoaded: true});
     }
-    else if (localStorage.getItem(GUEST_LOCATION_STORAGE_KEY)) {
-      const data = getDataFromLocalStorage(GUEST_LOCATION_STORAGE_KEY);
-      const countryWithCurrencyDetails = destructLocationData(data)
-      set({...countryWithCurrencyDetails, isLoaded: true});
-    }
-    else{
-      const {countryCode, currencyInfo} = await fetchCurrencyAndCodeByIp()
-      setDataInLocalStorage(GUEST_LOCATION_STORAGE_KEY, {
-        countryCode,
-        currencyInfo,
-      });
+    else {
+      const guestData = getDataFromLocalStorage(GUEST_LOCATION_STORAGE_KEY);
+      if (guestData) {
+        const countryWithCurrencyDetails = destructLocationData(guestData)
+        set({...countryWithCurrencyDetails, isLoaded: true});
+      }
+      else {
+        const {countryCode, currencyInfo} = await fetchCurrencyAndCodeByIp()
+        setDataInLocalStorage(GUEST_LOCATION_STORAGE_KEY, {
+          countryCode,
+          currencyInfo,
+        });
 
-      set({
-        countryCode,
-        currencyCode: currencyInfo.code,
-        currencySymbol: currencyInfo.symbol,
-        currencyRate: currencyInfo.rate,
-        isLoaded: true,
-      });
+        set({
+          countryCode,
+          currencyCode: currencyInfo.code,
+          currencySymbol: currencyInfo.symbol,
+          currencyRate: currencyInfo.rate,
+          isLoaded: true,
+        });
+      }
     }
   }
 
