@@ -39,7 +39,6 @@ interface CurrencySelectionViewProps {
 export default function CurrencySelectionView({ onBack, showBackButton }: CurrencySelectionViewProps) {
     const { currencyCode } = useDetectUserLocation();
     const { user } = useAuth();
-    const refreshLocation = useDetectUserLocation((s) => s.refreshLocation);
     const fetchProducts = useProductStore(s => s.fetchProducts);
 
     const [searchTerm, setSearchTerm] = useState("");
@@ -112,8 +111,6 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                     user_id: user.id,
                     currency_id: currency.id
                 });
-                await refreshLocation(user.id);
-
                 const state = useDetectUserLocation.getState();
                 fetchProducts({
                   currency: state.currencyCode,

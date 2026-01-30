@@ -26,7 +26,7 @@ export default function AddressSection({
   onAddressFetchComplete,
   initialAddress,
 }: AddressSectionProps) {
-  const refreshLocation = useDetectUserLocation((s) => s.refreshLocation);
+
   const getCart = useCartStore(s => s.getCart);
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(initialAddress || null);
@@ -115,7 +115,7 @@ export default function AddressSection({
         currency: addressData.currency,
       };
       const newAddress = await createUserAddress(apiData);
-      await refreshLocation(userId);
+
       const { currencyCode, countryCode } = useDetectUserLocation.getState();
       await getCart(currencyCode, countryCode);
       const formattedAddress: CartAddressData = {
@@ -146,7 +146,6 @@ export default function AddressSection({
         currency: addressData.currency,
       };
       await updateUserAddress(addressId, apiData);
-      await refreshLocation(userId);
       const { currencyCode, countryCode } = useDetectUserLocation.getState();
       await getCart(currencyCode, countryCode);
       const formattedAddress: CartAddressData = {

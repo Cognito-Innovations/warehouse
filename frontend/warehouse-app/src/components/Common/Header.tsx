@@ -41,7 +41,7 @@ export default function Header({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, logout } = useAuth();
-  const { countryCode, refreshLocation } = useDetectUserLocation();
+  const { countryCode, fetchLocationBasedOnUser } = useDetectUserLocation();
   const { searchQuery, setSearchQuery } = useProductStore();
   const { loading: cartLoading, cartProductQuantityCount } = useCartStore();
   
@@ -86,15 +86,8 @@ export default function Header({
   const [countryName, setCountryName] = useState<string>("");
 
   useEffect(() => {
-    const syncLocation = async () => {
-      if (user?.id) {
-        await refreshLocation(user.id);
-      } else {
-        await refreshLocation(undefined); 
-      }
-    };
-    syncLocation();
-  }, [user?.id, refreshLocation]);
+    fetchLocationBasedOnUser(user.id)
+  }, [user?.id]);
 
   useEffect(() => {
     if (user?.id){

@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, ReactNode, useMemo } from "react";
 import { signOut } from "next-auth/react";
-import { useLocationSync } from "@/hooks/useLocationSync";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 
 interface User {
   id: string;
@@ -54,6 +54,7 @@ const defaultUser: User = {
 };
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session }) => {
+  const { fetchLocationBasedOnUser } = useDetectUserLocation();
   const user: User | {} = useMemo(() => {
     if (session?.user) {
       return {
@@ -76,7 +77,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session })
   const token = session ? (session as any).access_token || null : null;
   const isAuthenticated = !!(session?.user && ((session.user as any).user_id || session.user.email));
 
-  useLocationSync(isAuthenticated, (user as User).id);
+  fetchLocationBasedOnUser((user as User).id);
 
   const logout = () => {
     signOut({ callbackUrl: "/" });

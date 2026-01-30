@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { DEFAULT_CURRENCY_INFO, DEFAULT_LOCATION, GUEST_LOCATION_STORAGE_KEY } from "@/utils/constants";
-import { getDataFromLocalStorage, setDataInLocalStorage } from "@/utils/localStorageUtils";
+import { clearDataFromLocalStorage, getDataFromLocalStorage, setDataInLocalStorage } from "@/utils/localStorageUtils";
 import { getUserPreferences } from "@/lib/api.service";
 import { destructLocationData, destructUserPreferenceData } from "@/utils/preferences.utils";
 import { fetchCurrencyAndCodeByIp } from "@/utils/getUserCountry";
@@ -11,6 +11,7 @@ export const useDetectUserLocation = create<any>((set) => {
 
   const fetchLocationBasedOnUser = async(userId?: string) => {
     if (userId) {
+      clearDataFromLocalStorage(GUEST_LOCATION_STORAGE_KEY)
       const preferenceData = await getUserPreferences(userId);
       const countryWithCurrencyDetails = destructUserPreferenceData(preferenceData)
       set({...countryWithCurrencyDetails, isLoaded: true});
