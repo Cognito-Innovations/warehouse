@@ -64,19 +64,14 @@ const PickupRequests: React.FC = () => {
 
   const columns: ColumnDefinition<typeof mappedRows[0]>[] = [
     {
-      header: 'Request No.',
-      cell: (row) => <Typography variant="body2" fontWeight={500}>{row.id}</Typography>,
-      width: '25%',
-    },
-    {
       header: 'Date',
       cell: (row) => <Typography variant="body2">{(row.date)}</Typography>,
-      width: '20%',
+      width: '15%',
     },
     {
       header: 'Customer',
       cell: (row) => <Typography variant="body2">{row.user}</Typography>,
-      width: '25%',
+      width: '20%',
     },
     {
       header: 'Pickup Location',
@@ -94,17 +89,17 @@ const PickupRequests: React.FC = () => {
             {row.pickupLocation}
           </Typography>
       ),
-      width: '30%',
+      width: '25%',
     },
     {
       header: 'Supplier',
       cell: (row) => <Typography variant="body2">{row.supplier}</Typography>,
-      width: '20%',
+      width: '15%',
     },
     {
       header: 'Status',
       cell: (row) => <StatusChip status={row.status} />,
-      width: '20%',
+      width: '15%',
     },
   ];
   

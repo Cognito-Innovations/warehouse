@@ -8,6 +8,8 @@ import {
   AddToCartRequest,
   UpdateCartItemRequest,
   CreateOrderRequest,
+  DeliveryOption,
+  ComputedCart,
 } from "../types/ecommerce";
 import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
 import { getAuthTokenWithFallback } from "@/utils/getAuthToken";
@@ -35,40 +37,72 @@ api.interceptors.request.use(async (config) => {
 export const ecommerceService = {
   // Categories
   async getCategories(countryCode?: string): Promise<EcommerceCategory[]> {
-    const params: any = {};
-    if (countryCode) {
-      params.countryCode = countryCode;
+    try {
+      const params: any = {};
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.get("/ecommerce-categories", { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get categories!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get categories:', error);
+      return [];
     }
-    const response = await api.get("/ecommerce-categories", { params });
-    return response.data;
   },
 
   async getCategory(id: string, countryCode?: string): Promise<EcommerceCategory> {
-    const params: any = {};
-    if (countryCode) {
-      params.countryCode = countryCode;
+    try {
+      const params: any = {};
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.get(`/ecommerce-categories/${id}`, { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get category!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get category with ${id}:`, error);
+      throw error;
     }
-    const response = await api.get(`/ecommerce-categories/${id}`, { params });
-    return response.data;
   },
 
   // Sub Categories
   async getSubCategories(countryCode?: string): Promise<EcommerceSubCategory[]> {
-    const params: any = {};
-    if (countryCode) {
-      params.countryCode = countryCode;
+    try {
+      const params: any = {};
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.get("/ecommerce-sub-categories", { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get sub-categories!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get sub-categories:', error);
+      return [];
     }
-    const response = await api.get("/ecommerce-sub-categories", { params });
-    return response.data;
   },
 
   async getSubCategory(id: string, countryCode?: string): Promise<EcommerceSubCategory> {
-    const params: any = {};
-    if (countryCode) {
-      params.countryCode = countryCode;
+    try {
+      const params: any = {};
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.get(`/ecommerce-sub-categories/${id}`, { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get sub-category!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get sub-category with ${id}:`, error);
+      throw error;
     }
-    const response = await api.get(`/ecommerce-sub-categories/${id}`, { params });
-    return response.data;
   },
 
   // Products
@@ -80,42 +114,58 @@ export const ecommerceService = {
     userId?: string,
     countryCode?: string
   ): Promise<EcommerceProduct[]> {
-    const params: any = {};
-    if (currency) {
-      params.currency = currency;
-    }
-    if (category) {
-      params.category = category;
-    }
-    if (limit !== undefined) {
-      params.limit = limit;
-    }
-    if (offset !== undefined) {
-      params.offset = offset;
-    }
-    if (userId) {
-      params.user_id = userId;
-    }
-    if (countryCode) {
-      params.countryCode = countryCode;
-    }
-    const response = await api.get("/ecommerce-products", { params });
-    return response.data;
+    try {
+      const params: any = {};
+      if (currency) {
+        params.currency = currency;
+      }
+      if (category) {
+        params.category = category;
+      }
+      if (limit !== undefined) {
+        params.limit = limit;
+      }
+      if (offset !== undefined) {
+        params.offset = offset;
+      }
+      if (userId) {
+        params.user_id = userId;
+      }
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.get("/ecommerce-products", { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get products!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get products:', error);
+      return [];
+    }  
   },
 
   async getProduct(slug: string, currency?: string, userId?: string, countryCode?: string): Promise<EcommerceProduct> {
-    const params: any = {};
-    if (currency) {
-      params.currency = currency;
-    }
-    if (userId) {
-      params.user_id = userId;
-    }
-    if (countryCode) {
-      params.countryCode = countryCode;
-    }
-    const response = await api.get(`/ecommerce-products/${slug}`, { params });
-    return response.data;
+    try {
+      const params: any = {};
+      if (currency) {
+        params.currency = currency;
+      }
+      if (userId) {
+        params.user_id = userId;
+      }
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.get(`/ecommerce-products/${slug}`, { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get product!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get product with ${slug}:`, error);
+      throw error;
+    } 
   },
 
   async searchProducts(
@@ -126,110 +176,308 @@ export const ecommerceService = {
     limit?: number,
     offset?: number
   ): Promise<EcommerceProduct[]> {
-    const params: any = {
-      searchTerm: searchTerm,
-      currency,
-      user_id: userId,
-      countryCode,
-      limit,
-      offset,
-    };
+    try {
+      const params: any = {
+        searchTerm: searchTerm,
+        currency,
+        user_id: userId,
+        countryCode,
+        limit,
+        offset,
+      };
 
-    const response = await api.get("/ecommerce-products/search", { params });
-    return response.data;
+      const response = await api.get("/ecommerce-products/search", { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to search product!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to search product with ${searchTerm}:`, error);
+      throw error;
+    } 
   },
 
   // Cart
-  async getCart(currency?: string): Promise<Cart> {
-    let params: any = {};
-    if (currency) {
-      params.currency = currency;
-    }
-    const response = await api.get("/ecommerce-cart", { params });
-    return response.data;
+  async getCart(currency?: string, countryCode?: string): Promise<Cart> {
+    try {
+      let params: any = {};
+      if (currency) {
+        params.currency = currency;
+      }
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.get("/ecommerce-cart", { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to fetch the cart!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch the cart:', error);
+      throw error;
+    } 
   },
 
-  async addToCart(data: AddToCartRequest, currency?: string): Promise<Cart> {
-    let params: any = {};
-    if (currency) {
-      params.currency = currency;
-    }
-    const response = await api.post("/ecommerce-cart/add", data, { params });
-    return response.data;
+  async addToCart(data: AddToCartRequest, currency?: string, countryCode?: string): Promise<Cart> {
+    try {
+      let params: any = {};
+      if (currency) {
+        params.currency = currency;
+      }
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.post("/ecommerce-cart/add", data, { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to add to cart!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      throw error;
+    } 
   },
 
-  async updateCartItem(itemId: string, data: UpdateCartItemRequest, currency?: string): Promise<Cart> {
-    let params: any = {};
-    if (currency) {
-      params.currency = currency;
-    }
-    const response = await api.put(`/ecommerce-cart/items/${itemId}`, data, { params });
-    return response.data;
+  async updateCartItem(itemId: string, data: UpdateCartItemRequest, currency?: string, countryCode?: string): Promise<Cart> {
+    try {
+      let params: any = {};
+      if (currency) {
+        params.currency = currency;
+      }
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.put(`/ecommerce-cart/items/${itemId}`, data, { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to update the cart item!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update the cart item with ${itemId}:`, error);
+      throw error;
+    }  
   },
 
-  async removeFromCart(itemId: string, currency?: string): Promise<Cart> {
-    let params: any = {};
-    if (currency) {
-      params.currency = currency;
-    }
-    const response = await api.delete(`/ecommerce-cart/items/${itemId}`, {params});
-    return response.data;
+  async removeFromCart(itemId: string, currency?: string, countryCode?: string): Promise<Cart> {
+    try {
+      let params: any = {};
+      if (currency) {
+        params.currency = currency;
+      }
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.delete(`/ecommerce-cart/items/${itemId}`, {params});
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to remove the cart item!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to remove the cart item with ${itemId}:`, error);
+      throw error;
+    }  
   },
 
   async clearCart(): Promise<void> {
-    await api.delete("/ecommerce-cart/clear");
+    try {
+      const response = await api.delete("/ecommerce-cart/clear");
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to clear the cart!');
+      }
+    } catch (error) {
+      console.error('Failed to clear the cart:', error);
+      throw error;
+    }
   },
 
+  async getDeliveryRates(countryCode?: string, currencyCode?: string): Promise<any[]> {
+    try {
+      const params: any = {};
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      if (currencyCode) {
+        params.currencyCode = currencyCode;
+      }
+      const response = await api.get("/ecommerce-cart/delivery-rates", { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get delivery rates!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get delivery rates:', error);
+      throw error;
+    }
+  },
+
+  async selectDeliveryOption(option: DeliveryOption, currencyCode: string): Promise<void> {
+    try {
+      const params: any = {};
+      if (currencyCode) {
+        params.currencyCode = currencyCode;
+      }
+      const response = await api.post('/ecommerce-cart/select-delivery-option', { delivery_option: option }, { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to store delivery option!');
+      }
+    } catch (error) {
+      console.error('Failed to store delivery option:', error);
+      throw error;
+    }
+  },
+
+  async postCheckout(
+    currency?: string, 
+    countryCode?: string, 
+    productIds?: string[]
+  ): Promise<ComputedCart> {
+    try {
+      const response = await api.post('/ecommerce-cart/checkout', {
+        currency,
+        countryCode,
+        productIds,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to post checkout data:', error);
+      throw error;
+    }  
+  },
+  
   // Orders
-  async initiateOrder(orderData: any): Promise<any> {
-    const response = await api.post("/ecommerce-orders/initiate", orderData);
-    return response.data;
+  async initiateOrder(orderData: any, countryCode?: string): Promise<any> {
+    try {
+      let params: any = {};
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.post("/ecommerce-orders/initiate", orderData, { params });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to initiate order!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to initiate order:', error);
+      throw error;
+    }  
   },
 
   async captureOrder(orderId: string, paypalOrderId: string): Promise<any> {
-    const response = await api.post(`/ecommerce-orders/${orderId}/capture`,
-      { orderID: paypalOrderId }
-    );
-    return response.data;
+    try {
+      const response = await api.post(`/ecommerce-orders/${orderId}/capture`,
+        { orderID: paypalOrderId }
+      );
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to capture order!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to capture order:', error);
+      throw error;
+    }  
   },
   
   async createOrder(data: CreateOrderRequest): Promise<Order> {
-    const response = await api.post("/ecommerce-orders", data);
-    return response.data;
+    try{
+      const response = await api.post("/ecommerce-orders", data);
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to create order!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      throw error;
+    } 
   },
 
   async getOrders(): Promise<Order[]> {
-    const response = await api.get("/ecommerce-orders");
-    return response.data;
+    try {
+      const response = await api.get("/ecommerce-orders");
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get orders!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get orders:', error);
+      throw error;
+    } 
   },
 
   async getOrder(id: string): Promise<Order> {
-    const response = await api.get(`/ecommerce-orders/${id}`);
-    return response.data;
+    try {
+      const response = await api.get(`/ecommerce-orders/${id}`);
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get order!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get order with ${id}:`, error);
+      throw error;
+    } 
   },
 
   async getOrderByNumber(orderNumber: string): Promise<Order> {
-    const response = await api.get(`/ecommerce-orders/order-number/${orderNumber}`);
-    return response.data;
+    try {
+      const response = await api.get(`/ecommerce-orders/order-number/${orderNumber}`);
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get order by order number!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get order by ${orderNumber}:`, error);
+      throw error;
+    } 
   },
 
   async updateOrderStatus(id: string, status: string): Promise<Order> {
-    const response = await api.put(`/ecommerce-orders/${id}/status`, { status });
-    return response.data;
+    try {
+      const response = await api.put(`/ecommerce-orders/${id}/status`, { status });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to update order status!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update order status of ${id}:`, error);
+      throw error;
+    } 
   },
 
   async updatePaymentStatus(id: string): Promise<Order> {
-    const response = await api.put(`/ecommerce-orders/${id}/payment-status`);
-    return response.data;
+    try {
+      const response = await api.put(`/ecommerce-orders/${id}/payment-status`);
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to update payment status!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update payment status of ${id}:`, error);
+      throw error;
+    } 
   },
 
   async cancelOrder(id: string): Promise<Order> {
-    const response = await api.put(`/ecommerce-orders/${id}/cancel`);
-    return response.data;
+    try {
+      const response = await api.put(`/ecommerce-orders/${id}/cancel`);
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to cancel order!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to cancel order of ${id}:`, error);
+      throw error;
+    } 
   },
 
   async getCurrencyByCode(code: string) {
-    const response = await api.get(`/currencies/by-code/${code}`);
-    return response.data;
+    try {
+      const response = await api.get(`/currencies/by-code/${code}`);
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to get currency by code!');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get currency by ${code}:`, error);
+      throw error;
+    } 
   },
 };

@@ -3,7 +3,6 @@ import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.
 import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Country, CountryCode } from 'src/Countries/country.entity.js';
 import { CreateEcommerceSubCategoryDto } from '../dto/sub_category/create-sub_category.dto.js';
 import { UpdateEcommerceSubCategoryDto } from '../dto/sub_category/update-sub_category.dto.js';
 

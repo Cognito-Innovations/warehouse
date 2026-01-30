@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { Add, Remove } from "@mui/icons-material";
 import { useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { EcommerceProduct } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";
@@ -28,7 +28,7 @@ export default function ProductCartActions({
 }: ProductCartActionsProps) {
     const router = useRouter();
     const { incrementCartQuantity, decrementCartQuantity, getItemQuantity, updatingProducts } = useCartStore();
-    const { currencyCode } = useDetectUserLocation();
+    const { currencyCode, countryCode } = useDetectUserLocation();
 
     const cartQuantity = getItemQuantity(product.id);
     const isUpdating = updatingProducts[product.id] || false;
@@ -41,8 +41,8 @@ export default function ProductCartActions({
     }, [router]);
 
     const handleAddToCartClick = useCallback(() => {
-        incrementCartQuantity(product, currencyCode);
-    }, [product, currencyCode, incrementCartQuantity]);
+        incrementCartQuantity(product, currencyCode, countryCode);
+    }, [product, currencyCode, countryCode, incrementCartQuantity]);
 
     return (
         <React.Fragment>
@@ -58,7 +58,7 @@ export default function ProductCartActions({
                         }}
                     >
                         <IconButton
-                            onClick={() => decrementCartQuantity(product, currencyCode)}
+                            onClick={() => decrementCartQuantity(product, currencyCode, countryCode)}
                             disabled={cartQuantity <= 0 || isUpdating}
                             sx={{
                                 border: "1px solid",
@@ -93,7 +93,7 @@ export default function ProductCartActions({
                             {cartQuantity}
                         </Typography>
                         <IconButton
-                            onClick={() => incrementCartQuantity(product, currencyCode)}
+                            onClick={() => incrementCartQuantity(product, currencyCode, countryCode)}
                             disabled={isOutOfStock || cartQuantity >= stockQuantity || isUpdating}
                             sx={{
                                 border: "1px solid",

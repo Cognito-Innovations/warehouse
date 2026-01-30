@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -74,8 +75,10 @@ export class PickupRequestsController {
     description: 'List of all pickup requests',
     type: [PickupRequestResponseDto],
   })
-  async findAll(): Promise<PickupRequestResponseDto[]> {
-    return this.pickupRequestsService.getAllPickupRequests();
+  async findAll(
+    @Query('country_id') countryId?: string,
+  ): Promise<PickupRequestResponseDto[]> {
+    return this.pickupRequestsService.getAllPickupRequests(countryId);
   }
 
   @Get(':userId')

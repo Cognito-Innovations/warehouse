@@ -4,20 +4,20 @@ import { DeliveryDining } from "@mui/icons-material";
 
 interface OrderTotalsProps {
   subtotal: number;
-  discount: number;
+  // discount: number;
   deliveryFee: number;
-  taxes: number;
-  serviceCharge: number;
+  // taxes: number;
+  // serviceCharge: number;
   total: number;
   formatPrice: (amount: number) => string;
 }
 
 export const OrderTotals: React.FC<OrderTotalsProps> = ({
   subtotal,
-  discount,
+  // discount,
   deliveryFee,
-  taxes,
-  serviceCharge,
+  // taxes,
+  // serviceCharge,
   total,
   formatPrice,
 }) => {
@@ -42,7 +42,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
         </Typography>
       </Box>
 
-      {discount > 0 && (
+      {/* {discount > 0 && (
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
           <Typography
             variant="body1"
@@ -61,7 +61,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
             -{formatPrice(discount)}
           </Typography>
         </Box>
-      )}
+      )} */}
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Typography
@@ -85,7 +85,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
         </Stack>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+      {/* <Box sx={{ display: "flex", justifyContent: "space-between" }}>
         <Typography
           variant="body1"
           fontWeight={500}
@@ -102,9 +102,9 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
         >
           {formatPrice(taxes)}
         </Typography>
-      </Box>
+      </Box> */}
 
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+      {/* <Box sx={{ display: "flex", justifyContent: "space-between" }}>
         <Typography
           variant="body1"
           fontWeight={500}
@@ -121,7 +121,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
         >
           {formatPrice(serviceCharge)}
         </Typography>
-      </Box>
+      </Box> */}
 
       <Divider sx={{ my: { xs: 1, md: 1.5 } }} />
 
@@ -130,7 +130,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
           variant="h5"
           fontWeight={700}
           color="text.primary"
-          sx={{ fontSize: { xs: "1.125rem", md: "1.5rem" } }}
+          sx={{ fontSize: { xs: "0.9rem", md: "1.1rem" } }}
         >
           Total
         </Typography>
@@ -138,7 +138,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
           variant="h5"
           fontWeight={700}
           color="primary.main"
-          sx={{ fontSize: { xs: "1.25rem", md: "1.75rem" } }}
+          sx={{ fontSize: { xs: "0.9rem", md: "1.1rem" } }}
         >
           {formatPrice(total)}
         </Typography>

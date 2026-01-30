@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { setCookie, getCookie, removeCookie, hasCookie } from '../utils/cookieUtils';
+import type { UserRole } from '../data/menuItems';
 
 const API_BASE_URL = import.meta.env?.VITE_BACKEND_URL || 'http://localhost:3001';
 
@@ -12,28 +13,37 @@ const authApi = axios.create({
   withCredentials: true,
 });
 
+export interface AuthUserResponse {
+  id: string;
+  email: string;
+  name?: string;
+  role: UserRole;
+  suite_no?: string;
+  country?: string;
+  preference?: {
+    courier?: {
+      country?: {
+        id: string;
+        name: string;
+        code: string;
+      };
+    };
+  };
+}
+
 export interface LoginResponse {
   access_token: string;
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-    role: string;
-    suite_no?: string;
-    country?: string;
-  }
+  user: AuthUserResponse;
 }
 
 export interface RegisterResponse {
   access_token: string;
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-    role: string;
-    suite_no?: string;
-    country?: string;
-  };
+  user: AuthUserResponse;
+}
+
+export interface StoredAuthData {
+  access_token: string;
+  user: AuthUserResponse;
 }
 
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
@@ -75,10 +85,10 @@ export const logout = async (): Promise<void> => {
   }
 };
 
-export const getStoredUser = (): any | null => {
+export const getStoredUser = (): StoredAuthData | null => {
   const userStr = getCookie('user_data');
   try {
-    return userStr ? JSON.parse(userStr) : null;
+    return userStr ? (JSON.parse(userStr) as StoredAuthData) : null;
   } catch (error) {
     console.error('Error parsing user data from cookie:', error);
     return null;

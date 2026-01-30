@@ -11,7 +11,7 @@ interface SignInFormProps {
 }
 
 export default function SignInForm({ callbackUrl }: SignInFormProps) {
-  const { loading: authLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,28 +27,26 @@ export default function SignInForm({ callbackUrl }: SignInFormProps) {
         redirect: false
       });
       
-      if (result?.url) {
-        // Force a page reload to ensure session is properly set
-        window.location.href = result.url;
+      if (result?.ok) {
+        // Sign-in successful, reload to get fresh session from server
+        window.location.href = redirectTo;
       } else if (result?.error) {
         console.error("Google sign-in error:", result.error);
         setError("Google sign-in failed. Please try again.");
+        setLoading(false);
+      } else if (result?.url) {
+        window.location.href = result.url;
       }
     } catch (error) {
       console.error("Google sign-in error:", error);
       setError("Google sign-in failed. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
 
-  // Show loading while checking authentication status
-  if (authLoading) {
-    return (
-      <Box sx={{ textAlign: "center", py: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+  // Don't show form if already authenticated
+  if (isAuthenticated) {
+    return null;
   }
 
   return (

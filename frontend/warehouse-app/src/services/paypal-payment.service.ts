@@ -60,7 +60,8 @@ function loadPayPalScript(currency: string): Promise<any> {
 
 export async function launchPayPalPayment(
   paymentConfig: PayPalConfig,
-  onSuccess: () => void,
+  onProcessing: () => void,
+  onSuccess: () => void | Promise<void>,
   onFailure: (failData: any) => void
 ): Promise<any> {
   try {
@@ -90,9 +91,16 @@ export async function launchPayPalPayment(
       createOrder: () => Promise.resolve(paymentConfig.paypalOrderId),
       onApprove: async (data: { orderID: string }) => {
         try {
+          onProcessing(); 
           await ecommerceService.captureOrder(paymentConfig.orderId, data.orderID);
           toast.success("Payment completed successfully!");
-          onSuccess();
+          
+          await onSuccess();
+
+          // Redirect to orders page after successful payment
+          if (typeof window !== "undefined") {
+            window.location.href = "/ecommerce/orders";
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : "Payment capture failed";
           toast.error(message);

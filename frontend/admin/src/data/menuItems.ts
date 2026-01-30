@@ -70,7 +70,12 @@ export const menuItems: MenuItem[] = [
     ],
   },
   { text: 'My Suite', icon: SuiteIcon, path: '/suite' },
-  { text: 'Customers', icon: CustomersIcon, path: '/customers' },
+  {
+    text: 'Customers',
+    icon: CustomersIcon,
+    path: '/customers',
+    roles: ['super_admin'],
+  },
   {
     text: 'Settings',
     icon: SettingsIcon,
@@ -80,6 +85,7 @@ export const menuItems: MenuItem[] = [
         { text: 'Countries', icon: CountriesIcon, path: '/settings/countries' },
         { text: 'Currencies', icon: CurrenciesIcon, path: '/settings/currencies' },
         { text: 'Couriers', icon: CouriersIcon, path: '/settings/couriers' },
+        { text: 'Users', icon: CustomersIcon, path: '/settings/users' },
     ],
   },
 ];

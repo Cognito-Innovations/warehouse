@@ -11,11 +11,12 @@ interface PayPalConfig {
 }
 
 interface UsePayPalPaymentOptions {
+  onProcessing?: () => void;
   onSuccess?: () => void;
   onFailure?: (reason: string) => void;
 }
 
-export const usePayPalPayment = ({ onSuccess, onFailure }: UsePayPalPaymentOptions = {}) => {
+export const usePayPalPayment = ({ onProcessing, onSuccess, onFailure }: UsePayPalPaymentOptions = {}) => {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPayPal, setShowPayPal] = useState(false);
@@ -45,14 +46,25 @@ export const usePayPalPayment = ({ onSuccess, onFailure }: UsePayPalPaymentOptio
     };
   }, [showPayPal, paypalConfig]);
 
-  const handleSuccess = useCallback(async () => {
+  const handleProcessing = useCallback(() => {
     if (!isMountedRef.current) return;
+    onProcessing?.();
+  }, [onProcessing]);
+
+  const handleSuccess = useCallback(async () => {
+    if (!isMountedRef.current) {
+      return;
+    }
     try {
       setShowPayPal(false);
       setPaypalConfig(null);
-      onSuccess?.();
+      if (onSuccess) {
+        await onSuccess();
+      } else {
+        console.log('[usePayPalPayment] No onSuccess callback provided');
+      }
     } catch (error) {
-      console.error("Success handler error:", error);
+      console.error("[usePayPalPayment] Success handler error:", error);
       toast.error("Order update error");
     }
   }, [onSuccess]);
@@ -60,7 +72,9 @@ export const usePayPalPayment = ({ onSuccess, onFailure }: UsePayPalPaymentOptio
   const handleFailure = useCallback((reason: string) => {
     if (!isMountedRef.current) return;
     console.error("Payment Failed:", reason);
-    toast.error(reason || "Payment cancelled");
+    if (reason !== "cancelled") {
+      toast.error(reason || "Payment cancelled");
+    }
     setShowPayPal(false);
     setPaypalConfig(null);
     if (reason !== "cancelled") {
@@ -84,7 +98,15 @@ export const usePayPalPayment = ({ onSuccess, onFailure }: UsePayPalPaymentOptio
       paypalConfig,
       () => {
         if (!isCancelled && isMountedRef.current) {
-          handleSuccess();
+          handleProcessing();
+        }
+      },
+      async () => {
+        console.log('[usePayPalPayment] Success callback invoked, isCancelled:', isCancelled, 'isMounted:', isMountedRef.current);
+        if (!isCancelled && isMountedRef.current) {
+          await handleSuccess();
+        } else {
+          console.log('[usePayPalPayment] Success callback skipped due to cancellation or unmount');
         }
       },
       (failData: any) => {
@@ -108,7 +130,7 @@ export const usePayPalPayment = ({ onSuccess, onFailure }: UsePayPalPaymentOptio
     return () => {
       isCancelled = true;
     };
-  }, [showPayPal, paypalConfig, handleSuccess, handleFailure]);
+  }, [showPayPal, paypalConfig, handleProcessing, handleSuccess, handleFailure]);
 
   const initializePayment = useCallback((config: PayPalConfig) => {
     if (!isMountedRef.current) return;

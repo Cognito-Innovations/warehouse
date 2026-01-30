@@ -4,7 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager } from 'typeorm';
+import {
+  Repository,
+  DataSource,
+  EntityManager,
+  FindOptionsWhere,
+} from 'typeorm';
 import { Shipment, ShipmentStatus } from './shipment.entity';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { ShipmentResponseDto } from './dto/shipment-response.dto';
@@ -54,8 +59,17 @@ export class ShipmentsService {
     private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
-  async getShipmentsCountByStatus(status: ShipmentStatus): Promise<number> {
-    return this.shipmentRepository.count({ where: { status } });
+  async getShipmentsCountByStatus(
+    status: ShipmentStatus,
+    countryId?: string,
+  ): Promise<number> {
+    const where: FindOptionsWhere<Shipment> = { status };
+
+    if (countryId) {
+      where.country = { id: countryId };
+    }
+
+    return this.shipmentRepository.count({ where });
   }
 
   private async generateShipmentNo(
@@ -265,10 +279,17 @@ export class ShipmentsService {
     }
   }
 
-  async getAllShipments() {
+  async getAllShipments(countryId?: string) {
+    const where: FindOptionsWhere<Shipment> = {};
+
+    if (countryId) {
+      where.country = { id: countryId };
+    }
+
     const shipments = await this.shipmentRepository.find({
+      where: where,
       order: { created_at: 'DESC' },
-      relations: ['user', 'packages', 'packages.items'],
+      relations: ['user', 'packages', 'packages.items', 'country'],
     });
 
     const shipmentsWithInvoices = await Promise.all(
@@ -365,14 +386,25 @@ export class ShipmentsService {
     };
   }
 
-  async getShipmentsByStatus(status: string): Promise<ShipmentResponseDto[]> {
+  async getShipmentsByStatus(
+    status: string,
+    countryId?: string,
+  ): Promise<ShipmentResponseDto[]> {
     const enumStatus = ShipmentStatus[status as keyof typeof ShipmentStatus];
     if (!enumStatus) {
       throw new BadRequestException(`Invalid shipment status: ${status}`);
     }
 
+    const where: FindOptionsWhere<Shipment> = {
+      status: enumStatus,
+    };
+
+    if (countryId) {
+      where.country = { id: countryId };
+    }
+
     const shipments = await this.shipmentRepository.find({
-      where: { status: enumStatus },
+      where: where,
       relations: ['user', 'packages', 'country', 'pieces'],
       order: { created_at: 'DESC' },
     });
@@ -633,13 +665,18 @@ export class ShipmentsService {
   async findByShipmentNumberAndStatus(
     shipmentNumber: string,
     status: ShipmentStatus,
+    countryId?: string,
   ): Promise<ShipmentResponseDto> {
-    const shipment = await this.shipmentRepository.findOne({
-      where: {
-        shipment_no: shipmentNumber,
-        status: status,
-      },
-    });
+    const where: FindOptionsWhere<Shipment> = {
+      shipment_no: shipmentNumber,
+      status,
+    };
+
+    if (countryId) {
+      where.country = { id: countryId };
+    }
+
+    const shipment = await this.shipmentRepository.findOne({ where });
 
     if (!shipment) {
       throw new NotFoundException(

@@ -6,7 +6,7 @@ import { Add, Remove, Delete, LocationOn, Inventory } from "@mui/icons-material"
 import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { getOptimalImageSizing, handleImageLoad, ImageDimensions } from "@/utils/imageUtils";
@@ -64,8 +64,8 @@ export default function CartItemCard({
   const pricing = getCartItemPricingSummary(item, currencySymbol);
   const unitPrice = pricing.discountedUnitPrice;
   const totalPrice = pricing.lineTotal;
-  const originalPrice = pricing.originalUnitPrice;
-  const hasDiscount = pricing.discountPerUnit > 0;  
+  // const originalPrice = pricing.originalUnitPrice;
+  // const hasDiscount = pricing.discountPerUnit > 0;  
   const unitValue = item.product.unit_value || 0;
   const measurementLabel = item.product.measurement?.label || "";
   const placeholderImage = `https://placehold.co/160x160?text=${item.product.name}`;
@@ -184,7 +184,7 @@ export default function CartItemCard({
             >
               {item.product.name}
             </Typography>
-            {hasDiscount && (
+            {/* {hasDiscount && (
               <Chip
                 label={formatDiscountPercentage(item.product.discount_percentage, "OFF")}
                 size="small"
@@ -196,7 +196,7 @@ export default function CartItemCard({
                   height: 22,
                 }}
               />
-            )}
+            )} */}
             {/* Stock Status */}
             <Chip
               label={stockStatus}
@@ -236,107 +236,114 @@ export default function CartItemCard({
                 {item.product.category?.name || "N/A"}
               </Typography>
             </Box>
-
           </Stack>
 
-          <Stack direction="row" spacing={1.5} flexWrap="wrap" sx={{ mb: 1.5 }}>
-            {unitValue > 0 && measurementLabel && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <Inventory sx={{ fontSize: 14, color: "text.secondary" }} />
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ fontSize: "0.8rem" }}
-                >
-                  {unitValue} {measurementLabel}
-                </Typography>
-              </Box>
-            )}
-
-            {item.product.country?.name && (
-              <>
-                {unitValue > 0 && <Divider orientation="vertical" flexItem sx={{ height: 16, alignSelf: "center" }} />}
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 1,
+            mb: 1.5,
+            width: '100%'
+          }}>
+            {/* Unit & Country Info */}
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              {unitValue > 0 && measurementLabel && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <LocationOn sx={{ fontSize: 14, color: "text.secondary" }} />
+                  <Inventory sx={{ fontSize: 14, color: "text.secondary" }} />
                   <Typography
                     variant="caption"
                     color="text.secondary"
                     sx={{ fontSize: "0.8rem" }}
                   >
-                    {item.product.country.name}
+                    {unitValue} {measurementLabel}
                   </Typography>
                 </Box>
-              </>
-            )}
-          </Stack>
+              )}
 
-          {/* Quantity Selector */}
-          <Box
-            onClick={(e) => e.stopPropagation()}
-            sx={{ 
-              display: "flex", 
-              alignItems: "center", 
-              gap: 1.5, 
-              mb: 1,
-              width: { xs: "100%", sm: "auto" },
-              justifyContent: { xs: "center", sm: "flex-start" }
-            }}
-          >
-            <IconButton
-              size="small"
-              onClick={() => handleQuantityChange(effectiveId, item.quantity - 1)}
-              disabled={item.quantity <= 1}
-              sx={{
-                pointerEvents: item.quantity <= 1 ? "none" : "auto",
-                border: "1.5px solid",
-                borderColor: item.quantity <= 1 ? "action.disabled" : "grey.300",
-                bgcolor: "white",
-                borderRadius: "50%",
-                width: 32,
-                height: 32,
-                transition: "all 0.2s ease",
-                "&:hover:not(:disabled)": {
-                  bgcolor: "grey.50",
-                  borderColor: "primary.main",
-                  transform: "scale(1.1)",
-                },
+              {item.product.country?.name && (
+                <>
+                  {unitValue > 0 && <Divider orientation="vertical" flexItem sx={{ height: 16, alignSelf: "center" }} />}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <LocationOn sx={{ fontSize: 14, color: "text.secondary" }} />
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.8rem" }}
+                    >
+                      {item.product.country.name}
+                    </Typography>
+                  </Box>
+                </>
+              )}
+            </Stack>
+
+            {/* Quantity Selector */}
+            <Box
+              onClick={(e) => e.stopPropagation()}
+              sx={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: 1.5,
               }}
             >
-              <Remove sx={{ fontSize: 18 }} />
-            </IconButton>
-            <Typography
-              variant="body1"
-              fontWeight="bold"
-              sx={{
-                minWidth: 32,
-                textAlign: "center",
-                fontSize: "1rem",
-              }}
-            >
-              {item.quantity}
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={() => handleQuantityChange(effectiveId, item.quantity + 1)}
-              disabled={item.quantity >= item.product.stock_quantity}
-              sx={{
-                pointerEvents: item.quantity >= item.product.stock_quantity ? "none" : "auto",
-                border: "1.5px solid",
-                borderColor: item.quantity >= item.product.stock_quantity ? "action.disabled" : "grey.300",
-                bgcolor: "white",
-                borderRadius: "50%",
-                width: 32,
-                height: 32,
-                transition: "all 0.2s ease",
-                "&:hover:not(:disabled)": {
-                  bgcolor: "grey.50",
-                  borderColor: "primary.main",
-                  transform: "scale(1.1)",
-                },
-              }}
-            >
-              <Add sx={{ fontSize: 18 }} />
-            </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => handleQuantityChange(effectiveId, item.quantity - 1)}
+                disabled={item.quantity <= 1}
+                sx={{
+                  pointerEvents: item.quantity <= 1 ? "none" : "auto",
+                  border: "1.5px solid",
+                  borderColor: item.quantity <= 1 ? "action.disabled" : "grey.300",
+                  bgcolor: "white",
+                  borderRadius: "50%",
+                  width: 32,
+                  height: 32,
+                  transition: "all 0.2s ease",
+                  "&:hover:not(:disabled)": {
+                    bgcolor: "grey.50",
+                    borderColor: "primary.main",
+                    transform: "scale(1.1)",
+                  },
+                }}
+              >
+                <Remove sx={{ fontSize: 18 }} />
+              </IconButton>
+              <Typography
+                variant="body1"
+                fontWeight="bold"
+                sx={{
+                  minWidth: 20,
+                  textAlign: "center",
+                  fontSize: "1rem",
+                }}
+              >
+                {item.quantity}
+              </Typography>
+              <IconButton
+                size="small"
+                onClick={() => handleQuantityChange(effectiveId, item.quantity + 1)}
+                disabled={item.quantity >= item.product.stock_quantity}
+                sx={{
+                  pointerEvents: item.quantity >= item.product.stock_quantity ? "none" : "auto",
+                  border: "1.5px solid",
+                  borderColor: item.quantity >= item.product.stock_quantity ? "action.disabled" : "grey.300",
+                  bgcolor: "white",
+                  borderRadius: "50%",
+                  width: 32,
+                  height: 32,
+                  transition: "all 0.2s ease",
+                  "&:hover:not(:disabled)": {
+                    bgcolor: "grey.50",
+                    borderColor: "primary.main",
+                    transform: "scale(1.1)",
+                  },
+                }}
+              >
+                <Add sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Box>
           </Box>
         </Box>
 
@@ -351,7 +358,6 @@ export default function CartItemCard({
             flexShrink: 0,
             minWidth: { xs: "unset", sm: 120 },
             width: { xs: "100%", sm: "auto" },
-            mt: { xs: 2, sm: 0 },
           }}
         >
           <IconButton
@@ -383,7 +389,7 @@ export default function CartItemCard({
             width: "100%",
           }}>
             {/* Original Unit Price */}
-            {hasDiscount && (
+            {/* {hasDiscount && (
               <Typography
                 variant="caption"
                 sx={{
@@ -396,13 +402,13 @@ export default function CartItemCard({
               >
                 {formatLocalPrice(originalPrice)}/unit
               </Typography>
-            )}
+            )} */}
 
             {/* Discounted Unit Price */}
             <Typography
               variant="body2"
               sx={{
-                color: hasDiscount ? "primary.main" : "text.primary",
+                color: "text.primary",
                 fontSize: "0.875rem",
                 fontWeight: 500,
                 display: "block",

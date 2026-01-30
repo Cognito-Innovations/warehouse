@@ -41,7 +41,7 @@ interface OrdersTableProps {
   loading: boolean;
   statusOptions?: { value: string; label: string }[];
   noDataMessage: string;
-  onEdit?: (id: string | number) => void;
+  // onEdit?: (id: string | number) => void;
   getIdentifier: (row: OrderRow) => string | number;
   getRowStatus: (row: OrderRow) => string;
 }
@@ -52,7 +52,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
   loading,
   statusOptions,
   noDataMessage,
-  onEdit,
+  // onEdit,
   getIdentifier,
   getRowStatus,
 }) => {
@@ -133,7 +133,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
             <OrderCardMobile
               key={String(getIdentifier(row))}
               order={row}
-              onEdit={onEdit}
+              // onEdit={onEdit}
             />
           ))}
           <TablePagination
@@ -184,7 +184,8 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                       {column.header}
                     </TableCell>
                   ))}
-                  {onEdit && (
+                  {/* TODO: Uncomment Actions column when order edit functionality is enabled */}
+                  {/* {onEdit && (
                     <TableCell
                       align="center"
                       sx={{
@@ -201,7 +202,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                     >
                       Actions
                     </TableCell>
-                  )}
+                  )} */}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -209,7 +210,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({
                   <OrderTableRow
                     key={String(getIdentifier(row))}
                     order={row}
-                    onEdit={onEdit}
+                    // onEdit={onEdit}
                   />
                 ))}
               </TableBody>

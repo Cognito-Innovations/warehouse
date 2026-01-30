@@ -9,12 +9,14 @@ import {
   UseGuards,
   Request,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
-import { CartService } from '../services/ecommerce-cart.service';
+import { CartService, ComputedCart } from '../services/ecommerce-cart.service';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { ComputedCart } from '../entities/ecommerce-cart.entity';
+import { DeliveryOption } from 'src/shared/get-delivery-fee.service';
+import { CheckoutDto } from '../dto/cart/checkout.dto';
 
 interface AuthenticatedRequest {
   user: {
@@ -31,12 +33,13 @@ export class CartController {
   async getCart(
     @Request() req: AuthenticatedRequest,
     @Query('currency') currency?: string,
+    @Query('countryCode') countryCode?: string,
   ) {
     const userId = req.user?.id;
     if (!userId) {
       return { items: [], final_amount: 0 };
     }
-    return this.cartService.getCart(userId, currency);
+    return this.cartService.getCart(userId, currency, countryCode);
   }
 
   @Post('add')
@@ -44,8 +47,28 @@ export class CartController {
     @Request() req: AuthenticatedRequest,
     @Body() addToCartDto: AddToCartDto,
     @Query('currency') currency?: string,
+    @Query('countryCode') countryCode?: string,
   ): Promise<ComputedCart> {
-    return this.cartService.addToCart(req.user.id, addToCartDto, currency);
+    return this.cartService.addToCart(
+      req.user.id,
+      addToCartDto,
+      currency,
+      countryCode,
+    );
+  }
+
+  @Post('select-delivery-option')
+  async selectDeliveryOption(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { delivery_option: DeliveryOption },
+    @Query('currencyCode') currencyCode: string,
+  ): Promise<{ success: boolean }> {
+    await this.cartService.setSelectedDeliveryOption(
+      req.user.id,
+      body.delivery_option,
+      currencyCode,
+    );
+    return { success: true };
   }
 
   @Put('items/:itemId')
@@ -54,12 +77,14 @@ export class CartController {
     @Param('itemId') itemId: string,
     @Body() updateCartItemDto: UpdateCartItemDto,
     @Query('currency') currency?: string,
+    @Query('countryCode') countryCode?: string,
   ): Promise<ComputedCart> {
     return this.cartService.updateCartItem(
       req.user.id,
       itemId,
       updateCartItemDto,
       currency,
+      countryCode,
     );
   }
 
@@ -68,8 +93,14 @@ export class CartController {
     @Request() req: AuthenticatedRequest,
     @Param('itemId') itemId: string,
     @Query('currency') currency?: string,
+    @Query('countryCode') countryCode?: string,
   ): Promise<ComputedCart> {
-    return this.cartService.removeFromCart(req.user.id, itemId, currency);
+    return this.cartService.removeFromCart(
+      req.user.id,
+      itemId,
+      currency,
+      countryCode,
+    );
   }
 
   @Delete('clear')
@@ -78,5 +109,38 @@ export class CartController {
   ): Promise<{ message: string }> {
     await this.cartService.clearCart(req.user.id);
     return { message: 'Cart cleared successfully' };
+  }
+
+  @Get('delivery-rates')
+  async getDeliveryRates(
+    @Request() req: AuthenticatedRequest,
+    @Query('countryCode') countryCode?: string,
+    @Query('currencyCode') currencyCode?: string,
+  ): Promise<DeliveryOption[]> {
+    const userId = req.user?.id;
+    if (!userId || !countryCode) {
+      return [];
+    }
+    return this.cartService.getDeliveryRates(userId, countryCode, currencyCode);
+  }
+
+  @Post('checkout')
+  async postCheckout(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: CheckoutDto,
+  ): Promise<ComputedCart> {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new BadRequestException('User not authenticated');
+    }
+
+    const { productIds, currency, countryCode } = body;
+
+    return this.cartService.getCheckoutData(
+      userId,
+      productIds,
+      currency,
+      countryCode,
+    );
   }
 }

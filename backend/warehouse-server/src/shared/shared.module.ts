@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-store';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { DocumentUploadService } from './document-upload.service';
 import { DocumentUploadController } from './document-upload.controller';
@@ -22,6 +23,18 @@ import { Country } from '../Countries/country.entity';
 import { Currency } from '../currencies/currency.entity';
 import { CurrenciesService } from '../currencies/currencies.service';
 import { ExternalCurrencyService } from './external-currency.service';
+import { DeliveryFeeService } from './get-delivery-fee.service';
+import { CacheManagerService } from './cache-manager.service';
+import { CurrencyCache } from './entities/cache/currency-cache.entity';
+import { DeliveryCache } from './entities/cache/delivery-cache.entity';
+import { DeliveryOptionCache } from './entities/cache/delivery-option-cache.entity';
+
+const cacheModuleFactory = (configService: ConfigService) => ({
+  store: redisStore,
+  host: configService.get<string>('REDIS_HOST'),
+  port: configService.get<number>('REDIS_PORT'),
+  keyPrefix: configService.get<string>('REDIS_KEY_PREFIX'),
+});
 
 @Module({
   imports: [
@@ -37,30 +50,14 @@ import { ExternalCurrencyService } from './external-currency.service';
       ClientIdentifier,
       Country,
       Currency,
+      CurrencyCache,
+      DeliveryCache,
+      DeliveryOptionCache,
     ]),
     CacheModule.registerAsync({
-      isGlobal: false,
-      useFactory: async () => {
-        const redisConfig = { url: process.env.REDIS_URL };
-        try {
-          const store = await redisStore(redisConfig);
-          return {
-            store,
-            keyPrefix: 'palakart:',
-            ttl: 0,
-          };
-        } catch (error) {
-          console.warn(
-            'Redis connection failed, falling back to in-memory cache:',
-            error,
-          );
-          return {
-            store: 'memory',
-            keyPrefix: 'palakart:',
-            ttl: 0,
-          };
-        }
-      },
+      imports: [ConfigModule],
+      useFactory: cacheModuleFactory,
+      inject: [ConfigService],
     }),
     HttpModule,
   ],
@@ -71,6 +68,8 @@ import { ExternalCurrencyService } from './external-currency.service';
     ClientIdentifierService,
     CurrenciesService,
     ExternalCurrencyService,
+    DeliveryFeeService,
+    CacheManagerService,
   ],
   exports: [
     HttpModule,
@@ -79,6 +78,8 @@ import { ExternalCurrencyService } from './external-currency.service';
     ClientIdentifierService,
     CurrenciesService,
     ExternalCurrencyService,
+    DeliveryFeeService,
+    CacheManagerService,
   ],
 })
 export class SharedModule {}

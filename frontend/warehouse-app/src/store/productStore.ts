@@ -1,7 +1,7 @@
 import { ecommerceService } from "@/services/ecommerce.service";
 import { create } from "zustand";
 
-import { FetchProductsParams, GetProductsParams, ProductCacheData, ProductStore } from "./storeTypes";
+import { FetchProductsParams, ProductStore } from "./storeTypes";
 import type { EcommerceProduct } from "@/types/ecommerce";
 import { ecommerceData } from "@/data/ecommerceData";
 
@@ -14,12 +14,10 @@ const useProductStore = create<ProductStore>((set, get) => ({
   error: null,
   offset: 0,
   hasMore: true,
-  cache: {},
 
   currentDetailProduct: null,
   detailPreviewProducts: [],
   detailRelatedProducts: [],
-  detailCache: {},
   isDetailLoading: true,
   arePreviewsLoading: true,
   detailError: null,
@@ -48,29 +46,10 @@ const useProductStore = create<ProductStore>((set, get) => ({
     }
   },
 
-  getProducts: async ({ searchTerm, currency, category, countryCode, limit, offset, userId }: GetProductsParams = {}) => {
-    set({ isLoading: true, error: null });
-    try {
-      const products = await ecommerceService.getProducts(
-        currency,
-        category,
-        limit,
-        offset,
-        userId,
-        countryCode
-      );
-      set({ products, isLoading: false });
-      return products;
-    } catch (error: any) {
-      set({ isLoading: false, error: error.message || "Failed to fetch products" });
-      return [];
-    }
-  },
-
-  fetchProducts: async (params: FetchProductsParams, reset = false) => {
+  fetchProducts: async (params: FetchProductsParams) => {
     const { category, searchTerm, currency, countryCode, userId } = params;
 
-    const cacheKey = JSON.stringify({
+    const requestKey = JSON.stringify({
       category,
       searchTerm,
       currency,
@@ -79,35 +58,23 @@ const useProductStore = create<ProductStore>((set, get) => ({
     });
 
     const state = get();
-    if (!reset && (state.loadingMore || state.isLoading)) return;
+    const isNewRequest = state.activeRequestKey !== requestKey;
+    const shouldReset = isNewRequest;
+    if (!shouldReset && (state.loadingMore || state.isLoading)) return;
     
     set({
-      activeRequestKey: cacheKey,
-      products: reset ? [] : state.products,
-      offset: reset ? 0 : state.offset,
-      hasMore: reset ? true : state.hasMore,
+      activeRequestKey: requestKey,
+      products: shouldReset ? [] : state.products,
+      offset: shouldReset ? 0 : state.offset,
+      hasMore: shouldReset ? true : state.hasMore,
     });
 
-    const currentOffset = reset || get().activeRequestKey !== cacheKey ? 0 : get().offset;
+    const currentOffset = shouldReset ? 0 : get().offset;
 
-    if (get().activeRequestKey !== cacheKey) return;
+    if (get().activeRequestKey !== requestKey) return;
 
-    if (reset) {
-      if (get().activeRequestKey !== cacheKey) return;
-
-      if (state.cache[cacheKey]) {
-        const cachedData = state.cache[cacheKey];
-        set({
-          products: cachedData.products,
-          hasMore: cachedData.hasMore,
-          offset: cachedData.offset,
-          isLoading: false,
-          loadingMore: false,
-          error: null
-        });
-        return; 
-      }
-      set({ isLoading: true, loadingMore: false, products: [], offset: 0, hasMore: true, error: null });
+    if (shouldReset) {
+      set({ isLoading: true, loadingMore: false, error: null });
     } else {
       set({ loadingMore: true, error: null });
     }
@@ -131,14 +98,14 @@ const useProductStore = create<ProductStore>((set, get) => ({
             countryCode
           );
 
-      if (get().activeRequestKey !== cacheKey) {
+      if (get().activeRequestKey !== requestKey) {
         return;
       }
 
       set((prevState) => {
-        if (get().activeRequestKey !== cacheKey) return prevState;
 
-        const mergedProducts = reset
+        if (get().activeRequestKey !== requestKey) return prevState;
+        const mergedProducts = shouldReset
           ? fetchedProducts
           : [...prevState.products, ...fetchedProducts];
 
@@ -149,39 +116,19 @@ const useProductStore = create<ProductStore>((set, get) => ({
         const newHasMore = fetchedProducts.length === 20;
         const newOffset = currentOffset + 20;
 
-        const newCacheEntry: ProductCacheData = {
+        return {
           products: uniqueProducts,
+          isLoading: false,
+          loadingMore: false,
           hasMore: newHasMore,
-          offset: newOffset
+          offset: newOffset,
         };
-
-        const updatedCache = {
-          ...prevState.cache,
-          [cacheKey]: newCacheEntry
-        };
-
-        return reset 
-          ? {
-            products: uniqueProducts,
-            isLoading: false,
-            hasMore: newHasMore,
-            loadingMore: false,
-            offset: newOffset,
-            cache: updatedCache
-          }
-          : {
-            products: uniqueProducts,
-            loadingMore: false,
-            hasMore: newHasMore,
-            offset: newOffset,
-            cache: updatedCache
-          };
       });
     } catch (error: any) {
       console.error("Failed to fetch products:", error);
       const errorMessage = error.message || "Failed to fetch products";
       
-      if (reset) {
+      if (shouldReset) {
         set({ isLoading: false, error: errorMessage });
       } else {
         set({ loadingMore: false, error: errorMessage });
@@ -199,34 +146,8 @@ const useProductStore = create<ProductStore>((set, get) => ({
     set({ detailPreviewProducts: [product, ...others.slice(0, 2)] });
   },
 
-  resetDetailState: () => {
-    set({ 
-      currentDetailProduct: null, 
-      detailPreviewProducts: [], 
-      detailRelatedProducts: [], 
-      isDetailLoading: true, 
-      arePreviewsLoading: true,
-      detailError: null,
-      isLoadingSlug: null
-    });
-  },
-
   loadProductPageData: async (slug: string, currency: string, countryCode?: string, userId?: string) => {
     const state = get();
-
-    if (state.detailCache[slug]) {
-      const cached = state.detailCache[slug];
-      set({
-        currentDetailProduct: cached.product,
-        detailPreviewProducts: cached.previews,
-        detailRelatedProducts: cached.related,
-        isDetailLoading: false,
-        arePreviewsLoading: false,
-        detailError: null
-      });
-      return;
-    }
-
     if (state.isLoadingSlug === slug) {
       return;
     }
@@ -279,19 +200,6 @@ const useProductStore = create<ProductStore>((set, get) => ({
         arePreviewsLoading: false,
         isLoadingSlug: null
       });
-
-      set((prev) => ({
-        detailCache: {
-          ...prev.detailCache,
-          [slug]: {
-            product: product,
-            previews: previewProducts,
-            related: relatedProducts,
-            timestamp: Date.now()
-          }
-        }
-      }));
-
     } catch (error: any) {
       set({ 
         currentDetailProduct: existingProductInList || null,
@@ -302,14 +210,6 @@ const useProductStore = create<ProductStore>((set, get) => ({
       });
     }
   },
-
-  clearProductCache: () => set({
-    products: [],
-    cache: {},
-    offset: 0,
-    hasMore: true,
-    activeRequestKey: null
-  }),
 }));
 
 export default useProductStore;

@@ -17,13 +17,14 @@ import { useRouter } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
 import { useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/hooks/useEffectiveUserLocation";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import ProductQuantityControl from "./ProductQuantityControl";
 import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
-import { formatDiscountPercentage } from "@/lib/utils";
-import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils"; 
+// import { formatDiscountPercentage } from "@/lib/utils";
+// import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils"; 
 import { EcommerceProductCardProps } from "@/types/ecommerce";
+import { formatPrice } from "@/utils/priceUtils";
 
 export default function EcommerceProductCard({
   product
@@ -35,14 +36,14 @@ export default function EcommerceProductCard({
   const decrementCartQuantity = useCartStore((state) => state.decrementCartQuantity);
   const cartQuantity = useCartStore((state) => state.cartProducts.find((item) => item.product_id === product.id))?.quantity || 0;
 
-  const { currencyCode } = useDetectUserLocation();
+  const { currencyCode, countryCode } = useDetectUserLocation();
 
   const rawPrice = product.price.price;
   const currency = product.price.currency;
-  const discountPercent = parseFloat(String(product.discount_percentage || 0)) || 0;
-  const discountedRaw = calculateDiscountedPrice(rawPrice, discountPercent);
+  // const discountPercent = parseFloat(String(product.discount_percentage || 0)) || 0;
+  // const discountedRaw = calculateDiscountedPrice(rawPrice, discountPercent);
+  // const formattedDiscounted = formatPrice(discountedRaw, currency);
   const formattedOriginal = formatPrice(rawPrice, currency);
-  const formattedDiscounted = formatPrice(discountedRaw, currency);
 
   const unitValue = parseFloat(String(product.unit_value || "0"));
   const measurementLabel = product.measurement?.label || "";
@@ -53,12 +54,12 @@ export default function EcommerceProductCard({
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    incrementCartQuantity(product, currencyCode);
+    incrementCartQuantity(product, currencyCode, countryCode);
   };
 
   const handleDecreaseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    decrementCartQuantity(product, currencyCode);
+    decrementCartQuantity(product, currencyCode, countryCode);
   };
 
   return (
@@ -93,7 +94,7 @@ export default function EcommerceProductCard({
           alt={product.name}
           sx={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
-        {discountPercent > 0 && !isOutOfStock && (
+        {/* {discountPercent > 0 && !isOutOfStock && (
           <Chip
             label={formatDiscountPercentage(discountPercent, "OFF")}
             size="small"
@@ -102,6 +103,22 @@ export default function EcommerceProductCard({
               top: { xs: 6, sm: 8 },
               left: { xs: 6, sm: 8 },
               bgcolor: ecommerceData.ui.colors.discountBadge,
+              color: "white",
+              fontSize: { xs: "0.65rem", sm: "0.7rem" },
+              height: { xs: 18, sm: 20 },
+              fontWeight: 600,
+            }}
+          />
+        )} */}
+        {isOutOfStock && (
+          <Chip
+            label="Out of Stock"
+            size="small"
+            sx={{
+              position: "absolute",
+              top: { xs: 6, sm: 8 },
+              right: { xs: 6, sm: 8 },
+              bgcolor: "red",
               color: "white",
               fontSize: { xs: "0.65rem", sm: "0.7rem" },
               height: { xs: 18, sm: 20 },
@@ -135,14 +152,20 @@ export default function EcommerceProductCard({
           variant="body2"
           fontWeight={600}
           sx={{
-            display: "-webkit-box",
-            WebkitLineClamp: { xs: 1, sm: 2 },
-            WebkitBoxOrient: "vertical",
+            whiteSpace: "nowrap",
             overflow: "hidden",
+            textOverflow: "ellipsis",
             fontSize: { xs: "0.8rem", sm: "0.9rem" },
             mb: { xs: 0.5, sm: 0.25 },
-            lineHeight: { xs: 1.2, sm: 1.4 },
-            minHeight: { xs: 19.2, sm: "auto" },
+
+            // display: "-webkit-box",
+            // WebkitLineClamp: { xs: 1, sm: 2 },
+            // WebkitBoxOrient: "vertical",
+            // overflow: "hidden",
+            // fontSize: { xs: "0.8rem", sm: "0.9rem" },
+            // mb: { xs: 0.5, sm: 0.25 },
+            // lineHeight: { xs: 1.2, sm: 1.4 },
+            // minHeight: { xs: 19.2, sm: "auto" },
           }}
         >
           {product.name}
@@ -182,9 +205,9 @@ export default function EcommerceProductCard({
                 lineHeight: 1.2,
               }}
             >
-              {formattedDiscounted}
+              {formattedOriginal}
             </Typography>
-            {discountPercent > 0 && (
+            {/* {discountPercent > 0 && (
               <Typography
                 variant="caption"
                 sx={{
@@ -195,7 +218,7 @@ export default function EcommerceProductCard({
               >
                 {formattedOriginal}
               </Typography>
-            )}
+            )} */}
           </Box>
           
 
