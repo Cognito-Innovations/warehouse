@@ -5,8 +5,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Toaster } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import EcommerceWrapper from "@/providers/EcommerceWrapper";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
 import Header from "@/components/Common/Header";
 
 interface ClientLayoutProps {

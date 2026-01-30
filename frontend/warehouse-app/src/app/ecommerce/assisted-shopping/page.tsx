@@ -3,7 +3,7 @@
 import React, { useRef, useCallback, useEffect } from "react";
 
 import useCategoryStore from "@/store/categoryStore";
-import { useDetectUserLocation } from "@/hooks/useDetectUserLocation";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import EcommercePageLayout from "@/components/ecommerce/EcommercePageLayout";
 // import EcommerceSkeletonLoader from "@/components/ecommerce/skeleton-loader/EcommerceSkeletonLoader";
 // import { ecommerceData } from "@/data/ecommerceData";

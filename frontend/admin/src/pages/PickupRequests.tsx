@@ -89,7 +89,7 @@ const PickupRequests: React.FC = () => {
             {row.pickupLocation}
           </Typography>
       ),
-      width: '30%',
+      width: '25%',
     },
     {
       header: 'Supplier',
@@ -99,7 +99,7 @@ const PickupRequests: React.FC = () => {
     {
       header: 'Status',
       cell: (row) => <StatusChip status={row.status} />,
-      width: '20%',
+      width: '15%',
     },
   ];
   
