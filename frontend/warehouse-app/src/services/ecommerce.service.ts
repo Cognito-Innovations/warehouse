@@ -218,6 +218,23 @@ export const ecommerceService = {
     } 
   },
 
+  async getCartGroupedByCargo(currency: string, countryCode?: string) {
+    try {
+      let params: any = {};
+      if (currency) {
+        params.currency = currency;
+      }
+      if (countryCode) {
+        params.countryCode = countryCode;
+      }
+      const response = await api.get("/ecommerce-cart/grouped-by-cargo", { params });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch the cart group by cargo:', error);
+      throw error; 
+    }
+  },
+
   async addToCart(data: AddToCartRequest, currency?: string, countryCode?: string): Promise<Cart> {
     try {
       let params: any = {};
@@ -290,22 +307,20 @@ export const ecommerceService = {
     }
   },
 
-  async getDeliveryRates(countryCode?: string, currencyCode?: string): Promise<any[]> {
+  async getDeliveryRates(
+    productIds: string[],
+    countryCode?: string,
+    currencyCode?: string,
+  ): Promise<any[]> {
     try {
-      const params: any = {};
-      if (countryCode) {
-        params.countryCode = countryCode;
-      }
-      if (currencyCode) {
-        params.currencyCode = currencyCode;
-      }
-      const response = await api.get("/ecommerce-cart/delivery-rates", { params });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to get delivery rates!');
-      }
+      const response = await api.post("/ecommerce-cart/delivery-rates", {
+        productIds,
+        countryCode,
+        currencyCode,
+      });
       return response.data;
     } catch (error) {
-      console.error('Failed to get delivery rates:', error);
+      console.error("Failed to get delivery rates:", error);
       throw error;
     }
   },

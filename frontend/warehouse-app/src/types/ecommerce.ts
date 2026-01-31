@@ -64,6 +64,7 @@ export interface CartItem {
   product_id?: string;
   product: EcommerceProduct;
   quantity: number;
+  requested_quantity: number;
   unit_price: number;
   total_price: number;
   discount_percentage: number;
@@ -255,6 +256,8 @@ export interface CartItemCardProps {
   item: CartItem;
   isSelected: boolean;
   selectedCurrency?: string;
+  onCheckboxToggle?: () => void;
+  isDisabled?: boolean;
 }
 
 export interface CartItemsListProps {

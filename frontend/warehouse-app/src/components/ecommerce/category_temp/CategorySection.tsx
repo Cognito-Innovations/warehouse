@@ -9,10 +9,11 @@ import useCategoryStore from "@/store/categoryStore";
 import CategoryItems from "./CategoryItems";
 import CategoryStaticAllCard from "./CategoryStaticAllCard";
 import CategoryStaticAssistedCard from "./CategoryStaticAssistedCard";
+import CategoryNavSkeleton from "../skeleton-loader/CategoryNavSkeleton";
 
 export default function CategorySection() {
   const router = useRouter();
-  const { selectedCategory } = useCategoryStore();
+  const { selectedCategory, loading } = useCategoryStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
@@ -70,7 +71,12 @@ export default function CategorySection() {
       >
         <CategoryStaticAllCard onClick={handleAllClick} isSelected={selectedCategory === null} />
         <CategoryStaticAssistedCard onClick={handleAssistedClick} isSelected={selectedCategory === "assisted"} />
-        <CategoryItems />
+        
+        {loading ? (
+          <CategoryNavSkeleton />
+        ) : (
+          <CategoryItems />
+        )}
       </Box>
 
       {showScrollButton && (

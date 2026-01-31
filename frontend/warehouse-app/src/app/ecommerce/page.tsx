@@ -8,6 +8,7 @@ import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 
 export default function Ecommerce() {
   const { user } = useAuth();
+  const userId = (user as any)?.id;
   const { currencyCode, countryCode, isLoaded } = useDetectUserLocation();
   const { fetchProducts } = useProductStore();
 
@@ -16,10 +17,10 @@ export default function Ecommerce() {
       fetchProducts({
         currency: currencyCode,
         countryCode,
-        userId: (user as any)?.id,
+        userId,
       });
     }
-  }, [isLoaded, currencyCode, countryCode, user, fetchProducts]);
+  }, [isLoaded, currencyCode, countryCode, userId, fetchProducts]);
 
   return <EcommerceContent />;
 }

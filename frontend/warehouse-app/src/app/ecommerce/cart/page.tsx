@@ -7,7 +7,8 @@ import { useSession } from "next-auth/react";
 
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
-import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
+import { useCheckout } from "@/store/useCheckout";
+import { ecommerceService } from "@/services/ecommerce.service";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
 import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
 import CartSkeletonLoader from "@/components/ecommerce/cart/CartSkeletonLoader";
@@ -19,8 +20,8 @@ import CartItemsSkeleton from "@/components/ecommerce/skeleton-loader/CartItemsS
 import CartStepper from "@/components/ecommerce/cart/CartStepper";
 import DeliveryModelSelection from "@/components/ecommerce/cart/DeliveryModelSelection";
 import ReadOnlyCartItems from "@/components/ecommerce/cart/ReadOnlyCartItems";
+import CargoGroupedCart from "@/components/ecommerce/cart/CargoGroupedCart";
 import { CartAddressData, DeliveryOption } from "@/types/ecommerce";
-import { ecommerceService } from "@/services/ecommerce.service";
 
 type CartStep = 0 | 1 | 2;
 
@@ -36,15 +37,30 @@ export default function CartPage() {
     selectedDeliveryOption,
     setSelectedDeliveryOption,
   } = useCartStore();
+  const { selectedCargo } = useCheckout();
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [highlightAddressError, setHighlightAddressError] = useState(false);
   const [isCartLoading, setIsCartLoading] = useState(true);
   const [isAddressDataReady, setIsAddressDataReady] = useState(false);
   const [activeStep, setActiveStep] = useState<CartStep>(0);
-
+  const [groupedCart, setGroupedCart] = useState<any>(null);
 
   const userId = (session?.user as any)?.user_id;
+
+  const fetchGroupedCart = useCallback(async () => {
+    const res = await ecommerceService.getCartGroupedByCargo(
+      currencyCode,
+      countryCode
+    );
+    setGroupedCart(res.items);
+  }, [currencyCode, countryCode]);
+
+  useEffect(() => {
+    if (activeStep === 0) {
+      fetchGroupedCart();
+    }
+  }, [activeStep, fetchGroupedCart]);
 
   const handleAddressFetchComplete = useCallback(() => {
     setIsAddressDataReady(true);
@@ -169,12 +185,12 @@ export default function CartPage() {
             {isCartLoading ? (
               <CartItemsSkeleton />
             ) : (
-              <CartItemsList
-                items={validItems as any}
-                loadingStates={{}}
-                selectedItems={new Set(checkoutProducts)}
-                selectedCurrency={currencyCode}
-              />
+              groupedCart && (
+                <CargoGroupedCart
+                  groupedItems={groupedCart}
+                  currency={currencyCode}
+                />
+              )
             )}
             {/* Action buttons at bottom */}
             <Box
@@ -189,7 +205,7 @@ export default function CartPage() {
               }}
             >
               <ContinueShoppingCard />
-              {selectedAddress && (
+              {selectedCargo && selectedAddress && (
                 <Button
                   variant="contained"
                   endIcon={<ArrowForward />}

@@ -56,6 +56,18 @@ export const OrderItemsList: React.FC<OrderItemsListProps> = ({
               >
                 Qty: {item.quantity}
               </Typography>
+
+              {item.requested_quantity &&
+               item.quantity < item.requested_quantity && (
+                <Typography
+                  variant="caption"
+                  color="warning.main"
+                  sx={{ display: "block", fontSize: "0.7rem" }}
+                >
+                  Only {item.quantity} of {item.requested_quantity} available
+                </Typography>
+              )}
+
               <Typography
                 variant="body2"
                 color="text.secondary"

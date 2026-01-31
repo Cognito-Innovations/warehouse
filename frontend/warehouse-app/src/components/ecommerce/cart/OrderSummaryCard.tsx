@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
+import { useCheckout } from "@/store/useCheckout";
 import { calculateCartTotals } from "@/utils/cartCalculations";
 import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";
@@ -26,8 +27,9 @@ export default function OrderSummaryCard({
   const router = useRouter();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { checkoutProducts, cartProducts, isSyncing } = useCartStore();
+  const { cartProducts, isSyncing } = useCartStore();
   const { currencySymbol } = useDetectUserLocation();
+  const { selectedProductIds } = useCheckout();
 
   useEffect(() => {
     return () => {
@@ -47,12 +49,12 @@ export default function OrderSummaryCard({
       return selectedDeliveryOption.total_amount;
     }
     // Fallback to item-based calculation
-    const totals = calculateCartTotals(items, new Set(checkoutProducts), selectedCurrency, currencySymbol);
+    const totals = calculateCartTotals(items, new Set(selectedProductIds), selectedCurrency, currencySymbol);
     return totals.deliveryFee;
   };
 
   const deliveryFee = calculateDeliveryFee();
-  const totals = calculateCartTotals(items, new Set(checkoutProducts), selectedCurrency, currencySymbol);
+  const totals = calculateCartTotals(items, new Set(selectedProductIds), selectedCurrency, currencySymbol);
   const finalTotal = totals.subtotal + deliveryFee;
   
   const handleCheckout = useCallback(() => {
@@ -62,7 +64,7 @@ export default function OrderSummaryCard({
     }
 
     const selected = cartProducts.filter(item =>
-      checkoutProducts.includes(item.product_id!)
+      selectedProductIds.includes(item.product_id!)
     );
 
     if (selected?.length === 0) {
@@ -92,7 +94,7 @@ export default function OrderSummaryCard({
       localStorage.setItem("checkoutSelectedItems", JSON.stringify(selected));
       router.push(ROUTES.CHECKOUT);
     }
-  }, [router, cartProducts, userId, selectedAddress, selectedDeliveryOption, checkoutProducts, isSyncing, setHighlightAddressError]);
+  }, [router, cartProducts, userId, selectedAddress, selectedDeliveryOption, selectedProductIds, isSyncing, setHighlightAddressError]);
   
   const formatAddress = (address: CartAddressData) => {
     return `${address.address}, ${address.city}, ${address.state} ${address.zip_code}`;

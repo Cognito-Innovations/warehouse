@@ -159,130 +159,125 @@ export class OrderService {
   ): Promise<OrderWithDetails> {
     let savedPayment: EcommercePayment | null = null;
 
-    try {
-      if (!userId) {
-        throw new BadRequestException('User not found');
+    if (!userId) {
+      throw new BadRequestException('User not found');
+    }
+
+    const cartItems = await this.userItemRepository.find({
+      where: { user_id: userId, status: UserProductStatus.CART },
+    });
+
+    if (!cartItems.length) {
+      throw new BadRequestException('Cart is empty');
+    }
+
+    const placeOrderProducts = cartItems.filter((item) =>
+      createOrderDto.product_ids.includes(item.product_id),
+    );
+
+    if (!placeOrderProducts.length) {
+      throw new BadRequestException('No valid products to order');
+    }
+
+    const products = await this.productRepository.find({
+      where: { id: In(placeOrderProducts.map((item) => item.product_id)) },
+    });
+
+    const productMap = new Map(
+      products.map((product) => [product.id, product]),
+    );
+
+    for (const item of placeOrderProducts) {
+      const product = productMap.get(item.product_id);
+
+      if (!product) {
+        throw new BadRequestException('Product not found');
       }
 
-      const cartItems = await this.userItemRepository.find({
-        where: { user_id: userId, status: UserProductStatus.CART },
-      });
-
-      if (!cartItems || cartItems.length === 0) {
-        throw new BadRequestException('Cart is empty');
-      }
-
-      if (!createOrderDto.product_ids.length) {
-        throw new BadRequestException('No product IDs provided');
-      }
-
-      const placeOrderProducts = cartItems.filter((item) =>
-        createOrderDto.product_ids.includes(item.product_id),
-      );
-
-      if (!placeOrderProducts?.length) {
-        throw new BadRequestException('No valid products to order');
-      }
-
-      const userCurrencyInfo =
-        await this.userPreferenceService.getUserPreferredCurrency(userId);
-
-      const sourceInfo: CurrencyInfo = userCurrencyInfo || DEFAULT_CURRENCY;
-
-      if (!sourceInfo?.rate) {
+      if (product.stock_quantity <= 0) {
         throw new BadRequestException(
-          `Currency rate missing for ${sourceInfo.code}`,
+          `Product ${product.id} is not available in stock`,
         );
       }
 
-      const selectedDelivery =
-        await this.cartService.getSelectedDeliveryOption(userId);
+      item.quantity = Math.min(item.quantity, product.stock_quantity);
+    }
 
-      const deliveryFeeUSD = selectedDelivery
-        ? Number(selectedDelivery.total_amount)
-        : 0;
+    const userCurrencyInfo =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
 
-      const { finalUSDTotal, itemDetails } = await this.calculateOrderPricing(
-        placeOrderProducts,
-        sourceInfo,
-        deliveryFeeUSD,
-      );
+    const sourceInfo = userCurrencyInfo || DEFAULT_CURRENCY;
 
-      // Generate order number
-      const orderNumber = this.generateOrderNumber();
-      // Create order
-      const payment = this.paymentRepository.create({
-        order_number: orderNumber,
-        status: Status.PENDING,
-        payment_gateway: PAYMENT_GATEWAY.PAYPAL,
-        payment_mode: 'UNKNOWN',
-      });
+    const selectedDelivery =
+      await this.cartService.getSelectedDeliveryOption(userId);
 
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+    const deliveryFeeUSD = selectedDelivery
+      ? Number(selectedDelivery.total_amount)
+      : 0;
 
-      try {
-        savedPayment = await queryRunner.manager.save(payment);
+    const { finalUSDTotal, itemDetails } = await this.calculateOrderPricing(
+      placeOrderProducts,
+      sourceInfo,
+      deliveryFeeUSD,
+    );
 
-        const orderReferences = itemDetails.map((detail) => {
-          const correspondingUserItem = placeOrderProducts.find(
-            (i) => i.product_id === detail.product_id,
-          )!;
-          return this.orderReferenceRepository.create({
-            payment_id: savedPayment!.id,
-            user_item_id: correspondingUserItem.id,
-            product_id: detail.product_id,
-          });
+    // Generate order number
+    const orderNumber = this.generateOrderNumber();
+    // Create order
+    const payment = this.paymentRepository.create({
+      order_number: orderNumber,
+      status: Status.PENDING,
+      payment_gateway: PAYMENT_GATEWAY.PAYPAL,
+      payment_mode: 'UNKNOWN',
+    });
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      savedPayment = await queryRunner.manager.save(payment);
+
+      for (const item of placeOrderProducts) {
+        const product = await queryRunner.manager.findOne(EcommerceProduct, {
+          where: { id: item.product_id },
         });
 
-        await queryRunner.manager.save(orderReferences);
-
-        await queryRunner.commitTransaction();
-      } catch (err) {
-        await queryRunner.rollbackTransaction();
-        throw err;
-      } finally {
-        await queryRunner.release();
-      }
-
-      await this.paymentService.createPayPalPaymentSession(
-        savedPayment,
-        orderNumber,
-        finalUSDTotal,
-      );
-
-      return this.findOne(savedPayment.id);
-    } catch (paypalErr: unknown) {
-      if (savedPayment?.id) {
-        await this.paymentRepository.delete(savedPayment.id);
-      }
-
-      console.error('PayPal error:', paypalErr);
-
-      let errorMessage = 'Unknown PayPal error';
-
-      if (paypalErr instanceof Error) {
-        errorMessage = paypalErr.message;
-      } else if (
-        paypalErr &&
-        typeof paypalErr === 'object' &&
-        'response' in paypalErr
-      ) {
-        const httpError = paypalErr as PayPalHttpError;
-        const responseData = httpError.response?.data;
-        if (responseData && typeof responseData === 'object') {
-          errorMessage =
-            responseData.message ||
-            responseData.details?.[0]?.description ||
-            errorMessage;
+        if (!product || product.stock_quantity < item.quantity) {
+          throw new BadRequestException(
+            `Insufficient stock for product ${item.product_id}`,
+          );
         }
       }
 
-      throw new BadRequestException(
-        `Failed to initialize payment session: ${errorMessage}`,
-      );
+      const orderReferences = itemDetails.map((detail) => {
+        const correspondingUserItem = placeOrderProducts.find(
+          (i) => i.product_id === detail.product_id,
+        )!;
+        return this.orderReferenceRepository.create({
+          payment_id: savedPayment!.id,
+          user_item_id: correspondingUserItem.id,
+          product_id: detail.product_id,
+        });
+      });
+
+      await queryRunner.manager.save(orderReferences);
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
+
+    await this.paymentService.createPayPalPaymentSession(
+      savedPayment,
+      orderNumber,
+      finalUSDTotal,
+    );
+
+    return this.findOne(savedPayment.id);
   }
 
   async findAll(userId: string): Promise<OrderWithDetails[]> {

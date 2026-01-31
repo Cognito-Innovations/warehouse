@@ -20,7 +20,7 @@ function SignInContent() {
   useEffect(() => {
     if (isAuthenticated && !isRedirecting) {
       setIsRedirecting(true);
-      router.replace(callbackUrl || ROUTES.DASHBOARD);
+      router.replace(callbackUrl || ROUTES.ROOT);
     }
   }, [isAuthenticated, router, isRedirecting, callbackUrl]);
 
@@ -31,7 +31,7 @@ function SignInContent() {
           <CircularProgress size={40} thickness={4} sx={{ color: "#7C3AED" }} />
           <Box sx={{ mt: 3, color: "text.secondary", fontWeight: 500 }}>
             {isRedirecting || isAuthenticated 
-              ? `Taking you ${callbackUrl ? 'back' : 'to dashboard'}...`
+              ? `Taking you ${callbackUrl ? 'back' : 'home'}...`
               : "Loading..."}
           </Box>
         </Box>

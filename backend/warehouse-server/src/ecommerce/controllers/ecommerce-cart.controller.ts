@@ -17,6 +17,7 @@ import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { DeliveryOption } from 'src/shared/get-delivery-fee.service';
 import { CheckoutDto } from '../dto/cart/checkout.dto';
+import { DeliveryRatesDto } from '../dto/cart/delivery-rates.dto';
 
 interface AuthenticatedRequest {
   user: {
@@ -40,6 +41,29 @@ export class CartController {
       return { items: [], final_amount: 0 };
     }
     return this.cartService.getCart(userId, currency, countryCode);
+  }
+
+  @Get('grouped-by-cargo')
+  async getCartGroupedByCargo(
+    @Request() req: AuthenticatedRequest,
+    @Query('currency') currency?: string,
+    @Query('countryCode') countryCode?: string,
+  ) {
+    const userId = req.user?.id;
+    if (!userId) {
+      return {
+        items: {},
+        total_amount: 0,
+        final_amount: 0,
+        total_delivery_fee: 0,
+      };
+    }
+
+    return this.cartService.getCartGroupedByCargo(
+      userId,
+      currency,
+      countryCode,
+    );
   }
 
   @Post('add')
@@ -111,17 +135,24 @@ export class CartController {
     return { message: 'Cart cleared successfully' };
   }
 
-  @Get('delivery-rates')
+  @Post('delivery-rates')
   async getDeliveryRates(
     @Request() req: AuthenticatedRequest,
-    @Query('countryCode') countryCode?: string,
-    @Query('currencyCode') currencyCode?: string,
+    @Body() body: DeliveryRatesDto,
   ): Promise<DeliveryOption[]> {
     const userId = req.user?.id;
-    if (!userId || !countryCode) {
+    if (!userId) {
       return [];
     }
-    return this.cartService.getDeliveryRates(userId, countryCode, currencyCode);
+
+    const { productIds, countryCode, currencyCode } = body;
+
+    return this.cartService.getDeliveryRates(
+      userId,
+      productIds,
+      countryCode,
+      currencyCode,
+    );
   }
 
   @Post('checkout')
