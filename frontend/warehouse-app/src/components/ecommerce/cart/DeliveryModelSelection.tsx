@@ -12,6 +12,7 @@ import {
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import { useCartStore } from "@/store/cartStore";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
+import { useCheckout } from "@/store/useCheckout";
 import { ecommerceService } from "@/services/ecommerce.service";
 import { DeliveryOption } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
@@ -37,6 +38,7 @@ export default function DeliveryModelSelection({
   const [error, setError] = useState<string | null>(null);
   const { currencyCode, currencySymbol } = useDetectUserLocation();
   const { getCart } = useCartStore();
+  const { selectedProductIds } = useCheckout();
 
   useEffect(() => {
     const fetchDeliveryOptions = async () => {
@@ -49,7 +51,11 @@ export default function DeliveryModelSelection({
       try {
         setLoading(true);
         setError(null);
-        const options = await ecommerceService.getDeliveryRates(countryCode, currencyCode);
+        const options = await ecommerceService.getDeliveryRates(
+          selectedProductIds,
+          countryCode,
+          currencyCode
+        );
         setDeliveryOptions(options);
         
         // Auto-select first option if none selected

@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button, Typography, Alert, Snackbar, CircularProgress } from "@mui/material";
+import { Box, Button, Typography, Alert, Snackbar } from "@mui/material";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -15,7 +15,7 @@ export default function SignInForm({ callbackUrl }: SignInFormProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const redirectTo = callbackUrl || ROUTES.DASHBOARD;
+  const redirectTo = callbackUrl || ROUTES.ROOT;
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -24,7 +24,6 @@ export default function SignInForm({ callbackUrl }: SignInFormProps) {
     try {
       const result = await signIn("google", {
         callbackUrl: redirectTo,
-        redirect: false
       });
       
       if (result?.ok) {

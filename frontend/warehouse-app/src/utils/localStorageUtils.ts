@@ -1,24 +1,31 @@
-interface LocationData { countryCode: string; currencyInfo: { code: string; symbol: string; rate: number } }
+const isBrowser = () => typeof window !== "undefined";
 
-export const getDataFromLocalStorage = (cacheKey: string): LocationData | undefined => {
-    const cached = localStorage.getItem(cacheKey);
-    if (!cached) return undefined;
-
+  export const getDataFromLocalStorage = (
+    cacheKey: string
+  )=> {
+    if (!isBrowser()) return undefined;
+  
+    const localStorageData = window.localStorage.getItem(cacheKey);
+    if (!localStorageData) return undefined;
+  
     try {
-        return JSON.parse(cached);
-    } catch (error) {
-        localStorage.removeItem(cacheKey);
-        return undefined;
+      return JSON.parse(localStorageData);
+    } catch {
+      window.localStorage.removeItem(cacheKey);
+      return undefined;
     }
-};
-
-export const setDataInLocalStorage = (
+  };
+  
+  export const setDataInLocalStorage = (
     cacheKey: string,
-    data: LocationData
-) => {
-    localStorage.setItem(cacheKey, JSON.stringify(data));
-}
-
-export const clearDataFromLocalStorage = (cacheKey: string) => {
-  localStorage.removeItem(cacheKey);
-};
+    data: object
+  ) => {
+    if (!isBrowser()) return;
+    window.localStorage.setItem(cacheKey, JSON.stringify(data));
+  };
+  
+  export const clearDataFromLocalStorage = (cacheKey: string) => {
+    if (!isBrowser()) return;
+    window.localStorage.removeItem(cacheKey);
+  };
+  

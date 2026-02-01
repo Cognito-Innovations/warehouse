@@ -14,7 +14,6 @@ import HeaderProfileMenu from "../Header/HeaderProfileMenu";
 import HeaderLocationMenu from "../Header/HeaderLocationMenu";
 import { ROUTES, ECOMMERCE_EXCLUDED_PATHS } from "@/utils/constants";
 import { ecommerceData } from "@/data/ecommerceData";
-import { getUserPreferences } from "@/lib/api.service";
 
 interface HeaderProps {
   locationData?: any; 
@@ -41,9 +40,9 @@ export default function Header({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, logout } = useAuth();
-  const { countryCode, refreshLocation } = useDetectUserLocation();
+  const { countryCode, countryName } = useDetectUserLocation();
   const { searchQuery, setSearchQuery } = useProductStore();
-  const { loading: cartLoading, cartProductQuantityCount } = useCartStore();
+  const { isLoading: cartLoading, cart } = useCartStore();
   
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -57,7 +56,7 @@ export default function Header({
   const open = Boolean(anchorEl);
   const isLocationMenuOpen = Boolean(locationAnchorEl);
 
-  const count = cartProductQuantityCount();
+  const count = (cart || []).length;
 
   const isEcommerce =
     (pathname === ROUTES.ROOT || pathname.startsWith(ROUTES.ECOMMERCE)) &&
@@ -82,29 +81,6 @@ export default function Header({
 
   const handleLocationClick = (event: React.MouseEvent<HTMLElement>) => setLocationAnchorEl(event.currentTarget);
   const handleLocationClose = () => setLocationAnchorEl(null);
-
-  const [countryName, setCountryName] = useState<string>("");
-
-  useEffect(() => {
-    const syncLocation = async () => {
-      if (user?.id) {
-        await refreshLocation(user.id);
-      } else {
-        await refreshLocation(undefined); 
-      }
-    };
-    syncLocation();
-  }, [user?.id, refreshLocation]);
-
-  useEffect(() => {
-    if (user?.id){
-      const fetchCountryDetails = async () => {
-        const userPreferences = await getUserPreferences(user.id);
-        setCountryName(userPreferences?.courier?.country?.name || "");
-      };
-      fetchCountryDetails();
-    }
-  }, [user]);
 
   let locationText: string | null = null;
   let onLocationClick: (() => void) | null = null;

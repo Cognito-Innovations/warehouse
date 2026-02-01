@@ -64,6 +64,7 @@ export interface CartItem {
   product_id?: string;
   product: EcommerceProduct;
   quantity: number;
+  requested_quantity: number;
   unit_price: number;
   total_price: number;
   discount_percentage: number;
@@ -129,11 +130,6 @@ export interface Order {
 
 export interface AddToCartRequest {
   product_id: string;
-  quantity: number;
-  country?: string;
-}
-
-export interface UpdateCartItemRequest {
   quantity: number;
 }
 
@@ -216,7 +212,6 @@ export interface ProductDetailInfoSectionProps {
   product: EcommerceProduct;
   cart: Cart | null;
   addToCart: (productId: string, quantity: number) => Promise<void>;
-  updateCartItem: (itemId: string, newQuantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   isLoading?: boolean;
 }
@@ -254,7 +249,8 @@ export interface DeliveryAddressCardProps {
 export interface CartItemCardProps {
   item: CartItem;
   isSelected: boolean;
-  selectedCurrency?: string;
+  onCheckboxToggle?: () => void;
+  isDisabled?: boolean;
 }
 
 export interface CartItemsListProps {
@@ -373,6 +369,5 @@ export interface ProductCartActionsProps {
   discountPriceRaw: number;
   currency: string;
   addToCart: (productId: string, quantity: number) => Promise<void>;
-  updateCartItem: (itemId: string, newQuantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
 }

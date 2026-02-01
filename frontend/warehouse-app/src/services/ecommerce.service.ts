@@ -6,7 +6,6 @@ import {
   Cart,
   Order,
   AddToCartRequest,
-  UpdateCartItemRequest,
   CreateOrderRequest,
   DeliveryOption,
   ComputedCart,
@@ -198,84 +197,67 @@ export const ecommerceService = {
   },
 
   // Cart
-  async getCart(currency?: string, countryCode?: string): Promise<Cart> {
+  async fetchCart(): Promise<Cart> {
     try {
-      let params: any = {};
-      if (currency) {
-        params.currency = currency;
-      }
-      if (countryCode) {
-        params.countryCode = countryCode;
-      }
-      const response = await api.get("/ecommerce-cart", { params });
+      const response = await api.get("/ecommerce-cart");
       if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to fetch the cart!');
+        console.error('Failed to fetch the cart!');
+        return { items: [], final_amount: 0, total_amount: 0, discount_percentage: 0, id: "", user_id: "", status: "ACTIVE", created_at: "", updated_at: "" };
       }
       return response.data;
     } catch (error) {
       console.error('Failed to fetch the cart:', error);
-      throw error;
+      return { items: [], final_amount: 0, total_amount: 0, discount_percentage: 0, id: "", user_id: "", status: "ACTIVE", created_at: "", updated_at: "" };
+    }
+  },
+
+  async syncLocalStorageProductsToCart(data: {product_id: string, quantity: number}[]): Promise<any> {
+    try {
+      const response = await api.post("/ecommerce-cart/sync-local-storage-products-to-cart", { products: data });
+      if (response.statusText.toLowerCase() !== 'ok') {
+        console.error('Failed to sync local storage products to cart!');
+        return { items: [], final_amount: 0, total_amount: 0, discount_percentage: 0, id: "", user_id: "", status: "ACTIVE", created_at: "", updated_at: "" };
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Failed to sync local storage products to cart:', error);
     } 
   },
 
-  async addToCart(data: AddToCartRequest, currency?: string, countryCode?: string): Promise<Cart> {
+
+  async getCartGroupedByCargo(userId: string) {
     try {
-      let params: any = {};
-      if (currency) {
-        params.currency = currency;
-      }
-      if (countryCode) {
-        params.countryCode = countryCode;
-      }
-      const response = await api.post("/ecommerce-cart/add", data, { params });
+      const response = await api.get(`/ecommerce-cart/grouped-by-cargo?userId=${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch the cart group by cargo:', error);
+      throw error; 
+    }
+  },
+
+  async addToCart(data: AddToCartRequest): Promise<any> {
+    try {
+      const response = await api.post("/ecommerce-cart/add", data);
       if (response.statusText.toLowerCase() !== 'ok') {
         throw new Error('Failed to add to cart!');
       }
       return response.data;
     } catch (error) {
       console.error('Failed to add to cart:', error);
-      throw error;
     } 
   },
 
-  async updateCartItem(itemId: string, data: UpdateCartItemRequest, currency?: string, countryCode?: string): Promise<Cart> {
+  async removeFromCart(productId: string): Promise<Cart> {
     try {
-      let params: any = {};
-      if (currency) {
-        params.currency = currency;
-      }
-      if (countryCode) {
-        params.countryCode = countryCode;
-      }
-      const response = await api.put(`/ecommerce-cart/items/${itemId}`, data, { params });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to update the cart item!');
-      }
-      return response.data;
-    } catch (error) {
-      console.error(`Failed to update the cart item with ${itemId}:`, error);
-      throw error;
-    }  
-  },
-
-  async removeFromCart(itemId: string, currency?: string, countryCode?: string): Promise<Cart> {
-    try {
-      let params: any = {};
-      if (currency) {
-        params.currency = currency;
-      }
-      if (countryCode) {
-        params.countryCode = countryCode;
-      }
-      const response = await api.delete(`/ecommerce-cart/items/${itemId}`, {params});
+      const response = await api.delete(`/ecommerce-cart/items/${productId}`);
       if (response.statusText.toLowerCase() !== 'ok') {
         throw new Error('Failed to remove the cart item!');
       }
       return response.data;
     } catch (error) {
-      console.error(`Failed to remove the cart item with ${itemId}:`, error);
+      console.error(`Failed to remove the cart item with ${productId}:`, error);
       throw error;
-    }  
+    }
   },
 
   async clearCart(): Promise<void> {
@@ -290,33 +272,27 @@ export const ecommerceService = {
     }
   },
 
-  async getDeliveryRates(countryCode?: string, currencyCode?: string): Promise<any[]> {
+  async getDeliveryRates(
+    productIds: string[],
+    countryCode?: string,
+    currencyCode?: string,
+  ): Promise<any[]> {
     try {
-      const params: any = {};
-      if (countryCode) {
-        params.countryCode = countryCode;
-      }
-      if (currencyCode) {
-        params.currencyCode = currencyCode;
-      }
-      const response = await api.get("/ecommerce-cart/delivery-rates", { params });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to get delivery rates!');
-      }
+      const response = await api.post("/ecommerce-cart/delivery-rates", {
+        productIds,
+        countryCode,
+        currencyCode,
+      });
       return response.data;
     } catch (error) {
-      console.error('Failed to get delivery rates:', error);
+      console.error("Failed to get delivery rates:", error);
       throw error;
     }
   },
 
-  async selectDeliveryOption(option: DeliveryOption, currencyCode: string): Promise<void> {
+  async selectDeliveryOption(option: DeliveryOption): Promise<void> {
     try {
-      const params: any = {};
-      if (currencyCode) {
-        params.currencyCode = currencyCode;
-      }
-      const response = await api.post('/ecommerce-cart/select-delivery-option', { delivery_option: option }, { params });
+      const response = await api.post('/ecommerce-cart/select-delivery-option', { delivery_option: option });
       if (response.statusText.toLowerCase() !== 'ok') {
         throw new Error('Failed to store delivery option!');
       }

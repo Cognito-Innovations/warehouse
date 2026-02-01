@@ -8,12 +8,8 @@ import { EcommerceProduct } from '../entities/ecommerce-product.entity';
 import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
-import { UpdateCartItemDto } from '../dto/cart/update-cart-item.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
-import {
-  DEFAULT_COUNTRY_CODE,
-  DEFAULT_CURRENCY,
-} from '../../shared/constants.js';
+import { DEFAULT_CURRENCY } from '../../shared/constants.js';
 import {
   DeliveryFeeService,
   DeliveryOption,
@@ -23,11 +19,6 @@ import {
   UserProductStatus,
 } from '../entities/ecommerce_user_products_status.entity';
 import { EcommerceUserDeliverySelection } from '../entities/ecommerce_user_delivery_selections.entity';
-import { CacheManagerService } from 'src/shared/cache-manager.service';
-import {
-  CartCargoState,
-  CartCargoStatus,
-} from '../entities/cargo-options.entity';
 
 export interface ComputedCartItem {
   id: string;
@@ -53,14 +44,13 @@ export interface ComputedCart {
 export class CartService {
   constructor(
     @InjectRepository(EcommerceUserProductStatus)
-    private readonly userItemRepository: Repository<EcommerceUserProductStatus>,
+    private readonly cartRepository: Repository<EcommerceUserProductStatus>,
     @InjectRepository(EcommerceProduct)
     private readonly productRepository: Repository<EcommerceProduct>,
     @InjectRepository(EcommerceUserDeliverySelection)
     private readonly deliverySelectionRepository: Repository<EcommerceUserDeliverySelection>,
     private readonly userPreferencesService: UserPreferencesService,
     private readonly deliveryFeeService: DeliveryFeeService,
-    private readonly cacheManagerService: CacheManagerService,
   ) {}
 
   private validateProductAndStock(
@@ -87,41 +77,6 @@ export class CartService {
 
       throw new BadRequestException(
         `Only ${product.stock_quantity} item(s) available in stock.`,
-      );
-    }
-  }
-
-  private async getCartCargoStatus(userId: string): Promise<CartCargoState> {
-    try {
-      const rows = await this.userItemRepository
-        .createQueryBuilder('uip')
-        .innerJoin(EcommerceProduct, 'p', 'p.id = uip.product_id')
-        .innerJoin('p.cargo_option', 'cargo')
-        .select('LOWER(cargo.label)', 'cargo')
-        .where('uip.user_id = :userId', { userId })
-        .andWhere('uip.status = :status', {
-          status: UserProductStatus.CART,
-        })
-        .groupBy('LOWER(cargo.label)')
-        .getRawMany<{ cargo: string }>();
-
-      if (!rows.length) {
-        return { status: CartCargoStatus.EMPTY, cargoLabel: null };
-      }
-
-      if (rows.length > 1) {
-        return { status: CartCargoStatus.MIXED, cargoLabel: null };
-      }
-
-      return { status: CartCargoStatus.SINGLE, cargoLabel: rows[0].cargo };
-    } catch (error) {
-      console.error(
-        `Failed to get cart cargo status for user ${userId}`,
-        error,
-      );
-
-      throw new InternalServerErrorException(
-        'Unable to determine cart cargo status',
       );
     }
   }
@@ -162,18 +117,20 @@ export class CartService {
   async setSelectedDeliveryOption(
     userId: string,
     option: DeliveryOption,
-    currencyCode: string,
   ): Promise<void> {
     try {
-      if (
-        !currencyCode ||
-        !option?.delivery_platform ||
-        !option?.total_amount ||
-        !userId
-      ) {
+      if (!option?.delivery_platform || !option?.total_amount || !userId) {
         throw new BadRequestException(
-          'Currency code, delivery platform, total amount, or user id is required',
+          'Delivery platform, total amount, or user id is required',
         );
+      }
+
+      const { currencyCode } =
+        await this.userPreferencesService.getUserPreferenceCurrencyAndCountry(
+          userId,
+        );
+      if (!currencyCode) {
+        throw new BadRequestException('Currency code not found');
       }
       const exchangeRate = await this.getExchangeRate(currencyCode);
 
@@ -205,7 +162,7 @@ export class CartService {
         throw error;
       }
 
-      throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException((error as Error).message);
     }
   }
 
@@ -253,11 +210,41 @@ export class CartService {
     }
   }
 
+  async syncLocalStorageProductsToCart(
+    userId: string,
+    products: { product_id: string; quantity: number }[],
+  ): Promise<ComputedCart> {
+    let cartItems = await this.cartRepository.find({
+      where: {
+        user_id: userId,
+        product_id: In(products.map((product) => product.product_id)),
+      },
+    });
+    if (cartItems.length === 0) cartItems = [];
+    for (const product of products) {
+      const cartItem = cartItems.find(
+        (cartItem) => cartItem.product_id === product.product_id,
+      );
+      if (cartItem) {
+        cartItem.quantity = product.quantity;
+        await this.cartRepository.save(cartItem);
+      } else {
+        const newCartItem = this.cartRepository.create({
+          user_id: userId,
+          product_id: product.product_id,
+          quantity: product.quantity,
+          status: UserProductStatus.CART,
+        });
+        cartItems.push(newCartItem);
+      }
+    }
+    await this.cartRepository.save(cartItems);
+    return this.getCart(userId);
+  }
+
   async addToCart(
     userId: string,
     addToCartDto: AddToCartDto,
-    currency?: string,
-    countryCode?: string,
   ): Promise<ComputedCart> {
     const { product_id, quantity } = addToCartDto;
 
@@ -270,207 +257,115 @@ export class CartService {
     if (quantity <= 0) {
       throw new BadRequestException('Quantity must be greater than zero');
     }
-
     // Check if product exists
     const product = await this.productRepository.findOne({
       where: { id: product_id },
-      select: ['id', 'price', 'stock_quantity', 'is_active'],
     });
 
     // Check if product is already in cart
-    let existingItem = await this.userItemRepository.findOne({
+    const existingItem = await this.cartRepository.findOne({
       where: { user_id: userId, product_id, status: UserProductStatus.CART },
     });
 
     const existingQuantity = existingItem?.quantity ?? 0;
-    if (!product?.name) {
+    if (!product) {
       throw new NotFoundException('Product not found');
     }
     this.validateProductAndStock(product, quantity, existingQuantity);
 
-    const cartState = await this.getCartCargoStatus(userId);
-    let cartWasCleared = false;
-
-    if (cartState.status === CartCargoStatus.MIXED) {
-      await this.clearCart(userId);
-      cartWasCleared = true;
-    }
-
-    if (cartState.status === CartCargoStatus.SINGLE) {
-      const incomingProduct = await this.productRepository.findOne({
-        where: { id: product_id },
-        relations: ['cargo_option'],
-      });
-
-      const incomingCargo =
-        incomingProduct?.cargo_option?.label?.toLowerCase() ?? null;
-
-      if (incomingCargo && incomingCargo !== cartState.cargoLabel) {
-        await this.clearCart(userId);
-        cartWasCleared = true;
-      }
-    }
-
-    if (cartWasCleared) {
-      existingItem = null;
-    }
-
     if (existingItem) {
       // Update quantity
       existingItem.quantity = existingQuantity + quantity;
-      await this.userItemRepository.save(existingItem);
+      await this.cartRepository.save(existingItem);
     } else {
       // Add new item
-      const cartItem = this.userItemRepository.create({
+      const cartItem = this.cartRepository.create({
         user_id: userId,
         product_id,
         quantity,
         status: UserProductStatus.CART,
       });
 
-      await this.userItemRepository.save(cartItem);
+      await this.cartRepository.save(cartItem);
     }
 
-    return this.getCart(userId, currency, countryCode);
+    return this.getCart(userId);
   }
 
-  async updateCartItem(
-    userId: string,
-    itemId: string,
-    updateCartItemDto: UpdateCartItemDto,
-    currency?: string,
-    countryCode?: string,
-  ): Promise<ComputedCart> {
-    const { quantity } = updateCartItemDto;
-
-    if (quantity <= 0) {
-      throw new BadRequestException('Quantity must be greater than zero');
-    }
-
-    const cartItem = await this.userItemRepository.findOne({
+  async removeFromCart(userId: string, itemId: string): Promise<ComputedCart> {
+    const cartItem = await this.cartRepository.findOne({
       where: { id: itemId, user_id: userId, status: UserProductStatus.CART },
     });
 
-    if (!cartItem) {
-      throw new NotFoundException('Cart item not found or cannot be updated');
+    if (cartItem && cartItem.quantity > 1) {
+      cartItem.quantity = cartItem.quantity - 1;
+      await this.cartRepository.save(cartItem);
+    } else if (cartItem) {
+      await this.cartRepository.remove(cartItem);
     }
 
-    const product = await this.productRepository.findOne({
-      where: { id: cartItem.product_id },
-      relations: ['cargo_option'],
-    });
-
-    this.validateProductAndStock(product, quantity);
-
-    const cartState = await this.getCartCargoStatus(userId);
-    const currentCargo = product?.cargo_option?.label?.toLowerCase() ?? null;
-
-    if (cartState.status === CartCargoStatus.MIXED) {
-      throw new BadRequestException(
-        'All items in the cart must belong to the same category',
-      );
-    }
-
-    if (
-      cartState.status === CartCargoStatus.SINGLE &&
-      currentCargo &&
-      cartState.cargoLabel !== currentCargo
-    ) {
-      throw new BadRequestException(
-        'All items in the cart must belong to the same category',
-      );
-    }
-
-    cartItem.quantity = quantity;
-
-    await this.userItemRepository.save(cartItem);
-
-    return this.getCart(userId, currency, countryCode);
-  }
-
-  async removeFromCart(
-    userId: string,
-    itemId: string,
-    currency?: string,
-    countryCode?: string,
-  ): Promise<ComputedCart> {
-    const cartItem = await this.userItemRepository.findOne({
-      where: { id: itemId, user_id: userId, status: UserProductStatus.CART },
-    });
-
-    // If item doesn't exist, it might have been already deleted (idempotent operation)
-    if (cartItem) {
-      await this.userItemRepository.remove(cartItem);
-    }
-
-    return this.getCart(userId, currency, countryCode);
+    return this.getCart(userId);
   }
 
   async clearCart(userId: string): Promise<void> {
-    await this.userItemRepository.delete({
+    await this.cartRepository.delete({
       user_id: userId,
       status: UserProductStatus.CART,
     });
   }
 
-  async getCart(
-    userId: string,
-    currency?: string,
-    countryCode?: string,
-  ): Promise<ComputedCart & { currency?: string }> {
-    const itemsFromDb = await this.userItemRepository.find({
+  async getCart(userId: string): Promise<ComputedCart> {
+    const itemsFromDb = await this.cartRepository.find({
       where: { user_id: userId, status: UserProductStatus.CART },
     });
 
-    const cargoSet = new Set<string>();
+    const productIds = itemsFromDb.map((item) => item.product_id);
 
-    const preparedItems = await Promise.all(
-      (itemsFromDb ?? []).map(async (item) => {
-        const product = await this.productRepository.findOne({
-          where: { id: item.product_id },
-          relations: ['category', 'measurement', 'cargo_option'],
-        });
+    const products = await this.productRepository.find({
+      where: { id: In(productIds) },
+      relations: ['category', 'measurement', 'cargo_option'],
+    });
 
-        const cargo = product?.cargo_option?.label?.toLowerCase() ?? null;
-
-        if (!cargo) {
-          throw new BadRequestException(
-            'Product does not belong to a valid category',
-          );
-        }
-
-        cargoSet.add(cargo);
-
-        const price = Number(product?.price ?? 0);
-        const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-          Number(product?.unit_value ?? 0),
-          product?.measurement?.label ?? 'kg',
-        );
-        const itemWeight = weightPerUnit * item.quantity;
-
-        return {
-          item,
-          product,
-          price,
-          itemWeight,
-        };
-      }),
+    const productMap = new Map(
+      products.map((product) => [product.id, product]),
     );
 
-    if (cargoSet.size > 1) {
-      throw new BadRequestException(
-        'All items in the cart must belong to the same category',
-      );
-    }
+    const preparedItems = itemsFromDb.map((item) => {
+      const product = productMap.get(item.product_id);
+      if (!product) {
+        throw new BadRequestException('Product not found');
+      }
 
+      const price = Number(product?.price ?? 0);
+      const weightPerUnit = this.deliveryFeeService.getWeightInKg(
+        Number(product?.unit_value ?? 0),
+        product?.measurement?.label ?? 'kg',
+      );
+      const itemWeight = weightPerUnit * item.quantity;
+
+      return {
+        item,
+        product,
+        price,
+        itemWeight,
+      };
+    });
+
+    const { currencyCode, countryCode } =
+      await this.userPreferencesService.getUserPreferenceCurrencyAndCountry(
+        userId,
+      );
+    if (!currencyCode || !countryCode) {
+      throw new BadRequestException('Currency code or country code not found');
+    }
     const items: ComputedCartItem[] = await Promise.all(
       preparedItems.map(async (data) => {
         const { item, product, price, itemWeight } = data;
 
         const delivery_fee = await this.deliveryFeeService.getDeliveryFee(
           itemWeight,
-          countryCode!,
-          currency!,
+          countryCode,
+          currencyCode,
         );
 
         return {
@@ -501,18 +396,46 @@ export class CartService {
       final_amount: finalAmount,
       total_delivery_fee: totalDeliveryFee,
     };
+    return this.applyCurrencyConversion(computedCart, currencyCode);
+  }
 
-    return this.applyCurrencyConversion(
-      computedCart,
-      currency ?? DEFAULT_CURRENCY.code,
-    );
+  async getCartGroupedByCargo(userId: string): Promise<{
+    items: Record<string, ComputedCartItem[]>;
+    total_amount: number;
+    final_amount: number;
+    total_delivery_fee?: number;
+  }> {
+    const cart = await this.getCart(userId);
+
+    const groupedItems: Record<string, ComputedCartItem[]> = {};
+
+    for (const item of cart.items) {
+      const cargoLabel = item.product?.cargo_option?.label?.toLowerCase();
+
+      if (!cargoLabel) {
+        throw new BadRequestException(
+          'Product does not have a valid cargo option',
+        );
+      }
+
+      if (!groupedItems[cargoLabel]) {
+        groupedItems[cargoLabel] = [];
+      }
+
+      groupedItems[cargoLabel].push(item);
+    }
+
+    return {
+      items: groupedItems,
+      total_amount: cart.total_amount,
+      final_amount: cart.final_amount,
+      total_delivery_fee: cart.total_delivery_fee,
+    };
   }
 
   async getCheckoutData(
     userId: string,
     productIds: string[],
-    currency?: string,
-    countryCode?: string,
   ): Promise<ComputedCart> {
     if (!productIds || productIds.length === 0) {
       return {
@@ -523,7 +446,7 @@ export class CartService {
       };
     }
 
-    const itemsFromDb = await this.userItemRepository.find({
+    const cartItems = await this.cartRepository.find({
       where: {
         user_id: userId,
         status: UserProductStatus.CART,
@@ -531,80 +454,117 @@ export class CartService {
       },
     });
 
-    let totalWeight = 0;
+    if (!cartItems.length) {
+      throw new BadRequestException('No valid cart items found');
+    }
 
-    const preparedItems = await Promise.all(
-      (itemsFromDb ?? []).map(async (item) => {
-        const product = await this.productRepository.findOne({
-          where: { id: item.product_id },
-          relations: ['category', 'measurement'],
-        });
+    const products = await this.productRepository.find({
+      where: { id: In(cartItems.map((item) => item.product_id)) },
+      relations: ['category', 'measurement', 'cargo_option'],
+    });
 
-        if (!product) {
-          throw new BadRequestException('Product not found');
-        }
-
-        const price = Number(product?.price);
-        if (!price || price <= 0) {
-          throw new BadRequestException(
-            `Invalid price for product ${product.id}`,
-          );
-        }
-
-        const unitValue = Number(product.unit_value);
-        if (!unitValue || unitValue <= 0) {
-          throw new BadRequestException(
-            `Invalid unit value for product ${product.id}`,
-          );
-        }
-
-        const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-          unitValue,
-          product?.measurement?.label ?? 'kg',
-        );
-        const itemWeight = weightPerUnit * item.quantity;
-        totalWeight += itemWeight;
-
-        return {
-          item,
-          product,
-          price,
-          itemWeight,
-        };
-      }),
+    const productMap = new Map(
+      products.map((product) => [product.id, product]),
     );
 
-    const normalizedCountry =
-      countryCode?.toUpperCase() || DEFAULT_COUNTRY_CODE;
+    const cargoSet = new Set<string>();
+    let totalWeight = 0;
+
+    const preparedItems = cartItems.map((item) => {
+      const product = productMap.get(item.product_id);
+
+      if (!product) {
+        throw new BadRequestException('Product not found');
+      }
+
+      const cargo = product.cargo_option?.label?.toLowerCase();
+      if (!cargo) {
+        throw new BadRequestException(
+          'Product does not belong to a valid category',
+        );
+      }
+      cargoSet.add(cargo);
+
+      if (product.stock_quantity <= 0) {
+        throw new BadRequestException(
+          `Product ${product.id} is not available in stock`,
+        );
+      }
+
+      const allowedQuantity = Math.min(item.quantity, product.stock_quantity);
+
+      const price = Number(product.price);
+      if (!price || price <= 0) {
+        throw new BadRequestException(
+          `Invalid price for product ${product.id}`,
+        );
+      }
+
+      const unitValue = Number(product.unit_value);
+      if (!unitValue || unitValue <= 0) {
+        throw new BadRequestException(
+          `Invalid unit value for product ${product.id}`,
+        );
+      }
+
+      const weightPerUnit = this.deliveryFeeService.getWeightInKg(
+        unitValue,
+        product.measurement?.label ?? 'kg',
+      );
+      const itemWeight = weightPerUnit * allowedQuantity;
+      totalWeight += itemWeight;
+
+      return {
+        item,
+        product,
+        quantity: allowedQuantity,
+        requestedQuantity: item.quantity,
+        price,
+        itemWeight,
+      };
+    });
+
+    if (cargoSet.size > 1) {
+      throw new BadRequestException(
+        'All items must belong to the same cargo category',
+      );
+    }
+
+    const { currencyCode, countryCode } =
+      await this.userPreferencesService.getUserPreferenceCurrencyAndCountry(
+        userId,
+      );
+    if (!currencyCode || !countryCode) {
+      throw new BadRequestException('Currency code or country code not found');
+    }
+
+    const normalizedCountry = countryCode?.toUpperCase();
 
     let totalDeliveryFee = 0;
     try {
       totalDeliveryFee = await this.deliveryFeeService.getDeliveryFee(
         totalWeight,
         normalizedCountry,
-        DEFAULT_CURRENCY.code,
+        currencyCode,
       );
     } catch (error) {
       console.warn('Failed to calculate delivery fee for checkout', error);
       totalDeliveryFee = 0;
     }
 
-    const items: ComputedCartItem[] = preparedItems.map((data) => {
-      const { item, product, price } = data;
-
-      return {
-        id: item.id,
-        cart_id: userId,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        product,
-        unit_price: price,
-        total_price: price * item.quantity,
-        delivery_fee: 0,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-      };
-    });
+    const items: ComputedCartItem[] = preparedItems.map((data) => ({
+      id: data.item.id,
+      cart_id: userId,
+      product_id: data.item.product_id,
+      quantity: data.quantity,
+      requested_quantity: data.requestedQuantity,
+      product: data.product,
+      unit_price: data.price,
+      total_price: data.price * data.quantity,
+      delivery_fee: 0,
+      created_at: data.item.created_at,
+      updated_at: data.item.updated_at,
+    }));
 
     const totalAmount = items.reduce((sum, it) => sum + it.total_price, 0);
 
@@ -617,35 +577,56 @@ export class CartService {
       total_delivery_fee: totalDeliveryFee,
     };
 
-    return this.applyCurrencyConversion(
-      computedCart,
-      currency ?? DEFAULT_CURRENCY.code,
-    );
+    return this.applyCurrencyConversion(computedCart, currencyCode);
   }
 
   async getDeliveryRates(
     userId: string,
-    countryCode?: string,
-    currencyCode?: string,
+    productIds: string[],
   ): Promise<DeliveryOption[]> {
-    const items = await this.userItemRepository.find({
-      where: { user_id: userId, status: UserProductStatus.CART },
-    });
-    if (!items || items.length === 0) {
+    if (!productIds || productIds.length === 0) {
       return [];
     }
 
-    const cargoWeightMap = new Map<string, number>();
+    const cartItems = await this.cartRepository.find({
+      where: {
+        user_id: userId,
+        status: UserProductStatus.CART,
+        product_id: In(productIds),
+      },
+    });
+    if (!cartItems.length) {
+      return [];
+    }
 
-    for (const item of items) {
-      const product = await this.productRepository.findOne({
-        where: { id: item.product_id },
-        relations: ['measurement', 'cargo_option'],
-      });
-      if (!product) continue;
+    const products = await this.productRepository.find({
+      where: { id: In(productIds) },
+      relations: ['measurement', 'cargo_option'],
+    });
+
+    const cargoSet = new Set<string>();
+    let totalWeight = 0;
+
+    for (const item of cartItems) {
+      const product = products.find((p) => p.id === item.product_id);
+      if (!product) {
+        throw new BadRequestException('Product not found');
+      }
 
       const cargoLabel = product.cargo_option?.label?.toLowerCase();
-      if (!cargoLabel) continue;
+      if (!cargoLabel) {
+        throw new BadRequestException(
+          `Product ${product.id} does not have a valid cargo option`,
+        );
+      }
+
+      cargoSet.add(cargoLabel);
+
+      if (cargoSet.size > 1) {
+        throw new BadRequestException(
+          'Selected products belong to different cargo types',
+        );
+      }
 
       const unitValue = Number(product.unit_value);
       if (!unitValue || unitValue <= 0) {
@@ -656,25 +637,25 @@ export class CartService {
 
       const weightPerUnit = this.deliveryFeeService.getWeightInKg(
         unitValue,
-        product?.measurement?.label ?? 'kg',
+        product.measurement?.label ?? 'kg',
       );
 
-      const totalWeight = weightPerUnit * item.quantity;
-
-      cargoWeightMap.set(
-        cargoLabel,
-        (cargoWeightMap.get(cargoLabel) ?? 0) + totalWeight,
-      );
+      totalWeight += weightPerUnit * item.quantity;
     }
 
-    // Only ONE cargo type should exist
-    const [[_, totalWeight]] = [...cargoWeightMap.entries()];
-
-    if (!totalWeight || totalWeight <= 0) {
+    if (totalWeight <= 0) {
       return [];
     }
 
-    return await this.deliveryFeeService.getDeliveryOptions(
+    const { currencyCode, countryCode } =
+      await this.userPreferencesService.getUserPreferenceCurrencyAndCountry(
+        userId,
+      );
+    if (!currencyCode || !countryCode) {
+      throw new BadRequestException('Currency code or country code not found');
+    }
+
+    return this.deliveryFeeService.getDeliveryOptions(
       totalWeight,
       countryCode,
       currencyCode,

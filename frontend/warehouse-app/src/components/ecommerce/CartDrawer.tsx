@@ -26,7 +26,7 @@ import {
   Delete,
   ShoppingCart,
 } from "@mui/icons-material";
-import { useCart, useCartActions } from "../../store/ecommerceStore";
+import { useCartStore } from "@/store/cartStore";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/utils/constants";
 
@@ -35,6 +35,7 @@ interface CartDrawerProps {
   onClose: () => void;
 }
 
+//TODO P0: Rework the cart drawer to use the new cart store
 export default function CartDrawer({ open, onClose }: CartDrawerProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -43,22 +44,14 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
     cart,
     loading,
     error,
-    updateCartItem,
+    // updateCartItem,
     removeFromCart,
     clearCart,
-  } = useCart();
+  } = useCartStore();
 
   const handleCheckout = () => {
     onClose();
     router.push(ROUTES.CHECKOUT);
-  };
-
-  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(itemId);
-    } else {
-      updateCartItem(itemId, newQuantity);
-    }
   };
 
   const handleRemoveItem = (itemId: string) => {
@@ -192,7 +185,7 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                         >
                           <IconButton
                             size="small"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            // onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                           >
                             <Remove fontSize="small" />
                           </IconButton>
@@ -208,7 +201,7 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                           </Typography>
                           <IconButton
                             size="small"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            // onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                           >
                             <Add fontSize="small" />
                           </IconButton>

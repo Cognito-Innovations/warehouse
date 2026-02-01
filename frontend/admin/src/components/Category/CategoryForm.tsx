@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, Stack, Button, CircularProgress,
-  // MenuItem, Chip
-} from "@mui/material";
+import { Box, TextField, Stack, Button, CircularProgress,} from "@mui/material";
 
 import { createCategory,
-  // getCountries,
   updateCategory
 } from "../../services/api.services";
 import ImageUpload from "../common/ImageUpload";
-// import { arraysEqual } from "../../utils/arrayEqual";
-// import { statusOptions } from "../../utils/constants";
 import type { CategoryPayload,
-  // Country
 } from "../../types";
 
 interface CategoryFormProps {
@@ -33,25 +27,7 @@ const defaultFormData: CategoryPayload = {
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
   const [formData, setFormData] = useState<CategoryPayload>(defaultFormData);
-  // const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(false);
-  // const [fetching, setFetching] = useState(true);
-
-  // const fetchCountries = async () => {
-  //   try {
-  //     setFetching(true);
-  //     const countries = await getCountries();
-  //     setCountries(countries);
-  //   } catch (error) {
-  //     console.error("Failed to fetch countries:", error);
-  //   } finally {
-  //     setFetching(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchCountries();
-  // }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -65,21 +41,12 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  // const handleCountryDelete = (countryId: string) => {
-  //   handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
-  // };
-
   const handleSubmit = async () => {
     if (!formData.name || !formData.slug || !formData.image_url) return;
 
     if (initialData) {
       const hasChanged = Object.keys(defaultFormData).some((key) => {
         const k = key as keyof CategoryPayload;
-
-        // if (k === "country_ids") {
-        //   return !arraysEqual(initialData.country_ids || [], formData.country_ids);
-        // }
-
         return initialData[k] !== formData[k];
       });
 

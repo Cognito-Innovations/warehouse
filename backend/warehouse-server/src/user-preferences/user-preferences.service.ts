@@ -73,6 +73,17 @@ export class UserPreferencesService {
     };
   }
 
+  async getUserPreferenceCurrencyAndCountry(userId: string) {
+    const userPreference = await this.userPreferenceRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['currency', 'courier', 'courier.country'],
+    });
+    return {
+      currencyCode: userPreference?.currency.currency_code,
+      countryCode: userPreference?.courier.country.code,
+    };
+  }
+
   async getUserCurrency(userId: string) {
     const userPreference = await this.userPreferenceRepository.findOne({
       where: { user: { id: userId } },

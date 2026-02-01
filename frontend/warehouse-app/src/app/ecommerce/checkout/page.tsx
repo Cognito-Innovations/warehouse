@@ -3,9 +3,11 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Box, Container, CircularProgress, Grid, Alert } from "@mui/material";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
+import { useCheckout } from "@/store/useCheckout";
 import { useAuth } from "@/contexts/AuthContext";
 import { FastDeliveryBanner } from "@/components/ecommerce/checkout/FastDeliveryBanner";
 import { DeliveryInfoCard } from "@/components/ecommerce/checkout/DeliveryInfoCard";
@@ -27,18 +29,18 @@ export default function CheckoutPage() {
   const [itemsLoaded, setItemsLoaded] = useState(false); 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [totalDeliveryFee, setTotalDeliveryFee] = useState(0);
-  const [hasError, setHasError] = useState(false);
 
   const initializationStarted = useRef(false);
 
   const { currencyCode, currencySymbol, countryCode } = useDetectUserLocation();
+  const { selectedProductIds } = useCheckout();
 
   const loadCheckoutData = async () => {
-    const currentCheckoutProducts = useCartStore.getState().checkoutProducts;
+    const currentCheckoutProducts = selectedProductIds;
 
     if (!currentCheckoutProducts || currentCheckoutProducts.length === 0) {
-      console.warn("No checkout products found in store.");
-      setItemsLoaded(true);
+      toast.error("Checkout session expired. Please review your cart.");
+      router.replace(ROUTES.CART);
       return;
     }
 
@@ -66,10 +68,16 @@ export default function CheckoutPage() {
         console.error("Checkout API returned no items", checkoutData);
         setItemsLoaded(true);
       }
-    } catch (e) {
-      console.error("Checkout load failed", e);
-      setHasError(true);
-      setItemsLoaded(true); 
+    } catch (error: any) {
+      console.error("Checkout load failed", error);
+
+      const message =
+        error?.response?.data?.message ||
+        "Unable to proceed with checkout. Please review your cart.";
+
+      toast.error(message);
+      setItemsLoaded(true);
+      router.replace(ROUTES.CART);
     }
   };
 
@@ -81,10 +89,18 @@ export default function CheckoutPage() {
   }, [currencyCode, countryCode]); 
 
   useEffect(() => {
-    if (itemsLoaded && checkedOutItems.length === 0 && !orderPlaced && !hasError) {
+    if (itemsLoaded && checkedOutItems.length === 0 && !orderPlaced) {
       router.replace(ROUTES.CART);
     }
-  }, [checkedOutItems, router, itemsLoaded, orderPlaced, hasError]);
+  }, [checkedOutItems, router, itemsLoaded, orderPlaced]);
+
+  const stockWarnings = useMemo(() => {
+    return checkedOutItems.filter(
+      (item: any) =>
+        item.requested_quantity &&
+        item.quantity < item.requested_quantity
+    );
+  }, [checkedOutItems]);
 
   const selectedIds = useMemo(() => new Set(checkedOutItems.map(item => item.product_id!)), [checkedOutItems]);
   const totals = useMemo(
@@ -105,16 +121,6 @@ export default function CheckoutPage() {
   const handleAddressLoadingChange = useCallback((isLoading: boolean) => {
     setAddressLoading(isLoading);
   }, []);
-
-  if (hasError) {
-    return (
-      <Container sx={{ py: 4 }}>
-        <Alert severity="error">
-          Unable to load checkout details. Please try again or return to cart.
-        </Alert>
-      </Container>
-    );
-  }
 
   if (!itemsLoaded) {
     return (
@@ -154,6 +160,14 @@ export default function CheckoutPage() {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <Box sx={{ position: { lg: "sticky" }, top: { lg: 20 } }}>
+              {stockWarnings.length > 0 && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  {stockWarnings.length === 1
+                    ? "An item had limited stock. Quantity was adjusted based on availability."
+                    : `${stockWarnings.length} items had limited stock. Quantities were adjusted based on availability.`}
+                </Alert>
+              )}
+
               <OrderSummary 
                 items={checkedOutItems}
                 totals={totals}

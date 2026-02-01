@@ -23,7 +23,7 @@ interface EcommerceContentProps {
   slug?: string;
 }
 export default function EcommerceContent({ slug }: EcommerceContentProps) {
-  const { isLoaded, loadLocation } = useDetectUserLocation();
+  const { isLoaded, fetchLocationBasedOnUser } = useDetectUserLocation();
   const { user } = useAuth();
   const {
     products,
@@ -42,8 +42,8 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
   });
 
   useEffect(() => {
-    loadLocation((user as any)?.id);
-  }, [user, loadLocation]);
+    fetchLocationBasedOnUser((user as any)?.id);
+  }, [(user as any)?.id]);
 
 
   const handleRefresh = () => {

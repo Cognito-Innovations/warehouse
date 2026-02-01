@@ -1,4 +1,4 @@
-import { EcommerceCategory, EcommerceProduct, LocalCartItem, UserAddress, DeliveryOption } from "@/types/ecommerce";
+import { EcommerceCategory, EcommerceProduct } from "@/types/ecommerce";
 
 export type CategoryStore = {
   selectedCategory: string | null;
@@ -47,35 +47,17 @@ export type FetchProductsParams = {
 };
 
 export type CartStore = {
-  cartProducts: LocalCartItem[];
-  updatingProducts: Record<string, boolean>;
-  cartProductQuantityCount: () => number;
-  loading: boolean;
-  isSyncing: boolean,
+  cart: any[];
+  userId: string | null;
+  isLoading: boolean;
   _hasHydrated: boolean;
-  hasUnsyncedChanges: boolean;
-  checkoutProducts: string[];
-  selectedDeliveryOption: DeliveryOption | null;
-  setCheckoutProducts: (productIds: string[]) => void;
-  setSelectedDeliveryOption: (option: DeliveryOption | null) => void;
-  toggleCartItemSelection: (productIds: string | string[]) => void;
-  setCartProducts: (products: any[]) => void;
-  clearCheckoutProducts: () => void;
-  setLoading: (value: boolean) => void;
   setHasHydrated: (value: boolean) => void;
-  setUpdating: (productId: string, isUpdating: boolean) => void;
-  getItemQuantity: (productId: string) => number;
-  getServerCartItemId: (productId: string, currency?: string, countryCode?: string) => Promise<string | undefined>;
-  refreshCart: (currency?: string, countryCode?: string) => Promise<LocalCartItem[]>;
-  syncCart: (currency?: string, countryCode?: string) => Promise<void>;
-  getCart: (currency?: string, countryCode?: string) => Promise<LocalCartItem[]>;
-  addOrIncreaseQty: (product: EcommerceProduct, quantity: number, currency?: string, countryCode?: string) => Promise<void>;
-  decreaseProductQty: (product: EcommerceProduct, quantity: number, currency?: string, countryCode?: string) => Promise<void>;
-  removeProductFromCart: (productId: string, currency?: string, countryCode?: string) => Promise<void>;
-  incrementCartQuantity: (product: EcommerceProduct, currency?: string, countryCode?: string) => Promise<void>;
-  decrementCartQuantity: (product: EcommerceProduct, currency?: string, countryCode?: string) => Promise<void>;
-  setCartItemQuantity: (productId: string, quantity: number, currency?: string, countryCode?: string) => Promise<void>;
-  removePurchasedProducts: (purchasedProductIds: string[]) => void;
+  setUserId: (userId: string | null) => void;
+  removeProductFromCart: (productId: string) => Promise<void>;
+  getCart: () => Promise<void>;
+  addProductToCartStore: (productId: string, requestedQty: number) => Promise<void>;
+  addProductToCart: (productId: string, requestedQty: number, productStockQty: number) => Promise<void>;
+  syncLocalStorageProductsToCartDB: (userId: string) => Promise<void>;
 }
 
 export type LocationStore = {
@@ -84,6 +66,12 @@ export type LocationStore = {
   currencyRate: number;
   countryCode: string;
   isLoaded: boolean;
-  refreshLocation: (userId?: string) => Promise<void>;
-  loadLocation: (userId?: string, skipCache?: boolean) => Promise<void>;
+  fetchLocationBasedOnUser: (userId?: string) => Promise<void>;
+}
+
+export type CheckoutState = {
+  selectedCargo: string | null;
+  selectedProductIds: string[];
+  selectCargo: (cargo: string, productIds: string[]) => void;
+  toggleProduct: (productId: string) => void;
 }
