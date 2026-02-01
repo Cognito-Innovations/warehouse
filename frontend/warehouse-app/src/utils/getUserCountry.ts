@@ -56,13 +56,14 @@ export async function fetchCurrencyByCode(currencyCode: string): Promise<any> {
   }
 }
 
-export async function fetchCurrencyAndCodeByIp(): Promise<{currencyInfo: CurrencyInfoProps, countryCode: string}> {
+export async function fetchCurrencyAndCodeByIp(): Promise<{currencyInfo: CurrencyInfoProps, countryCode: string, countryName: string}> {
   try {
     const data = await fetchUserCountryByIP()
     const countryCode = data.countryCode as string;
+    const countryName = data.countryName as string;
     const currencyCode = data.currency;  //INR, USD, GBP, etc.
     const currencyInfo = await fetchCurrencyByCode(currencyCode as string);
-    return {countryCode, currencyInfo}
+    return {countryCode, countryName, currencyInfo}
   } catch (e) {
     const currencyInfo: CurrencyInfoProps = {
       code: DEFAULT_CURRENCY_INFO.code,
@@ -71,6 +72,7 @@ export async function fetchCurrencyAndCodeByIp(): Promise<{currencyInfo: Currenc
     };
     return {
       countryCode: DEFAULT_LOCATION.countryCode,
+      countryName: DEFAULT_LOCATION.countryName,
       currencyInfo,
     };
   }

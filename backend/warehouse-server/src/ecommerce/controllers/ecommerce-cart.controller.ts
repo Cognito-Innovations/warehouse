@@ -14,6 +14,7 @@ import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { DeliveryOption } from 'src/shared/get-delivery-fee.service';
 import { CheckoutDto } from '../dto/cart/checkout.dto';
+import { DeliveryRatesDto } from '../dto/cart/delivery-rates.dto';
 
 interface AuthenticatedRequest {
   user: {
@@ -33,6 +34,21 @@ export class CartController {
       return { items: [], final_amount: 0 };
     }
     return this.cartService.getCart(userId);
+  }
+
+  @Get('grouped-by-cargo')
+  async getCartGroupedByCargo(@Request() req: AuthenticatedRequest) {
+    const userId = req.user?.id;
+    if (!userId) {
+      return {
+        items: {},
+        total_amount: 0,
+        final_amount: 0,
+        total_delivery_fee: 0,
+      };
+    }
+
+    return this.cartService.getCartGroupedByCargo(userId);
   }
 
   @Post('add')
@@ -82,15 +98,17 @@ export class CartController {
     return { message: 'Cart cleared successfully' };
   }
 
-  @Get('delivery-rates')
+  @Post('delivery-rates')
   async getDeliveryRates(
     @Request() req: AuthenticatedRequest,
+    @Body() body: DeliveryRatesDto,
   ): Promise<DeliveryOption[]> {
     const userId = req.user?.id;
     if (!userId) {
       return [];
     }
-    return this.cartService.getDeliveryRates(userId);
+    const { productIds } = body;
+    return this.cartService.getDeliveryRates(userId, productIds);
   }
 
   @Post('checkout')

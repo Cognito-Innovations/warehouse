@@ -14,7 +14,8 @@ export default function SignInForm({ callbackUrl }: SignInFormProps) {
   const { isAuthenticated } = useAuth();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const redirectTo = callbackUrl || ROUTES.ECOMMERCE;
+
+  const redirectTo = callbackUrl || ROUTES.ROOT;
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -23,7 +24,6 @@ export default function SignInForm({ callbackUrl }: SignInFormProps) {
     try {
       const result = await signIn("google", {
         callbackUrl: redirectTo,
-        redirect: false
       });
       
       if (result?.ok) {

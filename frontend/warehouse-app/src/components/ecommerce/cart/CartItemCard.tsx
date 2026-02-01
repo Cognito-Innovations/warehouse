@@ -16,6 +16,8 @@ import { CartItemCardProps, EcommerceProduct } from "@/types/ecommerce";
 export default function CartItemCard({
   item,
   isSelected,
+  onCheckboxToggle,
+  isDisabled = false,
 }: CartItemCardProps) {
   const router = useRouter();
   const {
@@ -33,14 +35,6 @@ export default function CartItemCard({
     if (blocked.includes((e.target as HTMLElement).tagName)) return;
 
     router.push(`${ROUTES.PRODUCT}/${product.slug}`);
-  };
-
-  const handleItemSelect = (itemId: string, isChecked: boolean) => {
-    const isCurrentlySelected = cart.some(item => item.product_id === itemId);
-    if (isChecked !== isCurrentlySelected) {
-      //TODO P0: Uncoment and make functionality work
-      // toggleCartItemSelection(itemId);
-    }
   };
 
   const handleQuantityChange = useCallback(async (identifier: string, newQuantity: number) => {
@@ -96,9 +90,10 @@ export default function CartItemCard({
         cursor: "pointer",
         transition: "all 0.3s ease",
         position: "relative",
+        opacity: isDisabled ? 0.7 : 1,
         "&:hover": {
-          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
-          transform: "translateY(-2px)",
+          boxShadow: isDisabled ? "none" : "0 4px 16px rgba(0, 0, 0, 0.12)",
+          transform: isDisabled ? "none" : "translateY(-2px)",
         },
         "&:last-child": {
           mb: 0,
@@ -110,13 +105,17 @@ export default function CartItemCard({
         <Box sx={{ display: "flex", alignItems: "flex-start", pt: 0.5 }}>
           <Checkbox
             checked={isSelected}
-            onChange={(e) => handleItemSelect(effectiveId, e.target.checked)}
+            onChange={onCheckboxToggle}
             onClick={(e) => e.stopPropagation()}
+            disabled={isDisabled}
             sx={{
               color: "success.main",
               "&.Mui-checked": {
                 color: "success.main",
               },
+              "&.Mui-disabled": {
+                color: "grey.400",
+              }
             }}
           />
         </Box>

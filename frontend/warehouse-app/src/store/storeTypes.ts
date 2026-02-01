@@ -68,3 +68,10 @@ export type LocationStore = {
   isLoaded: boolean;
   fetchLocationBasedOnUser: (userId?: string) => Promise<void>;
 }
+
+export type CheckoutState = {
+  selectedCargo: string | null;
+  selectedProductIds: string[];
+  selectCargo: (cargo: string, productIds: string[]) => void;
+  toggleProduct: (productId: string) => void;
+}

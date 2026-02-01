@@ -14,7 +14,6 @@ import HeaderProfileMenu from "../Header/HeaderProfileMenu";
 import HeaderLocationMenu from "../Header/HeaderLocationMenu";
 import { ROUTES, ECOMMERCE_EXCLUDED_PATHS } from "@/utils/constants";
 import { ecommerceData } from "@/data/ecommerceData";
-import { getUserPreferences } from "@/lib/api.service";
 
 interface HeaderProps {
   locationData?: any; 
@@ -41,7 +40,7 @@ export default function Header({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, logout } = useAuth();
-  const { countryCode, fetchLocationBasedOnUser } = useDetectUserLocation();
+  const { countryCode, countryName } = useDetectUserLocation();
   const { searchQuery, setSearchQuery } = useProductStore();
   const { isLoading: cartLoading, cart } = useCartStore();
   
@@ -82,22 +81,6 @@ export default function Header({
 
   const handleLocationClick = (event: React.MouseEvent<HTMLElement>) => setLocationAnchorEl(event.currentTarget);
   const handleLocationClose = () => setLocationAnchorEl(null);
-
-  const [countryName, setCountryName] = useState<string>("");
-
-  useEffect(() => {
-    fetchLocationBasedOnUser(user.id)
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (user?.id){
-      const fetchCountryDetails = async () => {
-        const userPreferences = await getUserPreferences(user.id);
-        setCountryName(userPreferences?.courier?.country?.name || "");
-      };
-      fetchCountryDetails();
-    }
-  }, [user]);
 
   let locationText: string | null = null;
   let onLocationClick: (() => void) | null = null;

@@ -140,8 +140,8 @@ export const authOptions: NextAuthOptions = {
         console.error("Invalid URL in redirect:", e);
       }
 
-      // Default to dashboard
-      return `${baseUrl}/dashboard`;
+      // Default to home
+      return `${baseUrl}/`;
     },
   },
   pages: {

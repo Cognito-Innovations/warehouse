@@ -20,9 +20,9 @@ function SignInContent() {
   useEffect(() => {
     if (isAuthenticated && !isRedirecting) {
       setIsRedirecting(true);
-      router.replace(callbackUrl || ROUTES.ECOMMERCE);
-    };
-  }, [isAuthenticated, isRedirecting, callbackUrl, (user as any).id]);
+      router.replace(callbackUrl || ROUTES.ROOT);
+    }
+  }, [isAuthenticated, router, isRedirecting, callbackUrl]);
 
   if (isRedirecting || isAuthenticated) {
     return (
@@ -30,8 +30,8 @@ function SignInContent() {
         <Box sx={{ textAlign: "center" }}>
           <CircularProgress size={40} thickness={4} sx={{ color: "#7C3AED" }} />
           <Box sx={{ mt: 3, color: "text.secondary", fontWeight: 500 }}>
-            {isRedirecting || isAuthenticated
-              ? `Taking you ${callbackUrl ? 'back' : 'to ecommerce'}...`
+            {isRedirecting || isAuthenticated 
+              ? `Taking you ${callbackUrl ? 'back' : 'home'}...`
               : "Loading..."}
           </Box>
         </Box>
