@@ -16,14 +16,11 @@ import { CartItemCardProps, EcommerceProduct } from "@/types/ecommerce";
 export default function CartItemCard({
   item,
   isSelected,
-  selectedCurrency,
 }: CartItemCardProps) {
   const router = useRouter();
   const {
-    checkoutProducts,
-    toggleCartItemSelection,
-    removeProductFromCart,
-    setCartItemQuantity,
+    cart,
+    removeProductFromCart
   } = useCartStore();
 
   const { currencySymbol } = useDetectUserLocation();
@@ -39,19 +36,21 @@ export default function CartItemCard({
   };
 
   const handleItemSelect = (itemId: string, isChecked: boolean) => {
-    const isCurrentlySelected = checkoutProducts.includes(itemId);
+    const isCurrentlySelected = cart.some(item => item.product_id === itemId);
     if (isChecked !== isCurrentlySelected) {
-      toggleCartItemSelection(itemId);
+      //TODO P0: Uncoment and make functionality work
+      // toggleCartItemSelection(itemId);
     }
   };
 
   const handleQuantityChange = useCallback(async (identifier: string, newQuantity: number) => {
-    await setCartItemQuantity(identifier, newQuantity, selectedCurrency);
-  }, [setCartItemQuantity, selectedCurrency]);
+    //TODO P0: Uncoment and make functionality wor
+    // await setCartItemQuantity(identifier, newQuantity);
+  }, []);
 
   const handleRemoveItem = useCallback(async (identifier: string) => {
-    await removeProductFromCart(identifier, selectedCurrency);
-  }, [removeProductFromCart, selectedCurrency]);
+    await removeProductFromCart(identifier);
+  }, [removeProductFromCart]);
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     handleImageLoad(e, setImageDimensions);

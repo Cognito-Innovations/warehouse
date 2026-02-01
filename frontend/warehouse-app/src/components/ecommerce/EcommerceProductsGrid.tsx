@@ -33,7 +33,7 @@ export default function EcommerceProductsGrid({
       {products.map((product: EcommerceProduct) => {
         return (
           <EcommerceProductCard
-            key={product.id}
+            key={`${product.id}-product-grid`}
             product={product}
           />
         );

@@ -8,21 +8,21 @@ import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "@/utils/constants";
 
 function SignInContent() {
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  const callbackUrl = searchParams.get('callbackUrl') 
-    ? decodeURIComponent(searchParams.get('callbackUrl')!) 
+  const callbackUrl = searchParams.get('callbackUrl')
+    ? decodeURIComponent(searchParams.get('callbackUrl')!)
     : undefined;
-  
+
   useEffect(() => {
     if (isAuthenticated && !isRedirecting) {
       setIsRedirecting(true);
-      router.replace(callbackUrl || ROUTES.DASHBOARD);
-    }
-  }, [isAuthenticated, router, isRedirecting, callbackUrl]);
+      router.replace(callbackUrl || ROUTES.ECOMMERCE);
+    };
+  }, [isAuthenticated, isRedirecting, callbackUrl, (user as any).id]);
 
   if (isRedirecting || isAuthenticated) {
     return (
@@ -30,8 +30,8 @@ function SignInContent() {
         <Box sx={{ textAlign: "center" }}>
           <CircularProgress size={40} thickness={4} sx={{ color: "#7C3AED" }} />
           <Box sx={{ mt: 3, color: "text.secondary", fontWeight: 500 }}>
-            {isRedirecting || isAuthenticated 
-              ? `Taking you ${callbackUrl ? 'back' : 'to dashboard'}...`
+            {isRedirecting || isAuthenticated
+              ? `Taking you ${callbackUrl ? 'back' : 'to ecommerce'}...`
               : "Loading..."}
           </Box>
         </Box>

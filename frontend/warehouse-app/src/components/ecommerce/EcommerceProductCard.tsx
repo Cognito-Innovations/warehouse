@@ -11,18 +11,17 @@ import {
   Button,
   useTheme,
 } from "@mui/material";
-import { Star, Add } from "@mui/icons-material";
+import { Add } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 
 import useProductStore from "@/store/productStore";
 import { useCartStore } from "@/store/cartStore";
-import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import ProductQuantityControl from "./ProductQuantityControl";
 import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
 // import { formatDiscountPercentage } from "@/lib/utils";
 // import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils"; 
-import { EcommerceProductCardProps } from "@/types/ecommerce";
+import { CartItem, EcommerceProductCardProps } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
 
 export default function EcommerceProductCard({
@@ -31,11 +30,8 @@ export default function EcommerceProductCard({
   const router = useRouter();
   const theme = useTheme();
   const {handleProductSelect} = useProductStore();
-  const incrementCartQuantity = useCartStore((state) => state.incrementCartQuantity);
-  const decrementCartQuantity = useCartStore((state) => state.decrementCartQuantity);
-  const cartQuantity = useCartStore((state) => state.cartProducts.find((item) => item.product_id === product.id))?.quantity || 0;
-
-  const { currencyCode, countryCode } = useDetectUserLocation();
+  const {addProductToCart, removeProductFromCart, cart} = useCartStore();
+  const cartQuantity = cart?.find((item: CartItem) => item.product_id === product.id)?.quantity || 0;
 
   const rawPrice = product.price.price;
   const currency = product.price.currency;
@@ -53,12 +49,12 @@ export default function EcommerceProductCard({
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    incrementCartQuantity(product, currencyCode, countryCode);
+    addProductToCart(product.id, 1, product.stock_quantity);
   };
 
   const handleDecreaseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    decrementCartQuantity(product, currencyCode, countryCode);
+    removeProductFromCart(product.id);
   };
 
   return (

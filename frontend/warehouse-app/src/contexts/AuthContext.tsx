@@ -1,7 +1,8 @@
 "use client";
 import React, { createContext, useContext, ReactNode, useMemo, useEffect } from "react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
+import { useCartStore } from "@/store/cartStore";
 
 interface User {
   id: string;
@@ -53,8 +54,12 @@ const defaultUser: User = {
   phone: "",
 };
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session: initialSession }) => {
   const { fetchLocationBasedOnUser } = useDetectUserLocation();
+  const setUserId = useCartStore((state) => state.setUserId);
+  const { data: sessionData } = useSession();
+  const session = sessionData || initialSession;
+  
   const user: User | {} = useMemo(() => {
     if (session?.user) {
       return {
@@ -77,6 +82,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session })
   const token = session ? (session as any).access_token || null : null;
   const isAuthenticated = !!(session?.user && ((session.user as any).user_id || session.user.email));
 
+  // Sync userId to cart store whenever user changes
+  // This ensures userId persists in memory while user is authenticated
+  // and gets cleared when user logs out
+  useEffect(() => {
+    const userId = (user as User).id;
+    if (userId && isAuthenticated) {
+      setUserId(userId);
+    } else {
+      setUserId(null);
+    }
+  }, [(user as User).id, isAuthenticated, setUserId]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       fetchLocationBasedOnUser((user as User).id);
@@ -84,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session })
   }, [(user as User).id]);
 
   const logout = () => {
+    setUserId(null);
     signOut({ callbackUrl: "/" });
   };
 

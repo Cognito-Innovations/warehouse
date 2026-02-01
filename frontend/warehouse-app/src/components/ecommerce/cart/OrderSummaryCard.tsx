@@ -16,7 +16,6 @@ import { OrderSummaryCardProps, CartAddressData } from "@/types/ecommerce";
 export default function OrderSummaryCard({
   userId,
   items,
-  selectedCurrency,
   selectedAddress,
   setHighlightAddressError,
   selectedDeliveryOption,
@@ -26,17 +25,8 @@ export default function OrderSummaryCard({
   const router = useRouter();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { checkoutProducts, cartProducts, isSyncing } = useCartStore();
+  const { cart, isLoading } = useCartStore();
   const { currencySymbol } = useDetectUserLocation();
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
-  }, []);
 
   // Calculate delivery fee from selected option or fallback to item-based calculation
   const calculateDeliveryFee = () => {
@@ -47,22 +37,22 @@ export default function OrderSummaryCard({
       return selectedDeliveryOption.total_amount;
     }
     // Fallback to item-based calculation
-    const totals = calculateCartTotals(items, new Set(checkoutProducts), selectedCurrency, currencySymbol);
+    const totals = calculateCartTotals(items, new Set(cart.map(item => item.product_id)), currencySymbol);
     return totals.deliveryFee;
   };
 
   const deliveryFee = calculateDeliveryFee();
-  const totals = calculateCartTotals(items, new Set(checkoutProducts), selectedCurrency, currencySymbol);
+  const totals = calculateCartTotals(items, new Set(cart.map(item => item.product_id)), currencySymbol);
   const finalTotal = totals.subtotal + deliveryFee;
   
   const handleCheckout = useCallback(() => {
-    if (isSyncing) {
+    if (isLoading) {
       toast.info("Syncing your cart with server, please wait...");
       return;
     }
 
-    const selected = cartProducts.filter(item =>
-      checkoutProducts.includes(item.product_id!)
+    const selected = cart.filter(item =>
+      cart.map(item => item.product_id).includes(item.product_id!)
     );
 
     if (selected?.length === 0) {
@@ -92,7 +82,7 @@ export default function OrderSummaryCard({
       localStorage.setItem("checkoutSelectedItems", JSON.stringify(selected));
       router.push(ROUTES.CHECKOUT);
     }
-  }, [router, cartProducts, userId, selectedAddress, selectedDeliveryOption, checkoutProducts, isSyncing, setHighlightAddressError]);
+  }, [router, userId, selectedAddress, selectedDeliveryOption,  setHighlightAddressError]);
   
   const formatAddress = (address: CartAddressData) => {
     return `${address.address}, ${address.city}, ${address.state} ${address.zip_code}`;
@@ -234,8 +224,8 @@ export default function OrderSummaryCard({
                   wordBreak: "break-word",
                 }}
               >
-                {selectedDeliveryOption.service_name}
-                {selectedDeliveryOption.estimated_days && ` • ${selectedDeliveryOption.estimated_days}`}
+                {/* {selectedDeliveryOption.service_name}
+                {selectedDeliveryOption.estimated_days && ` • ${selectedDeliveryOption.estimated_days}`} */}
               </Typography>
             )}
           </Box>
@@ -338,7 +328,7 @@ export default function OrderSummaryCard({
         onClick={handleCheckout}
         disabled={!selectedAddress || !selectedDeliveryOption}
         endIcon={
-          isSyncing ? (
+          isLoading ? (
             <CircularProgress size={20} color="inherit" />
           ) : userId ? (
             <ArrowForward />
@@ -365,7 +355,7 @@ export default function OrderSummaryCard({
           }
         }}
       >
-        {isSyncing ? "Syncing Cart..." : userId ? "Proceed to Payment" : "Login"}
+        {isLoading ? "Syncing Cart..." : userId ? "Proceed to Payment" : "Login"}
       </Button>
     </Paper>
   );

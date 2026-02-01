@@ -5,7 +5,6 @@ import { Box, Container, Button } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 import { useSession } from "next-auth/react";
 
-import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
 import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
@@ -27,14 +26,9 @@ type CartStep = 0 | 1 | 2;
 export default function CartPage() {
   const { data: session, status } = useSession();
   const hydrated = useCartHasHydrated();
-  const { currencyCode, countryCode, isLoaded: locationLoaded } = useDetectUserLocation();
   const { 
-    cartProducts, 
-    getCart, 
-    checkoutProducts, 
-    setCheckoutProducts,
-    selectedDeliveryOption,
-    setSelectedDeliveryOption,
+    cart,
+    getCart,
   } = useCartStore();
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
@@ -42,7 +36,7 @@ export default function CartPage() {
   const [isCartLoading, setIsCartLoading] = useState(true);
   const [isAddressDataReady, setIsAddressDataReady] = useState(false);
   const [activeStep, setActiveStep] = useState<CartStep>(0);
-
+  const [selectedDeliveryOption, setSelectedDeliveryOption] = useState<DeliveryOption | null>(null);
 
   const userId = (session?.user as any)?.user_id;
 
@@ -58,12 +52,12 @@ export default function CartPage() {
   const handleDeliveryOptionSelect = useCallback(async (option: DeliveryOption) => {
     setSelectedDeliveryOption(option);
     try {
-      await ecommerceService.selectDeliveryOption(option, currencyCode);
-      await getCart(currencyCode, countryCode);
+      await ecommerceService.selectDeliveryOption(option);
+      await getCart();
     } catch (err) {
       console.error('Failed to save delivery option:', err);
     }
-  }, [setSelectedDeliveryOption, getCart, currencyCode, countryCode]);
+  }, []);
 
   const handleBackToAddress = useCallback(() => {
     setActiveStep(0);
@@ -83,22 +77,20 @@ export default function CartPage() {
     setActiveStep(0); // Go back to address selection step
   }, []);
 
+
   const initCart = useCallback(async () => {
     setIsCartLoading(true);
     try {
-      await getCart(currencyCode, countryCode);
+      await ecommerceService.fetchCart();
     } catch (e) {
       console.error("Initialization error:", e);
     } finally {
       setIsCartLoading(false);
     }
-  }, [getCart, currencyCode]);
+  }, []);
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!currencyCode) return;
-
-    if (!locationLoaded) return;
 
     if (hydrated) {
       initCart();
@@ -111,21 +103,7 @@ export default function CartPage() {
         clearTimeout(timer);
       };
     }
-  }, [currencyCode, status, initCart, hydrated, userId, locationLoaded]);
-
-  useEffect(() => {
-    if (hydrated && cartProducts.length > 0) {
-      const validItems = cartProducts.filter(item => item && item.product);
-      const allIds = validItems.map(item => item.product_id).filter((id): id is string => !!id);
-      if (allIds.length > 0) {
-        const cleanCheckoutProducts = checkoutProducts.filter(id => allIds.includes(id));
-
-        if (cleanCheckoutProducts.length !== checkoutProducts.length) {
-          setCheckoutProducts(cleanCheckoutProducts);
-        }
-      }
-    }
-  }, [hydrated, cartProducts, checkoutProducts, setCheckoutProducts]);
+  }, [status, initCart, hydrated, userId]);
 
   // Auto-advance step based on selections
   useEffect(() => {
@@ -140,11 +118,11 @@ export default function CartPage() {
     return <CartSkeletonLoader />;
   }
 
-  if (!isCartLoading && (!cartProducts || cartProducts.length === 0)) {
+  if (!isCartLoading && (!cart || cart.length === 0)) {
     return <EmptyCartState/>;
   }
 
-  const validItems = cartProducts.filter(item => item && item.product);
+  const validItems = cart.filter(item => item && item.product);
 
   const renderStepContent = () => {
     switch (activeStep) {
@@ -172,8 +150,7 @@ export default function CartPage() {
               <CartItemsList
                 items={validItems as any}
                 loadingStates={{}}
-                selectedItems={new Set(checkoutProducts)}
-                selectedCurrency={currencyCode}
+                selectedItems={new Set(cart.map(item => item.product_id))}
               />
             )}
             {/* Action buttons at bottom */}
@@ -224,8 +201,6 @@ export default function CartPage() {
           <>
             {/* Step 1: Delivery Selection - NO cart items shown */}
             <DeliveryModelSelection
-              countryCode={countryCode}
-              currencyCode={currencyCode}
               selectedOption={selectedDeliveryOption}
               onSelectOption={handleDeliveryOptionSelect}
               onBack={handleBackToAddress}
@@ -243,7 +218,6 @@ export default function CartPage() {
             ) : (
               <ReadOnlyCartItems
                 items={validItems as any}
-                selectedCurrency={currencyCode}
               />
             )}
             {/* Note: Order Summary card is shown on the right side */}
@@ -296,7 +270,6 @@ export default function CartPage() {
                 <OrderSummaryCard
                   userId={userId}
                   items={validItems as any}
-                  selectedCurrency={currencyCode}
                   selectedAddress={selectedAddress}
                   setHighlightAddressError={setHighlightAddressError}
                   selectedDeliveryOption={selectedDeliveryOption}

@@ -130,11 +130,6 @@ export interface Order {
 export interface AddToCartRequest {
   product_id: string;
   quantity: number;
-  country?: string;
-}
-
-export interface UpdateCartItemRequest {
-  quantity: number;
 }
 
 export interface CreateOrderRequest {
@@ -216,7 +211,6 @@ export interface ProductDetailInfoSectionProps {
   product: EcommerceProduct;
   cart: Cart | null;
   addToCart: (productId: string, quantity: number) => Promise<void>;
-  updateCartItem: (itemId: string, newQuantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   isLoading?: boolean;
 }
@@ -373,6 +367,5 @@ export interface ProductCartActionsProps {
   discountPriceRaw: number;
   currency: string;
   addToCart: (productId: string, quantity: number) => Promise<void>;
-  updateCartItem: (itemId: string, newQuantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
 }

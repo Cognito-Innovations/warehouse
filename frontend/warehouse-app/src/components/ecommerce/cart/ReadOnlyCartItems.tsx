@@ -12,12 +12,10 @@ import { CartItem } from "@/types/ecommerce";
 
 interface ReadOnlyCartItemsProps {
   items: CartItem[];
-  selectedCurrency?: string;
 }
 
 export default function ReadOnlyCartItems({
-  items,
-  selectedCurrency,
+  items
 }: ReadOnlyCartItemsProps) {
   const { currencySymbol } = useDetectUserLocation();
   const currencyStr = currencySymbol || DEFAULT_CURRENCY_INFO.symbol;

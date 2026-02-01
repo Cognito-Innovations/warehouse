@@ -43,7 +43,7 @@ export default function Header({
   const { user, logout } = useAuth();
   const { countryCode, fetchLocationBasedOnUser } = useDetectUserLocation();
   const { searchQuery, setSearchQuery } = useProductStore();
-  const { loading: cartLoading, cartProductQuantityCount } = useCartStore();
+  const { isLoading: cartLoading, cart } = useCartStore();
   
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -57,7 +57,7 @@ export default function Header({
   const open = Boolean(anchorEl);
   const isLocationMenuOpen = Boolean(locationAnchorEl);
 
-  const count = cartProductQuantityCount();
+  const count = (cart || []).length;
 
   const isEcommerce =
     (pathname === ROUTES.ROOT || pathname.startsWith(ROUTES.ECOMMERCE)) &&
