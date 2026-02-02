@@ -46,7 +46,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   addressLoading,
   onOrderSuccess,
 }) => {
-  const { removePurchasedProducts } = useCartStore();
+  const { removeProductFromCart } = useCartStore();
   const { currencyCode, countryCode, currencyRate } = useDetectUserLocation();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isFinalizingPayment, setIsFinalizingPayment] = useState(false);
@@ -70,7 +70,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     onSuccess: async () => {
       try {
         const purchasedIds = items.map((item) => item.product_id!);
-        removePurchasedProducts(purchasedIds);
+        await Promise.all(purchasedIds.map((id) => removeProductFromCart(id)));
         onOrderSuccess?.();
         setIsFinalizingPayment(false);
         setShowSuccessModal(true);

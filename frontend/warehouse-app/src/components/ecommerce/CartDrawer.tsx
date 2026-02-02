@@ -110,7 +110,7 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
             <Alert severity="error" sx={{ m: 2 }}>
               {error}
             </Alert>
-          ) : !cart || cart.items.length === 0 ? (
+          ) : !cart || cart.length === 0 ? (
             <Box
               display="flex"
               flexDirection="column"
@@ -226,7 +226,7 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
         </Box>
 
         {/* Footer */}
-        {cart && cart.items.length > 0 && (
+        {cart && cart.length > 0 && (
           <Box
             sx={{
               p: 2,
