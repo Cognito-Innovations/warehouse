@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Box, Container, Skeleton, Paper } from "@mui/material";
 
 export default function CartSkeletonLoader() {

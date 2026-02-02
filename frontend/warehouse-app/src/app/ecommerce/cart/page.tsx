@@ -138,7 +138,7 @@ export default function CartPage() {
     return <EmptyCartState/>;
   }
 
-  const validItems = cart.filter(item => item && item.product);
+  const validItems = cart?.filter(item => item && item.product);
 
   const renderStepContent = () => {
     switch (activeStep) {

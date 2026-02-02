@@ -228,6 +228,9 @@ export const ecommerceService = {
   async getCartGroupedByCargo(userId: string) {
     try {
       const response = await api.get(`/ecommerce-cart/grouped-by-cargo?userId=${userId}`);
+      if (response.statusText.toLowerCase() !== 'ok') {
+        throw new Error('Failed to fetch the cart group by cargo!');
+      }
       return response.data;
     } catch (error) {
       console.error('Failed to fetch the cart group by cargo:', error);

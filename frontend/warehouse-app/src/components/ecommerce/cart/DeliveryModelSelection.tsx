@@ -36,7 +36,7 @@ export default function DeliveryModelSelection({
   const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { currencyCode, currencySymbol } = useDetectUserLocation();
+  const { currencySymbol } = useDetectUserLocation();
   const { getCart } = useCartStore();
   const { selectedProductIds } = useCheckout();
 
@@ -53,8 +53,7 @@ export default function DeliveryModelSelection({
         setError(null);
         const options = await ecommerceService.getDeliveryRates(
           selectedProductIds,
-          countryCode,
-          currencyCode
+          countryCode
         );
         setDeliveryOptions(options);
         
@@ -78,13 +77,13 @@ export default function DeliveryModelSelection({
     async (option: DeliveryOption) => {
       onSelectOption(option);
       try {
-        await ecommerceService.selectDeliveryOption(option, currencyCode);
-        await getCart(currencyCode, countryCode);
+        await ecommerceService.selectDeliveryOption(option);
+        await getCart();
       } catch (err) {
         console.error("Failed to save delivery option:", err);
       }
     },
-    [onSelectOption, getCart, currencyCode, countryCode]
+    [onSelectOption, getCart]
   );
 
   const formatDeliveryDays = (days?: string) => {

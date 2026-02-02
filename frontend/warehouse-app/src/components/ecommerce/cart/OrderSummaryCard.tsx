@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { Paper, Box, Typography, Button, Divider, CircularProgress, Chip } from "@mui/material";
 import { ArrowForward, Login, ArrowBack } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
@@ -39,12 +39,12 @@ export default function OrderSummaryCard({
       return selectedDeliveryOption.total_amount;
     }
     // Fallback to item-based calculation
-    const totals = calculateCartTotals(items, new Set(selectedProductIds), selectedCurrency, currencySymbol);
+    const totals = calculateCartTotals(items, new Set(selectedProductIds), currencySymbol);
     return totals.deliveryFee;
   };
 
   const deliveryFee = calculateDeliveryFee();
-  const totals = calculateCartTotals(items, new Set(selectedProductIds), selectedCurrency, currencySymbol);
+  const totals = calculateCartTotals(items, new Set(selectedProductIds), currencySymbol);
   const finalTotal = totals.subtotal + deliveryFee;
   
   const handleCheckout = useCallback(() => {
@@ -53,7 +53,7 @@ export default function OrderSummaryCard({
       return;
     }
 
-    const selected = cartProducts.filter(item =>
+    const selected = cart.filter((item: any) =>
       selectedProductIds.includes(item.product_id!)
     );
 
@@ -84,7 +84,7 @@ export default function OrderSummaryCard({
       localStorage.setItem("checkoutSelectedItems", JSON.stringify(selected));
       router.push(ROUTES.CHECKOUT);
     }
-  }, [router, cartProducts, userId, selectedAddress, selectedDeliveryOption, selectedProductIds, isSyncing, setHighlightAddressError]);
+  }, [router, cart, userId, selectedAddress, selectedDeliveryOption, selectedProductIds, setHighlightAddressError]);
   
   const formatAddress = (address: CartAddressData) => {
     return `${address.address}, ${address.city}, ${address.state} ${address.zip_code}`;
