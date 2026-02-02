@@ -21,6 +21,7 @@ import DeliveryModelSelection from "@/components/ecommerce/cart/DeliveryModelSel
 import ReadOnlyCartItems from "@/components/ecommerce/cart/ReadOnlyCartItems";
 import CargoGroupedCart from "@/components/ecommerce/cart/CargoGroupedCart";
 import { CartAddressData, DeliveryOption } from "@/types/ecommerce";
+import { normalizeCart } from "@/lib/utils";
 
 type CartStep = 0 | 1 | 2;
 
@@ -138,7 +139,8 @@ export default function CartPage() {
     return <EmptyCartState/>;
   }
 
-  const validItems = cart.filter(item => item && item.product);
+  const safeCart = normalizeCart(cart);
+  const validItems = safeCart.filter(item => item && item.product);
 
   const renderStepContent = () => {
     switch (activeStep) {

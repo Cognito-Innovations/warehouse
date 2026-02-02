@@ -38,6 +38,7 @@ export interface ComputedCart {
   total_amount: number;
   final_amount: number;
   total_delivery_fee?: number;
+  total_discount?: number;
 }
 
 @Injectable()
@@ -307,6 +308,27 @@ export class CartService {
     return this.getCart(userId);
   }
 
+  async removeEntireProductFromCart(
+    userId: string,
+    itemId: string,
+  ): Promise<ComputedCart> {
+    const cartItem = await this.cartRepository.findOne({
+      where: {
+        product_id: itemId,
+        user_id: userId,
+        status: UserProductStatus.CART,
+      },
+    });
+
+    if (!cartItem) {
+      throw new NotFoundException('Cart item not found');
+    }
+
+    await this.cartRepository.remove(cartItem);
+
+    return this.getCart(userId);
+  }
+
   async clearCart(userId: string): Promise<void> {
     await this.cartRepository.delete({
       user_id: userId,
@@ -460,15 +482,15 @@ export class CartService {
 
     const products = await this.productRepository.find({
       where: { id: In(cartItems.map((item) => item.product_id)) },
-      relations: ['category', 'measurement', 'cargo_option'],
+      relations: ['category', 'measurement'],
     });
 
     const productMap = new Map(
       products.map((product) => [product.id, product]),
     );
 
-    const cargoSet = new Set<string>();
     let totalWeight = 0;
+    let totalDiscount = 0;
 
     const preparedItems = cartItems.map((item) => {
       const product = productMap.get(item.product_id);
@@ -476,14 +498,6 @@ export class CartService {
       if (!product) {
         throw new BadRequestException('Product not found');
       }
-
-      const cargo = product.cargo_option?.label?.toLowerCase();
-      if (!cargo) {
-        throw new BadRequestException(
-          'Product does not belong to a valid category',
-        );
-      }
-      cargoSet.add(cargo);
 
       if (product.stock_quantity <= 0) {
         throw new BadRequestException(
@@ -499,6 +513,12 @@ export class CartService {
           `Invalid price for product ${product.id}`,
         );
       }
+
+      const discountPercentage = Number(product.discount_percentage) || 0;
+      const discountAmountPerUnit = price * (discountPercentage / 100);
+      const totalItemDiscount = discountAmountPerUnit * allowedQuantity;
+
+      totalDiscount += totalItemDiscount;
 
       const unitValue = Number(product.unit_value);
       if (!unitValue || unitValue <= 0) {
@@ -521,14 +541,10 @@ export class CartService {
         requestedQuantity: item.quantity,
         price,
         itemWeight,
+        discountPercentage,
+        totalItemDiscount,
       };
     });
-
-    if (cargoSet.size > 1) {
-      throw new BadRequestException(
-        'All items must belong to the same cargo category',
-      );
-    }
 
     const { currencyCode, countryCode } =
       await this.userPreferencesService.getUserPreferenceCurrencyAndCountry(
@@ -568,13 +584,14 @@ export class CartService {
 
     const totalAmount = items.reduce((sum, it) => sum + it.total_price, 0);
 
-    const finalAmount = totalAmount + totalDeliveryFee;
+    const finalAmount = totalAmount - totalDiscount + totalDeliveryFee;
 
     const computedCart: ComputedCart = {
       items,
       total_amount: totalAmount,
-      final_amount: finalAmount,
+      final_amount: Math.max(0, finalAmount),
       total_delivery_fee: totalDeliveryFee,
+      total_discount: totalDiscount,
     };
 
     return this.applyCurrencyConversion(computedCart, currencyCode);
@@ -601,31 +618,15 @@ export class CartService {
 
     const products = await this.productRepository.find({
       where: { id: In(productIds) },
-      relations: ['measurement', 'cargo_option'],
+      relations: ['measurement'],
     });
 
-    const cargoSet = new Set<string>();
     let totalWeight = 0;
 
     for (const item of cartItems) {
       const product = products.find((p) => p.id === item.product_id);
       if (!product) {
         throw new BadRequestException('Product not found');
-      }
-
-      const cargoLabel = product.cargo_option?.label?.toLowerCase();
-      if (!cargoLabel) {
-        throw new BadRequestException(
-          `Product ${product.id} does not have a valid cargo option`,
-        );
-      }
-
-      cargoSet.add(cargoLabel);
-
-      if (cargoSet.size > 1) {
-        throw new BadRequestException(
-          'Selected products belong to different cargo types',
-        );
       }
 
       const unitValue = Number(product.unit_value);

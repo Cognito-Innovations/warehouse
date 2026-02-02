@@ -54,6 +54,7 @@ export type CartStore = {
   setHasHydrated: (value: boolean) => void;
   setUserId: (userId: string | null) => void;
   removeProductFromCart: (productId: string) => Promise<void>;
+  removeEntireProductFromCart: (productId: string) => Promise<void>;
   getCart: () => Promise<void>;
   addProductToCartStore: (productId: string, requestedQty: number) => Promise<void>;
   addProductToCart: (productId: string, requestedQty: number, productStockQty: number) => Promise<void>;

@@ -21,6 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Search, Public, ArrowBack, LocationOn } from "@mui/icons-material";
 import { getCourierCompanies, updatePreferences, getUserPreferences } from "@/lib/api.service";
 import { toast } from "sonner";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 
 interface CourierCompany {
     id: string;
@@ -87,13 +88,11 @@ export default function CountrySelectionView({ onBack, showBackButton }: Country
                 });
             }
 
-            // Update local store for system-wide consistency
-            //TODO P0: Uncomment this when the country selection view is implemented
-            // setUserLocation({
-            //     ...userLocation,
-            //     countryName: courier.country_name,
-            //     countryCode: courier.country_code
-            // });
+            useDetectUserLocation.setState({
+                countryName: courier.country_name,
+                countryCode: courier.country_code,
+                isLoaded: true
+            });
 
             setCurrentCourierId(courier.id);
             toast.success(`Active location updated to ${courier.country_name}`);

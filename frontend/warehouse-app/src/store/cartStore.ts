@@ -42,6 +42,16 @@ export const useCartStore = create<CartStore>()(
         if(userId) await ecommerceService.removeFromCart(productId);
       },
 
+      removeEntireProductFromCart: async (productId: string) => {
+        const { cart, userId } = get();
+        set({
+          cart: cart.filter((item: any) => item.product_id !== productId),
+        });
+        if (userId) {
+          await ecommerceService.removeEntireProductFromCart(productId);
+        }
+      },
+
       addProductToCartStore: async (productId: string, requestedQty: number) => {
         const {cart} = get();
         const existingCartProduct = cart.find((item: CartItem) => item.product_id === productId)
@@ -59,12 +69,12 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      addProductToCart: (productId: string, requestedQty: number, productStockQty: number): any => {
+      addProductToCart: async (productId: string, requestedQty: number, productStockQty: number): Promise<void> => {
         const {userId, addProductToCartStore} = get();
         if (!productId || requestedQty > productStockQty) return;
         set({ isLoading: true });
-        if(userId) ecommerceService.addToCart({ product_id: productId, quantity: requestedQty });
         addProductToCartStore(productId, requestedQty);
+        if(userId) await ecommerceService.addToCart({ product_id: productId, quantity: requestedQty });
         set({ isLoading: false });
       },
 

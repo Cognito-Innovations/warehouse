@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, ReactNode, useMemo, useEffect } from "react";
+import React, { createContext, useContext, ReactNode, useMemo, useEffect, useRef } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCartStore } from "@/store/cartStore";
@@ -56,7 +56,13 @@ const defaultUser: User = {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session: initialSession }) => {
   const { fetchLocationBasedOnUser } = useDetectUserLocation();
-  const setUserId = useCartStore((state) => state.setUserId);
+
+  const {
+    setUserId,
+    getCart,
+    syncLocalStorageProductsToCartDB,
+    _hasHydrated,
+  } = useCartStore();
   const { data: sessionData } = useSession();
   const session = sessionData || initialSession;
   
@@ -81,6 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session: i
 
   const token = session ? (session as any).access_token || null : null;
   const isAuthenticated = !!(session?.user && ((session.user as any).user_id || session.user.email));
+  const hasSyncedCartRef = useRef(false);
 
   // Sync userId to cart store whenever user changes
   // This ensures userId persists in memory while user is authenticated
@@ -95,12 +102,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session: i
   }, [(user as User).id, isAuthenticated, setUserId]);
 
   useEffect(() => {
+    const userId = (user as User).id;
+    if (
+      !_hasHydrated ||
+      !isAuthenticated ||
+      !userId ||
+      hasSyncedCartRef.current
+    ) {
+      return;
+    }
+
+    hasSyncedCartRef.current = true;
+
+    const localCart =
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("cart-storage") || "{}")
+        : null;
+
+    const hasLocalCartItems = localCart?.state?.cart?.length > 0;
+
+    (async () => {
+      if (hasLocalCartItems) {
+        await syncLocalStorageProductsToCartDB(userId);
+      } else {
+        await getCart();
+      }
+    })();
+  }, [
+    _hasHydrated,
+    isAuthenticated,
+    (user as User).id,
+    getCart,
+    syncLocalStorageProductsToCartDB,
+  ]);
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       fetchLocationBasedOnUser((user as User).id);
     }
   }, [(user as User).id]);
 
   const logout = () => {
+    hasSyncedCartRef.current = false;
     setUserId(null);
     signOut({ callbackUrl: "/" });
   };

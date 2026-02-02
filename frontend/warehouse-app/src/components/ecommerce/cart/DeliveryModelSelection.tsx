@@ -42,20 +42,10 @@ export default function DeliveryModelSelection({
 
   useEffect(() => {
     const fetchDeliveryOptions = async () => {
-      if (!countryCode) {
-        setError("Country code is required");
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         setError(null);
-        const options = await ecommerceService.getDeliveryRates(
-          selectedProductIds,
-          countryCode,
-          currencyCode
-        );
+        const options = await ecommerceService.getDeliveryRates(selectedProductIds);
         setDeliveryOptions(options);
         
         // Auto-select first option if none selected
@@ -78,8 +68,8 @@ export default function DeliveryModelSelection({
     async (option: DeliveryOption) => {
       onSelectOption(option);
       try {
-        await ecommerceService.selectDeliveryOption(option, currencyCode);
-        await getCart(currencyCode, countryCode);
+        await ecommerceService.selectDeliveryOption(option);
+        await getCart();
       } catch (err) {
         console.error("Failed to save delivery option:", err);
       }

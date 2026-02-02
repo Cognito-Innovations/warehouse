@@ -7,9 +7,8 @@ import { Star, StarBorder, ExpandMore, ExpandLess } from "@mui/icons-material";
 import ProductCartActions from "./ProductCartActions";
 import ProductDetailTabs from "./ProductDetailTabs"; 
 import OfferCard from "./OfferCard";
-// import { formatDiscountPercentage } from "@/lib/utils";
-// import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils";
-import { formatPrice } from "@/utils/priceUtils";
+import { formatDiscountPercentage } from "@/lib/utils";
+import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils";
 import { ecommerceData } from "@/data/ecommerceData";
 import { EcommerceProduct } from "@/types/ecommerce";
 
@@ -26,12 +25,12 @@ export default function ProductDetailInfoSection({
 
   const currency = product.price.currency;
   const rawPrice = product.price.price;
-  // const discountPercentage = parseFloat(String(product.discount_percentage || "0"));
-  // const discountPriceRaw = calculateDiscountedPrice(rawPrice, discountPercentage);
-  // const formattedDiscountPrice = formatPrice(discountPriceRaw, currency);
-  // const formattedOriginalPrice = formatPrice(rawPrice, currency);
-  // const savingsAmount = rawPrice - discountPriceRaw;
-  // const formattedSavings = savingsAmount > 0 ? formatPrice(savingsAmount, currency) : '';
+  const discountPercentage = parseFloat(String(product.discount_percentage || "0"));
+  const discountPriceRaw = calculateDiscountedPrice(rawPrice, discountPercentage);
+  const formattedDiscountPrice = formatPrice(discountPriceRaw, currency);
+  const formattedOriginalPrice = formatPrice(rawPrice, currency);
+  const savingsAmount = rawPrice - discountPriceRaw;
+  const formattedSavings = savingsAmount > 0 ? formatPrice(savingsAmount, currency) : '';
 
   const formattedPrice = formatPrice(rawPrice, currency);
 
@@ -149,7 +148,7 @@ export default function ProductDetailInfoSection({
 
         {/* Price Section */}
         <Box sx={{ mb: 3 }}>
-          {/* {discountPercentage > 0 && (
+          {discountPercentage > 0 && (
             <Typography
               variant="body2"
               color="text.secondary"
@@ -160,7 +159,7 @@ export default function ProductDetailInfoSection({
             >
               {formatDiscountPercentage(discountPercentage, "OFF")}
             </Typography>
-          )} */}
+          )}
           <Typography
             variant="h4"
             fontWeight={700}
@@ -171,11 +170,11 @@ export default function ProductDetailInfoSection({
               mb: 1,
             }}
           >
-            {formattedPrice}
+            {discountPercentage > 0 ? formattedDiscountPrice : formattedOriginalPrice}
           </Typography>
-          {/* {discountPercentage > 0 && ( */}
-            {/* <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap"> */}
-              {/* <Typography
+          {discountPercentage > 0 && (
+            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+              <Typography
                 variant="h6"
                 color="text.secondary"
                 sx={{
@@ -185,8 +184,8 @@ export default function ProductDetailInfoSection({
                 }}
               >
                 {formattedOriginalPrice}
-              </Typography> */}
-              {/* {formattedSavings && (
+              </Typography>
+              {formattedSavings && (
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -197,9 +196,9 @@ export default function ProductDetailInfoSection({
                 >
                   Save {formattedSavings}
                 </Typography>
-              )} */}
-            {/* </Stack> */}
-          {/* )} */}
+              )}
+            </Stack>
+          )}
         </Box>
 
         <ProductDetailTabs product={product} loading={detailsLoading} />
@@ -279,7 +278,7 @@ export default function ProductDetailInfoSection({
 
         <ProductCartActions
           product={product}
-          discountPriceRaw={rawPrice}
+          discountPriceRaw={discountPriceRaw}
           currency={currency}
         />
       </Paper>

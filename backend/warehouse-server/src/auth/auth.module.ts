@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { User } from 'src/users/user.entity';
 
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { GlobalAuthGuard } from './guards/global-auth.guard';
 import { AuthController } from './auth.controller';
 
@@ -22,7 +23,7 @@ import { AuthController } from './auth.controller';
     }),
     UsersModule,
   ],
-  providers: [AuthService, JwtStrategy, GlobalAuthGuard],
+  providers: [AuthService, JwtStrategy, RefreshTokenStrategy, GlobalAuthGuard],
   controllers: [AuthController],
   exports: [AuthService, JwtModule, GlobalAuthGuard],
 })

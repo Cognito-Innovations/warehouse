@@ -39,9 +39,9 @@ export function formatPrice(rawPrice: number, currency_symbol = DEFAULT_CURRENCY
   return `${currency_symbol}${rawPrice?.toFixed(2)}`;
 }
 
-// export function calculateDiscountedPrice(rawPrice: number, discountPercent: number): number {
-//   return rawPrice * (1 - discountPercent / 100);
-// }
+export function calculateDiscountedPrice(rawPrice: number, discountPercent: number): number {
+  return rawPrice * (1 - discountPercent / 100);
+}
 
 export const roundCurrency = (value: number): number => Math.round((value + Number.EPSILON) * 100) / 100;
 
@@ -49,8 +49,8 @@ export interface ProductPricingSummary {
   currency: string;
   originalUnitPrice: number;
   discountedUnitPrice: number;
-  // discountPercent: number;
-  // discountPerUnit: number;
+  discountPercent: number;
+  discountPerUnit: number;
 }
 
 export const getProductPricingSummary = (
@@ -69,57 +69,68 @@ export const getProductPricingSummary = (
     currency = currencySymbol;
   }
 
-  // const discountPercent = Number(product.discount_percentage) || 0;
-  // const discountedUnitPrice = roundCurrency(calculateDiscountedPrice(rsaw, discountPercent));
-  // const discountPerUnit = roundCurrency(raw - discountedUnitPrice);
+  const discountPercent = Number(product.discount_percentage) || 0;
+  const discountedUnitPrice = roundCurrency(
+    calculateDiscountedPrice(raw, discountPercent)
+  );
+  const discountPerUnit = roundCurrency(raw - discountedUnitPrice);
 
   return {
     currency,
     originalUnitPrice: roundCurrency(raw),
-    discountedUnitPrice: roundCurrency(raw),
-    // discountPercent,
-    // discountPerUnit,
+    discountedUnitPrice,
+    discountPercent,
+    discountPerUnit,
   };
 };
 
 export interface CartItemPricingSummary extends ProductPricingSummary {
   quantity: number;
   lineTotal: number;
-  // discountTotal: number;
+  discountTotal: number;
 }
 
 export const getCartItemPricingSummary = (
   item: CartItem,
   currencySymbol?: string,
 ): CartItemPricingSummary => {
-  const baseUnitPrice =
-    Number(item.unit_price) ||
-    Number((item as any)?.product?.price?.price) ||
-    Number((item as any)?.product?.price) ||
-    0;
+  const quantity = Number(item.quantity) || 0;
 
-  const quantity = item.quantity || 0;
-  // const discountAmount = roundCurrency(Number(item.discount_amount) || 0);
+  const catalogPrice = roundCurrency(
+    Number((item as any)?.product?.price?.price) || 
+    Number((item as any)?.product?.price) || 
+    0
+  );
 
-  // const originalUnitPrice =
-  //   discountAmount > 0
-  //     ? roundCurrency(baseUnitPrice + discountAmount)
-  //     : baseUnitPrice;
+  const sellingPrice = roundCurrency(Number(item.unit_price) || 0);
 
-  // const discountPerUnit = roundCurrency(originalUnitPrice - baseUnitPrice);
+  const productDiscountPercent = Number((item as any)?.product?.discount_percentage) || 0;
+
+  let originalUnitPrice = catalogPrice > 0 ? catalogPrice : sellingPrice;
+  let discountedUnitPrice = sellingPrice > 0 ? sellingPrice : originalUnitPrice;
+
+  if (originalUnitPrice === discountedUnitPrice && productDiscountPercent > 0) {
+    discountedUnitPrice = roundCurrency(
+      calculateDiscountedPrice(originalUnitPrice, productDiscountPercent)
+    );
+  }
+
+  const discountPerUnit = roundCurrency(Math.max(originalUnitPrice - discountedUnitPrice, 0));
+
+  const discountPercent =
+    originalUnitPrice > 0
+      ? roundCurrency((discountPerUnit / originalUnitPrice) * 100)
+      : 0;
 
   return {
     currency: currencySymbol ?? INR_CURRENCY.symbol,
-    originalUnitPrice: baseUnitPrice,
-    discountedUnitPrice: baseUnitPrice,
-    // discountPercent:
-    //   originalUnitPrice > 0
-    //     ? roundCurrency((discountPerUnit / originalUnitPrice) * 100)
-    //     : 0,
-    // discountPerUnit,
+    originalUnitPrice,
+    discountedUnitPrice,
+    discountPercent,
+    discountPerUnit,
     quantity,
-    lineTotal: roundCurrency(baseUnitPrice * quantity),
-    // discountTotal: roundCurrency(discountPerUnit * quantity),
+    lineTotal: roundCurrency(discountedUnitPrice * quantity),
+    discountTotal: roundCurrency(discountPerUnit * quantity),
   };
 };
 

@@ -100,17 +100,18 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
         setCurrentCurrencyId(currency.id);
 
         try {
-            //TODO P0: Uncomment this when the currency selection view is implemented
-            // setUserLocation({
-            //     ...userLocation,
-            //     currency: currency.currency_symbol 
-            // });
-
             if (user?.id) {
                 await updatePreferences({
                     user_id: user.id,
                     currency_id: currency.id
                 });
+                
+                useDetectUserLocation.setState({
+                    currencyCode: currency.code,
+                    currencySymbol: currency.currency_symbol,
+                    isLoaded: true
+                });
+                
                 const state = useDetectUserLocation.getState();
                 fetchProducts({
                   currency: state.currencyCode,

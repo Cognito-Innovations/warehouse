@@ -26,11 +26,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
           <ThemeProvider>
-            <Suspense fallback={<EcommerceSkeletonLoader/>}>
-              <ClientLayout>
+            <ClientLayout>
+              <Suspense fallback={<EcommerceSkeletonLoader/>}>
                 {children}
-              </ClientLayout>
-            </Suspense>
+              </Suspense>
+            </ClientLayout>
           </ThemeProvider>
         </Providers>
       </body>

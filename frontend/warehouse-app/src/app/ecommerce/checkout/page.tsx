@@ -5,7 +5,6 @@ import { Box, Container, CircularProgress, Grid, Alert } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { useCartStore } from "@/store/cartStore";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCheckout } from "@/store/useCheckout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,7 +31,7 @@ export default function CheckoutPage() {
 
   const initializationStarted = useRef(false);
 
-  const { currencyCode, currencySymbol, countryCode } = useDetectUserLocation();
+  const { currencyCode, currencySymbol } = useDetectUserLocation();
   const { selectedProductIds } = useCheckout();
 
   const loadCheckoutData = async () => {
@@ -45,24 +44,12 @@ export default function CheckoutPage() {
     }
 
     try {
-      const checkoutData: ComputedCart = await ecommerceService.postCheckout(
-        currencyCode, 
-        countryCode,
-        currentCheckoutProducts
-      );
+      const checkoutData: ComputedCart =
+        await ecommerceService.postCheckout(currentCheckoutProducts);
 
       if (checkoutData && checkoutData.items && checkoutData.items.length > 0) {
         setCheckedOutItems(checkoutData.items as CartItem[]);
         setTotalDeliveryFee(checkoutData.total_delivery_fee ?? 0);
-
-        try {
-          useCartStore.getState().setCartProducts(checkoutData.items);
-          const itemProductIds = checkoutData.items.map(item => item.product_id!);
-          useCartStore.getState().toggleCartItemSelection(itemProductIds);
-        } catch (storeError) {
-          console.warn("Failed to sync with store", storeError);
-        }
-
         setItemsLoaded(true);
       } else {
         console.error("Checkout API returned no items", checkoutData);
@@ -82,11 +69,11 @@ export default function CheckoutPage() {
   };
 
   useEffect(() => {
-    if (currencyCode && !initializationStarted.current) {
+    if (!initializationStarted.current) {
       initializationStarted.current = true;
       loadCheckoutData();
     }
-  }, [currencyCode, countryCode]); 
+  }, []); 
 
   useEffect(() => {
     if (itemsLoaded && checkedOutItems.length === 0 && !orderPlaced) {

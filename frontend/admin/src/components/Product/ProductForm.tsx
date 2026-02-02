@@ -170,7 +170,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
     formData.description &&
     formData.image_url &&
     formData.price > 0 &&
-    formData.discount_percentage >= 0 &&
     formData.unit_value > 0 &&
     formData.measurement_id &&
     formData.cargo_option_id &&
@@ -321,8 +320,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
             handleChange("discount_percentage", isNaN(numValue) ? 0 : numValue);
           }}
           fullWidth
-          required
           type="number"
+          helperText="Optional (0 means no discount)"
         />
       </Box>
 

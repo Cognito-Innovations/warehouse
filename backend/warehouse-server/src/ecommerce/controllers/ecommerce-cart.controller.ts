@@ -90,6 +90,14 @@ export class CartController {
     return this.cartService.removeFromCart(req.user.id, itemId);
   }
 
+  @Delete('items/:itemId/all')
+  async removeEntireProductFromCart(
+    @Request() req: AuthenticatedRequest,
+    @Param('itemId') itemId: string,
+  ): Promise<ComputedCart> {
+    return this.cartService.removeEntireProductFromCart(req.user.id, itemId);
+  }
+
   @Delete('clear')
   async clearCart(
     @Request() req: AuthenticatedRequest,

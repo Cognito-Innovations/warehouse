@@ -32,15 +32,6 @@ interface CurrencyInfo {
   rate: number;
 }
 
-interface PayPalHttpError {
-  response: {
-    data: {
-      message?: string;
-      details?: Array<{ description?: string }>;
-    };
-  };
-}
-
 @Injectable()
 export class OrderService {
   constructor(
@@ -96,36 +87,46 @@ export class OrderService {
         });
 
         const basePrice = Number(product?.price || 0);
+        const discountPercentage = Number(product?.discount_percentage || 0);
 
-        const itemTotalUSDRaw = basePrice * item.quantity;
+        const discountPerUnitUSD = basePrice * (discountPercentage / 100);
+        const discountedUnitPriceUSD = basePrice - discountPerUnitUSD;
+
+        const itemTotalPaidUSDRaw = discountedUnitPriceUSD * item.quantity;
+
+        const itemOriginalTotalUSDRaw = basePrice * item.quantity;
 
         const localPrice = this.roundCurrency(basePrice * rate);
+        const localDiscountedPrice = this.roundCurrency(
+          discountedUnitPriceUSD * rate,
+        );
         const itemSubtotalLocal = localPrice * item.quantity;
 
-        const itemTotalUSDRounded = this.roundCurrency(itemTotalUSDRaw);
+        const itemTotalUSDRounded = this.roundCurrency(itemTotalPaidUSDRaw);
 
         return {
           product_id: item.product_id,
           quantity: item.quantity,
           unitPriceUSD: basePrice,
           totalUSD: itemTotalUSDRounded,
-          rawTotalUSD: itemTotalUSDRaw,
+          rawTotalUSD: itemTotalPaidUSDRaw,
           subtotalLocal: itemSubtotalLocal,
+          discountUSD: discountPerUnitUSD * item.quantity
         };
       }),
     );
 
     // Aggregate totals
-    let totalItemsUSDRaw = 0;
+    let totalItemsPaidUSDRaw = 0;
     for (const detail of itemDetails) {
       subtotalLocal += detail.subtotalLocal;
-      totalItemsUSDRaw += detail.rawTotalUSD;
+      totalItemsPaidUSDRaw += detail.rawTotalUSD;
     }
 
     const roundedDeliveryFeeUSD = this.roundCurrency(deliveryFeeUSD);
 
     const finalUSDTotal = this.roundCurrency(
-      totalItemsUSDRaw + roundedDeliveryFeeUSD,
+      totalItemsPaidUSDRaw + roundedDeliveryFeeUSD,
     );
 
     return {
@@ -155,7 +156,6 @@ export class OrderService {
   async createOrder(
     userId: string,
     createOrderDto: CreateOrderDto,
-    countryCode?: string,
   ): Promise<OrderWithDetails> {
     let savedPayment: EcommercePayment | null = null;
 

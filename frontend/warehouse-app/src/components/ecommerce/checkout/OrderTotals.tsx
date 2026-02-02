@@ -4,7 +4,7 @@ import { DeliveryDining } from "@mui/icons-material";
 
 interface OrderTotalsProps {
   subtotal: number;
-  // discount: number;
+  discount: number;
   deliveryFee: number;
   // taxes: number;
   // serviceCharge: number;
@@ -14,7 +14,7 @@ interface OrderTotalsProps {
 
 export const OrderTotals: React.FC<OrderTotalsProps> = ({
   subtotal,
-  // discount,
+  discount,
   deliveryFee,
   // taxes,
   // serviceCharge,
@@ -42,7 +42,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
         </Typography>
       </Box>
 
-      {/* {discount > 0 && (
+      {discount > 0 && (
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
           <Typography
             variant="body1"
@@ -61,7 +61,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
             -{formatPrice(discount)}
           </Typography>
         </Box>
-      )} */}
+      )}
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Typography
