@@ -29,7 +29,6 @@ const HeaderProfileTrigger = ({
   const [showChangeCountry, setShowChangeCountry] = useState(true);
 
   useEffect(() => {
-    // Hide the popup after 2 second
     const timer = setTimeout(() => {
       setShowChangeCountry(false);
     }, 2000);
@@ -123,7 +122,7 @@ const HeaderProfileTrigger = ({
                     zIndex: 1300,
                     background: "linear-gradient(180deg, #2874f0 0%, #1b5fd1 100%)",
                     color: "#fff",
-                    px: { xs: 1.5, sm: 2 },
+                    px: { xs: 0, sm: 2.5 },
                     py: "4px",
                     borderRadius: "999px",
                     fontSize: { xs: "11px", sm: "12px" },
@@ -157,6 +156,7 @@ const HeaderProfileTrigger = ({
                     },
                   }}
                 >
+                  Change
                   {alpha2Code && (
                     <ReactCountryFlag
                       countryCode={alpha2Code}
@@ -170,7 +170,7 @@ const HeaderProfileTrigger = ({
                       }}
                     />
                   )}
-                  Change Country
+                  
                 </Box>
               )}
             </span>
