@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Person, Public as WorldIcon } from "@mui/icons-material";
 import ReactCountryFlag from "react-country-flag";
@@ -27,6 +27,15 @@ const HeaderProfileTrigger = ({
 
   const router = useRouter();
   const [showChangeCountry, setShowChangeCountry] = useState(true);
+
+  useEffect(() => {
+    // Hide the popup after 2 second
+    const timer = setTimeout(() => {
+      setShowChangeCountry(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLogin = () => {
     const returnTo = `${window.location.pathname}${window.location.search}`;
@@ -73,6 +82,7 @@ const HeaderProfileTrigger = ({
                 display: "flex",
                 alignItems: "center",
                 position: "relative",
+                zIndex: 1,
               }}>
               {alpha2Code ? (
                 <ReactCountryFlag
@@ -107,23 +117,27 @@ const HeaderProfileTrigger = ({
                   sx={{
                     position: "absolute",
                     top: "100%",
-                    left: "50%",
+                    left: { xs: "50%", sm: "50%" },
                     transform: "translateX(-50%)",
                     mt: "8px",
-                    zIndex: 20,
+                    zIndex: 1300,
                     background: "linear-gradient(180deg, #2874f0 0%, #1b5fd1 100%)",
                     color: "#fff",
-                    px: 2,
+                    px: { xs: 1.5, sm: 2 },
                     py: "4px",
                     borderRadius: "999px",
-                    fontSize: "12px",
+                    fontSize: { xs: "11px", sm: "12px" },
                     fontWeight: 600,
                     letterSpacing: "0.2px",
                     cursor: "pointer",
                     whiteSpace: "nowrap",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
                     boxShadow:
                       "0 6px 12px rgba(40,116,240,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
-                    animation: `${fkAttention} 2.2s ease-in-out infinite`,
+                    animation: `${fkAttention} 1s ease-in-out`,
+                    maxWidth: { xs: "calc(100vw - 32px)", sm: "none" },
                     "&:hover": {
                       animation: "none",
                       background:
@@ -143,6 +157,19 @@ const HeaderProfileTrigger = ({
                     },
                   }}
                 >
+                  {alpha2Code && (
+                    <ReactCountryFlag
+                      countryCode={alpha2Code}
+                      svg
+                      style={{
+                        width: "14px",
+                        height: "14px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: "1px solid rgba(255,255,255,0.3)",
+                      }}
+                    />
+                  )}
                   Change Country
                 </Box>
               )}
