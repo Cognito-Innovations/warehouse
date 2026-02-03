@@ -122,7 +122,7 @@ const HeaderProfileTrigger = ({
                     zIndex: 1300,
                     background: "linear-gradient(180deg, #2874f0 0%, #1b5fd1 100%)",
                     color: "#fff",
-                    px: { xs: 0, sm: 2.5 },
+                    px: { xs: 2.25, sm: 2.25 },
                     py: "4px",
                     borderRadius: "999px",
                     fontSize: { xs: "11px", sm: "12px" },
