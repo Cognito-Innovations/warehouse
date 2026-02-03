@@ -36,6 +36,7 @@ export class ShoppingRequestResponseDto {
   user?: SafeUser;
   request_code: string;
   courier: string;
+  courier_country_code?: string;
   items_count: number;
   shopping_request_products?: ShoppingRequestProduct[];
   remarks?: string;

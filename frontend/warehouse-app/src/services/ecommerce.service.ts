@@ -314,7 +314,7 @@ export const ecommerceService = {
   async initiateOrder(orderData: any): Promise<any> {
     try {
       const response = await api.post("/ecommerce-orders/initiate", orderData);
-      if (response.statusText.toLowerCase() !== 'ok') {
+      if (response.status !== 200 && response.status !== 201) {
         throw new Error('Failed to initiate order!');
       }
       return response.data;

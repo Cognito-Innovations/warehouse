@@ -57,6 +57,7 @@ import { CustomThrottlerGuard } from './shared/guards/custom-throttler.guard';
     MailerModule.forRoot({
       transport: {
         host: 'smtp.gmail.com',
+        port: 587,
         secure: false,
         auth: {
           user: process.env.USERNAME,

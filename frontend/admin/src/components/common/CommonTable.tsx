@@ -24,6 +24,7 @@ interface CommonTableProps<T> {
   loading: boolean;
   statusOptions?: { value: string; label: string }[];
   noDataMessage: string;
+  filtersComponent?: React.ReactNode;
   onViewDetails?: (id: string | number) => void;
   onEdit?: (id: string | number) => void;
   onDelete?: (id: string | number) => void;
@@ -39,6 +40,7 @@ const CommonTable = <T,>({
   loading,
   statusOptions,
   noDataMessage,
+  filtersComponent,
   onViewDetails,
   onEdit,
   onDelete,
@@ -78,25 +80,40 @@ const CommonTable = <T,>({
 
   return (
     <>
-      {statusOptions && statusOptions.length > 0 && (
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <IconButton>
-            <FilterAltOutlinedIcon color="action" />
-          </IconButton>
-          <TextField
-            select
-            value={statusFilter}
-            onChange={handleStatusChange}
-            size="small"
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value="All">Status: All</MenuItem>
-            {statusOptions?.map(option => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
+      {(statusOptions?.length || filtersComponent) && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            mb: 2,
+            flexWrap: 'wrap',
+          }}
+        >
+          {statusOptions && statusOptions.length > 0 && (
+            <>
+              <IconButton>
+                <FilterAltOutlinedIcon color="action" />
+              </IconButton>
+          
+              <TextField
+                select
+                value={statusFilter}
+                onChange={handleStatusChange}
+                size="small"
+                sx={{ minWidth: 150 }}
+              >
+                <MenuItem value="All">Status: All</MenuItem>
+                {statusOptions.map(option => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </>
+          )}
+
+          {filtersComponent}
         </Box>
       )}
 

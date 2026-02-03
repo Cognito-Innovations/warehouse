@@ -9,6 +9,11 @@ export const getUsers = async (): Promise<User[]> => {
   return response.data;
 };
 
+export const updateUserRole = async (userId: string, role: string) => {
+  const response = await api.patch(`/users/${userId}`, { role });
+  return response.data;
+};
+
 export const getUserBySuiteNo = async (suiteNo: string): Promise<User> => {
   const response = await api.get<User>(`/users/suite/${suiteNo}`);
   return response.data;

@@ -31,12 +31,16 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
     const router = useRouter();
 
     const handleChangeLocation = () => {
-        router.push(`${ROUTES.PROFILE}`);
-        handleLocationClose();
-    };
+      const returnTo = `${ROUTES.PROFILE}?view=country`;
+      const callbackUrl = encodeURIComponent(returnTo);
 
-    const login = () => {
-        router.push(`${ROUTES.SIGN_IN}`);
+      if (!user?.id) {
+        router.push(`${ROUTES.SIGN_IN}?callbackUrl=${callbackUrl}`);
+      } else {
+        router.push(returnTo);
+      }
+
+      handleLocationClose();
     };
 
     return (
@@ -85,7 +89,7 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
                     </Typography>
                 </Box>
 
-               { user ? <Button
+                <Button
                     variant="outlined"
                     fullWidth
                     size="small"
@@ -93,15 +97,7 @@ const HeaderLocationMenu: React.FC<HeaderLocationMenuProps> = ({
                     sx={{ textTransform: "none" }}
                 >
                     Change Location or Currency
-                </Button> : <Button
-                    variant="outlined"
-                    fullWidth
-                    size="small"
-                    onClick={login}
-                    sx={{ textTransform: "none" }}
-                >
-                    Login
-                </Button>}
+                </Button>
             </Box>
         </Menu>
     );

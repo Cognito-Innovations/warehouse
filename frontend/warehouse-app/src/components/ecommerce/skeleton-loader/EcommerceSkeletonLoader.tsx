@@ -121,6 +121,27 @@ export default function EcommerceSkeletonLoader({
           ))}
         </Box>
 
+        {/* Carousel Skeleton */}
+        <Box sx={{ mb: 3 }}>
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={200}
+            sx={{ borderRadius: "8px" }}
+          />
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+            {[...Array(3)].map((_, i) => (
+              <Skeleton
+                key={i}
+                variant="circular"
+                width={8}
+                height={8}
+                sx={{ mx: 0.5 }}
+              />
+            ))}
+          </Box>
+        </Box>
+
         {/* Section 1: Today's Deal Skeleton */}
         <Box sx={{ bgcolor: "white", px: 2 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }} />

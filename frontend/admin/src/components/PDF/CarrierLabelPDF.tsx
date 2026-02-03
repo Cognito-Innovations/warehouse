@@ -29,13 +29,13 @@ export const generateCarrierLabelPDF = async (data: CarrierLabelData): Promise<v
     // ========== HEADER SECTION ==========
     const headerH = 12;
     
-    // REDBOX Logo - Red background with white text
+    // UGFLASH Logo - Red background with white text
     doc.setFillColor(220, 38, 38); // Red color
     doc.rect(margin, y, 35, headerH, 'F');
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(255, 255, 255);
-    doc.text("REDBOX", margin + 17.5, y + 8, { align: 'center' });
+    doc.text("UGFLASH", margin + 17.5, y + 8, { align: 'center' });
 
     // IN/MV Box - Black background with white divider
     const inMvX = margin + 36;

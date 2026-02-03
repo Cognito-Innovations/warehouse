@@ -18,8 +18,6 @@ import { DeliveryOption } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
 
 interface DeliveryModelSelectionProps {
-  countryCode?: string;
-  currencyCode?: string;
   selectedOption: DeliveryOption | null;
   onSelectOption: (option: DeliveryOption) => void;
   onBack: () => void;
@@ -27,7 +25,6 @@ interface DeliveryModelSelectionProps {
 }
 
 export default function DeliveryModelSelection({
-  countryCode,
   selectedOption,
   onSelectOption,
   onBack,
@@ -36,7 +33,7 @@ export default function DeliveryModelSelection({
   const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { currencyCode, currencySymbol } = useDetectUserLocation();
+  const { currencyCode, countryCode, countryName, currencySymbol } = useDetectUserLocation();
   const { getCart } = useCartStore();
   const { selectedProductIds } = useCheckout();
 
@@ -183,7 +180,7 @@ export default function DeliveryModelSelection({
           fontWeight={500}
           sx={{ fontSize: { xs: "0.85rem", sm: "0.875rem" } }}
         >
-          {countryCode || "Not specified"}
+          {countryName || "Not specified"}
         </Typography>
       </Box>
 

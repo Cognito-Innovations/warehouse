@@ -40,6 +40,7 @@ export interface Customer {
   suite_no: string;
   name: string;
   email: string;
+  role: string;
   phone_number: string;
   gender?: 'male' | 'female' | 'other' | null;
   dob?: string | null;

@@ -57,9 +57,7 @@ export class ShoppingRequestsController {
         summary: 'Basic Shopping Request',
         value: {
           user_id: 'user-123',
-          request_code: 'REQ-001',
-          country: 'India',
-          items: 3,
+          items_count: 3,
           remarks: 'Need urgent delivery',
         },
       },

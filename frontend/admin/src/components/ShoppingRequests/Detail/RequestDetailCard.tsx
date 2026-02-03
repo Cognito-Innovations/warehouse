@@ -28,6 +28,7 @@ interface Request {
     phone?: string | null;
     alt_phone?: string | null;
   };
+  courier_country_code?: string;
   [key: string]: unknown;
 }
 
@@ -163,6 +164,9 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
           bgColor: statusStyles.bgColor,
         }}
         user={request.user ?? { name: "Unknown", email: "unknown@example.com" }}
+        showOriginTarget
+        origin={request.user?.address?.[0]?.country}
+        target={request.courier_country_code}
         actionButtons={renderActionButton()}
       />
     </>

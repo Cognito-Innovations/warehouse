@@ -48,7 +48,7 @@ export const useOrderPayment = () => {
           product_ids: orderedProductIds,
         };
 
-        const initiateResponse = await ecommerceService.initiateOrder(orderData, countryCode);
+        const initiateResponse = await ecommerceService.initiateOrder(orderData);
         const { orderId, paymentSessionId } = initiateResponse;
 
         if (!paymentSessionId) {

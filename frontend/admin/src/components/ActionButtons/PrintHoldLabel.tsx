@@ -155,7 +155,7 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(20);
-      doc.text("REDBOX", 8, footerY + redboxHeight / 2 + 3);
+      doc.text("UGFLASH", 8, footerY + redboxHeight / 2 + 3);
 
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(24);
