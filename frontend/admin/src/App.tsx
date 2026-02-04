@@ -20,7 +20,7 @@ import Login from './pages/Login';
 
 import Sidebar from './components/Sidebar/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 
 import { menuItems, type MenuItem, type UserRole } from "./data/menuItems";
 

@@ -1,26 +1,24 @@
 "use client";
 
 import { useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Box, CircularProgress } from "@mui/material";
+import { useSession } from "next-auth/react";
 import SignInForm from "../../components/SignIn/SignInForm";
-import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "@/utils/constants";
 
 function SignInContent() {
-  const { isAuthenticated } = useAuth();
-  const router = useRouter();
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
-
   const callbackUrl = searchParams.get("callbackUrl") ?? ROUTES.ROOT;
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace(callbackUrl);
+    if (status === "authenticated" && session?.user) {
+      window.location.href = callbackUrl;
     }
-  }, [isAuthenticated, callbackUrl, router]);
-
-  if (isAuthenticated) {
+  }, [status, session, callbackUrl]);
+  
+  if (status === "loading") {
     return (
       <Box
         sx={{

@@ -72,7 +72,7 @@ export default function SuccessScreen() {
             fontSize: { xs: "0.875rem", md: "1rem" }
           }}
         >
-          Please check your email for future updates.
+         <b> Please check your email for future updates.</b>
         </Typography>
         <Typography 
           variant="body1" 

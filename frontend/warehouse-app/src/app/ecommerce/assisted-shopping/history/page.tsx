@@ -14,6 +14,7 @@ import EmptyState from "@/components/AssistedShopping/EmptyState";
 import RequestPagination from "@/components/AssistedShopping/RequestPagination";
 import ShoppingRequestTableRow from "@/components/AssistedShopping/ShoppingRequestTableRow";
 import ShoppingRequestCardMobile from "@/components/AssistedShopping/ShoppingRequestCardMobile";
+import { ROUTES } from "@/utils/constants";
 
 export default function AssistedShopping() {
   const { data: session, status } = useSession();
@@ -94,6 +95,12 @@ export default function AssistedShopping() {
     if (!request.request_code) return false;
     return request.request_code.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  useEffect(() => {
+    if(!user_id && typeof window !== "undefined") {
+     window.location.href = ROUTES.SIGN_IN;
+    }
+ }, [user_id]);
 
   return (
     <div className="min-h-screen bg-white w-full"> 

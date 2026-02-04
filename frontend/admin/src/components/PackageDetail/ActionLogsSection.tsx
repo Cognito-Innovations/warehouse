@@ -6,7 +6,7 @@ import { deletePackageDocument, updatePackageStatus, uploadPackageDocuments } fr
 import UploadModal from './UploadModal';
 import ImageWithPreview from './ImageWithPreview';
 import { formatFileName } from '../../utils/formatFileName';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 interface UploadedDocument {
   id: string;

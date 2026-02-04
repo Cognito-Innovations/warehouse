@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { uploadPackageDocuments, getPackageDocuments, deletePackageDocument } from '../services/api.services';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from './useAuth';
 
 interface DocumentUploadOptions {
   entityType: 'package' | 'user' | 'rack' | 'supplier' | 'pre-arrival' | 'pickup-request' | 'shopping-request';
