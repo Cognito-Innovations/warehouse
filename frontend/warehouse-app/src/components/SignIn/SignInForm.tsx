@@ -7,6 +7,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "@/utils/constants";
 import { setCookie } from "@/lib/cookieUtils";
 import { AUTH_COOKIE_NAME } from "../../utils/constants";
+import { clearAllCookies } from "../../lib/cookieUtils";
 
 interface SignInFormProps {
   callbackUrl?: string;
@@ -41,6 +42,7 @@ export default function SignInForm({ callbackUrl }: SignInFormProps) {
     setError("");
 
     try {
+      clearAllCookies();
       const result = await signIn("google", {
         callbackUrl: redirectTo,
       });
