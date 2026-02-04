@@ -42,9 +42,6 @@ export const ecommerceService = {
         params.countryCode = countryCode;
       }
       const response = await api.get("/ecommerce-categories", { params });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to get categories!');
-      }
       return response.data;
     } catch (error) {
       console.error('Failed to get categories:', error);
@@ -52,20 +49,16 @@ export const ecommerceService = {
     }
   },
 
-  async getCategory(id: string, countryCode?: string): Promise<EcommerceCategory> {
+  async getCategory(id: string, countryCode?: string): Promise<any> {
     try {
       const params: any = {};
       if (countryCode) {
         params.countryCode = countryCode;
       }
       const response = await api.get(`/ecommerce-categories/${id}`, { params });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to get category!');
-      }
       return response.data;
     } catch (error) {
       console.error(`Failed to get category with ${id}:`, error);
-      throw error;
     }
   },
 
@@ -134,9 +127,6 @@ export const ecommerceService = {
         params.countryCode = countryCode;
       }
       const response = await api.get("/ecommerce-products", { params });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to get products!');
-      }
       return response.data;
     } catch (error) {
       console.error('Failed to get products:', error);
@@ -144,7 +134,7 @@ export const ecommerceService = {
     }  
   },
 
-  async getProduct(slug: string, currency?: string, userId?: string, countryCode?: string): Promise<EcommerceProduct> {
+  async getProduct(slug: string, currency?: string, userId?: string, countryCode?: string): Promise<any> {
     try {
       const params: any = {};
       if (currency) {
@@ -157,13 +147,9 @@ export const ecommerceService = {
         params.countryCode = countryCode;
       }
       const response = await api.get(`/ecommerce-products/${slug}`, { params });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to get product!');
-      }
       return response.data;
     } catch (error) {
       console.error(`Failed to get product with ${slug}:`, error);
-      throw error;
     } 
   },
 
@@ -174,7 +160,7 @@ export const ecommerceService = {
     countryCode?: string,
     limit?: number,
     offset?: number
-  ): Promise<EcommerceProduct[]> {
+  ): Promise<any[]> {
     try {
       const params: any = {
         searchTerm: searchTerm,
@@ -186,13 +172,10 @@ export const ecommerceService = {
       };
 
       const response = await api.get("/ecommerce-products/search", { params });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to search product!');
-      }
       return response.data;
     } catch (error) {
       console.error(`Failed to search product with ${searchTerm}:`, error);
-      throw error;
+      return [];
     } 
   },
 
@@ -240,16 +223,11 @@ export const ecommerceService = {
     } 
   },
 
-  async removeFromCart(productId: string): Promise<Cart> {
+  async removeFromCart(productId: string): Promise<any> {
     try {
-      const response = await api.delete(`/ecommerce-cart/items/${productId}`);
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to remove the cart item!');
-      }
-      return response.data;
+      const response = await api.delete(`/ecommerce-cart/items/${productId}`);      return response.data;
     } catch (error) {
       console.error(`Failed to remove the cart item with ${productId}:`, error);
-      throw error;
     }
   },
 
@@ -269,12 +247,8 @@ export const ecommerceService = {
   async clearCart(): Promise<void> {
     try {
       const response = await api.delete("/ecommerce-cart/clear");
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to clear the cart!');
-      }
     } catch (error) {
       console.error('Failed to clear the cart:', error);
-      throw error;
     }
   },
 
