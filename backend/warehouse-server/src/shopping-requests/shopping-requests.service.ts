@@ -294,6 +294,7 @@ export class ShoppingRequestsService {
     let invoice: Invoice | null = null;
     if (normalizedStatus === 'QUOTATION_READY') {
       invoice = await this.invoicesService.createInvoice(shoppingRequest);
+      (shoppingRequest as any).invoice = invoice;
     }
 
     shoppingRequest.status = ShoppingRequestStatus[normalizedStatus];

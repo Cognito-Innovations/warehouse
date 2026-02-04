@@ -55,7 +55,7 @@ export default function AddressSection({
           phone_code: addressData.user.phone_code,
           phone_number: addressData.user.phone_number,
           email: addressData.user.email,
-          currency: addressData.user?.preference?.currency?.id || "",
+          // currency: addressData.user?.preference?.currency?.id || "",
         };
       }
       setSelectedAddress(formattedAddress);
@@ -112,12 +112,11 @@ export default function AddressSection({
         city: addressData.city,
         phone_number: `${addressData.phone_code || ""}${addressData.phone_number || ""}`,
         email: addressData.email,
-        currency: addressData.currency,
+        // currency: addressData.currency,
       };
       const newAddress = await createUserAddress(apiData);
 
-      const { currencyCode, countryCode } = useDetectUserLocation.getState();
-      await getCart(currencyCode, countryCode);
+      await getCart();
       const formattedAddress: CartAddressData = {
         id: newAddress.id,
         ...addressData,
@@ -143,11 +142,10 @@ export default function AddressSection({
         city: addressData.city,
         phone_number: `${addressData.phone_code || ""}${addressData.phone_number || ""}`,
         email: addressData.email,
-        currency: addressData.currency,
+        // currency: addressData.currency,
       };
       await updateUserAddress(addressId, apiData);
-      const { currencyCode, countryCode } = useDetectUserLocation.getState();
-      await getCart(currencyCode, countryCode);
+      await getCart();
       const formattedAddress: CartAddressData = {
         id: addressId,
         ...addressData,

@@ -41,12 +41,12 @@ interface Country {
   phone_code: string;
 }
 
-interface Currency {
-  id: string;
-  currency_code: string;
-  name: string;
-  currency_symbol: string;
-}
+// interface Currency {
+//   id: string;
+//   currency_code: string;
+//   name: string;
+//   currency_symbol: string;
+// }
 
 export default function AddAddressModal({
   open,
@@ -69,14 +69,14 @@ export default function AddAddressModal({
     phone_code: "",
     phone_number: "",
     email: "",
-    currency: "",
+    // currency: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [countries, setCountries] = useState<Country[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(false);
-  const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [loadingCurrencies, setLoadingCurrencies] = useState(false);
+  // const [currencies, setCurrencies] = useState<Currency[]>([]);
+  // const [loadingCurrencies, setLoadingCurrencies] = useState(false);
   const [availableStates, setAvailableStates] = useState<string[]>([]);
   const [availableCities, setAvailableCities] = useState<string[]>([]);
 
@@ -86,7 +86,7 @@ export default function AddAddressModal({
   useEffect(() => {
     if (open) {
       loadCountries();
-      loadCurrencies();
+      // loadCurrencies();
     }
   }, [open]);
 
@@ -121,7 +121,7 @@ export default function AddAddressModal({
         phone_code: phoneCode,
         phone_number: localPhone,
         email: prev.email || initialData.email || "",
-        currency: (initialData as any).currency_id || (initialData as any).currency || "",
+        // currency: (initialData as any).currency_id || (initialData as any).currency || "",
       }));
 
       setAvailableStates(getStatesForCountry(initialData.country));
@@ -173,15 +173,15 @@ export default function AddAddressModal({
     }
   };
 
-  const loadCurrencies = async () => {
-    setLoadingCurrencies(true);
-    try {
-      const data = await getCurrencies();
-      setCurrencies(Array.isArray(data) ? data : []);
-    } finally {
-      setLoadingCurrencies(false);
-    }
-  };
+  // const loadCurrencies = async () => {
+  //   setLoadingCurrencies(true);
+  //   try {
+  //     const data = await getCurrencies();
+  //     setCurrencies(Array.isArray(data) ? data : []);
+  //   } finally {
+  //     setLoadingCurrencies(false);
+  //   }
+  // };
 
   const handleChange =
     (field: string) =>
@@ -237,7 +237,7 @@ export default function AddAddressModal({
         ...formData,
         phone_number: formData.phone_number || undefined,
         email: formData.email || undefined,
-        currency: formData.currency || undefined,
+        // currency: formData.currency || undefined,
       });
       onClose();
     } finally {
@@ -286,7 +286,7 @@ export default function AddAddressModal({
             required
           />
 
-          <Box sx={{ display: "flex", gap: 2 }}>
+          {/* <Box sx={{ display: "flex", gap: 2 }}> */}
           <FormControl fullWidth required error={!!errors.country}>
             <InputLabel>Country</InputLabel>
             <Select
@@ -314,7 +314,7 @@ export default function AddAddressModal({
               )}
             </FormControl>
 
-            <FormControl fullWidth error={!!errors.currency}>
+            {/* <FormControl fullWidth error={!!errors.currency}>
               <InputLabel>Currency</InputLabel>
               <Select
                 value={formData.currency}
@@ -339,8 +339,8 @@ export default function AddAddressModal({
                   {errors.currency}
               </Typography>
               )}
-            </FormControl>
-          </Box>
+            </FormControl> */}
+          {/* </Box> */}
 
           <Box sx={{ display: "flex", gap: 2 }}>
             {availableStates.length > 0 ? (

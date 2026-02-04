@@ -4,6 +4,7 @@ export interface CartTotals {
     subtotal: number;
     discount: number;
     deliveryFee: number;
+    platform_fee: number;
     total: number;
 }
 
@@ -38,12 +39,16 @@ export const calculateCartTotals = (
     const discountedSubTotal = subtotal - discount;
 
 
-    const total = discountedSubTotal + totalDeliveryFee
+    let total = discountedSubTotal + totalDeliveryFee;
+
+    const platformFee = total * 0.05;
+    total += platformFee;
 
     return {
         subtotal: round(subtotal),
         discount: round(discount),
         deliveryFee: round(totalDeliveryFee),
+        platform_fee: round(platformFee),
         total: round(total),
     };
 };
@@ -54,5 +59,6 @@ const emptyTotals = (): CartTotals => ({
     subtotal: 0,
     discount: 0,
     deliveryFee: 0,
+    platform_fee: 0,
     total: 0,
 });

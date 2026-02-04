@@ -56,18 +56,18 @@ export class UserAddressService {
       );
     }
 
-    if (createUserAddressDto.currency) {
-      const existingPref = await this.userPreferenceRepository.findOne({
-        where: { user: { id: createUserAddressDto.user_id } },
-      });
+    // if (createUserAddressDto.currency) {
+    //   const existingPref = await this.userPreferenceRepository.findOne({
+    //     where: { user: { id: createUserAddressDto.user_id } },
+    //   });
 
-      if (existingPref) {
-        await this.userPreferenceRepository.save({
-          ...existingPref,
-          currency: { id: createUserAddressDto.currency },
-        });
-      }
-    }
+    //   if (existingPref) {
+    //     await this.userPreferenceRepository.save({
+    //       ...existingPref,
+    //       currency: { id: createUserAddressDto.currency },
+    //     });
+    //   }
+    // }
 
     return this.userAddressRepository.findOne({
       where: { id: savedAddress.id },
@@ -126,18 +126,18 @@ export class UserAddressService {
       await this.userRepository.update(existingAddress.user.id, userUpdates);
     }
 
-    if (updateUserAddressDto.currency) {
-      const existingPref = await this.userPreferenceRepository.findOne({
-        where: { user: { id: existingAddress.user.id } },
-      });
+    // if (updateUserAddressDto.currency) {
+    //   const existingPref = await this.userPreferenceRepository.findOne({
+    //     where: { user: { id: existingAddress.user.id } },
+    //   });
 
-      if (existingPref) {
-        await this.userPreferenceRepository.save({
-          ...existingPref,
-          currency: { id: updateUserAddressDto.currency },
-        });
-      }
-    }
+    //   if (existingPref) {
+    //     await this.userPreferenceRepository.save({
+    //       ...existingPref,
+    //       currency: { id: updateUserAddressDto.currency },
+    //     });
+    //   }
+    // }
 
     return this.userAddressRepository.findOne({
       where: { id },

@@ -41,10 +41,94 @@ export function getShoppingRequestEmailTemplate(
     case 'quotation-ready':
       subject = 'Your Shopping Quotation is Ready';
       title = 'Quotation Ready';
+
+      const quotationAmount = (request as any)?.invoice?.total || '—';
+
       content = `
         <p>Hello ${user.name || 'User'},</p>
-        <p>The quotation for your shopping request <strong>${request.request_code}</strong> is now ready.</p>
-        <p>Please log in to your account to review the details and proceed with payment.</p>
+
+        <p style="margin-bottom:12px;">
+          Great news! The quotation for your shopping request
+          <strong>${request.request_code}</strong> is ready.
+        </p>
+
+        <div
+          style="
+            background:#F5F3FF;
+            border:1px solid #E9D5FF;
+            padding:18px;
+            border-radius:10px;
+            margin:18px 0;
+            text-align:center;
+          "
+        >
+          <p style="margin:0; font-size:13px; color:#6B7280;">
+            Total Payable Amount
+          </p>
+          <p
+            style="
+              margin:6px 0 0;
+              font-size:24px;
+              font-weight:bold;
+              color:${BRAND_COLOR};
+            "
+          >
+            ${quotationAmount}
+          </p>
+        </div>
+
+        <p style="margin:20px 0 8px; font-weight:bold;">
+          Payment Instructions
+        </p>
+
+        <p style="margin-top:0;">
+          Please complete the payment using the bank details below.
+        </p>
+
+        <div
+          style="
+            background:#FAFAFA;
+            border:1px solid #E5E7EB;
+            padding:16px;
+            border-radius:8px;
+            margin-bottom:20px;
+          "
+        >
+          <p style="margin:4px 0;"><strong>Bank Name:</strong> CIMB Bank</p>
+          <p style="margin:4px 0;"><strong>Account Name:</strong> Ameera F&B Enterprise</p>
+          <p style="margin:4px 0;"><strong>Account Number:</strong> 8009529150</p>
+          <p style="margin:4px 0;"><strong>SWIFT Code:</strong> CIBBMYKLXXX</p>
+          <p style="margin:4px 0;"><strong>Reference:</strong> Payment – Textile</p>
+        </div>
+
+        <p style="margin-bottom:8px; font-weight:bold;">
+          What to do next
+        </p>
+
+        <ol style="padding-left:18px; margin-top:0;">
+          <li style="margin-bottom:6px;">
+            Complete the payment using the bank details above.
+          </li>
+          <li style="margin-bottom:6px;">
+            Take a screenshot after successful payment.
+          </li>
+          <li style="margin-bottom:6px;">
+            Log in to your account and open
+            <a
+              href="https://www.palakart.com/ecommerce/assisted-shopping/history"
+              target="_blank"
+              style="color:${BRAND_COLOR}; font-weight:600; text-decoration:none;"
+            >
+              Assisted Shopping History
+            </a>.
+          </li>
+          <li style="margin-bottom:6px;">
+            Select your request and upload the payment screenshot.
+          </li>
+          <li>
+            Our team will verify it and get back to you shortly.
+          </li>
+        </ol>
       `;
       break;
     case 'payment-approved':
@@ -77,7 +161,39 @@ export function getShoppingRequestEmailTemplate(
         <p>Thanks,<br>The ${BRAND_NAME} Team</p>
       </div>
       <div style="text-align: center; margin-top: 20px; font-size: 14px; color: #888;">
-        <p style="margin: 0;">&copy; ${new Date().getFullYear()} <span style="color: ${BRAND_COLOR}; font-weight: bold;">${BRAND_NAME}</span>. All rights reserved.</p>
+        <div
+          style="
+            background:#FAFAFA;
+            border:1px solid #E5E7EB;
+            border-radius:8px;
+            padding:14px;
+            margin-bottom:12px;
+          "
+        >
+          <p style="margin:0 0 6px; font-weight:bold; color:#333;">
+            Need help?
+          </p>
+
+          <p style="margin:4px 0;">
+            📞
+            <a
+              href="tel:+916382262427"
+              style="color:${BRAND_COLOR}; text-decoration:none; font-weight:500;"
+            >
+              +91 6382 262 427
+            </a>
+          </p>
+
+          <p style="margin:4px 0;">
+            ✉️
+            <a
+              href="mailto:team.palakart@gmail.com"
+              style="color:${BRAND_COLOR}; text-decoration:none; font-weight:500;"
+            >
+              team.palakart@gmail.com
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   `;

@@ -70,7 +70,7 @@ export class OrderService {
     return `ORD-${timeBasedSuffix}-${randomAlphaNumeric}`;
   }
 
-  private calculateOrderPricing(
+    private calculateOrderPricing(
     items: EcommerceUserProductStatus[],
     currencyInfo: CurrencyInfo,
     deliveryFeeUSD: number,
@@ -120,9 +120,12 @@ export class OrderService {
 
     const roundedDeliveryFeeUSD = this.roundCurrency(deliveryFeeUSD);
 
-    const finalUSDTotal = this.roundCurrency(
+    let finalUSDTotal = this.roundCurrency(
       totalItemsPaidUSDRaw + roundedDeliveryFeeUSD,
     );
+
+    const platformFee = finalUSDTotal * 0.05;
+    finalUSDTotal += platformFee;
 
     return {
       finalUSDTotal,

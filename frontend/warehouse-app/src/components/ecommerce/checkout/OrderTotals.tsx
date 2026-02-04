@@ -6,6 +6,7 @@ interface OrderTotalsProps {
   subtotal: number;
   discount: number;
   deliveryFee: number;
+  platformFee: number;
   // taxes: number;
   // serviceCharge: number;
   total: number;
@@ -16,6 +17,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
   subtotal,
   discount,
   deliveryFee,
+  platformFee,
   // taxes,
   // serviceCharge,
   total,
@@ -85,6 +87,25 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
         </Stack>
       </Box>
 
+      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+        <Typography
+          variant="body1"
+          fontWeight={500}
+          color="text.primary"
+          sx={{ fontSize: { xs: "0.875rem", md: "1rem" } }}
+        >
+          Platform Fee (5%)
+        </Typography>
+        <Typography
+          variant="body1"
+          fontWeight={500}
+          color="text.primary"
+          sx={{ fontSize: { xs: "0.875rem", md: "1rem" } }}
+        >
+          {formatPrice(platformFee)}
+        </Typography>
+      </Box>
+
       {/* <Box sx={{ display: "flex", justifyContent: "space-between" }}>
         <Typography
           variant="body1"
@@ -146,4 +167,3 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
     </Stack>
   );
 };
-

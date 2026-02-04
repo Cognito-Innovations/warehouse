@@ -96,3 +96,5 @@ export const ECOMMERCE_EXCLUDED_PATHS = [
   ROUTES.CART,
   ROUTES.ASSISTED_SHOPPING_HISTORY,
 ];
+
+export const AUTH_COOKIE_NAME = "auth-token";

@@ -22,6 +22,7 @@ interface OrderTotalsData {
   subtotal: number;
   discount: number;
   deliveryFee: number;
+  platformFee: number;
   // taxes: number;
   // serviceCharge: number;
   total: number;
@@ -155,6 +156,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             subtotal={totals.subtotal}
             discount={totals.discount}
             deliveryFee={totals.deliveryFee}
+            platformFee={totals.platform_fee}
             // taxes={totals.taxes}
             // serviceCharge={totals.serviceCharge}
             total={totals.total}

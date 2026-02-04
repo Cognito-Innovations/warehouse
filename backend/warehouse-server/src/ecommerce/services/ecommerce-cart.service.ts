@@ -39,6 +39,7 @@ export interface ComputedCart {
   final_amount: number;
   total_delivery_fee?: number;
   total_discount?: number;
+  platform_fee?: number;
 }
 
 @Injectable()
@@ -456,7 +457,7 @@ export class CartService {
     };
   }
 
-  async getCheckoutData(
+    async getCheckoutData(
     userId: string,
     productIds: string[],
   ): Promise<ComputedCart> {
@@ -577,7 +578,10 @@ export class CartService {
 
     const totalAmount = items.reduce((sum, it) => sum + it.total_price, 0);
 
-    const finalAmount = totalAmount - totalDiscount + totalDeliveryFee;
+    let finalAmount = totalAmount - totalDiscount + totalDeliveryFee;
+
+    const platformFee = finalAmount * 0.05;
+    finalAmount += platformFee;
 
     const computedCart: ComputedCart = {
       items,
@@ -585,6 +589,7 @@ export class CartService {
       final_amount: Math.max(0, finalAmount),
       total_delivery_fee: totalDeliveryFee,
       total_discount: totalDiscount,
+      platform_fee: platformFee,
     };
 
     return this.applyCurrencyConversion(computedCart, currencyCode);
@@ -656,7 +661,7 @@ export class CartService {
     );
   }
 
-  private async applyCurrencyConversion(
+    private async applyCurrencyConversion(
     cart: ComputedCart,
     currency: string,
   ): Promise<ComputedCart> {
@@ -693,6 +698,7 @@ export class CartService {
       total_amount: await convert(cart.total_amount),
       final_amount: await convert(cart.final_amount),
       total_delivery_fee: cart.total_delivery_fee ?? 0,
+      platform_fee: await convert(cart.platform_fee ?? 0),
       items: convertedItems,
     };
   }

@@ -3,6 +3,7 @@ import React, { createContext, useContext, ReactNode, useMemo, useEffect, useRef
 import { signOut, useSession } from "next-auth/react";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCartStore } from "@/store/cartStore";
+import { clearBrowserStorage, clearAllCookies } from "../lib/cookieUtils";
 
 interface User {
   id: string;
@@ -144,6 +145,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session: i
 
   const logout = () => {
     hasSyncedCartRef.current = false;
+    clearBrowserStorage();
+    clearAllCookies();
     setUserId(null);
     signOut({ callbackUrl: "/" });
   };
