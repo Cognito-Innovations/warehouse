@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Box, CircularProgress } from "@mui/material";
 import SignInForm from "../../components/SignIn/SignInForm";
@@ -8,33 +8,29 @@ import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "@/utils/constants";
 
 function SignInContent() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
-  const callbackUrl = searchParams.get('callbackUrl')
-    ? decodeURIComponent(searchParams.get('callbackUrl')!)
-    : undefined;
+  const callbackUrl = searchParams.get("callbackUrl") ?? ROUTES.ROOT;
 
   useEffect(() => {
-    if (isAuthenticated && !isRedirecting) {
-      setIsRedirecting(true);
-      router.replace(callbackUrl || ROUTES.ROOT);
+    if (isAuthenticated) {
+      router.replace(callbackUrl);
     }
-  }, [isAuthenticated, router, isRedirecting, callbackUrl]);
+  }, [isAuthenticated, callbackUrl, router]);
 
-  if (isRedirecting || isAuthenticated) {
+  if (isAuthenticated) {
     return (
-      <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center", bgcolor: "#fff" }}>
-        <Box sx={{ textAlign: "center" }}>
-          <CircularProgress size={40} thickness={4} sx={{ color: "#7C3AED" }} />
-          <Box sx={{ mt: 3, color: "text.secondary", fontWeight: 500 }}>
-            {isRedirecting || isAuthenticated 
-              ? `Taking you ${callbackUrl ? 'back' : 'home'}...`
-              : "Loading..."}
-          </Box>
-        </Box>
+      <Box
+        sx={{
+          display: "flex",
+          height: "100vh",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress />
       </Box>
     );
   }

@@ -27,23 +27,16 @@ export default function OrderSummaryCard({
   const { currencySymbol, currencyCode } = useDetectUserLocation();
 
   const itemIdsToCalculate = useMemo(() => {
-    return new Set(items.map((item) => item.product_id));
+    return new Set(
+      items
+        .map(item => item.product_id)
+        .filter((id): id is string => Boolean(id))
+    );
   }, [items]);
 
-  // Calculate delivery fee from selected option or fallback to item-based calculation
-  const calculateDeliveryFee = () => {
-    if (selectedDeliveryOption) {
-      // Use selected delivery option fee
-      // Note: This is per kg, so we need to calculate total weight
-      // For now, use the option's total_amount as base fee
-      return selectedDeliveryOption.total_amount;
-    }
-    // Fallback to item-based calculation
-    const totals = calculateCartTotals(items, itemIdsToCalculate, currencyCode, currencySymbol);
-    return totals.deliveryFee;
-  };
+  const deliveryFee = selectedDeliveryOption?.total_amount ?? 0;
 
-  const deliveryFee = calculateDeliveryFee();
+  const totalQty = items.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
 
   const totals = calculateCartTotals(
     items, 
@@ -172,7 +165,7 @@ export default function OrderSummaryCard({
             color="text.secondary"
             sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
           >
-            Subtotal ({items.length} {items.length === 1 ? "item" : "items"})
+            Subtotal ({totalQty} {totalQty === 1 ? "item" : "items"})
           </Typography>
           <Typography 
             variant="body2" 

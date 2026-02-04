@@ -29,10 +29,14 @@ export const calculateCartTotals = (
     let discount = 0;
 
     selectedItems.forEach((item) => {
-        const p = getCartItemPricingSummary(item, currencySymbol);
+        if (typeof item.total_price === "number") {
+          subtotal += item.total_price;
+        } else {
+          const p = getCartItemPricingSummary(item, currencySymbol);
 
-        subtotal += p.originalUnitPrice * p.quantity;
-        discount += p.discountTotal;
+          subtotal += p.originalUnitPrice * p.quantity;
+          discount += p.discountTotal;
+        }
     });
 
 

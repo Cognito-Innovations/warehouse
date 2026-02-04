@@ -68,6 +68,16 @@ export default function SuccessScreen() {
           variant="body1" 
           sx={{ 
             color: "text.secondary",
+            mt: 1,
+            fontSize: { xs: "0.875rem", md: "1rem" }
+          }}
+        >
+          Please check your email for future updates.
+        </Typography>
+        <Typography 
+          variant="body1" 
+          sx={{ 
+            color: "text.secondary",
             mt: 2,
             fontSize: { xs: "0.875rem", md: "1rem" }
           }}
