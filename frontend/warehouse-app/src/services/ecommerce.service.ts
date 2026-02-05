@@ -183,10 +183,6 @@ export const ecommerceService = {
   async fetchCart(): Promise<Cart> {
     try {
       const response = await api.get("/ecommerce-cart");
-      if (response.statusText.toLowerCase() !== 'ok') {
-        console.error('Failed to fetch the cart!');
-        return { items: [], final_amount: 0, total_amount: 0, discount_percentage: 0, id: "", user_id: "", status: "ACTIVE", created_at: "", updated_at: "" };
-      }
       return response.data;
     } catch (error) {
       console.error('Failed to fetch the cart:', error);
@@ -231,16 +227,12 @@ export const ecommerceService = {
     }
   },
 
-  async removeEntireProductFromCart(productId: string): Promise<Cart> {
+  async removeEntireProductFromCart(productId: string): Promise<any> {
     try {
       const response = await api.delete(`/ecommerce-cart/items/${productId}/all`);
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to remove product from cart');
-      }
       return response.data;
     } catch (error) {
       console.error(`Failed to remove entire product ${productId} from cart:`, error);
-      throw error;
     }
   },
 
@@ -262,15 +254,11 @@ export const ecommerceService = {
     }
   },
 
-  async selectDeliveryOption(option: DeliveryOption): Promise<void> {
+  async selectDeliveryOption(option: DeliveryOption): Promise<any> {
     try {
-      const response = await api.post('/ecommerce-cart/select-delivery-option', { delivery_option: option });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to store delivery option!');
-      }
+      await api.post('/ecommerce-cart/select-delivery-option', { delivery_option: option });
     } catch (error) {
       console.error('Failed to store delivery option:', error);
-      throw error;
     }
   },
 

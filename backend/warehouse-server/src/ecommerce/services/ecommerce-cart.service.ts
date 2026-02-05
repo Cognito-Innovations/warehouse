@@ -222,31 +222,60 @@ export class CartService {
     userId: string,
     products: { product_id: string; quantity: number }[],
   ): Promise<ComputedCart> {
-    let cartItems = await this.cartRepository.find({
+    const productIds = products.map((product) => product.product_id);
+    if (!productIds?.length) {
+      throw new BadRequestException('No product IDs provided');
+    }
+    const fetchedProducts = await this.productRepository.find({
       where: {
-        user_id: userId,
-        product_id: In(products.map((product) => product.product_id)),
+        id: In(productIds),
       },
     });
-    if (cartItems.length === 0) cartItems = [];
-    for (const product of products) {
-      const cartItem = cartItems.find(
-        (cartItem) => cartItem.product_id === product.product_id,
-      );
-      if (cartItem) {
-        cartItem.quantity = product.quantity;
-        await this.cartRepository.save(cartItem);
+
+    // Create a map for quick product lookup
+    const productMap = new Map(
+      fetchedProducts.map((product) => [product.id, product]),
+    );
+
+    // Fetch existing cart items
+    const existingCartItems = await this.cartRepository.find({
+      where: {
+        user_id: userId,
+        product_id: In(productIds),
+        status: UserProductStatus.CART,
+      },
+    });
+
+    // Create a map for existing cart items
+    const existingCartMap = new Map(
+      existingCartItems.map((item) => [item.product_id, item]),
+    );
+    // Now proceed with syncing cart items
+    const cartItemsToSave: EcommerceUserProductStatus[] = [];
+
+    for (const productRequest of products) {
+      const product = productMap.get(productRequest.product_id) || null;
+      if (!product || product.stock_quantity <= 0) continue;
+      const existingCartItem = existingCartMap.get(productRequest.product_id);
+
+      if (existingCartItem) {
+        // Update existing cart item quantity
+        existingCartItem.quantity = Math.min(
+          productRequest.quantity,
+          product.stock_quantity,
+        );
+        cartItemsToSave.push(existingCartItem);
       } else {
-        const newCartItem = this.cartRepository.create({
+        // Create new cart item
+        this.cartRepository.create({
           user_id: userId,
-          product_id: product.product_id,
-          quantity: product.quantity,
+          product_id: productRequest.product_id,
+          quantity: productRequest.quantity,
           status: UserProductStatus.CART,
         });
-        cartItems.push(newCartItem);
       }
     }
-    await this.cartRepository.save(cartItems);
+    await this.cartRepository.save(cartItemsToSave);
     return this.getCart(userId);
   }
 
@@ -360,9 +389,12 @@ export class CartService {
         throw new BadRequestException('Product not found');
       }
 
-      const price = Number(product?.price ?? 0);
+      const price = Number(product?.price);
+      if (price <= 0) {
+        throw new BadRequestException('Invalid price for product');
+      }
       const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-        Number(product?.unit_value ?? 0),
+        Number(product?.unit_value),
         product?.measurement?.label ?? 'kg',
       );
       const itemWeight = weightPerUnit * item.quantity;
@@ -434,19 +466,21 @@ export class CartService {
     const groupedItems: Record<string, ComputedCartItem[]> = {};
 
     for (const item of cart.items) {
-      const cargoLabel = item.product?.cargo_option?.label?.toLowerCase();
+      if (item?.product?.stock_quantity && item?.product?.stock_quantity > 0) {
+        const cargoLabel = item.product?.cargo_option?.label?.toLowerCase();
 
-      if (!cargoLabel) {
-        throw new BadRequestException(
-          'Product does not have a valid cargo option',
-        );
+        if (!cargoLabel) {
+          throw new BadRequestException(
+            'Product does not have a valid cargo option',
+          );
+        }
+
+        if (!groupedItems[cargoLabel]) {
+          groupedItems[cargoLabel] = [];
+        }
+
+        groupedItems[cargoLabel].push(item);
       }
-
-      if (!groupedItems[cargoLabel]) {
-        groupedItems[cargoLabel] = [];
-      }
-
-      groupedItems[cargoLabel].push(item);
     }
 
     return {
@@ -457,7 +491,7 @@ export class CartService {
     };
   }
 
-    async getCheckoutData(
+  async getCheckoutData(
     userId: string,
     productIds: string[],
   ): Promise<ComputedCart> {
@@ -661,7 +695,7 @@ export class CartService {
     );
   }
 
-    private async applyCurrencyConversion(
+  private async applyCurrencyConversion(
     cart: ComputedCart,
     currency: string,
   ): Promise<ComputedCart> {
