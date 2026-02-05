@@ -1,8 +1,9 @@
 "use client";
-import React, { createContext, useContext, ReactNode, useMemo, useEffect } from "react";
+import React, { createContext, useContext, ReactNode, useMemo, useEffect, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { useCartStore } from "@/store/cartStore";
+import { clearBrowserStorage, clearAllCookies } from "../lib/cookieUtils";
 
 interface User {
   id: string;
@@ -56,10 +57,14 @@ const defaultUser: User = {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session: initialSession }) => {
   const { fetchLocationBasedOnUser } = useDetectUserLocation();
-  const setUserId = useCartStore((state) => state.setUserId);
+  const {
+    setUserId,
+    getCart,
+    syncLocalStorageProductsToCartDB,
+  } = useCartStore();
   const { data: sessionData } = useSession();
   const session = sessionData || initialSession;
-  
+
   const user: User | {} = useMemo(() => {
     if (session?.user) {
       return {
@@ -78,29 +83,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session: i
     }
     return defaultUser;
   }, [session]);
+  const userId = session?.user?.user_id ?? null;
 
   const token = session ? (session as any).access_token || null : null;
-  const isAuthenticated = !!(session?.user && ((session.user as any).user_id || session.user.email));
+  const isAuthenticated = !!session?.user?.user_id;
 
-  // Sync userId to cart store whenever user changes
-  // This ensures userId persists in memory while user is authenticated
-  // and gets cleared when user logs out
-  useEffect(() => {
-    const userId = (user as User).id;
-    if (userId && isAuthenticated) {
-      setUserId(userId);
+  const getCartData = async (userId: string) => {
+    const localCart =
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("cart-storage") || "{}")
+        : null;
+    const hasLocalCartItems = localCart?.state?.cart?.length > 0;
+    if (hasLocalCartItems) {
+      await syncLocalStorageProductsToCartDB(userId);
     } else {
-      setUserId(null);
+      await getCart();
     }
-  }, [(user as User).id, isAuthenticated, setUserId]);
+  }
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      fetchLocationBasedOnUser((user as User).id);
+    if (userId) {
+      getCartData(userId);
     }
-  }, [(user as User).id]);
+    setUserId(userId);
+    if (typeof window !== 'undefined') {
+      fetchLocationBasedOnUser(userId);
+    }
+  }, [userId]);
+
 
   const logout = () => {
+    clearBrowserStorage();
+    clearAllCookies();
     setUserId(null);
     signOut({ callbackUrl: "/" });
   };

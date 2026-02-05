@@ -23,12 +23,6 @@ const menuItems = [
     icon: <Person />,
     href: "/profile",
   },
-  //TODO: Password is misleading because google auth won't have password
-  // {
-  //   label: "Password",
-  //   icon: <Lock />,
-  //   href: "/profile/password",
-  // },
   {
     label: "Addresses",
     icon: <LocationOn />,

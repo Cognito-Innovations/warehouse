@@ -332,9 +332,9 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
 
           <Box sx={{ mb: 3 }}>
             <Typography sx={{ fontWeight: 600, mb: 1 }}>Carriers</Typography>
-            <RadioGroup value="REDBOX">
+            <RadioGroup value="UGFLASH">
               <FormControlLabel
-                value="REDBOX"
+                value="UGFLASH"
                 control={
                   <Radio
                     sx={{
@@ -346,7 +346,7 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
                 label={
                   <Box>
                     <Typography variant="body1" fontWeight={500}>
-                      REDBOX
+                      UGFLASH
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       5 to 10 Business days from the day of departure

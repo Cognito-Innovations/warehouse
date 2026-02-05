@@ -34,8 +34,8 @@ export const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 export const CACHE_TTL_SECONDS = 25 * 60 * 60; // Slightly more than 24h
 
 export const DEFAULT_USER_PREFERENCE = {
-  COURIER: '0f502386-b904-4cb8-8861-6c32e900bd84',
-  CURRENCY: '72e41d4a-c7dd-437c-8cd1-b26f0f4473b4',
+  COURIER: '1d54af16-2b48-48af-b93e-e79f11f32908',
+  CURRENCY: '2aff9b99-0149-4d24-91e7-73aac0fbc9a8',
 };
 
 export const CACHE_KEY = {

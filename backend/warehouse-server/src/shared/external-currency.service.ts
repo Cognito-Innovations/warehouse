@@ -194,7 +194,6 @@ export class ExternalCurrencyService {
     const cacheKey = `${CACHE_KEY.CURRENCY_CODE}:${code.toLowerCase()}`;
     const cached = await this.cacheService.get<CurrencyInfo>(cacheKey);
     const now = Date.now();
-    //TODO P0: This might be incorrrect, add this into doc, will discuss on it
     if (cached && now - cached.timestamp < TWENTY_FOUR_HOURS_MS) {
       return cached;
     }

@@ -13,6 +13,7 @@ import { useCartStore } from "@/store/cartStore";
 import { CartItem, EcommerceProduct } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";
+import { normalizeCart } from "@/lib/utils";
 
 interface ProductCartActionsProps {
     product: EcommerceProduct;
@@ -27,7 +28,8 @@ export default function ProductCartActions({
 }: ProductCartActionsProps) {
     const router = useRouter();
     const { addProductToCart, removeProductFromCart, cart } = useCartStore();
-    const cartQuantity = cart?.find((item: CartItem) => item.product_id === product.id)?.quantity || 0;
+    const safeCart = normalizeCart(cart);
+    const cartQuantity = safeCart?.find((item: CartItem) => item.product_id === product.id)?.quantity || 0;
     const stockQuantity = product.stock_quantity;
     const isOutOfStock = stockQuantity === 0;
     const formattedSubtotal = formatPrice(cartQuantity * discountPriceRaw, currency);
@@ -132,7 +134,7 @@ export default function ProductCartActions({
                     fullWidth
                     size="large"
                     onClick={cartQuantity > 0 ? handleGoToCart : handleAddToCartClick}
-                    disabled={isOutOfStock || (!(cartQuantity > 0))}
+                    disabled={isOutOfStock}
                     sx={{
                         py: 1.5,
                         borderRadius: 2,

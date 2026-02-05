@@ -16,6 +16,7 @@ import ShareOtpHeader from "./ShareOTP/ShareOtpHeader";
 import ShareOtpCardMobile from "./ShareOTP/ShareOtpCardMobile";
 import ShareOtpTableRow from "./ShareOTP/ShareOtpTableRow";
 import { formatDateTime } from "@/lib/utils";
+import { ROUTES } from "@/utils/constants";
 
 const ShareOtpContent = () => {
   const { user } = useAuth();
@@ -46,6 +47,12 @@ const ShareOtpContent = () => {
       setPreArrivalLoading(false);
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    if(!user?.id && typeof window !== "undefined") {
+     window.location.href = ROUTES.SIGN_IN;
+    }
+ }, [user?.id]);
 
   useEffect(() => {
     fetchPreArrivals();

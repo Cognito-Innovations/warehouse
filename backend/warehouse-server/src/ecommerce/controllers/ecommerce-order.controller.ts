@@ -8,7 +8,6 @@ import {
   UseGuards,
   Request,
   Patch,
-  Query,
 } from '@nestjs/common';
 import { OrderService } from '../services/ecommerce-order.service';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
@@ -31,12 +30,10 @@ export class OrderController {
   async initiateOrder(
     @Request() req: AuthenticatedRequest,
     @Body() createOrderDto: CreateOrderDto,
-    @Query('countryCode') countryCode?: string,
   ) {
     const order = await this.orderService.createOrder(
       req.user.id,
       createOrderDto,
-      countryCode,
     );
     return {
       success: true,
@@ -51,13 +48,8 @@ export class OrderController {
   async createOrder(
     @Request() req: AuthenticatedRequest,
     @Body() createOrderDto: CreateOrderDto,
-    @Query('countryCode') countryCode?: string,
   ) {
-    return this.orderService.createOrder(
-      req.user.id,
-      createOrderDto,
-      countryCode,
-    );
+    return this.orderService.createOrder(req.user.id, createOrderDto);
   }
 
   @Get()

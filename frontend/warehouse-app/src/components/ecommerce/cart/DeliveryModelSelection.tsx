@@ -18,8 +18,6 @@ import { DeliveryOption } from "@/types/ecommerce";
 import { formatPrice } from "@/utils/priceUtils";
 
 interface DeliveryModelSelectionProps {
-  countryCode?: string;
-  currencyCode?: string;
   selectedOption: DeliveryOption | null;
   onSelectOption: (option: DeliveryOption) => void;
   onBack: () => void;
@@ -27,7 +25,6 @@ interface DeliveryModelSelectionProps {
 }
 
 export default function DeliveryModelSelection({
-  countryCode,
   selectedOption,
   onSelectOption,
   onBack,
@@ -36,26 +33,16 @@ export default function DeliveryModelSelection({
   const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { currencyCode, currencySymbol } = useDetectUserLocation();
+  const { currencyCode, countryCode, countryName, currencySymbol } = useDetectUserLocation();
   const { getCart } = useCartStore();
   const { selectedProductIds } = useCheckout();
 
   useEffect(() => {
     const fetchDeliveryOptions = async () => {
-      if (!countryCode) {
-        setError("Country code is required");
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         setError(null);
-        const options = await ecommerceService.getDeliveryRates(
-          selectedProductIds,
-          countryCode,
-          currencyCode
-        );
+        const options = await ecommerceService.getDeliveryRates(selectedProductIds);
         setDeliveryOptions(options);
         
         // Auto-select first option if none selected
@@ -78,8 +65,8 @@ export default function DeliveryModelSelection({
     async (option: DeliveryOption) => {
       onSelectOption(option);
       try {
-        await ecommerceService.selectDeliveryOption(option, currencyCode);
-        await getCart(currencyCode, countryCode);
+        await ecommerceService.selectDeliveryOption(option);
+        await getCart();
       } catch (err) {
         console.error("Failed to save delivery option:", err);
       }
@@ -193,7 +180,7 @@ export default function DeliveryModelSelection({
           fontWeight={500}
           sx={{ fontSize: { xs: "0.85rem", sm: "0.875rem" } }}
         >
-          {countryCode || "Not specified"}
+          {countryName || "Not specified"}
         </Typography>
       </Box>
 

@@ -38,6 +38,8 @@ export interface ComputedCart {
   total_amount: number;
   final_amount: number;
   total_delivery_fee?: number;
+  total_discount?: number;
+  platform_fee?: number;
 }
 
 @Injectable()
@@ -132,11 +134,17 @@ export class CartService {
       if (!currencyCode) {
         throw new BadRequestException('Currency code not found');
       }
-      const exchangeRate = await this.getExchangeRate(currencyCode);
 
-      const totalAmountInUsd = this.normalizeToBaseCurrency(
-        Number(option.total_amount),
-        Number(exchangeRate),
+      const currencyInfo =
+        await this.userPreferencesService.getCurrencyInfoByCode(currencyCode);
+
+      const rate =
+        currencyInfo?.rate && currencyInfo.rate > 0 ? currencyInfo.rate : 1;
+
+      const totalAmountLocal = Number(option.total_amount);
+      const totalAmountUSD = this.normalizeToBaseCurrency(
+        totalAmountLocal,
+        rate,
       );
 
       const now = Math.floor(Date.now() / 1000);
@@ -145,7 +153,7 @@ export class CartService {
         {
           user_id: userId,
           delivery_platform: option.delivery_platform,
-          total_amount: totalAmountInUsd,
+          total_amount: totalAmountUSD,
           estimated_time: option.estimated_time,
           description: option.description,
           created_at: now,
@@ -214,31 +222,60 @@ export class CartService {
     userId: string,
     products: { product_id: string; quantity: number }[],
   ): Promise<ComputedCart> {
-    let cartItems = await this.cartRepository.find({
+    const productIds = products.map((product) => product.product_id);
+    if (!productIds?.length) {
+      throw new BadRequestException('No product IDs provided');
+    }
+    const fetchedProducts = await this.productRepository.find({
       where: {
-        user_id: userId,
-        product_id: In(products.map((product) => product.product_id)),
+        id: In(productIds),
       },
     });
-    if (cartItems.length === 0) cartItems = [];
-    for (const product of products) {
-      const cartItem = cartItems.find(
-        (cartItem) => cartItem.product_id === product.product_id,
-      );
-      if (cartItem) {
-        cartItem.quantity = product.quantity;
-        await this.cartRepository.save(cartItem);
+
+    // Create a map for quick product lookup
+    const productMap = new Map(
+      fetchedProducts.map((product) => [product.id, product]),
+    );
+
+    // Fetch existing cart items
+    const existingCartItems = await this.cartRepository.find({
+      where: {
+        user_id: userId,
+        product_id: In(productIds),
+        status: UserProductStatus.CART,
+      },
+    });
+
+    // Create a map for existing cart items
+    const existingCartMap = new Map(
+      existingCartItems.map((item) => [item.product_id, item]),
+    );
+    // Now proceed with syncing cart items
+    const cartItemsToSave: EcommerceUserProductStatus[] = [];
+
+    for (const productRequest of products) {
+      const product = productMap.get(productRequest.product_id) || null;
+      if (!product || product.stock_quantity <= 0) continue;
+      const existingCartItem = existingCartMap.get(productRequest.product_id);
+
+      if (existingCartItem) {
+        // Update existing cart item quantity
+        existingCartItem.quantity = Math.min(
+          productRequest.quantity,
+          product.stock_quantity,
+        );
+        cartItemsToSave.push(existingCartItem);
       } else {
-        const newCartItem = this.cartRepository.create({
+        // Create new cart item
+        this.cartRepository.create({
           user_id: userId,
-          product_id: product.product_id,
-          quantity: product.quantity,
+          product_id: productRequest.product_id,
+          quantity: productRequest.quantity,
           status: UserProductStatus.CART,
         });
-        cartItems.push(newCartItem);
       }
     }
-    await this.cartRepository.save(cartItems);
+    await this.cartRepository.save(cartItemsToSave);
     return this.getCart(userId);
   }
 
@@ -307,6 +344,27 @@ export class CartService {
     return this.getCart(userId);
   }
 
+  async removeEntireProductFromCart(
+    userId: string,
+    itemId: string,
+  ): Promise<ComputedCart> {
+    const cartItem = await this.cartRepository.findOne({
+      where: {
+        product_id: itemId,
+        user_id: userId,
+        status: UserProductStatus.CART,
+      },
+    });
+
+    if (!cartItem) {
+      throw new NotFoundException('Cart item not found');
+    }
+
+    await this.cartRepository.remove(cartItem);
+
+    return this.getCart(userId);
+  }
+
   async clearCart(userId: string): Promise<void> {
     await this.cartRepository.delete({
       user_id: userId,
@@ -317,28 +375,26 @@ export class CartService {
   async getCart(userId: string): Promise<ComputedCart> {
     const itemsFromDb = await this.cartRepository.find({
       where: { user_id: userId, status: UserProductStatus.CART },
+      relations: [
+        'product',
+        'product.category',
+        'product.measurement',
+        'product.cargo_option',
+      ],
     });
-
-    const productIds = itemsFromDb.map((item) => item.product_id);
-
-    const products = await this.productRepository.find({
-      where: { id: In(productIds) },
-      relations: ['category', 'measurement', 'cargo_option'],
-    });
-
-    const productMap = new Map(
-      products.map((product) => [product.id, product]),
-    );
 
     const preparedItems = itemsFromDb.map((item) => {
-      const product = productMap.get(item.product_id);
+      const product = item.product;
       if (!product) {
         throw new BadRequestException('Product not found');
       }
 
-      const price = Number(product?.price ?? 0);
+      const price = Number(product?.price);
+      if (price <= 0) {
+        throw new BadRequestException('Invalid price for product');
+      }
       const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-        Number(product?.unit_value ?? 0),
+        Number(product?.unit_value),
         product?.measurement?.label ?? 'kg',
       );
       const itemWeight = weightPerUnit * item.quantity;
@@ -410,19 +466,21 @@ export class CartService {
     const groupedItems: Record<string, ComputedCartItem[]> = {};
 
     for (const item of cart.items) {
-      const cargoLabel = item.product?.cargo_option?.label?.toLowerCase();
+      if (item?.product?.stock_quantity && item?.product?.stock_quantity > 0) {
+        const cargoLabel = item.product?.cargo_option?.label?.toLowerCase();
 
-      if (!cargoLabel) {
-        throw new BadRequestException(
-          'Product does not have a valid cargo option',
-        );
+        if (!cargoLabel) {
+          throw new BadRequestException(
+            'Product does not have a valid cargo option',
+          );
+        }
+
+        if (!groupedItems[cargoLabel]) {
+          groupedItems[cargoLabel] = [];
+        }
+
+        groupedItems[cargoLabel].push(item);
       }
-
-      if (!groupedItems[cargoLabel]) {
-        groupedItems[cargoLabel] = [];
-      }
-
-      groupedItems[cargoLabel].push(item);
     }
 
     return {
@@ -452,38 +510,22 @@ export class CartService {
         status: UserProductStatus.CART,
         product_id: In(productIds),
       },
+      relations: ['product', 'product.category', 'product.measurement'],
     });
 
     if (!cartItems.length) {
       throw new BadRequestException('No valid cart items found');
     }
 
-    const products = await this.productRepository.find({
-      where: { id: In(cartItems.map((item) => item.product_id)) },
-      relations: ['category', 'measurement', 'cargo_option'],
-    });
-
-    const productMap = new Map(
-      products.map((product) => [product.id, product]),
-    );
-
-    const cargoSet = new Set<string>();
     let totalWeight = 0;
+    let totalDiscount = 0;
 
     const preparedItems = cartItems.map((item) => {
-      const product = productMap.get(item.product_id);
+      const product = item.product;
 
       if (!product) {
         throw new BadRequestException('Product not found');
       }
-
-      const cargo = product.cargo_option?.label?.toLowerCase();
-      if (!cargo) {
-        throw new BadRequestException(
-          'Product does not belong to a valid category',
-        );
-      }
-      cargoSet.add(cargo);
 
       if (product.stock_quantity <= 0) {
         throw new BadRequestException(
@@ -499,6 +541,12 @@ export class CartService {
           `Invalid price for product ${product.id}`,
         );
       }
+
+      const discountPercentage = Number(product.discount_percentage) || 0;
+      const discountAmountPerUnit = price * (discountPercentage / 100);
+      const totalItemDiscount = discountAmountPerUnit * allowedQuantity;
+
+      totalDiscount += totalItemDiscount;
 
       const unitValue = Number(product.unit_value);
       if (!unitValue || unitValue <= 0) {
@@ -521,14 +569,10 @@ export class CartService {
         requestedQuantity: item.quantity,
         price,
         itemWeight,
+        discountPercentage,
+        totalItemDiscount,
       };
     });
-
-    if (cargoSet.size > 1) {
-      throw new BadRequestException(
-        'All items must belong to the same cargo category',
-      );
-    }
 
     const { currencyCode, countryCode } =
       await this.userPreferencesService.getUserPreferenceCurrencyAndCountry(
@@ -568,13 +612,18 @@ export class CartService {
 
     const totalAmount = items.reduce((sum, it) => sum + it.total_price, 0);
 
-    const finalAmount = totalAmount + totalDeliveryFee;
+    let finalAmount = totalAmount - totalDiscount + totalDeliveryFee;
+
+    const platformFee = finalAmount * 0.05;
+    finalAmount += platformFee;
 
     const computedCart: ComputedCart = {
       items,
       total_amount: totalAmount,
-      final_amount: finalAmount,
+      final_amount: Math.max(0, finalAmount),
       total_delivery_fee: totalDeliveryFee,
+      total_discount: totalDiscount,
+      platform_fee: platformFee,
     };
 
     return this.applyCurrencyConversion(computedCart, currencyCode);
@@ -601,31 +650,15 @@ export class CartService {
 
     const products = await this.productRepository.find({
       where: { id: In(productIds) },
-      relations: ['measurement', 'cargo_option'],
+      relations: ['measurement'],
     });
 
-    const cargoSet = new Set<string>();
     let totalWeight = 0;
 
     for (const item of cartItems) {
       const product = products.find((p) => p.id === item.product_id);
       if (!product) {
         throw new BadRequestException('Product not found');
-      }
-
-      const cargoLabel = product.cargo_option?.label?.toLowerCase();
-      if (!cargoLabel) {
-        throw new BadRequestException(
-          `Product ${product.id} does not have a valid cargo option`,
-        );
-      }
-
-      cargoSet.add(cargoLabel);
-
-      if (cargoSet.size > 1) {
-        throw new BadRequestException(
-          'Selected products belong to different cargo types',
-        );
       }
 
       const unitValue = Number(product.unit_value);
@@ -688,7 +721,7 @@ export class CartService {
           ...item,
           unit_price: await convert(item.unit_price),
           total_price: await convert(item.total_price),
-          delivery_fee: await convert(item.delivery_fee ?? 0),
+          delivery_fee: item.delivery_fee ?? 0,
           product,
         } as ComputedCartItem;
       }),
@@ -698,7 +731,8 @@ export class CartService {
       ...cart,
       total_amount: await convert(cart.total_amount),
       final_amount: await convert(cart.final_amount),
-      total_delivery_fee: await convert(cart.total_delivery_fee ?? 0),
+      total_delivery_fee: cart.total_delivery_fee ?? 0,
+      platform_fee: await convert(cart.platform_fee ?? 0),
       items: convertedItems,
     };
   }

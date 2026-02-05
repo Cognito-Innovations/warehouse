@@ -18,6 +18,7 @@ import GridSkeletonLoader from "./skeleton-loader/GridSkeletonLoader";
 import { ecommerceData } from "@/data/ecommerceData";
 import ProductCardSkeletonLoader from "./skeleton-loader/ProductCardSkeletonLoader";
 import Category from "../Category/Category";
+import EcommerceCarousel from "./EcommerceCarousel";
 
 interface EcommerceContentProps {
   slug?: string;
@@ -92,8 +93,10 @@ export default function EcommerceContent({ slug }: EcommerceContentProps) {
       <Box sx={{ display: 'none' }}>
         <ProductCardSkeletonLoader ref={skeletonRef} />
       </Box>
-  
+
       <Category slug={slug} />
+      
+      <EcommerceCarousel />
 
       {showAssisted ? (
         <AssistedShoppingLandingContent />

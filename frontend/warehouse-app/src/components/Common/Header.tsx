@@ -49,6 +49,8 @@ export default function Header({
   const [locationAnchorEl, setLocationAnchorEl] = useState<null | HTMLElement>(null);
   const [hasMounted, setHasMounted] = useState(false);
 
+  const isLoggedIn = Boolean(user?.id || user?.email);
+
   useEffect(() => {
     setHasMounted(true);
   }, []);
@@ -176,7 +178,7 @@ export default function Header({
                   <HeaderProfileTrigger
                     countryName={countryName || ""}
                     countryCode={countryCode || ""}
-                    currentUser={user}
+                    currentUser={isLoggedIn ? user : null}
                     open={open}
                     handleProfileMenuOpen={handleProfileMenuOpen}
                     handleLocationClick={handleLocationClick}
@@ -223,7 +225,9 @@ export default function Header({
         </Toolbar>
       </AppBar>
 
-      <HeaderProfileMenu currentUser={user} anchorEl={anchorEl} open={open} handleProfileMenuClose={handleProfileMenuClose} handleProfileClick={handleProfileClick} handleLogoutClick={handleLogoutClick} />
+      {isLoggedIn && (
+        <HeaderProfileMenu currentUser={user} anchorEl={anchorEl} open={open} handleProfileMenuClose={handleProfileMenuClose} handleProfileClick={handleProfileClick} handleLogoutClick={handleLogoutClick} />
+      )}
       <HeaderLocationMenu locationAnchorEl={locationAnchorEl} isLocationMenuOpen={isLocationMenuOpen} handleLocationClose={handleLocationClose} countryCode={countryCode || ""} user={user} />
     </>
   );

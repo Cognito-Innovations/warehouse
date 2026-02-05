@@ -1,10 +1,13 @@
 "use client";
 
 import { Box, Button, Typography, Alert, Snackbar } from "@mui/material";
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "@/utils/constants";
+import { setCookie } from "@/lib/cookieUtils";
+import { AUTH_COOKIE_NAME } from "../../utils/constants";
+import { clearAllCookies } from "../../lib/cookieUtils";
 
 interface SignInFormProps {
   callbackUrl?: string;
@@ -12,16 +15,34 @@ interface SignInFormProps {
 
 export default function SignInForm({ callbackUrl }: SignInFormProps) {
   const { isAuthenticated } = useAuth();
+  const { data: session, status } = useSession();
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const redirectTo = callbackUrl || ROUTES.ROOT;
+
+  useEffect(() => {
+    if (
+      status === "authenticated" &&
+      (session as any)?.access_token
+    ) {
+      const token = (session as any).access_token;
+
+      setCookie(AUTH_COOKIE_NAME, token, {
+        path: "/",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    }
+  }, [session, status]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError("");
 
     try {
+      clearAllCookies();
       const result = await signIn("google", {
         callbackUrl: redirectTo,
       });

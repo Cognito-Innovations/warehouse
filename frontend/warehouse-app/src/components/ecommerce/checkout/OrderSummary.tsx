@@ -5,7 +5,6 @@ import { Card, CardContent, Stack, Typography, Box } from "@mui/material";
 import { Payment } from "@mui/icons-material";
 import { toast } from "sonner";
 
-import { useCartStore } from "@/store/cartStore";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
 import { usePayPalPayment } from "@/hooks/usePayPalPayment";
 import { useOrderPayment } from "@/hooks/useOrderPayment";
@@ -21,8 +20,9 @@ import { DEFAULT_CURRENCY_INFO } from "@/utils/constants";
 
 interface OrderTotalsData {
   subtotal: number;
-  // discount: number;
+  discount: number;
   deliveryFee: number;
+  platformFee: number;
   // taxes: number;
   // serviceCharge: number;
   total: number;
@@ -46,8 +46,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   addressLoading,
   onOrderSuccess,
 }) => {
-  const { removePurchasedProducts } = useCartStore();
-  const { currencyCode, countryCode, currencyRate } = useDetectUserLocation();
+  const { currencyCode, currencyRate } = useDetectUserLocation();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isFinalizingPayment, setIsFinalizingPayment] = useState(false);
 
@@ -69,8 +68,6 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     },
     onSuccess: async () => {
       try {
-        const purchasedIds = items.map((item) => item.product_id!);
-        removePurchasedProducts(purchasedIds);
         onOrderSuccess?.();
         setIsFinalizingPayment(false);
         setShowSuccessModal(true);
@@ -94,7 +91,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
     resetPayment();
 
-    const paymentConfig = await initiateOrder(items, shippingAddress, countryCode);
+    const paymentConfig = await initiateOrder(items, shippingAddress);
 
     if (paymentConfig) {
       initializePayment(paymentConfig);
@@ -157,8 +154,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
           <OrderTotals
             subtotal={totals.subtotal}
-            // discount={totals.discount}
+            discount={totals.discount}
             deliveryFee={totals.deliveryFee}
+            platformFee={totals.platform_fee}
             // taxes={totals.taxes}
             // serviceCharge={totals.serviceCharge}
             total={totals.total}

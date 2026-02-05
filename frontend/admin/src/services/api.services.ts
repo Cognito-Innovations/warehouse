@@ -9,6 +9,11 @@ export const getUsers = async (): Promise<User[]> => {
   return response.data;
 };
 
+export const updateUserRole = async (userId: string, role: string) => {
+  const response = await api.patch(`/users/${userId}`, { role });
+  return response.data;
+};
+
 export const getUserBySuiteNo = async (suiteNo: string): Promise<User> => {
   const response = await api.get<User>(`/users/suite/${suiteNo}`);
   return response.data;
@@ -246,10 +251,23 @@ export const updatePickupRequestStatus = async (id: string, status: string, pric
   return response.data;
 };
 
-export const getAllShoppingRequests = async () => {
-  const params = getCountryFilterParams();
+export const getAllShoppingRequests = async ({
+  page,
+  limit,
+}: {
+  page: number;
+  limit: number;
+}) => {
+  const countryParams = getCountryFilterParams();
 
-  const response = await api.get("/shopping-requests", { params });
+  const response = await api.get("/shopping-requests", {
+    params: {
+      ...countryParams,
+      page,
+      limit,
+    },
+  });
+
   return response.data;
 };
 

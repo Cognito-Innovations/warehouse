@@ -24,7 +24,7 @@ const ShipReportButton: React.FC<ShipReportButtonProps> = ({ shipments, loading 
             const customerName = user?.name || '';
             const suiteId = user?.suite_no || '';
             const requestedAt = created_at ? formatDateTime(created_at) : '';
-            const carrier = 'REDBOX (air)';
+            const carrier = 'UGFLASH (air)';
             const noOfItems = packages.length;
             let extraCharges = '';
             if (invoice && invoice.charges) {

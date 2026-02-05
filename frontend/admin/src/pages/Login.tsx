@@ -13,7 +13,7 @@ import {
   type Theme,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner'
 import PasswordStrength from '../components/common/PasswordStrength';
 

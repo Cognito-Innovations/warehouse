@@ -13,6 +13,7 @@ import SearchAndFilter from "../Tabs/SearchAndFilter";
 import ShipmentHeader from "./Shipments/ShipmentHeader";
 import ShipmentCardMobile from "./Shipments/ShipmentCardMobile";
 import ShipmentTableRow from "./Shipments/ShipmentTableRow";
+import { ROUTES } from "@/utils/constants";
 
 const ShipmentsContent = () => {
     const { user } = useAuth();
@@ -38,6 +39,12 @@ const ShipmentsContent = () => {
             setShipmentsLoading(false);
         }
     }, [userId]);
+
+    useEffect(() => {
+        if(!userId && typeof window !== "undefined") {
+         window.location.href = ROUTES.SIGN_IN;
+        }
+     }, [userId]);
 
     useEffect(() => {
         fetchData();

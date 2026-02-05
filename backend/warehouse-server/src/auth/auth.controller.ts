@@ -10,6 +10,7 @@ import { AuthResponseDto } from './dto/AuthResponseDto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // This is helpful don't remove this register we're using in ecommerce
   @Public()
   @Post('register')
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {

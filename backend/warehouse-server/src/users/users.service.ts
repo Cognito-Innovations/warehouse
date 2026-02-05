@@ -38,7 +38,7 @@ export class UsersService {
   async findById(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { id },
-      relations: ['preference', 'address'],
+      relations: ['preference', 'preference.courier.country', 'address'],
     });
   }
 

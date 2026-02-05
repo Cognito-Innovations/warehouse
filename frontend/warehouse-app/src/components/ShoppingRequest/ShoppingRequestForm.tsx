@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import { CircularProgress } from "@mui/material";
+import { CountrySelector } from "../AssistedShopping/getting-started/CountrySelector";
 import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
 import { ASSISTED_SHOPPING_PRODUCT_LINK_KEY } from "@/utils/constants";
 
@@ -24,6 +26,7 @@ interface ShoppingRequestFormProps {
 }
 
 export default function ShoppingRequestForm({ onSuccess }: ShoppingRequestFormProps) {
+  const router = useRouter();
   const { data: session } = useSession();
 
   const [items, setItems] = useState<ShoppingItem[]>([
@@ -96,14 +99,10 @@ export default function ShoppingRequestForm({ onSuccess }: ShoppingRequestFormPr
 
     const userId = (session?.user as any)?.user_id;
 
-    //TODO: revert hardcoded values
     const shoppingRequest = {
       user_id: userId,
-      request_code: `SR/IN/${Date.now()}`,
-      courier_id: "0f502386-b904-4cb8-8861-6c32e900bd84",
       items_count: items.length,
       remarks,
-      status: "REQUESTED",
     };
 
     try {
@@ -287,6 +286,8 @@ export default function ShoppingRequestForm({ onSuccess }: ShoppingRequestFormPr
                   </select>
                 </div>
               </div>
+
+              <CountrySelector className="mt-4 sm:mt-6 mb-4 sm:mb-5" />
             </div>
           ))}
         </div>

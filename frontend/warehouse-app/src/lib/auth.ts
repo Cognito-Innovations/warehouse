@@ -5,7 +5,7 @@ import { generateSequentialSuiteNumber } from "../utils/auth.utils";
 const API_BASE_URL = process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001";
 
 export const authOptions: NextAuthOptions = {
-  debug: false,
+  debug: process.env.NODE_ENV === "development",
   cookies: {
     sessionToken: {
       name: "next-auth.session-token",
@@ -65,11 +65,6 @@ export const authOptions: NextAuthOptions = {
               identifier: "google",
             }),
           });
-
-          if (!res.ok) {
-            console.error("Backend registration failed:", res.status, res.statusText);
-            return false;
-          }
 
           const data = await res.json();
           (user as any).user_id = data.id;

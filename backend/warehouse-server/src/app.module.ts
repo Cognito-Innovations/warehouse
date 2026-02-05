@@ -57,14 +57,15 @@ import { CustomThrottlerGuard } from './shared/guards/custom-throttler.guard';
     MailerModule.forRoot({
       transport: {
         host: 'smtp.gmail.com',
+        port: 587,
         secure: false,
         auth: {
-          user: process.env.USERNAME,
-          pass: process.env.PASSWORD,
+          user: 'team.palakart@gmail.com',
+          pass: 'fmuv ypoo jloc siux',
         },
       },
       defaults: {
-        from: `"No Reply" <${process.env.USERNAME}>`,
+        from: `"No Reply" <team.palakart@gmail.com>`,
       },
       template: {
         dir: join(__dirname, '..', 'src', 'users'),

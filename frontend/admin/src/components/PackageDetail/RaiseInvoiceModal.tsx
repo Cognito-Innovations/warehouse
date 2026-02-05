@@ -57,7 +57,7 @@ const RaiseInvoiceModal: React.FC<{
   const initialCharges: Charge[] = [
     {
       category: 'Freight Charge',
-      description: `REDBOX Chargeable Weight ${weight} kg`,
+      description: `UGFLASH Chargeable Weight ${weight} kg`,
       amount: FREIGHT_RATE_PER_KG,
       total: freightAmount,
     },

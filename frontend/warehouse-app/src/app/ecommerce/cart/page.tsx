@@ -5,7 +5,7 @@ import { Box, Container, Button } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 import { useSession } from "next-auth/react";
 
-import { useCartHasHydrated, useCartStore } from "@/store/cartStore";
+import { useCartStore } from "@/store/cartStore";
 import { useCheckout } from "@/store/useCheckout";
 import { ecommerceService } from "@/services/ecommerce.service";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
@@ -21,24 +21,21 @@ import DeliveryModelSelection from "@/components/ecommerce/cart/DeliveryModelSel
 import ReadOnlyCartItems from "@/components/ecommerce/cart/ReadOnlyCartItems";
 import CargoGroupedCart from "@/components/ecommerce/cart/CargoGroupedCart";
 import { CartAddressData, DeliveryOption } from "@/types/ecommerce";
+import { normalizeCart } from "@/lib/utils";
 
 type CartStep = 0 | 1 | 2;
 
 export default function CartPage() {
   const { data: session, status } = useSession();
-  const hydrated = useCartHasHydrated();
-  const { 
-    cart,
-    getCart,
-  } = useCartStore();
+  const { cart, getCart } = useCartStore();
   const { selectedCargo } = useCheckout();
 
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
   const [highlightAddressError, setHighlightAddressError] = useState(false);
-  const [isCartLoading, setIsCartLoading] = useState(true);
+  const [isCartLoading, setIsCartLoading] = useState(false);
   const [isAddressDataReady, setIsAddressDataReady] = useState(false);
   const [activeStep, setActiveStep] = useState<CartStep>(0);
-  const [selectedDeliveryOption, setSelectedDeliveryOption] = useState<DeliveryOption | null>(null);  
+  const [selectedDeliveryOption, setSelectedDeliveryOption] = useState<DeliveryOption | null>(null);
   const [groupedCart, setGroupedCart] = useState<any>(null);
 
   const userId = (session?.user as any)?.user_id;
@@ -51,7 +48,7 @@ export default function CartPage() {
   }, [userId]);
 
   useEffect(() => {
-    if (activeStep === 0) {
+    if (activeStep === 0 && userId) {
       fetchGroupedCart();
     }
   }, [activeStep, fetchGroupedCart]);
@@ -97,7 +94,7 @@ export default function CartPage() {
   const initCart = useCallback(async () => {
     setIsCartLoading(true);
     try {
-      await ecommerceService.fetchCart();
+      await getCart();
     } catch (e) {
       console.error("Initialization error:", e);
     } finally {
@@ -106,22 +103,12 @@ export default function CartPage() {
   }, []);
 
   useEffect(() => {
-    if (status === "loading") return;
-
-    if (hydrated) {
+    if (status === "loading" || !userId) return;
+    if (userId) {
       initCart();
-    } else {
-      const unsub = useCartStore.persist.onFinishHydration(() => initCart());
-      const timer = setTimeout(() => initCart(), 3000);
-
-      return () => {
-        unsub();
-        clearTimeout(timer);
-      };
     }
-  }, [status, initCart, hydrated, userId]);
+  }, [status, initCart, userId]);
 
-  // Auto-advance step based on selections
   useEffect(() => {
     if (activeStep === 0 && selectedAddress && userId) {
       // Don't auto-advance, let user click continue
@@ -129,16 +116,17 @@ export default function CartPage() {
       // Don't auto-advance, let user click continue
     }
   }, [activeStep, selectedAddress, selectedDeliveryOption, userId]);
-  
-  if (status === "loading" || !hydrated) {
+
+  if (status === "loading") {
     return <CartSkeletonLoader />;
   }
 
   if (!isCartLoading && (!cart || cart.length === 0)) {
-    return <EmptyCartState/>;
+    return <EmptyCartState />;
   }
 
-  const validItems = cart.filter(item => item && item.product);
+  const safeCart = normalizeCart(cart);
+  const validItems = safeCart.filter(item => item && item.product);
 
   const renderStepContent = () => {
     switch (activeStep) {
@@ -157,7 +145,7 @@ export default function CartPage() {
                   initialAddress={selectedAddress}
                 />
                 {/* Continue button to proceed to delivery step */}
-               
+
               </>
             )}
             {isCartLoading ? (
@@ -246,15 +234,15 @@ export default function CartPage() {
 
   return (
     <Box sx={{ bgcolor: "grey.50", minHeight: "100vh", pb: { xs: 2, md: 0 } }}>
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
+      <Container
+        maxWidth="lg"
+        sx={{
           py: { xs: 2, sm: 3 },
           px: { xs: 1.5, sm: 2, md: 3 },
         }}
       >
         <CartStepper activeStep={activeStep} />
-        
+
         <Box
           sx={{
             display: "flex",
@@ -264,8 +252,8 @@ export default function CartPage() {
           }}
         >
           {/* Main Content Section */}
-          <Box sx={{ 
-            flex: { md: activeStep === 2 ? "0 0 65%" : "1" }, 
+          <Box sx={{
+            flex: { md: activeStep === 2 ? "0 0 65%" : "1" },
             width: { xs: "100%", md: activeStep === 2 ? "65%" : "100%" },
             minWidth: 0, // Prevents overflow
           }}>
@@ -274,8 +262,8 @@ export default function CartPage() {
 
           {/* Order Summary Section - Only show in step 2 (Order Summary) */}
           {activeStep === 2 && (
-            <Box sx={{ 
-              flex: { md: "0 0 35%" }, 
+            <Box sx={{
+              flex: { md: "0 0 35%" },
               width: { xs: "100%", md: "35%" },
               minWidth: 0, // Prevents overflow
               order: { xs: -1, md: 0 }, // Show summary first on mobile for better UX

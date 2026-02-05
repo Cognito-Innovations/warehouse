@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
-import { formatDiscountPercentage } from "@/lib/utils";
+import { formatDiscountPercentage, normalizeCart } from "@/lib/utils";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { getOptimalImageSizing, handleImageLoad, ImageDimensions } from "@/utils/imageUtils";
 import { DEFAULT_CURRENCY_INFO, ROUTES } from "@/utils/constants";
@@ -22,12 +22,19 @@ export default function CartItemCard({
   const router = useRouter();
   const {
     cart,
-    removeProductFromCart
+    addProductToCart,
+    removeProductFromCart,
+    removeEntireProductFromCart
   } = useCartStore();
 
   const { currencySymbol } = useDetectUserLocation();
 
   const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null);
+
+  const safeCart = normalizeCart(cart);
+  const liveItem = safeCart.find((c) => c.product_id === item.product_id);
+
+  const currentQuantity = liveItem?.quantity || 0;
 
   const handleProductClick = (e: React.MouseEvent, product: EcommerceProduct) => {
     if (e.defaultPrevented) return;
@@ -37,14 +44,25 @@ export default function CartItemCard({
     router.push(`${ROUTES.PRODUCT}/${product.slug}`);
   };
 
-  const handleQuantityChange = useCallback(async (identifier: string, newQuantity: number) => {
-    //TODO P0: Uncoment and make functionality wor
-    // await setCartItemQuantity(identifier, newQuantity);
-  }, []);
+  const handleQuantityChange = useCallback(
+    async (productId: string, newQuantity: number) => {
+      if (newQuantity > currentQuantity) {
+        addProductToCart(productId, 1, item.product.stock_quantity);
+        return;
+      }
+
+      if (newQuantity < currentQuantity) {
+        removeProductFromCart(productId);
+      }
+    },
+    [currentQuantity, item.product.stock_quantity, addProductToCart, removeProductFromCart]
+  );
 
   const handleRemoveItem = useCallback(async (identifier: string) => {
-    await removeProductFromCart(identifier);
-  }, [removeProductFromCart]);
+    await removeEntireProductFromCart(identifier);
+  }, [removeEntireProductFromCart]);
+
+  if (!liveItem) return null;
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     handleImageLoad(e, setImageDimensions);
@@ -54,11 +72,16 @@ export default function CartItemCard({
 
   const effectiveId = item.product_id!;
 
-  const pricing = getCartItemPricingSummary(item, currencySymbol);
+  const pricingSource = {
+    ...item, 
+    quantity: currentQuantity 
+  };
+
+  const pricing = getCartItemPricingSummary(pricingSource, currencySymbol);
   const unitPrice = pricing.discountedUnitPrice;
   const totalPrice = pricing.lineTotal;
-  // const originalPrice = pricing.originalUnitPrice;
-  // const hasDiscount = pricing.discountPerUnit > 0;  
+  const originalPrice = pricing.originalUnitPrice;
+  const hasDiscount = pricing.discountPercent > 0; 
   const unitValue = item.product.unit_value || 0;
   const measurementLabel = item.product.measurement?.label || "";
   const placeholderImage = `https://placehold.co/160x160?text=${item.product.name}`;
@@ -182,7 +205,7 @@ export default function CartItemCard({
             >
               {item.product.name}
             </Typography>
-            {/* {hasDiscount && (
+            {hasDiscount && (
               <Chip
                 label={formatDiscountPercentage(item.product.discount_percentage, "OFF")}
                 size="small"
@@ -194,7 +217,7 @@ export default function CartItemCard({
                   height: 22,
                 }}
               />
-            )} */}
+            )}
             {/* Stock Status */}
             <Chip
               label={stockStatus}
@@ -288,12 +311,12 @@ export default function CartItemCard({
             >
               <IconButton
                 size="small"
-                onClick={() => handleQuantityChange(effectiveId, item.quantity - 1)}
-                disabled={item.quantity <= 1}
+                onClick={() => handleQuantityChange(effectiveId, currentQuantity - 1)}
+                disabled={currentQuantity <= 1}
                 sx={{
-                  pointerEvents: item.quantity <= 1 ? "none" : "auto",
+                  pointerEvents: currentQuantity <= 1 ? "none" : "auto",
                   border: "1.5px solid",
-                  borderColor: item.quantity <= 1 ? "action.disabled" : "grey.300",
+                  borderColor: currentQuantity <= 1 ? "action.disabled" : "grey.300",
                   bgcolor: "white",
                   borderRadius: "50%",
                   width: 32,
@@ -317,16 +340,16 @@ export default function CartItemCard({
                   fontSize: "1rem",
                 }}
               >
-                {item.quantity}
+                {currentQuantity}
               </Typography>
               <IconButton
                 size="small"
-                onClick={() => handleQuantityChange(effectiveId, item.quantity + 1)}
-                disabled={item.quantity >= item.product.stock_quantity}
+                onClick={() => handleQuantityChange(effectiveId, currentQuantity + 1)}
+                disabled={currentQuantity >= item.product.stock_quantity}
                 sx={{
-                  pointerEvents: item.quantity >= item.product.stock_quantity ? "none" : "auto",
+                  pointerEvents: currentQuantity >= item.product.stock_quantity ? "none" : "auto",
                   border: "1.5px solid",
-                  borderColor: item.quantity >= item.product.stock_quantity ? "action.disabled" : "grey.300",
+                  borderColor: currentQuantity >= item.product.stock_quantity ? "action.disabled" : "grey.300",
                   bgcolor: "white",
                   borderRadius: "50%",
                   width: 32,
@@ -387,7 +410,7 @@ export default function CartItemCard({
             width: "100%",
           }}>
             {/* Original Unit Price */}
-            {/* {hasDiscount && (
+            {hasDiscount && (
               <Typography
                 variant="caption"
                 sx={{
@@ -400,7 +423,7 @@ export default function CartItemCard({
               >
                 {formatLocalPrice(originalPrice)}/unit
               </Typography>
-            )} */}
+            )}
 
             {/* Discounted Unit Price */}
             <Typography
@@ -429,7 +452,7 @@ export default function CartItemCard({
                 textOverflow: "ellipsis",
               }}
             >
-              {item.quantity} × {formatLocalPrice(unitPrice)} = <Box component="span" sx={{ color: "primary.main", fontWeight: 600 }}>{formatLocalPrice(totalPrice)}</Box>
+              {currentQuantity} × {formatLocalPrice(unitPrice)} = <Box component="span" sx={{ color: "primary.main", fontWeight: 600 }}>{formatLocalPrice(totalPrice)}</Box>
             </Typography>
           </Box>
         </Box>

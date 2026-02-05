@@ -17,6 +17,7 @@ import SearchAndFilter from "../Tabs/SearchAndFilter";
 import PackageHeader from "./Packages/PackageHeader";
 import PackageCardMobile from "./Packages/PackageCardMobile";
 import PackageTableRow from "./Packages/PackageTableRow";
+import { ROUTES } from "@/utils/constants";
 
 const PackagesContent = () => {
     const { data: session } = useSession();
@@ -46,6 +47,13 @@ const PackagesContent = () => {
         } finally {
             setPackagesLoading(false);
         }
+    }, [userId]);
+
+
+    useEffect(() => {
+       if(!userId && typeof window !== "undefined") {
+        window.location.href = ROUTES.SIGN_IN;
+       }
     }, [userId]);
 
     useEffect(() => {

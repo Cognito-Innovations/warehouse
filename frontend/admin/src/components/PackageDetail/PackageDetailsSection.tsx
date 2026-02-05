@@ -127,7 +127,7 @@ const PackageDetailsSection: React.FC<PackageDetailsSectionProps> = ({
                   Dangerous Good
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                  ⛔️ {packageData.dangerous_good}
+                  ⛔️ {packageData.dangerous_good ? 'Yes' : 'No'}
                 </Typography>
               </Box>
             </Grid>

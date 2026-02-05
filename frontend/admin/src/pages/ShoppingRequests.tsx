@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 
@@ -9,28 +9,37 @@ import StatusChip from '../components/common/StatusChip';
 import CommonTable from '../components/common/CommonTable';
 import type { ColumnDefinition } from '../types/table';
 import { shoppingSummaryConfig } from '../utils/summaryConfig';
+import ShoppingRequestFilters from '../components/ShoppingRequests/ShoppingRequestFilters';
 
 const ShoppingRequests: React.FC = () => {
   const [requests, setRequests] = useState<any[]>([]); //TODO P0: Resolve these typescript errors
   const [selectedStatus, setSelectedStatus] = useState<string | string[] | null>(null);
+  const [originCountry, setOriginCountry] = useState<string | null>(null);
+  const [targetCountry, setTargetCountry] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [total, setTotal] = useState(0);
   const navigate = useNavigate();
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const requests = await getAllShoppingRequests();
-      setRequests(requests);
-    } catch (error) {
-      console.error("Error fetching shopping requests:", error);
+      const response = await getAllShoppingRequests({
+        page: page + 1,
+        limit: rowsPerPage,
+      });
+
+      setRequests(response.data);
+      setTotal(response.total);
     } finally {
       setLoading(false);
     }
-  }
+  }, [page, rowsPerPage]);
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [fetchRequests]);
 
   const statusOptions = [
     { value: 'REQUESTED', label: 'Requested' },
@@ -39,31 +48,76 @@ const ShoppingRequests: React.FC = () => {
     { value: 'ORDER_PLACED', label: 'Order Placed' },
   ];
 
-  const mappedRows = useMemo(() => {
-    const filteredRequests = selectedStatus
-      ? requests.filter(req => {
-          const statusesToFilter = Array.isArray(selectedStatus) ? selectedStatus : [selectedStatus];
-          return statusesToFilter.includes(req.status);
-        })
-      : requests;
+  const originOptions = useMemo(() => {
+    const set = new Set<string>();
 
-    return filteredRequests.map((req: any) => {
+    requests.forEach(req => {
+      const country = req.user?.address?.[0]?.country;
+      if (country) set.add(country);
+    });
+
+    return Array.from(set);
+  }, [requests]);
+
+  const targetOptions = useMemo(() => {
+    const set = new Set<string>();
+
+    requests.forEach(req => {
+      const country = req.courier?.country?.code;
+      if (country) set.add(country);
+    });
+
+    return Array.from(set);
+  }, [requests]);
+
+  const mappedRows = useMemo(() => {
+    let filtered = [...requests];
+
+    if (selectedStatus) {
+      const statuses = Array.isArray(selectedStatus)
+        ? selectedStatus
+        : [selectedStatus];
+
+      filtered = filtered.filter(req =>
+        statuses.includes(req.status)
+      );
+    }
+
+    if (originCountry) {
+      filtered = filtered.filter(
+        req => req.user?.address?.[0]?.country === originCountry
+      );
+    }
+
+    if (targetCountry) {
+      filtered = filtered.filter(
+        req => req.courier?.country?.code === targetCountry
+      );
+    }
+
+    return filtered.map((req: any) => {
       const createdAt = new Date(Number(req.created_at) * 1000);
+
       return {
         orderNo: req.request_code,
         requestedAt: {
           date: createdAt.toLocaleDateString('en-GB'),
-          time: createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: createdAt.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
         },
         user: {
           name: req.user?.name || 'Unknown',
           suite_no: req.user?.suite_no || '',
+          originCountry: req.user?.address?.country_code,
         },
+        targetCountry: req.courier?.country?.code,
         status: req.status,
         noOfItems: req.items_count,
       };
     });
-  }, [requests, selectedStatus]);
+  }, [requests, selectedStatus, originCountry, targetCountry]);
 
    const columns: ColumnDefinition<typeof mappedRows[0]>[] = [
     {
@@ -125,9 +179,25 @@ const ShoppingRequests: React.FC = () => {
         loading={loading}
         statusOptions={statusOptions}
         noDataMessage="No shopping requests available"
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={total}
+        onPageChange={setPage}
+        onRowsPerPageChange={setRowsPerPage}
+        paginationMode="server"
         onViewDetails={handleViewDetails}
         getIdentifier={(row) => row.orderNo}
         getRowStatus={(row) => row.status}
+        filtersComponent={
+          <ShoppingRequestFilters
+            originOptions={originOptions}
+            targetOptions={targetOptions}
+            originCountry={originCountry}
+            targetCountry={targetCountry}
+            onOriginChange={setOriginCountry}
+            onTargetChange={setTargetCountry}
+          />
+        }
       />
     </Box>
   );

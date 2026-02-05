@@ -32,15 +32,6 @@ interface CurrencyInfo {
   rate: number;
 }
 
-interface PayPalHttpError {
-  response: {
-    data: {
-      message?: string;
-      details?: Array<{ description?: string }>;
-    };
-  };
-}
-
 @Injectable()
 export class OrderService {
   constructor(
@@ -79,7 +70,7 @@ export class OrderService {
     return `ORD-${timeBasedSuffix}-${randomAlphaNumeric}`;
   }
 
-  private async calculateOrderPricing(
+    private calculateOrderPricing(
     items: EcommerceUserProductStatus[],
     currencyInfo: CurrencyInfo,
     deliveryFeeUSD: number,
@@ -88,45 +79,53 @@ export class OrderService {
     let subtotalLocal = 0;
 
     // Calculate details for each item
-    const itemDetails = await Promise.all(
-      items.map(async (item) => {
-        const product = await this.productRepository.findOne({
-          where: { id: item.product_id },
-          relations: ['measurement'],
-        });
+    const itemDetails = items.map((item) => {
+      const product = item.product;
 
-        const basePrice = Number(product?.price || 0);
+      const basePrice = Number(product?.price || 0);
+      const discountPercentage = Number(product?.discount_percentage || 0);
 
-        const itemTotalUSDRaw = basePrice * item.quantity;
+      const discountPerUnitUSD = basePrice * (discountPercentage / 100);
+      const discountedUnitPriceUSD = basePrice - discountPerUnitUSD;
 
-        const localPrice = this.roundCurrency(basePrice * rate);
-        const itemSubtotalLocal = localPrice * item.quantity;
+      const itemTotalPaidUSDRaw = discountedUnitPriceUSD * item.quantity;
 
-        const itemTotalUSDRounded = this.roundCurrency(itemTotalUSDRaw);
+      const itemOriginalTotalUSDRaw = basePrice * item.quantity;
 
-        return {
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unitPriceUSD: basePrice,
-          totalUSD: itemTotalUSDRounded,
-          rawTotalUSD: itemTotalUSDRaw,
-          subtotalLocal: itemSubtotalLocal,
-        };
-      }),
-    );
+      const localPrice = this.roundCurrency(basePrice * rate);
+      const localDiscountedPrice = this.roundCurrency(
+        discountedUnitPriceUSD * rate,
+      );
+      const itemSubtotalLocal = localPrice * item.quantity;
+
+      const itemTotalUSDRounded = this.roundCurrency(itemTotalPaidUSDRaw);
+
+      return {
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unitPriceUSD: basePrice,
+        totalUSD: itemTotalUSDRounded,
+        rawTotalUSD: itemTotalPaidUSDRaw,
+        subtotalLocal: itemSubtotalLocal,
+        discountUSD: discountPerUnitUSD * item.quantity,
+      };
+    });
 
     // Aggregate totals
-    let totalItemsUSDRaw = 0;
+    let totalItemsPaidUSDRaw = 0;
     for (const detail of itemDetails) {
       subtotalLocal += detail.subtotalLocal;
-      totalItemsUSDRaw += detail.rawTotalUSD;
+      totalItemsPaidUSDRaw += detail.rawTotalUSD;
     }
 
     const roundedDeliveryFeeUSD = this.roundCurrency(deliveryFeeUSD);
 
-    const finalUSDTotal = this.roundCurrency(
-      totalItemsUSDRaw + roundedDeliveryFeeUSD,
+    let finalUSDTotal = this.roundCurrency(
+      totalItemsPaidUSDRaw + roundedDeliveryFeeUSD,
     );
+
+    const platformFee = finalUSDTotal * 0.05;
+    finalUSDTotal += platformFee;
 
     return {
       finalUSDTotal,
@@ -155,7 +154,6 @@ export class OrderService {
   async createOrder(
     userId: string,
     createOrderDto: CreateOrderDto,
-    countryCode?: string,
   ): Promise<OrderWithDetails> {
     let savedPayment: EcommercePayment | null = null;
 
@@ -165,6 +163,7 @@ export class OrderService {
 
     const cartItems = await this.userItemRepository.find({
       where: { user_id: userId, status: UserProductStatus.CART },
+      relations: ['product', 'product.measurement'],
     });
 
     if (!cartItems.length) {
@@ -179,16 +178,8 @@ export class OrderService {
       throw new BadRequestException('No valid products to order');
     }
 
-    const products = await this.productRepository.find({
-      where: { id: In(placeOrderProducts.map((item) => item.product_id)) },
-    });
-
-    const productMap = new Map(
-      products.map((product) => [product.id, product]),
-    );
-
     for (const item of placeOrderProducts) {
-      const product = productMap.get(item.product_id);
+      const product = item.product;
 
       if (!product) {
         throw new BadRequestException('Product not found');
@@ -215,7 +206,7 @@ export class OrderService {
       ? Number(selectedDelivery.total_amount)
       : 0;
 
-    const { finalUSDTotal, itemDetails } = await this.calculateOrderPricing(
+    const { finalUSDTotal, itemDetails } = this.calculateOrderPricing(
       placeOrderProducts,
       sourceInfo,
       deliveryFeeUSD,
@@ -318,7 +309,7 @@ export class OrderService {
       .innerJoin('payment.items', 'ref')
       .innerJoin('ref.user_item', 'user_item')
       .innerJoin('ref.product', 'product')
-      .innerJoin('users', 'u', 'u.id::text = user_item.user_id')
+      .innerJoin('users', 'u', 'u.id = user_item.user_id')
       .select([
         'payment.id AS "id"',
         'payment.order_number AS "order_number"',

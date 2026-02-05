@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Paper, Box, Typography, Button, Divider, CircularProgress, Chip } from "@mui/material";
 import { ArrowForward, Login, ArrowBack } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,6 @@ import { toast } from "sonner";
 
 import { useCartStore } from "@/store/cartStore";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
-import { useCheckout } from "@/store/useCheckout";
 import { calculateCartTotals } from "@/utils/cartCalculations";
 import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";
@@ -24,67 +23,38 @@ export default function OrderSummaryCard({
   onEditAddress,
 }: OrderSummaryCardProps) {
   const router = useRouter();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const { cart, isLoading } = useCartStore();
-  const { currencySymbol } = useDetectUserLocation();
-  const { selectedProductIds } = useCheckout();
+  const { isLoading } = useCartStore();
+  const { currencySymbol, currencyCode } = useDetectUserLocation();
 
-  // Calculate delivery fee from selected option or fallback to item-based calculation
-  const calculateDeliveryFee = () => {
-    if (selectedDeliveryOption) {
-      // Use selected delivery option fee
-      // Note: This is per kg, so we need to calculate total weight
-      // For now, use the option's total_amount as base fee
-      return selectedDeliveryOption.total_amount;
-    }
-    // Fallback to item-based calculation
-    const totals = calculateCartTotals(items, new Set(selectedProductIds), selectedCurrency, currencySymbol);
-    return totals.deliveryFee;
-  };
+  const itemIdsToCalculate = useMemo(() => {
+    return new Set(
+      items
+        .map(item => item.product_id)
+        .filter((id): id is string => Boolean(id))
+    );
+  }, [items]);
 
-  const deliveryFee = calculateDeliveryFee();
-  const totals = calculateCartTotals(items, new Set(selectedProductIds), selectedCurrency, currencySymbol);
-  const finalTotal = totals.subtotal + deliveryFee;
+  const deliveryFee = selectedDeliveryOption?.total_amount ?? 0;
+
+  const totalQty = items.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
+
+  const totals = calculateCartTotals(
+    items, 
+    itemIdsToCalculate, 
+    currencyCode, 
+    currencySymbol, 
+    deliveryFee
+  );
+
+  const finalTotal = totals.total;
   
   const handleCheckout = useCallback(() => {
     if (isLoading) {
       toast.info("Syncing your cart with server, please wait...");
       return;
     }
-
-    const selected = cartProducts.filter(item =>
-      selectedProductIds.includes(item.product_id!)
-    );
-
-    if (selected?.length === 0) {
-      toast.error("Please select items to checkout");
-      return;
-    }
-
-    if (!userId) {
-      localStorage.setItem("checkoutSelectedItems", JSON.stringify(selected));
-      toast.info("Please sign in to continue with checkout");
-      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(ROUTES.CART)}`);
-      return;
-    } else if (!selectedAddress) {
-      toast.error("Please add a delivery address to continue with checkout.");
-      setHighlightAddressError(true);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(() => {
-        setHighlightAddressError(false);
-        timeoutRef.current = null;
-      }, 3000);
-    } else if (!selectedDeliveryOption) {
-      toast.error("Please select a delivery option to continue with checkout.");
-      return;
-    } else {
-      localStorage.setItem("checkoutSelectedItems", JSON.stringify(selected));
-      router.push(ROUTES.CHECKOUT);
-    }
-  }, [router, cartProducts, userId, selectedAddress, selectedDeliveryOption, selectedProductIds, isSyncing, setHighlightAddressError]);
+    router.push(ROUTES.CHECKOUT);
+  }, [router, isLoading]);
   
   const formatAddress = (address: CartAddressData) => {
     return `${address.address}, ${address.city}, ${address.state} ${address.zip_code}`;
@@ -195,7 +165,7 @@ export default function OrderSummaryCard({
             color="text.secondary"
             sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
           >
-            Subtotal ({items.length} {items.length === 1 ? "item" : "items"})
+            Subtotal ({totalQty} {totalQty === 1 ? "item" : "items"})
           </Typography>
           <Typography 
             variant="body2" 
@@ -205,6 +175,17 @@ export default function OrderSummaryCard({
             {formatPrice(totals.subtotal, currencySymbol)}
           </Typography>
         </Box>
+
+        {totals.discount > 0 && (
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
+            <Typography variant="body2" color="success.main" sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
+              Discount
+            </Typography>
+            <Typography variant="body2" color="success.main" fontWeight={500} sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
+              -{formatPrice(totals.discount, currencySymbol)}
+            </Typography>
+          </Box>
+        )}
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
           <Box sx={{ flex: 1, pr: 1 }}>
@@ -243,35 +224,6 @@ export default function OrderSummaryCard({
             {formatPrice(deliveryFee, currencySymbol)}
           </Typography>
         </Box>
-
-        {/* <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
-          <Typography variant="body2" color="text.secondary">
-            Taxes
-          </Typography>
-          <Typography variant="body2" fontWeight={500}>
-            {formatPrice(totals.taxes, currencySymbol)}
-          </Typography>
-        </Box> */}
-{/*         
-        {totals.discount > 0 && (
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
-            <Typography variant="body2" color="success.main">
-              Discount
-            </Typography>
-            <Typography variant="body2" color="success.main" fontWeight={500}>
-              -{formatPrice(totals.discount, currencySymbol)}
-            </Typography>
-          </Box>
-        )} */}
-
-        {/* <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
-          <Typography variant="body2" color="text.secondary">
-            Service Charge
-          </Typography>
-          <Typography variant="body2" fontWeight={500}>
-            {formatPrice(totals.serviceCharge, currencySymbol)}
-          </Typography>
-        </Box> */}
 
         <Divider sx={{ my: { xs: 1.5, sm: 2 } }} />
 

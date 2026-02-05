@@ -12,15 +12,9 @@ async function bootstrap() {
 
   const isDev = process.env.NODE_ENV === 'development';
 
-  //TODO P0: move to .env
-  const devAllowedOrigins = ['http://localhost:3000', 'http://localhost:5173']
+  const devAllowedOrigins = process.env.DEV_ALLOWED_ORIGINS?.split(',') ?? [];
 
-  //TODO P0: move to .env
-  const prodAllowedOrigins = [
-    'https://palakart.com',
-    'https://www.palakart.com',
-    'https://palakart-admin-54309.web.app',
-  ];
+  const prodAllowedOrigins = process.env.PROD_ALLOWED_ORIGINS?.split(',') ?? [];
 
   // Enable CORS
   app.enableCors({

@@ -18,15 +18,15 @@ const MySuiteHeader = () => (
           <Stack direction="row" spacing={3}>
             <Stack direction="row" alignItems="center" spacing={1}>
               <PhoneOutlined fontSize="small" />
-              <Typography variant="body2">+91 90429 99312</Typography> {/* TODO: Change this to the actual phone number */}
+              <Typography variant="body2">+91 99941 26566</Typography>
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <EmailOutlined fontSize="small" />
-              <Typography variant="body2">support@palakart.com</Typography> {/* TODO: Change this to the actual email */}
+              <Typography variant="body2">team.palakart@gmail.com</Typography>
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <AccessTimeOutlined fontSize="small" />
-              <Typography variant="body2">10:00 AM TO 06:00 PM (Sunday Closed)</Typography> {/* TODO: Change this to the actual timing */}
+              <Typography variant="body2">10:00 AM TO 07:00 PM (Sunday Closed)</Typography>
             </Stack>
           </Stack>
         </Stack>

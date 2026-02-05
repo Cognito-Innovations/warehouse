@@ -152,7 +152,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
           }}>
             <Box>
               <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.875rem', mb: 1 }}>
-                REDBOX (air)
+                UGFLASH (air)
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
                 {shipments.tracking_no}

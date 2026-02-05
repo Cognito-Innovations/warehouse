@@ -19,10 +19,10 @@ import { useCartStore } from "@/store/cartStore";
 import ProductQuantityControl from "./ProductQuantityControl";
 import { ecommerceData } from "@/data/ecommerceData";
 import { ROUTES } from "@/utils/constants";
-// import { formatDiscountPercentage } from "@/lib/utils";
-// import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils"; 
+import { formatDiscountPercentage } from "@/lib/utils";
+import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils"; 
 import { CartItem, EcommerceProductCardProps } from "@/types/ecommerce";
-import { formatPrice } from "@/utils/priceUtils";
+import { normalizeCart } from "@/lib/utils";
 
 export default function EcommerceProductCard({
   product
@@ -31,13 +31,16 @@ export default function EcommerceProductCard({
   const theme = useTheme();
   const {handleProductSelect} = useProductStore();
   const {addProductToCart, removeProductFromCart, cart} = useCartStore();
-  const cartQuantity = cart?.find((item: CartItem) => item.product_id === product.id)?.quantity || 0;
+
+  const safeCart = normalizeCart(cart);
+  const cartQuantity = safeCart.find((item: CartItem) => item.product_id === product.id)?.quantity || 0;
+
 
   const rawPrice = product.price.price;
   const currency = product.price.currency;
-  // const discountPercent = parseFloat(String(product.discount_percentage || 0)) || 0;
-  // const discountedRaw = calculateDiscountedPrice(rawPrice, discountPercent);
-  // const formattedDiscounted = formatPrice(discountedRaw, currency);
+  const discountPercent = parseFloat(String(product.discount_percentage || 0)) || 0;
+  const discountedRaw = calculateDiscountedPrice(rawPrice, discountPercent);
+  const formattedDiscounted = formatPrice(discountedRaw, currency);
   const formattedOriginal = formatPrice(rawPrice, currency);
 
   const unitValue = parseFloat(String(product.unit_value || "0"));
@@ -89,7 +92,7 @@ export default function EcommerceProductCard({
           alt={product.name}
           sx={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
-        {/* {discountPercent > 0 && !isOutOfStock && (
+        {discountPercent > 0 && !isOutOfStock && (
           <Chip
             label={formatDiscountPercentage(discountPercent, "OFF")}
             size="small"
@@ -104,7 +107,7 @@ export default function EcommerceProductCard({
               fontWeight: 600,
             }}
           />
-        )} */}
+        )}
         {isOutOfStock && (
           <Chip
             label="Out of Stock"
@@ -200,10 +203,9 @@ export default function EcommerceProductCard({
                 lineHeight: 1.2,
               }}
             >
-              {formattedOriginal}
+              {discountPercent > 0 ? formattedDiscounted : formattedOriginal}
             </Typography>
-            {/* 
-            TODO P0: Revert these discount changes and discount should work
+            
             {discountPercent > 0 && (
               <Typography
                 variant="caption"
@@ -215,7 +217,7 @@ export default function EcommerceProductCard({
               >
                 {formattedOriginal}
               </Typography>
-            )} */}
+            )}
           </Box>
           
 

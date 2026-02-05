@@ -20,7 +20,7 @@ import Login from './pages/Login';
 
 import Sidebar from './components/Sidebar/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 
 import { menuItems, type MenuItem, type UserRole } from "./data/menuItems";
 
@@ -98,15 +98,17 @@ function App() {
                   <Route path="/packages" element={<Packages />} />
                   <Route path="/packages/all" element={<Packages />} />
                   <Route path="/packages/:id" element={<PackageDetail />} />
-                  {/* TODO: Move this prearrivals to a separate page */}
                   <Route path="/packages/pre-arrivals" element={<PreArrivals />} />
+
                   <Route path="/shipments" element={<Shipments />} />
                   <Route path="/shipments/:shipment_no" element={<ShipmentDetail />} />
                   <Route path="/shipments/create" element={<CreateShipment />} />
                   <Route path="/shipments/export" element={<ShipmentExport />} />
                   <Route path="/shipment/export/:id" element={<ViewShipmentExportPage />} />
+
                   <Route path="/requests" element={<ShoppingRequests />} />
                   <Route path="/requests/:id" element={<ShoppingRequestDetail />} />
+
                   <Route path="/pickups" element={<PickupRequests />} />
                   <Route path="/pickups/:id" element={<PickupRequestDetail />} />
 
