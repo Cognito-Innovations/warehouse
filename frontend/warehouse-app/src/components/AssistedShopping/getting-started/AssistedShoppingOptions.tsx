@@ -375,7 +375,7 @@ export const AssistedShoppingOptions = ({
                 />
               </Box>
 
-              <CountrySelector className="mt-3 sm:mt-4" />
+              <CountrySelector />
 
               <Divider sx={{ my: { xs: 0.5, md: 1 } }} />
 
