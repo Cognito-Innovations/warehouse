@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import QRCode from 'qrcode';
 import JsBarcode from "jsbarcode";
 import { toast } from "sonner";
+import { formatDateTime } from "../../utils/formatDateTime";
 
 interface HoldLabelData {
     id: string;
@@ -30,122 +31,147 @@ const PrintHoldLabelButton: React.FC<PrintHoldLabelButtonProps> = ({ data }) => 
     const handlePrintHoldLabel = async () => {
         setIsPrintingHold(true);
         try {
-            if (!data || !data.id || !data.user?.name) {
+            if (!data?.id || !data.user?.name) {
                 toast.error("Required data for hold label is missing.");
-                console.error("Missing data for hold label:", data);
                 return;
             }
 
-            const doc = new jsPDF({
-                orientation: 'landscape',
-                unit: 'mm',
-                format: [150, 100] // 15cm x 10cm, similar to a 6x4 inch label
-            });
+      const shipmentNo = data.shipment_no;
+      const suiteNo = data.user.suite_no || "";
+      const userName = data.user.name;
 
-            doc.setDrawColor(0, 0, 0);
-            doc.setLineWidth(0.5);
-            doc.rect(3, 3, 144, 94); // slightly smaller than page to provide space
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: [150, 100],
+      });
 
-            // 1. MASTER Box (Top-Left)
-            doc.setFillColor(0, 0, 0);
-            doc.rect(5, 5, 30, 10, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(14);
-            doc.text("MASTER", 8, 12);
+      const startY = 8;
 
-            // SHIPMENT text outside the box
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(14);
-            doc.setFont("helvetica", "bold");
-            doc.text("SHIPMENT", 40, 12);
+      // 1. MASTER Box (Top-Left)
+      const masterY = startY + 5;
 
-            // 2. QR Code (Top-Right)
-            const qrCodeUrl = data.id ? `${window.location.origin}/shipments/${data.id}` : 'No shipment ID';
-            const qrCodeDataURL = await QRCode.toDataURL(qrCodeUrl, { width: 100, margin: 1, errorCorrectionLevel: 'H' });
-            doc.addImage(qrCodeDataURL, 'PNG', 125, 5, 20, 20);
+      doc.setFillColor(0, 0, 0);
+      doc.rect(5, masterY, 35, 11, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text("MASTER", 8, masterY + 7.5);
 
-            // 3. Barcode with "ONHOLD" overlay
-            const canvas = document.createElement('canvas');
-            const shipmentNo = data.shipment_no;
-            JsBarcode(canvas, shipmentNo, {
-                format: "CODE128",
-                displayValue: false,
-                height: 50,
-                width: 2,
-                margin: 0
-            });
-            const barcodeDataURL = canvas.toDataURL('image/png');
-            doc.addImage(barcodeDataURL, 'PNG', 5, 20, 90, 25);
-            
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(16);
-            doc.setTextColor(0, 0, 0);
-            doc.text("ON HOLD", 50, 32, { align: 'center' });
-            
-            // Barcode Text (Below Barcode)
-            const barcodeText = shipmentNo;
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(12);
+      // QR Code
+      const qrSize = 20;
+      const qrX = 120;
+      const qrY = startY + 5;
 
-            const barcodeX = 5;
-            const barcodeWidth = 90;
-            const textX = barcodeX + barcodeWidth / 2;
-            const textY = 20 + 25 + 5;
+      const qrCodeDataURL = await QRCode.toDataURL(shipmentNo, {
+        width: 80,
+        margin: 0,
+        errorCorrectionLevel: "M",
+      });
 
-            doc.text(barcodeText, textX, textY, { align: 'center' });
+      doc.addImage(qrCodeDataURL, "PNG", qrX, qrY, qrSize, qrSize);
 
-            // 4. Suite Box (Right)
-            const suiteNo = data.user?.suite_no || '';
-            doc.setDrawColor(0, 0, 0);
-            doc.setTextColor(0, 0, 0);
-            doc.roundedRect(100, 28, 45, 15, 1.5, 1.5, 'S'); 
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(9);
-            doc.text("SUITE:", 103, 33);
-            doc.setFontSize(18);
-            doc.setFont("helvetica", "bold");
-            doc.text(suiteNo, 122.5, 40, { align: 'center' });
+      // Barcode
+      const canvas = document.createElement("canvas");
+      JsBarcode(canvas, shipmentNo, {
+        format: "CODE128",
+        displayValue: false,
+        height: 50,
+        width: 2,
+        margin: 0,
+      });
+      const barcodeDataURL = canvas.toDataURL("image/png");
 
-            // 5. User Name (Right)
-            const userName = data.user?.name|| '';
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
-            doc.text(`${userName} (${suiteNo})`, 98, 50);
+      const gapBelowMaster = 3;
+      const barcodeY = masterY + 11 + gapBelowMaster;
 
-            // 6. Dashed Separator Line
-            doc.setLineDashPattern([1, 1], 0);
-            doc.line(5, 58, 145, 58);
-            doc.setLineDashPattern([], 0); // Reset dash pattern
+      doc.addImage(barcodeDataURL, "PNG", 5, barcodeY, 75, 20);
 
-            // 7. Weight / Pcs (Bottom-Left)
-            const weight = parseFloat(data.total_weight || '0').toFixed(2);
-            const pieces = data?.packages?.length || 0;
-            const weightText = `WEIGHT: ${weight} KG / ${pieces} PCS`;
-            doc.setFontSize(9);
-            doc.setFont("helvetica", "normal");
-            doc.text(weightText, 5, 65);
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(18);
+      doc.text(shipmentNo, 5, barcodeY + 26);
 
-            // 8. REG. DATE (Bottom-Right)
-            const regDateText = `REG. DATE: ${data.created_at || ''}`;
-            const pageWidth = 150;
-            const margin = 5;
-            const textWidth = doc.getTextWidth(regDateText);
-            doc.text(regDateText, pageWidth - margin - textWidth, 65); // align inside wrapper
+      // Suite box
+      const suiteBoxY = qrY + qrSize + 2;
 
-            // 9. REDBOX Box (Footer-Left)
-            doc.setFillColor(0, 0, 0);
-            doc.rect(5, 75, 30, 10, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14);
-            doc.setFont("helvetica", "bold");
-            doc.text("REDBOX", 7, 82);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(108, suiteBoxY, 34, 15, 2, 2);
 
-            // 10. MV (Footer-Right) - Static as per image template
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(22);
-            doc.setFont("helvetica", "bold");
-            doc.text("MV", 130, 85);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("SUITE:", 110, suiteBoxY + 5);
+
+      doc.setFontSize(18);
+      doc.text(suiteNo, 125, suiteBoxY + 12, { align: "center" });
+
+      // User name
+      const userNameY = suiteBoxY + 20;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`${userName} (${suiteNo})`, 142, userNameY, {
+        align: "right",
+      });
+
+      // Separator
+      const separatorY = userNameY + 4;
+
+      doc.setLineDashPattern([2, 2], 0);
+      doc.line(5, separatorY, 145, separatorY);
+      doc.setLineDashPattern([], 0);
+
+      // Weight & Date 
+      const weight = parseFloat(data.total_weight || "0").toFixed(2);
+      const pieces = data.packages?.length || 0;
+
+      const formattedDate =
+        formatDateTime(data.created_at)
+          ?.split(",")
+          .slice(0, 2)
+          .join(",")
+          .trim() || "";
+
+      const textY = separatorY + 7;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text(`WEIGHT: ${weight} KG / ${pieces} PCS`, 5, textY);
+      doc.text(`REG. DATE: ${formattedDate}`, 145, textY, {
+        align: "right",
+      });
+
+      // Footer Line
+      doc.setLineWidth(1);
+      doc.line(5, textY + 3, 145, textY + 3);
+
+      // Footer Content
+      const footerY = textY + 6;
+
+      const redboxHeight = 16;
+      const redboxWidth = 42;
+
+      doc.setFillColor(0, 0, 0);
+      doc.roundedRect(5, footerY, redboxWidth, redboxHeight, 2, 2, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(20);
+      doc.text("UGFLASH", 8, footerY + redboxHeight / 2 + 3);
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(24);
+      doc.text("MV", 145, footerY + redboxHeight / 2 + 4, { align: "right" });
+
+      // Outer Border
+      const contentBottomY = footerY + redboxHeight;
+      const borderPadding = 3;
+
+      doc.setLineWidth(0.5);
+      doc.rect(
+        2,
+        startY,
+        146,
+        contentBottomY - startY + borderPadding
+      );
 
             doc.save(`hold-label-${shipmentNo}.pdf`);
             toast.success("Hold Label downloaded successfully!");

@@ -6,7 +6,9 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
+import { Public } from 'src/auth/decorators/public.decorator';
 import { SubCategoriesService } from '../services/ecommerce-sub-categories.service';
 import { CreateEcommerceSubCategoryDto } from '../dto/sub_category/create-sub_category.dto';
 import { UpdateEcommerceSubCategoryDto } from '../dto/sub_category/update-sub_category.dto';
@@ -20,14 +22,16 @@ export class SubCategoriesController {
     return this.subCategoriesService.create(createEcommerceSubCategoryDto);
   }
 
+  @Public()
   @Get()
-  findAll() {
-    return this.subCategoriesService.findAll();
+  findAll(@Query('countryCode') countryCode?: string) {
+    return this.subCategoriesService.findAll(countryCode);
   }
 
+  @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.subCategoriesService.findOne(id);
+  findOne(@Param('id') id: string, @Query('countryCode') countryCode?: string) {
+    return this.subCategoriesService.findOne(id, countryCode);
   }
 
   @Patch(':id')

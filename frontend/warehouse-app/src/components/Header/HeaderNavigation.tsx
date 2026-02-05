@@ -11,7 +11,6 @@ const HeaderNavigation = () => {
 
     const navItems = [
       { name: "My Suite", path: ROUTES.DASHBOARD },
-      { name: "Ecommerce", path: ROUTES.ECOMMERCE },
       { name: "Orders", path: ROUTES.ORDER_HISTORY },
       { name: "Assisted Shopping", path: ROUTES.ASSISTED_SHOPPING },
       { name: "Pickup Request", path: ROUTES.PICKUP_REQUEST },

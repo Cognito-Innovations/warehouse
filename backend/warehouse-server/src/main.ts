@@ -8,16 +8,33 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
+  const isDev = process.env.NODE_ENV === 'development';
+
+  const devAllowedOrigins = process.env.DEV_ALLOWED_ORIGINS?.split(',') ?? [];
+
+  const prodAllowedOrigins = process.env.PROD_ALLOWED_ORIGINS?.split(',') ?? [];
+
   // Enable CORS
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3002',
-      'http://localhost:5173',
-      'https://palakart.vercel.app',
-      'https://palakart-admin.web.app',
-      'https://nasa-believed-opponents-cakes.trycloudflare.com',
-    ],
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Dev mode
+      if (isDev && devAllowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Prod mode
+      if (!isDev && prodAllowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(null, false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [

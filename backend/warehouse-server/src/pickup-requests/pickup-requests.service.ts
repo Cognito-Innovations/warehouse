@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, FindOptionsWhere } from 'typeorm';
 import { PickupRequest, PickupRequestStatus } from './pickup-request.entity';
 import { CreatePickupRequestDto } from './dto/create-pickup-request.dto';
 import { PickupRequestResponseDto } from './dto/pickup-request-response.dto';
@@ -15,7 +15,6 @@ import {
 } from 'src/tracking-requests/tracking-request.entity';
 import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
 import { mapPickupToTrackingStatus } from './status-mapper';
-import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class PickupRequestsService {
@@ -24,8 +23,17 @@ export class PickupRequestsService {
     private readonly pickupRequestRepository: Repository<PickupRequest>,
     private readonly dataSource: DataSource,
     private readonly trackingRequestsService: TrackingRequestsService,
-    private readonly usersService: UsersService,
   ) {}
+
+  async getPickupRequestsCount(countryId?: string): Promise<number> {
+    const where: FindOptionsWhere<PickupRequest> = {};
+
+    if (countryId) {
+      where.country = { id: countryId };
+    }
+
+    return this.pickupRequestRepository.count({ where });
+  }
 
   async createPickupRequest(
     createPickupRequestDto: CreatePickupRequestDto,
@@ -90,9 +98,18 @@ export class PickupRequestsService {
     }
   }
 
-  async getAllPickupRequests(): Promise<PickupRequestResponseDto[]> {
+  async getAllPickupRequests(
+    countryId?: string,
+  ): Promise<PickupRequestResponseDto[]> {
     try {
+      const where: FindOptionsWhere<PickupRequest> = {};
+
+      if (countryId) {
+        where.country = { id: countryId };
+      }
+
       const pickupRequests = await this.pickupRequestRepository.find({
+        where: where,
         order: { created_at: 'DESC' },
         relations: ['user', 'country'],
       });
@@ -103,10 +120,8 @@ export class PickupRequestsService {
         return {
           ...rest,
           country: country?.name,
-          user: user
-            ? this.usersService.mapToUserResponseDto(request.user)
-            : undefined,
-        }
+          user: user ? user : undefined,
+        };
       });
     } catch (error) {
       throw new BadRequestException(
@@ -162,9 +177,7 @@ export class PickupRequestsService {
       return {
         ...rest,
         country: country?.name,
-        user: user
-          ? this.usersService.mapToUserResponseDto(pickupRequest.user)
-          : undefined,
+        user: user ? user : undefined,
         tracking_requests: trackingRequests,
       };
     } catch (error) {
@@ -201,21 +214,20 @@ export class PickupRequestsService {
       }
 
       // Update the status of the pickup request
-      switch (status.toUpperCase()) {
-        case 'QUOTED':
-          pickupRequest.status = PickupRequestStatus.Quoted;
-          break;
-        case 'CONFIRMED':
-          pickupRequest.status = PickupRequestStatus.Confirmed;
-          break;
-        case 'PICKED':
-          pickupRequest.status = PickupRequestStatus.Picked;
-          break;
-        case 'CANCELLED':
-          pickupRequest.status = PickupRequestStatus.Cancelled;
-          break;
-        default:
-          throw new BadRequestException(`Invalid status: ${status}`);
+      const STATUS_UPDATE_MAP: Record<string, PickupRequestStatus> = {
+        QUOTED: PickupRequestStatus.Quoted,
+        CONFIRMED: PickupRequestStatus.Confirmed,
+        PICKED: PickupRequestStatus.Picked,
+        CANCELLED: PickupRequestStatus.Cancelled,
+      };
+
+      const normalizedStatus = status.toUpperCase();
+      const mappedStatus = STATUS_UPDATE_MAP[normalizedStatus];
+
+      if (mappedStatus) {
+        pickupRequest.status = mappedStatus;
+      } else {
+        throw new BadRequestException(`Invalid status: ${status}`);
       }
 
       const updatedPickupRequest = await queryRunner.manager.save(
@@ -228,7 +240,7 @@ export class PickupRequestsService {
           feature_type: FeatureType.PickupRequest,
           feature_fid: updatedPickupRequest.id,
           status: mapPickupToTrackingStatus(updatedPickupRequest.status),
-          user: updatedPickupRequest.user.id as any,
+          user: { id: updatedPickupRequest.user.id },
         });
         await queryRunner.manager.save(trackingRequest);
       }
@@ -260,11 +272,7 @@ export class PickupRequestsService {
       return {
         ...rest,
         country: country?.name,
-        user: user
-          ? this.usersService.mapToUserResponseDto(
-              pickupRequestWithRelations.user
-            )
-          : undefined,
+        user: user ? user : undefined,
         tracking_requests: trackingRequests,
       };
     } catch (error) {

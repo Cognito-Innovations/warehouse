@@ -51,7 +51,15 @@ export class CountriesController {
   @ApiOperation({ summary: 'Create multiple countries at once' })
   @ApiCreatedResponse({
     description: 'Countries created successfully',
-    type: [CountryResponseDto],
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Countries created successfully',
+        },
+      },
+    },
   })
   @ApiBody({
     schema: {
@@ -80,8 +88,9 @@ export class CountriesController {
   })
   async createBulk(
     @Body() body: { countries: CreateCountryDto[] },
-  ): Promise<CountryResponseDto[]> {
-    return this.countriesService.createCountriesBulk(body.countries);
+  ): Promise<{ message: string }> {
+    await this.countriesService.createCountriesBulk(body.countries);
+    return { message: 'Countries created successfully' };
   }
 
   @Public()

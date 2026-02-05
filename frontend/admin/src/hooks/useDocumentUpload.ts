@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { uploadPackageDocuments, getPackageDocuments, deletePackageDocument } from '../services/api.services';
+import { useAuth } from './useAuth';
 
 interface DocumentUploadOptions {
   entityType: 'package' | 'user' | 'rack' | 'supplier' | 'pre-arrival' | 'pickup-request' | 'shopping-request';
@@ -17,6 +18,9 @@ interface Document {
 }
 
 export const useDocumentUpload = (options: DocumentUploadOptions) => {
+  const { user } = useAuth();
+  const userId = user?.id;
+
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +37,7 @@ export const useDocumentUpload = (options: DocumentUploadOptions) => {
       // Use specific API based on entity type
       switch (options.entityType) {
         case 'package':
-          response = await uploadPackageDocuments(options.entityId, files);
+          response = await uploadPackageDocuments(options.entityId, files, userId);
           break;
         // Add other entity types as needed
         default:

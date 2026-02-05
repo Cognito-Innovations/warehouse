@@ -22,6 +22,9 @@ interface RequestHeaderProps {
   statusChipStyles: StatusChipStyles;
   user: User;
   actionButtons?: React.ReactNode;
+  showOriginTarget?: boolean;
+  origin?: string;
+  target?: string;
 }
 
 const RequestHeader: React.FC<RequestHeaderProps> = ({
@@ -31,6 +34,9 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
   statusChipStyles,
   user,
   actionButtons,
+  showOriginTarget,
+  origin,
+  target,
 }) => {
   return (
     <Card sx={{ p: 2, mb: 1 }}>
@@ -115,6 +121,29 @@ const RequestHeader: React.FC<RequestHeaderProps> = ({
               </Link>
             </Box>
           </Grid>
+
+          {showOriginTarget && (origin || target) && (
+            <Grid item xs={12} sm={6}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
+                {origin && (
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Origin:</strong> {origin}
+                  </Typography>
+                )}
+                {target && (
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Target:</strong> {target}
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
+          )}
         </Grid>
       </Box>
     </Card>

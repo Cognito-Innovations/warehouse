@@ -11,10 +11,20 @@ import PackageDetailsSection from '../components/PackageDetail/PackageDetailsSec
 import PhotosDocumentsSection from '../components/PackageDetail/PhotosDocumentsSection';
 import { formatDateTime } from '../utils/formatDateTime';
 
+export interface PackageType {
+  id: string;
+  package_id: string;
+  status: { value: string };
+  created_at: string | number;
+  created_by?: { name?: string };
+  items?: any[];
+  discard_comment?: string;
+}
+
 const PackageDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
-  const [packageData, setPackageData] = useState<any>(null);
+  const [packageData, setPackageData] = useState<PackageType | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +75,7 @@ const PackageDetail: React.FC = () => {
     setError(null);
 
     try {
-      const data = await getPackageById(id) as any; //TODO: Remove any
+      const data = await getPackageById(id) as PackageType;
       setPackageData(data);
       setPackageItems(data.items || []);
       await Promise.allSettled([
@@ -98,7 +108,7 @@ const PackageDetail: React.FC = () => {
     if (!id) return;
 
     try {
-      const data = await getPackageById(id) as any; //TODO: Remove any
+      const data = await getPackageById(id) as PackageType;
       const docs = await getPackageDocuments(data.id);
       const shipmentDocs = await getShipmentDocuments(data.id);
 
@@ -144,7 +154,7 @@ const PackageDetail: React.FC = () => {
   const isDiscarded = packageData.status.value === 'Discarded';
   const showDiscardedMessage = isDiscarded && (
     <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
-      This package has been discarded. No further actions can be taken.
+      This package has been discarded. {packageData.discard_comment ? `Reason: ${packageData.discard_comment}` : 'No further actions can be taken.'}
     </Alert>
   );
 

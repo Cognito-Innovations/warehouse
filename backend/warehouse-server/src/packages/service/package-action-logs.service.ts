@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { PackageActionLog } from '../entities';
+import { Package, PackageActionLog } from '../entities';
 import { CreatePackageActionLogDto } from '../dto/create-package-action-log.dto';
 import { PackageActionLogResponseDto } from '../dto/package-action-log-response.dto';
 
@@ -11,6 +11,8 @@ export class PackageActionLogsService {
   constructor(
     @InjectRepository(PackageActionLog)
     private readonly actionLogRepository: Repository<PackageActionLog>,
+    @InjectRepository(Package)
+    private readonly packageRepository: Repository<Package>,
   ) {}
 
   async createActionLog(
@@ -55,16 +57,18 @@ export class PackageActionLogsService {
   async getActionLogs(
     package_id: string,
   ): Promise<PackageActionLogResponseDto[]> {
-    // First verify package exists - we'll need to inject Package repository for this
-    // For now, we'll assume the package_id is valid and proceed
-    const actionLogs = await this.actionLogRepository.find({
+    const packageExists = await this.packageRepository.findOne({
+      where: { id: package_id },
+    });
+
+    if (!packageExists) {
+      throw new NotFoundException(`Package with id ${package_id} not found`);
+    }
+
+    return this.actionLogRepository.find({
       where: { package_id: package_id },
       order: { uploaded_at: 'DESC' },
     });
-
-    return actionLogs.map((log) => ({
-      ...log
-    }));
   }
 
   async deleteActionLog(actionLogId: string): Promise<{ success: boolean }> {

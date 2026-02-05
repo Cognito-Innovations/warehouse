@@ -9,10 +9,18 @@ import { DocumentsModule } from 'src/documents/documents.module';
 import { Rack } from 'src/racks/rack.entity';
 import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 import { InvoicesModule } from 'src/invoice/invoices.module';
+import { ShipmentPiece } from './shipment-piece.entity';
+import { ShipmentSequence } from './shipment-sequence.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Shipment, Package, Rack]),
+    TypeOrmModule.forFeature([
+      Shipment,
+      Package,
+      Rack,
+      ShipmentPiece,
+      ShipmentSequence,
+    ]),
     TrackingRequestsModule,
     DocumentsModule,
     InvoicesModule,

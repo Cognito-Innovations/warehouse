@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import { CircularProgress } from "@mui/material";
+import { CountrySelector } from "../AssistedShopping/getting-started/CountrySelector";
 import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
-import { useAddressAPI } from "@/hooks/useAddressAPI";
-import { ROUTES } from "@/utils/constants";
+import { ASSISTED_SHOPPING_PRODUCT_LINK_KEY } from "@/utils/constants";
 
 interface ShoppingItem {
   id: string;
@@ -21,10 +21,13 @@ interface ShoppingItem {
   ifNotAvailableColor: string;
 }
 
-export default function ShoppingRequestForm() {
+interface ShoppingRequestFormProps {
+  onSuccess?: () => void;
+}
+
+export default function ShoppingRequestForm({ onSuccess }: ShoppingRequestFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
-  const { selectedAddress } = useAddressAPI();
 
   const [items, setItems] = useState<ShoppingItem[]>([
     {
@@ -41,6 +44,23 @@ export default function ShoppingRequestForm() {
   ]);
   const [remarks, setRemarks] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const productLink = sessionStorage.getItem(ASSISTED_SHOPPING_PRODUCT_LINK_KEY);
+      
+      if (productLink) {
+        setItems((prevItems) => {
+          const newItems = [...prevItems];
+          if (newItems.length > 0) {
+            newItems[0].url = productLink;
+          }
+          return newItems;
+        });
+        sessionStorage.removeItem(ASSISTED_SHOPPING_PRODUCT_LINK_KEY);
+      }
+    }
+  }, []);
 
   const handleAddNewItem = () => {
     const newItem: ShoppingItem = {
@@ -81,11 +101,8 @@ export default function ShoppingRequestForm() {
 
     const shoppingRequest = {
       user_id: userId,
-      request_code: `SR/${selectedAddress.country_code.toUpperCase()}/${Date.now()}`,
-      courier_id: selectedAddress.id,
       items_count: items.length,
       remarks,
-      status: "REQUESTED",
     };
 
     try {
@@ -108,7 +125,7 @@ export default function ShoppingRequestForm() {
         )
       );
 
-      router.push(ROUTES.ASSISTED_SHOPPING);
+      onSuccess?.();
     } catch (error) {
       console.error("Error creating shopping request:", error);
     } finally {
@@ -117,33 +134,33 @@ export default function ShoppingRequestForm() {
   };
 
   const inputStyles =
-    "w-full px-3 py-1.5 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent";
+    "w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent";
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
+    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
       <form onSubmit={handleSubmit}>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {items.map((item, index) => (
             <div
               key={item.id}
-              className="border border-gray-200 rounded-lg p-4"
+              className="border border-gray-200 rounded-lg p-4 sm:p-5 md:p-6 bg-gray-50 hover:bg-gray-100 transition-colors"
             >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-900">{index + 1}.</h3>
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <h3 className="font-semibold text-gray-900 text-sm">{index + 1}.</h3>
                 {items.length > 1 && (
                   <button
                     type="button"
                     onClick={() => handleRemoveItem(item.id)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-md sm:rounded-lg transition-colors"
                   >
-                    <TrashIcon className="w-4 h-4" />
+                    <TrashIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                 <div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1 tracking-tight">
                         Link <span className="text-red-500">*</span>
@@ -179,7 +196,7 @@ export default function ShoppingRequestForm() {
                 </div>
 
                 <div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1 tracking-tight">
                         Quantity <span className="text-red-500">*</span>
@@ -229,7 +246,7 @@ export default function ShoppingRequestForm() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1 tracking-tight">
                     Other Variants
@@ -269,22 +286,24 @@ export default function ShoppingRequestForm() {
                   </select>
                 </div>
               </div>
+
+              <CountrySelector className="mt-4 sm:mt-6 mb-4 sm:mb-5" />
             </div>
           ))}
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 sm:mt-6">
           <button
             type="button"
             onClick={handleAddNewItem}
-            className="bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+            className="bg-purple-700 text-white px-4 sm:px-5 md:px-6 py-2.5 md:py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 w-full sm:w-auto hover:bg-purple-600 transition-colors shadow-sm hover:shadow-md"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon className="w-4 h-4 md:w-5 md:h-5" />
             Add New Link
           </button>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 sm:mt-6">
           <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-tight">
             Remarks
           </label>
@@ -297,15 +316,15 @@ export default function ShoppingRequestForm() {
           />
         </div>
 
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-end mt-6 sm:mt-8">
           <button
             type="submit"
             disabled={loading}
-            className={`bg-purple-700 text-white px-8 py-3 rounded-lg text-sm font-medium transition-colors duration-200 
+            className={`bg-purple-700 text-white px-6 sm:px-8 md:px-10 py-3 md:py-3.5 rounded-lg text-sm font-medium transition-all duration-200 w-full sm:w-auto shadow-sm hover:shadow-md
               ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-purple-600"}`}
           >
             {loading ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 justify-center">
                 <CircularProgress size={18} color="inherit" />
                 Submitting...
               </div>

@@ -20,7 +20,7 @@ import Login from './pages/Login';
 
 import Sidebar from './components/Sidebar/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 
 import { menuItems, type MenuItem, type UserRole } from "./data/menuItems";
 
@@ -39,6 +39,7 @@ import Products from './pages/Products';
 import Orders from './pages/Orders';
 import ShipmentDetail from './pages/ShipmentDetail';
 import CreateShipment from './pages/CreateShipment';
+import UsersPage from './pages/UsersPage';
 
 function App() {
   const { user } = useAuth()
@@ -56,9 +57,15 @@ function App() {
       return newItem;
     })
     .filter(item => {
-      const isParentVisible = !item.roles || item.roles.includes(user?.role as UserRole);
+      const isParentAllowed = !item.roles || item.roles.includes(user?.role as UserRole);
+      
+      if (!isParentAllowed) {
+        return false;
+      }
+
       const hasVisibleChildren = item.subMenu && item.subMenu.length > 0;
-      return isParentVisible || hasVisibleChildren;
+      
+      return !!item.path || hasVisibleChildren;
     });
 
   return (
@@ -91,15 +98,17 @@ function App() {
                   <Route path="/packages" element={<Packages />} />
                   <Route path="/packages/all" element={<Packages />} />
                   <Route path="/packages/:id" element={<PackageDetail />} />
-                  {/* TODO: Move this prearrivals to a separate page */}
                   <Route path="/packages/pre-arrivals" element={<PreArrivals />} />
+
                   <Route path="/shipments" element={<Shipments />} />
                   <Route path="/shipments/:shipment_no" element={<ShipmentDetail />} />
                   <Route path="/shipments/create" element={<CreateShipment />} />
                   <Route path="/shipments/export" element={<ShipmentExport />} />
                   <Route path="/shipment/export/:id" element={<ViewShipmentExportPage />} />
+
                   <Route path="/requests" element={<ShoppingRequests />} />
                   <Route path="/requests/:id" element={<ShoppingRequestDetail />} />
+
                   <Route path="/pickups" element={<PickupRequests />} />
                   <Route path="/pickups/:id" element={<PickupRequestDetail />} />
 
@@ -115,6 +124,7 @@ function App() {
                   <Route path="/settings/countries" element={<CountriesPage />} />
                   <Route path="/settings/currencies" element={<CurrenciesPage />} />
                   <Route path="/settings/couriers" element={<CouriersPage />} />
+                  <Route path="/settings/users" element={<UsersPage />} />
                 </Routes>
               </Box>
             </ProtectedRoute>

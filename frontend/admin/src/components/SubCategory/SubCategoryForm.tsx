@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
+import { Box, TextField, MenuItem, Stack, Button, CircularProgress,
+  // Chip
+} from "@mui/material";
 
-import { createSubCategory, getCategories, getCountries, updateSubCategory } from "../../services/api.services";
-import ImageUpload from "../common/ImageUpload";
-import { arraysEqual } from "../../utils/arrayEqual";
+import { createSubCategory, getCategories,
+  // getCountries,
+  updateSubCategory } from "../../services/api.services";
+// import ImageUpload from "../common/ImageUpload";
+// import { arraysEqual } from "../../utils/arrayEqual";
 import { statusOptions } from "../../utils/constants";
 import type { Category } from "../Product/ProductForm";
-import type { Country, SubCategoryPayload } from "../../types";
+import type {
+  // Country,
+  SubCategoryPayload } from "../../types";
 
 interface SubCategoryFormProps {
   onClose: () => void;
@@ -20,14 +26,14 @@ const defaultFormData: SubCategoryPayload = {
   name: "",
   slug: "",
   discount_percentage: 0,
-  country_ids: [],
+  // country_ids: [],
   is_active: true,
-  image_url: "",
+  // image_url: "",
 };
 
 const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
+  // const [countries, setCountries] = useState<Country[]>([]);
   const [formData, setFormData] = useState<SubCategoryPayload>(defaultFormData);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -35,12 +41,14 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
   const fetchDropdownData = async () => {
     try {
       setFetching(true);
-      const [categoriesData, countryData] = await Promise.all([
+      const [categoriesData,
+        // countryData
+      ] = await Promise.all([
         getCategories(),
-        getCountries(),
+        // getCountries(),
       ]);
       setCategories(categoriesData);
-      setCountries(countryData);
+      // setCountries(countryData);
     } catch (error) {
       console.error("Failed to fetch dropdown data:", error);
     } finally {
@@ -64,20 +72,22 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleCountryDelete = (countryId: string) => {
-    handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
-  };
+  // const handleCountryDelete = (countryId: string) => {
+  //   handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
+  // };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.slug || !formData.image_url) return;
+    if (!formData.name || !formData.slug 
+      // || !formData.image_url
+    ) return;
 
     if (initialData) {
       const hasChanged = Object.keys(defaultFormData).some((key) => {
         const k = key as keyof SubCategoryPayload;
 
-        if (k === "country_ids") {
-          return !arraysEqual(initialData.country_ids || [], formData.country_ids);
-        }
+        // if (k === "country_ids") {
+        //   return !arraysEqual(initialData.country_ids || [], formData.country_ids);
+        // }
 
         return initialData[k] !== formData[k];
       })
@@ -137,11 +147,11 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
           fullWidth
         />
 
-        <ImageUpload
+        {/* <ImageUpload
           value={formData.image_url}
           onChange={(url) => handleChange("image_url", url)}
           label="Sub Category Image"
-        />
+        /> */}
 
         <TextField
           label="Slug"
@@ -165,7 +175,8 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
           type="number"
         />
 
-        <TextField
+        {/* TODO: Uncomment the country selection when it's required */}
+        {/* <TextField
           label="Countries"
           select
           value={formData.country_ids}
@@ -221,7 +232,7 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
               </MenuItem>
             ))
           )}
-        </TextField>
+        </TextField> */}
 
         <TextField
           label="Status"
@@ -244,7 +255,9 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={loading || !formData.name || !formData.slug || !formData.image_url}
+            disabled={loading || !formData.name || !formData.slug 
+              // || !formData.image_url
+            }
           >
             {loading ? <CircularProgress size={20} color="inherit" /> : initialData ? "Update" : "Add"}
           </Button>

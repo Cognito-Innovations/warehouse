@@ -25,25 +25,59 @@ export class ProductsController {
   @Public()
   @Get()
   findAll(
-    @Query('country') country?: string,
-    @Query('search') search?: string,
+    @Query('currency') currency?: string,
+    @Query('category') category?: string,
+    @Query('user_id') userId?: string,
+    @Query('role') role?: string,
+    @Query('countryCode') countryCode?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
     const parsedLimit = limit ? parseInt(limit, 10) : 20;
     const parsedOffset = offset ? parseInt(offset, 10) : 0;
     return this.productsService.findAll(
-      country,
-      search,
+      currency,
+      category,
+      userId,
+      role,
+      countryCode,
       parsedLimit,
       parsedOffset,
     );
   }
 
   @Public()
-  @Get(':id')
-  findOne(@Param('id') id: string, @Query('country') country?: string) {
-    return this.productsService.findOne(id, country);
+  @Get('search')
+  search(
+    @Query('searchTerm') searchTerm: string,
+    @Query('currency') currency?: string,
+    @Query('user_id') userId?: string,
+    @Query('countryCode') countryCode?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : 20;
+    const parsedOffset = offset ? parseInt(offset, 10) : 0;
+
+    return this.productsService.searchProducts(
+      searchTerm,
+      currency,
+      userId,
+      countryCode,
+      parsedLimit,
+      parsedOffset,
+    );
+  }
+
+  @Public()
+  @Get(':slug')
+  findOne(
+    @Param('slug') slug: string,
+    @Query('currency') currency?: string,
+    @Query('user_id') userId?: string,
+    @Query('countryCode') countryCode?: string,
+  ) {
+    return this.productsService.findOne(slug, currency, userId, countryCode);
   }
 
   @Patch(':id')

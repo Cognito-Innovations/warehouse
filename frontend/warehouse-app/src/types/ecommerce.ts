@@ -11,7 +11,7 @@ export interface EcommerceCategory {
   };
   created_at: string;
   updated_at: string;
-}
+};
 
 export interface EcommerceSubCategory {
   id: string;
@@ -35,7 +35,10 @@ export interface EcommerceProduct {
   description?: string;
   slug: string;
   image_url: string;
-  price: number;
+  price: {
+    price: number;
+    currency: string;
+  };
   discount_percentage: number;
   quantity: number;
   stock_quantity: number;
@@ -49,19 +52,33 @@ export interface EcommerceProduct {
     id: string;
     name: string;
   };
+  cargo_option: {
+    label: string;
+  };
   created_at: string;
   updated_at: string;
 }
 
 export interface CartItem {
   id: string;
+  product_id?: string;
   product: EcommerceProduct;
   quantity: number;
+  requested_quantity: number;
   unit_price: number;
   total_price: number;
   discount_percentage: number;
+  discount_amount: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface LocalCartItem {
+  id?: string;
+  product_id: string;
+  quantity: number;
+  currency?: string;
+  product?: EcommerceProduct;
 }
 
 export interface Cart {
@@ -114,11 +131,6 @@ export interface Order {
 export interface AddToCartRequest {
   product_id: string;
   quantity: number;
-  country?: string;
-}
-
-export interface UpdateCartItemRequest {
-  quantity: number;
 }
 
 export interface CreateOrderRequest {
@@ -128,11 +140,6 @@ export interface CreateOrderRequest {
 }
 
 // Component Props Interfaces
-export interface EcommerceHeaderProps {
-  cartItemCount: number;
-  locationData: any;
-}
-
 export interface EcommerceSearchBarProps {
   searchQuery: string;
   placeholder: string;
@@ -151,12 +158,11 @@ export interface EcommerceCategorySectionProps {
 
 export interface EcommerceProductCardProps {
   product: EcommerceProduct;
-  onProductClick: (product: EcommerceProduct) => void;
 }
 
 export interface EcommerceProductsGridProps {
   products: EcommerceProduct[];
-  onProductClick: (product: EcommerceProduct) => void;
+  loading?: boolean;
 }
 
 export interface TodaysDealCarouselProps {
@@ -199,14 +205,15 @@ export interface ProductDetailImageSectionProps {
   product: EcommerceProduct;
   previewProducts: EcommerceProduct[];
   onProductSelect: (product: EcommerceProduct) => void;
+  arePreviewsLoading?: boolean;
 }
 
 export interface ProductDetailInfoSectionProps {
   product: EcommerceProduct;
   cart: Cart | null;
   addToCart: (productId: string, quantity: number) => Promise<void>;
-  updateCartItem: (itemId: string, newQuantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
+  isLoading?: boolean;
 }
 
 export interface PromotionalCardProps {
@@ -217,21 +224,11 @@ export interface PromotionalCardProps {
   onShopNow: (categoryId: string) => void;
 }
 
-export interface PromotionalCardsProps {
-  categories: EcommerceCategory[];
-}
-
 // Cart Page Interfaces
 export interface CartItemLoadingState {
   isIncrementLoading: boolean;
   isDecrementLoading: boolean;
   isRemoveLoading: boolean;
-}
-
-export interface CartHeaderProps {
-  title: string;
-  itemCount: number;
-  onBackClick: () => void;
 }
 
 export interface DeliveryBannerProps {
@@ -251,36 +248,16 @@ export interface DeliveryAddressCardProps {
 
 export interface CartItemCardProps {
   item: CartItem;
-  loadingState: CartItemLoadingState;
   isSelected: boolean;
-  onSelect: (itemId: string, selected: boolean) => void;
-  onQuantityChange: (itemId: string, newQuantity: number) => void;
-  onRemoveItem: (itemId: string) => void;
-  discountBadgeColor: string;
-  borderColor: string;
-  currencySymbol?: string;
-  selectedCountry?: string;
+  onCheckboxToggle?: () => void;
+  isDisabled?: boolean;
 }
 
 export interface CartItemsListProps {
   items: CartItem[];
   loadingStates: Record<string, CartItemLoadingState>;
   selectedItems: Set<string>;
-  onItemSelect: (itemId: string, selected: boolean) => void;
-  onSelectAll: (selected: boolean) => void;
-  onQuantityChange: (itemId: string, newQuantity: number) => void;
-  onRemoveItem: (itemId: string) => void;
-  title: string;
-  discountBadgeColor: string;
-  borderColor: string;
-  currencySymbol?: string;
-  selectedCountry?: string;
-}
-
-export interface ContinueShoppingCardProps {
-  label: string;
-  onClick: () => void;
-  borderColor: string;
+  selectedCurrency?: string;
 }
 
 export interface PaymentOffer {
@@ -304,25 +281,18 @@ export interface FreeDeliveryThresholdCardProps {
 }
 
 export interface OrderSummaryCardProps {
-  subtotal: number;
-  discount: number;
-  deliveryFee: number;
-  taxes: number;
-  serviceCharge: number;
-  total: number;
-  checkoutLabel: string;
-  onCheckout: () => void;
-  borderColor: string;
-  currencySymbol?: string;
+  userId?: string;
+  items: CartItem[];
+  selectedCurrency?: string;
+  selectedAddress: CartAddressData | null;
+  setHighlightAddressError(value: boolean): void;
+  selectedDeliveryOption?: DeliveryOption | null;
+  onBackToDelivery?: () => void;
+  onEditAddress?: () => void;
 }
 
 export interface EmptyCartStateProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  buttonLabel: string;
   onButtonClick: () => void;
-  buttonColor: string;
 }
 
 export interface AddressSelectionProps {
@@ -344,8 +314,37 @@ export interface CartAddressData {
   state: string;
   zip_code: string;
   country: string;
+  phone_code?: string;
   phone_number?: string;
   email?: string;
+  currency?: string;
+}
+
+export interface DeliveryOption {
+  delivery_platform: string;
+  total_amount: number;
+  estimated_time?: string;
+}
+
+export interface ComputedCartItem {
+  id: string;
+  cart_id: string;
+  product_id: string;
+  quantity: number;
+  product: EcommerceProduct | null;
+  unit_price: number;
+  total_price: number;
+  delivery_fee: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface ComputedCart {
+  items: ComputedCartItem[];
+  total_amount: number;
+  final_amount: number;
+  total_delivery_fee?: number;
+  currency?: string;
 }
 
 export interface UserAddress {
@@ -353,6 +352,15 @@ export interface UserAddress {
   city: string;
   zip_code: string;
   country: string;
+  user: {
+    preference: {
+      currency: {
+        currency_symbol: string;
+        currency_code: string;
+        rate: string;
+      };
+    };
+  };
 }
 
 export interface ProductCartActionsProps {
@@ -361,6 +369,5 @@ export interface ProductCartActionsProps {
   discountPriceRaw: number;
   currency: string;
   addToCart: (productId: string, quantity: number) => Promise<void>;
-  updateCartItem: (itemId: string, newQuantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
 }

@@ -12,22 +12,22 @@ export interface SafeUser {
 }
 
 export interface ShoppingRequestProduct {
-  id?: string,
-  shopping_request_id?: string,
-  created_at?: number,
-  updated_at?: number,
-  name?: string,
-  description?: string,
-  unit_price?: string | number | null,
-  currency?: string,
-  quantity?: number,
-  url?: string,
-  size?: string,
-  color?: string,
-  variants?: string,
-  if_not_available_quantity?: string,
-  if_not_available_color?: string,
-  available?: boolean
+  id?: string;
+  shopping_request_id?: string;
+  created_at?: number;
+  updated_at?: number;
+  name?: string;
+  description?: string;
+  unit_price?: string | number | null;
+  currency?: string;
+  quantity?: number;
+  url?: string;
+  size?: string;
+  color?: string;
+  variants?: string;
+  if_not_available_quantity?: string;
+  if_not_available_color?: string;
+  available?: boolean;
 }
 
 export class ShoppingRequestResponseDto {
@@ -36,6 +36,7 @@ export class ShoppingRequestResponseDto {
   user?: SafeUser;
   request_code: string;
   courier: string;
+  courier_country_code?: string;
   items_count: number;
   shopping_request_products?: ShoppingRequestProduct[];
   remarks?: string;

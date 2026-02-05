@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Box, CircularProgress, Grid } from '@mui/material';
 import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import TopNavbar from '../components/Layout/TopNavbar.tsx';
 import { getShipmentsByShipmentNo, updateShipmentStatus } from '../services/api.services.ts';
@@ -9,11 +10,11 @@ import PackagesSection from '../components/Shipments/Detail/PackagesSection.tsx'
 import ShipmentsPhotosSection from '../components/Shipments/Detail/ShipmentsPhotosSection.tsx';
 import ShippingAddress from '../components/Shipments/Detail/ShippingAddress.tsx';
 import TrackingStatus from '../components/common/Tracking/TrackingStatus.tsx';
-import { formatDateTime } from '../utils/formatDateTime.ts';
 import ActionLogs from '../components/Shipments/Detail/ActionLogs.tsx';
 import ShipmentHeader from '../components/Shipments/Detail/ShipmentHeader.tsx';
 import InvoiceTable from '../components/ShoppingRequests/Detail/InvoiceTable.tsx';
-import { toast } from 'sonner';
+import { formatDateTime } from '../utils/formatDateTime.ts';
+import { formatWithPlaceholders } from '../utils/formatPlaceholder.ts';
 
 const ShipmentDetail: React.FC = () => {
   const { shipment_no } = useParams();
@@ -91,7 +92,7 @@ const ShipmentDetail: React.FC = () => {
       }
       
       if (isComplete) {
-        description = step.description.replace('{userName}', userName);
+        description = formatWithPlaceholders(step.description, { userName });
       }
 
       return {

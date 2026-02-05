@@ -8,31 +8,34 @@ import ProductCartActions from "./ProductCartActions";
 import ProductDetailTabs from "./ProductDetailTabs"; 
 import OfferCard from "./OfferCard";
 import { formatDiscountPercentage } from "@/lib/utils";
-import { calculateDiscountedPrice, formatPrice, parsePrice } from "@/utils/priceUtils";
+import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils";
 import { ecommerceData } from "@/data/ecommerceData";
-import { ProductDetailInfoSectionProps } from "@/types/ecommerce";
+import { EcommerceProduct } from "@/types/ecommerce";
+
+interface ProductDetailInfoSectionProps {
+  product: EcommerceProduct;
+  detailsLoading?: boolean;
+}
 
 export default function ProductDetailInfoSection({
   product,
-  cart,
-  addToCart,
-  updateCartItem,
-  removeFromCart,
+  detailsLoading = false,
 }: ProductDetailInfoSectionProps) {
   const [offersExpanded, setOffersExpanded] = React.useState(false);
 
-  const parsedOriginal = parsePrice(product.price);
-  const currency = parsedOriginal.currency;
-  const rawPrice = parsedOriginal.raw;
+  const currency = product.price.currency;
+  const rawPrice = product.price.price;
   const discountPercentage = parseFloat(String(product.discount_percentage || "0"));
   const discountPriceRaw = calculateDiscountedPrice(rawPrice, discountPercentage);
   const formattedDiscountPrice = formatPrice(discountPriceRaw, currency);
-  const formattedOriginalPrice = parsedOriginal.formatted;
+  const formattedOriginalPrice = formatPrice(rawPrice, currency);
   const savingsAmount = rawPrice - discountPriceRaw;
   const formattedSavings = savingsAmount > 0 ? formatPrice(savingsAmount, currency) : '';
 
+  const formattedPrice = formatPrice(rawPrice, currency);
+
   const unitValue = parseFloat(String(product.unit_value || "0"));
-  const pricePerUnitRaw = unitValue > 0 ? discountPriceRaw / unitValue : discountPriceRaw;
+  const pricePerUnitRaw = unitValue > 0 ? rawPrice / unitValue : rawPrice;
   const formattedPricePerUnit = formatPrice(pricePerUnitRaw, currency);
   const measurementLabel = product.measurement?.label || "";
   const stockQuantity = product.stock_quantity;
@@ -167,7 +170,7 @@ export default function ProductDetailInfoSection({
               mb: 1,
             }}
           >
-            {formattedDiscountPrice}
+            {discountPercentage > 0 ? formattedDiscountPrice : formattedOriginalPrice}
           </Typography>
           {discountPercentage > 0 && (
             <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
@@ -198,7 +201,7 @@ export default function ProductDetailInfoSection({
           )}
         </Box>
 
-        <ProductDetailTabs product={product} />
+        <ProductDetailTabs product={product} loading={detailsLoading} />
         
         <Divider sx={{ my: 3 }} />
 
@@ -213,35 +216,13 @@ export default function ProductDetailInfoSection({
           >
             Selected Quantity:
           </Typography>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-            <Button
-              variant="outlined"
-              sx={{
-                borderRadius: 2,
-                px: 3,
-                py: 1,
-                borderWidth: 1,
-                borderColor: "#e91e63",
-                color: "#e91e63",
-                fontWeight: 500,
-                fontSize: "0.9rem",
-                textTransform: "none",
-                bgcolor: "transparent",
-                "&:hover": {
-                  borderWidth: 1,
-                  borderColor: "#e91e63",
-                  bgcolor: "transparent",
-                },
-              }}
-            >
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+            <Typography variant="subtitle1" fontWeight={600}>
               {product.unit_value} {measurementLabel}
-            </Button>
-            <Typography
-              variant="body2"
-              color="text.primary"
-              sx={{ fontWeight: 400 }}
-            >
-              ({formattedPricePerUnit}/{measurementLabel})
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary">
+              • {formattedPricePerUnit}/{measurementLabel}
             </Typography>
           </Stack>
         </Box>
@@ -297,12 +278,8 @@ export default function ProductDetailInfoSection({
 
         <ProductCartActions
           product={product}
-          cart={cart}
           discountPriceRaw={discountPriceRaw}
           currency={currency}
-          addToCart={addToCart}
-          updateCartItem={updateCartItem}
-          removeFromCart={removeFromCart}
         />
       </Paper>
     </Box>

@@ -82,8 +82,13 @@ export default function InvoiceTable({
           <Button
             variant="contained"
             size="medium"
-            onClick={isDiscarded ? undefined : onApprovePayment}
-            disabled={isDiscarded ||isApprovingPayment}
+            onClick={isDiscarded || payment_slips.length === 0 ? undefined : onApprovePayment}
+            disabled={
+              isDiscarded ||
+              isApprovingPayment || 
+              !payment_slips ||
+              payment_slips.length === 0
+            }
             sx={{
               textTransform: "none",
               fontWeight: 600,

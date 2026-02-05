@@ -1,8 +1,5 @@
-import { IsString, IsOptional, IsEnum } from 'class-validator';
-import {
-  OrderStatus,
-  PaymentStatus,
-} from '../../entities/ecommerce-order.entity';
+import { IsString, IsOptional, IsEnum, IsArray } from 'class-validator';
+import { Status } from 'src/ecommerce/entities/ecommerce-payments.entity';
 
 export class CreateOrderDto {
   @IsString()
@@ -17,15 +14,19 @@ export class CreateOrderDto {
   @IsOptional()
   notes?: string;
 
-  @IsEnum(OrderStatus)
+  @IsEnum(Status)
   @IsOptional()
-  status?: OrderStatus;
+  status?: Status;
 
-  @IsEnum(PaymentStatus)
-  @IsOptional()
-  payment_status?: PaymentStatus;
+  // @IsEnum(PaymentStatus)
+  // @IsOptional()
+  // payment_status?: PaymentStatus;
 
   @IsString()
   @IsOptional()
-  country_code?: string;
+  currency?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  product_ids: string[];
 }

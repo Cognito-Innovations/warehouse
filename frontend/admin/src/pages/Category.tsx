@@ -11,16 +11,16 @@ import Modal from "../components/common/Modal";
 import CategoryForm from "../components/Category/CategoryForm";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import type { ColumnDefinition } from "../types/table";
-import type { CategoryPayload, Country } from "../types";
+import type { CategoryPayload,
+  // Country
+} from "../types";
 
 interface CategoryRow {
   id: string;
   name: string;
   slug: string;
   discount_percentage: number,
-  countries: Country[],
-  cargo_type_label: string;
-  cargo_option_id: string;
+  // countries: Country[],
   products: number;
   image_url: string;
   description: string;
@@ -45,13 +45,11 @@ const Category: React.FC = () => {
         name: item.name,
         slug: item.slug,
         discount_percentage: parseFloat(item.discount_percentage),
-        countries: item.countries || [],
+        // countries: item.countries || [],
         products: item.products_count ?? 0,
         image_url: item.image_url || "",
         description: item.description || "",
         status: item.is_active ? "Active" : "Inactive",
-        cargo_option_id: item.cargo_option?.id,
-        cargo_type_label: item.cargo_option?.label,
       }));
       setCategories(mappedData);
     } catch (error) {
@@ -74,10 +72,9 @@ const Category: React.FC = () => {
       name: category.name,
       slug: category.slug,
       discount_percentage: category.discount_percentage,
-      country_ids: category.countries.map((country: Country) => country.id),
+      // country_ids: category.countries.map((country: Country) => country.id),
       is_active: category.status === "Active",
       image_url: category.image_url || "",
-      cargo_option_id: category.cargo_option_id,
       description: category.description || "",
     };
     
@@ -123,19 +120,18 @@ const Category: React.FC = () => {
       cell: (row) => <Typography variant="body2">{row.name}</Typography>,
       width: "25%",
     },
-    {
-      header: "Description",
-      cell: (row) => (
-        <Typography variant="body2">
-          {row?.description
-            ? row.description.length > 100
-              ? `${row.description.slice(0, 100)}...`
-              : row.description
-            : "N/A"}
-        </Typography>
-      ),      
-      width: "15%",
-    },
+    // TODO: Uncomment the country selection when it's required
+    // {
+    //   header: "Countries",
+    //   cell: (row) => (
+    //     <Typography variant="body2">
+    //       {row.countries && row.countries.length > 0
+    //         ? row.countries.map((country) => country.name).join(", ")
+    //         : "N/A"}
+    //     </Typography>
+    //   ),
+    //   width: "20%",
+    // },
     {
       header: "Slug",
       cell: (row) => <Typography variant="body2">{row.slug}</Typography>,
@@ -144,11 +140,6 @@ const Category: React.FC = () => {
     {
       header: "Products",
       cell: (row) => <Typography variant="body2">{row.products}</Typography>,
-      width: "15%",
-    },
-    {
-      header: "Cargo Type",
-      cell: (row) => <Typography variant="body2">{row.cargo_type_label}</Typography>,
       width: "15%",
     },
     {

@@ -1,0 +1,337 @@
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
+import { Paper, Typography, IconButton } from "@mui/material";
+import { Edit } from "@mui/icons-material";
+
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
+import { useCartStore } from "@/store/cartStore";
+import { fetchUserAddresses, createUserAddress, updateUserAddress } from "@/lib/api.service";
+import AddAddressModal from "./AddAddressModal";
+import AddressSectionSkeletonLoader from "../skeleton-loader/AddressSectionSkeletonLoader";
+import { CartAddressData } from "@/types/ecommerce";
+
+interface AddressSectionProps {
+  userId?: string;
+  onAddressChange: (address: CartAddressData | null) => void;
+  highlightAddressError: boolean;
+  onAddressFetchComplete?: () => void;
+  initialAddress?: CartAddressData | null;
+}
+
+export default function AddressSection({
+  userId,
+  onAddressChange,
+  highlightAddressError,
+  onAddressFetchComplete,
+  initialAddress,
+}: AddressSectionProps) {
+
+  const getCart = useCartStore(s => s.getCart);
+
+  const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(initialAddress || null);
+  const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
+  const [editAddress, setEditAddress] = useState<CartAddressData | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const formatAddress = (address: CartAddressData) => {
+    return `${address.address}, ${address.city}, ${address.state} ${address.zip_code}`;
+  };
+
+  const loadAddressesInternal = useCallback(async (uid: string) => {
+    try {
+      const addressData = await fetchUserAddresses(uid);
+      let formattedAddress: CartAddressData | null = null;
+      if (addressData) {
+        formattedAddress = {
+          id: addressData.id,
+          name: addressData.name || "",
+          address: addressData.address || "",
+          city: addressData.city || "",
+          state: addressData.state || "",
+          zip_code: addressData.zip_code || "",
+          country: addressData.country || "",
+          phone_code: addressData.user.phone_code,
+          phone_number: addressData.user.phone_number,
+          email: addressData.user.email,
+          // currency: addressData.user?.preference?.currency?.id || "",
+        };
+      }
+      setSelectedAddress(formattedAddress);
+      onAddressChange(formattedAddress);
+    } catch (err) {
+      console.error("Failed to load addresses:", err);
+      setSelectedAddress(null);
+      onAddressChange(null);
+    } finally {
+      if (onAddressFetchComplete) {
+        onAddressFetchComplete();
+      }
+    }
+  }, [onAddressChange, onAddressFetchComplete]);
+
+  // Update selectedAddress when initialAddress changes
+  useEffect(() => {
+    if (initialAddress) {
+      setSelectedAddress(initialAddress);
+      onAddressChange(initialAddress);
+      if (onAddressFetchComplete) onAddressFetchComplete();
+    }
+  }, [initialAddress, onAddressChange, onAddressFetchComplete]);
+
+  useEffect(() => {
+    if (userId) {
+      // Only load if we don't already have an address selected (from initialAddress or state)
+      if (!selectedAddress && !initialAddress) {
+        setIsLoading(true);
+        loadAddressesInternal(userId).finally(() => setIsLoading(false));
+      } else {
+        // If address is already selected, just mark as ready
+        setIsLoading(false);
+        if (onAddressFetchComplete) onAddressFetchComplete();
+      }
+    } else {
+      setSelectedAddress(null);
+      onAddressChange(null);
+      if (onAddressFetchComplete) onAddressFetchComplete();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]); // Only depend on userId to avoid unnecessary reloads
+
+  const handleSaveAddress = useCallback(async (addressData: Omit<CartAddressData, "id">) => {
+    if (!userId) return;
+    try {
+      const apiData = {
+        user_id: userId,
+        name: addressData.name,
+        address: addressData.address,
+        country: addressData.country,
+        zip_code: addressData.zip_code,
+        state: addressData.state,
+        city: addressData.city,
+        phone_number: `${addressData.phone_code || ""}${addressData.phone_number || ""}`,
+        email: addressData.email,
+        // currency: addressData.currency,
+      };
+      const newAddress = await createUserAddress(apiData);
+
+      await getCart();
+      const formattedAddress: CartAddressData = {
+        id: newAddress.id,
+        ...addressData,
+      };
+      setSelectedAddress(formattedAddress);
+      onAddressChange(formattedAddress);
+    } catch (err) {
+      console.error("Failed to save address:", err);
+      throw err;
+    }
+  }, [userId, onAddressChange]);
+
+  const handleUpdateAddress = useCallback(async (addressId: string, addressData: Omit<CartAddressData, "id">) => {
+    if (!userId) return;
+    try {
+      const apiData = {
+        user_id: userId,
+        name: addressData.name,
+        address: addressData.address,
+        country: addressData.country,
+        zip_code: addressData.zip_code,
+        state: addressData.state,
+        city: addressData.city,
+        phone_number: `${addressData.phone_code || ""}${addressData.phone_number || ""}`,
+        email: addressData.email,
+        // currency: addressData.currency,
+      };
+      await updateUserAddress(addressId, apiData);
+      await getCart();
+      const formattedAddress: CartAddressData = {
+        id: addressId,
+        ...addressData,
+      };
+      setSelectedAddress(formattedAddress);
+      onAddressChange(formattedAddress);
+      setEditAddress(null);
+    } catch (err) {
+      console.error("Failed to update address:", err);
+      throw err;
+    }
+  }, [userId, onAddressChange]);
+
+  const handleAddClick = () => {
+    setAddAddressModalOpen(true);
+  };
+
+  const handleEditClick = () => {
+    if (selectedAddress) {
+      setEditAddress(selectedAddress);
+      setEditModalOpen(true);
+    }
+  };
+
+  if (isLoading) {
+    return <AddressSectionSkeletonLoader borderColor="#e0e0e0" />;
+  }
+
+  let content;
+  if (!selectedAddress) {
+    content = (
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 2,
+          borderRadius: 2,
+          border: `1px solid ${highlightAddressError ? "#f44336" : "#e0e0e0"}`,
+          bgcolor: "white",
+          transition: "border 0.3s ease"
+        }}
+      >
+        <Typography variant="subtitle1" fontWeight={600}>
+          No Address Found
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mt={1}>
+          Add your delivery address to continue.
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ 
+            mt: 2, 
+            color: "primary.main", 
+            cursor: "pointer", 
+            fontWeight: 600,
+            textDecoration: "none",
+            "&:hover": {
+              textDecoration: "underline"
+            }
+          }}
+          onClick={handleAddClick}
+        >
+          + Add Address
+        </Typography>
+      </Paper>
+    );
+  } else {
+    content = (
+      <Paper
+        elevation={0}
+        sx={{
+          p: { xs: 2, sm: 2.5 },
+          mb: 2,
+          borderRadius: 2,
+          border: "1px solid #e0e0e0",
+          bgcolor: "white",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+          transition: "all 0.3s ease",
+          "&:hover": {
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
+          },
+          position: "relative",
+        }}
+      >
+        <IconButton
+          onClick={handleEditClick}
+          sx={{
+            position: "absolute",
+            top: { xs: 4, sm: 8 },
+            right: { xs: 4, sm: 8 },
+            color: "text.secondary",
+            "&:hover": {
+              color: "primary.main",
+            },
+          }}
+          size="small"
+        >
+          <Edit />
+        </IconButton>
+        <Typography 
+          variant="body2" 
+          fontWeight={600} 
+          sx={{ 
+            fontSize: { xs: "0.9rem", sm: "0.95rem" }, 
+            mb: 1.5,
+            pr: { xs: 4, sm: 5 },
+          }}
+        >
+          Delivery Address
+        </Typography>
+        <Typography
+          variant="body1"
+          fontWeight={600}
+          sx={{ 
+            mb: 0.5, 
+            color: "text.primary",
+            fontSize: { xs: "0.95rem", sm: "1rem" },
+            pr: { xs: 4, sm: 5 },
+          }}
+        >
+          {selectedAddress.name}
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{
+            mb: 0.5,
+            color: "text.secondary",
+            fontSize: { xs: "0.8rem", sm: "0.875rem" },
+            wordBreak: "break-word",
+            pr: { xs: 4, sm: 5 },
+          }}
+        >
+          {formatAddress(selectedAddress)}
+        </Typography>
+        {selectedAddress.phone_number && (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: "text.secondary", 
+              mb: 0.25,
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
+            }}
+          >
+            Phone: {selectedAddress.phone_number}
+          </Typography>
+        )}
+        {selectedAddress.email && (
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: "text.secondary",
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
+            }}
+          >
+            Email: {selectedAddress.email}
+          </Typography>
+        )}
+      </Paper>
+    );
+  }
+
+  return (
+    <>
+      {content}
+      <AddAddressModal
+        open={addAddressModalOpen}
+        initialData={null}
+        onClose={() => setAddAddressModalOpen(false)}
+        onSave={handleSaveAddress}
+        title="Add New Address"
+        saveLabel="Save Address"
+        cancelLabel="Cancel"
+      />
+
+      <AddAddressModal
+        open={editModalOpen}
+        initialData={editAddress}
+        onClose={() => {
+          setEditModalOpen(false);
+          setEditAddress(null);
+        }}
+        onSave={(data) => handleUpdateAddress(editAddress!.id, data)}
+        title="Edit Address"
+        saveLabel="Update Address"
+        cancelLabel="Cancel"
+      />
+    </>
+  );
+}

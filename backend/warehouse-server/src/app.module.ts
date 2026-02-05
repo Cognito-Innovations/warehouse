@@ -6,7 +6,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { join } from 'path';
 import { databaseConfig } from './config/database.config';
 import { GlobalAuthGuard } from './auth/guards/global-auth.guard';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 import { SharedModule } from './shared/shared.module';
 import { ClientIdentifierMiddleware } from './shared/middleware/client-identifier.middleware';
@@ -42,6 +42,9 @@ import { CurrenciesModule } from './currencies/currencies.module';
 import { UserAddressModule } from './user_address/user_address.module';
 import { EcommerceModule } from './ecommerce/ecommerce.module';
 import { ShipmentsModule } from './shipments/shipments.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { AnalyticsController } from './analytics/analytics.controller';
+import { CustomThrottlerGuard } from './shared/guards/custom-throttler.guard';
 
 @Module({
   imports: [
@@ -54,14 +57,15 @@ import { ShipmentsModule } from './shipments/shipments.module';
     MailerModule.forRoot({
       transport: {
         host: 'smtp.gmail.com',
+        port: 587,
         secure: false,
         auth: {
-          user: 'saurabhpingale93@gmail.com',
-          pass: 'umca lcon axee phdf',
+          user: 'team.palakart@gmail.com',
+          pass: 'fmuv ypoo jloc siux',
         },
       },
       defaults: {
-        from: '"No Reply" <saurabhpingale93@gmail.com>',
+        from: `"No Reply" <team.palakart@gmail.com>`,
       },
       template: {
         dir: join(__dirname, '..', 'src', 'users'),
@@ -95,6 +99,7 @@ import { ShipmentsModule } from './shipments/shipments.module';
     CurrenciesModule,
     EcommerceModule,
     ShipmentsModule,
+    AnalyticsModule,
   ],
   controllers: [
     HealthController,
@@ -105,11 +110,12 @@ import { ShipmentsModule } from './shipments/shipments.module';
     ShoppingRequestsController,
     ShoppingRequestProductsController,
     ShipmentsController,
+    AnalyticsController,
   ],
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: CustomThrottlerGuard,
     },
     {
       provide: APP_GUARD,

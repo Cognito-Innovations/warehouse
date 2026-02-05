@@ -13,6 +13,7 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
+import { ShipmentPiece } from './shipment-piece.entity';
 
 export enum ShipmentStatus {
   SHIP_REQUEST = 'SHIP_REQUEST',
@@ -65,9 +66,15 @@ export class Shipment extends BaseTimestampEntity {
 
   @OneToMany(
     () => TrackingRequest,
-    (trackingRequest) => trackingRequest.feature_fid
+    (trackingRequest) => trackingRequest.feature_fid,
   )
   tracking_requests: TrackingRequest[];
+
+  @OneToMany(() => ShipmentPiece, (piece) => piece.shipment, {
+    cascade: true,
+    eager: false,
+  })
+  pieces?: ShipmentPiece[];
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   customs_value: number;
@@ -82,11 +89,11 @@ export class Shipment extends BaseTimestampEntity {
   total_volumetric_weight: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  length: number;
+  length: number | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  width: number;
+  width: number | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  height: number;
+  height: number | null;
 }

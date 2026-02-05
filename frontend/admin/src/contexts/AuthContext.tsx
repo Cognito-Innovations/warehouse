@@ -1,24 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { getStoredUser, isAuthenticated, logout as authLogout, login as authLogin } from '../services/auth.service';
 import type { UserData } from '../types';
-
-interface AuthContextType {
-  user: UserData | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+import { AuthContext, type AuthContextType } from '../hooks/useAuth';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -39,7 +22,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const userData: UserData = {
               id: storedUser.user.id,
               email: storedUser.user.email,
-              name: storedUser.user.name,
+              name: storedUser.user.name?? '',
+              role: storedUser.user.role,
+              preference: storedUser.user.preference,
             };
             setUser(userData);
           } else {
@@ -69,7 +54,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userData: UserData = {
         id: loginResponse.user.id,
         email: loginResponse.user.email,
-        name: loginResponse.user.name || '',
+        name: loginResponse.user.name ?? '',
+        role: loginResponse.user.role,
+        preference: loginResponse.user.preference,
         image: undefined,
       };
       setUser(userData);

@@ -8,6 +8,7 @@ import {
   UseGuards,
   Req,
   Delete,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -56,9 +57,7 @@ export class ShoppingRequestsController {
         summary: 'Basic Shopping Request',
         value: {
           user_id: 'user-123',
-          request_code: 'REQ-001',
-          country: 'India',
-          items: 3,
+          items_count: 3,
           remarks: 'Need urgent delivery',
         },
       },
@@ -78,8 +77,16 @@ export class ShoppingRequestsController {
     description: 'List of all shopping requests',
     type: [ShoppingRequestResponseDto],
   })
-  async findAll() {
-    return this.shoppingRequestsService.getAllShoppingRequests();
+  async findAll(
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('country_id') countryId?: string,
+  ) {
+    return this.shoppingRequestsService.getAllShoppingRequests({
+      page: Number(page),
+      limit: Number(limit),
+      countryId,
+    });
   }
 
   @Get(':userId')

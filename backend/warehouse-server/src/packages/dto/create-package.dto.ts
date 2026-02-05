@@ -58,8 +58,6 @@ export class PackagePieceDto {
 
 export class CreatePackageDto {
   @IsString()
-  //TODO: Remove comment
-  // @IsNotEmpty()
   user: string;
 
   @IsString()

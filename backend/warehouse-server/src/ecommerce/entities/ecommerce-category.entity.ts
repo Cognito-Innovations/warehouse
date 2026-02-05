@@ -3,16 +3,13 @@ import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
 import {
   Column,
   Entity,
-  JoinColumn,
   JoinTable,
   ManyToMany,
-  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { EcommerceSubCategory } from './ecommerce-sub-category.entity';
 import { EcommerceProduct } from './ecommerce-product.entity';
-import { EcommerceCargoOption } from './cargo-options.entity';
 
 @Entity('ecommerce_categories')
 export class EcommerceCategory extends BaseTimestampEntity {
@@ -43,17 +40,13 @@ export class EcommerceCategory extends BaseTimestampEntity {
       referencedColumnName: 'id',
     },
   })
-  countries: Country[]
+  countries: Country[];
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
   @Column({ default: true })
   is_active: boolean;
-
-  @ManyToOne(() => EcommerceCargoOption, { eager: true, nullable: false })
-  @JoinColumn({ name: 'cargo_option_id' })
-  cargo_option: EcommerceCargoOption;
 
   @OneToMany(() => EcommerceSubCategory, (subCategory) => subCategory.category)
   sub_categories: EcommerceSubCategory[];

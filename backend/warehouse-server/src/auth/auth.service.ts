@@ -12,6 +12,7 @@ import {
 import { AuthResponseDto } from './dto/AuthResponseDto';
 import { UsersService } from 'src/users/users.service';
 import { Identifier, Gender } from 'src/users/dto/create-user.dto';
+import { Role } from 'src/users/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -29,13 +30,15 @@ export class AuthService {
       }
     }
 
-    const existingUser = await this.usersService.findByEmail(registerDto.email);
+    const existingUser = await this.usersService.findByEmailWithPassword(
+      registerDto.email,
+    );
 
     if (existingUser) {
       if (registerDto.identifier !== Identifier.Google) {
         if (existingUser.password) {
           throw new ConflictException(
-            'User with this email already exists. Please log in.'
+            'User with this email already exists. Please log in.',
           );
         }
         if (registerDto.password) {
@@ -43,18 +46,27 @@ export class AuthService {
           await this.usersService.update(existingUser.id, {
             password: hashedPassword,
             identifier: Identifier.Email,
+            shouldHashPassword: false,
           });
+          const user = await this.usersService.findById(existingUser.id);
+          const payload = { email: user?.email, sub: user?.id };
+          const access_token = this.jwtService.sign(payload);
+          return {
+            access_token,
+            ...user,
+          };
         }
       }
-      
+
+      (existingUser as any).password = undefined;
       const payload = { email: existingUser.email, sub: existingUser.id };
       const access_token = this.jwtService.sign(payload);
       return {
         access_token,
-        ...this.usersService.mapToUserResponseDto(existingUser),
+        ...existingUser,
       };
     }
-    
+
     let hashedPassword: string | undefined = undefined;
     if (registerDto.password) {
       const salt = await bcrypt.genSalt();
@@ -63,6 +75,7 @@ export class AuthService {
 
     const newUser = await this.usersService.create({
       ...registerDto,
+      role: registerDto.role as Role,
       password: hashedPassword!,
       verified: registerDto.verified ?? false,
       identifier:
@@ -70,6 +83,7 @@ export class AuthService {
           ? Identifier.Google
           : Identifier.Email,
       gender: registerDto.gender as Gender,
+      shouldHashPassword: false,
     });
 
     const payload = { email: newUser.email, sub: newUser.id };
@@ -78,7 +92,9 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const user = await this.usersService.findByEmail(loginDto.email);
+    const user = await this.usersService.findByEmailWithPassword(
+      loginDto.email,
+    );
     if (!user || !user.password) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -92,12 +108,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    (user as any).password = undefined;
+
     const payload = { email: user.email, sub: user.id };
     const access_token = this.jwtService.sign(payload);
 
-    return { 
-      access_token, 
-      user: this.usersService.mapToUserResponseDto(user),
+    return {
+      access_token,
+      user,
     };
   }
 

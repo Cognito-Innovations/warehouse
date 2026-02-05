@@ -62,6 +62,7 @@ export class PackageResponseDto {
   measurements?: PackageMeasurementResponseDto[];
   items?: PackageItemResponseDto[];
   charges?: PackageChargeResponseDto[];
+  discard_comment?: string | null;
 }
 
 export class PackageMeasurementResponseDto {

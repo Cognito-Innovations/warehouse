@@ -11,6 +11,9 @@ interface ApprovePaymentButtonProps {
 const ApprovePaymentButton: React.FC<ApprovePaymentButtonProps> = ({ data, onRefresh }) => {
     const [loading, setLoading] = useState(false);
 
+    const hasPaymentSlips = Array.isArray(data?.payment_slips) 
+      && data.payment_slips.length > 0;
+
     const handleApprovePayment = async () => {
       if (!data?.id) return;
       setLoading(true);
@@ -31,7 +34,7 @@ const ApprovePaymentButton: React.FC<ApprovePaymentButtonProps> = ({ data, onRef
             <Button
                 variant="contained"
                 onClick={handleApprovePayment}
-                disabled={loading}
+                disabled={loading || !hasPaymentSlips}
                 startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
                 sx={{
                   bgcolor: "#a855f7",

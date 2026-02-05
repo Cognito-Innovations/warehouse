@@ -2,6 +2,7 @@ import { ProfileData } from "@/components/Modals/EditProfileModal";
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { getSession } from "next-auth/react";
 import { attachClientIdentifierInterceptors } from "@/lib/client-identifier";
+import { getAuthTokenWithFallback } from "@/utils/getAuthToken";
 
 // Interface for the pickup request payload, combining the best types from both examples.
 export interface PickupRequestPayload {
@@ -37,15 +38,14 @@ const createAuthenticatedApi = (): AxiosInstance => {
   api.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {
       try {
-        const session = await getSession();
-        const token = (session as any)?.access_token;
+        const token = await getAuthTokenWithFallback();
         if (token) {
           config.headers.set("Authorization", `Bearer ${token}`);
         }
       } catch (error) {
         console.error("Error getting session for API request:", error);
       }
-      
+
       return config;
     },
     (error) => {
@@ -195,7 +195,7 @@ export const uploadPackageDocuments = async (packageId: string, files: File[]): 
   files.forEach(file => {
     formData.append("files", file);
   });
-  
+
   const response = await authenticatedApi.post(`/packages/${packageId}/documents/upload`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
@@ -207,13 +207,13 @@ export const uploadPackageDocuments = async (packageId: string, files: File[]): 
 export const updatePackageStatus = async (packageId: string, status: string) => {
   const session = await getSession();
   const userId = (session?.user as any)?.user_id;
-  
+
   if (!userId) {
     // Throw an error if the user ID is not available.
     throw new Error("No user ID found in session");
   }
-  
-  const res = await authenticatedApi.patch(`/packages/${packageId}/status`, { 
+
+  const res = await authenticatedApi.patch(`/packages/${packageId}/status`, {
     status: status,
     updated_by: userId
   });
@@ -249,8 +249,19 @@ export const getCountries = async () => {
   return res.data;
 };
 
+export const getSupportedCountries = async () => {
+  const res = await authenticatedApi.get("/supported-countries");
+  return res.data;
+};
+
+export const createUserPreferences = async (data: any) => {
+  const res = await authenticatedApi.post("/user-preferences", data);
+  return res.data;
+};
+
 export const updatePreferences = async (data: any) => {
-  const res = await authenticatedApi.patch(`/user-preferences/${data.user_id}`, data);
+  //  res = await authenticatedApi.patch(`/user-preferences/${data.user_id}`, data)
+  const res = await authenticatedApi.patch(`/user-preferences/by-user/${data.user_id}`, data);
   return res.data;
 };
 
@@ -286,6 +297,11 @@ export const createUserAddress = async (data: any) => {
 
 export const fetchUserAddresses = async (userId: string) => {
   const res = await authenticatedApi.get(`/user-address/user/${userId}`);
+  return res.data;
+};
+
+export const updateUserAddress = async (addressId: string, addressData: any) => {
+  const res = await authenticatedApi.patch(`/user-address/${addressId}`, addressData);
   return res.data;
 };
 

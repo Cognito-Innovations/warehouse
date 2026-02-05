@@ -2,19 +2,24 @@
 
 import React from "react";
 import { Box, Typography, Container } from "@mui/material";
-import { EcommerceProduct } from "@/types/ecommerce";
+
+import { useGridSkeletonCount } from "@/hooks/useGridSkeletonCount";
 import EcommerceProductsGrid from "./EcommerceProductsGrid";
+import GridSkeletonLoader from "./skeleton-loader/GridSkeletonLoader";
+import { EcommerceProduct } from "@/types/ecommerce";
 
 interface RelatedProductsSectionProps {
   products: EcommerceProduct[];
-  onProductClick: (product: EcommerceProduct) => void;
+  arePreviewsLoading?: boolean;
 }
 
 export default function RelatedProductsSection({
   products,
-  onProductClick,
+  arePreviewsLoading = false
 }: RelatedProductsSectionProps) {
-  if (products.length === 0) {
+  const skeletonCount = useGridSkeletonCount({ singleRow: true });
+
+  if (products.length === 0 && !arePreviewsLoading) {
     return null;
   }
 
@@ -33,10 +38,11 @@ export default function RelatedProductsSection({
         >
           You May Also Like
         </Typography>
-        <EcommerceProductsGrid
-          products={products}
-          onProductClick={onProductClick}
-        />
+        {arePreviewsLoading ? (
+          <GridSkeletonLoader count={skeletonCount} />
+        ) : (
+          <EcommerceProductsGrid products={products} />
+        )}
       </Container>
     </Box>
   );

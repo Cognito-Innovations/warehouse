@@ -7,11 +7,19 @@ import {
   Param,
   UseGuards,
   Request,
+  Patch,
 } from '@nestjs/common';
 import { OrderService } from '../services/ecommerce-order.service';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
-import { OrderStatus } from '../entities/ecommerce-order.entity';
+import { CaptureOrderDto } from '../dto/order/capture-order.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Status } from '../entities/ecommerce-payments.entity';
+
+interface AuthenticatedRequest {
+  user: {
+    id: string;
+  };
+}
 
 @Controller('ecommerce-orders')
 @UseGuards(JwtAuthGuard)
@@ -19,7 +27,10 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post('initiate')
-  async initiateOrder(@Request() req, @Body() createOrderDto: CreateOrderDto) {
+  async initiateOrder(
+    @Request() req: AuthenticatedRequest,
+    @Body() createOrderDto: CreateOrderDto,
+  ) {
     const order = await this.orderService.createOrder(
       req.user.id,
       createOrderDto,
@@ -28,19 +39,27 @@ export class OrderController {
       success: true,
       orderId: order.id,
       orderNumber: order.order_number,
-      paymentSessionId: order.cashfree_session_id,
+      paymentSessionId: order.gateway_order_id,
       totalAmount: order.total_amount,
     };
   }
 
   @Post()
-  async createOrder(@Request() req, @Body() createOrderDto: CreateOrderDto) {
+  async createOrder(
+    @Request() req: AuthenticatedRequest,
+    @Body() createOrderDto: CreateOrderDto,
+  ) {
     return this.orderService.createOrder(req.user.id, createOrderDto);
   }
 
   @Get()
-  async findAll(@Request() req) {
+  async findAll(@Request() req: AuthenticatedRequest) {
     return this.orderService.findAll(req.user.id);
+  }
+
+  @Get('all')
+  async getAllOrders() {
+    return this.orderService.getAllOrders();
   }
 
   @Get(':id')
@@ -58,20 +77,23 @@ export class OrderController {
     return this.orderService.findByOrderNumber(orderNumber);
   }
 
-  @Put(':id/status')
+  @Patch(':id/status')
   async updateOrderStatus(
     @Param('id') id: string,
-    @Body('status') status: OrderStatus,
+    @Body('status') status: Status,
+    @Body('comment') comment?: string,
   ) {
-    return this.orderService.updateOrderStatus(id, status);
+    return this.orderService.updateOrderStatus(id, status, comment);
   }
 
   @Put(':id/payment-status')
-  async updatePaymentStatus(
-    @Param('id') id: string,
-    @Body() cashfreeData: any,
-  ) {
-    return this.orderService.updatePaymentStatus(id, cashfreeData);
+  async updatePaymentStatus(@Param('id') id: string) {
+    return this.orderService.processOrderPayment(id);
+  }
+
+  @Post(':id/capture')
+  async captureOrder(@Param('id') id: string, @Body() body: CaptureOrderDto) {
+    return this.orderService.processOrderPayment(id, body.orderID);
   }
 
   @Put(':id/cancel')

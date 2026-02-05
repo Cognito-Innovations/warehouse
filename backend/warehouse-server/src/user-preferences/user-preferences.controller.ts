@@ -45,6 +45,17 @@ export class UserPreferencesController {
     return this.userPreferencesService.update(id, updateUserPreferenceDto);
   }
 
+  @Patch('by-user/:userId')
+  updateByUserId(
+    @Param('userId') userId: string,
+    @Body() updateUserPreferenceDto: UpdateUserPreferenceDto,
+  ) {
+    return this.userPreferencesService.updateByUserId(
+      userId,
+      updateUserPreferenceDto,
+    );
+  }
+
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.userPreferencesService.delete(id);

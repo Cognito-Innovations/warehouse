@@ -12,6 +12,7 @@ const mapApiUserToCustomer = (user: User): Customer => ({
   name: user.name,
   id: user.id,
   email: user.email,
+  role: user.role,
   email_verified: user.email_verified,
   phone_number: user.phone_number || '—',
   identifier: user.identifier,
@@ -33,8 +34,7 @@ const Customers = () => {
     try {
       setLoading(true);
       const allUsers = await getUsers();
-      const users = allUsers.filter((user: User) => user.role === "user")
-      const mappedCustomers = users.map(mapApiUserToCustomer);
+      const mappedCustomers = allUsers.map(mapApiUserToCustomer);
       setAllCustomers(mappedCustomers);
       setFilteredCustomers(mappedCustomers);
       setError(null);

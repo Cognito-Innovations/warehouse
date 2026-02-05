@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { CategoriesController } from './controllers/ecommerce-categories.controller';
 import { SubCategoriesController } from './controllers/ecommerce-sub-categories.controller';
 import { ProductsController } from './controllers/ecommerce-products.controller';
@@ -13,39 +14,40 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EcommerceCategory } from './entities/ecommerce-category.entity';
 import { EcommerceSubCategory } from './entities/ecommerce-sub-category.entity';
 import { EcommerceProduct } from './entities/ecommerce-product.entity';
-import { EcommerceCart } from './entities/ecommerce-cart.entity';
-import { EcommerceCartItem } from './entities/ecommerce-cart-item.entity';
-import { EcommerceOrder } from './entities/ecommerce-order.entity';
-import { EcommerceOrderItem } from './entities/ecommerce-order-item.entity';
 import { EcommerceMeasurement } from './entities/measurement.entity';
 import { MeasurementController } from './controllers/measurement.controller';
 import { MeasurementService } from './services/measurement.service';
 import { Country } from 'src/Countries/country.entity';
-import { SeedController } from './seed/seed.controller';
-import { SeedService } from './seed/seed.service';
 import { EcommerceCargoOption } from './entities/cargo-options.entity';
 import { CargoOptionsController } from './controllers/cargoOptions.controller';
 import { CargoOptionsService } from './services/cargo-options.service';
 import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 import { Currency } from 'src/currencies/currency.entity';
+import { SharedModule } from 'src/shared/shared.module';
+import { EcommerceUserProductStatus } from './entities/ecommerce_user_products_status.entity';
+import { EcommercePayment } from './entities/ecommerce-payments.entity';
+import { EcommerceOrderReference } from './entities/ecommerce-order-references.entity';
+import { PaymentService } from './services/payment.service';
+import { EcommerceUserDeliverySelection } from './entities/ecommerce_user_delivery_selections.entity';
 
 @Module({
   imports: [
+    HttpModule,
     TypeOrmModule.forFeature([
       EcommerceCategory,
       EcommerceSubCategory,
       EcommerceProduct,
-      EcommerceCart,
-      EcommerceCartItem,
-      EcommerceOrder,
-      EcommerceOrderItem,
+      EcommerceUserProductStatus,
+      EcommercePayment,
+      EcommerceOrderReference,
       EcommerceMeasurement,
-      EcommerceCartItem,
       Country,
       EcommerceCargoOption,
       Currency,
+      EcommerceUserDeliverySelection,
     ]),
     UserPreferencesModule,
+    SharedModule,
   ],
   controllers: [
     CategoriesController,
@@ -54,7 +56,6 @@ import { Currency } from 'src/currencies/currency.entity';
     CartController,
     OrderController,
     MeasurementController,
-    SeedController,
     CargoOptionsController,
   ],
   providers: [
@@ -64,8 +65,8 @@ import { Currency } from 'src/currencies/currency.entity';
     CartService,
     OrderService,
     MeasurementService,
-    SeedService,
     CargoOptionsService,
+    PaymentService,
   ],
 })
 export class EcommerceModule {}

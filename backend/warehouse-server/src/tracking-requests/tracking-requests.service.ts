@@ -19,11 +19,12 @@ export class TrackingRequestsService {
   async createTrackingRequest(
     createTrackingRequestDto: CreateTrackingRequestDto,
   ): Promise<TrackingRequestResponseDto> {
-    //TODO: Couldn't able to understand this logic
+    const courierRelation = createTrackingRequestDto.courier_id
+      ? { courier: { id: createTrackingRequestDto.courier_id } as any }
+      : {};
+
     const trackingRequest = this.trackingRequestRepository.create({
-      ...(createTrackingRequestDto.courier_id
-        ? { courier: { id: createTrackingRequestDto.courier_id } as any }
-        : {}),
+      ...courierRelation,
       feature_type: createTrackingRequestDto.feature_type,
       status: createTrackingRequestDto.status,
       feature_fid: createTrackingRequestDto.feature_fid,
@@ -37,7 +38,7 @@ export class TrackingRequestsService {
 
     return {
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     };
   }
 
@@ -49,7 +50,7 @@ export class TrackingRequestsService {
 
     return trackingRequests.map(({ user, ...rest }) => ({
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     }));
   }
 
@@ -69,7 +70,7 @@ export class TrackingRequestsService {
 
     return {
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     };
   }
 
@@ -84,7 +85,7 @@ export class TrackingRequestsService {
 
     return trackingRequests.map(({ user, ...rest }) => ({
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     }));
   }
 
@@ -103,7 +104,7 @@ export class TrackingRequestsService {
 
     return trackingRequests.map(({ user, ...rest }) => ({
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     }));
   }
 
@@ -127,7 +128,7 @@ export class TrackingRequestsService {
 
     return {
       ...rest,
-      user: user ? this.usersService.mapToUserResponseDto(user) : undefined,
+      user: user ? user : undefined,
     };
   }
 

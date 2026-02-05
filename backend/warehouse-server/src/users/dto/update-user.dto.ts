@@ -7,7 +7,7 @@ import {
   IsNumber,
   MinLength,
 } from 'class-validator';
-import { Gender, Identifier } from '../user.entity';
+import { Gender, Identifier, Role } from '../user.entity';
 
 export class UpdatePasswordDto {
   @IsString()
@@ -26,6 +26,10 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   suite_no?: string;
+
+  @IsOptional()
+  @IsString()
+  phone_code?: string;
 
   @IsOptional()
   @IsString()
@@ -67,4 +71,16 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(Identifier)
   identifier?: Identifier;
+
+  @IsOptional()
+  @IsEnum(Role)
+  role?: Role;
+
+  @IsOptional()
+  @IsString()
+  courier_id?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  shouldHashPassword?: boolean;
 }

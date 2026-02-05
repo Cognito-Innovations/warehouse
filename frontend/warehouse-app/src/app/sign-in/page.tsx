@@ -1,67 +1,50 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Box, CircularProgress } from "@mui/material";
+import { useSession } from "next-auth/react";
 import SignInForm from "../../components/SignIn/SignInForm";
-import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "@/utils/constants";
 
 function SignInContent() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
-  const [isRedirecting, setIsRedirecting] = useState(false);
-
-  const callbackUrl = searchParams.get('callbackUrl') 
-    ? decodeURIComponent(searchParams.get('callbackUrl')!) 
-    : undefined;
+  const callbackUrl = searchParams.get("callbackUrl") ?? ROUTES.ROOT;
 
   useEffect(() => {
-    if (!loading && user && !isRedirecting) {
-      setIsRedirecting(true);
-      router.replace(callbackUrl || ROUTES.DASHBOARD);
+    if (status === "authenticated" && session?.user) {
+      window.location.href = callbackUrl;
     }
-  }, [user, loading, router, isRedirecting, callbackUrl]);
-
-  if (loading || isRedirecting) {
+  }, [status, session, callbackUrl]);
+  
+  if (status === "loading") {
     return (
-      <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
-        <Box sx={{ textAlign: "center" }}>
-          <CircularProgress />
-          <Box sx={{ mt: 2, color: "text.secondary" }}>
-            {isRedirecting 
-              ? `Redirecting${callbackUrl ? ' back...' : ' to dashboard...'}`
-              : "Loading..."}
-          </Box>
-        </Box>
+      <Box
+        sx={{
+          display: "flex",
+          height: "100vh",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress />
       </Box>
     );
   }
 
-  if (user) {
-    return (
-       <Box sx={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
-        <Box sx={{ textAlign: "center" }}>
-          <CircularProgress />
-          <Box sx={{ mt: 2, color: "text.secondary" }}>
-            {`Redirecting${callbackUrl ? ' back...' : ' to dashboard...'}`}
-          </Box>
-        </Box>
-       </Box>
-    );
-  }
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#fff" }}>
       <Box
         sx={{
-          flex: { xs: "1 1 100%", sm: "1 1 50%", md: "1 1 30%" },
+          flex: { xs: "1 1 100%", md: "1 1 40%", lg: "1 1 35%" },
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          p: { xs: 2, sm: 4 },
-          overflow: "visible",
+          p: { xs: 3, sm: 6 },
+          zIndex: 1,
+          bgcolor: "#fff"
         }}
       >
         <SignInForm callbackUrl={callbackUrl} />
@@ -69,12 +52,12 @@ function SignInContent() {
 
       <Box
         sx={{
-          flex: { xs: "0 0 0%", sm: "1 1 50%", md: "1 1 70%" },
-          backgroundImage: "url(/palakart-background.png)",
+          flex: { xs: "0 0 0%", md: "1 1 60%", lg: "1 1 65%" },
+          display: { xs: "none", md: "block" },
+          backgroundImage: "url(/palakart-login.png)",
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: "center center",
           backgroundRepeat: "no-repeat",
-          backgroundColor: "#000000"
         }}
       />
     </Box>

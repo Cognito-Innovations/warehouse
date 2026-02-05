@@ -1,7 +1,9 @@
 "use client";
-import React, { createContext, useContext, ReactNode, useRef, useEffect } from "react";
-import { useSession, signOut } from "next-auth/react";
-import { useEcommerceStore } from "@/store/ecommerceStore";
+import React, { createContext, useContext, ReactNode, useMemo, useEffect, useRef, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
+import { useDetectUserLocation } from "@/store/useDetectUserLocation";
+import { useCartStore } from "@/store/cartStore";
+import { clearBrowserStorage, clearAllCookies } from "../lib/cookieUtils";
 
 interface User {
   id: string;
@@ -18,9 +20,9 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: User | {};
   token: string | null;
-  loading: boolean;
+  isAuthenticated: boolean;
   logout: () => void;
 }
 
@@ -36,114 +38,88 @@ export const useAuth = () => {
 
 interface AuthProviderProps {
   children: ReactNode;
+  session: any;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { data: session, status } = useSession();
+const defaultUser: User = {
+  id: "",
+  email: "",
+  name: "",
+  role: "",
+  suite_no: "",
+  country: "",
+  image: "",
+  is_logged_in: false,
+  last_login: "",
+  verified: false,
+  phone: "",
+};
 
-  const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session: initialSession }) => {
+  const { fetchLocationBasedOnUser } = useDetectUserLocation();
+  const {
+    setUserId,
+    getCart,
+    syncLocalStorageProductsToCartDB,
+  } = useCartStore();
+  const { data: sessionData } = useSession();
+  const session = sessionData || initialSession;
 
-  const syncLocalCartToServer = useEcommerceStore((state) => state.syncLocalCartToServer);
+  const user: User | {} = useMemo(() => {
+    if (session?.user) {
+      return {
+        id: (session.user as any).user_id || session.user.email || "",
+        email: session.user.email || "",
+        name: session.user.name || "",
+        role: (session.user as any).role || "",
+        suite_no: (session.user as any).suite_no || "",
+        country: (session.user as any).country || "",
+        image: (session.user as any).image || "",
+        is_logged_in: (session.user as any).is_logged_in || false,
+        last_login: (session.user as any).last_login || "",
+        verified: (session.user as any).verified || false,
+        phone: (session.user as any).phone || "",
+      };
+    }
+    return defaultUser;
+  }, [session]);
+  const userId = session?.user?.user_id ?? null;
 
-  // Get user data from NextAuth session
-  const user = session?.user ? {
-    id: (session.user as any).user_id || session.user.email || "",
-    email: session.user.email || "",
-    name: session.user.name || "",
-    verified: (session.user as any).verified ?? false, // Use actual verified status from backend, default to false
-    phone: (session.user as any).phone || "",
-  } : null;
+  const token = session ? (session as any).access_token || null : null;
+  const isAuthenticated = !!session?.user?.user_id;
 
-  const token = (session as any)?.access_token || null;
-  const loading = status === "loading";
+  const getCartData = async (userId: string) => {
+    const localCart =
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("cart-storage") || "{}")
+        : null;
+    const hasLocalCartItems = localCart?.state?.cart?.length > 0;
+    if (hasLocalCartItems) {
+      await syncLocalStorageProductsToCartDB(userId);
+    } else {
+      await getCart();
+    }
+  }
+
+  useEffect(() => {
+    if (userId) {
+      getCartData(userId);
+    }
+    setUserId(userId);
+    if (typeof window !== 'undefined') {
+      fetchLocationBasedOnUser(userId);
+    }
+  }, [userId]);
+
 
   const logout = () => {
-    signOut({ callbackUrl: "/sign-in" });
+    clearBrowserStorage();
+    clearAllCookies();
+    setUserId(null);
+    signOut({ callbackUrl: "/" });
   };
 
-  const value: AuthContextType = {
-    user: user
-      ? {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: (session?.user as any)?.role || "",
-          suite_no: (session?.user as any)?.suite_no,
-          country: (session?.user as any)?.country || "",
-          image: (session?.user as any)?.image,
-          is_logged_in: (session?.user as any)?.is_logged_in ?? true,
-          last_login: (session?.user as any)?.last_login,
-          verified: user.verified,
-        }
-      : null,
-    token,
-    loading,
-    logout,
-  };
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (token) {
-        localStorage.setItem("auth-token", token);
-      } else {
-        localStorage.removeItem("auth-token");
-      }
-    }
-
-    if (token && status === 'authenticated') {
-      syncLocalCartToServer();
-    }
-  }, [token]);
-
-  // Auto-logout when JWT expires
-  useEffect(() => {
-    // Clear any existing timer
-    if (logoutTimerRef.current) {
-      clearTimeout(logoutTimerRef.current);
-      logoutTimerRef.current = null;
-    }
-
-    if (!token) {
-      return;
-    }
-
-    try {
-      // Decode JWT payload safely without extra deps
-      const parts = token.split(".");
-      if (parts.length !== 3) return;
-      const payloadJson = JSON.parse(typeof window !== "undefined"
-        ? atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
-        : Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"));
-
-      const expSeconds = payloadJson?.exp;
-      if (!expSeconds || typeof expSeconds !== "number") return;
-
-      const expiryMs = expSeconds * 1000;
-      const nowMs = Date.now();
-      const deltaMs = expiryMs - nowMs;
-
-      if (deltaMs <= 0) {
-        // Already expired
-        signOut({ callbackUrl: "/sign-in" });
-        return;
-      }
-
-      // Schedule sign out slightly after expiry to avoid clock skews
-      logoutTimerRef.current = setTimeout(() => {
-        signOut({ callbackUrl: "/sign-in" });
-      }, Math.max(1000, deltaMs + 500));
-    } catch (_e) {
-      // If token cannot be decoded, do nothing
-    }
-
-    // Cleanup on unmount or token change
-    return () => {
-      if (logoutTimerRef.current) {
-        clearTimeout(logoutTimerRef.current);
-        logoutTimerRef.current = null;
-      }
-    };
-  }, [token]);
+  const value: AuthContextType = { user, token, isAuthenticated, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

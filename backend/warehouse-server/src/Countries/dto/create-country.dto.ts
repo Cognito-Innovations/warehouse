@@ -1,10 +1,9 @@
 import { IsString, IsNotEmpty } from 'class-validator';
-import { CountryCode } from '../country.entity';
 
 export class CreateCountryDto {
   @IsString()
   @IsNotEmpty()
-  code: CountryCode;
+  code: string;
 
   @IsString()
   @IsNotEmpty()

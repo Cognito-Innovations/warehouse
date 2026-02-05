@@ -1,11 +1,9 @@
-import { CountryCode, CountryPhoneCode } from '../country.entity';
-
 export class CountryResponseDto {
   id: string;
-  code: CountryCode;
+  code: string;
   name: string;
   image: string;
-  phone_code: CountryPhoneCode;
+  phone_code: string;
   created_at?: number;
   updated_at?: number;
 }

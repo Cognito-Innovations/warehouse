@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
-import { getShipmentExportById, getShipmentsByBoxId } from "../services/api.services";
+import { getShipmentExportById, getShipmentsByBoxIds } from "../services/api.services";
 import ShipmentHeader from "../components/ShipmentExport/ShipmentHeader";
 import ShipmentActionsBar from "../components/ShipmentExport/ShipmentActionsBar";
 import BoxesSection from "../components/ShipmentExport/BoxesSection";
@@ -9,7 +9,7 @@ import BoxesSection from "../components/ShipmentExport/BoxesSection";
 const ViewShipmentExportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [shipment, setShipment] = useState<any | null>(null);
-  const [selectedBoxId, setSelectedBoxId] = useState<number | null>(null);
+  const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
   const [selectedBoxShipments, setSelectedBoxShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingShipments, setLoadingShipments] = useState(false);
@@ -26,10 +26,10 @@ const ViewShipmentExportPage: React.FC = () => {
     }
   }, []);
 
-  const fetchShipmentsForBox = async (boxId: number) => {
+  const fetchShipmentsForBox = async (boxId: string) => {
     setLoadingShipments(true);
     try {
-      const shipments = await getShipmentsByBoxId(boxId);
+      const shipments = await getShipmentsByBoxIds([boxId]);
       setSelectedBoxShipments(shipments);
     } catch (error) {
       console.error(`Error fetching shipments for box ${boxId}:`, error);
@@ -84,10 +84,11 @@ const ViewShipmentExportPage: React.FC = () => {
       <ShipmentActionsBar 
         selectedBoxId={selectedBoxId}
         onPackageAdded={handlePackageAdded}
-        hasShipments={selectedBoxShipments.length > 0}
         exportId={shipment.id}
         status={shipment.status}
         onStatusUpdated={(newStatus) => setShipment({ ...shipment, status: newStatus })}
+        selectedBoxShipments={selectedBoxShipments}
+        boxes={shipment.boxes || []}
       />
       
       <BoxesSection 
@@ -99,6 +100,7 @@ const ViewShipmentExportPage: React.FC = () => {
         shipmentsInSelectedBox={selectedBoxShipments}
         loadingShipments={loadingShipments}
         refreshShipments={handlePackageAdded}
+        status={shipment.status}
       />
     </Box>
   );

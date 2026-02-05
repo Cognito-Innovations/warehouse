@@ -1,12 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EcommerceProduct } from '../entities/ecommerce-product.entity.js';
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EcommerceSubCategory } from '../entities/ecommerce-sub-category.entity.js';
-import { Country } from 'src/Countries/country.entity.js';
 import { CreateEcommerceProductDto } from '../dto/product/create-product.dto.js';
 import { UpdateEcommerceProductDto } from '../dto/product/update-product.dto.js';
 import { UserPreferencesService } from '../../user-preferences/user-preferences.service.js';
+import { EcommerceCargoOption } from '../entities/cargo-options.entity.js';
+import { EcommerceCategory } from '../entities/ecommerce-category.entity.js';
+// import { Country, CountryCode } from 'src/Countries/country.entity.js';
+import { EcommerceMeasurement } from '../entities/measurement.entity.js';
+import { DEFAULT_CURRENCY } from '../../shared/constants.js';
+
+interface CurrencyInfo {
+  code: string;
+  symbol: string;
+  rate: number;
+}
 
 @Injectable()
 export class ProductsService {
@@ -16,14 +26,35 @@ export class ProductsService {
     private readonly userPreferencesService: UserPreferencesService,
   ) {}
 
+  private async getCurrencyInfo(
+    currency?: string,
+    userId?: string,
+  ): Promise<CurrencyInfo> {
+    const selectedCurrency = currency || DEFAULT_CURRENCY.code;
+
+    if (userId) {
+      const userCurrency =
+        await this.userPreferencesService.getUserPreferredCurrency(userId);
+
+      if (userCurrency) {
+        return userCurrency;
+      }
+    }
+
+    return await this.userPreferencesService.getCurrencyInfoByCode(
+      selectedCurrency,
+    );
+  }
+
   async create(
     createProductDto: CreateEcommerceProductDto,
   ): Promise<EcommerceProduct> {
     const {
       category_id,
       sub_category_id,
-      country_ids,
+      // country_ids,
       measurement_id,
+      cargo_option_id,
       ...rest
     } = createProductDto;
 
@@ -31,58 +62,178 @@ export class ProductsService {
       ...rest,
       category: { id: category_id },
       sub_category: { id: sub_category_id },
-      countries: country_ids.map((id) => ({ id }) as Country),
+      // countries: country_ids.map((id) => ({ id }) as Country),
       measurement: { id: measurement_id },
+      cargo_option: { id: cargo_option_id } as EcommerceCargoOption,
     });
     return await this.productRepository.save(product);
   }
 
-  async findAll(country?: string, search?: string, limit = 20, offset = 0) {
-    const where: any = {};
-    if (search?.trim()) {
-      where.name = ILike(`%${search.trim()}%`);
+  async findAll(
+    currency?: string,
+    category?: string,
+    userId?: string,
+    role?: string,
+    countryCode?: string,
+    limit = 20,
+    offset = 0,
+  ) {
+    const isAdmin = role === 'admin' || role === 'super_admin';
+
+    const queryBuilder = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoin('product.category', 'category')
+      .addSelect(['category.id', 'category.slug', 'category.name'])
+      .leftJoinAndSelect('product.cargo_option', 'cargo_option');
+    // TODO: Uncomment the country filter when it's required
+    // .leftJoinAndSelect('product.countries', 'countries');
+
+    if (isAdmin) {
+      queryBuilder
+        .leftJoinAndSelect('product.sub_category', 'sub_category')
+        .leftJoinAndSelect('product.measurement', 'measurement')
     }
 
-    const products = await this.productRepository.find({
-      where,
-      relations: ['category', 'sub_category', 'countries', 'measurement'],
-      skip: offset,
-      take: limit,
-    });
+    // TODO: Uncomment the country filter when it's required
+    // if (countryCode) {
+    //   queryBuilder.andWhere('countries.code = :countryCode', {
+    //     countryCode,
+    //   });
+    // }
 
-    const selectedCountry = country || 'USA';
+    if (category?.trim()) {
+      queryBuilder.andWhere('category.slug = :category', {
+        category,
+      });
+    }
 
-    return Promise.all(
-      products.map(async (product) => ({
+    const [products, currencyInfo] = await Promise.all([
+      queryBuilder
+        .orderBy('product.created_at', 'DESC')
+        .skip(offset)
+        .take(limit)
+        .getMany(),
+      isAdmin ? Promise.resolve(null) : this.getCurrencyInfo(currency, userId),
+    ]);
+
+    if (isAdmin) {
+      return products.map((product) => ({
         ...product,
-        price:
-          await this.userPreferencesService.getFormattedConvertedPriceByCountry(
-            selectedCountry,
-            Number(product.price)
-          ),
-      })),
-    );
+        price: {
+          price: Number(product.price),
+          currency: DEFAULT_CURRENCY.symbol,
+        },
+      }));
+    }
+
+    const { symbol, rate, code } = currencyInfo!;
+
+    return products.map((product) => {
+      const basePrice = Number(product.price);
+      const convertedPrice = Math.round(basePrice * rate * 100) / 100;
+
+      return {
+        ...product,
+        price: {
+          price: convertedPrice,
+          currency:
+            code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
+        },
+      };
+    });
   }
 
-  async findOne(id: string, country?: string) {
+  async searchProducts(
+    searchTerm: string,
+    currency?: string,
+    userId?: string,
+    countryCode?: string,
+    limit = 20,
+    offset = 0,
+  ) {
+    if (!searchTerm?.trim()) return [];
+
+    const queryBuilder = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.cargo_option', 'cargo_option')
+      // TODO: Uncomment the country filter when it's required
+      // .leftJoinAndSelect('product.countries', 'countries')
+      .where('product.name ILIKE :query', {
+        query: `%${searchTerm.trim()}%`,
+      });
+
+    // TODO: Uncomment the country filter when it's required
+    // if (countryCode) {
+    //   queryBuilder.andWhere('countries.code = :countryCode', { countryCode });
+    // }
+
+    const products = await queryBuilder
+      .skip(offset)
+      .take(limit)
+      .orderBy('product.created_at', 'DESC')
+      .getMany();
+
+    const currencyInfo = await this.getCurrencyInfo(currency, userId);
+    const { symbol, rate, code } = currencyInfo;
+
+    return products.map((product) => {
+      const basePrice = Number(product.price);
+      const convertedPrice = Math.round(basePrice * rate * 100) / 100;
+
+      return {
+        ...product,
+        price: {
+          price: convertedPrice,
+          currency:
+            code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
+        },
+      };
+    });
+  }
+
+  async findOne(
+    slug: string,
+    currency?: string,
+    userId?: string,
+    countryCode?: string,
+  ) {
     const product = await this.productRepository.findOne({
-      where: { id },
-      relations: ['countries'],
+      where: { slug: slug },
+      relations: [
+        'category',
+        'cargo_option',
+        // TODO: Uncomment the country filter when it's required
+        // 'countries',
+      ],
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    const selectedCountry = country || 'USA';
+    // TODO: Uncomment the country filter when it's required
+    // if (
+    //   countryCode &&
+    //   !product.countries.some(
+    //     (c: Country) => c.code === (countryCode as CountryCode),
+    //   )
+    // ) {
+    //   throw new NotFoundException('Product not available in this country');
+    // }
+
+    const currencyInfo = await this.getCurrencyInfo(currency, userId);
+    const { symbol, rate, code } = currencyInfo;
+    const basePrice = Number(product.price);
+    const convertedPrice = Math.round(basePrice * rate * 100) / 100;
 
     return {
       ...product,
-      price:
-        await this.userPreferencesService.getFormattedConvertedPriceByCountry(
-          selectedCountry,
-          Number(product.price),
-        ),
+      price: {
+        price: convertedPrice,
+        currency:
+          code === DEFAULT_CURRENCY.code ? DEFAULT_CURRENCY.symbol : symbol,
+      },
     };
   }
 
@@ -100,24 +251,29 @@ export class ProductsService {
     const {
       category_id,
       sub_category_id,
-      country_ids,
+      // country_ids,
       measurement_id,
+      cargo_option_id,
       ...rest
     } = updateEcommerceProductDto;
 
     Object.assign(product, rest);
 
     if (category_id) {
-      product.category = { id: category_id } as any;
+      product.category = { id: category_id } as EcommerceCategory;
     }
     if (sub_category_id) {
       product.sub_category = { id: sub_category_id } as EcommerceSubCategory;
     }
-    if (country_ids) {
-      product.countries = country_ids.map((id) => ({ id }) as Country);
-    }
+    // TODO: Uncomment the country filtering when it's required
+    // if (country_ids) {
+    //   product.countries = country_ids.map((id) => ({ id }) as Country);
+    // }
     if (measurement_id) {
-      product.measurement = { id: measurement_id } as any;
+      product.measurement = { id: measurement_id } as EcommerceMeasurement;
+    }
+    if (cargo_option_id) {
+      product.cargo_option = { id: cargo_option_id } as EcommerceCargoOption;
     }
 
     return await this.productRepository.save(product);

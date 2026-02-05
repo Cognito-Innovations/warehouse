@@ -112,7 +112,7 @@ export default function ShipmentDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <div className="bg-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-screen-xl mx-auto">
         <p className="text-sm text-gray-500 mb-4">
           <Link href='/dashboard?tab=shipments' className="text-purple-600 hover:underline">
@@ -131,18 +131,10 @@ export default function ShipmentDetailPage() {
         <div className="mb-6">
           <RequestHeader
             request={request}
-            // onDelete={openDeleteDialog}
           />
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          <div className="w-full lg:w-[320px] lg:flex-shrink-0">
-            <TrackingStatus
-              trackingRequests={request.tracking_requests || []}
-              status={request.status}
-            />
-          </div>
-
           <div className="w-full lg:flex-1 space-y-6">
             {displayInvoiceSection && (
               <>
@@ -156,19 +148,14 @@ export default function ShipmentDetailPage() {
               </>
             )}
           </div>
+          <div className="w-full lg:w-[320px] lg:flex-shrink-0">
+            <TrackingStatus
+              trackingRequests={request.tracking_requests || []}
+              status={request.status}
+            />
+          </div>
         </div>
       </div>
-
-      {/* <ConfirmDialog
-        open={confirmOpen}
-        title="Delete Request"
-        message="Are you sure you want to delete this request? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        onConfirm={handleDelete}
-        onClose={() => setConfirmOpen(false)}
-        isLoading={isDeleting}
-      /> */}
     </div>
   );
 }

@@ -1,267 +1,169 @@
 "use client";
 
-import { Box, Button, TextField, Typography, Link, Divider, Alert, Snackbar, InputAdornment, IconButton, CircularProgress } from "@mui/material";
-import { signIn } from "next-auth/react";
-import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { Box, Button, Typography, Alert, Snackbar } from "@mui/material";
+import { signIn, useSession } from "next-auth/react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import axios from "axios";
-import { generateSequentialSuiteNumber } from "../../utils/auth.utils";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import PasswordStrength from "./PasswordStrength";
 import { ROUTES } from "@/utils/constants";
+import { setCookie } from "@/lib/cookieUtils";
+import { AUTH_COOKIE_NAME } from "../../utils/constants";
+import { clearAllCookies } from "../../lib/cookieUtils";
 
 interface SignInFormProps {
   callbackUrl?: string;
 }
 
 export default function SignInForm({ callbackUrl }: SignInFormProps) {
-  const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const { isAuthenticated } = useAuth();
+  const { data: session, status } = useSession();
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  
-  const { user, loading: authLoading } = useAuth();
-  const buttonStyles = { py: 1.5, textTransform: "none", borderRadius: "6px" };
 
-  const redirectTo = callbackUrl || ROUTES.DASHBOARD;
+  const redirectTo = callbackUrl || ROUTES.ROOT;
 
+  useEffect(() => {
+    if (
+      status === "authenticated" &&
+      (session as any)?.access_token
+    ) {
+      const token = (session as any).access_token;
 
-  const passwordValidation = useMemo(() => {
-    const pass = password;
-    return {
-      length: pass.length >= 6,
-      uppercase: /[A-Z]/.test(pass),
-      lowercase: (pass.match(/[a-z]/g) || []).length >= 2,
-      number: /[0-9]/.test(pass),
-      special: /[!@#$%^&*]/.test(pass),
-    };
-  }, [password]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!isLogin) {
-      const isPasswordValid = Object.values(passwordValidation).every(v => v);
-      if (!isPasswordValid) {
-        setError("Please meet all password requirements.");
-        return;
-      }
+      setCookie(AUTH_COOKIE_NAME, token, {
+        path: "/",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
     }
-
-    setLoading(true);
-
-    try {
-      if (isLogin) {
-        // Use NextAuth credentials provider for login
-        const result = await signIn("credentials", {
-          email,
-          password: password,
-          redirect: false,
-        });
-
-        if (result?.ok) {
-          window.location.href = redirectTo;
-        } else {
-          setError("Invalid email or password. Please try again.");
-        }
-      } else {
-        // For registration, call backend directly then sign in
-        const suiteNumber = generateSequentialSuiteNumber();
-        
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_NEST_BACKEND_URL || "http://localhost:3001"}/auth/register`, {
-          email,
-          password: password,
-          name,
-          suite_no: suiteNumber,
-        });
-
-        if (response.data.access_token) {
-          // After successful registration, sign in with credentials
-          const result = await signIn("credentials", {
-            email,
-            password: password,
-            redirect: false,
-          });
-
-          if (result?.ok) {
-            window.location.href = redirectTo;
-          } else {
-            setError("Registration successful but login failed. Please try logging in.");
-          }
-        } else {
-          setError(response.data.message || "Registration failed");
-        }
-      }
-    } catch (err: any) {
-      console.error("Auth error:", err);
-      setError(err.response?.data?.message || "An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [session, status]);
 
   const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError("");
+
     try {
+      clearAllCookies();
       const result = await signIn("google", {
         callbackUrl: redirectTo,
-        redirect: false
       });
       
-      if (result?.url) {
-        // Force a page reload to ensure session is properly set
-        window.location.href = result.url;
+      if (result?.ok) {
+        // Sign-in successful, reload to get fresh session from server
+        window.location.href = redirectTo;
       } else if (result?.error) {
         console.error("Google sign-in error:", result.error);
         setError("Google sign-in failed. Please try again.");
+        setLoading(false);
+      } else if (result?.url) {
+        window.location.href = result.url;
       }
     } catch (error) {
       console.error("Google sign-in error:", error);
       setError("Google sign-in failed. Please try again.");
+      setLoading(false);
     }
   };
 
-  // Show loading while checking authentication status
-  if (authLoading) {
-    return (
-      <Box sx={{ width: "100%", maxWidth: 380, textAlign: "center" }}>
-        <CircularProgress />
-      </Box>
-    );
+  // Don't show form if already authenticated
+  if (isAuthenticated) {
+    return null;
   }
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 380, overflow: "visible" }}>
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+    <Box
+      sx={{
+        width: "100%",
+        maxWidth: 400,
+        px: { xs: 2, sm: 0 },
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Box 
+        sx={{ 
+          mb: 1, 
+          display: "flex", 
+          justifyContent: "center", 
+          width: "100%",
+          bgcolor: "transparent"
+        }}
+      >
         <img
           src="/palakart-text-logo.png"
-          alt="Palakart Logo"
-          style={{ maxWidth: "200px", height: "auto", margin:10 }}
+          alt="Palakart"
+          style={{ 
+            maxWidth: 200, 
+            height: "auto", 
+            display: "block",
+            backgroundColor: "transparent"
+          }}
         />
       </Box>
 
-      <Typography component="h1" variant="h5" sx={{ mt: 2, mb: 1, fontWeight: "bold" }}>
-        {isLogin ? "Sign in to your account" : "Create your account"}
+      <Typography
+        variant="subtitle1"
+        color="text.secondary"
+        align="center"
+        sx={{ 
+          mb: 5, 
+          fontWeight: 500,
+          width: "100%",
+          lineHeight: 1.5
+        }}
+      >
+        Sign in securely using your Google account
       </Typography>
 
-      <form onSubmit={handleSubmit}>
-        {!isLogin && (
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            label="Full Name"
-            variant="outlined"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={loading}
-          />
-        )}
-        
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          label="Email"
-          type="email"
-          variant="outlined"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={loading}
-        />
-        
-        <Box sx={{ position: "relative" }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            variant="outlined"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onFocus={() => setIsPasswordFocused(true)}
-            onBlur={() => setIsPasswordFocused(false)}
-            disabled={loading}
-            InputProps={{
-              endAdornment: (
-              <InputAdornment position="end">
-                  <IconButton
-                  onClick={() => setShowPassword(!showPassword)}
-                  edge="end"
-                  >
-                  {showPassword ? <Visibility /> : <VisibilityOff />}
-                  </IconButton>
-              </InputAdornment>
-              ),
-            }}
-          />
-          {isPasswordFocused && password && (
-            <PasswordStrength password_str={password} />
-          )}
-        </Box>
-
-        {isLogin && (
-          <Link
-            href="#"
-            variant="body2"
-            sx={{ display: "block", textAlign: "right", mt: 1, color: "#6D28D9", textDecoration: "none" }}
-          >
-            Forgot your password?
-          </Link>
-        )}
-
-        <Button
-          type="submit"
-          fullWidth
-          variant="contained"
-          disabled={loading}
-          sx={{ ...buttonStyles, mt: 3, mb: 1, bgcolor: "#6D28D9", "&:hover": { bgcolor: "#5B21B6" } }}
-        >
-          {loading ? "Please wait..." : (isLogin ? "Sign in" : "Register")}
-        </Button>
-      </form>
-
       <Button
         fullWidth
+        size="large"
         variant="outlined"
-        onClick={() => setIsLogin(!isLogin)}
-        disabled={loading}
-        sx={{
-          ...buttonStyles,
-          mb: 2,
-          borderColor: "#E5E7EB",
-          color: "#4B5563",
-          "&:hover": { bgcolor: "#F9FAFB" }
-        }}
-      >
-        {isLogin ? "Don't have an account? Register" : "Already have an account? Sign in"}
-      </Button>
-
-      <Divider sx={{ my: 2, color: "#6B7280" }}>Or continue with</Divider>
-
-      <Button
-        fullWidth
-        variant="outlined"
-        startIcon={<img src="/google-icon.svg" alt="Google" style={{ width: 20, height: 20 }} />}
         onClick={handleGoogleSignIn}
         disabled={loading}
+        startIcon={
+          <Box
+            component="img"
+            src="/google-icon.svg"
+            alt="Google"
+            sx={{ width: 20, height: 20, mr: 1 }}
+          />
+        }
         sx={{
-          ...buttonStyles,
-          borderColor: "#E5E7EB",
-          color: "#4B5563",
-          "&:hover": { bgcolor: "#F9FAFB" }
+          py: 1.8,
+          borderRadius: "12px",
+          borderColor: "#E0E0E0",
+          color: "#1F2937",
+          textTransform: "none",
+          fontSize: "1rem",
+          fontWeight: 600,
+          backgroundColor: "#fff",
+          boxShadow: "0px 2px 4px rgba(0,0,0,0.02)",
+          transition: "all 0.2s ease-in-out",
+          "&:hover": {
+            bgcolor: "#F9FAFB",
+            borderColor: "#D1D5DB",
+            boxShadow: "0px 4px 6px rgba(0,0,0,0.05)",
+          },
         }}
       >
-        Sign in with Google
+        {loading ? "Signing in..." : "Continue with Google"}
       </Button>
+
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        align="center"
+        sx={{ 
+          mt: 5, 
+          display: "block", 
+          maxWidth: "90%",
+          lineHeight: 1.6 
+        }}
+      >
+        By continuing, you agree to Palakart’s Terms & Privacy Policy
+      </Typography>
 
       <Snackbar
         open={!!error}
@@ -269,7 +171,7 @@ export default function SignInForm({ callbackUrl }: SignInFormProps) {
         onClose={() => setError("")}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={() => setError("")} severity="error" sx={{ width: "100%" }}>
+        <Alert severity="error" onClose={() => setError("")} sx={{ width: "100%" }}>
           {error}
         </Alert>
       </Snackbar>

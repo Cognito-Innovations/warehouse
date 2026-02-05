@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
+import { Box, TextField, Stack, Button, CircularProgress,} from "@mui/material";
 
-import { createCategory, getCargoOptions, getCountries, updateCategory } from "../../services/api.services";
+import { createCategory,
+  updateCategory
+} from "../../services/api.services";
 import ImageUpload from "../common/ImageUpload";
-import { arraysEqual } from "../../utils/arrayEqual";
-import { statusOptions } from "../../utils/constants";
-import type { CargoOption, CategoryPayload, Country } from "../../types";
+import type { CategoryPayload,
+} from "../../types";
 
 interface CategoryFormProps {
   onClose: () => void;
@@ -18,49 +19,15 @@ const defaultFormData: CategoryPayload = {
   name: "",
   slug: "",
   discount_percentage: 0,
-  country_ids: [],
+  // country_ids: [],
   is_active: true,
   image_url: "",
-  cargo_option_id: "",
   description: "",
 };
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initialData }) => {
   const [formData, setFormData] = useState<CategoryPayload>(defaultFormData);
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [cargoOptions, setCargoOptions] = useState<CargoOption[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [fetchingCargo, setFetchingCargo] = useState(true);
-
-  const fetchCountries = async () => {
-    try {
-      setFetching(true);
-      const countries = await getCountries();
-      setCountries(countries);
-    } catch (error) {
-      console.error("Failed to fetch countries:", error);
-    } finally {
-      setFetching(false);
-    }
-  };
-
-  const fetchCargoOptions = async () => {
-    try {
-      setFetchingCargo(true);
-      const cargoOptions = await getCargoOptions();
-      setCargoOptions(cargoOptions);
-    } catch (err) {
-      console.error("Failed to fetch cargo options:", err);
-    } finally {
-      setFetchingCargo(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCountries();
-    fetchCargoOptions();
-  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -74,21 +41,12 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleCountryDelete = (countryId: string) => {
-    handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
-  };
-
   const handleSubmit = async () => {
     if (!formData.name || !formData.slug || !formData.image_url) return;
 
     if (initialData) {
       const hasChanged = Object.keys(defaultFormData).some((key) => {
         const k = key as keyof CategoryPayload;
-
-        if (k === "country_ids") {
-          return !arraysEqual(initialData.country_ids || [], formData.country_ids);
-        }
-
         return initialData[k] !== formData[k];
       });
 
@@ -101,7 +59,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
     try {
       setLoading(true);
       if (initialData?.id) {
-        await updateCategory(initialData.id, formData);
+        const { id, ...updatePayload } = formData;
+        await updateCategory(id!, updatePayload);
       } else {
         await createCategory(formData);
       }
@@ -148,7 +107,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
           required
           type="number"
         />
-        <TextField
+        
+        {/* TODO: Uncomment the country selection when it's required */}
+        {/* <TextField
           label="Countries"
           select
           value={formData.country_ids}
@@ -207,38 +168,6 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
         </TextField>
 
         <TextField
-          label="Cargo Type"
-          select
-          value={formData.cargo_option_id}
-          onChange={(e) => handleChange("cargo_option_id", e.target.value)}
-          required
-          fullWidth
-          disabled={fetchingCargo}
-          SelectProps={{
-            renderValue: (selected) =>
-              fetchingCargo ? (
-                <Box sx={{ display: "flex", alignItems: "center", pl: 1 }}>
-                  <CircularProgress size={20} />
-                </Box>
-              ) : (
-                cargoOptions.find((c) => c.id === selected)?.label || ""
-              ),
-          }}
-        >
-          {fetchingCargo ? (
-            <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : (
-            cargoOptions.map((option) => (
-              <MenuItem key={option.id} value={option.id}>
-                {option.label}
-              </MenuItem>
-            ))
-          )}
-        </TextField>
-
-        <TextField
           label="Status"
           select
           value={String(formData.is_active)}
@@ -250,7 +179,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
               {option.label}
             </MenuItem>
           ))}
-        </TextField>
+        </TextField> */}
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 1 }}>
           <Button variant="outlined" onClick={onClose} disabled={loading}>

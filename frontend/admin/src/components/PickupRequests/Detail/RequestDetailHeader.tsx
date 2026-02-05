@@ -41,7 +41,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
   const handleOpenModal = () => setOpenModal(true);
 
   const handleCloseModal = () => {
-    setPrice(''); //  TODO: Price should be reset 0 or ''
+    setPrice('');
     setOpenModal(false);
   }
 

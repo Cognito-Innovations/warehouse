@@ -9,11 +9,12 @@ import {
   CardContent,
   CircularProgress,
 } from "@mui/material";
+import {Edit,} from "@mui/icons-material";
 import {
   Add,
   LocationOn,
 } from "@mui/icons-material";
-import AddAddressModal from "../Modals/AddAddressModal";
+import AddEditAddressModal from "../Modals/AddEditAddressModal";
 import { useSession } from "next-auth/react";
 import { fetchUserAddresses } from "@/lib/api.service";
 
@@ -38,6 +39,7 @@ export default function AddressesPage() {
   const userId = (session?.user as any)?.user_id;
 
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [address, setAddress] = useState<Address>({} as Address);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +48,7 @@ export default function AddressesPage() {
     try {
       setLoading(true);
       const res = await fetchUserAddresses(userId);
-      setAddress(res || {});
+      setAddress(res || ({} as Address));
     } catch (error) {
       console.error("Error fetching user addresses:", error);
       setAddress({} as Address);
@@ -57,7 +59,13 @@ export default function AddressesPage() {
 
   const handleAddressAdded = () => {
     setAddModalOpen(false);
+    setSelectedAddress(null);
     getUserAddresses();
+  };
+
+  const handleEditClick = () => {
+    setSelectedAddress(address.id ? address : null);
+    setAddModalOpen(true);
   };
 
   useEffect(() => {
@@ -67,6 +75,8 @@ export default function AddressesPage() {
       setLoading(false);
     }
   }, [userId]);
+
+  const hasAddress = !!address.id;
 
   return (
     <Box>
@@ -79,7 +89,7 @@ export default function AddressesPage() {
             Your delivery addresses
           </Typography>
         </Box>
-        {Object.keys(address).length === 0 && !loading && (
+        {!loading && !hasAddress && (
           <Button
             variant="contained"
             startIcon={<Add />}
@@ -121,7 +131,7 @@ export default function AddressesPage() {
             </Box>
           </CardContent>
         </Card>
-      ) : Object.keys(address).length === 0 ? (
+      ) : !hasAddress ? (
         <Card sx={{ minHeight: 400 }}>
           <CardContent>
             <Box
@@ -148,47 +158,72 @@ export default function AddressesPage() {
       ) : (
         <Card sx={{ minHeight: 400 }}>
           <CardContent>
-            <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-              {/* Left column */}
-              <Box sx={{ flex: 1, minWidth: 220 }}>
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Name</Typography>
-                  <Typography variant="body1" sx={{  color: "grey.900", mb: 1 }}>
-                    {address.name}
-                  </Typography>
+            <Box sx={{ position: "relative" }}>
+              <Button
+                variant="outlined"
+                startIcon={<Edit />}
+                onClick={handleEditClick}
+                sx={{
+                  position: "absolute",
+                  top: 16,
+                  right: 16,
+                  textTransform: "none",
+                  borderRadius: "8px",
+                  px: 2,
+                  py: 0.5,
+                  color: "primary.main",
+                  borderColor: "primary.main",
+                  "&:hover": {
+                    borderColor: "primary.dark",
+                    bgcolor: "primary.main",
+                    color: "white",
+                  },
+                }}
+              >
+                Edit
+              </Button>
+              <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {/* Left column */}
+                <Box sx={{ flex: 1, minWidth: 220 }}>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Name</Typography>
+                    <Typography variant="body1" sx={{  color: "grey.900", mb: 1 }}>
+                      {address.name}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Address</Typography>
+                    <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
+                      {address.address}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>City</Typography>
+                    <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
+                      {address.city}
+                    </Typography>
+                  </Box>
                 </Box>
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Address</Typography>
-                  <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
-                    {address.address}
-                  </Typography>
-                </Box>
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>City</Typography>
-                  <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
-                    {address.city}
-                  </Typography>
-                </Box>
-              </Box>
-              {/* Right column */}
-              <Box sx={{ flex: 1, minWidth: 220 }}>
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>State</Typography>
-                  <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
-                    {address.state}
-                  </Typography>
-                </Box>
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Zip Code</Typography>
-                  <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
-                    {address.zip_code}
-                  </Typography>
-                </Box>
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Country</Typography>
-                  <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
-                    {address.country}
-                  </Typography>
+                {/* Right column */}
+                <Box sx={{ flex: 1, minWidth: 220 }}>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>State</Typography>
+                    <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
+                      {address.state}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Zip Code</Typography>
+                    <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
+                      {address.zip_code}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>Country</Typography>
+                    <Typography variant="body1" sx={{ color: "grey.900", mb: 1 }}>
+                      {address.country}
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
             </Box>
@@ -196,10 +231,14 @@ export default function AddressesPage() {
         </Card>
       )}
 
-      <AddAddressModal
+      <AddEditAddressModal
         open={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
+        onClose={() => {
+          setAddModalOpen(false);
+          setSelectedAddress(null);
+        }}
         onAddressAdded={handleAddressAdded}
+        initialAddress={selectedAddress}
       />
     </Box>
   );

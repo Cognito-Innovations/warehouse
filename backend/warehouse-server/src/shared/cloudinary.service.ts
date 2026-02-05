@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiErrorResponse } from 'cloudinary';
-import { Express } from 'express';
 
 // Cloudinary upload result interface
 interface CloudinaryUploadResult {

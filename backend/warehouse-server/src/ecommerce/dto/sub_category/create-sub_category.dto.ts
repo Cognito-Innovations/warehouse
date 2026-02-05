@@ -1,6 +1,6 @@
 import {
-  ArrayMinSize,
-  IsArray,
+  // ArrayMinSize,
+  // IsArray,
   IsBoolean,
   IsNotEmpty,
   IsNumber,
@@ -23,10 +23,11 @@ export class CreateEcommerceSubCategoryDto {
   @IsNotEmpty()
   category_id: string;
 
-  @IsArray()
-  @IsUUID('all', { each: true })
-  @ArrayMinSize(1)
-  country_ids: string[];
+  // TODO: Uncomment the country filtering when it's required
+  // @IsArray()
+  // @IsUUID('all', { each: true })
+  // @ArrayMinSize(1)
+  // country_ids: string[];
 
   @IsNumber()
   @Min(0)

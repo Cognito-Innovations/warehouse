@@ -1,12 +1,12 @@
 import {
-  ArrayMinSize,
-  IsArray,
+  // ArrayMinSize,
+  // IsArray,
   IsBoolean,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
+  // IsUUID,
   Min,
 } from 'class-validator';
 
@@ -23,19 +23,16 @@ export class CreateCategoryDto {
   @Min(0)
   discount_percentage: number;
 
-  @IsArray()
-  @IsUUID('all', { each: true })
-  @ArrayMinSize(1)
-  country_ids: string[];
+  // TODO: Uncomment the country filtering when it's required
+  // @IsArray()
+  // @IsUUID('all', { each: true })
+  // @ArrayMinSize(1)
+  // country_ids: string[];
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   image_url: string;
-
-  @IsUUID()
-  @IsNotEmpty()
-  cargo_option_id: string;
 
   @IsString()
   @IsOptional()

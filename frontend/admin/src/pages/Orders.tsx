@@ -2,157 +2,144 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 
-import { getOrderByOrderId, getOrders } from "../services/api.services";
+import { getOrders } from "../services/api.services";
 import TopNavbar from "../components/Layout/TopNavbar";
-import CommonTable from "../components/common/CommonTable";
+import OrdersTable from "../components/Orders/OrdersTable";
 import StatusChip from "../components/common/StatusChip";
-import OrderDetailsModal from "../components/Orders/OrderDetailsModal";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatDateTime } from "../utils/formatDateTime";
-import type { OrderDetails } from "../types/order";
 import type { ColumnDefinition } from "../types/table";
+// import EditOrderStatusModal from "../components/Orders/EditOrderStatusModal";
+import ExportOrdersButton from "../components/Orders/ExportOrderButton";
+import { ORDER_STATUS_OPTIONS } from "../utils/constants";
 
 interface OrderRow {
   id: string;
-  customer_name: string,
-  payment_id: string,
-  item_count: number,
-  total: number,
-  payment_method: string,
-  order_date: string,
+  order_number: string;
+  user_name: string;
+  cashfree_payment_id: string;
+  items_count: string;
+  total_amount: string;
+  payment_mode: string;
+  created_at: string;
   status: string;
+  payment_status: string;
 }
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
-  const [isModalLoading, setIsModalLoading] = useState(false);
+  // const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getOrders();
-      const mappedData: OrderRow[] = response.map((item: any) => ({
-        id: item.id,
-        customer_name: item.customer_name,
-        payment_id: item.payment_id,
-        item_count: item.item_count,
-        total: item.total,
-        payment_method: item.payment_method,
-        order_date: item.order_date,
-        status: item.status,
-      }));
-      setOrders(mappedData);
+      setOrders(response);
     } catch (error) {
-      console.error("Error fetching sub categories:", error);
+      console.error("Error fetching orders:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchOrders();
-  }, []);
-
-  const statusOptions = [
-    { value: 'Pending', label: 'Pending' },
-    { value: 'Processing', label: 'Processing' },
-    { value: 'Shipped', label: 'Shipped' },
-    { value: 'Delivered', label: 'Delivered' },
-    { value: 'Cancelled', label: 'Cancelled' },
-  ];
+  }, [fetchOrders]);
 
   const columns: ColumnDefinition<OrderRow>[] = [
     {
-      header: "Order ID",
-      cell: (row) => <Typography variant="body2" fontWeight={500}>{row.id}</Typography>,
-      width: "25%",
+      header: "Order No.",
+      cell: (row) => <Typography variant="body2" fontWeight={500}>{row.order_number}</Typography>,
+      width: "15%",
     },
     {
       header: "Customer",
-      cell: (row) => <Typography variant="body2">{row.customer_name}</Typography>,
-      width: "25%",
-    },
-    {
-      header: "Payment ID",
-      cell: (row) => <Typography variant="body2">{row.payment_id}</Typography>,
-      width: "15%",
+      cell: (row) => <Typography variant="body2">{row.user_name}</Typography>,
+      width: "13%",
     },
     {
       header: "Items",
-      cell: (row) => <Typography variant="body2">{row.item_count}</Typography>,
-      width: "15%",
+      cell: (row) => {
+        const count = parseInt(row.items_count || '0', 10);
+        return <Typography variant="body2">{isNaN(count) ? 0 : count}</Typography>;
+      },
+      width: "8%",
     },
     {
       header: "Total",
-      cell: (row) => <Typography variant="body2">{formatCurrency(row.total)}</Typography>,
-      width: "15%",
+      cell: (row) => {
+        const amount = Number(row.total_amount || '0');
+        return <Typography variant="body2">{isNaN(amount) ? formatCurrency(0) : formatCurrency(amount)}</Typography>;
+      },
+      width: "12%",
     },
     {
-      header: "Payment Method",
-      cell: (row) => <Typography variant="body2">{row.payment_method}</Typography>,
-      width: "20%",
+      header: "Payment Mode",
+      cell: (row) => <Typography variant="body2">{row.payment_mode || 'Unknown'}</Typography>,
+      width: "12%",
     },
     {
       header: "Order Date",
-      cell: (row) => <Typography variant="body2">{formatDateTime(row.order_date)}</Typography>,
-      width: "20%",
+      cell: (row) => <Typography variant="body2">{formatDateTime(row.created_at)}</Typography>,
+      width: "12%",
     },
+    // {
+    //   header: "Payment",
+    //   cell: (row) => <StatusChip status={row.payment_status} />,
+    //   width: "10%",
+    // },
     {
       header: "Status",
       cell: (row) => <StatusChip status={row.status} />,
-      width: "15%",
+      width: "12%",
     },
   ];
 
-  const handleViewDetails = useCallback(async (id: string | number) => {
-    setIsModalOpen(true);
-    setIsModalLoading(true);
-    try {
-      const details = await getOrderByOrderId(id);
-      setSelectedOrder(details);
-    } catch (error) {
-      console.error("Error fetching order details:", error);
-      setSelectedOrder(null);
-    } finally {
-      setIsModalLoading(false);
-    }
-  }, []);
+  // TODO: Uncomment when order status edit action is enabled
+  // const handleEditStatus = useCallback((id: string | number) => {
+  //   const idStr = typeof id === 'string' ? id : id.toString();
+  //   const row = orders.find((r) => r.id === idStr);
+  //   if (row) {
+  //     setSelectedOrder(row);
+  //   }
+  // }, [orders]);
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedOrder(null);
-  };
-
-  const handleUpdateStatus = () => {
-    console.log("Update Status clicked for:", selectedOrder?.id);
-    handleCloseModal();
-  };
+  // const handleCloseModal = useCallback(() => {
+  //   setSelectedOrder(null);
+  // }, []);
 
   return (
     <Box>
       <TopNavbar pageTitle="Orders" />
 
-      <CommonTable
-        rows={orders}
-        columns={columns}
-        loading={loading}
-        statusOptions={statusOptions}
-        noDataMessage="No orders available"
-        onViewDetails={handleViewDetails}
-        getIdentifier={(row) => row.id}
-        getRowStatus={(row) => row.status}
-      />
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 2, my: 2 }}>
+        <ExportOrdersButton orders={orders} />
+      </Box>
 
-      <OrderDetailsModal
-        open={isModalOpen}
+      <Box sx={{ px: { xs: 0, sm: 2 } }}>
+        <OrdersTable
+          rows={orders}
+          columns={columns}
+          loading={loading}
+          statusOptions={ORDER_STATUS_OPTIONS}
+          noDataMessage="No orders available"
+          // onEdit={handleEditStatus}
+          getIdentifier={(row) => row.id}
+          getRowStatus={(row) => row.status}
+        />
+      </Box>
+
+      {/* TODO: Uncomment when order status edit flow is finalized */}
+      {/* <EditOrderStatusModal
+        open={!!selectedOrder}
         onClose={handleCloseModal}
-        order={selectedOrder}
-        loading={isModalLoading}
-        onUpdateStatus={handleUpdateStatus}
-      />
+        orderId={selectedOrder?.id || ''}
+        orderNumber={selectedOrder?.order_number || ''}
+        currentStatus={selectedOrder?.status || ''}
+        statusOptions={ORDER_STATUS_OPTIONS}
+        onOrderUpdated={fetchOrders}
+      /> */}
     </Box>
   );
 };

@@ -3,277 +3,522 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, In, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Cashfree, CFEnvironment } from 'cashfree-pg';
-import { EcommerceOrder } from '../entities/ecommerce-order.entity';
-import { EcommerceOrderItem } from '../entities/ecommerce-order-item.entity';
-import { EcommerceCart } from '../entities/ecommerce-cart.entity';
-import { EcommerceCartItem } from '../entities/ecommerce-cart-item.entity';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
-import { OrderStatus, PaymentStatus } from '../entities/ecommerce-order.entity';
-import { CartStatus } from '../entities/ecommerce-cart.entity';
-import { User } from 'src/users/user.entity';
-import { Currency } from 'src/currencies/currency.entity';
-import { CountryCode } from 'src/Countries/country.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+import { DEFAULT_CURRENCY, PAYMENT_GATEWAY } from '../../shared/constants.js';
+import { Status } from '../entities/ecommerce-payments.entity';
+import { EcommercePayment } from '../entities/ecommerce-payments.entity';
+import { EcommerceOrderReference } from '../entities/ecommerce-order-references.entity';
+import {
+  EcommerceUserProductStatus,
+  UserProductStatus,
+} from '../entities/ecommerce_user_products_status.entity';
+import { EcommerceProduct } from '../entities/ecommerce-product.entity';
+import { PaymentService } from './payment.service';
+import { CartService } from './ecommerce-cart.service';
+import { EcommerceUserDeliverySelection } from '../entities/ecommerce_user_delivery_selections.entity';
 
-//TODO: Generated temprorarily need to look requirment and change
+export interface OrderWithDetails extends EcommercePayment {
+  total_amount: number;
+  display_currency: string;
+}
+
+interface CurrencyInfo {
+  code: string;
+  symbol: string;
+  rate: number;
+}
+
 @Injectable()
 export class OrderService {
-  private cashfree: Cashfree;
-
   constructor(
-    @InjectRepository(EcommerceOrder)
-    private readonly orderRepository: Repository<EcommerceOrder>,
-    @InjectRepository(EcommerceOrderItem)
-    private readonly orderItemRepository: Repository<EcommerceOrderItem>,
-    @InjectRepository(EcommerceCart)
-    private readonly cartRepository: Repository<EcommerceCart>,
-    @InjectRepository(EcommerceCartItem)
-    private readonly cartItemRepository: Repository<EcommerceCartItem>,
-    @InjectRepository(Currency)
-    private readonly currencyRepository: Repository<Currency>,
-    private readonly userPreferenceService: UserPreferencesService
-  ) {
-    const appId = process.env.CASHFREE_APP_ID;
-    const secretKey = process.env.CASHFREE_SECRET_KEY;
-    const mode = process.env.CASHFREE_MODE;
+    @InjectRepository(EcommercePayment)
+    private readonly paymentRepository: Repository<EcommercePayment>,
+    @InjectRepository(EcommerceOrderReference)
+    private readonly orderReferenceRepository: Repository<EcommerceOrderReference>,
+    @InjectRepository(EcommerceUserProductStatus)
+    private readonly userItemRepository: Repository<EcommerceUserProductStatus>,
+    @InjectRepository(EcommerceProduct)
+    private readonly productRepository: Repository<EcommerceProduct>,
+    @InjectRepository(EcommerceUserDeliverySelection)
+    private readonly deliverySelectionRepository: Repository<EcommerceUserDeliverySelection>,
+    private readonly userPreferenceService: UserPreferencesService,
+    private readonly paymentService: PaymentService,
+    private readonly cartService: CartService,
+    @InjectDataSource() private dataSource: DataSource,
+  ) {}
 
-    if (!appId || !secretKey) {
-      throw new BadRequestException('Cashfree credentials not configured');
+  private roundCurrency(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
+  }
+
+  private generateOrderNumber(): string {
+    // Last 6 digits of epoch milliseconds
+    const timeBasedSuffix = (Date.now() % 1_000_000)
+      .toString()
+      .padStart(6, '0');
+
+    // 4-character alphanumeric (A-Z, 0-9)
+    const randomAlphaNumeric = Math.random()
+      .toString(36)
+      .substring(2, 6)
+      .toUpperCase();
+
+    return `ORD-${timeBasedSuffix}-${randomAlphaNumeric}`;
+  }
+
+    private calculateOrderPricing(
+    items: EcommerceUserProductStatus[],
+    currencyInfo: CurrencyInfo,
+    deliveryFeeUSD: number,
+  ) {
+    const { rate } = currencyInfo;
+    let subtotalLocal = 0;
+
+    // Calculate details for each item
+    const itemDetails = items.map((item) => {
+      const product = item.product;
+
+      const basePrice = Number(product?.price || 0);
+      const discountPercentage = Number(product?.discount_percentage || 0);
+
+      const discountPerUnitUSD = basePrice * (discountPercentage / 100);
+      const discountedUnitPriceUSD = basePrice - discountPerUnitUSD;
+
+      const itemTotalPaidUSDRaw = discountedUnitPriceUSD * item.quantity;
+
+      const itemOriginalTotalUSDRaw = basePrice * item.quantity;
+
+      const localPrice = this.roundCurrency(basePrice * rate);
+      const localDiscountedPrice = this.roundCurrency(
+        discountedUnitPriceUSD * rate,
+      );
+      const itemSubtotalLocal = localPrice * item.quantity;
+
+      const itemTotalUSDRounded = this.roundCurrency(itemTotalPaidUSDRaw);
+
+      return {
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unitPriceUSD: basePrice,
+        totalUSD: itemTotalUSDRounded,
+        rawTotalUSD: itemTotalPaidUSDRaw,
+        subtotalLocal: itemSubtotalLocal,
+        discountUSD: discountPerUnitUSD * item.quantity,
+      };
+    });
+
+    // Aggregate totals
+    let totalItemsPaidUSDRaw = 0;
+    for (const detail of itemDetails) {
+      subtotalLocal += detail.subtotalLocal;
+      totalItemsPaidUSDRaw += detail.rawTotalUSD;
     }
 
-    this.cashfree = new Cashfree(
-      mode === 'production' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
-      appId,
-      secretKey,
-    )
+    const roundedDeliveryFeeUSD = this.roundCurrency(deliveryFeeUSD);
+
+    let finalUSDTotal = this.roundCurrency(
+      totalItemsPaidUSDRaw + roundedDeliveryFeeUSD,
+    );
+
+    const platformFee = finalUSDTotal * 0.05;
+    finalUSDTotal += platformFee;
+
+    return {
+      finalUSDTotal,
+      itemDetails,
+    };
+  }
+
+  private async decreaseProductStock(payment: EcommercePayment): Promise<void> {
+    for (const item of payment.items) {
+      const product = item.product;
+      const quantity = item.user_item?.quantity || 0;
+
+      if (!product) continue;
+
+      if (product.stock_quantity < quantity) {
+        throw new BadRequestException(
+          `Insufficient stock for product ${product.id}`,
+        );
+      }
+
+      product.stock_quantity -= quantity;
+      await this.productRepository.save(product);
+    }
   }
 
   async createOrder(
     userId: string,
     createOrderDto: CreateOrderDto,
-  ): Promise<EcommerceOrder> {
-    // Get user's active cart
-    const cart = await this.cartRepository.findOne({
-      where: { user_id: userId, status: CartStatus.ACTIVE },
-      relations: ['items', 'items.product', 'user'],
-    });
+  ): Promise<OrderWithDetails> {
+    let savedPayment: EcommercePayment | null = null;
 
-    if (!cart || cart.items.length === 0) {
-      throw new BadRequestException('Cart is empty');
-    }
-
-    const user = cart.user;
-    if (!user) {
+    if (!userId) {
       throw new BadRequestException('User not found');
     }
 
-    const countryCode = createOrderDto.country_code || 'USA';
-    const currencyResponse = await this.currencyRepository.findOne({
-      where: { country: { code: countryCode as CountryCode } },
-      relations: ['country'],
+    const cartItems = await this.userItemRepository.find({
+      where: { user_id: userId, status: UserProductStatus.CART },
+      relations: ['product', 'product.measurement'],
     });
 
-    if (!currencyResponse) {
-      throw new BadRequestException('Currency not found for country');
+    if (!cartItems.length) {
+      throw new BadRequestException('Cart is empty');
     }
 
-    const orderCurrency = currencyResponse.currency_code;
-
-    // Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-    // Create order
-    const order = this.orderRepository.create({
-      order_number: orderNumber,
-      user_id: userId,
-      status: OrderStatus.PENDING,
-      payment_status: PaymentStatus.PENDING,
-      subtotal: cart.total_amount,
-      discount_percentage: cart.discount_percentage,
-      shipping_amount: 0, // Can be calculated based on shipping rules
-      tax_amount: 0, // Can be calculated based on tax rules
-      total_amount: cart.final_amount,
-      shipping_address: createOrderDto.shipping_address,
-      billing_address: createOrderDto.billing_address,
-      notes: createOrderDto.notes,
-    });
-
-    const savedOrder = await this.orderRepository.save(order);
-
-    // Create order items from cart items
-    const orderItems = cart.items.map((cartItem) =>
-      this.orderItemRepository.create({
-        order_id: savedOrder.id,
-        product_id: cartItem.product_id,
-        quantity: cartItem.quantity,
-        unit_price: cartItem.unit_price,
-        total_price: cartItem.total_price,
-        discount_percentage: cartItem.discount_percentage,
-      }),
+    const placeOrderProducts = cartItems.filter((item) =>
+      createOrderDto.product_ids.includes(item.product_id),
     );
 
-    await this.orderItemRepository.save(orderItems);
+    if (!placeOrderProducts.length) {
+      throw new BadRequestException('No valid products to order');
+    }
 
-    // Mark cart as checked out
-    const originalCartStatus = cart.status;
-    cart.status = CartStatus.CHECKED_OUT;
-    await this.cartRepository.save(cart);
+    for (const item of placeOrderProducts) {
+      const product = item.product;
+
+      if (!product) {
+        throw new BadRequestException('Product not found');
+      }
+
+      if (product.stock_quantity <= 0) {
+        throw new BadRequestException(
+          `Product ${product.id} is not available in stock`,
+        );
+      }
+
+      item.quantity = Math.min(item.quantity, product.stock_quantity);
+    }
+
+    const userCurrencyInfo =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+
+    const sourceInfo = userCurrencyInfo || DEFAULT_CURRENCY;
+
+    const selectedDelivery =
+      await this.cartService.getSelectedDeliveryOption(userId);
+
+    const deliveryFeeUSD = selectedDelivery
+      ? Number(selectedDelivery.total_amount)
+      : 0;
+
+    const { finalUSDTotal, itemDetails } = this.calculateOrderPricing(
+      placeOrderProducts,
+      sourceInfo,
+      deliveryFeeUSD,
+    );
+
+    // Generate order number
+    const orderNumber = this.generateOrderNumber();
+    // Create order
+    const payment = this.paymentRepository.create({
+      order_number: orderNumber,
+      status: Status.PENDING,
+      payment_gateway: PAYMENT_GATEWAY.PAYPAL,
+      payment_mode: 'UNKNOWN',
+    });
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
     try {
-      let amountNum = Number(savedOrder.total_amount);
-      if(isNaN(amountNum)) throw new BadRequestException('Invalid order amount')
+      savedPayment = await queryRunner.manager.save(payment);
 
-      const converted = await this.userPreferenceService.getConvertedPrice(
-        userId,
-        amountNum,
+      for (const item of placeOrderProducts) {
+        const product = await queryRunner.manager.findOne(EcommerceProduct, {
+          where: { id: item.product_id },
+        });
+
+        if (!product || product.stock_quantity < item.quantity) {
+          throw new BadRequestException(
+            `Insufficient stock for product ${item.product_id}`,
+          );
+        }
+      }
+
+      const orderReferences = itemDetails.map((detail) => {
+        const correspondingUserItem = placeOrderProducts.find(
+          (i) => i.product_id === detail.product_id,
+        )!;
+        return this.orderReferenceRepository.create({
+          payment_id: savedPayment!.id,
+          user_item_id: correspondingUserItem.id,
+          product_id: detail.product_id,
+        });
+      });
+
+      await queryRunner.manager.save(orderReferences);
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
+    await this.paymentService.createPayPalPaymentSession(
+      savedPayment,
+      orderNumber,
+      finalUSDTotal,
+    );
+
+    return this.findOne(savedPayment.id);
+  }
+
+  async findAll(userId: string): Promise<OrderWithDetails[]> {
+    const payments = await this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoinAndSelect('payment.items', 'ref')
+      .innerJoinAndSelect('ref.user_item', 'user_item')
+      .innerJoinAndSelect('ref.product', 'product')
+      .where('user_item.user_id = :userId', { userId })
+      .andWhere('user_item.status = :itemStatus', {
+        itemStatus: UserProductStatus.ORDERED,
+      })
+      .andWhere('payment.status = :paymentStatus', {
+        paymentStatus: Status.PAID,
+      })
+      .orderBy('payment.created_at', 'DESC')
+      .getMany();
+
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    const displayCurrency = userCurrency?.symbol || DEFAULT_CURRENCY.symbol;
+
+    return payments.map((payment) => ({
+      ...payment,
+      items: payment.items,
+      total_amount: payment.items.reduce(
+        (sum, ref) =>
+          sum + Number(ref.product.price) * (ref.user_item?.quantity || 0),
+        0,
+      ),
+      display_currency: displayCurrency,
+    })) as OrderWithDetails[];
+  }
+
+  async getAllOrders(): Promise<any[]> {
+    return this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoin('payment.items', 'ref')
+      .innerJoin('ref.user_item', 'user_item')
+      .innerJoin('ref.product', 'product')
+      .innerJoin('users', 'u', 'u.id = user_item.user_id')
+      .select([
+        'payment.id AS "id"',
+        'payment.order_number AS "order_number"',
+        'payment.status AS "status"',
+        'payment.payment_mode AS "payment_mode"',
+        'payment.created_at AS "created_at"',
+        'payment.gateway_transaction_id AS "gateway_transaction_id"',
+        'COUNT(ref.id) AS "items_count"',
+        'SUM(product.price * user_item.quantity) AS "total_amount"',
+        'user_item.user_id AS "user_id"',
+        'u.name AS "user_name"',
+      ])
+      .where('payment.payment_gateway = :paymentGateway', {
+        paymentGateway: PAYMENT_GATEWAY.PAYPAL,
+      })
+      .andWhere('payment.status = :paymentStatus', {
+        paymentStatus: Status.PAID,
+      })
+      .andWhere('user_item.status = :itemStatus', {
+        itemStatus: UserProductStatus.ORDERED,
+      })
+      .groupBy(
+        `
+        payment.id,
+        payment.order_number,
+        payment.status,
+        payment.payment_mode,
+        payment.created_at,
+        payment.gateway_transaction_id,
+        user_item.user_id,
+        u.name
+        `,
       )
-
-      const finalAmount = Number(converted.toFixed(2));
-
-      await this.createCashfreePaymentSession(
-        savedOrder,
-        user,
-        orderNumber,
-        createOrderDto,
-        orderCurrency,
-        finalAmount,
-      );
-
-      return await this.findOne(savedOrder.id);
-    } catch (cashfreeErr: any) {
-      // Rollback on Cashfree failure
-      await this.orderRepository.delete(savedOrder.id);
-      cart.status = originalCartStatus;
-      await this.cartRepository.save(cart);
-
-      console.error(
-        'Cashfree error:',
-        cashfreeErr.response?.data || cashfreeErr.message
-      );
-
-      throw new BadRequestException(
-        'Failed to initialize payment session: ' +
-          (cashfreeErr.response?.data?.message ||
-            cashfreeErr.message ||
-            'Unknown error')
-      );
-    }
+      .orderBy('payment.created_at', 'DESC')
+      .getRawMany();
   }
 
-  private async createCashfreePaymentSession(
-    savedOrder: EcommerceOrder,
-    user: User,
-    orderNumber: string,
-    createOrderDto: CreateOrderDto,
-    orderCurrency: string,
-    finalAmount: number,
-  ): Promise<void> {
-    const cashfreeOrderRequest = {
-      order_amount: finalAmount,
-      order_currency: orderCurrency,
-      order_id: orderNumber,
-      customer_details: {
-        customer_id: user.id,
-        customer_name: user.name,
-        customer_email: user.email,
-        customer_phone: user.phone_number, 
-      },
-      order_meta: {
-        return_url: `${process.env.FRONTEND_URL}/order`,
-      },
-      order_note: createOrderDto.notes || '',
-    };
+  async findOne(id: string): Promise<OrderWithDetails> {
+    const payment = await this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoinAndSelect('payment.items', 'ref')
+      .innerJoinAndSelect('ref.user_item', 'user_item')
+      .innerJoinAndSelect('ref.product', 'product')
+      .where('payment.id = :id', { id })
+      .getOne();
 
-    const cashfreeResponse =
-      await this.cashfree.PGCreateOrder(cashfreeOrderRequest); 
-
-    savedOrder.cashfree_session_id = cashfreeResponse.data.payment_session_id!;
-    await this.orderRepository.save(savedOrder);
-  }
-
-  async findAll(userId?: string): Promise<EcommerceOrder[]> {
-    const whereCondition = userId ? { user_id: userId } : {};
-
-    return this.orderRepository.find({
-      where: whereCondition,
-      relations: ['items', 'items.product', 'user'],
-      order: { created_at: 'DESC' },
-    });
-  }
-
-  async findOne(id: string): Promise<EcommerceOrder> {
-    const order = await this.orderRepository.findOne({
-      where: { id },
-      relations: ['items', 'items.product', 'user'],
-    });
-
-    if (!order) {
+    if (!payment) {
       throw new NotFoundException('Order not found');
     }
 
-    return order;
+    const userId = payment.items[0]?.user_item?.user_id;
+
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+    const displayCurrency = userCurrency?.symbol || DEFAULT_CURRENCY.symbol;
+
+    const total_amount = payment.items.reduce(
+      (sum, ref) =>
+        sum + Number(ref.product.price) * (ref.user_item?.quantity || 0),
+      0,
+    );
+
+    return {
+      ...payment,
+      items: payment.items,
+      total_amount,
+      display_currency: displayCurrency,
+    } as OrderWithDetails;
   }
 
-  async getOrdersByUser(userId?: string): Promise<EcommerceOrder[]> {
-    const whereCondition = userId ? { user_id: userId } : {};
+  async getOrdersByUser(userId: string): Promise<OrderWithDetails[]> {
+    const payments = await this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoinAndSelect('payment.items', 'ref')
+      .innerJoinAndSelect('ref.user_item', 'user_item')
+      .innerJoinAndSelect('ref.product', 'product')
+      .where('user_item.user_id = :userId', { userId })
+      .andWhere('user_item.status = :itemStatus', {
+        itemStatus: UserProductStatus.ORDERED,
+      })
+      .andWhere('payment.status = :paymentStatus', {
+        paymentStatus: Status.PAID,
+      })
+      .orderBy('payment.created_at', 'DESC')
+      .getMany();
 
-    return this.orderRepository.find({
-      where: whereCondition,
-      relations: ['items', 'items.product', 'user'],
-      order: { created_at: 'DESC' },
-    });
+    if (!payments.length) return [];
+
+    const userCurrency =
+      await this.userPreferenceService.getUserPreferredCurrency(userId);
+
+    const targetInfo: CurrencyInfo = userCurrency || DEFAULT_CURRENCY;
+
+    const origCurrency =
+      await this.userPreferenceService.getCurrencyInfoByCode('USD');
+
+    const conversionFactor = origCurrency
+      ? targetInfo.rate / origCurrency.rate
+      : 1;
+
+    return payments.map((payment) => ({
+      ...payment,
+      items: payment.items,
+      total_amount: this.roundCurrency(
+        payment.items.reduce(
+          (sum, ref) =>
+            sum + Number(ref.product.price) * (ref.user_item?.quantity || 0),
+          0,
+        ) * conversionFactor,
+      ),
+      display_currency: targetInfo.symbol,
+    })) as OrderWithDetails[];
   }
 
-  async findByOrderNumber(orderNumber: string): Promise<EcommerceOrder> {
-    const order = await this.orderRepository.findOne({
-      where: { order_number: orderNumber },
-      relations: ['items', 'items.product', 'user'],
-    });
+  async findByOrderNumber(orderNumber: string): Promise<EcommercePayment> {
+    const payment = await this.paymentRepository
+      .createQueryBuilder('payment')
+      .select('payment')
+      .leftJoinAndSelect('payment.items', 'items')
+      .leftJoinAndSelect('items.product', 'product')
+      .leftJoinAndSelect('items.user_item', 'user_item')
+      .where('payment.order_number = :orderNumber', { orderNumber })
+      .getOne();
 
-    if (!order) {
+    if (!payment) {
       throw new NotFoundException('Order not found');
     }
 
-    return order;
+    return payment;
   }
 
   async updateOrderStatus(
     id: string,
-    status: OrderStatus,
-  ): Promise<EcommerceOrder> {
-    const order = await this.findOne(id);
-    order.status = status;
-    return this.orderRepository.save(order);
+    status: Status,
+    comment?: string,
+  ): Promise<EcommercePayment> {
+    const payment = (await this.findOne(id)) as EcommercePayment;
+    payment.status = status;
+
+    return this.paymentRepository.save(payment);
   }
 
-  async updatePaymentStatus(
+  async processOrderPayment(
     orderId: string,
-    cashfreeData: any,
-  ): Promise<EcommerceOrder> {
-    const order = await this.findOne(orderId);
-    if (order.payment_status !== PaymentStatus.PENDING) {
-      throw new BadRequestException('Payment already processed');
+    paypalOrderId?: string,
+  ): Promise<EcommercePayment> {
+    const payment = (await this.findOne(orderId)) as EcommercePayment;
+
+    if (payment.status === Status.PAID) {
+      return payment;
     }
 
-    order.payment_status = PaymentStatus.PAID;
-    order.cashfree_payment_id = cashfreeData.cf_payment_id;
-    return this.orderRepository.save(order);
+    if (payment.status !== Status.PENDING) {
+      throw new BadRequestException(
+        'Payment already processed or invalid status',
+      );
+    }
+
+    if (paypalOrderId && payment.gateway_order_id !== paypalOrderId) {
+      throw new BadRequestException('Invalid PayPal order ID');
+    }
+
+    const captureData = await this.paymentService.capturePayPalPayment(payment);
+    this.paymentService.applyPayPalToOrder(payment, captureData);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      await this.decreaseProductStock(payment);
+
+      const userItemIds = payment.items.map((item) => item.user_item_id);
+
+      await queryRunner.manager.update(
+        EcommerceUserProductStatus,
+        { id: In(userItemIds) },
+        { status: UserProductStatus.ORDERED },
+      );
+
+      await queryRunner.manager.save(EcommercePayment, payment);
+
+      const userId = payment.items[0]?.user_item?.user_id;
+      if (userId) {
+        await this.cartService.clearSelectedDeliveryOption(userId);
+      }
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return payment;
   }
 
-  async cancelOrder(id: string): Promise<EcommerceOrder> {
-    const order = await this.findOne(id);
+  async cancelOrder(id: string): Promise<EcommercePayment> {
+    const payment = (await this.findOne(id)) as EcommercePayment;
 
     if (
-      order.status === OrderStatus.DELIVERED ||
-      order.status === OrderStatus.CANCELLED
+      payment.status === Status.DELIVERED ||
+      payment.status === Status.CANCELLED
     ) {
       throw new BadRequestException('Cannot cancel this order');
     }
 
-    order.status = OrderStatus.CANCELLED;
-    return this.orderRepository.save(order);
+    payment.status = Status.CANCELLED;
+    return this.paymentRepository.save(payment);
   }
 }

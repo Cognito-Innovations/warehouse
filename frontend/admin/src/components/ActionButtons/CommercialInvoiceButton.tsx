@@ -3,6 +3,7 @@ import { Button, CircularProgress } from "@mui/material";
 import jsPDF from "jspdf";
 import autoTable, { type UserOptions } from 'jspdf-autotable';
 import { toast } from "sonner";
+import { formatDateTime } from "../../utils/formatDateTime";
 
 interface AutoTableFinalY {
   finalY: number;
@@ -26,18 +27,19 @@ interface Item {
 
 interface InvoiceData {
     id: string;
+    shipment_no: string;
     user?: {
         name: string;
         phone?: string;
         suite_no?: string;
         address?: string;
     }
-    updated_at?: string;
     to_address?: {
         line1?: string;
         zip_code?: string;
     };
     packages: Packages[];
+    created_at: number;
 }
 
 interface CommercialInvoiceButtonProps {
@@ -58,196 +60,184 @@ const CommercialInvoiceButton: React.FC<CommercialInvoiceButtonProps> = ({ data 
             const allItems = data.packages
               ?.flatMap((pkg) => pkg.items) ?? [];
 
+            const grandTotal = allItems.reduce(
+              (sum, item) => sum + parseFloat(item.total_price || "0"), 
+              0
+            );
+
             const doc = new jsPDF() as jsPDFWithAutoTable;
             const pageW = doc.internal.pageSize.getWidth();
             const margin = 14;
             const purpleColor = [104, 38, 128];
+            const lightGray = [240, 240, 240];
 
-            // --- 2. Header Section ---
+            // Header Section
             let yPos = 20;
-            // Left-side: Sender Information
+            // Left Side: Sender Info
+            doc.setTextColor(0, 0, 0);
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
+            doc.setFontSize(11);
             doc.text("PALAKART INTERNATIONAL COURIER", margin, yPos);
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            yPos += 6;
+            doc.setFontSize(9);
+            yPos += 5;
             doc.text("support@palakart.com", margin, yPos);
-            yPos += 5;
+            yPos += 4;
             doc.text("6/454, Palakart Nagar, Amman Kovil Road, Perumagoundampatti, Elampillai", margin, yPos);
-            yPos += 5;
+            yPos += 4;
             doc.text("India", margin, yPos);
 
             // Right-side: "palakart" Logo and "INVOICE" box
+            const rightX = pageW - margin;
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(28);
+            doc.setFontSize(24);
             doc.setTextColor(purpleColor[0], purpleColor[1], purpleColor[2]);
-            doc.text("palakart", pageW - margin, 28, { align: "right" });
+            doc.text("palakart", rightX, 22, { align: "right" });
 
-            const invoiceBoxY = 35;
-            const invoiceBoxW = 40;
-            const invoiceBoxH = 12;
+            // Invoice Badge
+            const badgeY = 26;
+            const badgeWidth = 40;
+            const badgeHeight = 10;
+            const badgeX = rightX - badgeWidth;
             doc.setDrawColor(purpleColor[0], purpleColor[1], purpleColor[2]);
             doc.setLineWidth(0.5);
-            doc.roundedRect(pageW - margin - invoiceBoxW, invoiceBoxY, invoiceBoxW, invoiceBoxH, 2, 2, 'S');
-            doc.setFontSize(22);
-            doc.text("INVOICE", pageW - margin - (invoiceBoxW / 2), invoiceBoxY + 8.5, { align: "center" });
-            doc.setTextColor(0, 0, 0); // Reset color
+            doc.roundedRect(badgeX, badgeY, badgeWidth, badgeHeight, 2, 2, 'S');
+            doc.setFontSize(14);
+            doc.setTextColor(purpleColor[0], purpleColor[1], purpleColor[2]);
+            doc.text("INVOICE", badgeX + (badgeWidth / 2), badgeY + 7, { align: "center" });
+
+            // Address & Details Boxes
+            const gap = 5;
+            const usableWidth = pageW - (margin * 2);
+
+            // Custom Widths (approximated ratios)
+            const wDetails = 45; 
+            const wBill = 60;
+            const wShip = usableWidth - wDetails - wBill - (gap * 2);
+
+            // Start Y position
+            const boxStartY = 38;
+            const boxHeaderHeight = 8;
+            const boxContentHeight = 25;
+
+            const drawBox = (x: number, width: number, title: string, lines: string[]) => {
+              doc.setFillColor(purpleColor[0], purpleColor[1], purpleColor[2]);
+              doc.rect(x, boxStartY, width, boxHeaderHeight, 'F');
             
-            yPos = 65; // Set start Y for the next section
-
-            // --- 3. Address & Details Section (Manual Drawing for Precision) ---
-            const boxWidth = (pageW - margin * 2) / 3;
-            const boxHeaderH = 8;
-            const boxBodyH = 25;
-
-            const drawInfoBox = (x: number, y: number, title: string, content: string[]) => {
-                // Header
-                doc.setFillColor(purpleColor[0], purpleColor[1], purpleColor[2]);
-                doc.rect(x, y, boxWidth, boxHeaderH, 'F');
-                doc.setTextColor(255, 255, 255);
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(10);
-                doc.text(title, x + 4, y + 5.5);
-
-                // Body
-                doc.setDrawColor(200, 200, 200);
-                doc.rect(x, y + boxHeaderH, boxWidth, boxBodyH, 'S');
-                doc.setTextColor(0, 0, 0);
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(9);
-                doc.text(content, x + 4, y + boxHeaderH + 6);
+              // Header Text
+              doc.setTextColor(255, 255, 255);
+              doc.setFont("helvetica", "bold");
+              doc.setFontSize(9);
+              doc.text(title, x + 3, boxStartY + 5.5);
+            
+            // Body
+            doc.setDrawColor(purpleColor[0], purpleColor[1], purpleColor[2]);
+            doc.setLineWidth(0.1);
+            doc.rect(x, boxStartY + boxHeaderHeight, width, boxContentHeight, 'S');
+                
+            // Body Text
+            doc.setTextColor(0, 0, 0);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+        
+            let textY = boxStartY + boxHeaderHeight + 5;
+            lines.forEach(line => {
+                doc.text(line, x + 3, textY);
+                textY += 4;
+              });
             };
 
-            // Ship To Box
-            const shipToContent = [
-                data.user?.name || 'Maryam Maana',
-                data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City Kaafu",
-                data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
-                data.user?.phone || '9834396'
-            ];
-            drawInfoBox(margin, yPos, 'Ship To', shipToContent);
-            
-            // Bill To Box
-            const billToContent = [
-                data.user?.name || 'Maryam Maana',
-                data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City",
-                data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
-                data.user?.phone || '9834396'
-            ];
-            drawInfoBox(margin + boxWidth + 6, yPos, 'Bill To', billToContent);
-            
-            // Invoice Details Box
-            const invoiceDetailsContent = [
-                `Suite ID: ${data.user?.suite_no || '714-881'}`,
-                `Invoice Number: ${data.id || 'S2025236IN'}`,
-                `Invoice Date: ${data.updated_at || '2025-09-22'}`,
-                'Currency: USD'
-            ];
-            drawInfoBox(margin + (boxWidth + 6) * 2, yPos, 'Invoice Details', invoiceDetailsContent);
+            // Ship To Data
+            drawBox(margin, wShip, "Ship To", [
+              data.user?.name || 'Maryam Maana',
+              data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City Kaafu",
+              data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
+              data.user?.phone || '9834396'
+            ]);
 
-            // --- 4. Items Table ---
-            const tableColumns = ["Description", "Qty", "Amount", "Total"];
-            let tableRows: any[] = []; 
-            let grandTotal = 0;
+            // Bill To Data
+            drawBox(margin + wShip + gap, wBill, "Bill To", [
+              data.user?.name || 'Maryam Maana',
+              data.to_address?.line1 || "G. Fun, 3rd Floor, Male' City",
+              data.to_address?.zip_code ? `${data.to_address.zip_code} MV` : '20131 MV',
+              data.user?.phone || '9834396'
+            ]);
 
-            if (allItems.length === 0) {
-                tableRows = [["No items found", "", "", ""]]
-            } else {
-                tableRows = allItems.map(item => [
-                    item.name || 'N/A',
-                    item.quantity,
-                    parseFloat(item.unit_price).toFixed(2),
-                    `USD ${parseFloat(item.total_price).toFixed(2)}`
-                ]);
-            
-                grandTotal = allItems.reduce(
-                    (sum, item) => sum + parseFloat(item.total_price), 
-                    0
-                );
-            }
-            
+            // Invoice Details Data
+            drawBox(margin + wShip + gap + wBill + gap, wDetails, "Invoice Details", [
+              `Suite ID: ${data.user?.suite_no || '714-881'}`,
+              `Invoice Number: ${data.shipment_no || 'N/A'}`,
+              `Invoice Date: ${formatDateTime(data.created_at)
+                  ?.split(',')
+                  .slice(0, 2)
+                  .join(',')
+                  .trim() || 'Dec 29, 2025'}`,
+              `Currency: USD`
+            ]);
+
+            // --- 3. Items Table ---
+            const tableStartY = boxStartY + boxHeaderHeight + boxContentHeight + 8;
+            const tableBody = allItems.map(item => [
+              item.name,
+              item.quantity,
+              parseFloat(item.unit_price).toFixed(2),
+              `USD ${parseFloat(item.total_price).toFixed(2)}`
+            ]);
+
             autoTable(doc, {
-                startY: yPos + boxHeaderH + boxBodyH + 10,
-                head: [tableColumns],
-                body: tableRows,
-                theme: 'grid',
-                headStyles: {
-                    fillColor: [purpleColor[0], purpleColor[1], purpleColor[2]],
-                    textColor: [255, 255, 255],
-                    fontStyle: 'bold',
-                    fontSize: 10,
-                    cellPadding: 3,
-                },
-                styles: {
-                    lineColor: [220, 220, 220],
-                    lineWidth: 0.2,
-                    font: 'helvetica',
-                    fontSize: 9,
-                    valign: 'middle'
-                },
-                columnStyles: {
-                    0: { cellWidth: 95, halign: 'left' },
-                    1: { halign: 'center' },
-                    2: { halign: 'right' },
-                    3: { halign: 'right' },
-                },
-                bodyStyles: {
-                  textColor: allItems.length === 0 ? [120,120,120] : [0,0,0],
-                },
-                didDrawCell: (data) => {
-                    // Custom draw the "Brand:, Model:" text in a smaller, grey font
-                    if (data.column.index === 0 && data.cell.text[0].includes('Brand:')) {
-                        const [mainText, brandText] = data.cell.text[0].split('\n');
-                        const textPos = data.cell.getTextPos();
-                        
-                        // Erase the default text
-                        doc.setFillColor(data.cell.styles.fillColor as string);
-                        doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
-                        
-                        // Draw main text
-                        doc.setTextColor(0, 0, 0);
-                        doc.text(mainText, textPos.x, textPos.y);
-
-                        // Draw brand text
-                        doc.setFontSize(8);
-                        doc.setTextColor(120, 120, 120);
-                        doc.text(brandText, textPos.x, textPos.y + 5);
-                        doc.setFontSize(9); // Reset
-                        doc.setTextColor(0,0,0); // Reset
-                    }
-                },
-                margin: { left: margin, right: margin },
+              startY: tableStartY,
+              head: [["Description", "Qty", "Amount", "Total"]],
+              body: tableBody,
+              foot: [
+                  ["TOTAL", "", "", `USD ${grandTotal.toFixed(2)}`]
+              ],
+              theme: 'grid',
+              styles: {
+                  font: 'helvetica',
+                  fontSize: 9,
+                  cellPadding: 3,
+                  lineColor: [220, 220, 220],
+                  lineWidth: 0.1,
+                  textColor: [0, 0, 0]
+              },
+              headStyles: {
+                  fillColor: purpleColor,
+                  textColor: [255, 255, 255],
+                  fontStyle: 'bold',
+                  halign: 'left'
+              },
+              columnStyles: {
+                  0: { halign: 'left', cellWidth: 'auto' }, // Description
+                  1: { halign: 'center', cellWidth: 20 },   // Qty
+                  2: { halign: 'right', cellWidth: 30 },    // Amount
+                  3: { halign: 'right', cellWidth: 35 }     // Total
+              },
+              footStyles: {
+                  fillColor: lightGray,
+                  textColor: [0, 0, 0],
+                  fontStyle: 'bold',
+                  halign: 'right'
+              },
+              didParseCell: function (data) {
+                  // Merge the first 3 columns of the footer for the "TOTAL" label
+                  if (data.section === 'foot' && data.column.index === 0) {
+                      data.cell.colSpan = 3;
+                      data.cell.styles.halign = 'right';
+                  }
+              },
+              margin: { left: margin, right: margin }
             });
 
-             // --- 5. Total Section ---
-             autoTable(doc, {
-                startY: doc.lastAutoTable?.finalY || yPos + boxHeaderH + boxBodyH + 10,
-                body: [
-                    [
-                        { content: 'TOTAL', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', fontSize: 10 } },
-                        { content: `USD ${grandTotal.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold', fontSize: 10 } }
-                    ]
-                ],
-                theme: 'grid',
-                styles: {
-                    fillColor: [240, 240, 240],
-                    lineColor: [220, 220, 220],
-                    lineWidth: 0.2,
-                },
-                margin: { left: margin, right: margin },
-            });
+              doc.save(`commercial-invoice-${data.id}.pdf`);
+              toast.success("Commercial Invoice downloaded successfully!");
 
-            doc.save(`commercial-invoice-${data.id}.pdf`);
-            toast.success("Commercial Invoice downloaded successfully!");
-
-        } catch (error) {
-            console.error("Failed to generate PDF invoice:", error);
-            toast.error("Failed to generate PDF. Please try again.");
-        } finally {
-            setIsPrinting(false);
-        }
-    };
+            } catch (error) {
+              console.error("Failed to generate PDF invoice:", error);
+              toast.error("Failed to generate PDF. Please try again.");
+            } finally {
+              setIsPrinting(false);
+            }
+        };
 
     return (
         <Button

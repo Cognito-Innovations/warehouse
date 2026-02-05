@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
+import { MailerService } from '@nestjs-modules/mailer';
 import {
   ShoppingRequest,
   ShoppingRequestStatus,
@@ -17,6 +18,11 @@ import { InvoicesService } from 'src/invoice/invoices.service';
 import { Invoice, InvoiceStatus } from 'src/invoice/entities/invoice.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { UsersService } from 'src/users/users.service';
+import { User } from 'src/users/user.entity';
+import {
+  getShoppingRequestEmailTemplate,
+  ShoppingRequestEmailType,
+} from './shopping-request-email-templates';
 
 @Injectable()
 export class ShoppingRequestsService {
@@ -32,25 +38,65 @@ export class ShoppingRequestsService {
     private readonly invoicesService: InvoicesService,
     private readonly userPreferencesService: UserPreferencesService,
     private readonly usersService: UsersService,
+    private readonly mailerService: MailerService,
   ) {}
+
+  private buildShoppingRequestQB(
+    countryId?: string,
+  ): SelectQueryBuilder<ShoppingRequest> {
+    const qb = this.shoppingRequestRepository
+      .createQueryBuilder('shoppingRequest')
+      .leftJoinAndSelect('shoppingRequest.courier', 'courier')
+      .leftJoinAndSelect('courier.country', 'country');
+
+    if (countryId) {
+      qb.andWhere('country.id = :countryId', { countryId });
+    }
+
+    return qb;
+  }
+
+  async getShoppingRequestsCountByStatus(
+    status: ShoppingRequestStatus,
+    countryId?: string,
+  ): Promise<number> {
+    const qb = this.buildShoppingRequestQB(countryId);
+
+    qb.andWhere('shoppingRequest.status = :status', { status });
+
+    return qb.getCount();
+  }
+
+  private generateRequestCode(courier: CourierCompany): string {
+    const countryCode = courier.country.code;
+    return `SR/${countryCode}/${Date.now()}`;
+  }
 
   async createShoppingRequest(
     createShoppingRequestDto: CreateShoppingRequestDto,
   ): Promise<ShoppingRequestResponseDto> {
-    const courier = await this.courierRepository.findOne({
-      where: { id: createShoppingRequestDto.courier_id },
-    });
-    if (!courier) {
-      throw new NotFoundException(
-        `Courier ${createShoppingRequestDto.courier_id} not found`,
-      );
+    const { user_id, items_count = 0, remarks } = createShoppingRequestDto;
+
+    const user = await this.usersService.findById(user_id);
+    if (!user) {
+      throw new NotFoundException(`User ${user_id} not found`);
     }
+
+    if (!user.preference || !user.preference.courier) {
+      throw new NotFoundException('Courier not found in user preferences');
+    }
+
+    const courier = user.preference.courier;
+
+    const request_code = this.generateRequestCode(courier);
+
     const shoppingRequest = this.shoppingRequestRepository.create({
-      ...createShoppingRequestDto,
+      user_id,
       courier,
-      status:
-        createShoppingRequestDto.status || ShoppingRequestStatus.REQUESTED,
-      items_count: createShoppingRequestDto.items_count || 0,
+      request_code,
+      items_count,
+      remarks,
+      status: ShoppingRequestStatus.REQUESTED,
     });
     const savedShoppingRequest =
       await this.shoppingRequestRepository.save(shoppingRequest);
@@ -62,6 +108,8 @@ export class ShoppingRequestsService {
       courier_id: savedShoppingRequest.courier.id,
     });
 
+    await this.sendEmailToUser(savedShoppingRequest, 'request-created');
+
     const { courier: savedCourier, ...rest } = savedShoppingRequest;
     return {
       ...rest,
@@ -71,13 +119,36 @@ export class ShoppingRequestsService {
     };
   }
 
-  async getAllShoppingRequests() {
-    const shoppingRequests = await this.shoppingRequestRepository.find({
-      order: { created_at: 'DESC' },
-      relations: ['user', 'courier'],
-    });
+  async getAllShoppingRequests({
+    page,
+    limit,
+    countryId,
+  }: {
+    page: number;
+    limit: number;
+    countryId?: string;
+  }) {
+    const qb = this.shoppingRequestRepository
+      .createQueryBuilder('sr')
+      .leftJoinAndSelect('sr.user', 'user')
+      .orderBy('sr.created_at', 'DESC');
 
-    return shoppingRequests;
+    if (countryId) {
+      qb.andWhere('sr.country_id = :countryId', { countryId });
+    }
+
+    const [data, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getShoppingRequestsByUser(
@@ -103,12 +174,12 @@ export class ShoppingRequestsService {
         const shoppingRequestProducts = await Promise.all(
           rawProducts.map(async (product) => ({
             ...product,
-            unit_price: 
+            unit_price:
               await this.userPreferencesService.getFormattedConvertedPrice(
                 request.user_id,
                 product.unit_price,
               ),
-          }))
+          })),
         );
 
         return {
@@ -126,7 +197,7 @@ export class ShoppingRequestsService {
   ): Promise<ShoppingRequestResponseDto> {
     const shoppingRequest = await this.shoppingRequestRepository.findOne({
       where: { request_code: requestCode },
-      relations: ['user', 'courier'],
+      relations: ['user', 'user.address', 'courier', 'courier.country'],
     });
 
     if (!shoppingRequest) {
@@ -193,10 +264,9 @@ export class ShoppingRequestsService {
 
     return {
       ...rest,
-      user: user
-        ? this.usersService.mapToUserResponseDto(shoppingRequest.user)
-        : undefined,
+      user: user ? user : undefined,
       courier: courier?.name,
+      courier_country_code: courier?.country?.code,
       shopping_request_products: await Promise.all(
         shoppingRequestProducts.map(async (product) => ({
           ...product,
@@ -246,6 +316,7 @@ export class ShoppingRequestsService {
     let invoice: Invoice | null = null;
     if (normalizedStatus === 'QUOTATION_READY') {
       invoice = await this.invoicesService.createInvoice(shoppingRequest);
+      (shoppingRequest as any).invoice = invoice;
     }
 
     shoppingRequest.status = ShoppingRequestStatus[normalizedStatus];
@@ -268,6 +339,19 @@ export class ShoppingRequestsService {
       user: updatedShoppingRequest.user_id,
       courier_id: updatedShoppingRequest.courier.id,
     });
+
+    let emailType: ShoppingRequestEmailType = 'status-updated';
+    if (normalizedStatus === 'QUOTATION_READY') {
+      emailType = 'quotation-ready';
+    } else if (normalizedStatus === 'PAYMENT_APPROVED') {
+      emailType = 'payment-approved';
+    }
+
+    await this.sendEmailToUser(
+      updatedShoppingRequest,
+      emailType,
+      ShoppingRequestStatus[normalizedStatus],
+    );
 
     const slips = await this.documentsService.findByFeature(
       FeatureType.ShoppingRequest,
@@ -363,5 +447,39 @@ export class ShoppingRequestsService {
     await this.shoppingRequestRepository.delete(id);
 
     return { message: 'Shopping request deleted successfully' };
+  }
+
+  private async sendEmailToUser(
+    request: ShoppingRequest,
+    type: ShoppingRequestEmailType,
+    status?: ShoppingRequestStatus,
+  ): Promise<void> {
+    try {
+      const user: User | null = await this.usersService.findById(
+        request.user_id,
+      );
+      if (!user || !user.email) {
+        return;
+      }
+
+      const { subject, html } = getShoppingRequestEmailTemplate(
+        type,
+        user,
+        request,
+        status,
+      );
+
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject,
+        html,
+      });
+    } catch (error) {
+      console.error('[Email Error]', {
+        requestId: request.id,
+        type,
+        error: error?.message,
+      });
+    }
   }
 }

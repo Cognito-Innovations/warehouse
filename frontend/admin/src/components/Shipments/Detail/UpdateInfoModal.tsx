@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import WeightSection from "./WeightSection";
 import { updateShipment } from "../../../services/api.services";
+import type { Pieces } from "./ShipmentDetailsSection";
 
 interface PieceData {
   weight: string;
@@ -32,11 +33,12 @@ interface FormData {
 interface Shipment {
   id: string;
   customs_value: string;
-  total_weight: number;
-  total_volumetric_weight: number;
-  length: number;
-  width: number;
-  height: number;
+  pieces: Pieces[];
+  total_weight: string | number;
+  total_volumetric_weight: string | number;
+  length: string | number | null;
+  width: string | number | null;
+  height: string | number | null;
 }
 
 interface UpdateInfoModalProps {
@@ -47,27 +49,41 @@ interface UpdateInfoModalProps {
 }
 
 const getInitialFormData = (shipmentData: Shipment): FormData => {
-  const l = shipmentData.length || 0;
-  const w = shipmentData.width || 0;
-  const h = shipmentData.height || 0;
+  const parseNum = (val: string | number | null | undefined): number => {
+    return parseFloat(String(val || '0')) || 0;
+  };
+
+  const l = parseNum(shipmentData.length);
+  const w = parseNum(shipmentData.width);
+  const h = parseNum(shipmentData.height);
   const initialVolumetricWeight = (l * w * h) / 5000;
 
-  const volWeight =
-    shipmentData.total_volumetric_weight > 0
-      ? shipmentData.total_volumetric_weight
-      : initialVolumetricWeight;
+  const volWeightNum = parseNum(shipmentData.total_volumetric_weight);
+  const volWeight = volWeightNum > 0 ? volWeightNum : initialVolumetricWeight;
+
+  let pieces: PieceData[] = [
+    {
+      weight: String(parseNum(shipmentData.total_weight)),
+      length: String(l),
+      width: String(w),
+      height: String(h),
+      volumetricWeight: volWeight > 0 ? volWeight.toFixed(3) : "0.000",
+    },
+  ];
+
+  if (shipmentData.pieces && shipmentData.pieces.length > 0) {
+    pieces = shipmentData.pieces.map((p: any) => ({
+      weight: String(parseNum(p.weight)),
+      length: String(parseNum(p.length)),
+      width: String(parseNum(p.width)),
+      height: String(parseNum(p.height)),
+      volumetricWeight: String(parseNum(p.volumetric_weight)),
+    }));
+  }
 
   return {
-    customsValue: String(shipmentData.customs_value || ""),
-    pieces: [
-      {
-        weight: String(shipmentData.total_weight || 0),
-        length: String(l),
-        width: String(w),
-        height: String(h),
-        volumetricWeight: volWeight > 0 ? volWeight.toFixed(3) : "0.000",
-      },
-    ],
+    customsValue: String(shipmentData.customs_value || "0.00"),
+    pieces,
   };
 };
 
@@ -188,12 +204,18 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
     if (formData.pieces.length === 0) {
       return false;
     }
-    return formData.pieces.every(
-      (p) =>
-        p.weight && parseFloat(p.weight) > 0 &&
-        p.length && parseFloat(p.length) > 0 &&
-        p.width && parseFloat(p.width) > 0 &&
-        p.height && parseFloat(p.height) > 0
+    return formData.pieces.every((p) => {
+      const weightValid = p.weight && parseFloat(p.weight) > 0;
+
+      const l = parseFloat(p.length) || 0;
+      const w = parseFloat(p.width) || 0;
+      const h = parseFloat(p.height) || 0;
+
+      const anyVolProvided = l > 0 || w > 0 || h > 0;
+      const allVolProvided = l > 0 && w > 0 && h > 0;
+
+      return weightValid && (!anyVolProvided || allVolProvided);
+    }
     );
   }, [formData]);
 
@@ -217,16 +239,24 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
         newErrors[`piece_${idx}_weight`] = "Required > 0";
         isValid = false;
       }
-      if (!piece.length || parseFloat(piece.length) <= 0) {
-        newErrors[`piece_${idx}_length`] = "Required > 0";
-        isValid = false;
-      }
-      if (!piece.width || parseFloat(piece.width) <= 0) {
-        newErrors[`piece_${idx}_width`] = "Required > 0";
-        isValid = false;
-      }
-      if (!piece.height || parseFloat(piece.height) <= 0) {
-        newErrors[`piece_${idx}_height`] = "Required > 0";
+
+      const l = parseFloat(piece.length) || 0;
+      const w = parseFloat(piece.width) || 0;
+      const h = parseFloat(piece.height) || 0;
+
+      const anyVolProvided = l > 0 || w > 0 || h > 0;
+      const allVolProvided = l > 0 && w > 0 && h > 0;
+
+      if (anyVolProvided && !allVolProvided) {
+        if (l <= 0) {
+          newErrors[`piece_${idx}_length`] = "Required when using volumetric weight";
+        }
+        if (w <= 0) {
+          newErrors[`piece_${idx}_width`] = "Required when using volumetric weight";
+        }
+        if (h <= 0) {
+          newErrors[`piece_${idx}_height`] = "Required when using volumetric weight";
+        }
         isValid = false;
       }
     });
@@ -247,13 +277,20 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
 
     setSaving(true);
     try {
-      const piece = formData.pieces[0];
-      const payload = {
+      const piecesPayload = formData.pieces.map((piece, index) => ({
+        piece_number: index + 1,
         weight: parseFloat(piece.weight),
         length: parseFloat(piece.length),
         width: parseFloat(piece.width),
         height: parseFloat(piece.height),
+        volumetric_weight: parseFloat(piece.volumetricWeight),
+      }));
+
+      const payload = {
+        customs_value: parseFloat(formData.customsValue),
+        pieces: piecesPayload,
       };
+
       await updateShipment(shipments.id, payload);
       onRefresh();
       onClose();
@@ -295,9 +332,9 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
 
           <Box sx={{ mb: 3 }}>
             <Typography sx={{ fontWeight: 600, mb: 1 }}>Carriers</Typography>
-            <RadioGroup value="REDBOX">
+            <RadioGroup value="UGFLASH">
               <FormControlLabel
-                value="REDBOX"
+                value="UGFLASH"
                 control={
                   <Radio
                     sx={{
@@ -309,7 +346,7 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
                 label={
                   <Box>
                     <Typography variant="body1" fontWeight={500}>
-                      REDBOX
+                      UGFLASH
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       5 to 10 Business days from the day of departure

@@ -1,424 +1,290 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Container, Typography } from "@mui/material";
-import { ShoppingCart } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { Box, Container, Button } from "@mui/material";
+import { ArrowForward } from "@mui/icons-material";
 import { useSession } from "next-auth/react";
-import { toast } from "sonner";
 
-import { useCart, useCartActions } from "../../../store/ecommerceStore";
-import { useEffectiveUserLocation } from "@/hooks/useEffectiveUserLocation";
-import { fetchUserAddresses, createUserAddress } from "@/lib/api.service";
-import CartHeader from "@/components/ecommerce/cart/CartHeader";
-import AddressSelectionDropdown from "@/components/ecommerce/cart/AddressSelectionDropdown";
-import AddAddressModal from "@/components/ecommerce/cart/AddAddressModal";
-import CartItemsList from "@/components/ecommerce/cart/CartItemsList";
+import { useCartStore } from "@/store/cartStore";
+import { useCheckout } from "@/store/useCheckout";
+import { ecommerceService } from "@/services/ecommerce.service";
 import OrderSummaryCard from "@/components/ecommerce/cart/OrderSummaryCard";
 import EmptyCartState from "@/components/ecommerce/cart/EmptyCartState";
 import CartSkeletonLoader from "@/components/ecommerce/cart/CartSkeletonLoader";
 import ContinueShoppingCard from "@/components/ecommerce/cart/ContinueShoppingCard";
-import { ecommerceData } from "@/data/ecommerceData";
-import { ROUTES } from "@/utils/constants";
-import { getCurrencyForCountry } from "@/utils/currency";
-import { getCartItemPricingSummary } from "@/utils/priceUtils";
-import { CartItemLoadingState, CartAddressData } from "@/types/ecommerce";
+import AddressSection from "@/components/ecommerce/cart/AddressSection";
+import CartLoginState from "@/components/ecommerce/cart/CartLoginState";
+import OrderSummarySkeleton from "@/components/ecommerce/skeleton-loader/OrderSummarySkeleton";
+import CartItemsSkeleton from "@/components/ecommerce/skeleton-loader/CartItemsSkeleton";
+import CartStepper from "@/components/ecommerce/cart/CartStepper";
+import DeliveryModelSelection from "@/components/ecommerce/cart/DeliveryModelSelection";
+import ReadOnlyCartItems from "@/components/ecommerce/cart/ReadOnlyCartItems";
+import CargoGroupedCart from "@/components/ecommerce/cart/CargoGroupedCart";
+import { CartAddressData, DeliveryOption } from "@/types/ecommerce";
+import { normalizeCart } from "@/lib/utils";
+
+type CartStep = 0 | 1 | 2;
 
 export default function CartPage() {
-  const router = useRouter();
-  const { data: session } = useSession();
-  const { cart, itemCount, loading: cartLoading } = useCart();
-  const { updateCartItem, removeFromCart, fetchCart } = useCartActions();
+  const { data: session, status } = useSession();
+  const { cart, getCart } = useCartStore();
+  const { selectedCargo } = useCheckout();
 
-  const [loadingStates, setLoadingStates] = useState<Record<string, CartItemLoadingState>>({});
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [addresses, setAddresses] = useState<CartAddressData[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<CartAddressData | null>(null);
-  const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
-  const [loadingAddresses, setLoadingAddresses] = useState(false);
-
-  const locationData = useEffectiveUserLocation({
-    countryCode: undefined,
-    countryName: undefined,
-    city: '',
-    pincode: '',
-  });
-  const selectedCountry = locationData.location.countryName;
-  const countryCode = locationData.location.countryCode;
+  const [highlightAddressError, setHighlightAddressError] = useState(false);
+  const [isCartLoading, setIsCartLoading] = useState(false);
+  const [isAddressDataReady, setIsAddressDataReady] = useState(false);
+  const [activeStep, setActiveStep] = useState<CartStep>(0);
+  const [selectedDeliveryOption, setSelectedDeliveryOption] = useState<DeliveryOption | null>(null);
+  const [groupedCart, setGroupedCart] = useState<any>(null);
 
   const userId = (session?.user as any)?.user_id;
 
-  useEffect(() => {
-    if (countryCode) {
-      fetchCart(countryCode);
-    }
-  }, [fetchCart]);
-
-  useEffect(() => {
-    if (cart && cart.items.length > 0) {
-      setSelectedItems(new Set(cart.items.map((item) => item.id)));
-    }
-  }, [cart])
-
-  useEffect(() => {
-    if (userId) {
-      loadAddresses();
-    }
+  const fetchGroupedCart = useCallback(async () => {
+    const res = await ecommerceService.getCartGroupedByCargo(
+      userId
+    );
+    setGroupedCart(res.items);
   }, [userId]);
 
-  const loadAddresses = async () => {
-    if (!userId) return;
-    setLoadingAddresses(true);
-    try {
-      const addressData = await fetchUserAddresses(userId);
-      if (addressData) {
-        const formattedAddresses: CartAddressData[] = Array.isArray(addressData)
-          ? addressData.map((addr: any) => ({
-              id: addr.id,
-              name: addr.name || "",
-              address: addr.address || "",
-              city: addr.city || "",
-              state: addr.state || "",
-              zip_code: addr.zip_code || "",
-              country: addr.country || "",
-              phone_number: addr.phone_number,
-              email: addr.email,
-            }))
-          : [
-              {
-                id: addressData.id,
-                name: addressData.name || "",
-                address: addressData.address || "",
-                city: addressData.city || "",
-                state: addressData.state || "",
-                zip_code: addressData.zip_code || "",
-                country: addressData.country || "",
-                phone_number: addressData.phone_number,
-                email: addressData.email,
-              },
-            ];
-        setAddresses(formattedAddresses);
-        if (formattedAddresses.length > 0 && !selectedAddress) {
-          setSelectedAddress(formattedAddresses[0]);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load addresses:", err);
-    } finally {
-      setLoadingAddresses(false);
+  useEffect(() => {
+    if (activeStep === 0 && userId) {
+      fetchGroupedCart();
     }
-  };
+  }, [activeStep, fetchGroupedCart]);
 
-  const handleSaveAddress = async (addressData: Omit<CartAddressData, "id">) => {
-    if (!userId) return;
-    try {
-      // Only send fields that the API expects
-      const apiData = {
-        user_id: userId,
-        name: addressData.name,
-        address: addressData.address,
-        country: addressData.country,
-        zip_code: addressData.zip_code,
-        state: addressData.state,
-        city: addressData.city,
-      };
-      const newAddress = await createUserAddress(apiData);
-      const formattedAddress: CartAddressData = {
-        id: newAddress.id,
-        ...addressData,
-      };
-      setAddresses((prev) => [...prev, formattedAddress]);
-      setSelectedAddress(formattedAddress);
-    } catch (err) {
-      console.error("Failed to save address:", err);
-      throw err;
-    }
-  };
-
-  const handleQuantityChange = useCallback(async (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setLoadingStates((prev) => ({
-        ...prev,
-        [itemId]: { ...prev[itemId], isDecrementLoading: true },
-      }));
-      try {
-        await removeFromCart(itemId, countryCode);
-      } catch (err) {
-        console.error("Failed to remove item:", err);
-      } finally {
-        setLoadingStates((prev) => {
-          const newState = { ...prev };
-          delete newState[itemId];
-          return newState;
-        });
-      }
-    } else {
-      const isIncrement = newQuantity > (cart?.items.find((item) => item.id === itemId)?.quantity || 0);
-      setLoadingStates((prev) => ({
-        ...prev,
-        [itemId]: {
-          ...prev[itemId],
-          isIncrementLoading: isIncrement,
-          isDecrementLoading: !isIncrement,
-        },
-      }));
-      try {
-        await updateCartItem(itemId, newQuantity, countryCode);
-      } catch (err) {
-        console.error("Failed to update quantity:", err);
-      } finally {
-        setLoadingStates((prev) => ({
-          ...prev,
-          [itemId]: {
-            ...prev[itemId],
-            isIncrementLoading: false,
-            isDecrementLoading: false,
-          },
-        }));
-      }
-    }
-  }, [cart, updateCartItem, removeFromCart]);
-
-  const handleRemoveItem = useCallback(async (itemId: string) => {
-    setLoadingStates((prev) => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], isRemoveLoading: true },
-    }));
-    try {
-      await removeFromCart(itemId, countryCode);
-    } catch (err) {
-      console.error("Failed to remove item:", err);
-    } finally {
-      setLoadingStates((prev) => {
-        const newState = { ...prev };
-        delete newState[itemId];
-        return newState;
-      });
-    }
-  }, [removeFromCart]);
-
-  const handleItemSelect = useCallback((itemId: string, selected: boolean) => {
-    setSelectedItems((prev) => {
-      const newSet = new Set(prev);
-      if (selected) {
-        newSet.add(itemId);
-      } else {
-        newSet.delete(itemId);
-      }
-      return newSet;
-    });
+  const handleAddressFetchComplete = useCallback(() => {
+    setIsAddressDataReady(true);
   }, []);
 
-  const handleSelectAll = useCallback((selected: boolean) => {
-    if (selected) {
-      setSelectedItems(new Set(cart?.items.map((item) => item.id) || []));
-    } else {
-      setSelectedItems(new Set());
+  const handleAddressSelect = useCallback((address: CartAddressData | null) => {
+    setSelectedAddress(address);
+    // Don't auto-advance - let user manually proceed to next step
+  }, []);
+
+  const handleDeliveryOptionSelect = useCallback(async (option: DeliveryOption) => {
+    setSelectedDeliveryOption(option);
+    try {
+      await ecommerceService.selectDeliveryOption(option);
+      await getCart();
+    } catch (err) {
+      console.error('Failed to save delivery option:', err);
     }
-  }, [cart]);
+  }, []);
 
-  const handleCheckout = useCallback(() => {
-    const selectedCartItems = cart?.items.filter((item) => selectedItems.has(item.id)) || [];   
+  const handleBackToAddress = useCallback(() => {
+    setActiveStep(0);
+  }, []);
 
-    localStorage.setItem("checkoutSelectedItems", JSON.stringify(selectedCartItems));
+  const handleContinueToReview = useCallback(() => {
+    if (selectedDeliveryOption) {
+      setActiveStep(2); // Move to order summary step
+    }
+  }, [selectedDeliveryOption]);
 
+  const handleBackToDelivery = useCallback(() => {
+    setActiveStep(1);
+  }, []);
+
+  const handleEditAddress = useCallback(() => {
+    setActiveStep(0); // Go back to address selection step
+  }, []);
+
+
+  const initCart = useCallback(async () => {
+    setIsCartLoading(true);
+    try {
+      await getCart();
+    } catch (e) {
+      console.error("Initialization error:", e);
+    } finally {
+      setIsCartLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading" || !userId) return;
     if (userId) {
-      router.push(ROUTES.CHECKOUT);
-    } else {
-      toast.info("Please sign in to continue with checkout");
-      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(ROUTES.CHECKOUT)}`);
+      initCart();
     }
-  }, [router, selectedItems, cart, userId]);
+  }, [status, initCart, userId]);
 
-  const handleContinueShopping = useCallback(() => {
-    router.push(ROUTES.ECOMMERCE);
-  }, [router]);
-
-  const getThresholdAndFees = (country?: string) => {
-    if (country && country.includes('India')) {
-      return { threshold: 299, deliveryFee: 3, serviceCharge: 1 };
-    } else {
-      return { threshold: 20, deliveryFee: 5, serviceCharge: 1 };
+  useEffect(() => {
+    if (activeStep === 0 && selectedAddress && userId) {
+      // Don't auto-advance, let user click continue
+    } else if (activeStep === 1 && selectedDeliveryOption) {
+      // Don't auto-advance, let user click continue
     }
-  };
+  }, [activeStep, selectedAddress, selectedDeliveryOption, userId]);
 
-  // Calculate totals for all items in cart (in local currency)
-  const calculateSelectedTotals = useCallback(() => {
-    if (!cart || !cart.items || cart.items.length === 0) {
-      return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
-    }
-
-    const { threshold, deliveryFee: deliveryBase, serviceCharge: serviceBase } =
-      getThresholdAndFees(selectedCountry);
-
-    const selectedCartItems =
-      cart.items.filter((item) => selectedItems.has(item.id)) ?? [];
-
-    if (selectedCartItems.length === 0) {
-      return { subtotal: 0, discount: 0, deliveryFee: 0, taxes: 0, serviceCharge: 0, total: 0 };
-    }
-
-    let grossSubtotal = 0;
-    let discountAmount = 0;
-
-    selectedCartItems.forEach((item) => {
-      const pricing = getCartItemPricingSummary(item);
-      const lineOriginalTotal = pricing.originalUnitPrice * pricing.quantity;
-      grossSubtotal += lineOriginalTotal;
-      discountAmount += pricing.discountTotal;
-    });
-
-    const discountedSubtotal = grossSubtotal - discountAmount;
-    const deliveryFee = discountedSubtotal >= threshold ? 0 : deliveryBase;
-    const taxes = discountedSubtotal * 0.02; // 2% tax
-    const serviceCharge = serviceBase;
-    const total = discountedSubtotal + deliveryFee + taxes + serviceCharge;
-    const asAmount = (value: number) => Number(value.toFixed(2));
-
-    return {
-      subtotal: asAmount(grossSubtotal),
-      discount: asAmount(discountAmount),
-      deliveryFee: asAmount(deliveryFee),
-      taxes: asAmount(taxes),
-      serviceCharge: asAmount(serviceCharge),
-      total: asAmount(total),
-    };
-  }, [cart, selectedItems, selectedCountry]);
-
-  // Show skeleton loader while cart is loading and no cart data exists
-  if (cartLoading && !cart) {
+  if (status === "loading") {
     return <CartSkeletonLoader />;
   }
 
-  // Show empty cart state
-  if (!cart || cart.items.length === 0) {
-    return (
-      <EmptyCartState
-        icon={<ShoppingCart sx={{ fontSize: 80, color: "text.secondary", mb: 2 }} />}
-        title={ecommerceData.cart.emptyCart.title}
-        description={ecommerceData.cart.emptyCart.description}
-        buttonLabel={ecommerceData.cart.emptyCart.buttonLabel}
-        onButtonClick={() => router.push(ROUTES.ECOMMERCE)}
-        buttonColor={ecommerceData.ui.colors.bottomNavCart}
-      />
-    );
+  if (!isCartLoading && (!cart || cart.length === 0)) {
+    return <EmptyCartState />;
   }
 
-  const getCurrencySymbol = () => {
-    if (cart && cart.items.length > 0) {
-      const firstSelected = cart.items.find((item) => selectedItems.has(item.id)) || cart.items[0];
-      const pricing = getCartItemPricingSummary(firstSelected);
-      if (pricing.currency) {
-        return pricing.currency;
-      }
+  const safeCart = normalizeCart(cart);
+  const validItems = safeCart.filter(item => item && item.product);
+
+  const renderStepContent = () => {
+    switch (activeStep) {
+      case 0:
+        return (
+          <>
+            {!userId ? (
+              <CartLoginState />
+            ) : (
+              <>
+                <AddressSection
+                  userId={userId}
+                  onAddressChange={handleAddressSelect}
+                  highlightAddressError={highlightAddressError}
+                  onAddressFetchComplete={handleAddressFetchComplete}
+                  initialAddress={selectedAddress}
+                />
+                {/* Continue button to proceed to delivery step */}
+
+              </>
+            )}
+            {isCartLoading ? (
+              <CartItemsSkeleton />
+            ) : (
+              groupedCart && (
+                <CargoGroupedCart
+                  groupedItems={groupedCart}
+                />
+              )
+            )}
+            {/* Action buttons at bottom */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column-reverse", sm: "row" },
+                justifyContent: { xs: "flex-start", sm: "space-between" },
+                alignItems: { xs: "stretch", sm: "center" },
+                gap: { xs: 1.5, sm: 2 },
+                mt: 2,
+                mb: { xs: 1, sm: 0 },
+              }}
+            >
+              <ContinueShoppingCard />
+              {selectedCargo && selectedAddress && (
+                <Button
+                  variant="contained"
+                  endIcon={<ArrowForward />}
+                  onClick={() => setActiveStep(1)}
+                  disabled={!selectedAddress || !isAddressDataReady || isCartLoading}
+                  fullWidth={false}
+                  sx={{
+                    textTransform: "none",
+                    bgcolor: "primary.main",
+                    px: { xs: 2, sm: 3 },
+                    py: { xs: 1, sm: 1.25 },
+                    fontSize: { xs: "0.875rem", sm: "1rem" },
+                    minWidth: { xs: "auto", sm: 180 },
+                    flex: { xs: "1 1 auto", sm: "0 0 auto" },
+                    "&:hover": {
+                      bgcolor: "primary.dark",
+                    },
+                    "&.Mui-disabled": {
+                      bgcolor: "grey.400",
+                      color: "grey.700",
+                    },
+                  }}
+                >
+                  Continue to Delivery
+                </Button>
+              )}
+            </Box>
+          </>
+        );
+      case 1:
+        return (
+          <>
+            {/* Step 1: Delivery Selection - NO cart items shown */}
+            <DeliveryModelSelection
+              selectedOption={selectedDeliveryOption}
+              onSelectOption={handleDeliveryOptionSelect}
+              onBack={handleBackToAddress}
+              onContinue={handleContinueToReview}
+            />
+            {/* Cart items removed from this step - users can't edit during delivery selection */}
+          </>
+        );
+      case 2:
+        return (
+          <>
+            {/* Step 2: Order Summary - Show read-only cart items for final review */}
+            {isCartLoading ? (
+              <CartItemsSkeleton />
+            ) : (
+              <ReadOnlyCartItems
+                items={validItems as any}
+              />
+            )}
+            {/* Note: Order Summary card is shown on the right side */}
+          </>
+        );
+      default:
+        return null;
     }
-    return currencyInfo.symbol;
   };
 
-  const totals = calculateSelectedTotals();
-  const currencyInfo = getCurrencyForCountry(selectedCountry!);
-  const currencySymbol = getCurrencySymbol();
-
   return (
-    <Box sx={{ bgcolor: "grey.50", minHeight: "100vh" }}>
-      <CartHeader
-        title={ecommerceData.cart.title}
-        itemCount={itemCount}
-        onBackClick={() => router.back()}
-      />
+    <Box sx={{ bgcolor: "grey.50", minHeight: "100vh", pb: { xs: 2, md: 0 } }}>
+      <Container
+        maxWidth="lg"
+        sx={{
+          py: { xs: 2, sm: 3 },
+          px: { xs: 1.5, sm: 2, md: 3 },
+        }}
+      >
+        <CartStepper activeStep={activeStep} />
 
-      <Container maxWidth="lg" sx={{ py: 3, px: { xs: 2, sm: 3 } }}>
         <Box
           sx={{
             display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            gap: 3,
+            flexDirection: { xs: "column", md: activeStep === 2 ? "row" : "column" },
+            gap: { xs: 2, sm: 3 },
+            alignItems: { xs: "stretch", md: "flex-start" },
           }}
         >
-          {/* Cart Items Section */}
-          <Box sx={{ flex: { md: "0 0 65%" }, width: { xs: "100%", md: "65%" } }}>
-            {!userId ? (
-              <Box sx={{ p: 2, border: "1px solid #ddd", borderRadius: 2, mb: 2 }}>
-                <Typography variant="subtitle1" fontWeight={600}>Address</Typography>
-                <Typography variant="body2" color="text.secondary" mt={1}>
-                  To select or add an address, please login.
-                </Typography>
-              </Box>
-            ) : addresses.length === 0 ? (
-              <Box sx={{ p: 2, border: "1px solid #ddd", borderRadius: 2, mb: 2 }}>
-                <Typography variant="subtitle1" fontWeight={600}>No Address Found</Typography>
-                <Typography variant="body2" color="text.secondary" mt={1}>
-                  Add your delivery address to continue.
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ mt: 2, color: "primary.main", cursor: "pointer", fontWeight: 600 }}
-                  onClick={() => setAddAddressModalOpen(true)}
-                >
-                  + Add Address
-                </Typography>
-              </Box>
+          {/* Main Content Section */}
+          <Box sx={{
+            flex: { md: activeStep === 2 ? "0 0 65%" : "1" },
+            width: { xs: "100%", md: activeStep === 2 ? "65%" : "100%" },
+            minWidth: 0, // Prevents overflow
+          }}>
+            {renderStepContent()}
+          </Box>
+
+          {/* Order Summary Section - Only show in step 2 (Order Summary) */}
+          {activeStep === 2 && (
+            <Box sx={{
+              flex: { md: "0 0 35%" },
+              width: { xs: "100%", md: "35%" },
+              minWidth: 0, // Prevents overflow
+              order: { xs: -1, md: 0 }, // Show summary first on mobile for better UX
+            }}>
+              {isCartLoading ? (
+                <OrderSummarySkeleton />
               ) : (
-                <AddressSelectionDropdown
-                  addresses={addresses}
+                <OrderSummaryCard
+                  userId={userId}
+                  items={validItems as any}
                   selectedAddress={selectedAddress}
-                  onAddressSelect={setSelectedAddress}
-                  onAddNewAddress={() => setAddAddressModalOpen(true)}
-                  noAddressLabel={ecommerceData.cart.addressSelection.noAddressLabel}
-                  addAddressLabel={ecommerceData.cart.addressSelection.addAddressLabel}
-                  selectAddressLabel={ecommerceData.cart.addressSelection.selectAddressLabel}
-                  borderColor={ecommerceData.ui.colors.borderColor}
+                  setHighlightAddressError={setHighlightAddressError}
+                  selectedDeliveryOption={selectedDeliveryOption}
+                  onBackToDelivery={handleBackToDelivery}
+                  onEditAddress={handleEditAddress}
                 />
               )}
-
-            <CartItemsList
-              items={cart.items}
-              loadingStates={loadingStates}
-              selectedItems={selectedItems}
-              onItemSelect={handleItemSelect}
-              onSelectAll={handleSelectAll}
-              onQuantityChange={handleQuantityChange}
-              onRemoveItem={handleRemoveItem}
-              title={ecommerceData.cart.cartItems.title}
-              discountBadgeColor={ecommerceData.ui.colors.discountBadge}
-              borderColor={ecommerceData.ui.colors.borderColor}
-              currencySymbol={currencySymbol}
-              selectedCountry={selectedCountry}
-            />
-
-            <ContinueShoppingCard
-              label={ecommerceData.cart.continueShopping.label}
-              onClick={handleContinueShopping}
-              borderColor={ecommerceData.ui.colors.borderColor}
-            />
-          </Box>
-
-          {/* Order Summary Section */}
-          <Box sx={{ flex: { md: "0 0 35%" }, width: { xs: "100%", md: "35%" } }}>
-            <OrderSummaryCard
-              subtotal={totals.subtotal}
-              discount={totals.discount}
-              deliveryFee={totals.deliveryFee}
-              taxes={totals.taxes}
-              serviceCharge={totals.serviceCharge}
-              total={totals.total}
-              checkoutLabel={ecommerceData.cart.orderSummary.checkoutLabel}
-              onCheckout={handleCheckout}
-              borderColor={ecommerceData.ui.colors.borderColor}
-              currencySymbol={currencySymbol}
-            />
-          </Box>
+            </Box>
+          )}
         </Box>
       </Container>
-
-      <AddAddressModal
-        open={addAddressModalOpen}
-        onClose={() => setAddAddressModalOpen(false)}
-        onSave={handleSaveAddress}
-        title="Add New Address"
-        saveLabel="Save Address"
-        cancelLabel="Cancel"
-      />
     </Box>
   );
 }

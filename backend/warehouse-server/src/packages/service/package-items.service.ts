@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { PackageItem } from '../entities';
+import { Package, PackageItem } from '../entities';
 import { CreatePackageItemDto } from '../dto/create-package-item.dto';
 import { UpdatePackageItemDto } from '../dto/update-package-item.dto';
 import { PackageItemResponseDto } from '../dto/package-item-response.dto';
@@ -12,13 +12,21 @@ export class PackageItemsService {
   constructor(
     @InjectRepository(PackageItem)
     private readonly packageItemRepository: Repository<PackageItem>,
+    @InjectRepository(Package)
+    private readonly packageRepository: Repository<Package>,
   ) {}
   async createItem(
     package_id: string,
     createItemDto: CreatePackageItemDto,
   ): Promise<PackageItemResponseDto> {
-    // For now, we'll assume the package_id is valid and proceed
-    // In a real implementation, you'd verify the package exists first
+    const packageExists = await this.packageRepository.findOne({
+      where: { id: package_id },
+    });
+
+    if (!packageExists) {
+      throw new NotFoundException(`Package with id ${package_id} not found`);
+    }
+
     const packageItem = this.packageItemRepository.create({
       package_id: package_id,
       name: createItemDto.name,
@@ -88,21 +96,13 @@ export class PackageItemsService {
 
     const savedItems = await this.packageItemRepository.save(packageItems);
 
-    return {
-      items: savedItems.map((item) => ({
-        ...item
-      })),
-    };
+    return { items: savedItems };
   }
 
   async getItems(package_id: string): Promise<PackageItemResponseDto[]> {
-    const items = await this.packageItemRepository.find({
+    return this.packageItemRepository.find({
       where: { package_id: package_id },
       order: { created_at: 'DESC' },
     });
-
-    return items.map((item) => ({
-      ...item
-    }));
   }
 }

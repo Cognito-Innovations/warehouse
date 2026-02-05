@@ -1,10 +1,16 @@
 //TODO P0: Resolve these typescript errors
-import type { CargoOption, CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
+import type { CargoOption, CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, DashboardMetrics, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
 import type { PreArrival } from '../types/PreArrival';
 import api from './axios';
+import { getCountryFilterParams } from './countryFilter';
 
 export const getUsers = async (): Promise<User[]> => {
   const response = await api.get<User[]>('/users');
+  return response.data;
+};
+
+export const updateUserRole = async (userId: string, role: string) => {
+  const response = await api.patch(`/users/${userId}`, { role });
   return response.data;
 };
 
@@ -63,7 +69,9 @@ export const createPackage = async (pkg: CreatePackageDto): Promise<Package> => 
 };
 
 export const getPackage = async () : Promise <Package[]> => {
-  const response = await api.get<Package[]>('/packages')
+  const params = getCountryFilterParams();
+
+  const response = await api.get<Package[]>('/packages', { params })
   return response.data;
 }
 
@@ -73,14 +81,17 @@ export const getPackageById = async (id: string): Promise<Package> => {
 };
 
 export const searchPackages = async (query: string): Promise<Package[]> => {
-  const response = await api.get<Package[]>('/packages', {
-    params: { search: query }
-  });
+  const params = {
+    ...getCountryFilterParams(),
+    search: query,
+  };
+
+  const response = await api.get<Package[]>('/packages', { params });
   return response.data;
 }
 
-export const updatePackageStatus = async (id: string, status: string): Promise<Package> => {
-  const response = await api.patch<Package>(`/packages/${id}/status`, { status });
+export const updatePackageStatus = async (id: string, status: string, discard_comment?: string): Promise<Package> => {
+  const response = await api.patch<Package>(`/packages/${id}/status`, { status, discard_comment });
   return response.data;
 };
 
@@ -130,11 +141,19 @@ export const bulkUploadPackageItems = async (packageId: string, items: Array<{
 };
 
 // Package Documents API functions
-export const uploadPackageDocuments = async (packageId: string, files: File[]): Promise<any> => {
+export const uploadPackageDocuments = async (
+  packageId: string,
+  files: File[],
+  userId?: string,
+): Promise<any> => {
   const formData = new FormData();
   files.forEach(file => {
     formData.append('files', file);
   });
+
+  if (userId) {
+    formData.append('uploadedBy', userId);
+  }
   
   const response = await api.post(`/packages/${packageId}/documents/upload`, formData, {
     headers: {
@@ -216,7 +235,9 @@ export const markPreArrivalAsReceived = async (id: string): Promise<PreArrival> 
 };
 
 export const getPickupRequests = async () => {
-  const response = await api.get('/pickup-requests');
+  const params = getCountryFilterParams();
+
+  const response = await api.get('/pickup-requests', { params });
   return response.data;
 };
 
@@ -230,8 +251,23 @@ export const updatePickupRequestStatus = async (id: string, status: string, pric
   return response.data;
 };
 
-export const getAllShoppingRequests = async () => {
-  const response = await api.get("/shopping-requests");
+export const getAllShoppingRequests = async ({
+  page,
+  limit,
+}: {
+  page: number;
+  limit: number;
+}) => {
+  const countryParams = getCountryFilterParams();
+
+  const response = await api.get("/shopping-requests", {
+    params: {
+      ...countryParams,
+      page,
+      limit,
+    },
+  });
+
   return response.data;
 };
 
@@ -289,7 +325,7 @@ export const markShipmentExportDeparted = async (id: string) => {
   return response.data;
 };
 
-export const updateShipmentExportBox = async (id: number, payload: any) => {
+export const updateShipmentExportBox = async (id: string, payload: any) => {
   const response = await api.patch(`/shipment-export-boxes/${id}`, payload);
   return response.data;
 };
@@ -299,7 +335,7 @@ export const createShipmentExportBox = async (exportId: string, payload: any = {
   return response.data;
 };
 
-export const deleteShipmentExportBox = async (id: number) => {
+export const deleteShipmentExportBox = async (id: string) => {
   await api.delete(`/shipment-export-boxes/${id}`);
 };
 
@@ -313,26 +349,32 @@ export const deleteShipmentExport = async (id: string) => {
 };
 
 export const searchReadyToShipShipment = async (shipmentNumber: string) => {
-  const response = await api.get('/shipments/search', {
+  const params = {
+    shipmentNumber,
+    status: 'READY_TO_SHIP',
+    ...getCountryFilterParams(),
+  };
+
+  const response = await api.get('/shipments/search', { params });
+  return response.data;
+};
+
+export const addShipmentToBox = async (boxId: string, shipmentId: string) => {
+  const response = await api.post(`/shipment-export-boxes/${boxId}/shipments`, { shipmentId });
+  return response.data;
+};
+
+export const getShipmentsByBoxIds = async (boxIds: string[]) => {
+  if (!boxIds.length) return [];
+  const response = await api.get(`/shipment-export-boxes/shipments`, {
     params: {
-      shipmentNumber,
-      status: 'READY_TO_SHIP',
+      boxIds: boxIds.join(','),
     },
   });
   return response.data;
 };
 
-export const addShipmentToBox = async (boxId: number, shipmentId: string) => {
-  const response = await api.post(`/shipment-export-boxes/${boxId}/shipments`, { shipmentId });
-  return response.data;
-};
-
-export const getShipmentsByBoxId = async (boxId: number) => {
-  const response = await api.get(`/shipment-export-boxes/${boxId}/shipments`);
-  return response.data;
-};
-
-export const removeShipmentFromBox = async (boxId: number, shipmentId: string) => {
+export const removeShipmentFromBox = async (boxId: string, shipmentId: string) => {
   const response = await api.delete(`/shipment-export-boxes/${boxId}/shipments/${shipmentId}`);
   return response.data;
 };
@@ -449,8 +491,21 @@ export const createProduct = async (
   return response.data;
 };
 
-export const getProducts = async () => {
-  const response = await api.get("/ecommerce-products");
+export const getProducts = async (search: string = "") => {
+  const params = new URLSearchParams();
+  
+  const cleanSearch = search.trim();
+  if (cleanSearch) {
+    params.append("search", cleanSearch);
+  }
+
+  params.append("limit", "1000");
+  params.append("role", "admin");
+
+  const queryString = params.toString();
+  const url = `/ecommerce-products${queryString ? `?${queryString}` : ""}`;
+
+  const response = await api.get(url);
   return response.data;
 };
 
@@ -475,7 +530,7 @@ export const getMeasurements = async () => {
 
 // Orders
 export const getOrders = async () => {
-  const response = await api.get("/ecommerce-orders");
+  const response = await api.get("/ecommerce-orders/all");
   return response.data;
 };
 
@@ -484,8 +539,8 @@ export const getOrderByOrderId = async (orderId: string | number) => {
   return response.data;
 };
 
-export const updateOrderStatus = async (id: string, status: string) => {
-  const response = await api.patch(`/ecommerce-orders/${id}/status`, status);
+export const updateOrderStatus = async (id: string, status: string, comment?: string) => {
+  const response = await api.patch(`/ecommerce-orders/${id}/status`, { status, comment });
   return response.data;
 };
 
@@ -496,14 +551,19 @@ export const updatePaymentStatus = async (id: string, paymentStatus: string) => 
 
 // Shipment
 export const getShipments = async () => {
-  const response = await api.get('/shipments');
+  const params = getCountryFilterParams();
+
+  const response = await api.get('/shipments', { params });
   return response.data;
 };
 
 export const getShipmentsByStatus = async (status: string) => {
-  const params = new URLSearchParams();
-  params.append('status', status);
-  const response = await api.get(`/shipments/by-status?${params.toString()}`);
+  const params = {
+    status,
+    ...getCountryFilterParams(),
+  };
+
+  const response = await api.get(`/shipments/by-status`, { params });
   return response.data;
 };
 
@@ -559,5 +619,23 @@ export const createShipmentInvoice = async (
 
 export const getCargoOptions = async (): Promise<CargoOption[]> => {
   const response = await api.get<CargoOption[]>('/ecommerce-cargo-options');
+  return response.data;
+};
+
+export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
+  const params = getCountryFilterParams();
+
+  const response = await api.get<DashboardMetrics>('/analytics', { params });
+  return response.data;
+};
+
+export const createUser = async (data: {
+  email: string;
+  password: string;
+  role: string;
+  courier_id: string;
+  shouldHashPassword: boolean;
+}): Promise<any> => {
+  const response = await api.post('/users', data);
   return response.data;
 };

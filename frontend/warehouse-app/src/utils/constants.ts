@@ -1,16 +1,22 @@
 export enum ROUTES {
+  ROOT = "/",
   SIGN_IN = "/sign-in",  
   DASHBOARD = "/dashboard",  
+  DASHBOARD_PACKAGES = "/packages",
+  DASHBOARD_SHIPMENTS = "/shipments",
   PROFILE = "/profile",
   PICKUP_REQUEST = "/pickup-request",
-  ORDER_HISTORY = "/order",
+  CREATE_PICKUP_REQUEST = "/pickup-request/create-request",
+  ORDER_HISTORY = "/ecommerce/orders",
   SHIPMENT = "/shipment",
   ECOMMERCE = "/ecommerce",
   PRODUCT = "/ecommerce/product",
   CART = "/ecommerce/cart",
   CHECKOUT = "/ecommerce/checkout",
-  ORDER = "/ecommerce/orders",
-  ASSISTED_SHOPPING = "/assisted-shopping",
+  ASSISTED_SHOPPING = "/ecommerce/assisted-shopping",
+  CREATE_ASSISTED_SHOPPING = "/assisted-shopping/create-request",
+  ASSISTED_SHOPPING_HISTORY = "/ecommerce/assisted-shopping/history",
+  DASHBOARD_SHARE_OTP = "/share-otp"
 }
 
 export const IMAGE_FILE_REGEX = /\.(jpeg|jpg|png|gif|webp)$/i;
@@ -45,4 +51,50 @@ export const steps = [
 export const STORAGE_KEY = "warehouse:clientIdentifier";
 export const HEADER_KEY = "x-client-identifier";
 
-export const CF_SCRIPT_SRC = "https://sdk.cashfree.com/js/v3/cashfree.js";
+export const DEFAULT_IMG =
+  "https://rukminim2.flixcart.com/fk-p-flap/108/108/image/eb75e5d9571bde1a.png?q=60";
+
+export const ASSISTED_SHOPPING_PRODUCT_LINK_KEY = "assisted_shopping_product_link";
+export const ASSISTED_SHOPPING_VIRTUAL_ADDRESS_KEY = "assisted_shopping_virtual_address";
+
+export const orderStatusPhrases: { [key: string]: string } = {
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+  shipped: "Shipped",
+  pending: "Pending",
+};
+
+export const GUEST_LOCATION_STORAGE_KEY = "guest_location";
+
+export const DEFAULT_CURRENCY_INFO = {
+  code: "USD",
+  symbol: "$",
+  rate: 1.00,
+}
+
+export const DEFAULT_LOCATION = {
+  countryName: "United States of Ameria",
+  countryCode: "US"
+}
+
+export const INR_CURRENCY = {
+  code: 'INR',
+  symbol: '₹',
+  rate: 90.25,
+}
+
+export const ASSISTED_SHOPPING_STEPS = [
+  { number: 1, label: "LINK" },
+  { number: 2, label: "DETAILS" },
+  { number: 3, label: "COMPLETE" },
+];
+
+export const ECOMMERCE_EXCLUDED_PATHS = [
+  ROUTES.ORDER_HISTORY,
+  ROUTES.CHECKOUT,
+  ROUTES.PRODUCT,
+  ROUTES.CART,
+  ROUTES.ASSISTED_SHOPPING_HISTORY,
+];
+
+export const AUTH_COOKIE_NAME = "auth-token";

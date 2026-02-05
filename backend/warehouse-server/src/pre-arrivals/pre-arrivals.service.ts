@@ -20,6 +20,24 @@ export class PreArrivalService {
     private readonly userRepository: Repository<User>,
   ) {}
 
+  private readonly preArrivalSelect = {
+    id: true,
+    otp: true,
+    tracking_no: true,
+    estimate_arrival_time: true,
+    details: true,
+    status: true,
+    created_at: true,
+    updated_at: true,
+    user: {
+      id: true,
+      name: true,
+      suite_no: true,
+    },
+  };
+
+  private readonly preArrivalRelations = { user: true };
+
   private mapToResponseDto(preArrival: PreArrival): PreArrivalResponseDto {
     const { user, ...rest } = preArrival;
 
@@ -41,7 +59,10 @@ export class PreArrivalService {
   ): Promise<PreArrivalResponseDto> {
     const { userId, ...restOfDto } = createPreArrivalDto;
 
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'name', 'suite_no'],
+    });
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
@@ -53,14 +74,15 @@ export class PreArrivalService {
     });
 
     const savedPreArrival = await this.preArrivalRepository.save(preArrival);
-    savedPreArrival.user = user; 
+    savedPreArrival.user = user;
 
     return this.mapToResponseDto(savedPreArrival);
   }
 
   async getAllPrearrival(): Promise<PreArrivalResponseDto[]> {
     const preArrivals = await this.preArrivalRepository.find({
-      relations: ['user'],
+      relations: this.preArrivalRelations,
+      select: this.preArrivalSelect,
       order: { created_at: 'DESC' },
     });
 
@@ -70,7 +92,8 @@ export class PreArrivalService {
   async getPreArrivalById(id: string): Promise<PreArrivalResponseDto> {
     const preArrival = await this.preArrivalRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: this.preArrivalRelations,
+      select: this.preArrivalSelect,
     });
 
     if (!preArrival) {
@@ -83,7 +106,8 @@ export class PreArrivalService {
   async updateStatusToReceived(id: string): Promise<PreArrivalResponseDto> {
     const preArrival = await this.preArrivalRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: this.preArrivalRelations,
+      select: this.preArrivalSelect,
     });
 
     if (!preArrival) {
@@ -105,7 +129,8 @@ export class PreArrivalService {
   async getPreArrivalsByUser(userId: string): Promise<PreArrivalResponseDto[]> {
     const preArrivals = await this.preArrivalRepository.find({
       where: { user: { id: userId } },
-      relations: ['user'],
+      relations: this.preArrivalRelations,
+      select: this.preArrivalSelect,
       order: { created_at: 'DESC' },
     });
 

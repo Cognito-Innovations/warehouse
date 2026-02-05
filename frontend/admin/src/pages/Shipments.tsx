@@ -52,6 +52,7 @@ const Shipments = () => {
         status={statusFilter} 
         setStatus={setStatusFilter} 
         shipments={shipments}
+        loading={loading}
       />
 
       <ShipmentsTable shipments={shipments} status={statusFilter} loading={loading} />

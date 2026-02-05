@@ -21,172 +21,182 @@ export const usePackageLabelPDF = ({ data }: PackageLabelPDFProps) => {
 
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 15;
+      
+      // Define the Label Dimensions
+      const margin = 10;
+      const labelWidth = pageWidth - (margin * 6);
+      const labelHeight = 80; 
+      const startX = margin;
+      const startY = margin + 10; 
 
       // White background
       doc.setFillColor(255, 255, 255);
       doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
       // Header Section
-      const headerY = margin + 8;
-      
-      // Date and Time (top left)
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(100, 100, 100);
-      const currentDate = format(new Date(), 'dd/MM/yyyy, HH:mm');
-      doc.text(currentDate, margin + 8, headerY);
+      doc.setFontSize(8);
+      doc.setTextColor(0, 0, 0);
+      const headerDate = format(new Date(), 'dd/MM/yyyy, HH:mm');
+      doc.text(headerDate, startX, startY - 3);
 
       // URL (top right)
-      const urlText = `${window.location.origin}/api/packages/${data.id}/print`;
-      doc.text(urlText, pageWidth - margin - 8, headerY, { align: 'right' });
+      const urlText = `${window.location.origin}/packages/${data.package_id}/print`;
+      doc.text(urlText, startX + labelWidth, startY - 3, { align: 'right' });
 
-      // Wrapper box
-      const wrapperX = margin + 5;
-      const wrapperY = headerY + 12;
-      const wrapperWidth = pageWidth - 2 * wrapperX;
-      const wrapperHeight = 120;
-
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.8);
-      doc.roundedRect(wrapperX, wrapperY, wrapperWidth, wrapperHeight, 2, 2, 'S');
-
-      // Inner padding
-      const padding = 5;
-      const contentStartX = wrapperX + padding;
-      let currentY = wrapperY + padding;
-
-      // Palakart Logo
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.setTextColor(109, 40, 217);
-      doc.text("Palakart", contentStartX, currentY);
-
-      // IN Text (right top inside wrapper)
-      const statusText = "IN";
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      const statusX = wrapperX + wrapperWidth - padding;
-      const statusY = currentY;
-      doc.text(statusText, statusX, statusY, { align: 'right' });
-
-      // Y position for Suite and Package Arrived
-      currentY += 10;
-
-      // SUITE (Left)
-      const suiteBoxWidth = 35;
-      const suiteBoxHeight = 12;
-      const suiteX = contentStartX;
-      const suiteY = currentY;
-
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0);
-      doc.text("SUITE:", suiteX, suiteY);
 
       doc.setDrawColor(0, 0, 0);
       doc.setLineWidth(0.5);
-      doc.roundedRect(suiteX, suiteY + 1.5, suiteBoxWidth, suiteBoxHeight, 1, 1, 'S');
-      doc.setFontSize(10);
+      doc.rect(startX, startY, labelWidth, labelHeight);
+
+      const padding = 6;
+      const row1Y = startY + padding + 10;
+
+      // LOGO: "Palakart"
       doc.setFont("helvetica", "bold");
-      doc.text(data.user?.suite_no || 'N/A', suiteX + (suiteBoxWidth / 2), suiteY + 8, { align: 'center' });
+      doc.setFontSize(28); 
+      doc.setTextColor(91, 33, 182); // Deep Purple (#5b21b6)
+      doc.text("Palakart", startX + padding, row1Y);
 
-      // PACKAGE ARRIVED (Right)
-      const arrivedBoxWidth = 60;
-      const arrivedBoxHeight = 8;
-      const arrivedX = wrapperX + wrapperWidth - padding - arrivedBoxWidth;
+      // "IN" Text
+      doc.setFontSize(24);
+      doc.setTextColor(0, 0, 0);
+      doc.text("IN", startX + labelWidth - padding, row1Y, { align: 'right' });
 
-      doc.setFillColor(0, 0, 0);
-      doc.roundedRect(arrivedX, suiteY, arrivedBoxWidth, arrivedBoxHeight, 1, 1, 'F');
-      doc.setTextColor(255, 255, 255);
+
+      // SUITE BOX & STATUS BANNER
+      const row2Y = row1Y + 3;
+
+      // SUITE BOX (Left)
+      // The Box
+      const suiteBoxY = row2Y;
+      const suiteBoxWidth = 55;
+      const suiteBoxHeight = 16;
+
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.8); // Medium-thick border
+      doc.roundedRect(startX + padding, suiteBoxY, suiteBoxWidth, suiteBoxHeight, 2, 2, 'S');
+
+      // SUITE label INSIDE box (top-left)
       doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
-      doc.text("PACKAGE ARRIVED", arrivedX + (arrivedBoxWidth / 2), suiteY + 5.5, { align: 'center' });
+      doc.text("SUITE:", startX + padding + 2, suiteBoxY + 5);
+      
+      // Suite Number (Centered in box)
+      const suiteNo = data.user?.suite_no || 'N/A';
+      doc.setFontSize(22);
+      doc.text(suiteNo, startX + padding + (suiteBoxWidth/2), suiteBoxY + 11, { align: 'center' });
 
-      currentY = suiteY + Math.max(suiteBoxHeight, arrivedBoxHeight) + 6;
 
-      // User Information
+      // PACKAGE ARRIVED (Right)
+      const statusBoxWidth = 75;
+      const statusBoxHeight = 10;
+      const statusBoxX = startX + labelWidth - padding - statusBoxWidth;
+      const statusBoxY = suiteBoxY; // Align top with suite box
+
+      // Black Background Box
+      doc.setFillColor(0, 0, 0);
+      doc.rect(statusBoxX, statusBoxY, statusBoxWidth, statusBoxHeight, 'F');
+
+      // White Text "PACKAGE ARRIVED"
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("PACKAGE ARRIVED", statusBoxX + (statusBoxWidth/2), statusBoxY + 6.5, { align: 'center' });
+
+      // Customer Name (Below Black Box)
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      const customerText = `${data.user?.name || 'Unknown'} (${suiteNo})`;
+      doc.text(customerText, statusBoxX + (statusBoxWidth/2), statusBoxY + statusBoxHeight + 6, { align: 'center' });
+
+      // SEPARATOR & DETAILS
+      const dashY = suiteBoxY + suiteBoxHeight + 3;
+
+      // Dashed Line
+      doc.setLineWidth(0.3);
+      doc.setLineDash([1.5, 1.5], 0); // Tight dash
+      doc.line(startX + 2, dashY, startX + labelWidth - 2, dashY);
+      doc.setLineDash([], 0); // Reset to solid
+
+      // Info Text
+      const detailsY = dashY + 6;
+      
+      // Weight
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 0, 0);
-      const userInfoX = wrapperX + wrapperWidth - padding;
-      doc.text(`${data.user?.name || 'N/A'} (${data.user?.suite_no || 'N/A'})`, userInfoX, currentY, { align: 'right' });
+      const weightVal = parseFloat(data.total_weight || '0').toFixed(2);
+      const pcsVal = data.items?.length || 0;
+      doc.text(`WEIGHT: ${weightVal} KG / PCS`, startX + padding, detailsY);
 
-      // Dashed separator
-      const dashY = currentY + 8;
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.3);
-      for (let x = contentStartX; x < wrapperX + wrapperWidth - padding; x += 2) {
-        doc.line(x, dashY, x + 1, dashY);
-      }
-
-      // Weight and Registration Date
-      const detailsY = dashY + 8;
-      const weightText = `WEIGHT: ${parseFloat(data.total_weight || '0').toFixed(1)} KG / ${data.items?.length || 0} PCS`;
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "bold");
-      doc.text(weightText, contentStartX, detailsY);
-
-      doc.setFont("helvetica", "normal");
-      const formattedDate = format(formatDateTime(Number(data.created_at)), 'dd MMM yyyy - HH:mm');
-      doc.text(`REG. DATE: ${formattedDate}`, wrapperX + wrapperWidth - padding, detailsY, { align: 'right' });
+      // Reg Date
+      const regDate = format(formatDateTime(Number(data.created_at)), 'dd MMM yyyy - HH:mm');
+      doc.text(`REG. DATE: ${regDate}`, startX + labelWidth - padding, detailsY, { align: 'right' });
 
       // Solid separator line
-      const separatorY = detailsY + 6;
-      doc.setDrawColor(0, 0, 0);
+      const solidLineY = detailsY + 4;
       doc.setLineWidth(0.5);
-      doc.line(contentStartX, separatorY, wrapperX + wrapperWidth - padding, separatorY);
+      doc.line(startX + padding, solidLineY, startX + labelWidth - padding, solidLineY);
 
-      // Package ID Section
-      const pkgIdY = separatorY + 8;
-      doc.setFontSize(7);
+      // FOOTER (ID, BARCODE, BIG BOX, QR)
+      const footerStartY = solidLineY + 4;
+
+      // "PKG ID" Label
+      doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
-      doc.text("PKG ID", contentStartX, pkgIdY);
+      doc.text("PKG ID", startX + padding, footerStartY + 3);
 
-      // Barcode
-      const barcodeY = pkgIdY + 4;
-      const barcodeWidth = 50;
-      const barcodeHeight = 10;
-
+      // BARCODE (Left)
+      const barcodeY = footerStartY + 5;
+      const barcodeWidth = 55;
+      const barcodeHeight = 14;
+      
+      // Generate Barcode Image
       const canvas = document.createElement('canvas');
-      JsBarcode(canvas, data.id, {
+      JsBarcode(canvas, data.package_id, {
         format: "CODE128",
         displayValue: false,
-        height: 30,
-        width: 1.2,
+        height: 40,
+        width: 2,
         margin: 0
       });
       const barcodeDataURL = canvas.toDataURL('image/png');
-      doc.addImage(barcodeDataURL, 'PNG', contentStartX, barcodeY, barcodeWidth, barcodeHeight);
+      doc.addImage(barcodeDataURL, 'PNG', startX + padding, barcodeY, barcodeWidth, barcodeHeight);
 
-      // Package ID text
-      const pkgIdTextY = barcodeY + barcodeHeight + 3;
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "bold");
-      doc.text(data.id, contentStartX + (barcodeWidth / 2), pkgIdTextY, { align: 'center' });
+      // Manual Barcode Text (Centered under barcode)
+      doc.setFontSize(9);
+      doc.text(data.package_id, startX + padding + (barcodeWidth/2), barcodeY + barcodeHeight + 4, { align: 'center' });
 
-      // Last 4 digits
-      const lastFourDigits = data.id?.slice(-4) || '0000';
-      const digitsBoxWidth = 16;
-      const digitsBoxHeight = 8;
-      const digitsBoxX = contentStartX + barcodeWidth + 8;
-      const digitsBoxY = barcodeY + 1;
+      // QR CODE alignment
+      const qrSize = 22;
+      const qrX = startX + labelWidth - padding - qrSize;
+      const qrY = footerStartY + 2;
+
+      // BIG NUMBER BOX (Center) (Last 4 digits)
+      const lastFour = data.package_id?.slice(-4) || '0000';
+      const bigBoxWidth = 35;
+      const bigBoxHeight = 16;
+      
+      const barcodeEndX = startX + padding + barcodeWidth;
+      const qrStartX = qrX;
+
+      const availableSpace = qrStartX - barcodeEndX;
+      const bigBoxX = barcodeEndX + (availableSpace / 2) - (bigBoxWidth / 2);
+      const bigBoxY = barcodeY - 1;
 
       doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(digitsBoxX, digitsBoxY, digitsBoxWidth, digitsBoxHeight, 1, 1, 'S');
-      doc.setFontSize(9);
+      doc.setLineWidth(1.0);
+      doc.roundedRect(bigBoxX, bigBoxY, bigBoxWidth, bigBoxHeight, 3, 3, 'S');
+
+      // Big Text Inside
+      doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
-      doc.text(lastFourDigits, digitsBoxX + (digitsBoxWidth / 2), digitsBoxY + 5.5, { align: 'center' });
+      doc.text(lastFour, bigBoxX + (bigBoxWidth/2), bigBoxY + 11, { align: 'center' });
 
       // QR Code
-      const qrCodeUrl = `${window.location.origin}/packages/${data.id}`;
-      const qrCodeDataURL = await QRCode.toDataURL(qrCodeUrl, { width: 60, margin: 1 });
-      const qrCodeSize = 10;
-      const qrCodeX = digitsBoxX + digitsBoxWidth + 8;
-      const qrCodeY = barcodeY + 1;
-      doc.addImage(qrCodeDataURL, 'PNG', qrCodeX, qrCodeY, qrCodeSize, qrCodeSize);
+      const qrCodeDataURL = await QRCode.toDataURL(data.package_id, { width: 100, margin: 0 });
+      doc.addImage(qrCodeDataURL, 'PNG', qrX, qrY, qrSize, qrSize);
 
       // Open PDF in new tab
       const pdfBlob = doc.output('blob');

@@ -63,7 +63,7 @@ const TrackingStatus: React.FC<TrackingStatusProps> = ({ trackingRequests = [], 
   const currentId = stepStatuses[currentStepIndex]?.id;
 
   return (
-    <Box sx={{ p: 1 }}>
+    <Box sx={{ pl: 1, pr: 1 }}>
       <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
         Tracking
       </Typography>
