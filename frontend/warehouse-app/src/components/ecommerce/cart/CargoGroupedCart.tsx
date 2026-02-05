@@ -21,12 +21,12 @@ export default function CargoGroupedCart({ groupedItems }: { groupedItems: any }
   const [openCargo, setOpenCargo] = useState<string | null>(null);
 
   const visibleGroups = useMemo(() => {
-    if (!groupedItems) return [];
+    if (!groupedItems || !cart?.length) return [];
 
     return (Object.entries(groupedItems) as [string, any][])
       .map(([cargo, initialItems]) => {
         const validItems = initialItems.filter((groupItem: any) => 
-          cart.some((cartItem: any) => 
+          cart?.length && cart.some((cartItem: any) => 
             (cartItem.product_id === groupItem.product_id) || 
             (cartItem.product?.id === groupItem.product_id)
           )
