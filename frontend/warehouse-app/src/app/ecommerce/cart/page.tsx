@@ -41,6 +41,7 @@ export default function CartPage() {
   const [activeStep, setActiveStep] = useState<CartStep>(0);
   const [selectedDeliveryOption, setSelectedDeliveryOption] = useState<DeliveryOption | null>(null);  
   const [groupedCart, setGroupedCart] = useState<any>(null);
+  const [hasFetchedCart, setHasFetchedCart] = useState(false);
 
   const userId = (session?.user as any)?.user_id;
 
@@ -103,6 +104,7 @@ export default function CartPage() {
       console.error("Initialization error:", e);
     } finally {
       setIsCartLoading(false);
+      setHasFetchedCart(true);
     }
   }, []);
 
@@ -135,7 +137,7 @@ export default function CartPage() {
     return <CartSkeletonLoader />;
   }
 
-  if (!isCartLoading && (!cart || cart.length === 0)) {
+  if (hasFetchedCart && !isCartLoading && (!cart || cart.length === 0)) {
     return <EmptyCartState/>;
   }
 

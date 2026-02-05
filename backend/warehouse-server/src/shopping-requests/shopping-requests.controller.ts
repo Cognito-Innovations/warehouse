@@ -77,8 +77,16 @@ export class ShoppingRequestsController {
     description: 'List of all shopping requests',
     type: [ShoppingRequestResponseDto],
   })
-  async findAll(@Query('country_id') countryId?: string) {
-    return this.shoppingRequestsService.getAllShoppingRequests(countryId);
+  async findAll(
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('country_id') countryId?: string,
+  ) {
+    return this.shoppingRequestsService.getAllShoppingRequests({
+      page: Number(page),
+      limit: Number(limit),
+      countryId,
+    });
   }
 
   @Get(':userId')

@@ -5,12 +5,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Plus as PlusIcon, Trash2 as TrashIcon } from "lucide-react";
 import { CircularProgress } from "@mui/material";
-import ReactCountryFlag from "react-country-flag";
-import { Public as WorldIcon } from "@mui/icons-material";
-import { useDetectUserLocation } from "@/store/useDetectUserLocation";
+import { CountrySelector } from "../AssistedShopping/getting-started/CountrySelector";
 import { createShoppingRequest, createShoppingRequestProduct } from "@/lib/api.service";
 import { ASSISTED_SHOPPING_PRODUCT_LINK_KEY } from "@/utils/constants";
-import { alpha3ToAlpha2 } from "@/lib/header.utils";
 
 interface ShoppingItem {
   id: string;
@@ -30,10 +27,7 @@ interface ShoppingRequestFormProps {
 
 export default function ShoppingRequestForm({ onSuccess }: ShoppingRequestFormProps) {
   const router = useRouter();
-  const { countryCode, countryName } = useDetectUserLocation();
   const { data: session } = useSession();
-  
-  const alpha2Code = countryCode && countryCode.length === 3 ? alpha3ToAlpha2[countryCode] : countryCode;
 
   const [items, setItems] = useState<ShoppingItem[]>([
     {
@@ -293,48 +287,7 @@ export default function ShoppingRequestForm({ onSuccess }: ShoppingRequestFormPr
                 </div>
               </div>
 
-              <div className="flex items-center flex-wrap gap-2 sm:gap-3 mt-4 sm:mt-6 mb-4 sm:mb-5">
-                <div className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <span>Country:</span>
-                  <div className="flex items-center gap-1.5">
-                    {alpha2Code ? (
-                      <ReactCountryFlag
-                        countryCode={alpha2Code}
-                        svg
-                        style={{
-                          width: "1.25em",
-                          height: "1.25em",
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          border: "1px solid rgba(0, 0, 0, 0.1)",
-                        }}
-                        title={countryName || countryCode}
-                      />
-                    ) : (
-                      <WorldIcon
-                        style={{
-                          width: "1.25em",
-                          height: "1.25em",
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          border: "1px solid rgba(0, 0, 0, 0.1)",
-                          color: "gray",
-                        }}
-                        titleAccess={countryName || countryCode}
-                      />
-                    )}
-                    <span className="text-gray-900">{countryCode}</span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => router.push("/profile?view=country")}
-                  className="text-sm font-medium text-purple-700 hover:text-purple-600 transition-colors"
-                >
-                  Change
-                </button>
-              </div>
+              <CountrySelector className="mt-4 sm:mt-6 mb-4 sm:mb-5" />
             </div>
           ))}
         </div>

@@ -23,7 +23,7 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({ open, onClose, onRefr
     trackingNo: packageData.tracking_no || "",
     weight: packageData.total_weight || "",
     volumetricWeight: packageData.total_volumetric_weight || "",
-    dangerousGood: packageData.dangerous_good === "Yes" ? "true" : "false",
+    dangerousGood: packageData.dangerous_good ? "true" : "false",
   });
 
   const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {

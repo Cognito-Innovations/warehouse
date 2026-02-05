@@ -23,6 +23,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { CopyButtonAdvanced } from "@/components/UI";
+import { CountrySelector } from "./CountrySelector";
 import { 
   ASSISTED_SHOPPING_PRODUCT_LINK_KEY,
 } from "@/utils/constants";
@@ -373,6 +374,8 @@ export const AssistedShoppingOptions = ({
                   }}
                 />
               </Box>
+
+              <CountrySelector className="mt-3 sm:mt-4" />
 
               <Divider sx={{ my: { xs: 0.5, md: 1 } }} />
 
