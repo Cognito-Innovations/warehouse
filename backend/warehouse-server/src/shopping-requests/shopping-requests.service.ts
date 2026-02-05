@@ -119,14 +119,36 @@ export class ShoppingRequestsService {
     };
   }
 
-  async getAllShoppingRequests(countryId?: string) {
-    const qb = this.buildShoppingRequestQB(countryId);
+  async getAllShoppingRequests({
+    page,
+    limit,
+    countryId,
+  }: {
+    page: number;
+    limit: number;
+    countryId?: string;
+  }) {
+    const qb = this.shoppingRequestRepository
+      .createQueryBuilder('sr')
+      .leftJoinAndSelect('sr.user', 'user')
+      .orderBy('sr.created_at', 'DESC');
 
-    qb.leftJoinAndSelect('shoppingRequest.user', 'user')
-      .leftJoinAndSelect('user.address', 'userAddress')
-      .orderBy('shoppingRequest.created_at', 'DESC');
+    if (countryId) {
+      qb.andWhere('sr.country_id = :countryId', { countryId });
+    }
 
-    return qb.getMany();
+    const [data, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getShoppingRequestsByUser(

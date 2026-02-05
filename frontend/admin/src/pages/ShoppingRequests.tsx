@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, MenuItem, TextField, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 
 import { getAllShoppingRequests } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
@@ -17,23 +17,29 @@ const ShoppingRequests: React.FC = () => {
   const [originCountry, setOriginCountry] = useState<string | null>(null);
   const [targetCountry, setTargetCountry] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [total, setTotal] = useState(0);
   const navigate = useNavigate();
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const requests = await getAllShoppingRequests();
-      setRequests(requests);
-    } catch (error) {
-      console.error("Error fetching shopping requests:", error);
+      const response = await getAllShoppingRequests({
+        page: page + 1,
+        limit: rowsPerPage,
+      });
+
+      setRequests(response.data);
+      setTotal(response.total);
     } finally {
       setLoading(false);
     }
-  }
+  }, [page, rowsPerPage]);
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [fetchRequests]);
 
   const statusOptions = [
     { value: 'REQUESTED', label: 'Requested' },
@@ -173,6 +179,12 @@ const ShoppingRequests: React.FC = () => {
         loading={loading}
         statusOptions={statusOptions}
         noDataMessage="No shopping requests available"
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={total}
+        onPageChange={setPage}
+        onRowsPerPageChange={setRowsPerPage}
+        paginationMode="server"
         onViewDetails={handleViewDetails}
         getIdentifier={(row) => row.orderNo}
         getRowStatus={(row) => row.status}

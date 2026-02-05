@@ -109,7 +109,6 @@ export default function CartPage() {
     }
   }, [status, initCart, userId]);
 
-  // Auto-advance step based on selections
   useEffect(() => {
     if (activeStep === 0 && selectedAddress && userId) {
       // Don't auto-advance, let user click continue

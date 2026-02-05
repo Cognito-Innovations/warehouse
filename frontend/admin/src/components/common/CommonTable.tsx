@@ -32,6 +32,12 @@ interface CommonTableProps<T> {
   isToggleLoading?: (id: string | number) => boolean;
   getIdentifier: (row: T) => string | number;
   getRowStatus: (row: T) => string;
+  page?: number;
+  rowsPerPage?: number;
+  totalCount?: number;
+  onPageChange?: (page: number) => void;
+  onRowsPerPageChange?: (rows: number) => void;
+  paginationMode?: 'client' | 'server';
 }
 
 const CommonTable = <T,>({
@@ -48,30 +54,57 @@ const CommonTable = <T,>({
   isToggleLoading,
   getIdentifier,
   getRowStatus,
+  page,
+  rowsPerPage,
+  totalCount,
+  onPageChange,
+  onRowsPerPageChange,
+  paginationMode,
 }: CommonTableProps<T>) => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [pageState, setPageState] = useState(0);
+  const [rowsPerPageState, setRowsPerPageState] = useState(15);
   const [statusFilter, setStatusFilter] = useState('All');
 
   const filteredRows = statusFilter === 'All'
     ? rows
     : rows.filter((row) => getRowStatus(row) === statusFilter);
 
-  const visibleRows = filteredRows.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const isServer = paginationMode === 'server';
 
-  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+  const currentPage = isServer ? page ?? 0 : pageState;
+  const currentRowsPerPage = isServer ? rowsPerPage ?? 15 : rowsPerPageState;
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const visibleRows = isServer
+    ? rows
+    : filteredRows.slice(
+        currentPage * currentRowsPerPage,
+        currentPage * currentRowsPerPage + currentRowsPerPage
+      );
+
+  const handlePageChange = (_: unknown, newPage: number) => {
+    if (isServer) {
+      onPageChange?.(newPage);
+    } else {
+      setPageState(newPage);
+    }
+  };
+
+  const handleRowsPerPageChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const value = parseInt(event.target.value, 10);
+
+    if (isServer) {
+      onRowsPerPageChange?.(value);
+    } else {
+      setRowsPerPageState(value);
+      setPageState(0);
+    }
   };
 
   const handleStatusChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setStatusFilter(event.target.value);
-    setPage(0);
+    setPageState(0);
   };
 
   const hasActions = Boolean(onViewDetails || onEdit || onDelete || onToggle);
@@ -182,11 +215,11 @@ const CommonTable = <T,>({
           <TablePagination
             rowsPerPageOptions={[15, 25, 50]}
             component="div"
-            count={filteredRows.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
+            count={isServer ? totalCount ?? 0 : filteredRows.length}
+            rowsPerPage={currentRowsPerPage}
+            page={currentPage}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
           />
         </Card>
       )}
