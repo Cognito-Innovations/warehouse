@@ -25,7 +25,7 @@ interface OrderTotalsData {
   platformFee: number;
   // taxes: number;
   // serviceCharge: number;
-  total: number;
+  payable_total: number;
 }
 
 interface OrderSummaryProps {
@@ -159,7 +159,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             platformFee={totals.platform_fee}
             // taxes={totals.taxes}
             // serviceCharge={totals.serviceCharge}
-            total={totals.total}
+            payable_total={totals.payable_total}
             formatPrice={formatPriceWithOptionalLocal}
           />
         </CardContent>
@@ -173,7 +173,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             processing={isProcessing}
             addressLoading={addressLoading}
             disabled={isButtonDisabled}
-            total={totals.total}
+            total={totals.payable_total}
             formatPrice={formatPriceWithOptionalLocal}
             onClick={handlePaymentAndOrder}
           />

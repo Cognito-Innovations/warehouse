@@ -23,22 +23,28 @@ export default function CargoGroupedCart({ groupedItems }: { groupedItems: any }
   const visibleGroups = useMemo(() => {
     if (!groupedItems || !cart?.length) return [];
 
-    return (Object.entries(groupedItems) as [string, any][])
-      .map(([cargo, initialItems]) => {
-        const validItems = initialItems.filter((groupItem: any) => 
-          cart?.length && cart.some((cartItem: any) => 
-            (cartItem.product_id === groupItem.product_id) || 
-            (cartItem.product?.id === groupItem.product_id)
-          )
-        );
+    const results = [];
 
-        return {
+    for (const cargo in groupedItems) {
+      const initialItems = groupedItems[cargo];
+
+      const validItems = initialItems.filter((groupItem: any) =>
+        cart.some((cartItem: any) =>
+          (cartItem.product_id === groupItem.product_id) ||
+          (cartItem.product?.id === groupItem.product_id)
+        )
+      );
+
+      if (validItems.length > 0) {
+        results.push({
           cargo,
           validItems,
           productIds: validItems.map((i: any) => i.product_id)
-        };
-      })
-      .filter((group) => group.validItems.length > 0);
+        });
+      }
+    }
+
+    return results;
   }, [groupedItems, cart]);
 
   const handleRadioClick = (e: React.MouseEvent, cargo: string, productIds: any[]) => {

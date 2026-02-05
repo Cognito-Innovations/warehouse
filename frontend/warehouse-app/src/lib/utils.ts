@@ -27,9 +27,3 @@ export const formatDiscountPercentage = (percentage: number | string, suffix?: s
   
   return suffix ? `${baseFormat} ${suffix}` : baseFormat;
 };
-
-import { CartItem } from "@/types/ecommerce";
-
-export function normalizeCart(cart: unknown): CartItem[] {
-  return Array.isArray(cart) ? cart : [];
-}

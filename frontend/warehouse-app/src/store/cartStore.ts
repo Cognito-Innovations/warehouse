@@ -22,7 +22,7 @@ export const useCartStore = create<CartStore>()(
 
       getCart: async () => {
         const cart = await ecommerceService.fetchCart();
-        set({ cart: cart?.items || [] });
+        set({ cart: Array.isArray(cart?.items) ? cart?.items : [] });
       },
 
       removeProductFromCart: async (productId: string) => {
@@ -85,7 +85,7 @@ export const useCartStore = create<CartStore>()(
           set({ isLoading: true });
           if(userId && cart.length) {
             const cartData = await ecommerceService.syncLocalStorageProductsToCart(cart);
-            set({ cart: cartData });
+            set({ cart: Array.isArray(cartData?.items) ? cartData?.items : [] });
             useCartStore.persist.clearStorage();
           }
         } catch (error) {

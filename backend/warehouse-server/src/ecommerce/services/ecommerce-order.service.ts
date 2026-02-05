@@ -70,16 +70,15 @@ export class OrderService {
     return `ORD-${timeBasedSuffix}-${randomAlphaNumeric}`;
   }
 
-    private calculateOrderPricing(
+  private calculateOrderPricing(
     items: EcommerceUserProductStatus[],
     currencyInfo: CurrencyInfo,
     deliveryFeeUSD: number,
   ) {
-    const { rate } = currencyInfo;
-    let subtotalLocal = 0;
+    let totalItemsPaidUSDRaw = 0;
+    let totalDiscountUSD = 0;
 
-    // Calculate details for each item
-    const itemDetails = items.map((item) => {
+    for (const item of items) {
       const product = item.product;
 
       const basePrice = Number(product?.price || 0);
@@ -88,48 +87,23 @@ export class OrderService {
       const discountPerUnitUSD = basePrice * (discountPercentage / 100);
       const discountedUnitPriceUSD = basePrice - discountPerUnitUSD;
 
-      const itemTotalPaidUSDRaw = discountedUnitPriceUSD * item.quantity;
-
-      const itemOriginalTotalUSDRaw = basePrice * item.quantity;
-
-      const localPrice = this.roundCurrency(basePrice * rate);
-      const localDiscountedPrice = this.roundCurrency(
-        discountedUnitPriceUSD * rate,
-      );
-      const itemSubtotalLocal = localPrice * item.quantity;
-
-      const itemTotalUSDRounded = this.roundCurrency(itemTotalPaidUSDRaw);
-
-      return {
-        product_id: item.product_id,
-        quantity: item.quantity,
-        unitPriceUSD: basePrice,
-        totalUSD: itemTotalUSDRounded,
-        rawTotalUSD: itemTotalPaidUSDRaw,
-        subtotalLocal: itemSubtotalLocal,
-        discountUSD: discountPerUnitUSD * item.quantity,
-      };
-    });
-
-    // Aggregate totals
-    let totalItemsPaidUSDRaw = 0;
-    for (const detail of itemDetails) {
-      subtotalLocal += detail.subtotalLocal;
-      totalItemsPaidUSDRaw += detail.rawTotalUSD;
+      totalDiscountUSD += discountPerUnitUSD * item.quantity;
+      totalItemsPaidUSDRaw += basePrice * item.quantity;
     }
 
-    const roundedDeliveryFeeUSD = this.roundCurrency(deliveryFeeUSD);
+    const baseTotalUSD =
+      totalItemsPaidUSDRaw - totalDiscountUSD + Number(deliveryFeeUSD || 0);
 
-    let finalUSDTotal = this.roundCurrency(
-      totalItemsPaidUSDRaw + roundedDeliveryFeeUSD,
-    );
+    const platformFeeUSD = baseTotalUSD * 0.05;
 
-    const platformFee = finalUSDTotal * 0.05;
-    finalUSDTotal += platformFee;
+    const finalUSDTotal = baseTotalUSD + platformFeeUSD;
 
     return {
-      finalUSDTotal,
-      itemDetails,
+      finalUSDTotal: this.roundCurrency(finalUSDTotal),
+      itemDetails: items.map((item) => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+      })),
     };
   }
 

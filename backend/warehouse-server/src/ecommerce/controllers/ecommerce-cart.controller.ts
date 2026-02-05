@@ -9,7 +9,11 @@ import {
   Request,
   BadRequestException,
 } from '@nestjs/common';
-import { CartService, ComputedCart } from '../services/ecommerce-cart.service';
+import {
+  CartService,
+  CartItemsResponse,
+  CheckoutCartResponse,
+} from '../services/ecommerce-cart.service';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { DeliveryOption } from 'src/shared/get-delivery-fee.service';
@@ -55,7 +59,7 @@ export class CartController {
   async addToCart(
     @Request() req: AuthenticatedRequest,
     @Body() addToCartDto: AddToCartDto,
-  ): Promise<ComputedCart> {
+  ): Promise<CartItemsResponse> {
     return this.cartService.addToCart(req.user.id, addToCartDto);
   }
 
@@ -63,7 +67,7 @@ export class CartController {
   async syncLocalStorageProductsToCart(
     @Request() req: AuthenticatedRequest,
     @Body() body: { products: { product_id: string; quantity: number }[] },
-  ): Promise<ComputedCart> {
+  ): Promise<CartItemsResponse> {
     return this.cartService.syncLocalStorageProductsToCart(
       req.user.id,
       body.products,
@@ -86,7 +90,7 @@ export class CartController {
   async removeFromCart(
     @Request() req: AuthenticatedRequest,
     @Param('itemId') itemId: string,
-  ): Promise<ComputedCart> {
+  ): Promise<CartItemsResponse> {
     return this.cartService.removeFromCart(req.user.id, itemId);
   }
 
@@ -94,7 +98,7 @@ export class CartController {
   async removeEntireProductFromCart(
     @Request() req: AuthenticatedRequest,
     @Param('itemId') itemId: string,
-  ): Promise<ComputedCart> {
+  ): Promise<CartItemsResponse> {
     return this.cartService.removeEntireProductFromCart(req.user.id, itemId);
   }
 
@@ -123,7 +127,7 @@ export class CartController {
   async postCheckout(
     @Request() req: AuthenticatedRequest,
     @Body() body: CheckoutDto,
-  ): Promise<ComputedCart> {
+  ): Promise<CheckoutCartResponse> {
     const userId = req.user?.id;
     if (!userId) {
       throw new BadRequestException('User not authenticated');

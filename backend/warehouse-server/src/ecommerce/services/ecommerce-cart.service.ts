@@ -22,18 +22,27 @@ import { EcommerceUserDeliverySelection } from '../entities/ecommerce_user_deliv
 
 export interface ComputedCartItem {
   id: string;
-  cart_id: string;
   product_id: string;
   quantity: number;
   product: EcommerceProduct | null;
   unit_price: number;
   total_price: number;
-  delivery_fee: number;
-  created_at: number;
-  updated_at: number;
 }
 
 export interface ComputedCart {
+  items: ComputedCartItem[];
+  total_amount: number;
+  final_amount: number;
+  total_delivery_fee?: number;
+  total_discount?: number;
+  platform_fee?: number;
+}
+
+export interface CartItemsResponse {
+  items: ComputedCartItem[];
+}
+
+export interface CheckoutCartResponse {
   items: ComputedCartItem[];
   total_amount: number;
   final_amount: number;
@@ -113,7 +122,7 @@ export class CartService {
       );
     }
 
-    return Number((amount / exchangeRate).toFixed(2));
+    return amount / exchangeRate;
   }
 
   async setSelectedDeliveryOption(
@@ -221,7 +230,7 @@ export class CartService {
   async syncLocalStorageProductsToCart(
     userId: string,
     products: { product_id: string; quantity: number }[],
-  ): Promise<ComputedCart> {
+  ): Promise<CartItemsResponse> {
     const productIds = products.map((product) => product.product_id);
     if (!productIds?.length) {
       throw new BadRequestException('No product IDs provided');
@@ -282,7 +291,7 @@ export class CartService {
   async addToCart(
     userId: string,
     addToCartDto: AddToCartDto,
-  ): Promise<ComputedCart> {
+  ): Promise<CartItemsResponse> {
     const { product_id, quantity } = addToCartDto;
 
     if (!userId || !product_id || !quantity) {
@@ -329,7 +338,10 @@ export class CartService {
     return this.getCart(userId);
   }
 
-  async removeFromCart(userId: string, itemId: string): Promise<ComputedCart> {
+  async removeFromCart(
+    userId: string,
+    itemId: string,
+  ): Promise<CartItemsResponse> {
     const cartItem = await this.cartRepository.findOne({
       where: { id: itemId, user_id: userId, status: UserProductStatus.CART },
     });
@@ -347,7 +359,7 @@ export class CartService {
   async removeEntireProductFromCart(
     userId: string,
     itemId: string,
-  ): Promise<ComputedCart> {
+  ): Promise<CartItemsResponse> {
     const cartItem = await this.cartRepository.findOne({
       where: {
         product_id: itemId,
@@ -372,8 +384,8 @@ export class CartService {
     });
   }
 
-  async getCart(userId: string): Promise<ComputedCart> {
-    const itemsFromDb = await this.cartRepository.find({
+  async getCart(userId: string): Promise<CartItemsResponse> {
+    const cartItems = await this.cartRepository.find({
       where: { user_id: userId, status: UserProductStatus.CART },
       relations: [
         'product',
@@ -383,83 +395,41 @@ export class CartService {
       ],
     });
 
-    const preparedItems = itemsFromDb.map((item) => {
-      const product = item.product;
-      if (!product) {
-        throw new BadRequestException('Product not found');
-      }
-
-      const price = Number(product?.price);
-      if (price <= 0) {
-        throw new BadRequestException('Invalid price for product');
-      }
-      const weightPerUnit = this.deliveryFeeService.getWeightInKg(
-        Number(product?.unit_value),
-        product?.measurement?.label ?? 'kg',
-      );
-      const itemWeight = weightPerUnit * item.quantity;
-
-      return {
-        item,
-        product,
-        price,
-        itemWeight,
-      };
-    });
-
-    const { currencyCode, countryCode } =
+    const { currencyCode } =
       await this.userPreferencesService.getUserPreferenceCurrencyAndCountry(
         userId,
       );
-    if (!currencyCode || !countryCode) {
-      throw new BadRequestException('Currency code or country code not found');
+
+    if (!currencyCode) {
+      throw new BadRequestException('Currency code not found');
     }
-    const items: ComputedCartItem[] = await Promise.all(
-      preparedItems.map(async (data) => {
-        const { item, product, price, itemWeight } = data;
 
-        const delivery_fee = await this.deliveryFeeService.getDeliveryFee(
-          itemWeight,
-          countryCode,
-          currencyCode,
-        );
+    const items: ComputedCartItem[] = cartItems.map((item) => {
+      const product = item.product;
 
-        return {
-          id: item.id,
-          cart_id: userId,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          product: product ?? null,
-          unit_price: price,
-          total_price: price * item.quantity,
-          delivery_fee,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-        };
-      }),
-    );
+      if (!product) {
+        throw new BadRequestException('Product not found');
+      }
+      const unitPrice = Number(product.price);
+      if (unitPrice <= 0) {
+        throw new BadRequestException('Invalid price for product');
+      }
 
-    const totalAmount = items.reduce((sum, it) => sum + it.total_price, 0);
-    const totalDeliveryFee = items.reduce(
-      (sum, it) => sum + it.delivery_fee,
-      0,
-    );
-    const finalAmount = totalAmount + totalDeliveryFee;
+      return {
+        id: item.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        product,
+        unit_price: unitPrice,
+        total_price: unitPrice * item.quantity,
+      };
+    });
 
-    const computedCart: ComputedCart = {
-      items,
-      total_amount: totalAmount,
-      final_amount: finalAmount,
-      total_delivery_fee: totalDeliveryFee,
-    };
-    return this.applyCurrencyConversion(computedCart, currencyCode);
+    return this.applyCurrencyConversionToItems(items, currencyCode);
   }
 
   async getCartGroupedByCargo(userId: string): Promise<{
     items: Record<string, ComputedCartItem[]>;
-    total_amount: number;
-    final_amount: number;
-    total_delivery_fee?: number;
   }> {
     const cart = await this.getCart(userId);
 
@@ -483,12 +453,7 @@ export class CartService {
       }
     }
 
-    return {
-      items: groupedItems,
-      total_amount: cart.total_amount,
-      final_amount: cart.final_amount,
-      total_delivery_fee: cart.total_delivery_fee,
-    };
+    return { items: groupedItems };
   }
 
   async getCheckoutData(
@@ -582,19 +547,11 @@ export class CartService {
       throw new BadRequestException('Currency code or country code not found');
     }
 
-    const normalizedCountry = countryCode?.toUpperCase();
+    const selectedDelivery = await this.deliverySelectionRepository.findOne({
+      where: { user_id: userId },
+    });
 
-    let totalDeliveryFee = 0;
-    try {
-      totalDeliveryFee = await this.deliveryFeeService.getDeliveryFee(
-        totalWeight,
-        normalizedCountry,
-        currencyCode,
-      );
-    } catch (error) {
-      console.warn('Failed to calculate delivery fee for checkout', error);
-      totalDeliveryFee = 0;
-    }
+    const totalDeliveryFee = selectedDelivery?.total_amount ?? 0;
 
     const items: ComputedCartItem[] = preparedItems.map((data) => ({
       id: data.item.id,
@@ -612,21 +569,20 @@ export class CartService {
 
     const totalAmount = items.reduce((sum, it) => sum + it.total_price, 0);
 
-    let finalAmount = totalAmount - totalDiscount + totalDeliveryFee;
-
-    const platformFee = finalAmount * 0.05;
-    finalAmount += platformFee;
+    const baseTotal = totalAmount - totalDiscount + totalDeliveryFee;
+    const platformFee = baseTotal * 0.05;
+    const payableTotal = baseTotal + platformFee;
 
     const computedCart: ComputedCart = {
       items,
       total_amount: totalAmount,
-      final_amount: Math.max(0, finalAmount),
       total_delivery_fee: totalDeliveryFee,
       total_discount: totalDiscount,
       platform_fee: platformFee,
+      final_amount: Math.max(0, payableTotal),
     };
 
-    return this.applyCurrencyConversion(computedCart, currencyCode);
+    return this.applyCurrencyConversionToCart(computedCart, currencyCode);
   }
 
   async getDeliveryRates(
@@ -695,7 +651,41 @@ export class CartService {
     );
   }
 
-  private async applyCurrencyConversion(
+  private async applyCurrencyConversionToItems(
+    items: ComputedCartItem[],
+    currency: string,
+  ): Promise<CartItemsResponse> {
+    const convert = async (price: number): Promise<number> => {
+      const result =
+        await this.userPreferencesService.getFormattedConvertedPriceByCurrency(
+          currency,
+          price,
+        );
+      return typeof result === 'number' ? result : Number(result.price);
+    };
+
+    const convertedItems = await Promise.all(
+      items.map(async (item) => {
+        let product = item.product;
+        if (product) {
+          product = Object.assign(product, {
+            price: await convert(Number(product.price)),
+          });
+        }
+
+        return {
+          ...item,
+          unit_price: await convert(item.unit_price),
+          total_price: await convert(item.total_price),
+          product,
+        };
+      }),
+    );
+
+    return { items: convertedItems };
+  }
+
+  private async applyCurrencyConversionToCart(
     cart: ComputedCart,
     currency: string,
   ): Promise<ComputedCart> {
@@ -721,19 +711,23 @@ export class CartService {
           ...item,
           unit_price: await convert(item.unit_price),
           total_price: await convert(item.total_price),
-          delivery_fee: item.delivery_fee ?? 0,
           product,
-        } as ComputedCartItem;
+        };
       }),
     );
 
     return {
       ...cart,
+      items: convertedItems,
       total_amount: await convert(cart.total_amount),
       final_amount: await convert(cart.final_amount),
-      total_delivery_fee: cart.total_delivery_fee ?? 0,
-      platform_fee: await convert(cart.platform_fee ?? 0),
-      items: convertedItems,
+      total_delivery_fee: cart.total_delivery_fee
+        ? await convert(cart.total_delivery_fee)
+        : 0,
+      total_discount: cart.total_discount
+        ? await convert(cart.total_discount)
+        : 0,
+      platform_fee: cart.platform_fee ? await convert(cart.platform_fee) : 0,
     };
   }
 }
