@@ -26,7 +26,7 @@ export const CountrySelector = ({ className }: CountrySelectorProps) => {
       className={`flex items-center flex-wrap gap-2 sm:gap-3 ${className ?? ""}`}
     >
       <div className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-        <span>Country:</span>
+        <span>Ship from:</span>
 
         <div className="flex items-center gap-1.5">
           {alpha2Code ? (
