@@ -56,3 +56,25 @@ export const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Admin' },
   { value: 'super_admin', label: 'Super Admin' },
 ];
+
+export const SHOPPING_REQUEST_STATUS_OPTIONS = [
+  { value: 'REQUESTED', label: 'Requested' },
+  { value: 'PAID', label: 'Paid' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'ORDER_PLACED', label: 'Order Placed' },
+];
+
+export const PRODUCT_STATUS_OPTIONS = [
+  { value: 'Active', label: 'Active' },
+  { value: 'Inactive', label: 'Inactive' },
+];
+
+export const PICKUP_REQUEST_STATUS_OPTIONS = [
+  { value: 'requested', label: 'Requested' },
+  { value: 'quoted', label: 'Quotation Confirmed' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'picked', label: 'Picked' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+export const FALLBACK_IMAGE = 'https://placehold.co/100x100?text=No+Image'

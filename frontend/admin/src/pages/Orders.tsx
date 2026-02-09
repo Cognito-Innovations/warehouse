@@ -12,19 +12,7 @@ import type { ColumnDefinition } from "../types/table";
 // import EditOrderStatusModal from "../components/Orders/EditOrderStatusModal";
 import ExportOrdersButton from "../components/Orders/ExportOrderButton";
 import { ORDER_STATUS_OPTIONS } from "../utils/constants";
-
-interface OrderRow {
-  id: string;
-  order_number: string;
-  user_name: string;
-  cashfree_payment_id: string;
-  items_count: string;
-  total_amount: string;
-  payment_mode: string;
-  created_at: string;
-  status: string;
-  payment_status: string;
-}
+import type { OrderRow } from "../types";
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);

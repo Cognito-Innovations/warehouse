@@ -122,19 +122,41 @@ export class ShoppingRequestsService {
   async getAllShoppingRequests({
     page,
     limit,
+    origin,
+    target,
+    status,
     countryId,
   }: {
     page: number;
     limit: number;
+    origin?: string;
+    target?: string;
+    status?: string | string[];
     countryId?: string;
   }) {
     const qb = this.shoppingRequestRepository
       .createQueryBuilder('sr')
       .leftJoinAndSelect('sr.user', 'user')
+      .leftJoin('user.address', 'address')
+      .leftJoinAndSelect('sr.courier', 'courier')
+      .leftJoin('courier.country', 'country')
       .orderBy('sr.created_at', 'DESC');
+
+    if (origin) {
+      qb.andWhere('address.country = :origin', { origin });
+    }
+
+    if (target) {
+      qb.andWhere('country.code = :target', { target });
+    }
 
     if (countryId) {
       qb.andWhere('sr.country_id = :countryId', { countryId });
+    }
+
+    if (status) {
+      const statuses = Array.isArray(status) ? status : [status];
+      qb.andWhere('sr.status IN (:...statuses)', { statuses });
     }
 
     const [data, total] = await qb
@@ -292,6 +314,28 @@ export class ShoppingRequestsService {
           }
         : undefined,
     };
+  }
+
+  async getOriginOptions(): Promise<string[]> {
+    const originRows = await this.shoppingRequestRepository
+      .createQueryBuilder('sr')
+      .innerJoin('sr.user', 'user')
+      .innerJoin('user.address', 'address')
+      .select('DISTINCT address.country', 'country')
+      .getRawMany<{ country: string }>();
+
+    return originRows.map((row) => row.country);
+  }
+
+  async getTargetOptions(): Promise<string[]> {
+    const targetRows = await this.shoppingRequestRepository
+      .createQueryBuilder('sr')
+      .innerJoin('sr.courier', 'courier')
+      .innerJoin('courier.country', 'country')
+      .select('DISTINCT country.code', 'code')
+      .getRawMany<{ code: string }>();
+
+    return targetRows.map((row) => row.code);
   }
 
   async updateStatus(

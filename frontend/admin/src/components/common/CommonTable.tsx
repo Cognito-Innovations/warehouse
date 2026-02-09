@@ -23,6 +23,7 @@ interface CommonTableProps<T> {
   columns: ColumnDefinition<T>[];
   loading: boolean;
   statusOptions?: { value: string; label: string }[];
+  onStatusFilterChange?: (status: string | null) => void;
   noDataMessage: string;
   filtersComponent?: React.ReactNode;
   onViewDetails?: (id: string | number) => void;
@@ -45,6 +46,7 @@ const CommonTable = <T,>({
   columns,
   loading,
   statusOptions,
+  onStatusFilterChange,
   noDataMessage,
   filtersComponent,
   onViewDetails,
@@ -103,8 +105,12 @@ const CommonTable = <T,>({
   };
 
   const handleStatusChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setStatusFilter(event.target.value);
+    const value = event.target.value;
+
+    setStatusFilter(value);
     setPageState(0);
+
+    onStatusFilterChange?.(value === 'All' ? null : value);
   };
 
   const hasActions = Boolean(onViewDetails || onEdit || onDelete || onToggle);

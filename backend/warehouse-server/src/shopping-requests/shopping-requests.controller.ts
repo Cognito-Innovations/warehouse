@@ -80,11 +80,17 @@ export class ShoppingRequestsController {
   async findAll(
     @Query('page') page = '1',
     @Query('limit') limit = '10',
+    @Query('origin') origin?: string,
+    @Query('target') target?: string,
+    @Query('status') status?: string | string[],
     @Query('country_id') countryId?: string,
   ) {
     return this.shoppingRequestsService.getAllShoppingRequests({
       page: Number(page),
       limit: Number(limit),
+      origin,
+      target,
+      status,
       countryId,
     });
   }
@@ -112,6 +118,22 @@ export class ShoppingRequestsController {
     @Param('requestCode') requestCode: string,
   ): Promise<ShoppingRequestResponseDto> {
     return this.shoppingRequestsService.getShoppingRequestByCode(requestCode);
+  }
+
+  @Get('filters/origins')
+  @ApiOperation({
+    summary: 'Get origin country options from shopping requests',
+  })
+  async getOriginOptions() {
+    return this.shoppingRequestsService.getOriginOptions();
+  }
+
+  @Get('filters/targets')
+  @ApiOperation({
+    summary: 'Get target country options from shopping requests',
+  })
+  async getTargetOptions() {
+    return this.shoppingRequestsService.getTargetOptions();
   }
 
   @Patch(':id/status')

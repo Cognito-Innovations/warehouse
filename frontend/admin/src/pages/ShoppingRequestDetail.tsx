@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -7,16 +7,7 @@ import { getShoppingRequestByCode, updateProduct } from '../services/api.service
 import TopNavbar from '../components/Layout/TopNavbar';
 import RequestDetailContent from '../components/ShoppingRequests/Detail/RequestDetailContent.tsx';
 import RequestDetailCard from '../components/ShoppingRequests/Detail/RequestDetailCard.tsx';
-
-interface ShoppingRequestProduct {
-  id: string;
-  name?: string;
-  quantity: number;
-  unit_price?: number | null;
-  currency?: string;
-  available?: boolean;
-  [key: string]: unknown;
-}
+import type { ShoppingRequestProduct } from '../types.ts';
 
 const ShoppingRequestDetail: React.FC = () => {
   const { id } = useParams();
@@ -25,7 +16,7 @@ const ShoppingRequestDetail: React.FC = () => {
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
@@ -39,38 +30,66 @@ const ShoppingRequestDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchRequest();
-  }, [id]);
+  }, [fetchRequest]);
 
   const handleItemUpdate = async (itemId: string, updates: Partial<ShoppingRequestProduct>) => {
-    const originalProducts = [...products];
+    const originalProducts = products;
 
-    const productIndex = products.findIndex(p => p.id === itemId);
-    if (productIndex === -1) {
+    const updatedProducts = applyProductUpdate(products, itemId, updates);
+
+    if (!updatedProducts) {
       console.error("Product not found for update!");
       return;
     }
 
-    const updatedProducts = [...products];
-    const productToUpdate = { ...updatedProducts[productIndex], ...updates };
-    updatedProducts[productIndex] = productToUpdate;
     setProducts(updatedProducts);
 
-    if (productToUpdate.id) {
-      const unitPrice = updates.unit_price === null ? 0 : updates.unit_price;
-      try {
-        await updateProduct(productToUpdate.id, unitPrice, updates.available, updates.currency);
-        toast.success("Item updated successfully!");
-      } catch (error) {
-        console.error("Failed to update item:", error);
-        toast.error("Failed to update item.");
-        setProducts(originalProducts);
-      }
+    const updatedProduct = updatedProducts.find(p => p.id === itemId)!;
+
+    try {
+      await persistProductUpdate(updatedProduct, updates);
+      toast.success("Item updated successfully!");
+    } catch (error) {
+      console.error("Failed to update item:", error);
+      toast.error("Failed to update item.");
+      setProducts(originalProducts);
     }
-  }
+  };
+
+  const applyProductUpdate = (
+    products: ShoppingRequestProduct[],
+    itemId: string,
+    updates: Partial<ShoppingRequestProduct>
+  ) => {
+    const index = products.findIndex(p => p.id === itemId);
+    if (index === -1) return null;
+
+    const updatedProducts = [...products];
+    updatedProducts[index] = {
+      ...updatedProducts[index],
+      ...updates,
+    };
+
+    return updatedProducts;
+  };
+
+  const persistProductUpdate = async (
+    product: ShoppingRequestProduct,
+    updates: Partial<ShoppingRequestProduct>
+  ) => {
+    const unitPrice = updates.unit_price === null ? 0 : updates.unit_price;
+
+    await updateProduct(
+      product.id,
+      unitPrice,
+      updates.available,
+      updates.currency
+    );
+  };
 
   const handleSelectionChange = (itemId: string, isSelected: boolean) => {
     setSelectedItemIds(previousSelectedIds => {

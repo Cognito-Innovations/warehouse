@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, CircularProgress} from '@mui/material';
 import { useParams } from 'react-router-dom';
 
+import { getPickupRequestById } from '../services/api.services.ts';
 import TopNavbar from '../components/Layout/TopNavbar';
 import RequestDetailHeader from '../components/PickupRequests/Detail/RequestDetailHeader.tsx';
 import RequestDetailContent from '../components/PickupRequests/Detail/RequestDetailContent.tsx';
-import { getPickupRequestById } from '../services/api.services.ts';
 
 const PickupRequestDetail: React.FC = () => {
   const { id } = useParams();
   const [pickupRequest, setPickupRequest] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
@@ -24,11 +24,11 @@ const PickupRequestDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchRequest();
-  }, [id]);
+  }, [fetchRequest]);
 
   if (loading) {
     return (

@@ -7,9 +7,10 @@ import TopNavbar from '../components/Layout/TopNavbar';
 import RequestSummary from '../components/common/RequestSummary';
 import StatusChip from '../components/common/StatusChip';
 import CommonTable from '../components/common/CommonTable';
-import type { ColumnDefinition } from '../types/table';
-import { shoppingSummaryConfig } from '../utils/summaryConfig';
 import ShoppingRequestFilters from '../components/ShoppingRequests/ShoppingRequestFilters';
+import { shoppingSummaryConfig } from '../utils/summaryConfig';
+import { SHOPPING_REQUEST_STATUS_OPTIONS } from '../utils/constants';
+import type { ColumnDefinition } from '../types/table';
 
 const ShoppingRequests: React.FC = () => {
   const [requests, setRequests] = useState<any[]>([]); //TODO P0: Resolve these typescript errors
@@ -28,6 +29,9 @@ const ShoppingRequests: React.FC = () => {
       const response = await getAllShoppingRequests({
         page: page + 1,
         limit: rowsPerPage,
+        origin: originCountry ?? undefined,
+        target: targetCountry ?? undefined,
+        status: selectedStatus ?? undefined,
       });
 
       setRequests(response.data);
@@ -35,67 +39,18 @@ const ShoppingRequests: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, originCountry, targetCountry, selectedStatus]);
 
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
-
-  const statusOptions = [
-    { value: 'REQUESTED', label: 'Requested' },
-    { value: 'PAID', label: 'Paid' },
-    { value: 'CANCELLED', label: 'Cancelled' },
-    { value: 'ORDER_PLACED', label: 'Order Placed' },
-  ];
-
-  const originOptions = useMemo(() => {
-    const set = new Set<string>();
-
-    requests.forEach(req => {
-      const country = req.user?.address?.[0]?.country;
-      if (country) set.add(country);
-    });
-
-    return Array.from(set);
-  }, [requests]);
-
-  const targetOptions = useMemo(() => {
-    const set = new Set<string>();
-
-    requests.forEach(req => {
-      const country = req.courier?.country?.code;
-      if (country) set.add(country);
-    });
-
-    return Array.from(set);
-  }, [requests]);
+  
+  useEffect(() => {
+    setPage(0);
+  }, [originCountry, targetCountry, selectedStatus]);
 
   const mappedRows = useMemo(() => {
-    let filtered = [...requests];
-
-    if (selectedStatus) {
-      const statuses = Array.isArray(selectedStatus)
-        ? selectedStatus
-        : [selectedStatus];
-
-      filtered = filtered.filter(req =>
-        statuses.includes(req.status)
-      );
-    }
-
-    if (originCountry) {
-      filtered = filtered.filter(
-        req => req.user?.address?.[0]?.country === originCountry
-      );
-    }
-
-    if (targetCountry) {
-      filtered = filtered.filter(
-        req => req.courier?.country?.code === targetCountry
-      );
-    }
-
-    return filtered.map((req: any) => {
+    return requests.map((req: any) => {
       const createdAt = new Date(Number(req.created_at) * 1000);
 
       return {
@@ -117,7 +72,7 @@ const ShoppingRequests: React.FC = () => {
         noOfItems: req.items_count,
       };
     });
-  }, [requests, selectedStatus, originCountry, targetCountry]);
+  }, [requests]);
 
    const columns: ColumnDefinition<typeof mappedRows[0]>[] = [
     {
@@ -177,7 +132,8 @@ const ShoppingRequests: React.FC = () => {
         rows={mappedRows}
         columns={columns}
         loading={loading}
-        statusOptions={statusOptions}
+        statusOptions={SHOPPING_REQUEST_STATUS_OPTIONS}
+        onStatusFilterChange={(status) => setSelectedStatus(status)}
         noDataMessage="No shopping requests available"
         page={page}
         rowsPerPage={rowsPerPage}
@@ -190,8 +146,6 @@ const ShoppingRequests: React.FC = () => {
         getRowStatus={(row) => row.status}
         filtersComponent={
           <ShoppingRequestFilters
-            originOptions={originOptions}
-            targetOptions={targetOptions}
             originCountry={originCountry}
             targetCountry={targetCountry}
             onOriginChange={setOriginCountry}

@@ -203,6 +203,7 @@ export class ProductsService {
       relations: [
         'category',
         'cargo_option',
+        'measurement',
         // TODO: Uncomment the country filter when it's required
         // 'countries',
       ],

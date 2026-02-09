@@ -43,11 +43,13 @@ export default function ProductDetailInfoSection({
 
   const stockStatus = isOutOfStock ? "Out of Stock" : stockQuantity < 10 ? `Only ${stockQuantity} left!` : "In Stock";
   
+  const offerPrice = discountPercentage > 0 ? formattedDiscountPrice : formattedOriginalPrice;
+
   const offers = [
     {
-      title: "WOW! DEAL",
-      description: "Buy at ₹18"
-    }
+      title: discountPercentage > 0 ? "WOW! DEAL" : "BEST PRICE",
+      description: `Buy at ${offerPrice}`,
+    },
   ];
 
   return (

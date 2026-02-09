@@ -10,22 +10,11 @@ import AddActionButton from "../components/common/AddActionButton";
 import Modal from "../components/common/Modal";
 import CategoryForm from "../components/Category/CategoryForm";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import { FALLBACK_IMAGE } from "../utils/constants";
 import type { ColumnDefinition } from "../types/table";
-import type { CategoryPayload,
+import type { CategoryPayload, CategoryRow,
   // Country
 } from "../types";
-
-interface CategoryRow {
-  id: string;
-  name: string;
-  slug: string;
-  discount_percentage: number,
-  // countries: Country[],
-  products: number;
-  image_url: string;
-  description: string;
-  status: string;
-}
 
 const Category: React.FC = () => {
   const [categories, setCategories] = useState<CategoryRow[]>([]);
@@ -106,12 +95,12 @@ const Category: React.FC = () => {
     {
       header: "Image URL",
       cell: (row) =><img
-        src={row.image_url || "https://placehold.co/100x100?text=No+Image"}
+        src={row.image_url || FALLBACK_IMAGE}
         alt={row.name}
         width={100}
         height={100}
         style={{ objectFit: "cover" }}
-        onError={(e) => (e.currentTarget.src = "https://placehold.co/100x100?text=No+Image")}
+        onError={(e) => (e.currentTarget.src = FALLBACK_IMAGE)}
     />,
       width: "15%",
     },

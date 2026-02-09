@@ -254,9 +254,15 @@ export const updatePickupRequestStatus = async (id: string, status: string, pric
 export const getAllShoppingRequests = async ({
   page,
   limit,
+  origin,
+  target,
+  status,
 }: {
   page: number;
   limit: number;
+  origin?: string;
+  target?: string;
+  status?: string | string[];
 }) => {
   const countryParams = getCountryFilterParams();
 
@@ -265,10 +271,23 @@ export const getAllShoppingRequests = async ({
       ...countryParams,
       page,
       limit,
+      origin,
+      target,
+      status,
     },
   });
 
   return response.data;
+};
+
+export const getOriginOptions = async () => {
+  const res = await api.get('/shopping-requests/filters/origins');
+  return res.data;
+};
+
+export const getTargetOptions = async () => {
+  const res = await api.get('/shopping-requests/filters/targets');
+  return res.data;
 };
 
 export const getShoppingRequestByCode = async (code: string) => {

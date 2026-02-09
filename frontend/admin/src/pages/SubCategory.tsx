@@ -11,19 +11,7 @@ import Modal from "../components/common/Modal";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import SubCategoryForm from "../components/SubCategory/SubCategoryForm";
 import type { ColumnDefinition } from "../types/table";
-import type { Country, SubCategoryPayload } from "../types";
-
-interface SubCategoryRow {
-  id: string;
-  name: string;
-  slug: string;
-  discount_percentage: number,
-  // countries: Country[],
-  categoryName: string;
-  categoryId: string | null;
-  products: number;
-  status: string;
-}
+import type { SubCategoryPayload, SubCategoryRow } from "../types";
 
 const SubCategory: React.FC = () => {
   const [subcategories, setSubCategories] = useState<SubCategoryRow[]>([]);

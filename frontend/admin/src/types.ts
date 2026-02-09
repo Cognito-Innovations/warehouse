@@ -263,3 +263,91 @@ export interface DashboardMetrics {
   quotationConfirm: number;
   assistPaymentApproval: number;
 }
+
+export interface ProductRow {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url: string;
+  category: string;
+  category_id: string;
+  sub_category: string;
+  sub_category_id: string;
+  price: {
+    price: number;
+    currency: string;
+  };
+  discount_percentage: number;
+  unit: string;
+  unit_value: number;
+  measurement_id: string;
+  stock_quantity: number;
+  // countries: Country[];
+  cargo_type_label: string;
+  cargo_option_id: string;
+  status: string;
+}
+
+export interface SubCategoryRow {
+  id: string;
+  name: string;
+  slug: string;
+  discount_percentage: number,
+  // countries: Country[],
+  categoryName: string;
+  categoryId: string | null;
+  products: number;
+  status: string;
+}
+
+export interface CategoryRow {
+  id: string;
+  name: string;
+  slug: string;
+  discount_percentage: number,
+  // countries: Country[],
+  products: number;
+  image_url: string;
+  description: string;
+  status: string;
+}
+
+export interface OrderRow {
+  id: string;
+  order_number: string;
+  user_name: string;
+  cashfree_payment_id: string;
+  items_count: string;
+  total_amount: string;
+  payment_mode: string;
+  created_at: string;
+  status: string;
+  payment_status: string;
+}
+
+export interface ShoppingRequestFiltersProps {
+  originCountry: string | null;
+  targetCountry: string | null;
+  onOriginChange: (value: string | null) => void;
+  onTargetChange: (value: string | null) => void;
+}
+
+export interface ShoppingRequestProduct {
+  id: string;
+  name?: string;
+  quantity: number;
+  unit_price?: number | null;
+  currency?: string;
+  available?: boolean;
+  [key: string]: unknown;
+}
+
+export interface StatusCard {
+  title: string;
+  value: number;
+  color: string;
+  bgColor: string;
+  icon: string;
+  status: string;
+}

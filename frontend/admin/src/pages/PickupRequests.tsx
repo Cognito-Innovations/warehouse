@@ -6,18 +6,11 @@ import { getPickupRequests } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
 import StatusChip from '../components/common/StatusChip';
 import CommonTable from '../components/common/CommonTable';
-import { formatDateTime } from '../utils/formatDateTime';
-import type { ColumnDefinition } from '../types/table';
-import { pickupSummaryConfig } from '../utils/summaryConfig';
 import RequestSummary from '../components/common/RequestSummary';
-
-const statusOptions = [
-  { value: 'requested', label: 'Requested' },
-  { value: 'quoted', label: 'Quotation Confirmed' },
-  { value: 'accepted', label: 'Accepted' },
-  { value: 'picked', label: 'Picked' },
-  { value: 'cancelled', label: 'Cancelled' },
-];
+import { formatDateTime } from '../utils/formatDateTime';
+import { pickupSummaryConfig } from '../utils/summaryConfig';
+import { PICKUP_REQUEST_STATUS_OPTIONS } from '../utils/constants';
+import type { ColumnDefinition } from '../types/table';
 
 //TODO: Code is very hard to read, please remove columns ->  header,  cell, width, its not the right approach.
 //TODO: Refer old git project for reference.
@@ -123,7 +116,7 @@ const PickupRequests: React.FC = () => {
         rows={mappedRows}
         columns={columns}
         loading={loading}
-        statusOptions={statusOptions}
+        statusOptions={PICKUP_REQUEST_STATUS_OPTIONS}
         noDataMessage="No pickup requests available"
         onViewDetails={handleViewDetails}
         getIdentifier={(row) => row.id!}

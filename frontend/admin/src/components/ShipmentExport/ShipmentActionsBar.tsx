@@ -9,6 +9,7 @@ import {
   updateShipmentStatus,
 } from "../../services/api.services";
 import ExportButton from "./ExportButton";
+import { LoadingEndAdornment } from "../common/LoadingEndAdornment";
 
 interface Shipment {
   id: string;
@@ -170,13 +171,7 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
                   <SearchIcon fontSize="small" />
                 </InputAdornment>
               ),
-              endAdornment: (
-                isSearching && (
-                  <InputAdornment position="end">
-                    <CircularProgress color="inherit" size={20} />
-                  </InputAdornment>
-                )
-              )
+              endAdornment: <LoadingEndAdornment loading={isSearching} />
             }}
             sx={{ width: 410 }}
           />
