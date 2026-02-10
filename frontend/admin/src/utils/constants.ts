@@ -78,3 +78,10 @@ export const PICKUP_REQUEST_STATUS_OPTIONS = [
 ];
 
 export const FALLBACK_IMAGE = 'https://placehold.co/100x100?text=No+Image'
+
+export const SHIPMENT_MEASUREMENTS_TABLE_HEADERS = [
+  '#',
+  'Weight',
+  'Volumetric Weight(L×W×H)',
+  'Label',
+];
