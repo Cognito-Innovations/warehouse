@@ -6,6 +6,7 @@ import { PackagesModule } from 'src/packages/packages.module';
 import { ShipmentsModule } from 'src/shipments/shipments.module';
 import { PickupRequestsModule } from 'src/pickup-requests/pickup-requests.module';
 import { ShoppingRequestsModule } from 'src/shopping-requests/shopping-requests.module';
+import { SharedModule } from 'src/shared/shared.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ShoppingRequestsModule } from 'src/shopping-requests/shopping-requests.
     ShipmentsModule,
     PickupRequestsModule,
     ShoppingRequestsModule,
+    SharedModule,
   ],
   controllers: [AnalyticsController],
   providers: [AnalyticsService],
