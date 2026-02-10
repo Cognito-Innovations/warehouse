@@ -78,20 +78,20 @@ export class ShoppingRequestsController {
     type: [ShoppingRequestResponseDto],
   })
   async findAll(
+    @Req() req: AuthenticatedRequest,
     @Query('page') page = '1',
     @Query('limit') limit = '10',
     @Query('origin') origin?: string,
     @Query('target') target?: string,
     @Query('status') status?: string | string[],
-    @Query('country_id') countryId?: string,
   ) {
     return this.shoppingRequestsService.getAllShoppingRequests({
+      userId: req.user.id,
       page: Number(page),
       limit: Number(limit),
       origin,
       target,
       status,
-      countryId,
     });
   }
 
@@ -132,8 +132,8 @@ export class ShoppingRequestsController {
   @ApiOperation({
     summary: 'Get target country options from shopping requests',
   })
-  async getTargetOptions() {
-    return this.shoppingRequestsService.getTargetOptions();
+  async getTargetOptions(@Req() req: AuthenticatedRequest) {
+    return this.shoppingRequestsService.getTargetOptions(req.user.id);
   }
 
   @Patch(':id/status')

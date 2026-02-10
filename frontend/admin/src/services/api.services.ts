@@ -264,11 +264,8 @@ export const getAllShoppingRequests = async ({
   target?: string;
   status?: string | string[];
 }) => {
-  const countryParams = getCountryFilterParams();
-
   const response = await api.get("/shopping-requests", {
     params: {
-      ...countryParams,
       page,
       limit,
       origin,

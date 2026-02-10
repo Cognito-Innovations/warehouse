@@ -351,3 +351,10 @@ export interface StatusCard {
   icon: string;
   status: string;
 }
+
+export interface ItemDetail {
+  name: string;
+  quantity: number;
+  unit_price: string;
+  total_price: string;
+}
