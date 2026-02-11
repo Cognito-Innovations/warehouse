@@ -10,21 +10,19 @@ import {
   TableRow,
 } from '@mui/material';
 
+import { useShipmentDetail } from '../../../contexts/ShipmentDetailContext';
 import { MeasurementRow } from './MeasurementRow';
 import { VolumetricWeightDisplay } from './VolumetricWeightDisplay';
 import { formatDateTime } from '../../../utils/formatDateTime';
 import { SHIPMENT_MEASUREMENTS_TABLE_HEADERS } from '../../../utils/constants';
 import { normalizeMeasurements } from '../../../utils/measurementNormalizer';
 
-interface MeasurementsTableProps {
-  shipments?: any;
-  isDiscarded: boolean;
-}
+const MeasurementsTable: React.FC = () => {
+  const { shipment } = useShipmentDetail();
 
-const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ shipments, isDiscarded }) => {
   const measurements = useMemo(
-    () => normalizeMeasurements(shipments),
-    [shipments]
+    () => normalizeMeasurements(shipment),
+    [shipment]
   );
 
   function mapMeasurementToRow(m: any) {
@@ -68,9 +66,6 @@ const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ shipments, isDisc
                 <MeasurementRow
                   key={index}
                   measurement={mapMeasurementToRow(m)}
-                  shipments={shipments}
-                  trackingNo={shipments?.tracking_no}
-                  isDiscarded={isDiscarded}
                 />
               ))}
             </TableBody>
@@ -91,7 +86,7 @@ const MeasurementsTable: React.FC<MeasurementsTableProps> = ({ shipments, isDisc
       )}
       
       <Typography variant="caption" sx={{ mt: 2, display: 'block', color: '#64748b', maxWidth: "250px" }}>
-        Created By {shipments?.user?.name} on {formatDateTime(shipments?.created_at)}
+        Created By {shipment?.user?.name} on {formatDateTime(shipment?.created_at)}
       </Typography>
     </Box>
   );

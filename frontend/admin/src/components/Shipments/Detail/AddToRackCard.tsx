@@ -1,14 +1,11 @@
 import React, { useState } from "react";
 import { Box, Typography } from "@mui/material";
+import { useShipmentDetail } from "../../../contexts/ShipmentDetailContext";
 import UpdateRackSlotModal from "./UpdateRackSlotModal";
 
-interface AddToRackCardProps {
-  shipmentId: string;
-  onRefresh: () => void;
-  isDiscarded: boolean;
-}
+const AddToRackCard: React.FC = () => {
+  const { isDiscarded } = useShipmentDetail();
 
-const AddToRackCard: React.FC<AddToRackCardProps> = ({ shipmentId, onRefresh, isDiscarded }) => {
   const [rackModalOpen, setRackModalOpen] = useState(false);
 
   const handleOpenRackModal = () => {
@@ -54,11 +51,6 @@ const AddToRackCard: React.FC<AddToRackCardProps> = ({ shipmentId, onRefresh, is
         <UpdateRackSlotModal
           open={rackModalOpen}
           onClose={handleCloseRackModal}
-          onRefresh={onRefresh}
-          shipments={{
-            id: shipmentId,
-            updated_at: "",
-          }}
         />
       )}
     </>

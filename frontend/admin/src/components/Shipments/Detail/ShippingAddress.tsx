@@ -1,13 +1,12 @@
 import React from "react";
 import { Box, Card, CardContent, Typography } from "@mui/material";
 import PublicIcon from "@mui/icons-material/Public";
+import { useShipmentDetail } from "../../../contexts/ShipmentDetailContext";
 
-interface ShippingAddressProps {
-  shipments: any;
-}
+const ShippingAddress: React.FC = () => {
+  const { shipment } = useShipmentDetail();
 
-const ShippingAddress: React.FC<ShippingAddressProps> = ({ shipments }) => {
-  const user = shipments?.user;
+  const user = shipment?.user;
   const courier = user?.preference?.courier;
   const address = courier?.address || '';
 
