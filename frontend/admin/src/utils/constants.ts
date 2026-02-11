@@ -85,3 +85,21 @@ export const SHIPMENT_MEASUREMENTS_TABLE_HEADERS = [
   'Volumetric Weight(L×W×H)',
   'Label',
 ];
+
+export const SHIPMENT_EXPORT_TABLE_HEADERS = [
+  "Serial #",
+  "Date",
+  "MAWB",
+  "Count",
+  "Created By",
+  "Status",
+  "Actions",
+];
+
+export const BOX_SHIPMENTS_TABLE_HEADERS = [
+  { label: "Shipment No." },
+  { label: "Tracking No." },
+  { label: "Customer" },
+  { label: "Date" },
+  { label: "", align: "center" as const },
+];

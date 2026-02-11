@@ -358,3 +358,36 @@ export interface ItemDetail {
   unit_price: string;
   total_price: string;
 }
+
+export interface BoxItem {
+  id: string;
+  label: string;
+  length_cm: number;
+  breadth_cm: number;
+  height_cm: number;
+  volumetric_weight?: number;
+  mass_weight?: number;
+}
+
+export interface BoxFormValues {
+  label: string;
+  length: string;
+  breadth: string;
+  height: string;
+  volumetricWeight: string;
+  massWeight: string;
+}
+
+export interface Shipment {
+  id: string;
+  tracking_no: string;
+  shipment_no: string;
+  courier: string;
+  customer: string;
+  customerCode: string;
+  updated_at: string;
+  time: string;
+  user: {
+    name: string;
+  }
+}
