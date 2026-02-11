@@ -1,4 +1,5 @@
 import type { UserRole } from "./data/menuItems";
+import type { TRACKING_STATUS } from "./utils/trackingConfig";
 
 export interface UserData {
   id: string;
@@ -390,4 +391,43 @@ export interface Shipment {
   user: {
     name: string;
   }
+}
+
+export type TrackingStatusValue = (typeof TRACKING_STATUS)[keyof typeof TRACKING_STATUS];
+
+export interface PickupActionConfig {
+  label: string;
+  color: 'primary' | 'danger';
+  statusToUpdate?: TrackingStatusValue;
+  requiresModal?: boolean;
+}
+
+export interface PickupUser {
+  id: string;
+  name: string;
+  email?: string;
+  phone_number?: string;
+  suite_no?: string;
+}
+
+export interface TrackingRequest {
+  id: string;
+  status: string;
+  created_at: string;
+}
+
+export interface PickupRequestData {
+  id: string;
+  status: string;
+  pickup_address: string;
+  supplier_name: string;
+  supplier_phone_number: string;
+  pcs_box: number;
+  est_weight: string;
+  pkg_details: string;
+  price?: string;
+  total_mvr?: string;
+  remarks?: string;
+  user: PickupUser;
+  tracking_requests?: TrackingRequest[];
 }
