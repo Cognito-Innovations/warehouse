@@ -1,34 +1,13 @@
 import React, { useState } from "react";
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
-import { Add as AddIcon } from "@mui/icons-material";
-import {
-  createShipmentExportBox,
-  deleteShipmentExportBox,
-  updateShipmentExportBox,
-} from "../../services/api.services";
+import { Box, Typography } from "@mui/material";
+
+import { deleteShipmentExportBox, updateShipmentExportBox } from "../../services/api.services";
 import BoxCard from "./BoxCard";
-import BoxShipmentsList, { type Shipment } from "./BoxShipmentsList";
+import BoxShipmentsList from "./BoxShipmentsList";
 import Modal from "../common/Modal";
 import BoxDetailsForm from "./BoxDetailsForm";
-
-interface BoxItem {
-  id: string;
-  label: string;
-  length_cm: number;
-  breadth_cm: number;
-  height_cm: number;
-  volumetric_weight?: number;
-  mass_weight?: number;
-}
-
-interface BoxFormValues {
-  label: string;
-  length: string;
-  breadth: string;
-  height: string;
-  volumetricWeight: string;
-  massWeight: string;
-}
+import AddNewBoxButton from "./AddNewBoxButton";
+import type { BoxFormValues, BoxItem, Shipment } from "../../types";
 
 interface BoxesSectionProps {
   boxes: BoxItem[];
@@ -54,12 +33,12 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
   status,
 }) => {
   const [open, setOpen] = useState(false);
-  const [isAddingBox, setIsAddingBox] = useState(false);
   const [deletingBoxId, setDeletingBoxId] = useState<string | null>(null);
   const [editingBoxLabel, setEditingBoxLabel] = useState<string | null>(null);
 
   const isDeparted = status === "SHIPMENTS DEPARTED";
-  const selectedBoxData = boxes.find((b) => b.id === selectedBoxId);
+  const selectedBoxData = boxes.find((box) => box.id === selectedBoxId);
+  const selectedBoxIndex = boxes.findIndex((box) => box.id === selectedBoxId);
 
   const handleEditClick = (boxId: string, displayLabel: string) => {
     if (isDeparted) return;
@@ -88,35 +67,14 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
       });
       
       onBoxAdded();
-      setOpen(false);
-      setSelectedBoxId(null);
-      setEditingBoxLabel(null);
+      handleClose();
     } catch (error) {
       console.error("Failed to update box:", error);
     }
   };
 
-  const handleAddBox = async () => {
-    if (isDeparted) return; // Disabled when departed
-    setIsAddingBox(true);
-    try {
-      await createShipmentExportBox(shipmentId, {
-        length_cm: 0,
-        breadth_cm: 0,
-        height_cm: 0,
-        volumetric_weight: 0,
-        mass_weight: 0,
-      });
-      onBoxAdded();
-    } catch (error) {
-      console.error("Failed to create box:", error);
-    } finally {
-      setIsAddingBox(false);
-    }
-  };
-
   const handleDelete = async (boxId: string) => {
-    if (isDeparted) return; // Disabled when departed
+    if (isDeparted) return;
     setDeletingBoxId(boxId);
     try {
       await deleteShipmentExportBox(boxId);
@@ -150,27 +108,12 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
             />
           ))}
 
-          <Button
-            variant="contained"
-            disabled={isAddingBox || isDeparted}
-            startIcon={
-              isAddingBox ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                <AddIcon />
-              )
-            }
-            sx={{
-              textTransform: "none",
-              borderRadius: 2,
-              boxShadow: "none",
-              alignSelf: "flex-start",
-              mt: boxes.length > 0 ? 2 : 0, 
-            }}
-            onClick={handleAddBox}
-          >
-            {isAddingBox ? "Adding..." : "Add New Box"}
-          </Button>
+          <AddNewBoxButton
+            shipmentId={shipmentId}
+            onBoxAdded={onBoxAdded}
+            isDeparted={isDeparted}
+            hasBoxes={boxes.length > 0}
+          />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -178,8 +121,8 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
             <BoxShipmentsList
               boxId={selectedBoxId}
               refreshShipments={refreshShipments}
-              boxIndex={boxes.findIndex(b => b.id === selectedBoxId)}
-              boxLabel={boxes.find(b => b.id === selectedBoxId)?.label}
+              boxIndex={selectedBoxIndex}
+              boxLabel={selectedBoxData?.label}
               totalBoxes={boxes.length}
               shipments={shipmentsInSelectedBox}
               isLoading={loadingShipments}

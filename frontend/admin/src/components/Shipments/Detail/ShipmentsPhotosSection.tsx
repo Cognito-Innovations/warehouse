@@ -2,45 +2,22 @@ import React, { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Box, Button, Card, CardContent, CircularProgress, Typography } from "@mui/material";
 import { Add as AddIcon, CloudUpload as UploadIcon, PictureAsPdf as PictureAsPdfIcon } from '@mui/icons-material';
+
+import { useShipmentDetail } from "../../../contexts/ShipmentDetailContext";
+import { createShipmentDocument } from "../../../services/api.services";
 import { uploadToCloudinary } from "../../../utils/cloudinary.api";
 import { formatFileName } from "../../../utils/formatFileName";
-import { createShipmentDocument } from "../../../services/api.services";
 import { formatDateTime } from "../../../utils/formatDateTime";
 
-interface Document {
-  id: string;
-  document_url: string;
-  original_filename: string;
-  mime_type: string;
-}
+const ShipmentsPhotosSection: React.FC = () => {
+    const { shipment, isDiscarded, fetchShipments } = useShipmentDetail();
+    const documents = shipment.shipment_photos || [];
 
-interface Shipments {
-  id?: string;
-  created_by?: {
-    name: string;
-  }
-  created_at?: string;
-  [key: string]: unknown;
-}
-
-interface ShipmentsPhotosSectionProps {
-  shipments: Shipments;
-  documents: Document[];
-  onUploadSuccess?: () => Promise<void>;
-  isDiscarded: boolean;
-}
-
-const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
-    shipments,
-    documents,
-    onUploadSuccess,
-    isDiscarded,
-}) => {
     const [uploading, setUploading] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const isUploadDisabled = !shipments.id;
+    const isUploadDisabled = !shipment.id;
     
     const handleFileSelect = async (files: FileList | null) => {
       if (isUploadDisabled) {
@@ -56,7 +33,7 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
         for (const file of filesArray) {
           const url = await uploadToCloudinary(file);
           if (url) {
-            await createShipmentDocument(shipments.id!, {
+            await createShipmentDocument(shipment.id!, {
               url,
               original_filename: file.name,
               mime_type: file.type,
@@ -65,7 +42,7 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
             })
           }
         }
-        await onUploadSuccess?.();
+        await fetchShipments();
         toast.success('Files uploaded successfully');
       } catch (error) {
         console.error('Upload failed:', error);
@@ -265,7 +242,7 @@ const ShipmentsPhotosSection: React.FC<ShipmentsPhotosSectionProps> = ({
                     )}
 
                     <Typography variant="caption" sx={{ color: '#64748b', fontSize: '0.75rem' }}>
-                      {shipments.created_by?.name} {formatDateTime(shipments.created_at)}
+                      {shipment.created_by?.name} {formatDateTime(shipment.created_at)}
                     </Typography>
                   </Box>
                 </Box>

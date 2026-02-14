@@ -1,57 +1,11 @@
 import React from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 
-interface DetailItemProps {
-  label: string;
-  value: string | number | undefined;
-}
-
-const DetailItem: React.FC<DetailItemProps> = ({ label, value }) => (
-  <Box>
-    <Typography
-      variant="caption"
-      color="text.secondary"
-      sx={{ 
-        display: 'block', 
-        mb: 0.75,
-        fontSize: '0.75rem',
-        fontWeight: 600,
-        letterSpacing: '0.025em',
-        textTransform: 'uppercase',
-      }}
-    >
-      {label}
-    </Typography>
-    <Typography 
-      variant="body2" 
-      sx={{ 
-        whiteSpace: 'pre-wrap',
-        fontSize: '0.875rem',
-        fontWeight: 500,
-        color: 'text.primary',
-        lineHeight: 1.5,
-      }}
-    >
-      {value || "-"}
-    </Typography>
-  </Box>
-);
-
-export interface RequestDetailsData {
-  status: string;
-  pickup_address: string;
-  supplier_name: string;
-  supplier_phone_number: string;
-  pcs_box: number;
-  est_weight: string;
-  pkg_details: string;
-  price?: string;
-  total_mvr?: string;
-  remarks?: string;
-}
+import DetailItem from './DetailItem';
+import type { PickupRequestData } from '../../../types';
 
 interface RequestDetailsProps {
-  details: RequestDetailsData;
+  details: PickupRequestData;
 }
 
 const RequestDetails: React.FC<RequestDetailsProps> = ({ details }) => {
@@ -120,7 +74,7 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({ details }) => {
 
           <Box sx={{ gridColumn: '1 / -1' }}>
             {showQuotationDetails && (
-                <DetailItem label="Customer Remarks" value={details.remarks} />
+              <DetailItem label="Customer Remarks" value={details.remarks} />
             )}
           </Box>
         </Box>

@@ -2,21 +2,20 @@ import { useState } from "react";
 import { CircularProgress, IconButton } from "@mui/material";
 import PrintIcon from '@mui/icons-material/Print';
 import { toast } from "sonner";
+
+import { useShipmentDetail } from "../../../contexts/ShipmentDetailContext";
 import { generateCarrierLabelPDF } from "../../PDF/CarrierLabelPDF";
 
-interface PrintLabelButtonProps {
-  shipments: any;
-  isDiscarded: boolean;
-}
+export const PrintLabelButton: React.FC = () => {
+  const { shipment, isDiscarded } = useShipmentDetail();
 
-export const PrintLabelButton: React.FC<PrintLabelButtonProps> = ({ shipments, isDiscarded }) => {
   const [loading, setLoading] = useState(false);
 
   const handlePrintClick = async () => {
-    if (!shipments) return;
+    if (!shipment) return;
     setLoading(true);
     try {
-      await generateCarrierLabelPDF({ ...shipments, num_pieces: "1 PCS" });
+      await generateCarrierLabelPDF({ ...shipment, num_pieces: "1 PCS" });
       toast.success("Carrier label generated");
     } catch (error) {
       toast.error("Failed to generate Carrier Label PDF");
