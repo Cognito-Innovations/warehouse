@@ -103,3 +103,12 @@ export const BOX_SHIPMENTS_TABLE_HEADERS = [
   { label: "Date" },
   { label: "", align: "center" as const },
 ];
+
+export const PRE_ARRIVALS_TABLE_HEADERS = [
+  'OTP / Tracking No',
+  'Customer',
+  'ETA',
+  'Created At',
+  'Status',
+  'Actions',
+];
