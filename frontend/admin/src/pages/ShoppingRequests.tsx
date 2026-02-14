@@ -10,7 +10,7 @@ import CommonTable from '../components/common/CommonTable';
 import ShoppingRequestFilters from '../components/ShoppingRequests/ShoppingRequestFilters';
 import { shoppingSummaryConfig } from '../utils/summaryConfig';
 import { SHOPPING_REQUEST_STATUS_OPTIONS } from '../utils/constants';
-import type { ColumnDefinition } from '../types/table';
+import type { ColumnDefinition, TablePaginationConfig } from '../types/table';
 
 const ShoppingRequests: React.FC = () => {
   const [requests, setRequests] = useState<any[]>([]); //TODO P0: Resolve these typescript errors
@@ -116,6 +116,32 @@ const ShoppingRequests: React.FC = () => {
     navigate(`/requests/${encodeURIComponent(orderNo as string)}`);
   };
 
+  const pagination: TablePaginationConfig = {
+    mode: 'server',
+    page,
+    rowsPerPage,
+    totalCount: total,
+    onPageChange: setPage,
+    onRowsPerPageChange: setRowsPerPage,
+  }
+
+  const filters = {
+    statusOptions: SHOPPING_REQUEST_STATUS_OPTIONS,
+    onStatusChange: setSelectedStatus,
+    filtersComponent:(
+      <ShoppingRequestFilters
+        originCountry={originCountry}
+        targetCountry={targetCountry}
+        onOriginChange={setOriginCountry}
+        onTargetChange={setTargetCountry}
+      />
+    )
+  }
+
+  const actions = {
+    onViewDetails: handleViewDetails,
+  }
+
   return (
     <Box>
       <TopNavbar pageTitle="Shopping Request" pageSubtitle="All" />
@@ -132,26 +158,12 @@ const ShoppingRequests: React.FC = () => {
         rows={mappedRows}
         columns={columns}
         loading={loading}
-        statusOptions={SHOPPING_REQUEST_STATUS_OPTIONS}
-        onStatusFilterChange={(status) => setSelectedStatus(status)}
         noDataMessage="No shopping requests available"
-        page={page}
-        rowsPerPage={rowsPerPage}
-        totalCount={total}
-        onPageChange={setPage}
-        onRowsPerPageChange={setRowsPerPage}
-        paginationMode="server"
-        onViewDetails={handleViewDetails}
         getIdentifier={(row) => row.orderNo}
         getRowStatus={(row) => row.status}
-        filtersComponent={
-          <ShoppingRequestFilters
-            originCountry={originCountry}
-            targetCountry={targetCountry}
-            onOriginChange={setOriginCountry}
-            onTargetChange={setTargetCountry}
-          />
-        }
+        pagination={pagination}
+        filters={filters}
+        actions={actions}
       />
     </Box>
   );

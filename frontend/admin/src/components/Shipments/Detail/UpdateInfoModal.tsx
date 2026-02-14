@@ -13,8 +13,10 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import WeightSection from "./WeightSection";
+
+import { useShipmentDetail } from "../../../contexts/ShipmentDetailContext";
 import { updateShipment } from "../../../services/api.services";
+import WeightSection from "./WeightSection";
 import type { Pieces } from "./ShipmentDetailsSection";
 
 interface PieceData {
@@ -44,8 +46,6 @@ interface Shipment {
 interface UpdateInfoModalProps {
   open: boolean;
   onClose: () => void;
-  onRefresh: () => void;
-  shipments: Shipment;
 }
 
 const getInitialFormData = (shipmentData: Shipment): FormData => {
@@ -87,27 +87,24 @@ const getInitialFormData = (shipmentData: Shipment): FormData => {
   };
 };
 
-const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
-  open,
-  onClose,
-  onRefresh,
-  shipments,
-}) => {
+const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({ open, onClose }) => {
+  const { shipment, fetchShipments } = useShipmentDetail();
+
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [initialFormData, setInitialFormData] = useState<FormData>(() =>
-    getInitialFormData(shipments)
+    getInitialFormData(shipment)
   );
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
   useEffect(() => {
     if (open) {
-      const newInitialData = getInitialFormData(shipments);
+      const newInitialData = getInitialFormData(shipment);
       setInitialFormData(newInitialData);
       setFormData(newInitialData);
       setErrors({});
     }
-  }, [shipments, open]);
+  }, [shipment, open]);
 
   const handleCustomsValueChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -291,8 +288,8 @@ const UpdateInfoModal: React.FC<UpdateInfoModalProps> = ({
         pieces: piecesPayload,
       };
 
-      await updateShipment(shipments.id, payload);
-      onRefresh();
+      await updateShipment(shipment.id, payload);
+      fetchShipments();
       onClose();
     } catch (err) {
       console.error("Failed to update package", err);
