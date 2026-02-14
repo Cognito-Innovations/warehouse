@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, TextField } from '@mui/material';
 
 import { updatePickupRequestStatus } from '../../../services/api.services';
 import RequestHeader from '../../common/RequestHeader';
-import Modal from '../../common/Modal';
-import ActionButton from '../../common/ActionButton';
+import PickupRequestActionButtons from './PickupRequestActionButtons';
+import SendQuotationModal from './SendQuotationModal';
 import { TRACKING_STATUS } from '../../../utils/trackingConfig';
 import { getChipStyles } from '../../../utils/pickupStatus';
-import { numberInputStyle } from '../../../styles/numberInputStyle';
-
-type TrackingStatusValue = (typeof TRACKING_STATUS)[keyof typeof TRACKING_STATUS];
+import type { TrackingStatusValue } from '../../../types';
 
 interface Users {
   id: string;
@@ -33,17 +30,11 @@ interface RequestDetailHeaderProps {
 const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onStatusUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
-  const [price, setPrice] = useState('');
 
   const normalizedStatus = request.status.toUpperCase();
   const chipStyles = getChipStyles(normalizedStatus);
 
   const handleOpenModal = () => setOpenModal(true);
-
-  const handleCloseModal = () => {
-    setPrice('');
-    setOpenModal(false);
-  }
 
   const handleStatusUpdate = async (status: TrackingStatusValue, price?: number) => {
     try {
@@ -51,7 +42,7 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
       await updatePickupRequestStatus(request.id, status, price);
       onStatusUpdate();
       if (status === TRACKING_STATUS.QUOTED) {
-        handleCloseModal();
+        setOpenModal(false);
       }
     } catch (err) {
       console.error(err);
@@ -60,43 +51,12 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
     }
   };
 
-  const userForHeader = {
+  const user = {
     name: request.user.name,
     email: request.user.email,
     phone: request.user.phone_number,
     suite_no: request.user.suite_no,
   };
-
-  const renderActionButtons = () => (
-    <Box sx={{ display: "flex", gap: 1.5 }}>
-      {normalizedStatus === "REQUESTED" && (
-        <ActionButton
-          label="Send Quotation"
-          onClick={handleOpenModal}
-          color="primary"
-          loading={loading}
-        />
-      )}
-
-      {normalizedStatus === "QUOTED" && (
-        <ActionButton
-          label="Reject"
-          onClick={() => handleStatusUpdate(TRACKING_STATUS.CANCELLED)}
-          color="danger"
-          loading={loading}
-        />
-      )}
-
-      {normalizedStatus === "CONFIRMED" && (
-        <ActionButton
-          label="Complete"
-          onClick={() => handleStatusUpdate(TRACKING_STATUS.PICKED)}
-          color="primary"
-          loading={loading}
-        />
-      )}
-    </Box>
-  );
 
   return (
     <>
@@ -108,38 +68,24 @@ const RequestDetailHeader: React.FC<RequestDetailHeaderProps> = ({ request, onSt
           color: chipStyles.color,
           bgColor: chipStyles.backgroundColor,
         }}
-        user={userForHeader}
-        actionButtons={renderActionButtons()}
+        user={user}
+        actionButtons={
+          <PickupRequestActionButtons
+            status={normalizedStatus}
+            loading={loading}
+            onOpenModal={handleOpenModal}
+            onStatusUpdate={handleStatusUpdate}
+          />
+        }
       />
 
-      <Modal open={openModal} onClose={handleCloseModal} title="Send Quotation ($)">
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField
-            label="Quotation Price ($)"
-            type="number"
-            fullWidth
-            value={price}
-            onChange={(e) => {
-              if (e.target.value.length <= 7) {
-                setPrice(e.target.value);
-              }
-            }}
-            sx={numberInputStyle}
-          />
-          {price && (
-            <Typography variant="body2" color="text.secondary">
-              Total: ${price}
-            </Typography>
-          )}
-          <Button
-            variant="contained"
-            onClick={() => handleStatusUpdate(TRACKING_STATUS.QUOTED, Number(price))}
-            disabled={loading || !price}
-          >
-            {loading ? 'Sending...' : 'Confirm'}
-          </Button>
-        </Box>
-      </Modal>
+      <SendQuotationModal
+        requestId={request.id}
+        open={openModal}
+        loading={loading}
+        onClose={() => setOpenModal(false)}
+        onSubmit={handleStatusUpdate}
+      />
     </>
   );
 };

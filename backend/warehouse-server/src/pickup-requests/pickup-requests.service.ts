@@ -15,6 +15,7 @@ import {
 } from 'src/tracking-requests/tracking-request.entity';
 import { TrackingRequestsService } from 'src/tracking-requests/tracking-requests.service';
 import { mapPickupToTrackingStatus } from './status-mapper';
+import { UserContextService } from 'src/shared/user-context.service';
 
 @Injectable()
 export class PickupRequestsService {
@@ -23,6 +24,7 @@ export class PickupRequestsService {
     private readonly pickupRequestRepository: Repository<PickupRequest>,
     private readonly dataSource: DataSource,
     private readonly trackingRequestsService: TrackingRequestsService,
+    private readonly userContextService: UserContextService,
   ) {}
 
   async getPickupRequestsCount(countryId?: string): Promise<number> {
@@ -99,10 +101,17 @@ export class PickupRequestsService {
   }
 
   async getAllPickupRequests(
-    countryId?: string,
+    userId?: string,
   ): Promise<PickupRequestResponseDto[]> {
     try {
       const where: FindOptionsWhere<PickupRequest> = {};
+
+      let countryId: string | null = null;
+
+      if (userId) {
+        countryId =
+          await this.userContextService.getUserPreferredCountryId(userId);
+      }
 
       if (countryId) {
         where.country = { id: countryId };

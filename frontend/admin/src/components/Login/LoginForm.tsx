@@ -86,6 +86,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
         p: 4,
         borderRadius: 3,
         boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+        overflow: 'visible',
       }}
     >
       <Box sx={{ textAlign: 'center', mb: 4 }}>

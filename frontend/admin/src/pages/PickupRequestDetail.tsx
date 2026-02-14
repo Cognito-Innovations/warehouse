@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, CircularProgress} from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 
 import { getPickupRequestById } from '../services/api.services.ts';
@@ -41,11 +41,24 @@ const PickupRequestDetail: React.FC = () => {
     );
   }
 
+   if (!pickupRequest) {
+    return (
+      <Box>
+        <TopNavbar pageTitle="Pickup Request" pageSubtitle="All" />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+          <Typography variant="h6" color="text.secondary">
+            Pickup request not found
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       <TopNavbar pageTitle="Pickup Request" pageSubtitle="All" />
-      {pickupRequest && <RequestDetailHeader request={pickupRequest} onStatusUpdate={fetchRequest} />}
-      {pickupRequest && <RequestDetailContent request={pickupRequest} />}
+      <RequestDetailHeader request={pickupRequest} onStatusUpdate={fetchRequest} />
+      <RequestDetailContent request={pickupRequest} />
     </Box>
   );
 };

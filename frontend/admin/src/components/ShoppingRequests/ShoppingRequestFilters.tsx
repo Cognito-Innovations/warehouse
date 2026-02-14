@@ -53,6 +53,9 @@ const ShoppingRequestFilters: React.FC<ShoppingRequestFiltersProps> = ({
           onOriginChange(e.target.value === 'All' ? null : e.target.value)
         }
         sx={{ minWidth: 160 }}
+        SelectProps={{
+          IconComponent: originLoading ? () => null: undefined,
+        }}
         InputProps={{
           endAdornment: <LoadingEndAdornment loading={originLoading} />,
         }}
@@ -76,6 +79,9 @@ const ShoppingRequestFilters: React.FC<ShoppingRequestFiltersProps> = ({
           onTargetChange(e.target.value === 'All' ? null : e.target.value)
         }
         sx={{ minWidth: 160 }}
+        SelectProps={{
+          IconComponent: targetLoading ? () => null: undefined,
+        }}
         InputProps={{
           endAdornment: <LoadingEndAdornment loading={targetLoading} />,
         }}

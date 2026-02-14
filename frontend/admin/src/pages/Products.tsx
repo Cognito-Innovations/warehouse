@@ -222,6 +222,17 @@ const Products: React.FC = () => {
 
   const isToggleLoading = (id: string | number) => togglingIds.has(String(id));
 
+  const filters = {
+    statusOptions: PRODUCT_STATUS_OPTIONS,
+  };
+
+  const actions = {
+    onEdit: handleEditProduct,
+    onDelete: handleDeleteClick,
+    onToggle: handleToggleStatus,
+    isToggleLoading,
+  };
+
   return (
     <Box>
       <TopNavbar
@@ -263,14 +274,11 @@ const Products: React.FC = () => {
         rows={products}
         columns={columns}
         loading={loading}
-        statusOptions={PRODUCT_STATUS_OPTIONS}
         noDataMessage={noDataMessage}
         getIdentifier={(row) => row.id}
         getRowStatus={(row) => row.status}
-        onEdit={handleEditProduct}
-        onDelete={handleDeleteClick}
-        onToggle={handleToggleStatus}
-        isToggleLoading={isToggleLoading}
+        filters={filters}
+        actions={actions}
       />
 
       <ConfirmDialog

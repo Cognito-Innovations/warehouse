@@ -16,7 +16,7 @@ export const LoadingEndAdornment = ({
 
   return (
     <InputAdornment position={position}>
-      <CircularProgress size={size} />
+      <CircularProgress size={size} color="inherit" />
     </InputAdornment>
   );
 };

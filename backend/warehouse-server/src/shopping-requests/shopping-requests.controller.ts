@@ -20,20 +20,12 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Request } from 'express';
 import { ShoppingRequestsService } from './shopping-requests.service';
 import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
 import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
 import { DocumentResponseDto } from 'src/documents/dto/document-response.dto';
 import { ShoppingRequestStatus } from './shopping-request.entity';
-
-interface AuthenticatedRequest extends Request {
-  user: {
-    id: string;
-    email?: string;
-    role?: string;
-  };
-}
+import type { AuthenticatedRequest } from 'src/shared/types/authenticated-request.type';
 
 @ApiTags('Shopping Requests')
 @ApiBearerAuth()
@@ -78,20 +70,21 @@ export class ShoppingRequestsController {
     type: [ShoppingRequestResponseDto],
   })
   async findAll(
+    @Req() req: AuthenticatedRequest,
     @Query('page') page = '1',
     @Query('limit') limit = '10',
     @Query('origin') origin?: string,
     @Query('target') target?: string,
     @Query('status') status?: string | string[],
-    @Query('country_id') countryId?: string,
   ) {
     return this.shoppingRequestsService.getAllShoppingRequests({
+      userId: req.user.id,
+      role: req.user.role,
       page: Number(page),
       limit: Number(limit),
       origin,
       target,
       status,
-      countryId,
     });
   }
 
@@ -132,8 +125,11 @@ export class ShoppingRequestsController {
   @ApiOperation({
     summary: 'Get target country options from shopping requests',
   })
-  async getTargetOptions() {
-    return this.shoppingRequestsService.getTargetOptions();
+  async getTargetOptions(@Req() req: AuthenticatedRequest) {
+    return this.shoppingRequestsService.getTargetOptions(
+      req.user.id,
+      req.user.role,
+    );
   }
 
   @Patch(':id/status')

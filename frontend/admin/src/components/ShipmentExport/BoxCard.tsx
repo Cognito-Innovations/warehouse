@@ -1,17 +1,10 @@
 import React from "react";
 import { Box, Card, CircularProgress, IconButton, Typography } from "@mui/material";
 import { Edit as EditIcon, DeleteOutline as DeleteIcon } from "@mui/icons-material";
+import type { BoxItem } from "../../types";
 
 interface BoxCardProps {
-  box: {
-    id: string;
-    label?: string;
-    length_cm: number;
-    breadth_cm: number;
-    height_cm: number;
-    volumetric_weight?: number;
-    mass_weight?: number;
-  };
+  box: BoxItem;
   index: number;
   total: number;
   onEdit: (boxId: string, displayLabel: string) => void;
