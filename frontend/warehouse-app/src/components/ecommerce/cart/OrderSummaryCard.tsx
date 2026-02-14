@@ -46,7 +46,7 @@ export default function OrderSummaryCard({
     deliveryFee
   );
 
-  const finalTotal = totals.total;
+  const finalTotal = totals.display_total;
   
   const handleCheckout = useCallback(() => {
     if (isLoading) {

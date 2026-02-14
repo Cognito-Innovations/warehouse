@@ -18,14 +18,7 @@ import { ShipmentResponseDto } from './dto/shipment-response.dto';
 import { ShipmentStatus } from './shipment.entity';
 import { UpdateShipmentDto } from './dto/update-shipment.dto';
 import { CreateShipmentInvoiceDto } from './dto/create-shipment-invoice.dto';
-
-interface AuthenticatedRequest extends Request {
-  user: {
-    id: string;
-    email?: string;
-    role?: string;
-  };
-}
+import type { AuthenticatedRequest } from 'src/shared/types/authenticated-request.type';
 
 @Controller('shipments')
 @UseGuards(JwtAuthGuard)
@@ -42,31 +35,31 @@ export class ShipmentsController {
   }
 
   @Get()
-  async findAll(@Query('country_id') countryId?: string) {
-    return this.shipmentsService.getAllShipments(countryId);
+  async findAll(@Req() req: AuthenticatedRequest) {
+    return this.shipmentsService.getAllShipments(req.user.id);
   }
 
   @Get('by-status')
   async getByStatus(
+    @Req() req: AuthenticatedRequest,
     @Query('status') status?: string,
-    @Query('country_id') countryId?: string,
   ) {
     if (!status) {
       throw new BadRequestException('Status query parameter is required');
     }
-    return this.shipmentsService.getShipmentsByStatus(status, countryId);
+    return this.shipmentsService.getShipmentsByStatus(status, req.user.id);
   }
 
   @Get('/search')
   async searchShipment(
     @Query('shipmentNumber') shipmentNumber: string,
     @Query('status') status: ShipmentStatus,
-    @Query('country_id') countryId?: string,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ShipmentResponseDto> {
     return this.shipmentsService.findByShipmentNumberAndStatus(
       shipmentNumber,
       status,
-      countryId,
+      req.user.id,
     );
   }
 

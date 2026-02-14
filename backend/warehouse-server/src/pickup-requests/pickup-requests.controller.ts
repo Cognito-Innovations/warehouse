@@ -6,7 +6,7 @@ import {
   Param,
   Patch,
   Post,
-  Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PickupRequestsService } from './pickup-requests.service';
 import { CreatePickupRequestDto } from './dto/create-pickup-request.dto';
 import { PickupRequestResponseDto } from './dto/pickup-request-response.dto';
+import type { AuthenticatedRequest } from 'src/shared/types/authenticated-request.type';
 
 @ApiTags('Pickup Requests')
 @Controller('pickup-requests')
@@ -76,9 +77,9 @@ export class PickupRequestsController {
     type: [PickupRequestResponseDto],
   })
   async findAll(
-    @Query('country_id') countryId?: string,
+    @Req() req: AuthenticatedRequest,
   ): Promise<PickupRequestResponseDto[]> {
-    return this.pickupRequestsService.getAllPickupRequests(countryId);
+    return this.pickupRequestsService.getAllPickupRequests(req.user.id);
   }
 
   @Get(':userId')

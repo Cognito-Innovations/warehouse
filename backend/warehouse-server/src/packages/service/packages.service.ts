@@ -28,6 +28,7 @@ import { Rack } from 'src/racks/rack.entity';
 import { DocumentsService } from 'src/documents/documents.service';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
 import { PackageSequence } from '../entities/package-sequence.entity';
+import { UserContextService } from 'src/shared/user-context.service';
 
 @Injectable()
 export class PackagesService {
@@ -47,6 +48,7 @@ export class PackagesService {
     @InjectRepository(PackageCharge)
     private readonly packageChargeRepository: Repository<PackageCharge>,
     private readonly dataSource: DataSource,
+    private readonly userContextService: UserContextService,
   ) {}
 
   async getPackagesCount(countryId?: string): Promise<number> {
@@ -379,8 +381,15 @@ export class PackagesService {
     await manager.save(savedPackage);
   }
 
-  async getAllPackages(countryId?: string): Promise<PackageResponseDto[]> {
+  async getAllPackages(userId?: string): Promise<PackageResponseDto[]> {
     const where: FindOptionsWhere<Package> = {};
+
+    let countryId: string | null = null;
+
+    if (userId) {
+      countryId =
+        await this.userContextService.getUserPreferredCountryId(userId);
+    }
 
     if (countryId) {
       where.country = { id: countryId };
@@ -467,7 +476,7 @@ export class PackagesService {
 
   async searchPackages(
     searchTerm: string,
-    countryId?: string,
+    userId?: string,
   ): Promise<PackageResponseDto[]> {
     const whereConditions: FindOptionsWhere<Package>[] = [
       { package_id: searchTerm },
@@ -476,6 +485,13 @@ export class PackagesService {
 
     if (isUUID(searchTerm)) {
       whereConditions.push({ id: searchTerm });
+    }
+
+    let countryId: string | null = null;
+
+    if (userId) {
+      countryId =
+        await this.userContextService.getUserPreferredCountryId(userId);
     }
 
     if (countryId) {

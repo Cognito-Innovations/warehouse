@@ -6,6 +6,7 @@ import { ShoppingRequestsService } from 'src/shopping-requests/shopping-requests
 import { UsersService } from 'src/users/users.service';
 import { ShipmentStatus } from 'src/shipments/shipment.entity';
 import { ShoppingRequestStatus } from 'src/shopping-requests/shopping-request.entity';
+import { UserContextService } from 'src/shared/user-context.service';
 
 export interface DashboardMetrics {
   customers: number;
@@ -30,9 +31,18 @@ export class AnalyticsService {
     private readonly shipmentsService: ShipmentsService,
     private readonly pickupRequestsService: PickupRequestsService,
     private readonly shoppingRequestsService: ShoppingRequestsService,
+    private readonly userContextService: UserContextService,
   ) {}
 
-  async getDashboardMetrics(countryId?: string): Promise<DashboardMetrics> {
+  async getDashboardMetrics(userId?: string): Promise<DashboardMetrics> {
+    let countryId: string | undefined;
+
+    if (userId) {
+      countryId =
+        (await this.userContextService.getUserPreferredCountryId(userId)) ??
+        undefined;
+    }
+
     const totalCustomers = await this.usersService.getUsersCount();
 
     const totalPackages =

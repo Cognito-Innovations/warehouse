@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -18,7 +22,7 @@ import { InvoicesService } from 'src/invoice/invoices.service';
 import { Invoice, InvoiceStatus } from 'src/invoice/entities/invoice.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { UsersService } from 'src/users/users.service';
-import { User } from 'src/users/user.entity';
+import { Role, User } from 'src/users/user.entity';
 import {
   getShoppingRequestEmailTemplate,
   ShoppingRequestEmailType,
@@ -120,21 +124,50 @@ export class ShoppingRequestsService {
   }
 
   async getAllShoppingRequests({
+    userId,
+    role,
     page,
     limit,
-    countryId,
+    origin,
+    target,
+    status,
   }: {
+    userId: string;
+    role?: string;
     page: number;
     limit: number;
-    countryId?: string;
+    origin?: string;
+    target?: string;
+    status?: string | string[];
   }) {
     const qb = this.shoppingRequestRepository
       .createQueryBuilder('sr')
       .leftJoinAndSelect('sr.user', 'user')
+      .leftJoin('user.address', 'address')
+      .leftJoinAndSelect('sr.courier', 'courier')
+      .leftJoin('courier.country', 'country')
       .orderBy('sr.created_at', 'DESC');
 
-    if (countryId) {
-      qb.andWhere('sr.country_id = :countryId', { countryId });
+    if (role !== Role.SuperAdmin) {
+      qb.innerJoin(
+        'user_preferences',
+        'up',
+        'up.user_id = :userId AND up.courier_id = courier.id',
+        { userId },
+      );
+    }
+
+    if (origin) {
+      qb.andWhere('address.country = :origin', { origin });
+    }
+
+    if (target) {
+      qb.andWhere('country.code = :target', { target });
+    }
+
+    if (status) {
+      const statuses = Array.isArray(status) ? status : [status];
+      qb.andWhere('sr.status IN (:...statuses)', { statuses });
     }
 
     const [data, total] = await qb
@@ -292,6 +325,48 @@ export class ShoppingRequestsService {
           }
         : undefined,
     };
+  }
+
+  async getOriginOptions(): Promise<string[]> {
+    try {
+      const originRows = await this.shoppingRequestRepository
+        .createQueryBuilder('sr')
+        .innerJoin('sr.user', 'user')
+        .innerJoin('user.address', 'address')
+        .select('DISTINCT address.country', 'country')
+        .getRawMany<{ country: string }>();
+
+      return originRows.map((row) => row.country);
+    } catch (error) {
+      console.error('Failed to fetch origin options:', error);
+      throw new InternalServerErrorException('Unable to fetch origin options');
+    }
+  }
+
+  async getTargetOptions(userId: string, role?: string): Promise<string[]> {
+    try {
+      const qb = this.shoppingRequestRepository
+        .createQueryBuilder('sr')
+        .innerJoin('sr.courier', 'courier')
+        .innerJoin('countries', 'country', 'country.id = courier.country_id')
+        .select('DISTINCT country.code', 'code');
+
+      if (role !== Role.SuperAdmin) {
+        qb.innerJoin(
+          'user_preferences',
+          'up',
+          'up.courier_id = courier.id AND up.user_id = :userId',
+          { userId },
+        );
+      }
+
+      const targetRows = await qb.getRawMany<{ code: string }>();
+
+      return targetRows.map((row) => row.code);
+    } catch (error) {
+      console.error('Failed to fetch target options:', error);
+      throw new InternalServerErrorException('Unable to fetch target options');
+    }
   }
 
   async updateStatus(

@@ -16,51 +16,35 @@ import {
 } from '@mui/material';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import CommonTableBody from './CommonTableBody';
-import { type ColumnDefinition } from '../../types/table';
+import { type ColumnDefinition, type TableActionsConfig, type TableFilterConfig, type TablePaginationConfig } from '../../types/table';
 
 interface CommonTableProps<T> {
   rows: T[];
   columns: ColumnDefinition<T>[];
   loading: boolean;
-  statusOptions?: { value: string; label: string }[];
   noDataMessage: string;
-  filtersComponent?: React.ReactNode;
-  onViewDetails?: (id: string | number) => void;
-  onEdit?: (id: string | number) => void;
-  onDelete?: (id: string | number) => void;
-  onToggle?: (id: string | number, newActive: boolean) => Promise<void>;
-  isToggleLoading?: (id: string | number) => boolean;
   getIdentifier: (row: T) => string | number;
   getRowStatus: (row: T) => string;
-  page?: number;
-  rowsPerPage?: number;
-  totalCount?: number;
-  onPageChange?: (page: number) => void;
-  onRowsPerPageChange?: (rows: number) => void;
-  paginationMode?: 'client' | 'server';
+  pagination?: TablePaginationConfig;
+  filters?: TableFilterConfig;
+  actions?: TableActionsConfig;
 }
 
 const CommonTable = <T,>({
   rows,
   columns,
   loading,
-  statusOptions,
   noDataMessage,
-  filtersComponent,
-  onViewDetails,
-  onEdit,
-  onDelete,
-  onToggle,
-  isToggleLoading,
   getIdentifier,
   getRowStatus,
-  page,
-  rowsPerPage,
-  totalCount,
-  onPageChange,
-  onRowsPerPageChange,
-  paginationMode,
+  pagination,
+  filters,
+  actions,
 }: CommonTableProps<T>) => {
+  const { mode, page, rowsPerPage, totalCount, onPageChange, onRowsPerPageChange } = pagination ?? {};
+  const { statusOptions, onStatusChange, filtersComponent } = filters ?? {};
+  const { onViewDetails, onEdit, onDelete, onToggle, isToggleLoading } = actions ?? {};
+
   const [pageState, setPageState] = useState(0);
   const [rowsPerPageState, setRowsPerPageState] = useState(15);
   const [statusFilter, setStatusFilter] = useState('All');
@@ -69,7 +53,7 @@ const CommonTable = <T,>({
     ? rows
     : rows.filter((row) => getRowStatus(row) === statusFilter);
 
-  const isServer = paginationMode === 'server';
+  const isServer = mode === 'server';
 
   const currentPage = isServer ? page ?? 0 : pageState;
   const currentRowsPerPage = isServer ? rowsPerPage ?? 15 : rowsPerPageState;
@@ -103,8 +87,12 @@ const CommonTable = <T,>({
   };
 
   const handleStatusChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setStatusFilter(event.target.value);
+    const value = event.target.value;
+
+    setStatusFilter(value);
     setPageState(0);
+
+    onStatusChange?.(value === 'All' ? null : value);
   };
 
   const hasActions = Boolean(onViewDetails || onEdit || onDelete || onToggle);

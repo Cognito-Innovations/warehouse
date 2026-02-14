@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 
+import { getShipments, getShipmentsByStatus } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
 import StatusCards from '../components/Shipments/StatusCards';
 import SearchFilters from '../components/Shipments/SearchFilters';
 import ShipmentsTable from '../components/Shipments/ShipmentsTable';
-import { getShipments, getShipmentsByStatus } from '../services/api.services';
 
 const Shipments = () => {
   const [shipments, setShipments] = useState<any[]>([]);

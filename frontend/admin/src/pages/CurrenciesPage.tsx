@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { toast } from 'sonner';
 
+import { createCurrency, getCurrencies, updateCurrency } from '../services/api.services';
 import PageHeader from '../components/shared/PageHeader';
 import CurrenciesList from '../components/settings/CurrenciesList';
 import AddEditCurrencyDialog from '../components/settings/AddEditCurrencyDialog';
-import { createCurrency, getCurrencies, updateCurrency } from '../services/api.services';
 import type { CreateCurrencyPayload, Currency } from '../types';
 
 const CurrenciesPage: React.FC = () => {

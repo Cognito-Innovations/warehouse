@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Box, Card, Typography } from '@mui/material';
 import { toast } from 'sonner';
+
+import { getUserBySuiteNo } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
 import SearchCustomer from '../components/Shipments/Create/SearchCustomer';
-import { getUserBySuiteNo } from '../services/api.services';
 
 const CreateShipment = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
@@ -30,19 +31,19 @@ const CreateShipment = () => {
 
       <Box display="flex" px={2} mt={2}>
         <Box width="50%" pr={2}>
-            <Card sx={{ p: 2 }}>
-                <SearchCustomer onSearch={handleSearchCustomer} loading={loading} />
+          <Card sx={{ p: 2 }}>
+            <SearchCustomer onSearch={handleSearchCustomer} loading={loading} />
 
-                <Box mt={2}>
-                    {selectedCustomer ? (
-                        <Typography variant='body1'>
-                            Selected: {selectedCustomer.name} (Suite {selectedCustomer.suite})
-                        </Typography>
-                    ) : (
-                        <Typography variant='body2'>Search customer</Typography>
-                    )}
-                </Box>
-            </Card>
+            <Box mt={2}>
+              {selectedCustomer ? (
+                <Typography variant='body1'>
+                  Selected: {selectedCustomer.name} (Suite {selectedCustomer.suite})
+                </Typography>
+              ) : (
+                <Typography variant='body2'>Search customer</Typography>
+              )}
+            </Box>
+          </Card>
         </Box>
 
         <Box width="50%" pl={2}></Box>

@@ -1,14 +1,14 @@
 import { 
-  Table, 
-  TableBody, 
+  Table,
   TableCell, 
   TableHead, 
   TableRow, 
   Typography,
   Box,
-  Chip,
 } from "@mui/material";
+
 import type { Invoice } from "./RequestDetailContent";
+import InvoiceProductsTableBody from "./InvoiceProductsTableBody";
 
 export default function InvoiceProducts({ products }: { products?: Invoice["products"] }) {
   if (!products?.length) {
@@ -45,41 +45,8 @@ export default function InvoiceProducts({ products }: { products?: Invoice["prod
             <TableCell sx={{ fontWeight: 600 }} align="right">Unit Price</TableCell>
           </TableRow>
         </TableHead>
-        <TableBody>
-          {products.map((product, idx) => (
-            <TableRow 
-              key={product.id || idx}
-              sx={{ 
-                "&:hover": { bgcolor: "action.hover" },
-                "&:last-child": { borderBottom: 0 }
-              }}
-            >
-              <TableCell>
-                <Box>
-                  <Typography variant="body2" fontWeight="500">
-                    {product.name}
-                  </Typography>
-                  {product.description && (
-                    <Typography variant="caption" color="text.secondary">
-                      {product.description}
-                    </Typography>
-                  )}
-                </Box>
-              </TableCell>
-              <TableCell align="center">
-                <Chip 
-                  label={product.quantity} 
-                  size="small" 
-                  variant="outlined"
-                  color="primary"
-                />
-              </TableCell>
-              <TableCell align="right">
-                {product.unit_price && product.currency && <p>{product.unit_price}</p>}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
+
+        <InvoiceProductsTableBody products={products} />
       </Table>
     </Box>
   );

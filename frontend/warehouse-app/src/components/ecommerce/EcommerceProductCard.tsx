@@ -22,7 +22,6 @@ import { ROUTES } from "@/utils/constants";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils"; 
 import { CartItem, EcommerceProductCardProps } from "@/types/ecommerce";
-import { normalizeCart } from "@/lib/utils";
 
 export default function EcommerceProductCard({
   product
@@ -32,8 +31,7 @@ export default function EcommerceProductCard({
   const {handleProductSelect} = useProductStore();
   const {addProductToCart, removeProductFromCart, cart} = useCartStore();
 
-  const safeCart = normalizeCart(cart);
-  const cartQuantity = safeCart.find((item: CartItem) => item.product_id === product.id)?.quantity || 0;
+  const cartQuantity = cart.find((item: CartItem) => item.product_id === product.id)?.quantity || 0;
 
 
   const rawPrice = product.price.price;

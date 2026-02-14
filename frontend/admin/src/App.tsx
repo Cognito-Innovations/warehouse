@@ -22,7 +22,7 @@ import Sidebar from './components/Sidebar/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './hooks/useAuth';
 
-import { menuItems, type MenuItem, type UserRole } from "./data/menuItems";
+import { menuItems } from "./data/menuItems";
 
 import themeConfig from './utils/themeConfig';
 import PreArrivals from './pages/PreArrivals';
@@ -40,33 +40,13 @@ import Orders from './pages/Orders';
 import ShipmentDetail from './pages/ShipmentDetail';
 import CreateShipment from './pages/CreateShipment';
 import UsersPage from './pages/UsersPage';
+import { getVisibleMenuItems } from './utils/menu.utils';
 
 function App() {
   const { user } = useAuth()
   const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
 
-  const visibleMenuItems = menuItems
-    .map(item => {
-      const newItem: MenuItem = { ...item };
-
-      if (item.subMenu) {
-        newItem.subMenu = item.subMenu.filter(subItem =>
-          !subItem.roles || subItem.roles.includes(user?.role as UserRole)
-        );
-      }
-      return newItem;
-    })
-    .filter(item => {
-      const isParentAllowed = !item.roles || item.roles.includes(user?.role as UserRole);
-      
-      if (!isParentAllowed) {
-        return false;
-      }
-
-      const hasVisibleChildren = item.subMenu && item.subMenu.length > 0;
-      
-      return !!item.path || hasVisibleChildren;
-    });
+  const visibleMenuItems = getVisibleMenuItems(menuItems, user?.role);
 
   return (
     <ThemeProvider theme={themeConfig}>

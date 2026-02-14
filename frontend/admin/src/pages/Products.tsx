@@ -3,39 +3,15 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Box, Typography } from "@mui/material";
 
 import { deleteProduct, getProducts, updateEcommerceProduct } from "../services/api.services";
-import type { Country, ProductPayload } from "../types";
 import TopNavbar from "../components/Layout/TopNavbar";
 import CommonTable from "../components/common/CommonTable";
 import AddActionButton from "../components/common/AddActionButton";
 import ProductForm from "../components/Product/ProductForm";
 import Modal from "../components/common/Modal"; 
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import { FALLBACK_IMAGE, PRODUCT_STATUS_OPTIONS } from "../utils/constants";
 import type { ColumnDefinition } from "../types/table";
-
-interface ProductRow {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  image_url: string;
-  category: string;
-  category_id: string;
-  sub_category: string;
-  sub_category_id: string;
-  price: {
-    price: number;
-    currency: string;
-  };
-  discount_percentage: number;
-  unit: string;
-  unit_value: number;
-  measurement_id: string;
-  stock_quantity: number;
-  // countries: Country[];
-  cargo_type_label: string;
-  cargo_option_id: string;
-  status: string;
-}
+import type { ProductPayload, ProductRow } from "../types";
 
 const Products: React.FC = () => {
   const [products, setProducts] = useState<ProductRow[]>([]);
@@ -62,36 +38,7 @@ const Products: React.FC = () => {
         return; 
       }
       
-      const mappedData: ProductRow[] = response.map((item: any) => {
-        const priceValue = item.price?.price || item.price || 0;
-        const currencyValue = item.price?.currency; 
-
-        return {
-          id: item.id,
-          name: item.name,
-          slug: item.slug || "",
-          description: item.description || "",
-          image_url: item.image_url || "",
-          category: item.category?.name || "N/A",
-          category_id: item.category?.id || "",
-          sub_category: item.sub_category?.name || "N/A",
-          sub_category_id: item.sub_category?.id || "",
-          price: {
-            price: parseFloat(priceValue) || 0,
-            currency: currencyValue
-          },
-          discount_percentage: parseFloat(item.discount_percentage) || 0,
-          unit: `${parseFloat(item.unit_value).toFixed(0)} ${item.measurement?.label || ''}`.trim(),
-          unit_value: parseFloat(item.unit_value) || 0,
-          measurement_id: item.measurement?.id || "",
-          stock_quantity: item.stock_quantity || 0,
-          // countries: item.countries || [],
-          cargo_option_id: item.cargo_option?.id,
-          cargo_type_label: item.cargo_option?.label,
-          status: item.is_active ? "Active" : "Inactive",
-        };
-      });
-      setProducts(mappedData);
+      setProducts(response.map(mapProductToRow));
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -100,6 +47,36 @@ const Products: React.FC = () => {
       }
     }
   }, []);
+
+  const mapProductToRow = (item: any): ProductRow => {
+    const priceValue = item.price?.price || item.price || 0;
+    const currencyValue = item.price?.currency;
+
+    return {
+      id: item.id,
+      name: item.name,
+      slug: item.slug || "",
+      description: item.description || "",
+      image_url: item.image_url || "",
+      category: item.category?.name || "N/A",
+      category_id: item.category?.id || "",
+      sub_category: item.sub_category?.name || "N/A",
+      sub_category_id: item.sub_category?.id || "",
+      price: {
+        price: parseFloat(priceValue) || 0,
+        currency: currencyValue
+      },
+      discount_percentage: parseFloat(item.discount_percentage) || 0,
+      unit: `${parseFloat(item.unit_value).toFixed(0)} ${item.measurement?.label || ''}`.trim(),
+      unit_value: parseFloat(item.unit_value) || 0,
+      measurement_id: item.measurement?.id || "",
+      stock_quantity: item.stock_quantity || 0,
+      // countries: item.countries || [],
+      cargo_option_id: item.cargo_option?.id,
+      cargo_type_label: item.cargo_option?.label,
+      status: item.is_active ? "Active" : "Inactive",
+    }
+  }
 
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
@@ -116,11 +93,6 @@ const Products: React.FC = () => {
   useEffect(() => {
     fetchProducts(debouncedSearchValue);
   }, [debouncedSearchValue, fetchProducts]);
-
-  const statusOptions = [
-    { value: 'Active', label: 'Active' },
-    { value: 'Inactive', label: 'Inactive' },
-  ];
 
   const handleToggleStatus = async (id: string | number, newActive: boolean) => {
     const idStr = String(id);
@@ -197,12 +169,12 @@ const Products: React.FC = () => {
     {
       header: "Image URL",
       cell: (row) =><img
-        src={row.image_url || "https://placehold.co/100x100?text=No+Image"}
+        src={row.image_url || FALLBACK_IMAGE}
         alt={row.name}
         width={100}
         height={100}
         style={{ objectFit: "cover" }}
-        onError={(e) => (e.currentTarget.src = "https://placehold.co/100x100?text=No+Image")}
+        onError={(e) => (e.currentTarget.src = FALLBACK_IMAGE)}
     />,
       width: "25%",
     },
@@ -250,6 +222,17 @@ const Products: React.FC = () => {
 
   const isToggleLoading = (id: string | number) => togglingIds.has(String(id));
 
+  const filters = {
+    statusOptions: PRODUCT_STATUS_OPTIONS,
+  };
+
+  const actions = {
+    onEdit: handleEditProduct,
+    onDelete: handleDeleteClick,
+    onToggle: handleToggleStatus,
+    isToggleLoading,
+  };
+
   return (
     <Box>
       <TopNavbar
@@ -291,14 +274,11 @@ const Products: React.FC = () => {
         rows={products}
         columns={columns}
         loading={loading}
-        statusOptions={statusOptions}
         noDataMessage={noDataMessage}
         getIdentifier={(row) => row.id}
         getRowStatus={(row) => row.status}
-        onEdit={handleEditProduct}
-        onDelete={handleDeleteClick}
-        onToggle={handleToggleStatus}
-        isToggleLoading={isToggleLoading}
+        filters={filters}
+        actions={actions}
       />
 
       <ConfirmDialog

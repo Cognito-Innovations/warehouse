@@ -1,4 +1,5 @@
 import type { UserRole } from "./data/menuItems";
+import type { TRACKING_STATUS } from "./utils/trackingConfig";
 
 export interface UserData {
   id: string;
@@ -262,4 +263,171 @@ export interface DashboardMetrics {
   shoppingRequested: number;
   quotationConfirm: number;
   assistPaymentApproval: number;
+}
+
+export interface ProductRow {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url: string;
+  category: string;
+  category_id: string;
+  sub_category: string;
+  sub_category_id: string;
+  price: {
+    price: number;
+    currency: string;
+  };
+  discount_percentage: number;
+  unit: string;
+  unit_value: number;
+  measurement_id: string;
+  stock_quantity: number;
+  // countries: Country[];
+  cargo_type_label: string;
+  cargo_option_id: string;
+  status: string;
+}
+
+export interface SubCategoryRow {
+  id: string;
+  name: string;
+  slug: string;
+  discount_percentage: number,
+  // countries: Country[],
+  categoryName: string;
+  categoryId: string | null;
+  products: number;
+  status: string;
+}
+
+export interface CategoryRow {
+  id: string;
+  name: string;
+  slug: string;
+  discount_percentage: number,
+  // countries: Country[],
+  products: number;
+  image_url: string;
+  description: string;
+  status: string;
+}
+
+export interface OrderRow {
+  id: string;
+  order_number: string;
+  user_name: string;
+  cashfree_payment_id: string;
+  items_count: string;
+  total_amount: string;
+  payment_mode: string;
+  created_at: string;
+  status: string;
+  payment_status: string;
+}
+
+export interface ShoppingRequestFiltersProps {
+  originCountry: string | null;
+  targetCountry: string | null;
+  onOriginChange: (value: string | null) => void;
+  onTargetChange: (value: string | null) => void;
+}
+
+export interface ShoppingRequestProduct {
+  id: string;
+  name?: string;
+  quantity: number;
+  unit_price?: number | null;
+  currency?: string;
+  available?: boolean;
+  [key: string]: unknown;
+}
+
+export interface StatusCard {
+  title: string;
+  value: number;
+  color: string;
+  bgColor: string;
+  icon: string;
+  status: string;
+}
+
+export interface ItemDetail {
+  name: string;
+  quantity: number;
+  unit_price: string;
+  total_price: string;
+}
+
+export interface BoxItem {
+  id: string;
+  label: string;
+  length_cm: number;
+  breadth_cm: number;
+  height_cm: number;
+  volumetric_weight?: number;
+  mass_weight?: number;
+}
+
+export interface BoxFormValues {
+  label: string;
+  length: string;
+  breadth: string;
+  height: string;
+  volumetricWeight: string;
+  massWeight: string;
+}
+
+export interface Shipment {
+  id: string;
+  tracking_no: string;
+  shipment_no: string;
+  courier: string;
+  customer: string;
+  customerCode: string;
+  updated_at: string;
+  time: string;
+  user: {
+    name: string;
+  }
+}
+
+export type TrackingStatusValue = (typeof TRACKING_STATUS)[keyof typeof TRACKING_STATUS];
+
+export interface PickupActionConfig {
+  label: string;
+  color: 'primary' | 'danger';
+  statusToUpdate?: TrackingStatusValue;
+  requiresModal?: boolean;
+}
+
+export interface PickupUser {
+  id: string;
+  name: string;
+  email?: string;
+  phone_number?: string;
+  suite_no?: string;
+}
+
+export interface TrackingRequest {
+  id: string;
+  status: string;
+  created_at: string;
+}
+
+export interface PickupRequestData {
+  id: string;
+  status: string;
+  pickup_address: string;
+  supplier_name: string;
+  supplier_phone_number: string;
+  pcs_box: number;
+  est_weight: string;
+  pkg_details: string;
+  price?: string;
+  total_mvr?: string;
+  remarks?: string;
+  user: PickupUser;
+  tracking_requests?: TrackingRequest[];
 }

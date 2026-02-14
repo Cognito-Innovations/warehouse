@@ -11,19 +11,7 @@ import Modal from "../components/common/Modal";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import SubCategoryForm from "../components/SubCategory/SubCategoryForm";
 import type { ColumnDefinition } from "../types/table";
-import type { Country, SubCategoryPayload } from "../types";
-
-interface SubCategoryRow {
-  id: string;
-  name: string;
-  slug: string;
-  discount_percentage: number,
-  // countries: Country[],
-  categoryName: string;
-  categoryId: string | null;
-  products: number;
-  status: string;
-}
+import type { SubCategoryPayload, SubCategoryRow } from "../types";
 
 const SubCategory: React.FC = () => {
   const [subcategories, setSubCategories] = useState<SubCategoryRow[]>([]);
@@ -126,6 +114,11 @@ const SubCategory: React.FC = () => {
     },
   ];
 
+  const actions = {
+    onEdit: handleEditSubCategory,
+    onDelete: handleDeleteClick,
+  };
+
   return (
     <Box>
       <TopNavbar pageTitle="Sub Categories" />
@@ -162,8 +155,7 @@ const SubCategory: React.FC = () => {
         noDataMessage="No sub categories available"
         getIdentifier={(row) => row.id}
         getRowStatus={(row) => row.status}
-        onEdit={handleEditSubCategory}
-        onDelete={handleDeleteClick}
+        actions={actions}
       />
 
       <ConfirmDialog

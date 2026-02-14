@@ -9,7 +9,7 @@ interface OrderTotalsProps {
   platformFee: number;
   // taxes: number;
   // serviceCharge: number;
-  total: number;
+  payable_total: number;
   formatPrice: (amount: number) => string;
 }
 
@@ -20,7 +20,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
   platformFee,
   // taxes,
   // serviceCharge,
-  total,
+  payable_total,
   formatPrice,
 }) => {
   return (
@@ -161,7 +161,7 @@ export const OrderTotals: React.FC<OrderTotalsProps> = ({
           color="primary.main"
           sx={{ fontSize: { xs: "0.9rem", md: "1.1rem" } }}
         >
-          {formatPrice(total)}
+          {formatPrice(payable_total)}
         </Typography>
       </Box>
     </Stack>

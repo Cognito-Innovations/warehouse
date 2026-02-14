@@ -1,11 +1,12 @@
 import { getCartItemPricingSummary } from "./priceUtils";
 
 export interface CartTotals {
-    subtotal: number;
-    discount: number;
-    deliveryFee: number;
-    platform_fee: number;
-    total: number;
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
+  platform_fee: number;
+  display_total: number;
+  payable_total: number;
 }
 
 export const calculateCartTotals = (
@@ -42,18 +43,16 @@ export const calculateCartTotals = (
 
     const discountedSubTotal = subtotal - discount;
 
-
-    let total = discountedSubTotal + totalDeliveryFee;
-
-    const platformFee = total * 0.05;
-    total += platformFee;
+    const baseTotal = discountedSubTotal + totalDeliveryFee;
+    const platformFee = baseTotal * 0.05;
 
     return {
         subtotal: round(subtotal),
         discount: round(discount),
         deliveryFee: round(totalDeliveryFee),
         platform_fee: round(platformFee),
-        total: round(total),
+        display_total: round(baseTotal),
+        payable_total: round(baseTotal + platformFee),
     };
 };
 
@@ -64,5 +63,6 @@ const emptyTotals = (): CartTotals => ({
     discount: 0,
     deliveryFee: 0,
     platform_fee: 0,
-    total: 0,
+    display_total: 0,
+    payable_total: 0,
 });

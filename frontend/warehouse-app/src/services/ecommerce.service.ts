@@ -196,6 +196,7 @@ export const ecommerceService = {
       return response.data;
     } catch (error) {
       console.error('Failed to sync local storage products to cart:', error);
+      return [];
     } 
   },
 

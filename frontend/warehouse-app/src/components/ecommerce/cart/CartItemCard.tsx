@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/store/cartStore";
 import { useDetectUserLocation } from "@/store/useDetectUserLocation";
-import { formatDiscountPercentage, normalizeCart } from "@/lib/utils";
+import { formatDiscountPercentage } from "@/lib/utils";
 import { formatPrice, getCartItemPricingSummary } from "@/utils/priceUtils";
 import { getOptimalImageSizing, handleImageLoad, ImageDimensions } from "@/utils/imageUtils";
 import { DEFAULT_CURRENCY_INFO, ROUTES } from "@/utils/constants";
@@ -31,8 +31,7 @@ export default function CartItemCard({
 
   const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null);
 
-  const safeCart = normalizeCart(cart);
-  const liveItem = safeCart.find((c) => c.product_id === item.product_id);
+  const liveItem = cart.find((c) => c.product_id === item.product_id);
 
   const currentQuantity = liveItem?.quantity || 0;
 
