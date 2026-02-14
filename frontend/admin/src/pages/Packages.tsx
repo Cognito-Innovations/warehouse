@@ -5,15 +5,7 @@ import { StatusCards, PackagesTable } from '../components/Packages';
 import RegisterPackageModal from '../components/Modals/RegisterPackageModal';
 import { getPackage } from '../services/api.services';
 import { PACKAGE_STATUS_CARDS } from '../utils/constants';
-
-interface StatusCard {
-  title: string;
-  value: number;
-  color: string;
-  bgColor: string;
-  icon: string;
-  status: string;
-}
+import type { StatusCard } from '../types';
 
 interface Package {
   status?: {
@@ -50,39 +42,16 @@ const Packages: React.FC = () => {
   const fetchStatusData = async () => {
     try {
       setLoading(true);
-      const packages = await getPackage();
-      
-      // Count packages by status
-      const statusCounts = packages.reduce<Record<string, number>>((acc, pkg: Package) => {
-        const statusValue = pkg.status?.value || 'Unknown';
-        acc[statusValue] = (acc[statusValue] || 0) + 1;
-        return acc;
-      }, {});
 
-      // Create status cards with real data - only the 3 needed statuses
-      const cards: StatusCard[] = PACKAGE_STATUS_CARDS.map(card => ({
-        title: card.title,
-        value: statusCounts[card.key] || 0,
-        color: card.color,
-        bgColor: card.bgColor,
-        icon: card.icon,
-        status: card.key
-      }))
+      const packages = await getPackage();
+      const statusCounts = getPackageStatusCounts(packages);
+      const cards = buildStatusCards(statusCounts);
 
       setStatusCards(cards);
     } catch (error) {
       console.error('Failed to fetch status data:', error);
       // Fallback to empty cards
-      setStatusCards(
-        PACKAGE_STATUS_CARDS.map(card => ({
-          title: card.title,
-          value: 0,
-          color: card.color,
-          bgColor: card.bgColor,
-          icon: card.icon,
-          status: card.key,
-        }))
-      );
+      setStatusCards(getEmptyStatusCards());
     } finally {
       setLoading(false);
     }
@@ -92,6 +61,34 @@ const Packages: React.FC = () => {
     fetchStatusData();
   }, []);
 
+  const getPackageStatusCounts = (packages: Package[]): Record<string, number> => {
+    return packages.reduce<Record<string, number>>((counts, pkg) => {
+      const status = pkg.status?.value ?? 'Unknown';
+      counts[status] = (counts[status] ?? 0) + 1;
+      return counts;
+    }, {});
+  };
+
+  const buildStatusCards = (statusCounts: Record<string, number>): StatusCard[] => {
+    return PACKAGE_STATUS_CARDS.map(card => ({
+      title: card.title,
+      value: statusCounts[card.key] ?? 0,
+      color: card.color,
+      bgColor: card.bgColor,
+      icon: card.icon,
+      status: card.key,
+    }));
+  };
+
+  const getEmptyStatusCards = (): StatusCard[] =>
+    PACKAGE_STATUS_CARDS.map(card => ({
+      title: card.title,
+      value: 0,
+      color: card.color,
+      bgColor: card.bgColor,
+      icon: card.icon,
+      status: card.key,
+    }));
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%', minHeight: '100%', display: 'flex', flexDirection: 'column'}}>

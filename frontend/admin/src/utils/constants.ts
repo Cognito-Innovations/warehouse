@@ -56,3 +56,59 @@ export const ROLES: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Admin' },
   { value: 'super_admin', label: 'Super Admin' },
 ];
+
+export const SHOPPING_REQUEST_STATUS_OPTIONS = [
+  { value: 'REQUESTED', label: 'Requested' },
+  { value: 'PAID', label: 'Paid' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'ORDER_PLACED', label: 'Order Placed' },
+];
+
+export const PRODUCT_STATUS_OPTIONS = [
+  { value: 'Active', label: 'Active' },
+  { value: 'Inactive', label: 'Inactive' },
+];
+
+export const PICKUP_REQUEST_STATUS_OPTIONS = [
+  { value: 'requested', label: 'Requested' },
+  { value: 'quoted', label: 'Quotation Confirmed' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'picked', label: 'Picked' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+export const FALLBACK_IMAGE = 'https://placehold.co/100x100?text=No+Image'
+
+export const SHIPMENT_MEASUREMENTS_TABLE_HEADERS = [
+  '#',
+  'Weight',
+  'Volumetric Weight(L×W×H)',
+  'Label',
+];
+
+export const SHIPMENT_EXPORT_TABLE_HEADERS = [
+  "Serial #",
+  "Date",
+  "MAWB",
+  "Count",
+  "Created By",
+  "Status",
+  "Actions",
+];
+
+export const BOX_SHIPMENTS_TABLE_HEADERS = [
+  { label: "Shipment No." },
+  { label: "Tracking No." },
+  { label: "Customer" },
+  { label: "Date" },
+  { label: "", align: "center" as const },
+];
+
+export const PRE_ARRIVALS_TABLE_HEADERS = [
+  'OTP / Tracking No',
+  'Customer',
+  'ETA',
+  'Created At',
+  'Status',
+  'Actions',
+];

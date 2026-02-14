@@ -20,7 +20,6 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { Request as ExpressRequest } from 'express';
 
 import { PackagesService } from '../service/packages.service';
 import { CreatePackageDto } from '../dto/create-package.dto';
@@ -28,13 +27,7 @@ import { PackageResponseDto } from '../dto/package-response.dto';
 import { UpdatePackageDto } from '../dto/update-package.dto';
 import { FeatureType } from 'src/tracking-requests/tracking-request.entity';
 import { CreatePackageChargeDto } from '../dto/create-package-charge.dto';
-
-interface AuthenticatedRequest extends ExpressRequest {
-  user: {
-    id: string;
-    email?: string;
-  };
-}
+import type { AuthenticatedRequest } from 'src/shared/types/authenticated-request.type';
 
 @ApiTags('Packages')
 @Controller('packages')
@@ -84,13 +77,13 @@ export class PackagesController {
   })
   @ApiOkResponse({ type: [PackageResponseDto] })
   async findAll(
+    @Request() req: AuthenticatedRequest,
     @Query('search') search?: string,
-    @Query('country_id') countryId?: string,
   ): Promise<PackageResponseDto[]> {
     if (search) {
-      return this.packagesService.searchPackages(search, countryId);
+      return this.packagesService.searchPackages(search, req.user.id);
     }
-    return this.packagesService.getAllPackages(countryId);
+    return this.packagesService.getAllPackages(req.user.id);
   }
 
   @Get('debug/all')

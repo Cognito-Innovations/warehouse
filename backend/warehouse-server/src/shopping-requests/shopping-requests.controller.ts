@@ -20,20 +20,12 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Request } from 'express';
 import { ShoppingRequestsService } from './shopping-requests.service';
 import { CreateShoppingRequestDto } from './dto/create-shopping-request.dto';
 import { ShoppingRequestResponseDto } from './dto/shopping-request-response.dto';
 import { DocumentResponseDto } from 'src/documents/dto/document-response.dto';
 import { ShoppingRequestStatus } from './shopping-request.entity';
-
-interface AuthenticatedRequest extends Request {
-  user: {
-    id: string;
-    email?: string;
-    role?: string;
-  };
-}
+import type { AuthenticatedRequest } from 'src/shared/types/authenticated-request.type';
 
 @ApiTags('Shopping Requests')
 @ApiBearerAuth()
@@ -78,14 +70,21 @@ export class ShoppingRequestsController {
     type: [ShoppingRequestResponseDto],
   })
   async findAll(
+    @Req() req: AuthenticatedRequest,
     @Query('page') page = '1',
     @Query('limit') limit = '10',
-    @Query('country_id') countryId?: string,
+    @Query('origin') origin?: string,
+    @Query('target') target?: string,
+    @Query('status') status?: string | string[],
   ) {
     return this.shoppingRequestsService.getAllShoppingRequests({
+      userId: req.user.id,
+      role: req.user.role,
       page: Number(page),
       limit: Number(limit),
-      countryId,
+      origin,
+      target,
+      status,
     });
   }
 
@@ -112,6 +111,25 @@ export class ShoppingRequestsController {
     @Param('requestCode') requestCode: string,
   ): Promise<ShoppingRequestResponseDto> {
     return this.shoppingRequestsService.getShoppingRequestByCode(requestCode);
+  }
+
+  @Get('filters/origins')
+  @ApiOperation({
+    summary: 'Get origin country options from shopping requests',
+  })
+  async getOriginOptions() {
+    return this.shoppingRequestsService.getOriginOptions();
+  }
+
+  @Get('filters/targets')
+  @ApiOperation({
+    summary: 'Get target country options from shopping requests',
+  })
+  async getTargetOptions(@Req() req: AuthenticatedRequest) {
+    return this.shoppingRequestsService.getTargetOptions(
+      req.user.id,
+      req.user.role,
+    );
   }
 
   @Patch(':id/status')

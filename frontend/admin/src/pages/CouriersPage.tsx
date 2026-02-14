@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { CircularProgress, Box } from '@mui/material';
 import { toast } from 'sonner';
 
-import PageHeader from '../components/shared/PageHeader';
-import CouriersList from '../components/settings/CouriersList';
-import AddEditCourierDialog from '../components/settings/AddEditCourierDialog';
 import {
   getCouriers,
   createCourier,
   updateCourier,
   getCountries,
 } from '../services/api.services';
-import type { Country, Courier, CreateCourierPayload } from '../types';
+import PageHeader from '../components/shared/PageHeader';
+import CouriersList from '../components/settings/CouriersList';
+import AddEditCourierDialog from '../components/settings/AddEditCourierDialog';
 import { PromiseStatus } from '../utils/constants';
+import type { Country, Courier, CreateCourierPayload } from '../types';
 
 const CouriersPage: React.FC = () => {
   const [couriers, setCouriers] = useState<Courier[]>([]);
@@ -75,13 +75,13 @@ const CouriersPage: React.FC = () => {
       if (editingCourier) {
         await updateCourier(editingCourier.id, formData);
         setCouriers(couriers.map((courier) => 
-            courier.id === editingCourier.id 
-                ? { 
-                    ...courier, 
-                    ...formData, 
-                    country_name: countries.find(country => country.id === formData.country_id)?.name || '' 
-                  } 
-                : courier
+          courier.id === editingCourier.id 
+            ? { 
+                ...courier, 
+                ...formData, 
+                country_name: countries.find(country => country.id === formData.country_id)?.name || '' 
+              } 
+            : courier
         ));
       } else {
         const newCourier = await createCourier(formData);

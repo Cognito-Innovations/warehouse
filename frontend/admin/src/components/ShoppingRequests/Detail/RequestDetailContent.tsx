@@ -8,6 +8,7 @@ import InvoiceTable from './InvoiceTable';
 import CustomerRemarks from '../../common/CustomerRemarks';
 import { formatDateTime } from '../../../utils/formatDateTime';
 import { formatWithPlaceholders } from '../../../utils/formatPlaceholder';
+import { SHOPPING_STATUS_TO_STEP_ID_MAPPING, SHOPPING_TRACKING_STEPS } from '../../../utils/trackingSteps';
 
 interface User {
   id: string;
@@ -95,26 +96,6 @@ interface RequestDetailContentProps {
   selectedItemIds: Set<string>;
 }
 
-const SHOPPING_TRACKING_STEPS = [
-  { id: 'REQUESTED', title: 'Requested', description: 'Requested by {userName}' },
-  { id: 'QUOTED', title: 'Quotation Ready', description: 'Quoted for {userName}', defaultDescription: 'Quotation is not ready yet!' },
-  { id: 'QUOTATION_CONFIRMED', title: 'Quotation Confirmed', description: 'Quotation Confirmed by {userName}', defaultDescription: 'Quotation is not confirmed yet!' },
-  { id: 'INVOICED', title: 'Invoiced', description: 'Invoice raised by {userName}', defaultDescription: 'Waiting for raise invoice' },
-  { id: 'PAYMENT_PENDING', title: 'Pending Payment Approval', description: 'Payment slip uploaded by {userName}', defaultDescription: 'Waiting for upload payment slip' },
-  { id: 'PAYMENT_APPROVED', title: 'Payment Approved', description: 'Payment Approved by {userName}', defaultDescription: 'Waiting for payment approval' },
-  { id: 'ORDER_PLACED', title: 'Order placed', description: 'Order Placed by {userName}', defaultDescription: 'Waiting for complete' },
-];
-
-const STATUS_TO_STEP_ID_MAPPING: Record<string, string> = {
-  REQUESTED: 'REQUESTED',
-  QUOTATION_READY: 'QUOTED',
-  QUOTATION_CONFIRMED: 'QUOTATION_CONFIRMED',
-  INVOICED: 'INVOICED',
-  PAYMENT_PENDING: 'PAYMENT_PENDING',
-  PAYMENT_APPROVED: 'PAYMENT_APPROVED',
-  ORDER_PLACED: 'ORDER_PLACED',
-};
-
 const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
   request,
   onStatusUpdated,
@@ -140,46 +121,98 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
   };
 
   const prepareTrackingData = () => {
+    const statuses = buildTrackingStatuses(request);
+    const currentStageId = getCurrentStageId(request, statuses);
+
+    if (request.status.toUpperCase() === 'REJECTED') {
+      return {
+        statuses: resetFutureStepsForRejected(statuses, currentStageId),
+        currentStageId,
+      };
+    }
+
+    return { statuses, currentStageId };
+  };
+
+  const getTrackingHistoryItem = (stepId: string, trackingHistory: TrackingRequest[]) => {
+    return trackingHistory.find(track => {
+      const upperCaseStatus = track.status.toUpperCase();
+      const mappedStepId = SHOPPING_STATUS_TO_STEP_ID_MAPPING[upperCaseStatus];
+
+      return (
+        String(mappedStepId) === stepId ||
+        upperCaseStatus === stepId
+      );
+    });
+  };
+
+  const resolveStepCompletion = ({
+    stepId,
+    historyItem,
+    request,
+    isRejected,
+    isComplete,
+  }: {
+    stepId: string;
+    historyItem?: TrackingRequest;
+    request: RequestData;
+    isRejected: boolean;
+    isComplete: boolean;
+  }) => {
+    if (historyItem) {
+      return {
+        isComplete: true,
+        date: historyItem.created_at,
+      };
+    }
+
+    if (isRejected) return { isComplete, date: undefined };
+
+    switch (stepId) {
+      case 'QUOTATION_CONFIRMED':
+        if (request.invoice) {
+          return {
+            isComplete: true,
+            date: request.invoice.created_at,
+          };
+        }
+        break;
+
+      case 'PAYMENT_PENDING':
+        if (request.payment_slips?.length) {
+          return {
+            isComplete: true,
+            date: request.payment_slips[0].created_at,
+          };
+        }
+        break;
+    }
+
+    return { isComplete, date: undefined };
+  };
+
+  const buildTrackingStatuses = (request: RequestData): Status[] => {
     const trackingHistory = request.tracking_requests || [];
     const isRejected = request.status.toUpperCase() === 'REJECTED';
-    
-    const statuses: Status[] = SHOPPING_TRACKING_STEPS.map(step => {
-      let description = step.defaultDescription || '';
-      let date: string | undefined = undefined;
-      let isComplete = false;
-      let userName = request.user.name;
 
-      const historyItem = trackingHistory.find(track => {
-      const upperCaseStatus = track.status.toUpperCase();
-        return STATUS_TO_STEP_ID_MAPPING[upperCaseStatus] === step.id || upperCaseStatus === step.id;
+    return SHOPPING_TRACKING_STEPS.map(step => {
+      let description = step.defaultDescription || '';
+      const userName = request.user.name;
+      let isComplete = false;
+
+      const historyItem = getTrackingHistoryItem(step.id, trackingHistory);
+
+      const resolved = resolveStepCompletion({
+        stepId: step.id,
+        historyItem,
+        request,
+        isRejected,
+        isComplete,
       });
 
-      if (historyItem) {
-        isComplete = true;
-        date = historyItem.created_at;
-      }
+      isComplete = resolved.isComplete;
+      const date = resolved.date;
 
-      if (!isRejected) {
-        switch (step.id) {
-          case 'QUOTATION_CONFIRMED':
-            if (request.invoice && !isComplete) {
-              isComplete = true;
-              date = request.invoice.created_at;
-              userName = request.user.name;
-            }
-            break;
-          case 'PAYMENT_PENDING':
-            if (request.payment_slips && request.payment_slips.length > 0 && !isComplete) {
-              isComplete = true;
-              date = request.payment_slips[0].created_at;
-              userName = request.user.name;
-            }
-            break;
-          default:
-            break;
-        }
-      }
-    
       if (isComplete) {
         description = formatWithPlaceholders(step.description, { userName });
       }
@@ -191,32 +224,42 @@ const RequestDetailContent: React.FC<RequestDetailContentProps> = ({
         date: formatDateTime(date),
       };
     });
-    
-    let currentStageId: string;
+  };
+
+  const getCurrentStageId = (request: RequestData, statuses: Status[]) => {
+    const isRejected = request.status.toUpperCase() === 'REJECTED';
     const upperCaseStatus = request.status.toUpperCase();
-    const mappedId = STATUS_TO_STEP_ID_MAPPING[upperCaseStatus];
+    const mappedId = SHOPPING_STATUS_TO_STEP_ID_MAPPING[upperCaseStatus];
 
     if (mappedId && !isRejected) {
-      currentStageId = mappedId;
-    } else {
-      const lastCompletedStep = [...statuses].reverse().find(s => s.date && s.date.trim() !== '');
-      currentStageId = lastCompletedStep ? (lastCompletedStep.id as string) : 'REQUESTED';
+      return String(mappedId);
     }
 
-    if (isRejected) {
-      const currentStageIndex = statuses.findIndex(s => s.id === currentStageId);
+    const lastCompletedStep = [...statuses]
+      .reverse()
+      .find(s => s.date && s.date.trim() !== '');
 
-      if (currentStageIndex > -1) {
-        for (let i = currentStageIndex + 1; i < statuses.length; i++) {
-          const originalStep = SHOPPING_TRACKING_STEPS.find(s => s.id === statuses[i].id);
+    return String(lastCompletedStep?.id) || 'REQUESTED';
+  };
 
-          statuses[i].date = formatDateTime(undefined);
-          statuses[i].description = originalStep?.defaultDescription || '';
-        }
-      }
-    }
+  const resetFutureStepsForRejected = (statuses: Status[], currentStageId: string) => {
+    const currentIndex = statuses.findIndex(status => status.id === currentStageId);
 
-    return { statuses, currentStageId };
+    if (currentIndex === -1) return statuses;
+
+    return statuses.map((status, index) => {
+      if (index <= currentIndex) return status;
+
+      const originalStep = SHOPPING_TRACKING_STEPS.find(
+        step => step.id === String(status.id)
+      );
+
+      return {
+        ...status,
+        date: formatDateTime(undefined),
+        description: originalStep?.defaultDescription || '',
+      };
+    });
   };
 
   const { statuses, currentStageId } = prepareTrackingData();

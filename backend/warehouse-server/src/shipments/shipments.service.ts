@@ -26,6 +26,7 @@ import { UserPreferencesService } from 'src/user-preferences/user-preferences.se
 import { CreateShipmentInvoiceDto } from './dto/create-shipment-invoice.dto';
 import { ShipmentPiece } from './shipment-piece.entity';
 import { ShipmentSequence } from './shipment-sequence.entity';
+import { UserContextService } from 'src/shared/user-context.service';
 
 export type FormattedInvoice = {
   amount: string;
@@ -57,6 +58,7 @@ export class ShipmentsService {
     private readonly documentsService: DocumentsService,
     private readonly invoicesService: InvoicesService,
     private readonly userPreferencesService: UserPreferencesService,
+    private readonly userContextService: UserContextService,
   ) {}
 
   async getShipmentsCountByStatus(
@@ -279,8 +281,15 @@ export class ShipmentsService {
     }
   }
 
-  async getAllShipments(countryId?: string) {
+  async getAllShipments(userId?: string) {
     const where: FindOptionsWhere<Shipment> = {};
+
+    let countryId: string | null = null;
+
+    if (userId) {
+      countryId =
+        await this.userContextService.getUserPreferredCountryId(userId);
+    }
 
     if (countryId) {
       where.country = { id: countryId };
@@ -388,7 +397,7 @@ export class ShipmentsService {
 
   async getShipmentsByStatus(
     status: string,
-    countryId?: string,
+    userId?: string,
   ): Promise<ShipmentResponseDto[]> {
     const enumStatus = ShipmentStatus[status as keyof typeof ShipmentStatus];
     if (!enumStatus) {
@@ -398,6 +407,13 @@ export class ShipmentsService {
     const where: FindOptionsWhere<Shipment> = {
       status: enumStatus,
     };
+
+    let countryId: string | null = null;
+
+    if (userId) {
+      countryId =
+        await this.userContextService.getUserPreferredCountryId(userId);
+    }
 
     if (countryId) {
       where.country = { id: countryId };
@@ -665,12 +681,19 @@ export class ShipmentsService {
   async findByShipmentNumberAndStatus(
     shipmentNumber: string,
     status: ShipmentStatus,
-    countryId?: string,
+    userId?: string,
   ): Promise<ShipmentResponseDto> {
     const where: FindOptionsWhere<Shipment> = {
       shipment_no: shipmentNumber,
       status,
     };
+
+    let countryId: string | null = null;
+
+    if (userId) {
+      countryId =
+        await this.userContextService.getUserPreferredCountryId(userId);
+    }
 
     if (countryId) {
       where.country = { id: countryId };

@@ -1,6 +1,7 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
+import type { AuthenticatedRequest } from 'src/shared/types/authenticated-request.type';
 
 @ApiTags('Analytics')
 @Controller('analytics')
@@ -11,7 +12,7 @@ export class AnalyticsController {
   @ApiOkResponse({
     description: 'Retrives all dashboard and analytics data.',
   })
-  async getDashboardMetrics(@Query('country_id') countryId?: string) {
-    return this.analyticsService.getDashboardMetrics(countryId);
+  async getDashboardMetrics(@Req() req: AuthenticatedRequest) {
+    return this.analyticsService.getDashboardMetrics(req.user.id);
   }
 }

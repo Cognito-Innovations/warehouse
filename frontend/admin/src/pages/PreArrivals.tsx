@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import TopNavbar from '../components/Layout/TopNavbar';
 import { Box, CircularProgress } from '@mui/material';
+
 import { getPreArrivals, markPreArrivalAsReceived } from '../services/api.services';
+import TopNavbar from '../components/Layout/TopNavbar';
 import FiltersSection from '../components/PreArrivals/FiltersSection';
 import PreArrivalsTable from '../components/PreArrivals/PreArrivalsTable';
 import PaginationSection from '../components/PreArrivals/PaginationSection';

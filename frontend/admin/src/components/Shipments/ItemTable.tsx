@@ -2,19 +2,13 @@ import React from 'react';
 import {
   Box,
   Table,
-  TableBody,
   TableCell,
   TableHead,
   TableRow,
   Typography,
 } from '@mui/material';
-
-interface ItemDetail {
-  name: string;
-  quantity: number;
-  unit_price: string;
-  total_price: string;
-}
+import ItemTableBody from './ItemTableBody';
+import type { ItemDetail } from '../../types';
 
 const ItemTable: React.FC<{ items: ItemDetail[] }> = ({ items }) => {
   if (!items || items.length === 0) {
@@ -87,43 +81,7 @@ const ItemTable: React.FC<{ items: ItemDetail[] }> = ({ items }) => {
               <TableCell align="right">Total</TableCell>
             </TableRow>
           </TableHead>
-          <TableBody>
-            {items.map((detail, index) => (
-              <TableRow 
-                key={detail.name}
-                sx={{
-                  '& > *': { 
-                    border: 'none',
-                    borderBottom: index === items.length - 1 ? 'none' : '1px solid #f1f5f9'
-                  },
-                  '&:hover': {
-                    bgcolor: '#f8fafc'
-                  }
-                }}
-              >
-                <TableCell sx={{ py: 1.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                    {detail.name}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center" sx={{ py: 1.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                    {detail.quantity}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right" sx={{ py: 1.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                    {detail.unit_price}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right" sx={{ py: 1.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937' }}>
-                    {detail.total_price}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+          <ItemTableBody items={items} />
         </Table>
       </Box>
     </Box>

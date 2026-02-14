@@ -3,26 +3,19 @@ import {
   Dialog, DialogTitle, DialogContent, Box, Grid, TextField, Button, CircularProgress, MenuItem, Stack, Typography, IconButton
 } from '@mui/material';
 import { CloseOutlined } from '@mui/icons-material';
-import type { Rack } from '../../../types';
+
+import { useShipmentDetail } from '../../../contexts/ShipmentDetailContext';
 import { getRacks, updateShipment } from '../../../services/api.services';
+import type { Rack } from '../../../types';
 
 interface UpdateRackSlotModalProps {
   open: boolean;
   onClose: () => void;
-  onRefresh: () => void;
-  shipments: {
-    id: string;
-    rack_slot?:{
-      label: string;
-    };
-    updated_by?: {
-      name: string;
-    };
-    updated_at: string;
-  };
 }
 
-const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose, onRefresh, shipments }) => {
+const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose }) => {
+  const { shipment, fetchShipments } = useShipmentDetail();
+
   const [rackSlots, setRackSlots] = useState<Rack[]>([]);
   const [selectedRackSlot, setSelectedRackSlot] = useState('');
   const [saving, setSaving] = useState(false);
@@ -33,7 +26,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
     try {
       const data = await getRacks();
       setRackSlots(data);
-      const currentRack = data.find((r) => r.label === shipments.rack_slot?.label);
+      const currentRack = data.find((r) => r.label === shipment.rack_slot?.label);
       if (currentRack) {
         setSelectedRackSlot(currentRack.id);
       }
@@ -42,7 +35,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
     } finally {
       setLoadingRacks(false);
     }
-  }, [shipments.rack_slot?.label]);
+  }, [shipment.rack_slot?.label]);
 
   useEffect(() => {
     if (open) {
@@ -51,16 +44,16 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
   }, [open, fetchRacks]);
 
   const currentRack = useMemo(() =>
-    rackSlots.find(r => r.id === selectedRackSlot || r.label === shipments.rack_slot?.label),
-    [rackSlots, selectedRackSlot, shipments.rack_slot?.label]
+    rackSlots.find(r => r.id === selectedRackSlot || r.label === shipment.rack_slot?.label),
+    [rackSlots, selectedRackSlot, shipment.rack_slot?.label]
   );
 
   const handleSaveRackSlot = async () => {
     if (!selectedRackSlot) return;
     setSaving(true);
     try {
-      await updateShipment(shipments.id, { rack_slot: selectedRackSlot });
-      onRefresh();
+      await updateShipment(shipment.id, { rack_slot: selectedRackSlot });
+      fetchShipments();
       onClose();
     } catch (err) {
       console.error("Failed to update rack slot", err);
@@ -140,7 +133,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
                   onClick={handleSaveRackSlot}
                   variant="contained"
                   fullWidth
-                  disabled={saving || !selectedRackSlot || selectedRackSlot === rackSlots.find(r => r.label === shipments.rack_slot?.label)?.id}
+                  disabled={saving || !selectedRackSlot || selectedRackSlot === rackSlots.find(r => r.label === shipment.rack_slot?.label)?.id}
                   sx={{
                     textTransform: 'none',
                     bgcolor: '#4f46e5',
@@ -152,7 +145,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
               </Grid>
             </Grid>
 
-            {shipments.rack_slot && currentRack && (
+            {shipment.rack_slot && currentRack && (
               <Box sx={{ mt: 3, borderTop: '1px solid #e2e8f0', pt: 3 }}>
                 <Stack direction="row" alignItems="center" spacing={2}>
                   <Box
@@ -170,7 +163,7 @@ const UpdateRackSlotModal: React.FC<UpdateRackSlotModalProps> = ({ open, onClose
                       {currentRack.label}
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#64748b' }}>
-                      {shipments.updated_by?.name} on {shipments.updated_at}
+                      {shipment.updated_by?.name} on {shipment.updated_at}
                     </Typography>
                   </Box>
                 </Stack>

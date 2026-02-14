@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { CircularProgress, Box } from '@mui/material';
 import { toast } from 'sonner';
 
+import { getCountries, createCountry, updateCountry } from '../services/api.services';
 import PageHeader from '../components/shared/PageHeader';
 import CountriesList from '../components/settings/CountriesList';
 import AddEditCountryDialog from '../components/settings/AddEditCountryDialog';
-import { getCountries, createCountry, updateCountry } from '../services/api.services';
 import type { Country, CreateCountryPayload } from '../types';
 
 const CountriesPage: React.FC = () => {
@@ -58,10 +58,10 @@ const CountriesPage: React.FC = () => {
           image: formData.image 
         });
         setCountries(
-          countries.map((c) =>
-            c.id === editingCountry.id
-              ? { ...c, ...formData }
-              : c
+          countries.map((country) =>
+            country.id === editingCountry.id
+              ? { ...country, ...formData }
+              : country
           )
         );
       } else {

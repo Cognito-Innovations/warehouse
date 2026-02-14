@@ -1,12 +1,12 @@
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
+import { getUserBySuiteNo } from '../services/api.services';
 import TopNavbar from '../components/Layout/TopNavbar';
 import CustomerHeader from '../components/Customers/CustomerHeader';
 import CustomerAddressList from '../components/Customers/CustomerAddressList';
-import { useEffect, useState } from 'react';
 import type { User } from '../types';
-import { getUserBySuiteNo } from '../services/api.services';
 
 const CustomerDetailPage = () => {
   const { id } = useParams();
@@ -14,7 +14,7 @@ const CustomerDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -28,11 +28,11 @@ const CustomerDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchUser();
-  }, [id]);
+  }, [fetchUser]);
 
   if (loading) {
     return (

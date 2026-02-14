@@ -1,20 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { Edit as EditIcon } from '@mui/icons-material';
 import { Box, Typography, Card, CardContent, Button, CircularProgress } from '@mui/material';
+
+import { useShipmentDetail } from '../../../contexts/ShipmentDetailContext';
 import RackSlotInfo from './RackSlotInfo';
 import AddToRackCard from './AddToRackCard';
 import MeasurementsTable from './MeasurementsTable';
 import UpdateInfoModal from './UpdateInfoModal';
-
-interface Items {
-  total_price: number;
-}
-
-interface Package {
-  total_weight: string;
-  total_volumetric_weight: string;
-  items: Items[];
-}
 
 export interface Pieces {
   id: string;
@@ -24,54 +16,18 @@ export interface Pieces {
   width: number;
   height: number;
   volumetric_weight: number;
-  created_at: number;
-  updated_at: number;
 }
 
-interface ShipmentDetailsSectionProps {
-  shipments: {
-    id: string;
-    tracking_no: string;
-    packages: Package[];
-    pieces: Pieces[];
-    dangerous_good: string;
-    customs_value: string;
-    total_weight: number;
-    total_volumetric_weight: number;
-    length: number;
-    width: number;
-    height: number;
-    manifested?: boolean;
-    created_by?: {
-      name: string;
-    }
-    created_at: string;
-    updated_at: string;
-    status?: string;
-    rack_slot?: {
-      label: string;
-      color: string;
-      count?: number
-    }
-  };
-  loading?: boolean
-  onRefresh: () => void;
-  isDiscarded: boolean;
-}
+const ShipmentDetailsSection: React.FC = () => {
+  const { shipment, loading, isDiscarded } = useShipmentDetail();
 
-const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
-  shipments,
-  loading,
-  onRefresh,
-  isDiscarded,
-}) => {
   const [infoModalOpen, setInfoModalOpen] = useState(false);
 
   const handleOpenInfoModal = () => setInfoModalOpen(true);
   const handleCloseInfoModal = () => setInfoModalOpen(false);
 
   const { totalWeight, totalVolumetricWeight } = useMemo(() => {
-    const pieces = shipments?.pieces || [];
+    const pieces = shipment?.pieces || [];
 
     if (pieces.length > 0) {
       const totalWeight = pieces.reduce((acc: number, p: any) => acc + parseFloat(p.weight || '0'), 0);
@@ -79,7 +35,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
       return { totalWeight, totalVolumetricWeight };
     }
 
-    const packages = shipments?.packages || [];
+    const packages = shipment?.packages || [];
     
     if (!packages.length) {
       return { totalWeight: 0, totalVolumetricWeight: 0 };
@@ -96,31 +52,31 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
     }, 0);
 
     return { totalWeight, totalVolumetricWeight };
-  }, [shipments.packages, shipments.pieces]);
+  }, [shipment.packages, shipment.pieces]);
 
-  const packagesCount = (shipments?.packages || []).length;
+  const packagesCount = (shipment?.packages || []).length;
 
   return (
     <>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-              Shipment Details
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<EditIcon />}
-              onClick={handleOpenInfoModal}
-              disabled={isDiscarded}
-              sx={{
-                bgcolor: '#3b82f6',
-                '&:hover': { bgcolor: '#2563eb' },
-                textTransform: 'none',
-                borderRadius: 1
-              }}
-            >
-              Update Information
-            </Button>
-        </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
+          Shipment Details
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<EditIcon />}
+          onClick={handleOpenInfoModal}
+          disabled={isDiscarded}
+          sx={{
+            bgcolor: '#3b82f6',
+            '&:hover': { bgcolor: '#2563eb' },
+            textTransform: 'none',
+            borderRadius: 1
+          }}
+        >
+          Update Information
+        </Button>
+      </Box>
 
       <Card sx={{ mb: 3, position: 'relative' }}>
         {loading && (
@@ -155,7 +111,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
                 UGFLASH (air)
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                {shipments.tracking_no}
+                {shipment.tracking_no}
               </Typography>
             </Box>
 
@@ -188,7 +144,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
                 Customs Value
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                {shipments.customs_value ? `$${parseFloat(shipments.customs_value).toFixed(2)}` : '0.00'}
+                {shipment.customs_value ? `$${parseFloat(shipment.customs_value).toFixed(2)}` : '0.00'}
               </Typography>
             </Box>
 
@@ -197,7 +153,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
                 Dangerous Good
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                {shipments?.dangerous_good ? '⛔️ Yes' : 'No'}
+                {shipment?.dangerous_good ? '⛔️ Yes' : 'No'}
               </Typography>
             </Box>
 
@@ -223,7 +179,7 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
                 Manifested
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                {shipments.manifested ? 'Yes' : 'No'}
+                {shipment.manifested ? 'Yes' : 'No'}
               </Typography>
             </Box>
             <Box sx={{ 
@@ -236,28 +192,17 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
                 display: 'flex',
                 alignItems: 'flex-start'
               }}>
-                {shipments.rack_slot ? (
-                  <RackSlotInfo
-                    shipments={shipments}
-                    onRefresh={onRefresh}
-                    isDiscarded={isDiscarded}
-                  />
+                {shipment.rack_slot ? (
+                  <RackSlotInfo />
                 ) : (
-                  <AddToRackCard
-                    shipmentId={shipments.id}
-                    onRefresh={onRefresh}
-                    isDiscarded={isDiscarded}
-                  />
+                  <AddToRackCard />
                 )}
               </Box>
             </Box>
           </Box>
 
           <Box sx={{ mt: 3 }}>
-            <MeasurementsTable 
-              shipments={shipments}
-              isDiscarded={isDiscarded}
-            />
+            <MeasurementsTable />
           </Box>
         </CardContent>
       </Card>
@@ -266,8 +211,6 @@ const ShipmentDetailsSection: React.FC<ShipmentDetailsSectionProps> = ({
         <UpdateInfoModal
           open={infoModalOpen}
           onClose={handleCloseInfoModal}
-          onRefresh={onRefresh}
-          shipments={shipments}
         />
       )}
     </>
