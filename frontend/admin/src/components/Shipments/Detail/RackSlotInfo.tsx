@@ -1,27 +1,12 @@
 import React, { useState } from 'react';
 import { Box, Typography } from '@mui/material';
+
+import { useShipmentDetail } from '../../../contexts/ShipmentDetailContext';
 import UpdateRackSlotModal from './UpdateRackSlotModal';
 
-interface RackSlotInfoProps {
-  shipments: {
-    id: string;
-    tracking_no: string;
-    rack_slot?: {
-      label: string;
-      color: string;
-      count?: number;
-    };
-    updated_by?: {
-      name: string;
-    }
-    updated_at: string;
-    [key: string]: unknown; 
-  };
-  onRefresh: () => void;
-  isDiscarded: boolean;
-}
+const RackSlotInfo: React.FC = () => {
+  const { shipment, isDiscarded } = useShipmentDetail();
 
-const RackSlotInfo: React.FC<RackSlotInfoProps> = ({ shipments, onRefresh, isDiscarded }) => {
   const [rackModalOpen, setRackModalOpen] = useState(false);
 
   const handleOpenRackModal = () => {
@@ -48,10 +33,10 @@ const RackSlotInfo: React.FC<RackSlotInfoProps> = ({ shipments, onRefresh, isDis
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 1 }}>
-          {shipments.rack_slot?.label} →
+          {shipment.rack_slot?.label} →
         </Typography>
         <Typography variant="body2" sx={{ fontWeight: 500, color: '#166534' }}>
-          {`Slot has ${shipments.rack_slot?.count} pkgs`}
+          {`Slot has ${shipment.rack_slot?.count} pkgs`}
         </Typography>
       </Box>
 
@@ -59,13 +44,6 @@ const RackSlotInfo: React.FC<RackSlotInfoProps> = ({ shipments, onRefresh, isDis
         <UpdateRackSlotModal
           open={rackModalOpen}
           onClose={handleCloseRackModal}
-          onRefresh={onRefresh}
-          shipments={{
-            id: shipments.id,
-            rack_slot: shipments.rack_slot,
-            updated_by: shipments.updated_by,
-            updated_at: shipments.updated_at,
-          }}
         />
       )}
     </>

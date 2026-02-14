@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Box, CircularProgress, Grid } from '@mui/material';
-import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { getShipmentsByShipmentNo, updateShipmentStatus } from '../services/api.services.ts';
+import { ShipmentDetailProvider, useShipmentDetail } from '../contexts/ShipmentDetailContext.tsx';
+import { updateShipmentStatus } from '../services/api.services.ts';
 import TopNavbar from '../components/Layout/TopNavbar.tsx';
 import ShipmentDetailsSection from '../components/Shipments/Detail/ShipmentDetailsSection.tsx';
 import PackagesSection from '../components/Shipments/Detail/PackagesSection.tsx';
@@ -17,28 +17,10 @@ import { SHIPMENT_STATUS_TO_STEP_ID_MAPPING, SHIPMENT_TRACKING_STEPS } from '../
 import { formatDateTime } from '../utils/formatDateTime.ts';
 import { formatWithPlaceholders } from '../utils/formatPlaceholder.ts';
 
-const ShipmentDetail: React.FC = () => {
-  const { shipment_no } = useParams();
-  const [shipments, setShipments] = useState<any | null>(null);
+const ShipmentDetailContent: React.FC = () => {
+  const { shipment, loading, isDiscarded, fetchShipments } = useShipmentDetail();
+
   const [isApprovingPayment, setIsApprovingPayment] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const fetchShipments = useCallback(async () => {
-    if (!shipment_no) return;
-    setLoading(true);
-    try {
-      const data = await getShipmentsByShipmentNo(shipment_no);
-      setShipments(data);
-    } catch (err) {
-      console.error("Error fetching shopping request:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [shipment_no]);
-
-  useEffect(() => {
-    fetchShipments();
-  }, [fetchShipments]);
 
   const handleApprovePayment = async (id: string) => {
     if (!id) return;
@@ -117,7 +99,7 @@ const ShipmentDetail: React.FC = () => {
     });
   };
   
-  if (loading || !shipments) {
+  if (loading) {
     return (
       <Box sx={{ p: 1 }}>
         <TopNavbar />
@@ -128,81 +110,77 @@ const ShipmentDetail: React.FC = () => {
     );
   }
 
-  const { statuses, currentStageId } = getTrackingViewData(shipments);
-  const showInvoiceTable = ["PAYMENT_PENDING", "PAYMENT_APPROVAL_PENDING", "PAYMENT_APPROVED", "READY_TO_SHIP", "DEPARTED", "DISCARDED"]
-    .includes(shipments.status);
+  if (!shipment) {
+    return (
+      <Box sx={{ p: 1 }}>
+        <TopNavbar />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+          Shipment not found.
+        </Box>
+      </Box>
+    )
+  }
 
-  const isDiscarded = shipments.status === 'DISCARDED';
-  const showDiscardedMessage = isDiscarded && (
-    <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
-      This shipment has been discarded. No further actions can be taken.
-    </Alert>
-  );
+  const { statuses, currentStageId } = getTrackingViewData(shipment);
+  const showInvoiceTable = ["PAYMENT_PENDING", "PAYMENT_APPROVAL_PENDING", "PAYMENT_APPROVED", "READY_TO_SHIP", "DEPARTED", "DISCARDED"]
+    .includes(shipment.status);
 
   return (
     <Box sx={{ p: 1 }}>
       <TopNavbar
         pageTitle="Shipments"
-        pageSubtitle={shipment_no}
+        pageSubtitle={shipment.shipment_no}
       />
-      {showDiscardedMessage}
+      
+      {isDiscarded && (
+        <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
+          This shipment has been discarded. No further actions can be taken.
+        </Alert>
+      )}
 
-      <ShipmentHeader 
-        shipments={shipments}
-        onRefresh={fetchShipments}
-        isDiscarded={isDiscarded}
-      />
+      <ShipmentHeader />
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 8 }}  sx={{ mt: 2 }}>
-          <ShipmentDetailsSection 
-            shipments={shipments}
-            loading={loading}
-            onRefresh={fetchShipments}
-            isDiscarded={isDiscarded}
-          />
+          <ShipmentDetailsSection />
 
-          <PackagesSection
-            packages={shipments?.packages}
-            shipmentId={shipments?.id}
-            onPackageRemoved={fetchShipments} 
-            isDiscarded={isDiscarded}
-          />
+          <PackagesSection />
 
           {showInvoiceTable && (
             <InvoiceTable
-              invoice={shipments.invoice}
-              payment_slips={shipments.payment_slips}
-              status={shipments.status}
+              invoice={shipment.invoice}
+              payment_slips={shipment.payment_slips}
+              status={shipment.status}
               isApprovingPayment={isApprovingPayment}
-              onApprovePayment={() => handleApprovePayment(shipments.id)} 
+              onApprovePayment={() => handleApprovePayment(shipment.id)} 
               isDiscarded={isDiscarded}
             />
           )}           
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <ShippingAddress
-            shipments={shipments}
-          />
+          <ShippingAddress />
 
-          <ShipmentsPhotosSection 
-            shipments={shipments}
-            documents={shipments.shipment_photos || []}
-            onUploadSuccess={fetchShipments}
-            isDiscarded={isDiscarded}
-          />
+          <ShipmentsPhotosSection />
 
           <TrackingStatus
             statuses={statuses}
             currentStageId={currentStageId}
           />
 
-          <ActionLogs isDiscarded={isDiscarded}/> 
+          <ActionLogs /> 
         </Grid>
       </Grid>
     </Box>
   );
 };
+
+const ShipmentDetail: React.FC = () => {
+  return (
+    <ShipmentDetailProvider>
+      <ShipmentDetailContent />
+    </ShipmentDetailProvider>
+  )
+}
 
 export default ShipmentDetail;

@@ -1,43 +1,37 @@
 import React from 'react';
+
+import { useShipmentDetail } from '../../../contexts/ShipmentDetailContext';
+import RequestHeader from '../../common/RequestHeader';
 import StatusActionButtons from '../../StatusActionButtons/StatusActionButtons';
 import { FEATURE_CONFIG } from '../../../utils/trackingConfig';
-import RequestHeader from '../../common/RequestHeader';
 import { getStatusColor } from '../../../utils/statusUtils';
 
-interface ShipmentHeaderProps {
-  shipments: any;
-  onRefresh?: () => void;
-  isDiscarded: boolean;
-}
+const ShipmentHeader: React.FC = () => {
+  const { shipment, isDiscarded, fetchShipments } = useShipmentDetail();
 
-const ShipmentHeader: React.FC<ShipmentHeaderProps> = ({ 
-  shipments,
-  onRefresh,
-  isDiscarded
-}) => {
   const user = {
-    name: shipments.user?.name || '',
-    suite_no: shipments.user?.suite_no ?? '',
-    email: shipments.user?.email ?? '',
-    phone: shipments.user?.phone_number === 'N/A' ? null : shipments.user?.phone_number,
-    alt_phone: shipments.user?.phone_number_2 === 'N/A' ? null : shipments?.phone_number_2,
+    name: shipment.user?.name || '',
+    suite_no: shipment.user?.suite_no ?? '',
+    email: shipment.user?.email ?? '',
+    phone: shipment.user?.phone_number === 'N/A' ? null : shipment.user?.phone_number,
+    alt_phone: shipment.user?.phone_number_2 === 'N/A' ? null : shipment?.phone_number_2,
   };
 
   const actionButtons = (
     <StatusActionButtons
       feature={FEATURE_CONFIG.SHIPMENT}
-      status={shipments.status ?? ''}
-      data={shipments}
-      onRefresh={onRefresh}
+      status={shipment.status ?? ''}
+      data={shipment}
+      onRefresh={fetchShipments}
       disabled={isDiscarded}
     />
   );
   return (
     <RequestHeader
       title="Shipment"
-      requestCode={shipments.shipment_no!}
-      statusDisplay={shipments.status ?? ''}
-      statusChipStyles={getStatusColor(shipments.status ?? '')}
+      requestCode={shipment.shipment_no}
+      statusDisplay={shipment.status ?? ''}
+      statusChipStyles={getStatusColor(shipment.status ?? '')}
       user={user}
       actionButtons={actionButtons}
     />

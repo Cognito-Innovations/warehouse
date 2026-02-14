@@ -1,69 +1,47 @@
 import React from 'react';
 import { Box } from '@mui/material';
 
-import RequestDetails, { type RequestDetailsData } from './RequestDetails';
+import RequestDetails from './RequestDetails';
 import TrackingStatus, { type Status } from '../../../components/common/Tracking/TrackingStatus';
 import { formatDateTime } from '../../../utils/formatDateTime';
 import { formatWithPlaceholders } from '../../../utils/formatPlaceholder';
+import { PICKUP_STATUS_TO_STEP_ID_MAPPING, PICKUP_TRACKING_STEPS } from '../../../utils/trackingSteps';
+import type { PickupRequestData, TrackingRequest } from '../../../types';
 
-interface User {
-  id: string;
-  name: string;
-}
-
-interface TrackingRequest {
-  id: string;
-  status: string;
-  created_at: string;
-}
-
-interface RequestData extends RequestDetailsData {
-  id: string;
-  status: string;
-  user: User;
-  tracking_requests?: TrackingRequest[];
-  [key: string]: unknown;
-}
-
-const PICKUP_TRACKING_STEPS = [
-  { id: 'REQUESTED', title: 'Requested', description: 'Requested by {userName}' },
-  { id: 'QUOTED', title: 'Quotation Ready', description: 'Quoted for {userName}', defaultDescription: 'Quotation is not ready yet!' },
-  { id: 'CONFIRMED', title: 'Confirmed', description: 'Confirmed by {userName}', defaultDescription: 'Waiting for confirmation!' },
-  { id: 'PICKED', title: 'Picked', description: 'Picked by {userName}', defaultDescription: 'Waiting for complete' },
-];
-
-const STATUS_TO_STEP_ID_MAPPING: Record<string, string> = {
-  REQUESTED: 'REQUESTED',
-  QUOTED: 'QUOTED',
-  CONFIRMED: 'CONFIRMED',
-  PICKED: 'PICKED',
-};
-
-const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) => {
-  //TODO: Needs to improve this code
+const RequestDetailContent: React.FC<{ request: PickupRequestData }> = ({ request }) => {
   const prepareTrackingData = () => {
+    const statuses = buildTrackingStatuses(request);
+
+    const currentStageId = getCurrentStageId(request, statuses);
+    
+    resetFutureStepsIfRejected(request, statuses, currentStageId);
+
+    return { statuses, currentStageId };
+  };
+
+  const findHistoryItemForStep = (stepId: string, trackingHistory: TrackingRequest[]) => {
+    return trackingHistory.find(track => {
+      const upperCaseStatus = track.status.toUpperCase();
+      return (
+        PICKUP_STATUS_TO_STEP_ID_MAPPING[upperCaseStatus] === stepId ||
+        upperCaseStatus === stepId
+      );
+    });
+  };
+
+  const buildTrackingStatuses = (request: PickupRequestData): Status[] => {
     const trackingHistory = request.tracking_requests || [];
-    const isRejected = request.status.toUpperCase() === 'REJECTED';
+    const userName = request.user.name;
 
-    const statuses: Status[] = PICKUP_TRACKING_STEPS.map(step => {
-      let description = step.defaultDescription || '';
-      let date: string | undefined = undefined;
-      let isComplete = false;
-      const userName = request.user.name;
+    return PICKUP_TRACKING_STEPS.map(step => {
+      const historyItem = findHistoryItemForStep(step.id, trackingHistory);
 
-      const historyItem = trackingHistory.find( track => {
-        const upperCaseStatus = track.status.toUpperCase();
-        return STATUS_TO_STEP_ID_MAPPING[upperCaseStatus] === step.id || upperCaseStatus === step.id;
-      });
+      const isComplete = Boolean(historyItem);
+      const date = historyItem?.created_at;
 
-      if (historyItem) {
-        isComplete = true;
-        date = historyItem.created_at;
-      }
-      
-      if (isComplete) {
-        description = formatWithPlaceholders(step.description, { userName });
-      }
+      const description = isComplete
+        ? formatWithPlaceholders(step.description, { userName })
+        : step.defaultDescription || '';
 
       return {
         id: step.id,
@@ -72,31 +50,45 @@ const RequestDetailContent: React.FC<{ request: RequestData }> = ({ request }) =
         date: formatDateTime(date),
       };
     });
-    
-    let currentStageId: string;
+  };
+
+  const getCurrentStageId = (request: PickupRequestData, statuses: Status[]): string => {
     const upperCaseStatus = request.status.toUpperCase();
-    const mappedId = STATUS_TO_STEP_ID_MAPPING[upperCaseStatus];
+    const isRejected = upperCaseStatus === 'REJECTED';
+    const mappedId = PICKUP_STATUS_TO_STEP_ID_MAPPING[upperCaseStatus];
 
-    if (mappedId && !isRejected) {
-      currentStageId = mappedId;
-    } else {
-      const lastCompletedStep = [...statuses].reverse().find(s => s.date && s.date.trim() !== '');
-      currentStageId = lastCompletedStep ? (lastCompletedStep.id as string) : 'REQUESTED';
+    if (mappedId && !isRejected) return mappedId;
+
+    const lastCompletedStep = [...statuses]
+      .reverse()
+      .find(status => status.date && status.date.trim() !== '');
+
+    return lastCompletedStep ? (lastCompletedStep.id as string) : 'REQUESTED';
+  };
+
+  const resetFutureStepsIfRejected = (
+    request: PickupRequestData,
+    statuses: Status[],
+    currentStageId: string
+  ) => {
+    const isRejected = request.status.toUpperCase() === 'REJECTED';
+
+    if (!isRejected) return;
+
+    const currentStageIndex = statuses.findIndex(
+      status => status.id === currentStageId
+    );
+
+    if (currentStageIndex === -1) return;
+
+    for (let stageIndex = currentStageIndex + 1; stageIndex < statuses.length; stageIndex++) {
+      const originalStep = PICKUP_TRACKING_STEPS.find(
+        status => status.id === statuses[stageIndex].id
+      );
+
+      statuses[stageIndex].date = formatDateTime(undefined);
+      statuses[stageIndex].description = originalStep?.defaultDescription || '';
     }
-
-    if (isRejected) {
-      const currentStageIndex = statuses.findIndex(s => s.id === currentStageId);
-      if (currentStageIndex > -1) {
-        for (let i = currentStageIndex + 1; i < statuses.length; i++) {
-          const originalStep = PICKUP_TRACKING_STEPS.find(s => s.id === statuses[i].id);
-
-          statuses[i].date = formatDateTime(undefined);
-          statuses[i].description = originalStep?.defaultDescription || '';
-        }
-      }
-    }
-
-    return { statuses, currentStageId };
   };
 
   const { statuses, currentStageId } = prepareTrackingData();

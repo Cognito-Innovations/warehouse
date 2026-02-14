@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Button, CircularProgress, InputAdornment, TextField, Typography } from "@mui/material";
+import { Box, InputAdornment, TextField, Typography } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
 import { 
   addShipmentToBox,
   getShipmentsByBoxIds,
-  markShipmentExportDeparted,
   searchReadyToShipShipment,
-  updateShipmentStatus,
 } from "../../services/api.services";
 import ExportButton from "./ExportButton";
 import { LoadingEndAdornment } from "../common/LoadingEndAdornment";
+import MarkExportDepartedButton from "./MarkExportDepartedButton";
 
 interface Shipment {
   id: string;
@@ -19,11 +18,6 @@ interface Shipment {
 interface BoxItem {
   id: string;
   shipments?: Shipment[];
-}
-
-interface ShipmentExport {
-  status: string;
-  boxes?: BoxItem[];
 }
 
 interface ShipmentActionsBarProps {
@@ -46,7 +40,6 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
   boxes = [],
 }) => {
   const [shipmentNumber, setShipmentNumber] = useState("");
-  const [loading, setLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [allShipments, setAllShipments] = useState<any[]>([]);
@@ -113,33 +106,6 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
     }
   };
 
-  const handleUpdateDeparted = async () => {
-    try {
-      setLoading(true);
-      const updated: ShipmentExport = await markShipmentExportDeparted(exportId);
-      onStatusUpdated(updated.status);
-
-      if (updated.boxes) {
-        const allShipments: Shipment[] = updated.boxes.flatMap((box) => box.shipments ?? []);
-        if (allShipments.length > 0) {
-          await Promise.allSettled(
-            allShipments.map((shipment) =>
-              updateShipmentStatus(shipment.id, "DEPARTED")
-            )
-          );
-        }
-
-        const boxIds = updated.boxes.map((box: any) => box.id);
-        const refreshedShipments = await getShipmentsByBoxIds(boxIds);
-        setAllShipments(refreshedShipments);
-      }
-    } catch (err) {
-      console.error("Failed to update to departed", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleTrackingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setShipmentNumber(event.target.value);
     if (error) setError(null);
@@ -197,21 +163,12 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
 
       {!isDeparted && (
         <Box sx={{ display: "flex", gap: 2, flexShrink: 0, marginLeft: "auto" }}>
-          <Button
-            variant="contained"
-            disabled={loading || allShipments.length === 0}
-            onClick={handleUpdateDeparted}
-            sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, textTransform: "none" }}
-          >
-            {loading ? (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <CircularProgress size={16} color="inherit" />
-                Updating...
-              </Box>
-            ) : (
-              "Update to Departed"
-            )}
-          </Button>
+          <MarkExportDepartedButton
+            exportId={exportId}
+            disabled={allShipments.length === 0}
+            onStatusUpdated={onStatusUpdated}
+            onShipmentsRefreshed={setAllShipments}
+          />
         </Box>
       )}
     </Box>
