@@ -28,6 +28,7 @@ import { CacheManagerService } from './cache-manager.service';
 import { CurrencyCache } from './entities/cache/currency-cache.entity';
 import { DeliveryCache } from './entities/cache/delivery-cache.entity';
 import { DeliveryOptionCache } from './entities/cache/delivery-option-cache.entity';
+import { UserContextService } from './user-context.service';
 
 const cacheModuleFactory = (configService: ConfigService) => ({
   store: redisStore,
@@ -70,6 +71,7 @@ const cacheModuleFactory = (configService: ConfigService) => ({
     ExternalCurrencyService,
     DeliveryFeeService,
     CacheManagerService,
+    UserContextService,
   ],
   exports: [
     HttpModule,
@@ -80,6 +82,7 @@ const cacheModuleFactory = (configService: ConfigService) => ({
     ExternalCurrencyService,
     DeliveryFeeService,
     CacheManagerService,
+    UserContextService,
   ],
 })
 export class SharedModule {}

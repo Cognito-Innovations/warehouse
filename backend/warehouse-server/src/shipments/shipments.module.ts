@@ -11,6 +11,7 @@ import { UserPreferencesModule } from 'src/user-preferences/user-preferences.mod
 import { InvoicesModule } from 'src/invoice/invoices.module';
 import { ShipmentPiece } from './shipment-piece.entity';
 import { ShipmentSequence } from './shipment-sequence.entity';
+import { SharedModule } from 'src/shared/shared.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ShipmentSequence } from './shipment-sequence.entity';
     DocumentsModule,
     InvoicesModule,
     UserPreferencesModule,
+    SharedModule,
   ],
   controllers: [ShipmentsController],
   providers: [ShipmentsService],

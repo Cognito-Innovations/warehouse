@@ -22,7 +22,7 @@ import { InvoicesService } from 'src/invoice/invoices.service';
 import { Invoice, InvoiceStatus } from 'src/invoice/entities/invoice.entity';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { UsersService } from 'src/users/users.service';
-import { User } from 'src/users/user.entity';
+import { Role, User } from 'src/users/user.entity';
 import {
   getShoppingRequestEmailTemplate,
   ShoppingRequestEmailType,
@@ -125,6 +125,7 @@ export class ShoppingRequestsService {
 
   async getAllShoppingRequests({
     userId,
+    role,
     page,
     limit,
     origin,
@@ -132,6 +133,7 @@ export class ShoppingRequestsService {
     status,
   }: {
     userId: string;
+    role?: string;
     page: number;
     limit: number;
     origin?: string;
@@ -144,13 +146,16 @@ export class ShoppingRequestsService {
       .leftJoin('user.address', 'address')
       .leftJoinAndSelect('sr.courier', 'courier')
       .leftJoin('courier.country', 'country')
-      .innerJoin(
+      .orderBy('sr.created_at', 'DESC');
+
+    if (role !== Role.SuperAdmin) {
+      qb.innerJoin(
         'user_preferences',
         'up',
         'up.user_id = :userId AND up.courier_id = courier.id',
         { userId },
-      )
-      .orderBy('sr.created_at', 'DESC');
+      );
+    }
 
     if (origin) {
       qb.andWhere('address.country = :origin', { origin });
@@ -338,16 +343,24 @@ export class ShoppingRequestsService {
     }
   }
 
-  async getTargetOptions(userId: string): Promise<string[]> {
+  async getTargetOptions(userId: string, role?: string): Promise<string[]> {
     try {
-      const targetRows = await this.shoppingRequestRepository
+      const qb = this.shoppingRequestRepository
         .createQueryBuilder('sr')
         .innerJoin('sr.courier', 'courier')
-        .innerJoin('user_preferences', 'up', 'up.courier_id = courier.id')
         .innerJoin('countries', 'country', 'country.id = courier.country_id')
-        .where('up.user_id = :userId', { userId })
-        .select('DISTINCT country.code', 'code')
-        .getRawMany<{ code: string }>();
+        .select('DISTINCT country.code', 'code');
+
+      if (role !== Role.SuperAdmin) {
+        qb.innerJoin(
+          'user_preferences',
+          'up',
+          'up.courier_id = courier.id AND up.user_id = :userId',
+          { userId },
+        );
+      }
+
+      const targetRows = await qb.getRawMany<{ code: string }>();
 
       return targetRows.map((row) => row.code);
     } catch (error) {

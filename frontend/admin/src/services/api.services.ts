@@ -2,7 +2,6 @@
 import type { CargoOption, CategoryPayload, Country, Courier, CreateCountryPayload, CreateCourierPayload, CreateCurrencyPayload, Currency, DashboardMetrics, Package, ProductPayload, Rack, SubCategoryPayload, Supplier, UpdateCountryPayload, UpdateCourierPayload, UpdateCurrencyPayload, User } from '../types';
 import type { PreArrival } from '../types/PreArrival';
 import api from './axios';
-import { getCountryFilterParams } from './countryFilter';
 
 export const getUsers = async (): Promise<User[]> => {
   const response = await api.get<User[]>('/users');
@@ -69,9 +68,7 @@ export const createPackage = async (pkg: CreatePackageDto): Promise<Package> => 
 };
 
 export const getPackage = async () : Promise <Package[]> => {
-  const params = getCountryFilterParams();
-
-  const response = await api.get<Package[]>('/packages', { params })
+  const response = await api.get<Package[]>('/packages')
   return response.data;
 }
 
@@ -81,10 +78,7 @@ export const getPackageById = async (id: string): Promise<Package> => {
 };
 
 export const searchPackages = async (query: string): Promise<Package[]> => {
-  const params = {
-    ...getCountryFilterParams(),
-    search: query,
-  };
+  const params = { search: query };
 
   const response = await api.get<Package[]>('/packages', { params });
   return response.data;
@@ -235,9 +229,7 @@ export const markPreArrivalAsReceived = async (id: string): Promise<PreArrival> 
 };
 
 export const getPickupRequests = async () => {
-  const params = getCountryFilterParams();
-
-  const response = await api.get('/pickup-requests', { params });
+  const response = await api.get('/pickup-requests');
   return response.data;
 };
 
@@ -368,7 +360,6 @@ export const searchReadyToShipShipment = async (shipmentNumber: string) => {
   const params = {
     shipmentNumber,
     status: 'READY_TO_SHIP',
-    ...getCountryFilterParams(),
   };
 
   const response = await api.get('/shipments/search', { params });
@@ -567,17 +558,12 @@ export const updatePaymentStatus = async (id: string, paymentStatus: string) => 
 
 // Shipment
 export const getShipments = async () => {
-  const params = getCountryFilterParams();
-
-  const response = await api.get('/shipments', { params });
+  const response = await api.get('/shipments');
   return response.data;
 };
 
 export const getShipmentsByStatus = async (status: string) => {
-  const params = {
-    status,
-    ...getCountryFilterParams(),
-  };
+  const params = { status };
 
   const response = await api.get(`/shipments/by-status`, { params });
   return response.data;
@@ -639,9 +625,7 @@ export const getCargoOptions = async (): Promise<CargoOption[]> => {
 };
 
 export const getDashboardMetrics = async (): Promise<DashboardMetrics> => {
-  const params = getCountryFilterParams();
-
-  const response = await api.get<DashboardMetrics>('/analytics', { params });
+  const response = await api.get<DashboardMetrics>('/analytics');
   return response.data;
 };
 

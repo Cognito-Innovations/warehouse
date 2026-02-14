@@ -137,7 +137,12 @@ const Category: React.FC = () => {
       width: "15%",
     },
   ];
-    
+
+  const actions = {
+    onEdit: handleEditCategory,
+    onDelete: handleDeleteClick,
+  };
+
   return (
     <Box>
       <TopNavbar pageTitle="Categories" />
@@ -174,8 +179,7 @@ const Category: React.FC = () => {
         noDataMessage="No categories available"
         getIdentifier={(row) => row.id}
         getRowStatus={(row) => row.status}
-        onEdit={handleEditCategory}
-        onDelete={handleDeleteClick}
+        actions={actions}
       />
 
       <ConfirmDialog

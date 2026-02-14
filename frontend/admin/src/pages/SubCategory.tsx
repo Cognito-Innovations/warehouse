@@ -114,6 +114,11 @@ const SubCategory: React.FC = () => {
     },
   ];
 
+  const actions = {
+    onEdit: handleEditSubCategory,
+    onDelete: handleDeleteClick,
+  };
+
   return (
     <Box>
       <TopNavbar pageTitle="Sub Categories" />
@@ -150,8 +155,7 @@ const SubCategory: React.FC = () => {
         noDataMessage="No sub categories available"
         getIdentifier={(row) => row.id}
         getRowStatus={(row) => row.status}
-        onEdit={handleEditSubCategory}
-        onDelete={handleDeleteClick}
+        actions={actions}
       />
 
       <ConfirmDialog

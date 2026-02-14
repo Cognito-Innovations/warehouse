@@ -9,9 +9,11 @@ import {
   TablePagination,
 } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
+
 import { getShipmentExports } from '../../services/api.services';
 import ShipmentExportFilters from './ShipmentExportFilters';
 import ShipmentExportTableBody, { type ShipmentExportRow } from './ShipmentExportTableBody';
+import { SHIPMENT_EXPORT_TABLE_HEADERS } from '../../utils/constants';
 
 const ShipmentExportTable: React.FC = () => {
   const [rows, setRows] = useState<ShipmentExportRow[]>([]);
@@ -55,16 +57,6 @@ const ShipmentExportTable: React.FC = () => {
     page * rowsPerPage + rowsPerPage
   );
 
-  const tableHeaders = [
-    "Serial #",
-    "Date",
-    "MAWB",
-    "Count",
-    "Created By",
-    "Status",
-    "Actions",
-  ];
-
   return (
     <>
       <ShipmentExportFilters 
@@ -78,7 +70,7 @@ const ShipmentExportTable: React.FC = () => {
           <Table>
             <TableHead sx={{ bgcolor: '#f8fafc' }}>
               <TableRow>
-                {tableHeaders.map((header, index) => (
+                {SHIPMENT_EXPORT_TABLE_HEADERS.map((header, index) => (
                   <TableCell key={index}>{header}</TableCell>
                 ))}
               </TableRow>

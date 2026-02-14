@@ -100,6 +100,16 @@ const PickupRequests: React.FC = () => {
     navigate(`/pickups/${encodeURIComponent(id as string)}`);
   };
 
+  const filters = {
+    statusOptions: PICKUP_REQUEST_STATUS_OPTIONS,
+    onStatusChange: setSelectedStatus,
+  };
+
+  const actions = {
+    onViewDetails: handleViewDetails,
+  };
+
+
   return (
     <Box>
       <TopNavbar pageTitle="Pickup Request" pageSubtitle="All" />
@@ -116,11 +126,11 @@ const PickupRequests: React.FC = () => {
         rows={mappedRows}
         columns={columns}
         loading={loading}
-        statusOptions={PICKUP_REQUEST_STATUS_OPTIONS}
         noDataMessage="No pickup requests available"
-        onViewDetails={handleViewDetails}
         getIdentifier={(row) => row.id!}
         getRowStatus={(row) => row.status || 'REQUESTED'}
+        filters={filters}
+        actions={actions}
       />
     </Box>
   );
