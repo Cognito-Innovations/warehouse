@@ -1,32 +1,16 @@
 import React from "react";
 import {
   Box,
-  CircularProgress,
-  IconButton,
   Table,
-  TableBody,
   TableCell,
   TableHead,
   TableRow,
   Typography,
 } from "@mui/material";
-import { Delete as DeleteIcon } from "@mui/icons-material";
-import { removeShipmentFromBox } from "../../services/api.services";
-import { formatDateTime } from "../../utils/formatDateTime";
 
-export interface Shipment {
-  id: string;
-  tracking_no: string;
-  shipment_no: string;
-  courier: string;
-  customer: string;
-  customerCode: string;
-  updated_at: string;
-  time: string;
-  user: {
-    name: string;
-  }
-}
+import BoxShipmentsTableBody from "./BoxShipmentsTableBody";
+import { BOX_SHIPMENTS_TABLE_HEADERS } from "../../utils/constants";
+import type { Shipment } from "../../types";
 
 interface BoxShipmentsListProps {
   boxId: string;
@@ -49,17 +33,6 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
   isLoading,
   isDeparted,
 }) => {
-
-  const handleDeleteShipment = async (shipmentId: string) => {
-    if (!boxId || isDeparted) return;
-    try {
-      await removeShipmentFromBox(boxId, shipmentId);
-      refreshShipments();
-    } catch (error) {
-      console.error("Failed to delete shipment from box:", error);
-    }
-  };
-
   const displayLabel = boxLabel 
     ? boxLabel 
     : totalBoxes === 1 
@@ -97,67 +70,21 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
                 },
               }}
             >
-              <TableCell>Shipment No.</TableCell>
-              <TableCell>Tracking No.</TableCell>
-              <TableCell>Customer</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell align="center" />
+              {BOX_SHIPMENTS_TABLE_HEADERS.map((header, index) => (
+                <TableCell key={index} align={header.align}>
+                  {header.label}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
 
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                  <CircularProgress size={24} />
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Loading shipments...
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : shipments.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    No shipments found
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              shipments.map((pkg) => (
-                <TableRow key={pkg.id}>
-                  <TableCell>{pkg.shipment_no}</TableCell>
-
-                  <TableCell>
-                    <Typography fontWeight={500}>{pkg.tracking_no}</Typography>
-                  </TableCell>
-
-                  <TableCell>
-                    <Typography fontWeight={500}>{pkg.user.name}</Typography>
-                  </TableCell>
-
-                  <TableCell>
-                    <Typography fontWeight={500}>{formatDateTime(pkg.updated_at)}</Typography>
-                  </TableCell>
-
-                  <TableCell align="center">
-                    <IconButton
-                      sx={{
-                        bgcolor: "#f87171",
-                        color: "white",
-                        "&:hover": { bgcolor: "#ef4444" },
-                      }}
-                      size="small"
-                      onClick={() => handleDeleteShipment(pkg.id)}
-                      disabled={isDeparted}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
+          <BoxShipmentsTableBody
+            boxId={boxId}
+            shipments={shipments}
+            isLoading={isLoading}
+            isDeparted={isDeparted}
+            refreshShipments={refreshShipments}
+          />
         </Table>
       </Box>
     </Box>

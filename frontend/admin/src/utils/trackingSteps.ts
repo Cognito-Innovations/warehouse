@@ -35,3 +35,17 @@ export const SHOPPING_STATUS_TO_STEP_ID_MAPPING: Record<string, string> = {
   PAYMENT_APPROVED: 'PAYMENT_APPROVED',
   ORDER_PLACED: 'ORDER_PLACED',
 };
+
+export const PICKUP_TRACKING_STEPS = [
+  { id: 'REQUESTED', title: 'Requested', description: 'Requested by {userName}' },
+  { id: 'QUOTED', title: 'Quotation Ready', description: 'Quoted for {userName}', defaultDescription: 'Quotation is not ready yet!' },
+  { id: 'CONFIRMED', title: 'Confirmed', description: 'Confirmed by {userName}', defaultDescription: 'Waiting for confirmation!' },
+  { id: 'PICKED', title: 'Picked', description: 'Picked by {userName}', defaultDescription: 'Waiting for complete' },
+];
+
+export const PICKUP_STATUS_TO_STEP_ID_MAPPING: Record<string, string> = {
+  REQUESTED: 'REQUESTED',
+  QUOTED: 'QUOTED',
+  CONFIRMED: 'CONFIRMED',
+  PICKED: 'PICKED',
+};
