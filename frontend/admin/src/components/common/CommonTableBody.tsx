@@ -82,6 +82,7 @@ const CommonTableBody = <T,>({
                         <IconButton
                           size="small"
                           onClick={() => onDelete(rowId)}
+                          aria-label="delete"
                           sx={{
                             color: '#6b7280',
                             '&:hover': { color: '#dc2626', backgroundColor: 'transparent' },
