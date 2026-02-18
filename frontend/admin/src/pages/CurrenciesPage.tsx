@@ -25,7 +25,6 @@ const CurrenciesPage: React.FC = () => {
       const data = await getCurrencies();
       setCurrencies(data);
     } catch (err) {
-      console.error(err);
       toast.error('Failed to fetch currencies');
     } finally {
       setLoading(false);
@@ -59,7 +58,6 @@ const CurrenciesPage: React.FC = () => {
       await fetchCurrencies();
       handleCloseDialog();
     } catch (err) {
-      console.error(err);
       toast.error(`Failed to ${action} currency`);
     } finally {
       setSaving(false);

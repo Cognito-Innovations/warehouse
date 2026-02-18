@@ -5,6 +5,8 @@ import {
   CircularProgress,
   TextField,
 } from '@mui/material';
+import { toast } from 'sonner';
+
 import { updateShipmentExport } from '../../services/api.services';
 import Modal from '../common/Modal';
 
@@ -40,7 +42,7 @@ const UpdateMawbModal: React.FC<UpdateMawbModalProps> = ({ open, onClose, onUpda
       await onUpdate();
       handleClose();
     } catch (error) {
-      console.error("Failed to update MAWB:", error);
+      toast.error("Failed to update MAWB:");
     } finally {
       setSaving(false);
     }

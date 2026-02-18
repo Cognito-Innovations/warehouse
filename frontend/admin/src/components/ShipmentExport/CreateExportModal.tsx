@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
 import { createShipmentExport } from '../../services/api.services';
 import Modal from '../common/Modal';
 import { numberInputStyle } from '../../styles/numberInputStyle';
@@ -31,7 +33,7 @@ const CreateExportModal: React.FC<CreateExportModalProps> = ({ open, onClose, on
         navigate(`/shipment/export/${request.id}`);
       }
     } catch (err) {
-      console.error('Failed to create export:', err);
+      toast.error('Failed to create export:');
     } finally {
       setLoading(false);
       handleClose();

@@ -2,11 +2,9 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import * as api from "../src/services/api.services";
-import * as auth from "../src/hooks/useAuth";
 import Category from "../src/pages/Category";
 
 jest.mock("../src/services/api.services");
-jest.mock("../src/hooks/useAuth");
 
 describe("Category Page", () => {
   const mockCategories = [
@@ -36,17 +34,6 @@ describe("Category Page", () => {
     jest.clearAllMocks();
     (api.getCategories as jest.Mock).mockResolvedValue(mockCategories);
     (api.deleteCategory as jest.Mock).mockResolvedValue({});
-
-    (auth.useAuth as jest.Mock).mockReturnValue({
-      user: { 
-        id: 1, 
-        name: "Test Admin", 
-        email: "admin@example.com", 
-        avatar: "avatar.jpg" 
-      },
-      isAuthenticated: true,
-      logout: jest.fn(),
-    });
   });
 
   it("should fetch and display categories on mount", async () => {

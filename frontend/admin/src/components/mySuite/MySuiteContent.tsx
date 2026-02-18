@@ -26,7 +26,7 @@ const MySuiteContent = () => {
       const data = await getRacks();
       setRacks(data);
     } catch (err) {
-      console.error('Failed to fetch racks', err);
+      toast.error('Failed to fetch racks');
     } finally {
       setLoadingRacks(false);
     }
@@ -39,7 +39,6 @@ const MySuiteContent = () => {
       setRacks(prev => prev.filter(rack => rack.id !== id));
       toast.success('Rack deleted successfully');
     } catch (err) {
-      console.error('Failed to delete rack', err);
       const error = err as {
         response?: { data?: { message?: string } };
         message?: string;

@@ -25,7 +25,6 @@ const CountriesPage: React.FC = () => {
       const data = await getCountries();
       setCountries(data);
     } catch (err) {
-      console.error(err);
       toast.error('Failed to fetch countries');
     } finally {
       setLoading(false);
@@ -71,7 +70,6 @@ const CountriesPage: React.FC = () => {
       toast.success(`Country "${formData.name}" ${action === 'add' ? 'added' : 'updated'} successfully!`);
       handleCloseDialog();
     } catch (err) {
-      console.error(err);
       toast.error(`Failed to ${action} country`);
     } finally {
       setSaving(false);

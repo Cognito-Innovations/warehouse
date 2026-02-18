@@ -71,7 +71,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
       setConfirmOpen(false);
       setDeletingId(null);
     } catch (error) {
-      console.error('Failed to delete package:', error);
       toast.error("Failed to delete package.");
     } finally {
       handleMenuClose();
@@ -131,7 +130,6 @@ const PackagesTable: React.FC<PackagesTableProps> = ({
         setFilteredPackages(statusFiltered);
         setPage(1);
       } catch (error) {
-        console.error('Failed to fetch packages:', error);
         toast.error("Failed to load packages.");
         setPackages([]);
         setFilteredPackages([]);

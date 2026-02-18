@@ -2,11 +2,9 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import * as api from "../src/services/api.services";
-import * as auth from "../src/hooks/useAuth";
 import Products from "../src/pages/Products";
 
 jest.mock("../src/services/api.services");
-jest.mock("../src/hooks/useAuth");
 
 describe("Products Page", () => {
   const mockProducts = [
@@ -80,20 +78,17 @@ describe("Products Page", () => {
     (api.getProducts as jest.Mock).mockResolvedValue(mockProducts);
     (api.deleteProduct as jest.Mock).mockResolvedValue({});
     (api.updateEcommerceProduct as jest.Mock).mockResolvedValue({});
-
-    (auth.useAuth as jest.Mock).mockReturnValue({
-      user: { id: 1, name: "Admin" },
-      isAuthenticated: true,
-      logout: jest.fn(),
-    });
   });
 
-  it("should fetch and display products on mount", async () => {
+  const renderPage = () =>
     render(
       <MemoryRouter>
         <Products />
       </MemoryRouter>
     );
+
+  it("should fetch and display products on mount", async () => {
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByText("iPhone 15")).toBeInTheDocument();
@@ -109,11 +104,7 @@ describe("Products Page", () => {
   });
 
   it("should handle search input", async () => {
-    render(
-        <MemoryRouter>
-          <Products />
-        </MemoryRouter>
-    );
+    renderPage();
     
     await waitFor(() => screen.getByText("iPhone 15"));
 
@@ -127,11 +118,7 @@ describe("Products Page", () => {
   });
 
   it("should open delete dialog and remove product", async () => {
-    render(
-      <MemoryRouter>
-        <Products />
-      </MemoryRouter>
-    );
+    renderPage();
 
     await waitFor(() => screen.getByText("iPhone 15"));
 

@@ -11,6 +11,7 @@ import {
   CircularProgress,
   FormHelperText,
 } from "@mui/material";
+import { type SelectChangeEvent } from "@mui/material/Select";
 
 import { createUser, getCouriers } from "../../services/api.services";
 import { ROLES } from "../../utils/constants";
@@ -128,7 +129,9 @@ const UserCreateForm: React.FC = () => {
     return valid;
   };
 
-  const handleChange = (e: React.ChangeEvent<any>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent
+  ) => {
     const name = e.target.name as keyof FormData;
     const value = e.target.value;
 

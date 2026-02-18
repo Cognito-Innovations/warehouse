@@ -2,11 +2,9 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import * as api from "../src/services/api.services";
-import * as auth from "../src/hooks/useAuth";
 import SubCategory from "../src/pages/SubCategory";
 
 jest.mock("../src/services/api.services");
-jest.mock("../src/hooks/useAuth");
 
 describe("SubCategory Page", () => {
   const mockSubCategories = [
@@ -41,17 +39,6 @@ describe("SubCategory Page", () => {
 
     (api.getSubCategories as jest.Mock).mockResolvedValue(mockSubCategories);
     (api.deleteSubCategory as jest.Mock).mockResolvedValue({});
-
-    (auth.useAuth as jest.Mock).mockReturnValue({
-      user: {
-        id: 1,
-        name: "Test Admin",
-        email: "admin@example.com",
-        avatar: "avatar.jpg",
-      },
-      isAuthenticated: true,
-      logout: jest.fn(),
-    });
   });
 
   it("should fetch and display sub categories on mount", async () => {

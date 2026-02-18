@@ -59,8 +59,12 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ status, setStatus, shipme
         </Box>
         
         <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Status</InputLabel>
+          <InputLabel id="status-select-label">
+            Status
+          </InputLabel>
           <Select
+            labelId="status-select-label"
+            id="status-select"
             value={status}
             onChange={(e) => handleStatusChange(e.target.value as string)}
             label="Status"

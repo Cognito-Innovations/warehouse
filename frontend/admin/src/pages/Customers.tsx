@@ -39,7 +39,6 @@ const Customers = () => {
       setFilteredCustomers(mappedCustomers);
       setError(null);
     } catch (err) {
-      console.error("Failed to fetch customers:", err);
       setError("Failed to load customer data. Please try again later.");
     } finally {
       setLoading(false);

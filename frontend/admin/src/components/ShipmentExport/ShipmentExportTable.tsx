@@ -9,6 +9,7 @@ import {
   TablePagination,
 } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
+import { toast } from 'sonner';
 
 import { getShipmentExports } from '../../services/api.services';
 import ShipmentExportFilters from './ShipmentExportFilters';
@@ -28,7 +29,7 @@ const ShipmentExportTable: React.FC = () => {
       const data = await getShipmentExports();
       setRows(data);
     } catch (err) {
-      console.error('Failed to fetch shipment exports:', err);
+      toast.error('Failed to fetch shipment exports:');
     } finally {
       setLoading(false);
     }

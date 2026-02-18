@@ -125,6 +125,7 @@ const CommonTableBody = <T,>({
                   ) : (
                     onViewDetails && (
                       <IconButton
+                        aria-label="view-details"
                         size="small"
                         sx={{
                           color: '#6b7280',
