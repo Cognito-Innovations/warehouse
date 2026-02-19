@@ -5,6 +5,14 @@ import { getShipmentExportById, getShipmentsByBoxIds } from "../services/api.ser
 import ShipmentHeader from "../components/ShipmentExport/ShipmentHeader";
 import ShipmentActionsBar from "../components/ShipmentExport/ShipmentActionsBar";
 import BoxesSection from "../components/ShipmentExport/BoxesSection";
+import {
+  addBoxToShipment,
+  updateBoxInShipment,
+  removeBoxFromShipment,
+  addShipmentToBox,
+  removeShipmentFromBox,
+  updateExportStatusWithDepartedShipments,
+} from "../utils/shipmentExportStateTransforms";
 
 const ViewShipmentExportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,16 +73,45 @@ const ViewShipmentExportPage: React.FC = () => {
     return <div>Shipment not found</div>;
   }
 
-  const handleBoxAdded = () => {
-    if (id) {
-      fetchShipment(id);
+  const handleBoxCreated = (newBox: any) => {
+    setShipment((prev: any) => addBoxToShipment(prev, newBox));
+  };
+
+  const handleBoxUpdated = (updatedBox: any) => {
+    setShipment((prev: any) => updateBoxInShipment(prev, updatedBox));
+  };
+
+  const handleBoxDeleted = (boxId: string) => {
+    setShipment((prev: any) => removeBoxFromShipment(prev, boxId));
+
+    if (selectedBoxId === boxId) {
+      setSelectedBoxId(null);
+      setSelectedBoxShipments([]);
     }
   };
 
-  const handlePackageAdded = () => {
-    if (selectedBoxId) {
-      fetchShipmentsForBox(selectedBoxId);
-    }
+  const handlePackageAdded = (newShipment: any) => {
+    setSelectedBoxShipments((prev) => [...prev, newShipment]);
+
+    setShipment((prev: any) =>
+      addShipmentToBox(prev, selectedBoxId, newShipment)
+    );
+  };
+
+  const handleStatusUpdated = (newStatus: string) => {
+    setShipment((prev: any) =>
+      updateExportStatusWithDepartedShipments(prev, newStatus)
+    );
+  };
+
+  const handleShipmentRemoved = (shipmentId: string) => {
+    setSelectedBoxShipments((prev) =>
+      prev.filter((s) => s.id !== shipmentId)
+    );
+
+    setShipment((prev: any) =>
+      removeShipmentFromBox(prev, selectedBoxId, shipmentId)
+    );
   };
 
   return (
@@ -86,20 +123,22 @@ const ViewShipmentExportPage: React.FC = () => {
         onPackageAdded={handlePackageAdded}
         exportId={shipment.id}
         status={shipment.status}
-        onStatusUpdated={(newStatus) => setShipment({ ...shipment, status: newStatus })}
+        onStatusUpdated={handleStatusUpdated}
         selectedBoxShipments={selectedBoxShipments}
         boxes={shipment.boxes || []}
       />
       
       <BoxesSection 
         boxes={shipment.boxes || []} 
-        onBoxAdded={handleBoxAdded}
+        onBoxCreated={handleBoxCreated}
+        onBoxUpdated={handleBoxUpdated}
+        onBoxDeleted={handleBoxDeleted}
         selectedBoxId={selectedBoxId}
         setSelectedBoxId={setSelectedBoxId}
         shipmentId={shipment.id}
         shipmentsInSelectedBox={selectedBoxShipments}
         loadingShipments={loadingShipments}
-        refreshShipments={handlePackageAdded}
+        onShipmentRemoved={handleShipmentRemoved}
         status={shipment.status}
       />
     </Box>

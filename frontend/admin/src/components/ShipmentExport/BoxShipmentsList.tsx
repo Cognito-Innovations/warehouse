@@ -14,7 +14,7 @@ import type { Shipment } from "../../types";
 
 interface BoxShipmentsListProps {
   boxId: string;
-  refreshShipments: () => void;
+  onShipmentRemoved: (shipmentId: string) => void;
   boxLabel?: string; 
   boxIndex: number;
   totalBoxes: number;
@@ -25,7 +25,7 @@ interface BoxShipmentsListProps {
 
 const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
   boxId,
-  refreshShipments,
+  onShipmentRemoved,
   boxIndex,
   totalBoxes,
   boxLabel,
@@ -83,7 +83,7 @@ const BoxShipmentsList: React.FC<BoxShipmentsListProps> = ({
             shipments={shipments}
             isLoading={isLoading}
             isDeparted={isDeparted}
-            refreshShipments={refreshShipments}
+            onShipmentRemoved={onShipmentRemoved}
           />
         </Table>
       </Box>

@@ -41,6 +41,8 @@ interface RequestDetailCardProps {
 
 const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds }: RequestDetailCardProps) => {
   const [activeAction, setActiveAction] = useState<string | null>(null);
+  
+  if (!request) return null;
 
   const normalizeStatus = (status: string) => {
     switch (status.toUpperCase()) {
@@ -55,6 +57,7 @@ const RequestDetailCard = ({ request, onStatusUpdated, products, selectedItemIds
   const statusStyles = getStatusColor(latestStatus);
 
   const handleStatusChange = async (newStatus: string, actionName: string) => {
+    if (activeAction) return;
     setActiveAction(actionName);
     try {
       await updateShoppingRequestStatus(request.id, newStatus);

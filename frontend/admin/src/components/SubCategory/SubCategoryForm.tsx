@@ -16,7 +16,7 @@ import type {
 
 interface SubCategoryFormProps {
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (data: any) => void;
   initialData?: SubCategoryPayload;
 }
 
@@ -100,13 +100,14 @@ const SubCategoryForm: React.FC<SubCategoryFormProps> = ({ onClose, onSuccess, i
 
     try {
       setLoading(true);
+      let response;
       if (initialData?.id) {
         const { id, ...updatePayload } = formData;
-        await updateSubCategory(initialData.id, updatePayload);
+        response = await updateSubCategory(initialData.id, updatePayload);
       } else {
-        await createSubCategory(formData);
+        response = await createSubCategory(formData);
       }
-      onSuccess?.();
+      onSuccess?.(response);
       onClose();
     } catch (err) {
       console.error("Failed to create category:", err);

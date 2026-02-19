@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Box, Typography, Button, Tabs, Tab, Stack, Paper, CircularProgress } from '@mui/material';
 import { Add } from '@mui/icons-material';
+import { toast } from 'sonner';
 
 import { deleteRack, getRacks } from '../../services/api.services';
 import RackList from './RackList';
 import RackModal from './RackModal';
 import type { Rack } from '../../types';
-import { toast } from 'sonner';
 
 const MySuiteContent = () => {
   const [racks, setRacks] = useState<Rack[]>([]);
@@ -56,6 +56,18 @@ const MySuiteContent = () => {
     setIsModalOpen(true);
   };
 
+  const upsertRack = (rack: Rack) => {
+    setRacks(prev => {
+      const existingRack = prev.find(r => r.id === rack.id);
+
+      if (existingRack) {
+        return prev.map(r => (r.id === rack.id ? rack : r));
+      }
+
+      return [...prev, rack];
+    });
+  };
+
   return (
     <Paper sx={{ p: 3, borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
       <Tabs value={tabValue} onChange={(_, value) => setTabValue(value)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
@@ -99,16 +111,7 @@ const MySuiteContent = () => {
         open={isModalOpen} 
         rack={editingRack} 
         onClose={() => { setEditingRack(null); setIsModalOpen(false); }}
-        onSuccess={(rack) => {
-          setRacks(prev => {
-            const exists = prev.find(r => r.id === rack.id);
-            if (exists) {
-              return prev.map(r => r.id === rack.id ? rack : r);
-            } else {
-              return [...prev, rack];
-            }
-          });
-        }}
+        onSuccess={upsertRack}
       />
     </Paper>
   );

@@ -16,8 +16,10 @@ interface BoxesSectionProps {
   shipmentId: string;
   shipmentsInSelectedBox: Shipment[];
   loadingShipments: boolean;
-  refreshShipments: () => void;
-  onBoxAdded: () => void;
+  onShipmentRemoved: (shipmentId: string) => void;
+  onBoxCreated: (box: any) => void;
+  onBoxUpdated: (box: any) => void;
+  onBoxDeleted: (boxId: string) => void;
   status: string;
 }
 
@@ -28,8 +30,10 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
   shipmentId,
   shipmentsInSelectedBox,
   loadingShipments,
-  refreshShipments,
-  onBoxAdded,
+  onShipmentRemoved,
+  onBoxCreated,
+  onBoxUpdated,
+  onBoxDeleted,
   status,
 }) => {
   const [open, setOpen] = useState(false);
@@ -57,7 +61,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
     if (!selectedBoxId || isDeparted) return;
 
     try {
-      await updateShipmentExportBox(selectedBoxId, {
+      const updatedBox = await updateShipmentExportBox(selectedBoxId, {
         label: values.label,
         length_cm: Number(values.length),
         breadth_cm: Number(values.breadth),
@@ -66,7 +70,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
         mass_weight: Number(values.massWeight),
       });
       
-      onBoxAdded();
+      onBoxUpdated(updatedBox);
       handleClose();
     } catch (error) {
       console.error("Failed to update box:", error);
@@ -78,7 +82,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
     setDeletingBoxId(boxId);
     try {
       await deleteShipmentExportBox(boxId);
-      onBoxAdded();
+      onBoxDeleted(boxId);
       if (selectedBoxId === boxId) {
         setSelectedBoxId(null);
       }
@@ -110,7 +114,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
 
           <AddNewBoxButton
             shipmentId={shipmentId}
-            onBoxAdded={onBoxAdded}
+            onBoxCreated={onBoxCreated}
             isDeparted={isDeparted}
             hasBoxes={boxes.length > 0}
           />
@@ -120,7 +124,7 @@ const BoxesSection: React.FC<BoxesSectionProps> = ({
           {selectedBoxId ? (
             <BoxShipmentsList
               boxId={selectedBoxId}
-              refreshShipments={refreshShipments}
+              onShipmentRemoved={onShipmentRemoved}
               boxIndex={selectedBoxIndex}
               boxLabel={selectedBoxData?.label}
               totalBoxes={boxes.length}

@@ -19,7 +19,7 @@ interface Measurement { id: string; label: string; }
 
 interface ProductFormProps {
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (savedProduct: any) => void;
   initialData?: ProductPayload;
 }
 
@@ -147,13 +147,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
 
     try {
       setLoading(true);
+      let response;
       if (initialData?.id) {
         const { id, ...updatePayload } = formData;
-        await updateEcommerceProduct(initialData.id, updatePayload);
+        response = await updateEcommerceProduct(initialData.id, updatePayload);
       } else {
-        await createProduct(payload);
+        response = await createProduct(payload);
       }
-      onSuccess?.();
+      onSuccess?.(response);
       onClose();
     } catch (err) {
       console.error("Failed to save product:", err);

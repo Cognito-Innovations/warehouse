@@ -5,14 +5,14 @@ import { createShipmentExportBox } from "../../services/api.services";
 
 interface AddNewBoxButtonProps {
   shipmentId: string;
-  onBoxAdded: () => void;
+  onBoxCreated: (box: any) => void;
   isDeparted: boolean;
   hasBoxes: boolean;
 }
 
 const AddNewBoxButton: React.FC<AddNewBoxButtonProps> = ({
   shipmentId,
-  onBoxAdded,
+  onBoxCreated,
   isDeparted,
   hasBoxes,
 }) => {
@@ -23,7 +23,7 @@ const AddNewBoxButton: React.FC<AddNewBoxButtonProps> = ({
 
     setIsAdding(true);
     try {
-      await createShipmentExportBox(shipmentId, {
+      const newBox = await createShipmentExportBox(shipmentId, {
         length_cm: 0,
         breadth_cm: 0,
         height_cm: 0,
@@ -31,7 +31,7 @@ const AddNewBoxButton: React.FC<AddNewBoxButtonProps> = ({
         mass_weight: 0,
       });
 
-      onBoxAdded();
+      onBoxCreated(newBox);
     } catch (error) {
       console.error("Failed to create box:", error);
     } finally {

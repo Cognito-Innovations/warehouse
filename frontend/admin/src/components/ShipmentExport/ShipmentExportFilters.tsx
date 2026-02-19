@@ -9,14 +9,15 @@ import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { Dayjs } from 'dayjs';
 import CreateExportModal from './CreateExportModal';
+import type { ShipmentExportRow } from './ShipmentExportTableBody';
 
 interface ShipmentExportFiltersProps {
   selectedDate: Dayjs | null;
   onDateChange: (date: Dayjs | null) => void;
-  onUpdate: () => void;
+  onCreate: (row: ShipmentExportRow) => void;
 }
 
-const ShipmentExportFilters: React.FC<ShipmentExportFiltersProps> = ({ selectedDate, onDateChange, onUpdate }) => {
+const ShipmentExportFilters: React.FC<ShipmentExportFiltersProps> = ({ selectedDate, onDateChange, onCreate }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -67,7 +68,7 @@ const ShipmentExportFilters: React.FC<ShipmentExportFiltersProps> = ({ selectedD
       <CreateExportModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onUpdate={onUpdate}
+        onCreate={onCreate}
       />
     </>
   );

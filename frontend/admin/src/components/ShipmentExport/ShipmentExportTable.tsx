@@ -29,7 +29,7 @@ const ShipmentExportTable: React.FC = () => {
       const data = await getShipmentExports();
       setRows(data);
     } catch (err) {
-      toast.error('Failed to fetch shipment exports:');
+      toast.error('Failed to fetch shipment exports');
     } finally {
       setLoading(false);
     }
@@ -58,12 +58,28 @@ const ShipmentExportTable: React.FC = () => {
     page * rowsPerPage + rowsPerPage
   );
 
+  const handleAddRow = (newRow: ShipmentExportRow) => {
+    setRows((prev) => [newRow, ...prev]);
+  };
+
+  const handleUpdateRow = (updatedRow: ShipmentExportRow) => {
+    setRows((prevRows) =>
+      prevRows.map((row) =>
+        row.id === updatedRow.id ? { ...row, ...updatedRow } : row
+      )
+    );
+  };
+
+  const handleDeleteRow = (id: string) => {
+    setRows((prev) => prev.filter((row) => row.id !== id));
+  };
+
   return (
     <>
       <ShipmentExportFilters 
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
-        onUpdate={fetchExports}
+        onCreate={handleAddRow}
       />
 
       <Card>
@@ -80,7 +96,8 @@ const ShipmentExportTable: React.FC = () => {
             <ShipmentExportTableBody
               rows={visibleRows}
               loading={loading}
-              onUpdate={fetchExports}
+              onUpdateRow={handleUpdateRow}
+              onDeleteRow={handleDeleteRow}
             />
           </Table>
         </TableContainer>

@@ -9,20 +9,16 @@ import { toast } from 'sonner';
 
 import { updateShipmentExport } from '../../services/api.services';
 import Modal from '../common/Modal';
-
-interface Shipment {
-  id: string;
-  mawb?: string;
-}
+import type { ShipmentExportRow } from './ShipmentExportTableBody';
 
 interface UpdateMawbModalProps {
   open: boolean;
   onClose: () => void;
-  onUpdate: () => void;
-  shipment: Shipment | null;
+  onUpdateRow: (updatedRow: ShipmentExportRow) => void;
+  shipment: ShipmentExportRow | null;
 }
 
-const UpdateMawbModal: React.FC<UpdateMawbModalProps> = ({ open, onClose, onUpdate, shipment }) => {
+const UpdateMawbModal: React.FC<UpdateMawbModalProps> = ({ open, onClose, onUpdateRow, shipment }) => {
   const [mawb, setMawb] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -39,10 +35,10 @@ const UpdateMawbModal: React.FC<UpdateMawbModalProps> = ({ open, onClose, onUpda
     try {
       setSaving(true);
       await updateShipmentExport(shipment.id, { mawb });
-      await onUpdate();
+      onUpdateRow({ ...shipment, mawb });
       handleClose();
     } catch (error) {
-      toast.error("Failed to update MAWB:");
+      toast.error("Failed to update MAWB");
     } finally {
       setSaving(false);
     }

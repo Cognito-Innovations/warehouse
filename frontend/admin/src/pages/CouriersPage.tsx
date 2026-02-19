@@ -68,26 +68,18 @@ const CouriersPage: React.FC = () => {
   const handleSaveCourier = async (formData: CreateCourierPayload) => {
     setSaving(true);
     const action = editingCourier ? 'update' : 'add';
+    
     try {
+      let savedCourier: Courier;
+
       if (editingCourier) {
-        await updateCourier(editingCourier.id, formData);
-        setCouriers(couriers.map((courier) => 
-          courier.id === editingCourier.id 
-            ? { 
-                ...courier, 
-                ...formData, 
-                country_name: countries.find(country => country.id === formData.country_id)?.name || '' 
-              } 
-            : courier
-        ));
+        savedCourier = await updateCourier(editingCourier.id, formData);
       } else {
-        const newCourier = await createCourier(formData);
-        const newCourierWithCountryName = {
-          ...newCourier,
-          country_name: countries.find(country => country.id === newCourier.country_id)?.name || '',
-        };
-        setCouriers([newCourierWithCountryName, ...couriers]);
+        savedCourier = await createCourier(formData);
       }
+
+      upsertCourier(savedCourier);
+
       toast.success(`Courier "${formData.name}" ${action === 'add' ? 'added' : 'updated'} successfully!`);
       handleCloseDialog();
     } catch (err) {
@@ -95,6 +87,28 @@ const CouriersPage: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const upsertCourier = (courier: Courier) => {
+    const countryName = 
+      countries.find(country => country.id === courier.country_id)?.name || '';
+
+    const courierWithCountryName = {
+      ...courier,
+      country_name: countryName,
+    };
+
+    setCouriers(prev => {
+      const exists = prev.some(c => c.id === courier.id);
+
+      if (exists) {
+        return prev.map(c =>
+          c.id === courier.id ? courierWithCountryName : c
+        );
+      }
+
+      return [courierWithCountryName, ...prev];
+    });
   };
 
   return (

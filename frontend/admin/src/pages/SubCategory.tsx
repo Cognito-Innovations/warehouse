@@ -13,6 +13,18 @@ import SubCategoryForm from "../components/SubCategory/SubCategoryForm";
 import type { ColumnDefinition } from "../types/table";
 import type { SubCategoryPayload, SubCategoryRow } from "../types";
 
+const mapSubCategoryToRow = (item: any): SubCategoryRow => ({
+  id: item.id,
+  name: item.name,
+  slug: item.slug,
+  discount_percentage: item.discount_percentage,
+  // countries: item.countries || [],
+  categoryName: item.category?.name || "N/A",
+  categoryId: item.category?.id || null,
+  products: item.products_count ?? 0,
+  status: item.is_active ? "Active" : "Inactive",
+});
+
 const SubCategory: React.FC = () => {
   const [subcategories, setSubCategories] = useState<SubCategoryRow[]>([]);
   const [editingSubCategory, setEditingSubCategory] = useState<SubCategoryPayload | undefined>(undefined);
@@ -26,17 +38,7 @@ const SubCategory: React.FC = () => {
     try {
       setLoading(true);
       const response = await getSubCategories();
-      const mappedData: SubCategoryRow[] = response.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        slug: item.slug,
-        discount_percentage: item.discount_percentage,
-        // countries: item.countries || [],
-        categoryName: item.category?.name || "N/A",
-        categoryId: item.category?.id || null,
-        products: item.products_count ?? 0,
-        status: item.is_active ? "Active" : "Inactive",
-      }));
+      const mappedData: SubCategoryRow[] = response.map(mapSubCategoryToRow);
       setSubCategories(mappedData);
     } catch (error) {
       console.error("Error fetching sub categories:", error);
@@ -84,6 +86,22 @@ const SubCategory: React.FC = () => {
     } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const handleSubCategorySuccess = (savedItem: any) => {
+    const mappedItem = mapSubCategoryToRow(savedItem);
+
+    setSubCategories((prev) => {
+      const exists = prev.some((item) => item.id === mappedItem.id);
+
+      if (exists) {
+        return prev.map((item) =>
+          item.id === mappedItem.id ? mappedItem : item
+        );
+      }
+
+      return [...prev, mappedItem];
+    });
   };
   
   const columns: ColumnDefinition<SubCategoryRow>[] = [
@@ -143,7 +161,7 @@ const SubCategory: React.FC = () => {
                 setModalOpen(false);
                 setEditingSubCategory(undefined);
               }}
-              onSuccess={fetchSubCategories}
+              onSuccess={handleSubCategorySuccess}
               initialData={editingSubCategory}
             />
         </Modal>        

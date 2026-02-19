@@ -10,7 +10,7 @@ import type { CategoryPayload,
 
 interface CategoryFormProps {
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (data: any) => void;
   initialData?: CategoryPayload;
 }
 
@@ -58,13 +58,14 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onClose, onSuccess, initial
 
     try {
       setLoading(true);
+      let response;
       if (initialData?.id) {
         const { id, ...updatePayload } = formData;
-        await updateCategory(id!, updatePayload);
+        response = await updateCategory(id!, updatePayload);
       } else {
-        await createCategory(formData);
+        response = await createCategory(formData);
       }
-      onSuccess?.();
+      onSuccess?.(response);
       onClose();
     } catch (err) {
       console.error("Failed to save category:", err);

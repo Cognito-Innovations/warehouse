@@ -18,7 +18,7 @@ interface BoxShipmentsTableBodyProps {
   shipments: Shipment[];
   isLoading: boolean;
   isDeparted: boolean;
-  refreshShipments: () => void;
+  onShipmentRemoved: (shipmentId: string) => void;
 }
 
 const BoxShipmentsTableBody: React.FC<BoxShipmentsTableBodyProps> = ({
@@ -26,14 +26,14 @@ const BoxShipmentsTableBody: React.FC<BoxShipmentsTableBodyProps> = ({
   shipments,
   isLoading,
   isDeparted,
-  refreshShipments,
+  onShipmentRemoved,
 }) => {
   const handleDeleteShipment = async (shipmentId: string) => {
     if (!boxId || isDeparted) return;
 
     try {
       await removeShipmentFromBox(boxId, shipmentId);
-      refreshShipments();
+      onShipmentRemoved(shipmentId);
     } catch (error) {
       console.error("Failed to delete shipment from box:", error);
     }
