@@ -22,7 +22,7 @@ interface BoxItem {
 
 interface ShipmentActionsBarProps {
   selectedBoxId: string | null;
-  onPackageAdded: () => void;
+  onPackageAdded: (shipment) => void;
   exportId: string;
   status: string;
   onStatusUpdated: (newStatus: string) => void;
@@ -92,7 +92,7 @@ const ShipmentActionsBar: React.FC<ShipmentActionsBarProps> = ({
       const foundShipment = await searchReadyToShipShipment(shipmentNumber.trim());
       if (foundShipment) {
         await addShipmentToBox(selectedBoxId, foundShipment.id);
-        onPackageAdded();
+        onPackageAdded(foundShipment);
         setShipmentNumber("");
       } else {
         setError("Shipment not found.");

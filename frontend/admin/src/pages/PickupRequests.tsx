@@ -11,11 +11,12 @@ import { formatDateTime } from '../utils/formatDateTime';
 import { pickupSummaryConfig } from '../utils/summaryConfig';
 import { PICKUP_REQUEST_STATUS_OPTIONS } from '../utils/constants';
 import type { ColumnDefinition } from '../types/table';
+import type { PickupRequest } from '../types';
 
 //TODO: Code is very hard to read, please remove columns ->  header,  cell, width, its not the right approach.
 //TODO: Refer old git project for reference.
 const PickupRequests: React.FC = () => {
-  const [requests, setRequests] = useState([]);
+  const [requests, setRequests] = useState<PickupRequest[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string | string[] | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const PickupRequests: React.FC = () => {
         })
       : requests;
 
-    return filteredRequests.map((req: any) => ({
+    return filteredRequests.map((req) => ({
       id: req.id!,
       date: formatDateTime(req.created_at),
       user: req.user.name,

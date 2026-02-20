@@ -26,12 +26,10 @@ const PreArrivals: React.FC = () => {
       if (Array.isArray(data)) {
         setPreArrivals(data);
       } else {
-        console.error('API returned non-array data:', data);
         setError('Invalid data format received from server');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch pre-arrivals');
-      console.error('Error fetching pre-arrivals:', err);
     } finally {
       setLoading(false);
     }
@@ -62,7 +60,6 @@ const PreArrivals: React.FC = () => {
         )
       );
     } catch (err) {
-      console.error('Error marking as received:', err);
       setError(err instanceof Error ? err.message : 'Failed to mark as received');
     }
   };
@@ -80,7 +77,6 @@ const PreArrivals: React.FC = () => {
         )
       );
     } catch (err) {
-      console.error('Error marking as received:', err);
       setError(err instanceof Error ? err.message : 'Failed to mark as received');
     }
   };

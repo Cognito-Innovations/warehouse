@@ -16,6 +16,18 @@ import type { CategoryPayload, CategoryRow,
   // Country
 } from "../types";
 
+const mapCategoryToRow = (item: any): CategoryRow => ({
+  id: item.id,
+  name: item.name,
+  slug: item.slug,
+  discount_percentage: item.discount_percentage,
+  // countries: item.countries || [],
+  products: item.products_count ?? 0,
+  image_url: item.image_url || "",
+  description: item.description || "",
+  status: item.is_active ? "Active" : "Inactive",
+});
+
 const Category: React.FC = () => {
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [editingCategory, setEditingCategory] = useState<CategoryPayload | undefined>(undefined);
@@ -29,17 +41,7 @@ const Category: React.FC = () => {
     try {
       setLoading(true);
       const response = await getCategories();
-      const mappedData: CategoryRow[] = response.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        slug: item.slug,
-        discount_percentage: parseFloat(item.discount_percentage),
-        // countries: item.countries || [],
-        products: item.products_count ?? 0,
-        image_url: item.image_url || "",
-        description: item.description || "",
-        status: item.is_active ? "Active" : "Inactive",
-      }));
+      const mappedData: CategoryRow[] = response.map(mapCategoryToRow);
       setCategories(mappedData);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -90,6 +92,22 @@ const Category: React.FC = () => {
         setDeleteLoading(false);
       }
     };
+
+  const handleCategorySuccess = (savedItem: any) => {
+    const mappedItem = mapCategoryToRow(savedItem);
+
+    setCategories((prev) => {
+      const exists = prev.some((item) => item.id === mappedItem.id);
+
+      if (exists) {
+        return prev.map((item) =>
+          item.id === mappedItem.id ? mappedItem : item
+        );
+      }
+
+      return [...prev, mappedItem];
+    });
+  };
 
   const columns: ColumnDefinition<CategoryRow>[] = [
     {
@@ -167,7 +185,7 @@ const Category: React.FC = () => {
                 setModalOpen(false);
                 setEditingCategory(undefined);
               }}
-              onSuccess={fetchCategories}
+              onSuccess={handleCategorySuccess}
               initialData={editingCategory}
             />
         </Modal>

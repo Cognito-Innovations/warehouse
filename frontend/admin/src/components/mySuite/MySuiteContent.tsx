@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Box, Typography, Button, Tabs, Tab, Stack, Paper, CircularProgress } from '@mui/material';
 import { Add } from '@mui/icons-material';
+import { toast } from 'sonner';
 
 import { deleteRack, getRacks } from '../../services/api.services';
 import RackList from './RackList';
 import RackModal from './RackModal';
 import type { Rack } from '../../types';
-import { toast } from 'sonner';
 
 const MySuiteContent = () => {
   const [racks, setRacks] = useState<Rack[]>([]);
@@ -26,7 +26,7 @@ const MySuiteContent = () => {
       const data = await getRacks();
       setRacks(data);
     } catch (err) {
-      console.error('Failed to fetch racks', err);
+      toast.error('Failed to fetch racks');
     } finally {
       setLoadingRacks(false);
     }
@@ -39,7 +39,6 @@ const MySuiteContent = () => {
       setRacks(prev => prev.filter(rack => rack.id !== id));
       toast.success('Rack deleted successfully');
     } catch (err) {
-      console.error('Failed to delete rack', err);
       const error = err as {
         response?: { data?: { message?: string } };
         message?: string;
@@ -55,6 +54,18 @@ const MySuiteContent = () => {
   const handleEditRack = (rack: Rack) => {
     setEditingRack(rack);
     setIsModalOpen(true);
+  };
+
+  const upsertRack = (rack: Rack) => {
+    setRacks(prev => {
+      const existingRack = prev.find(r => r.id === rack.id);
+
+      if (existingRack) {
+        return prev.map(r => (r.id === rack.id ? rack : r));
+      }
+
+      return [...prev, rack];
+    });
   };
 
   return (
@@ -100,16 +111,7 @@ const MySuiteContent = () => {
         open={isModalOpen} 
         rack={editingRack} 
         onClose={() => { setEditingRack(null); setIsModalOpen(false); }}
-        onSuccess={(rack) => {
-          setRacks(prev => {
-            const exists = prev.find(r => r.id === rack.id);
-            if (exists) {
-              return prev.map(r => r.id === rack.id ? rack : r);
-            } else {
-              return [...prev, rack];
-            }
-          });
-        }}
+        onSuccess={upsertRack}
       />
     </Paper>
   );

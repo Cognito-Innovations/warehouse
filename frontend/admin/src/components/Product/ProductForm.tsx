@@ -19,7 +19,7 @@ interface Measurement { id: string; label: string; }
 
 interface ProductFormProps {
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (savedProduct: any) => void;
   initialData?: ProductPayload;
 }
 
@@ -147,13 +147,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
 
     try {
       setLoading(true);
+      let response;
       if (initialData?.id) {
         const { id, ...updatePayload } = formData;
-        await updateEcommerceProduct(initialData.id, updatePayload);
+        response = await updateEcommerceProduct(initialData.id, updatePayload);
       } else {
-        await createProduct(payload);
+        response = await createProduct(payload);
       }
-      onSuccess?.();
+      onSuccess?.(response);
       onClose();
     } catch (err) {
       console.error("Failed to save product:", err);
@@ -182,7 +183,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
     </Box>
   );
 
-  const categoryRenderValue = (selected: string) => {
+  const categoryRenderValue = (selected: unknown) => {
+    const selectedId = selected as string;
     if (fetching) {
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '24px', pl: 1 }}>
@@ -190,10 +192,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
         </Box>
       );
     }
-    return categories.find(c => c.id === selected)?.name || '';
+    return categories.find(c => c.id === selectedId)?.name || '';
   };
 
-  const subCategoryRenderValue = (selected: string) => {
+  const subCategoryRenderValue = (selected: unknown) => {
+    const selectedId = selected as string;
     if (fetching || !formData.category_id) {
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '24px', pl: 1 }}>
@@ -201,10 +204,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
         </Box>
       );
     }
-    return filteredSubCategories.find(s => s.id === selected)?.name || '';
+    return filteredSubCategories.find(s => s.id === selectedId)?.name || '';
   };
 
-  const measurementRenderValue = (selected: string) => {
+  const measurementRenderValue = (selected: unknown) => {
+    const selectedId = selected as string;
     if (fetching) {
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '24px', pl: 1 }}>
@@ -212,10 +216,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
         </Box>
       );
     }
-    return measurements.find(m => m.id === selected)?.label || '';
+    return measurements.find(m => m.id === selectedId)?.label || '';
   };
 
-  const cargoOptionsRenderValue = (selected: string) => {
+  const cargoOptionsRenderValue = (selected: unknown) => {
+    const selectedId = selected as string;
     if (fetching || !formData.cargo_option_id) {
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '24px', pl: 1 }}>
@@ -223,7 +228,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
         </Box>
       );
     }
-    return cargoOptions.find(cargoOption => cargoOption.id === selected)?.label || '';
+    return cargoOptions.find(cargoOption => cargoOption.id === selectedId)?.label || '';
   };
 
   return (

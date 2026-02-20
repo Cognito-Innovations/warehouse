@@ -129,6 +129,9 @@ export interface Package {
 export interface PickupRequest {
   id?: string;
   user_id: string;
+  user: {
+    name: string;
+  }
   pickup_address: string;
   supplier_name: string;
   supplier_phone: string;
@@ -137,7 +140,8 @@ export interface PickupRequest {
   est_weight?: number;
   pkg_details: string;
   remarks?: string;
-  status?: string;
+  status: string;
+  created_at: number;
 }
 
 export interface Status {

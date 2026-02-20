@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import { Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
 import { createShipmentExport } from '../../services/api.services';
 import Modal from '../common/Modal';
 import { numberInputStyle } from '../../styles/numberInputStyle';
+import type { ShipmentExportRow } from './ShipmentExportTableBody';
 
 interface CreateExportModalProps {
   open: boolean;
   onClose: () => void;
-  onUpdate: () => void;
+  onCreate: (row: ShipmentExportRow) => void;
 }
 
-const CreateExportModal: React.FC<CreateExportModalProps> = ({ open, onClose, onUpdate }) => {
+const CreateExportModal: React.FC<CreateExportModalProps> = ({ open, onClose, onCreate }) => {
   const navigate = useNavigate();
   const [noOfBoxes, setNoOfBoxes] = useState("1");
   const [loading, setLoading] = useState(false);
@@ -25,13 +28,14 @@ const CreateExportModal: React.FC<CreateExportModalProps> = ({ open, onClose, on
         created_by: 'admin-123',
       };
 
-      const request = await createShipmentExport(payload);
-      onUpdate();
-      if (request?.id) {
-        navigate(`/shipment/export/${request.id}`);
+      const response = await createShipmentExport(payload);
+      onCreate(response);
+
+      if (response?.id) {
+        navigate(`/shipment/export/${response.id}`);
       }
     } catch (err) {
-      console.error('Failed to create export:', err);
+      toast.error('Failed to create export');
     } finally {
       setLoading(false);
       handleClose();

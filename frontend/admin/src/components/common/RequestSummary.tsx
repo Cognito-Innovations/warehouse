@@ -11,7 +11,6 @@ export interface SummaryCardConfig {
 
 export interface Request {
   status: string;
-  [key: string]: unknown;
 }
 
 interface RequestSummaryProps {
@@ -47,7 +46,7 @@ const RequestSummary: React.FC<RequestSummaryProps> = ({
 
   if (loading) {
     return (
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4 }} data-testid="request-summary-loading">
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: `repeat(${summaryConfig.length}, 1fr)` }, gap: 2.5 }}>
           {[...Array(summaryConfig.length)].map((_, index) => (
             <Card key={index} sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 2.5 }}>

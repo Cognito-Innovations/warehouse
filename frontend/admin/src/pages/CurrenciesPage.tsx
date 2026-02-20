@@ -25,7 +25,6 @@ const CurrenciesPage: React.FC = () => {
       const data = await getCurrencies();
       setCurrencies(data);
     } catch (err) {
-      console.error(err);
       toast.error('Failed to fetch currencies');
     } finally {
       setLoading(false);
@@ -49,21 +48,37 @@ const CurrenciesPage: React.FC = () => {
   const handleSaveCurrency = async (formData: CreateCurrencyPayload) => {
     setSaving(true);
     const action = editingCurrency ? 'update' : 'add';
+
     try {
+      let savedCurrency: Currency;
+
       if (editingCurrency) {
-        await updateCurrency(editingCurrency.id, formData);
+        savedCurrency = await updateCurrency(editingCurrency.id, formData);
       } else {
-        await createCurrency(formData);
+        savedCurrency = await createCurrency(formData);
       }
+
+      upsertCurrency(savedCurrency);
+
       toast.success(`Currency ${action === 'add' ? 'added' : 'updated'} successfully!`);
-      await fetchCurrencies();
       handleCloseDialog();
     } catch (err) {
-      console.error(err);
       toast.error(`Failed to ${action} currency`);
     } finally {
       setSaving(false);
     }
+  };
+
+  const upsertCurrency = (currency: Currency) => {
+    setCurrencies(prev => {
+      const existingCurrency = prev.some(c => c.id === currency.id);
+
+      if (existingCurrency) {
+        return prev.map(c => (c.id === currency.id ? currency : c));
+      }
+
+      return [...prev, currency];
+    });
   };
 
   return (

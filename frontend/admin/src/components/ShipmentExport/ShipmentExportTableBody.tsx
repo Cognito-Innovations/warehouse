@@ -35,10 +35,16 @@ export interface ShipmentExportRow {
 interface ShipmentExportTableBodyProps {
   rows: ShipmentExportRow[];
   loading: boolean;
-  onUpdate: () => void;
+  onUpdateRow: (updatedRow: ShipmentExportRow) => void;
+  onDeleteRow?: (id: string) => void;
 }
 
-const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows, loading, onUpdate }) => {
+const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({
+  rows,
+  loading,
+  onUpdateRow,
+  onDeleteRow,
+}) => {
   const [mawbModalOpen, setMawbModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<ShipmentExportRow | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -67,7 +73,7 @@ const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows,
     try {
       setDeleting(true);
       await deleteShipmentExport(deletingId);
-      await onUpdate();
+      onDeleteRow?.(deletingId);
       setConfirmOpen(false);
       setDeletingId(null);
     } catch (error) {
@@ -174,7 +180,7 @@ const ShipmentExportTableBody: React.FC<ShipmentExportTableBodyProps> = ({ rows,
      <UpdateMawbModal
         open={mawbModalOpen}
         onClose={handleCloseMawbModal}
-        onUpdate={onUpdate}
+        onUpdateRow={onUpdateRow}
         shipment={selectedRow}
       />
 

@@ -22,9 +22,13 @@ const Login: React.FC = () => {
   const { isLoading, login } = useAuth();
 
   const handleLogin = async (email: string, password: string) => {
-    await login(email, password);
-    toast.success('Login successful!');
-    navigate('/packages/all', { replace: true });
+    try {
+      await login(email, password);
+      toast.success('Login successful!');
+      navigate('/packages/all', { replace: true });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   // Show loading spinner while checking authentication

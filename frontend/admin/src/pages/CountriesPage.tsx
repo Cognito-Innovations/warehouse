@@ -25,7 +25,6 @@ const CountriesPage: React.FC = () => {
       const data = await getCountries();
       setCountries(data);
     } catch (err) {
-      console.error(err);
       toast.error('Failed to fetch countries');
     } finally {
       setLoading(false);
@@ -49,33 +48,39 @@ const CountriesPage: React.FC = () => {
   const handleSaveCountry = async (formData: CreateCountryPayload) => {
     setSaving(true);
     const action = editingCountry ? 'update' : 'add';
+
     try {
+      let savedCountry: Country;
+
       if (editingCountry) {
-        await updateCountry(editingCountry.id, {
-          name: formData.name, 
-          code: formData.code, 
-          phone_code: formData.phone_code, 
-          image: formData.image 
-        });
-        setCountries(
-          countries.map((country) =>
-            country.id === editingCountry.id
-              ? { ...country, ...formData }
-              : country
-          )
-        );
+        savedCountry = await updateCountry(editingCountry.id, formData);
       } else {
-        const newCountry = await createCountry(formData);
-        setCountries([newCountry, ...countries]);
+        savedCountry = await createCountry(formData);
       }
+
+      upsertCountry(savedCountry);
+
       toast.success(`Country "${formData.name}" ${action === 'add' ? 'added' : 'updated'} successfully!`);
       handleCloseDialog();
     } catch (err) {
-      console.error(err);
       toast.error(`Failed to ${action} country`);
     } finally {
       setSaving(false);
     }
+  };
+
+  const upsertCountry = (country: Country) => {
+    setCountries(prev => {
+      const exists = prev.some(c => c.id === country.id);
+
+      if (exists) {
+        return prev.map(c =>
+          c.id === country.id ? { ...c, ...country } : c
+        );
+      }
+
+      return [country, ...prev];
+    });
   };
 
   return (

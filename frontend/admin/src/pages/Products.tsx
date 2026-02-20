@@ -163,6 +163,22 @@ const Products: React.FC = () => {
     }
   };
 
+  const handleProductSuccess = (savedItem: any) => {
+    const mappedItem = mapProductToRow(savedItem);
+
+    setProducts((prev) => {
+      const exists = prev.some((p) => p.id === mappedItem.id);
+
+      if (exists) {
+        return prev.map((p) =>
+          p.id === mappedItem.id ? mappedItem : p
+        );
+      }
+
+      return [...prev, mappedItem];
+    });
+  };  
+
   const noDataMessage = searchValue.trim() ? "Product not found" : "No products available";
 
   const columns: ColumnDefinition<ProductRow>[] = [
@@ -265,7 +281,7 @@ const Products: React.FC = () => {
             setModalOpen(false);
             setEditingProduct(undefined);
           }}
-          onSuccess={() => fetchProducts(searchValue)}
+          onSuccess={handleProductSuccess}
           initialData={editingProduct}
         />
       </Modal>

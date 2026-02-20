@@ -49,7 +49,6 @@ const Packages: React.FC = () => {
 
       setStatusCards(cards);
     } catch (error) {
-      console.error('Failed to fetch status data:', error);
       // Fallback to empty cards
       setStatusCards(getEmptyStatusCards());
     } finally {

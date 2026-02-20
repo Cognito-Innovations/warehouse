@@ -33,17 +33,14 @@ const CouriersPage: React.FC = () => {
       if (results[0].status === PromiseStatus.Fulfilled) {
         setCouriers(results[0].value);
       } else {
-        console.error(results[0].reason);
         toast.error('Failed to fetch couriers');
       }
       if (results[1].status === PromiseStatus.Fulfilled) {
         setCountries(results[1].value);
       } else {
-        console.error(results[1].reason);
         toast.error('Failed to fetch countries');
       }
     } catch (err) {
-      console.error(err);
       toast.error('Failed to fetch required data');
     } finally {
       setLoading(false);
@@ -71,34 +68,47 @@ const CouriersPage: React.FC = () => {
   const handleSaveCourier = async (formData: CreateCourierPayload) => {
     setSaving(true);
     const action = editingCourier ? 'update' : 'add';
+    
     try {
+      let savedCourier: Courier;
+
       if (editingCourier) {
-        await updateCourier(editingCourier.id, formData);
-        setCouriers(couriers.map((courier) => 
-          courier.id === editingCourier.id 
-            ? { 
-                ...courier, 
-                ...formData, 
-                country_name: countries.find(country => country.id === formData.country_id)?.name || '' 
-              } 
-            : courier
-        ));
+        savedCourier = await updateCourier(editingCourier.id, formData);
       } else {
-        const newCourier = await createCourier(formData);
-        const newCourierWithCountryName = {
-          ...newCourier,
-          country_name: countries.find(country => country.id === newCourier.country_id)?.name || '',
-        };
-        setCouriers([newCourierWithCountryName, ...couriers]);
+        savedCourier = await createCourier(formData);
       }
+
+      upsertCourier(savedCourier);
+
       toast.success(`Courier "${formData.name}" ${action === 'add' ? 'added' : 'updated'} successfully!`);
       handleCloseDialog();
     } catch (err) {
-      console.error(err);
       toast.error(`Failed to ${action} courier`);
     } finally {
       setSaving(false);
     }
+  };
+
+  const upsertCourier = (courier: Courier) => {
+    const countryName = 
+      countries.find(country => country.id === courier.country_id)?.name || '';
+
+    const courierWithCountryName = {
+      ...courier,
+      country_name: countryName,
+    };
+
+    setCouriers(prev => {
+      const exists = prev.some(c => c.id === courier.id);
+
+      if (exists) {
+        return prev.map(c =>
+          c.id === courier.id ? courierWithCountryName : c
+        );
+      }
+
+      return [courierWithCountryName, ...prev];
+    });
   };
 
   return (

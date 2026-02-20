@@ -1,6 +1,7 @@
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
+import { toast } from "sonner";
 
 import { getOrders } from "../services/api.services";
 import TopNavbar from "../components/Layout/TopNavbar";
@@ -25,7 +26,7 @@ const Orders: React.FC = () => {
       const response = await getOrders();
       setOrders(response);
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      toast.error("Error fetching orders:");
     } finally {
       setLoading(false);
     }

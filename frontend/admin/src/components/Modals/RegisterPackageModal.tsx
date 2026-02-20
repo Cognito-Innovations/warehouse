@@ -5,7 +5,7 @@ import { createPackage, getRacks, getSuppliers, getUsers, type CreatePackageDto 
 import { toast } from "sonner";
 
 import { Close as CloseIcon } from "@mui/icons-material";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box, CircularProgress } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Grid, Box } from "@mui/material";
 import FormFields from "./RegisterPackageModal/FormFields";
 
 import WeightSection from "./RegisterPackageModal/WeightSection";
