@@ -3,12 +3,12 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { Repository, In, DataSource } from 'typeorm';
+import { Repository, In, DataSource, EntityManager } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
-import { DEFAULT_CURRENCY, PAYMENT_GATEWAY } from '../../shared/constants.js';
+import { DEFAULT_CURRENCY, PAYMENT_GATEWAY } from '../../shared/constants';
 import { Status } from '../entities/ecommerce-payments.entity';
 import { EcommercePayment } from '../entities/ecommerce-payments.entity';
 import { EcommerceOrderReference } from '../entities/ecommerce-order-references.entity';
@@ -20,6 +20,7 @@ import { EcommerceProduct } from '../entities/ecommerce-product.entity';
 import { PaymentService } from './payment.service';
 import { CartService } from './ecommerce-cart.service';
 import { EcommerceUserDeliverySelection } from '../entities/ecommerce_user_delivery_selections.entity';
+import { PayPalCaptureResource } from 'src/types/paypal-webhook.types';
 
 export interface OrderWithDetails extends EcommercePayment {
   total_amount: number;
@@ -107,21 +108,53 @@ export class OrderService {
     };
   }
 
-  private async decreaseProductStock(payment: EcommercePayment): Promise<void> {
+  private async decreaseProductStock(
+    payment: EcommercePayment,
+    manager?: EntityManager,
+  ): Promise<void> {
+    if (!manager) {
+      for (const item of payment.items) {
+        const product = item.product;
+        const quantity = item.user_item?.quantity || 0;
+
+        if (!product) continue;
+
+        if (product.stock_quantity < quantity) {
+          throw new BadRequestException(
+            `Insufficient stock for product ${product.id}`,
+          );
+        }
+
+        product.stock_quantity -= quantity;
+        await this.productRepository.save(product);
+      }
+
+      return;
+    }
+
     for (const item of payment.items) {
-      const product = item.product;
       const quantity = item.user_item?.quantity || 0;
 
-      if (!product) continue;
+      if (!quantity) continue;
 
-      if (product.stock_quantity < quantity) {
+      const lockedProduct = await manager.findOne(EcommerceProduct, {
+        where: { id: item.product_id },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!lockedProduct) {
+        throw new NotFoundException(`Product ${item.product_id} not found`);
+      }
+
+      if (lockedProduct.stock_quantity < quantity) {
         throw new BadRequestException(
-          `Insufficient stock for product ${product.id}`,
+          `Insufficient stock for product ${lockedProduct.id}`,
         );
       }
 
-      product.stock_quantity -= quantity;
-      await this.productRepository.save(product);
+      lockedProduct.stock_quantity -= quantity;
+
+      await manager.save(EcommerceProduct, lockedProduct);
     }
   }
 
@@ -426,12 +459,97 @@ export class OrderService {
     return this.paymentRepository.save(payment);
   }
 
-  async processOrderPayment(
-    orderId: string,
-    paypalOrderId?: string,
-  ): Promise<EcommercePayment> {
-    const payment = (await this.findOne(orderId)) as EcommercePayment;
+  async findByGatewayOrderId(
+    gatewayOrderId: string,
+  ): Promise<EcommercePayment | null> {
+    return this.paymentRepository.findOne({
+      where: { gateway_order_id: gatewayOrderId },
+      relations: ['items', 'items.user_item', 'items.product'],
+    });
+  }
 
+  async processWebhookCapture(
+    orderId: string,
+    webhookResource: PayPalCaptureResource,
+  ): Promise<EcommercePayment> {
+    try {
+      const payment = (await this.findOne(orderId)) as EcommercePayment;
+
+      const paypalOrderId =
+        webhookResource?.supplementary_data?.related_ids?.order_id;
+
+      if (!paypalOrderId) {
+        return payment;
+      }
+
+      if (payment.gateway_order_id !== paypalOrderId) {
+        return payment;
+      }
+
+      if (payment.status === Status.PAID) {
+        return payment;
+      }
+
+      if (webhookResource.status !== 'COMPLETED') {
+        return payment;
+      }
+
+      const captureData = {
+        id: webhookResource.id,
+        status: webhookResource.status,
+        payment_source: webhookResource.payment_source,
+        purchase_units: [
+          {
+            payments: {
+              captures: [
+                {
+                  id: webhookResource.id,
+                  status: webhookResource.status,
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      this.paymentService.applyPayPalToOrder(payment, captureData);
+
+      return this.finalizeSuccessfulPayment(payment);
+    } catch (error) {
+      console.error('Webhook processing failed:', error);
+      throw error;
+    }
+  }
+
+  async processOrderPayment(orderId: string): Promise<EcommercePayment> {
+    try {
+      const payment = (await this.findOne(orderId)) as EcommercePayment;
+
+      if (payment.status === Status.PAID) {
+        return payment;
+      }
+
+      if (payment.status !== Status.PENDING) {
+        throw new BadRequestException(
+          'Payment already processed or invalid status',
+        );
+      }
+
+      const captureData =
+        await this.paymentService.capturePayPalPayment(payment);
+
+      this.paymentService.applyPayPalToOrder(payment, captureData);
+
+      return this.finalizeSuccessfulPayment(payment);
+    } catch (error) {
+      console.error('Processing order payment failed:', error);
+      throw error;
+    }
+  }
+
+  private async finalizeSuccessfulPayment(
+    payment: EcommercePayment,
+  ): Promise<EcommercePayment> {
     if (payment.status === Status.PAID) {
       return payment;
     }
@@ -442,21 +560,32 @@ export class OrderService {
       );
     }
 
-    if (paypalOrderId && payment.gateway_order_id !== paypalOrderId) {
-      throw new BadRequestException('Invalid PayPal order ID');
-    }
-
-    const captureData = await this.paymentService.capturePayPalPayment(payment);
-    this.paymentService.applyPayPalToOrder(payment, captureData);
-
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      await this.decreaseProductStock(payment);
+      const lockedPayment = await queryRunner.manager.findOne(
+        EcommercePayment,
+        {
+          where: { id: payment.id },
+          lock: { mode: 'pessimistic_write' },
+          relations: ['items', 'items.user_item', 'items.product'],
+        },
+      );
 
-      const userItemIds = payment.items.map((item) => item.user_item_id);
+      if (!lockedPayment) {
+        throw new NotFoundException('Order not found');
+      }
+
+      if (lockedPayment.status === Status.PAID) {
+        await queryRunner.commitTransaction();
+        return lockedPayment;
+      }
+
+      await this.decreaseProductStock(lockedPayment, queryRunner.manager);
+
+      const userItemIds = lockedPayment.items.map((item) => item.user_item_id);
 
       await queryRunner.manager.update(
         EcommerceUserProductStatus,
@@ -464,35 +593,22 @@ export class OrderService {
         { status: UserProductStatus.ORDERED },
       );
 
-      await queryRunner.manager.save(EcommercePayment, payment);
+      lockedPayment.status = Status.PAID;
 
-      const userId = payment.items[0]?.user_item?.user_id;
+      await queryRunner.manager.save(lockedPayment);
+
+      const userId = lockedPayment.items[0]?.user_item?.user_id;
       if (userId) {
         await this.cartService.clearSelectedDeliveryOption(userId);
       }
 
       await queryRunner.commitTransaction();
+      return lockedPayment;
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
     } finally {
       await queryRunner.release();
     }
-
-    return payment;
-  }
-
-  async cancelOrder(id: string): Promise<EcommercePayment> {
-    const payment = (await this.findOne(id)) as EcommercePayment;
-
-    if (
-      payment.status === Status.DELIVERED ||
-      payment.status === Status.CANCELLED
-    ) {
-      throw new BadRequestException('Cannot cancel this order');
-    }
-
-    payment.status = Status.CANCELLED;
-    return this.paymentRepository.save(payment);
   }
 }

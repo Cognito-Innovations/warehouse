@@ -287,12 +287,10 @@ export const ecommerceService = {
     }  
   },
 
-  async captureOrder(orderId: string, paypalOrderId: string): Promise<any> {
+  async captureOrder(orderId: string): Promise<any> {
     try {
-      const response = await api.post(`/ecommerce-orders/${orderId}/capture`,
-        { orderID: paypalOrderId }
-      );
-      if (response.statusText.toLowerCase() !== 'ok') {
+      const response = await api.post(`/ecommerce-orders/${orderId}/capture`);
+      if (response.status !== 200) {
         throw new Error('Failed to capture order!');
       }
       return response.data;
@@ -311,84 +309,6 @@ export const ecommerceService = {
       return response.data;
     } catch (error) {
       console.error('Failed to create order:', error);
-      throw error;
-    } 
-  },
-
-  async getOrders(): Promise<Order[]> {
-    try {
-      const response = await api.get("/ecommerce-orders");
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to get orders!');
-      }
-      return response.data;
-    } catch (error) {
-      console.error('Failed to get orders:', error);
-      throw error;
-    } 
-  },
-
-  async getOrder(id: string): Promise<Order> {
-    try {
-      const response = await api.get(`/ecommerce-orders/${id}`);
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to get order!');
-      }
-      return response.data;
-    } catch (error) {
-      console.error(`Failed to get order with ${id}:`, error);
-      throw error;
-    } 
-  },
-
-  async getOrderByNumber(orderNumber: string): Promise<Order> {
-    try {
-      const response = await api.get(`/ecommerce-orders/order-number/${orderNumber}`);
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to get order by order number!');
-      }
-      return response.data;
-    } catch (error) {
-      console.error(`Failed to get order by ${orderNumber}:`, error);
-      throw error;
-    } 
-  },
-
-  async updateOrderStatus(id: string, status: string): Promise<Order> {
-    try {
-      const response = await api.put(`/ecommerce-orders/${id}/status`, { status });
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to update order status!');
-      }
-      return response.data;
-    } catch (error) {
-      console.error(`Failed to update order status of ${id}:`, error);
-      throw error;
-    } 
-  },
-
-  async updatePaymentStatus(id: string): Promise<Order> {
-    try {
-      const response = await api.put(`/ecommerce-orders/${id}/payment-status`);
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to update payment status!');
-      }
-      return response.data;
-    } catch (error) {
-      console.error(`Failed to update payment status of ${id}:`, error);
-      throw error;
-    } 
-  },
-
-  async cancelOrder(id: string): Promise<Order> {
-    try {
-      const response = await api.put(`/ecommerce-orders/${id}/cancel`);
-      if (response.statusText.toLowerCase() !== 'ok') {
-        throw new Error('Failed to cancel order!');
-      }
-      return response.data;
-    } catch (error) {
-      console.error(`Failed to cancel order of ${id}:`, error);
       throw error;
     } 
   },

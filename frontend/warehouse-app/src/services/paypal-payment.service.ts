@@ -92,15 +92,15 @@ export async function launchPayPalPayment(
       onApprove: async (data: { orderID: string }) => {
         try {
           onProcessing(); 
-          await ecommerceService.captureOrder(paymentConfig.orderId, data.orderID);
+
+          if (data.orderID !== paymentConfig.paypalOrderId) {
+            throw new Error("PayPal order ID mismatch");
+          }
+
+          await ecommerceService.captureOrder(paymentConfig.orderId);
           toast.success("Payment completed successfully!");
           
           await onSuccess();
-
-          // Redirect to orders page after successful payment
-          if (typeof window !== "undefined") {
-            window.location.href = "/ecommerce/orders";
-          }
         } catch (error) {
           const message = error instanceof Error ? error.message : "Payment capture failed";
           toast.error(message);
