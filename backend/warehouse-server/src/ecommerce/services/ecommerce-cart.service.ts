@@ -9,7 +9,7 @@ import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AddToCartDto } from '../dto/cart/add-to-cart.dto';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
-import { DEFAULT_CURRENCY } from '../../shared/constants.js';
+import { DEFAULT_CURRENCY } from '../../shared/constants';
 import {
   DeliveryFeeService,
   DeliveryOption,

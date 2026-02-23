@@ -29,6 +29,7 @@ import { EcommercePayment } from './entities/ecommerce-payments.entity';
 import { EcommerceOrderReference } from './entities/ecommerce-order-references.entity';
 import { PaymentService } from './services/payment.service';
 import { EcommerceUserDeliverySelection } from './entities/ecommerce_user_delivery_selections.entity';
+import { PaymentWebhookController } from './controllers/payment-webhook.controller';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { EcommerceUserDeliverySelection } from './entities/ecommerce_user_delive
     OrderController,
     MeasurementController,
     CargoOptionsController,
+    PaymentWebhookController,
   ],
   providers: [
     CategoriesService,

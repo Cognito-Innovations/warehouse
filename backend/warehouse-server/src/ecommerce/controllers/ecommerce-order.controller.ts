@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { OrderService } from '../services/ecommerce-order.service';
 import { CreateOrderDto } from '../dto/order/create-order.dto';
-import { CaptureOrderDto } from '../dto/order/capture-order.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Status } from '../entities/ecommerce-payments.entity';
 
@@ -92,12 +91,7 @@ export class OrderController {
   }
 
   @Post(':id/capture')
-  async captureOrder(@Param('id') id: string, @Body() body: CaptureOrderDto) {
-    return this.orderService.processOrderPayment(id, body.orderID);
-  }
-
-  @Put(':id/cancel')
-  async cancelOrder(@Param('id') id: string) {
-    return this.orderService.cancelOrder(id);
+  async captureOrder(@Param('id') id: string) {
+    return this.orderService.processOrderPayment(id);
   }
 }

@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+  HttpException,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,43 +12,14 @@ import {
   EcommercePayment,
   Status,
 } from '../entities/ecommerce-payments.entity';
-
-interface PayPalAccessTokenResponse {
-  access_token: string;
-  token_type: string;
-  app_id: string;
-  expires_in: number;
-  scope: string;
-  nonce: string;
-}
-
-interface PayPalOrderResponse {
-  id: string;
-  status: string;
-}
-
-interface PayPalCaptureResponse {
-  id: string;
-  status: string;
-  payment_source?: {
-    paypal?: {
-      email_address?: string;
-      account_id?: string;
-    };
-    card?: {
-      brand?: string;
-      last_digits?: string;
-    };
-  };
-  purchase_units: Array<{
-    payments: {
-      captures: Array<{
-        id: string;
-        status: string;
-      }>;
-    };
-  }>;
-}
+import {
+  PayPalAccessTokenResponse,
+  PayPalCaptureResponse,
+  PayPalOrderResponse,
+  PayPalVerifyWebhookRequest,
+  PayPalVerifyWebhookResponse,
+} from 'src/types/payment-service.types';
+import { PayPalWebhookHeaders } from 'src/types/paypal-webhook.types';
 
 @Injectable()
 export class PaymentService {
@@ -138,6 +114,76 @@ export class PaymentService {
     await this.paymentRepository.save(payment);
   }
 
+  async verifyWebhook(
+    headers: PayPalWebhookHeaders,
+    body: unknown,
+  ): Promise<void> {
+    try {
+      const token = await this.getAccessToken();
+
+      const {
+        'paypal-auth-algo': authAlgo,
+        'paypal-cert-url': certUrl,
+        'paypal-transmission-id': transmissionId,
+        'paypal-transmission-sig': transmissionSig,
+        'paypal-transmission-time': transmissionTime,
+      } = headers;
+
+      if (
+        !authAlgo ||
+        !certUrl ||
+        !transmissionId ||
+        !transmissionSig ||
+        !transmissionTime
+      ) {
+        throw new BadRequestException('Missing PayPal webhook headers');
+      }
+
+      const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+
+      if (!webhookId) {
+        throw new InternalServerErrorException(
+          'PAYPAL_WEBHOOK_ID not configured',
+        );
+      }
+
+      const payload: PayPalVerifyWebhookRequest = {
+        auth_algo: authAlgo,
+        cert_url: certUrl,
+        transmission_id: transmissionId,
+        transmission_sig: transmissionSig,
+        transmission_time: transmissionTime,
+        webhook_id: webhookId,
+        webhook_event: body,
+      };
+
+      const response = await firstValueFrom(
+        this.httpService.post<PayPalVerifyWebhookResponse>(
+          `${this.baseUrl}/v1/notifications/verify-webhook-signature`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
+      );
+
+      if (response.data.verification_status !== 'SUCCESS') {
+        throw new BadRequestException('Invalid PayPal webhook signature');
+      }
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      console.error('PayPal webhook verification failed:', error);
+
+      throw new InternalServerErrorException('Webhook verification failed');
+    }
+  }
+
   async capturePayPalPayment(
     payment: EcommercePayment,
   ): Promise<PayPalCaptureResponse> {
@@ -174,7 +220,11 @@ export class PaymentService {
     payment: EcommercePayment,
     captureData: PayPalCaptureResponse,
   ): void {
-    const capture = captureData.purchase_units[0].payments.captures[0];
+    const capture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+
+    if (!capture) {
+      throw new BadRequestException('Invalid capture data from PayPal');
+    }
 
     payment.status = Status.PAID;
     payment.gateway_transaction_id = capture.id;
