@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Delete,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +19,7 @@ import {
 import { ShipmentExportsService } from './shipment-export.service';
 import { CreateExportDto } from './dto/create-export.dto';
 import { ShipmentExport } from './shipment-export.entity';
+import type { AuthenticatedRequest } from 'src/shared/types/authenticated-request.type';
 
 @ApiTags('Shipment Exports')
 @Controller('shipment-exports')
@@ -44,8 +46,12 @@ export class ShipmentExportsController {
       },
     },
   })
-  async createExport(@Body() dto: CreateExportDto) {
-    return this.exportsService.createExport(dto);
+  async createExport(
+    @Body() dto: CreateExportDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const user = req.user;
+    return this.exportsService.createExport(dto, user.id);
   }
 
   @Get()
@@ -54,16 +60,16 @@ export class ShipmentExportsController {
     description: 'List of all shipment exports',
     type: [ShipmentExport],
   })
-  async findAll() {
-    return this.exportsService.getAllExports();
+  async findAll(@Req() req: AuthenticatedRequest) {
+    return this.exportsService.getAllExports(req.user.id);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a shipment export by ID' })
   @ApiOkResponse({ description: 'Shipment export found', type: ShipmentExport })
   @ApiResponse({ status: 404, description: 'Export not found' })
-  async findOne(@Param('id') id: string) {
-    return this.exportsService.getExportById(id);
+  async findOne(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.exportsService.getExportById(id, req.user.id);
   }
 
   @Patch(':id')

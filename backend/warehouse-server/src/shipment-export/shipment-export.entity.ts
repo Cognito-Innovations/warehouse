@@ -4,9 +4,12 @@ import {
   Column,
   OneToMany,
   AfterLoad,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ShipmentExportBox } from './shipment-export-box.entity';
 import { BaseTimestampEntity } from 'src/shared/entities/base-timestamp.entity';
+import { Country } from 'src/Countries/country.entity';
 
 @Entity('shipment_exports')
 export class ShipmentExport extends BaseTimestampEntity {
@@ -31,6 +34,10 @@ export class ShipmentExport extends BaseTimestampEntity {
     cascade: true,
   })
   boxes: ShipmentExportBox[];
+
+  @ManyToOne(() => Country, { eager: true })
+  @JoinColumn({ name: 'country_id' })
+  country: Country;
 
   @AfterLoad()
   updateBoxesCount() {

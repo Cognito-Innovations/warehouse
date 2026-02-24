@@ -23,9 +23,7 @@ const CreateExportModal: React.FC<CreateExportModalProps> = ({ open, onClose, on
     setLoading(true);
     try {
       const payload = {
-        export_code: `MS/IN/${Date.now()}`,
         boxes_count: parseInt(noOfBoxes, 10),
-        created_by: 'admin-123',
       };
 
       const response = await createShipmentExport(payload);

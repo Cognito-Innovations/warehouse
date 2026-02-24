@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ShipmentExportBox } from './shipment-export-box.entity';
@@ -35,136 +41,210 @@ export class ShipmentExportBoxesService {
     private readonly exportRepo: Repository<ShipmentExport>,
     @InjectRepository(Shipment)
     private readonly shipmentRepo: Repository<Shipment>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
 
   async createBox(
     exportId: string,
     dto: CreateBoxDto,
   ): Promise<ShipmentExportBox> {
-    const exp = await this.exportRepo.findOne({ where: { id: exportId } });
-    if (!exp)
-      throw new NotFoundException(`Export with id ${exportId} not found`);
+    try {
+      const exp = await this.exportRepo.findOne({ where: { id: exportId } });
+      if (!exp)
+        throw new NotFoundException(`Export with id ${exportId} not found`);
 
-    const box = this.boxRepo.create({
-      ...dto,
-      shipmentExport: exp,
-    });
+      const box = this.boxRepo.create({
+        ...dto,
+        shipmentExport: exp,
+      });
 
-    return this.boxRepo.save(box);
+      return this.boxRepo.save(box);
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Failed to add shipment to box');
+    }
   }
 
   async updateBox(
     id: string,
     dto: Partial<CreateBoxDto>,
   ): Promise<ShipmentExportBox> {
-    const box = await this.boxRepo.findOne({ where: { id } });
-    if (!box) throw new NotFoundException(`Box with id ${id} not found`);
+    try {
+      const box = await this.boxRepo.findOne({ where: { id } });
+      if (!box) throw new NotFoundException(`Box with id ${id} not found`);
 
-    Object.assign(box, dto);
-    return this.boxRepo.save(box);
+      Object.assign(box, dto);
+      return this.boxRepo.save(box);
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Failed to update box');
+    }
   }
 
   async deleteBox(id: string): Promise<void> {
-    const result = await this.boxRepo.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Box with id ${id} not found`);
+    try {
+      const result = await this.boxRepo.delete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException(`Box with id ${id} not found`);
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Failed to delete box');
     }
   }
 
   async getShipmentsByBoxIds(boxIds: string[]): Promise<TransformedShipment[]> {
-    if (!boxIds.length) return [];
+    try {
+      if (!boxIds.length) return [];
 
-    const validBoxIds = boxIds
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
-    if (!validBoxIds.length) return [];
+      const validBoxIds = boxIds
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0);
+      if (!validBoxIds.length) return [];
 
-    const shipments = await this.shipmentRepo
-      .createQueryBuilder('shipment')
-      .leftJoin('shipment.user', 'user')
-      .leftJoin('shipment.country', 'country')
-      .leftJoin('user.preference', 'preference')
-      .leftJoin('preference.courier', 'courier')
-      .where('shipment.shipment_export_box_id IN (:...boxIds)', {
-        boxIds: validBoxIds,
-      })
-      .select([
-        'shipment.id AS id',
-        'shipment.shipment_no AS shipment_no',
-        'shipment.tracking_no AS tracking_no',
-        'shipment.status AS status',
-        'shipment.customs_value AS customs_value',
-        'shipment.dangerous_good AS dangerous_good',
-        'shipment.total_weight AS total_weight',
-        'shipment.total_volumetric_weight AS total_volumetric_weight',
-        'shipment.length AS length',
-        'shipment.width AS width',
-        'shipment.height AS height',
-        'shipment.created_at AS created_at',
-        'shipment.updated_at AS updated_at',
-        'NULL AS "shipmentExportBox"',
-      ])
-      .addSelect(
-        `json_build_object(
-          'id', country.id,
-          'name', country.name
+      const shipments = await this.shipmentRepo
+        .createQueryBuilder('shipment')
+        .leftJoin('shipment.user', 'user')
+        .leftJoin('shipment.country', 'country')
+        .leftJoin('user.preference', 'preference')
+        .leftJoin('preference.courier', 'courier')
+        .where('shipment.shipment_export_box_id IN (:...boxIds)', {
+          boxIds: validBoxIds,
+        })
+        .select([
+          'shipment.id AS id',
+          'shipment.shipment_no AS shipment_no',
+          'shipment.tracking_no AS tracking_no',
+          'shipment.status AS status',
+          'shipment.customs_value AS customs_value',
+          'shipment.dangerous_good AS dangerous_good',
+          'shipment.total_weight AS total_weight',
+          'shipment.total_volumetric_weight AS total_volumetric_weight',
+          'shipment.length AS length',
+          'shipment.width AS width',
+          'shipment.height AS height',
+          'shipment.created_at AS created_at',
+          'shipment.updated_at AS updated_at',
+          'NULL AS "shipmentExportBox"',
+        ])
+        .addSelect(
+          `json_build_object(
+            'id', country.id,
+            'name', country.name
+          )`,
+          'country',
+        )
+        .addSelect(
+          `json_build_object(
+            'id', user.id, 
+            'name', user.name,
+            'phone_code', user.phone_code,
+            'phone_number', user.phone_number,
+            'preference', json_build_object(
+                'id', preference.id,
+                'courier', json_build_object(
+                    'id', courier.id,
+                    'address', courier.address
+                )
+            )
         )`,
-        'country',
-      )
-      .addSelect(
-        `json_build_object(
-          'id', user.id, 
-          'name', user.name,
-          'phone_code', user.phone_code,
-          'phone_number', user.phone_number,
-          'preference', json_build_object(
-              'id', preference.id,
-              'courier', json_build_object(
-                  'id', courier.id,
-                  'address', courier.address
-              )
-          )
-      )`,
-        'user',
-      )
-      .addSelect((subQuery) => {
-        return subQuery
-          .select("COALESCE(ARRAY_AGG(package_item.name), '{}')")
-          .from('packages', 'pkg')
-          .leftJoin(
-            'package_items',
-            'package_item',
-            'package_item.package_id = pkg.id',
-          )
-          .where('pkg.shipment_id = shipment.id');
-      }, 'packageItemNames')
-      .getRawMany<TransformedShipment>();
+          'user',
+        )
+        .addSelect((subQuery) => {
+          return subQuery
+            .select("COALESCE(ARRAY_AGG(package_item.name), '{}')")
+            .from('packages', 'pkg')
+            .leftJoin(
+              'package_items',
+              'package_item',
+              'package_item.package_id = pkg.id',
+            )
+            .where('pkg.shipment_id = shipment.id');
+        }, 'packageItemNames')
+        .getRawMany<TransformedShipment>();
 
-    return shipments;
+      return shipments;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(
+        'Failed to fetch shipments by box Ids',
+      );
+    }
   }
 
-  async addShipmentToBox(boxId: string, shipmentId: string): Promise<Shipment> {
-    const box = await this.boxRepo.findOne({ where: { id: boxId } });
-    if (!box) throw new NotFoundException(`Box with id ${boxId} not found`);
+  async addShipmentToBox(
+    boxId: string,
+    shipmentId: string,
+    userId: string,
+  ): Promise<Shipment> {
+    try {
+      const user = await this.userRepo.findOne({
+        where: { id: userId },
+        relations: [
+          'preference',
+          'preference.courier',
+          'preference.courier.country',
+        ],
+      });
 
-    const shipment = await this.shipmentRepo.findOne({
-      where: { id: shipmentId },
-    });
-    if (!shipment)
-      throw new NotFoundException(`Shipment with id ${shipmentId} not found`);
+      const box = await this.boxRepo.findOne({
+        where: { id: boxId },
+        relations: ['shipmentExport', 'shipmentExport.country'],
+      });
+      if (!box) throw new NotFoundException(`Box with id ${boxId} not found`);
 
-    shipment.shipmentExportBox = box;
-    return this.shipmentRepo.save(shipment);
+      const shipment = await this.shipmentRepo.findOne({
+        where: { id: shipmentId },
+        relations: ['country'],
+      });
+      if (!shipment)
+        throw new NotFoundException(`Shipment with id ${shipmentId} not found`);
+
+      const exportCountryId = box.shipmentExport.country.id;
+      const shipmentCountryId = shipment.country.id;
+      const adminCountryId = user?.preference.courier.country.id;
+
+      if (exportCountryId !== adminCountryId) {
+        throw new ForbiddenException('You cannot access this export');
+      }
+
+      if (shipmentCountryId !== exportCountryId) {
+        throw new BadRequestException(
+          'Shipment country does not match export country',
+        );
+      }
+
+      shipment.shipmentExportBox = box;
+      return this.shipmentRepo.save(shipment);
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Failed to add shipment to box');
+    }
   }
 
   async removeShipmentFromBox(shipmentId: string): Promise<Shipment> {
-    const shipment = await this.shipmentRepo.findOne({
-      where: { id: shipmentId },
-    });
-    if (!shipment)
-      throw new NotFoundException(`Shipment with id ${shipmentId} not found`);
+    try {
+      const shipment = await this.shipmentRepo.findOne({
+        where: { id: shipmentId },
+      });
+      if (!shipment)
+        throw new NotFoundException(`Shipment with id ${shipmentId} not found`);
 
-    shipment.shipmentExportBox = null;
-    return this.shipmentRepo.save(shipment);
+      shipment.shipmentExportBox = null;
+      return this.shipmentRepo.save(shipment);
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(
+        'Failed to remove shipment from box',
+      );
+    }
   }
 }

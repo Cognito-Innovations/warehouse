@@ -309,9 +309,7 @@ export const updateProduct = async (
 };
 
 export const createShipmentExport = async (data: {
-  export_code: string;
   boxes_count: number;
-  created_by: string;
   mawb?: string;
 }) => {
   const res = await api.post('/shipment-exports', data);
