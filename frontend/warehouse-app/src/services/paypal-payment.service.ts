@@ -7,7 +7,11 @@ interface PayPalConfig {
   orderCurrency: string;
 }
 
-const PAYPAL_SDK_URL = "https://www.paypal.com/sdk/js";
+const PAYPAL_SDK_URL =
+  process.env.NEXT_PUBLIC_PAYPAL_MODE === "live"
+    ? "https://www.paypal.com/sdk/js"
+    : "https://www.sandbox.paypal.com/sdk/js";
+
 const SANDBOX_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
 if (!SANDBOX_CLIENT_ID) {
