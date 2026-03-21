@@ -11,7 +11,7 @@ import { ShipmentExportBox } from './shipment-export-box.entity';
 import { ShipmentExport } from './shipment-export.entity';
 import { CreateBoxDto } from './dto/create-box.dto';
 import { Shipment, ShipmentStatus } from 'src/shipments/shipment.entity';
-import { User } from 'src/users/user.entity';
+import { Role, User } from 'src/users/user.entity';
 
 export interface TransformedShipment {
   id: string;
@@ -210,13 +210,19 @@ export class ShipmentExportBoxesService {
 
       const exportCountryId = box.shipmentExport.country.id;
       const shipmentCountryId = shipment.country.id;
-      const adminCountryId = user?.preference.courier.country.id;
+      const adminCountryId = user?.preference?.courier?.country?.id;
 
-      if (exportCountryId !== adminCountryId) {
+      if (
+        user?.role !== Role.SuperAdmin &&
+        exportCountryId !== adminCountryId
+      ) {
         throw new ForbiddenException('You cannot access this export');
       }
 
-      if (shipmentCountryId !== exportCountryId) {
+      if (
+        user?.role !== Role.SuperAdmin &&
+        shipmentCountryId !== exportCountryId
+      ) {
         throw new BadRequestException(
           'Shipment country does not match export country',
         );
