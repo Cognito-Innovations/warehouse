@@ -10,6 +10,10 @@ import { ShipmentExport } from './shipment-export.entity';
 import { CreateExportDto } from './dto/create-export.dto';
 import { ShipmentExportBox } from './shipment-export-box.entity';
 import { Role, User } from 'src/users/user.entity';
+import {
+  DEFAULT_COUNTRY_CODE,
+  DEFAULT_USER_PREFERENCE,
+} from 'src/shared/constants';
 
 @Injectable()
 export class ShipmentExportsService {
@@ -53,6 +57,13 @@ export class ShipmentExportsService {
 
   private getUserCountryOrFail(user: User) {
     const country = user?.preference?.courier?.country;
+
+    if (user.role === Role.SuperAdmin) {
+      return {
+        id: DEFAULT_USER_PREFERENCE.COUNTRY,
+        code: DEFAULT_COUNTRY_CODE,
+      };
+    }
 
     if (!country) {
       throw new BadRequestException('Admin country not configured');
