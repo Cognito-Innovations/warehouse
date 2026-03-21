@@ -7,6 +7,7 @@ import {
   Delete,
   Get,
   Query,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,6 +21,7 @@ import {
 import { ShipmentExportBoxesService } from './shipment-export-box.service';
 import { CreateBoxDto } from './dto/create-box.dto';
 import { ShipmentExportBox } from './shipment-export-box.entity';
+import type { AuthenticatedRequest } from 'src/shared/types/authenticated-request.type';
 
 @ApiTags('Shipment Export Boxes')
 @Controller('shipment-export-boxes')
@@ -113,8 +115,9 @@ export class ShipmentExportBoxesController {
   async addShipmentToBox(
     @Param('boxId') boxId: string,
     @Body('shipmentId') shipmentId: string,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.boxesService.addShipmentToBox(boxId, shipmentId);
+    return this.boxesService.addShipmentToBox(boxId, shipmentId, req.user.id);
   }
 
   @Delete(':boxId/shipments/:shipmentId')

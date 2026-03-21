@@ -112,7 +112,7 @@ export class ShoppingRequestsService {
       courier_id: savedShoppingRequest.courier.id,
     });
 
-    await this.sendEmailToUser(savedShoppingRequest, 'request-created');
+    // await this.sendEmailToUser(savedShoppingRequest, 'request-created');
 
     const { courier: savedCourier, ...rest } = savedShoppingRequest;
     return {
@@ -415,18 +415,18 @@ export class ShoppingRequestsService {
       courier_id: updatedShoppingRequest.courier.id,
     });
 
-    let emailType: ShoppingRequestEmailType = 'status-updated';
-    if (normalizedStatus === 'QUOTATION_READY') {
-      emailType = 'quotation-ready';
-    } else if (normalizedStatus === 'PAYMENT_APPROVED') {
-      emailType = 'payment-approved';
-    }
+    // let emailType: ShoppingRequestEmailType = 'status-updated';
+    // if (normalizedStatus === 'QUOTATION_READY') {
+    //   emailType = 'quotation-ready';
+    // } else if (normalizedStatus === 'PAYMENT_APPROVED') {
+    //   emailType = 'payment-approved';
+    // }
 
-    await this.sendEmailToUser(
-      updatedShoppingRequest,
-      emailType,
-      ShoppingRequestStatus[normalizedStatus],
-    );
+    // await this.sendEmailToUser(
+    //   updatedShoppingRequest,
+    //   emailType,
+    //   ShoppingRequestStatus[normalizedStatus],
+    // );
 
     const slips = await this.documentsService.findByFeature(
       FeatureType.ShoppingRequest,
