@@ -229,7 +229,16 @@ export default function CurrencySelectionView({ onBack, showBackButton }: Curren
                                 </ListItem>
                             );
                         })}
-                        {filteredCurrencies.length === 0 && (
+                        {
+                            !searchTerm && filteredCurrencies.length === 0 && (
+                                <Box sx={{ p: 4, textAlign: "center" }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        No currencies available.
+                                    </Typography>
+                                </Box>
+                            )
+                        }
+                        {searchTerm && filteredCurrencies.length === 0 && (
                             <Box sx={{ p: 4, textAlign: "center" }}>
                                 <Typography variant="body2" color="text.secondary">
                                     No currencies found matching "{searchTerm}"

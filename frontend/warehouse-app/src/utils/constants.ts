@@ -67,14 +67,15 @@ export const orderStatusPhrases: { [key: string]: string } = {
 export const GUEST_LOCATION_STORAGE_KEY = "guest_location";
 
 export const DEFAULT_CURRENCY_INFO = {
-  code: "USD",
-  symbol: "$",
-  rate: 1.00,
+  code: "MVR", // USD
+  symbol: "ރ", // $
+  rate: 1.00, // 1.00
 }
 
+
 export const DEFAULT_LOCATION = {
-  countryName: "United States of Ameria",
-  countryCode: "US"
+  countryName: "Maldives", // United States of America
+  countryCode: "MV" // US
 }
 
 export const INR_CURRENCY = {

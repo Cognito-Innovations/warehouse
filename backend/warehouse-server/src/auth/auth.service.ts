@@ -22,6 +22,9 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
+    if (!registerDto.password) {
+      throw new BadRequestException('Password is required');
+    }
     if (registerDto.password) {
       if ((registerDto.password.match(/[a-z]/g) || []).length < 2) {
         throw new BadRequestException(

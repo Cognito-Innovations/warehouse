@@ -3,15 +3,15 @@ export const PAYMENT_GATEWAY = {
   PAYPAL: 'paypal',
 } as const;
 
-export const DEFAULT_CURRENCY_CODE = 'USD';
+export const DEFAULT_CURRENCY_CODE = 'MVR'; //USD
 
 export const INR_CURRENCY_CODE = 'INR';
 
-export const DEFAULT_CURRENCY_SYMBOL = '$';
+export const DEFAULT_CURRENCY_SYMBOL = 'ރ'; // $
 
 export const DEFAULT_CURRENCY_RATE = 1;
 
-export const DEFAULT_COUNTRY_CODE = 'US';
+export const DEFAULT_COUNTRY_CODE = 'MV';
 
 export const DEFAULT_CURRENCY = {
   code: DEFAULT_CURRENCY_CODE,

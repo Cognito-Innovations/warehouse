@@ -11,7 +11,7 @@ import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { ExternalCurrencyService } from 'src/shared/external-currency.service';
 import { Currency } from 'src/currencies/currency.entity';
 import { CourierCompany } from 'src/courier_companies/courier_company.entity';
-import { DEFAULT_CURRENCY } from '../shared/constants';
+import { DEFAULT_COUNTRY_CODE, DEFAULT_CURRENCY } from '../shared/constants';
 
 interface CurrencyInfo {
   code: string;
@@ -79,8 +79,9 @@ export class UserPreferencesService {
       relations: ['currency', 'courier', 'courier.country'],
     });
     return {
-      currencyCode: userPreference?.currency.currency_code,
-      countryCode: userPreference?.courier.country.code,
+      currencyCode:
+        userPreference?.currency.currency_code || DEFAULT_CURRENCY.code,
+      countryCode: userPreference?.courier.country.code || DEFAULT_COUNTRY_CODE,
     };
   }
 

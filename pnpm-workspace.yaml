@@ -3,8 +3,12 @@ packages:
   - 'frontend/admin'
   - 'frontend/warehouse-app'
   
-onlyBuiltDependencies:
-  - '@swc/core'
-  - esbuild
-  - sharp
-  - unrs-resolver
+allowBuilds:
+  '@nestjs/core': true
+  '@scarf/scarf': false
+  '@swc/core': true
+  bcrypt: true
+  core-js: false
+  esbuild: true
+  sharp: true
+  unrs-resolver: true

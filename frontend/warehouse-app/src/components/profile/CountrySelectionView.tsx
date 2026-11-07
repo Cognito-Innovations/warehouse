@@ -220,7 +220,16 @@ export default function CountrySelectionView({ onBack, showBackButton }: Country
                                 </ListItem>
                             );
                         })}
-                        {filteredCouriers.length === 0 && (
+                        {
+                            filteredCouriers.length === 0 && !searchTerm && (
+                                <Box sx={{ p: 4, textAlign: "center" }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        No country couriers available.
+                                    </Typography>
+                                </Box>
+                            )
+                        }
+                        {searchTerm && filteredCouriers.length === 0 && (
                             <Box sx={{ p: 4, textAlign: "center" }}>
                                 <Typography variant="body2" color="text.secondary">
                                     No results found matching "{searchTerm}"
