@@ -47,8 +47,17 @@ export const useDetectUserLocation = create<any>((set, get) => {
           });
         }
       }
+    } catch (error) {
+       set({ 
+        isFetching: false, isLoaded: true, 
+        countryCode: DEFAULT_LOCATION.countryCode, 
+        countryName: DEFAULT_LOCATION.countryName,
+        currencyCode: DEFAULT_CURRENCY_INFO.code, 
+        currencySymbol: DEFAULT_CURRENCY_INFO.symbol, 
+        currencyRate: DEFAULT_CURRENCY_INFO.rate 
+      });
     } finally {
-      set({ isFetching: false });
+      set({ isFetching: false, isLoaded: true });
     }
   };
 

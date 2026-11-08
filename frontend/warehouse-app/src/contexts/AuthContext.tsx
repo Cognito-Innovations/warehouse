@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, session: i
   const user: User | {} = useMemo(() => {
     if (session?.user) {
       return {
-        id: (session.user as any).user_id || session.user.email || "",
+        id: (session.user as any).user_id || "",
         email: session.user.email || "",
         name: session.user.name || "",
         role: (session.user as any).role || "",
