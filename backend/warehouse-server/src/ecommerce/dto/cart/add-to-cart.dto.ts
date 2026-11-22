@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsUUID, IsNumber, IsPositive } from 'class-validator';
+import { IsNotEmpty, IsUUID, IsNumber, IsPositive, IsOptional } from 'class-validator';
 
 export class AddToCartDto {
   @IsUUID()
@@ -8,4 +8,8 @@ export class AddToCartDto {
   @IsNumber()
   @IsPositive()
   quantity: number;
+
+  @IsUUID()
+  @IsOptional()
+  measurement_id?: string;
 }

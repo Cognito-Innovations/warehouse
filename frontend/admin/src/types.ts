@@ -241,7 +241,7 @@ export interface ProductPayload {
   discount_percentage: number;
   image_url: string;
   unit_value: number;
-  measurement_id: string;
+  measurement_ids: string[];
   // TODO: Uncomment the country selection when it's required
   // country_ids: string[],
   cargo_option_id: string;
@@ -286,7 +286,7 @@ export interface ProductRow {
   discount_percentage: number;
   unit: string;
   unit_value: number;
-  measurement_id: string;
+  measurement_ids: string[];
   stock_quantity: number;
   // countries: Country[];
   cargo_type_label: string;

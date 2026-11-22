@@ -57,7 +57,7 @@ export type CartStore = {
   removeEntireProductFromCart: (productId: string) => Promise<void>;
   getCart: () => Promise<void>;
   addProductToCartStore: (productId: string, requestedQty: number) => Promise<void>;
-  addProductToCart: (productId: string, requestedQty: number, productStockQty: number) => Promise<void>;
+  addProductToCart: (productId: string, requestedQty: number, measurementId:string, productStockQty: number) => Promise<void>;
   syncLocalStorageProductsToCartDB: (userId: string) => Promise<void>;
 }
 

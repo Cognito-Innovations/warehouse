@@ -61,7 +61,7 @@ export class CreateEcommerceProductDto {
 
   @IsUUID()
   @IsNotEmpty()
-  measurement_id: string;
+  measurement_ids: string[];
 
   @IsUUID()
   @IsNotEmpty()

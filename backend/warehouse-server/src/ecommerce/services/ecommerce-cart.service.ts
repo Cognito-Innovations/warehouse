@@ -292,7 +292,7 @@ export class CartService {
     userId: string,
     addToCartDto: AddToCartDto,
   ): Promise<CartItemsResponse> {
-    const { product_id, quantity } = addToCartDto;
+    const { product_id, quantity, measurement_id } = addToCartDto;
 
     if (!userId || !product_id || !quantity) {
       throw new BadRequestException(
@@ -329,6 +329,7 @@ export class CartService {
         user_id: userId,
         product_id,
         quantity,
+        measurement_id: measurement_id ?? undefined,
         status: UserProductStatus.CART,
       });
 
@@ -343,7 +344,7 @@ export class CartService {
     itemId: string,
   ): Promise<CartItemsResponse> {
     const cartItem = await this.cartRepository.findOne({
-      where: { id: itemId, user_id: userId, status: UserProductStatus.CART },
+      where: { product_id: itemId, user_id: userId, status: UserProductStatus.CART },
     });
 
     if (cartItem && cartItem.quantity > 1) {
@@ -390,7 +391,7 @@ export class CartService {
       relations: [
         'product',
         'product.category',
-        'product.measurement',
+        'product.measurements',
         'product.cargo_option',
       ],
     });
@@ -475,7 +476,7 @@ export class CartService {
         status: UserProductStatus.CART,
         product_id: In(productIds),
       },
-      relations: ['product', 'product.category', 'product.measurement'],
+      relations: ['product', 'product.category', 'product.measurements'],
     });
 
     if (!cartItems.length) {
@@ -522,7 +523,7 @@ export class CartService {
 
       const weightPerUnit = this.deliveryFeeService.getWeightInKg(
         unitValue,
-        product.measurement?.label ?? 'kg',
+        'kg', // TODO: product.measurement?.label ?? 
       );
       const itemWeight = weightPerUnit * allowedQuantity;
       totalWeight += itemWeight;
@@ -606,7 +607,7 @@ export class CartService {
 
     const products = await this.productRepository.find({
       where: { id: In(productIds) },
-      relations: ['measurement'],
+      relations: ['measurements'],
     });
 
     let totalWeight = 0;
@@ -626,7 +627,7 @@ export class CartService {
 
       const weightPerUnit = this.deliveryFeeService.getWeightInKg(
         unitValue,
-        product.measurement?.label ?? 'kg',
+         'kg', // TODO: product.measurement?.label ??
       );
 
       totalWeight += weightPerUnit * item.quantity;

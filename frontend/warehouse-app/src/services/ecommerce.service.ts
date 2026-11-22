@@ -222,7 +222,8 @@ export const ecommerceService = {
 
   async removeFromCart(productId: string): Promise<any> {
     try {
-      const response = await api.delete(`/ecommerce-cart/items/${productId}`);      return response.data;
+      const response = await api.delete(`/ecommerce-cart/items/${productId}`);
+      return response.data;
     } catch (error) {
       console.error(`Failed to remove the cart item with ${productId}:`, error);
     }

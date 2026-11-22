@@ -43,19 +43,19 @@ export default function CartItemCard({
     router.push(`${ROUTES.PRODUCT}/${product.slug}`);
   };
 
-  const handleQuantityChange = useCallback(
-    async (productId: string, newQuantity: number) => {
-      if (newQuantity > currentQuantity) {
-        addProductToCart(productId, 1, item.product.stock_quantity);
-        return;
-      }
+  // const handleQuantityChange = useCallback(
+  //   async (productId: string, newQuantity: number) => {
+  //     if (newQuantity > currentQuantity) {
+  //       addProductToCart(productId, 1, item.product.stock_quantity);
+  //       return;
+  //     }
 
-      if (newQuantity < currentQuantity) {
-        removeProductFromCart(productId);
-      }
-    },
-    [currentQuantity, item.product.stock_quantity, addProductToCart, removeProductFromCart]
-  );
+  //     if (newQuantity < currentQuantity) {
+  //       removeProductFromCart(productId);
+  //     }
+  //   },
+  //   [currentQuantity, item.product.stock_quantity, addProductToCart, removeProductFromCart]
+  // );
 
   const handleRemoveItem = useCallback(async (identifier: string) => {
     await removeEntireProductFromCart(identifier);
@@ -308,7 +308,7 @@ export default function CartItemCard({
                 gap: 1.5,
               }}
             >
-              <IconButton
+              {/* <IconButton
                 size="small"
                 onClick={() => handleQuantityChange(effectiveId, currentQuantity - 1)}
                 disabled={currentQuantity <= 1}
@@ -329,7 +329,7 @@ export default function CartItemCard({
                 }}
               >
                 <Remove sx={{ fontSize: 18 }} />
-              </IconButton>
+              </IconButton> */}
               <Typography
                 variant="body1"
                 fontWeight="bold"
@@ -341,7 +341,7 @@ export default function CartItemCard({
               >
                 {currentQuantity}
               </Typography>
-              <IconButton
+              {/* <IconButton
                 size="small"
                 onClick={() => handleQuantityChange(effectiveId, currentQuantity + 1)}
                 disabled={currentQuantity >= item.product.stock_quantity}
@@ -362,7 +362,7 @@ export default function CartItemCard({
                 }}
               >
                 <Add sx={{ fontSize: 18 }} />
-              </IconButton>
+              </IconButton> */}
             </Box>
           </Box>
         </Box>

@@ -5,8 +5,10 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  Index
 } from 'typeorm';
 import { EcommerceProduct } from './ecommerce-product.entity';
+import { EcommerceMeasurement } from './measurement.entity';
 import { User } from 'src/users/user.entity';
 
 export enum UserProductStatus {
@@ -15,6 +17,11 @@ export enum UserProductStatus {
 }
 
 @Entity('ecommerce_user_products_status')
+@Index(
+  'uq_cart_user_product_measurement_status',
+  ['user_id', 'product_id', 'measurement_id', 'status'],
+  { unique: true },
+)
 export class EcommerceUserProductStatus extends BaseTimestampEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -32,6 +39,13 @@ export class EcommerceUserProductStatus extends BaseTimestampEntity {
   @ManyToOne(() => EcommerceProduct, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product: EcommerceProduct;
+
+  @Column({ type: 'uuid', nullable: true })
+  measurement_id: string;
+
+  @ManyToOne(() => EcommerceMeasurement, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'measurement_id' })
+  measurement: EcommerceMeasurement;
 
   @Column()
   quantity: number;

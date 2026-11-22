@@ -29,7 +29,7 @@ export default function EcommerceProductCard({
   const router = useRouter();
   const theme = useTheme();
   const {handleProductSelect} = useProductStore();
-  const {addProductToCart, removeProductFromCart, cart} = useCartStore();
+  const {removeProductFromCart, cart} = useCartStore();
 
   const cartQuantity = cart.find((item: CartItem) => item.product_id === product.id)?.quantity || 0;
 
@@ -50,7 +50,8 @@ export default function EcommerceProductCard({
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addProductToCart(product.id, 1, product.stock_quantity);
+    handleProductSelect(product.id);
+    router.push(`${ROUTES.PRODUCT}/${product.slug}`);
   };
 
   const handleDecreaseClick = (e: React.MouseEvent) => {

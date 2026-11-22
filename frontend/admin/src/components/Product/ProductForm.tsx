@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, MenuItem, Stack, Button, CircularProgress,
-  // Chip
-} from "@mui/material";
+import { Box, TextField, MenuItem, Stack, Button, CircularProgress, Chip } from "@mui/material";
 
 import { createProduct, getCargoOptions, getCategories,
   // getCountries,
   getMeasurements, getSubCategories, updateEcommerceProduct } from "../../services/api.services";
 import ImageUpload from "../common/ImageUpload";
-// import { arraysEqual } from "../../utils/arrayEqual";
+import { arraysEqual } from "../../utils/arrayEqual";
 import { statusOptions } from "../../utils/constants";
 import type { CargoOption,
   // Country,
@@ -34,7 +32,7 @@ const defaultFormData: ProductPayload = {
   price: 0,
   discount_percentage: 0,
   unit_value: 0,
-  measurement_id: "",
+  measurement_ids: [],
   // country_ids: [],
   cargo_option_id: "",
   stock_quantity: 0,
@@ -119,6 +117,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
   //   handleChange("country_ids", formData.country_ids.filter(id => id !== countryId));
   // };
 
+  const handleMeasurementDelete = (measurementId: string) => {
+    handleChange("measurement_ids", formData.measurement_ids.filter(id => id !== measurementId));
+  };
+
   const handleSubmit = async () => {
     if (!formData.name || !formData.slug || !formData.image_url) return;
 
@@ -129,6 +131,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
         // if (k === "country_ids") {
         //   return !arraysEqual(initialData.country_ids || [], formData.country_ids);
         // }
+
+        if (k === "measurement_ids") {
+          return !arraysEqual(initialData.measurement_ids || [], formData.measurement_ids);
+        }
 
         if (k === "id") return false;
 
@@ -172,7 +178,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
     formData.image_url &&
     formData.price > 0 &&
     formData.unit_value > 0 &&
-    formData.measurement_id &&
+    formData.measurement_ids.length > 0 &&
     formData.cargo_option_id &&
     // formData.country_ids.length > 0 &&
     formData.stock_quantity > 0;
@@ -208,15 +214,35 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
   };
 
   const measurementRenderValue = (selected: unknown) => {
-    const selectedId = selected as string;
-    if (fetching) {
+    const selectedIds = selected as string[];
+    if (fetching && selectedIds.length > 0) {
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '24px', pl: 1 }}>
           <CircularProgress size={20} />
         </Box>
       );
     }
-    return measurements.find(m => m.id === selectedId)?.label || '';
+    return (
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+        {selectedIds.map((value) => {
+          const measurementLabel = measurements.find(m => m.id === value)?.label || value;
+          return (
+            <Chip
+              key={value}
+              label={measurementLabel}
+              onMouseDown={(e) => e.stopPropagation()}
+              onDelete={(e) => {
+                e.stopPropagation();
+                handleMeasurementDelete(value);
+              }}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
+          );
+        })}
+      </Box>
+    );
   };
 
   const cargoOptionsRenderValue = (selected: unknown) => {
@@ -345,12 +371,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ onClose, onSuccess, initialDa
         <TextField
           label="Unit Type"
           select
-          value={formData.measurement_id}
-          onChange={(e) => handleChange("measurement_id", e.target.value)}
+          value={formData.measurement_ids}
+          onChange={(e) => handleChange("measurement_ids", e.target.value)}
           fullWidth
           required
           disabled={fetching}
           SelectProps={{
+            multiple: true,
             renderValue: measurementRenderValue,
           }}
         >

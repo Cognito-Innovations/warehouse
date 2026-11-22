@@ -69,12 +69,12 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      addProductToCart: async (productId: string, requestedQty: number, productStockQty: number): Promise<void> => {
+      addProductToCart: async (productId: string, requestedQty: number, measurementId: string, productStockQty: number): Promise<void> => {
         const {userId, addProductToCartStore} = get();
         if (!productId || requestedQty > productStockQty) return;
         set({ isLoading: true });
         addProductToCartStore(productId, requestedQty);
-        if(userId) await ecommerceService.addToCart({ product_id: productId, quantity: requestedQty });
+        if(userId) await ecommerceService.addToCart({ product_id: productId, measurement_id:measurementId, quantity: requestedQty });
         set({ isLoading: false });
       },
 

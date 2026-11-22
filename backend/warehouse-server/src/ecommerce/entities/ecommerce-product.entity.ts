@@ -68,9 +68,19 @@ export class EcommerceProduct extends BaseTimestampEntity {
   @Column({ default: true })
   is_active: boolean;
 
-  @ManyToOne(() => EcommerceMeasurement, { nullable: true })
-  @JoinColumn({ name: 'measurement_id' })
-  measurement: EcommerceMeasurement;
+  @ManyToMany(() => EcommerceMeasurement)
+  @JoinTable({
+    name: 'ecommerce_product_measurements',
+    joinColumn: {
+      name: 'product_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'measurement_id',
+      referencedColumnName: 'id',
+    },
+  })
+  measurements: EcommerceMeasurement[];
 
   @ManyToOne(() => EcommerceCargoOption, { nullable: false })
   @JoinColumn({ name: 'cargo_option_id' })

@@ -46,6 +46,10 @@ export interface EcommerceProduct {
   measurement?: {
     label: string;
   };
+  measurements?: {
+    id: string;
+    label: string;
+  }[];
   category: EcommerceCategory;
   sub_category: EcommerceSubCategory;
   country: {
@@ -130,6 +134,7 @@ export interface Order {
 
 export interface AddToCartRequest {
   product_id: string;
+  measurement_id: string;
   quantity: number;
 }
 

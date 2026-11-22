@@ -5,7 +5,7 @@ import {
   IsPositive,
   Min,
   IsBoolean,
-  // IsArray,
+  IsArray,
   IsOptional,
 } from 'class-validator';
 
@@ -63,10 +63,11 @@ export class UpdateEcommerceProductDto {
   @IsBoolean()
   @IsOptional()
   is_active?: boolean;
-
-  @IsUUID()
+  
   @IsOptional()
-  measurement_id?: string;
+  @IsArray()
+  @IsUUID('4', { each: true })
+  measurement_ids?: string[];
 
   @IsUUID()
   @IsOptional()

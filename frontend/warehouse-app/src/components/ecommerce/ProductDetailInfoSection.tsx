@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Box, Paper, Typography, Button, Divider, Stack, Collapse } from "@mui/material";
+import { Box, Paper, Typography, Button, Divider, Stack, Collapse, Chip } from "@mui/material";
 import { Star, StarBorder, ExpandMore, ExpandLess } from "@mui/icons-material";
 
 import ProductCartActions from "./ProductCartActions";
@@ -10,7 +10,8 @@ import OfferCard from "./OfferCard";
 import { formatDiscountPercentage } from "@/lib/utils";
 import { calculateDiscountedPrice, formatPrice } from "@/utils/priceUtils";
 import { ecommerceData } from "@/data/ecommerceData";
-import { EcommerceProduct } from "@/types/ecommerce";
+import { EcommerceProduct, CartItem } from "@/types/ecommerce";
+import { useCartStore } from "@/store/cartStore";
 
 interface ProductDetailInfoSectionProps {
   product: EcommerceProduct;
@@ -37,7 +38,16 @@ export default function ProductDetailInfoSection({
   const unitValue = parseFloat(String(product.unit_value || "0"));
   const pricePerUnitRaw = unitValue > 0 ? rawPrice / unitValue : rawPrice;
   const formattedPricePerUnit = formatPrice(pricePerUnitRaw, currency);
-  const measurementLabel = product.measurement?.label || "";
+  const measurements = product.measurements ?? [];
+  const [selectedMeasurementId, setSelectedMeasurementId] = React.useState<string>("");
+
+  const { cart } = useCartStore();
+  const cartQuantity = cart?.find((item: CartItem) => item.product_id === product.id)?.quantity || 0;
+
+  React.useEffect(() => {
+    setSelectedMeasurementId(product.measurements?.[0]?.id ?? "");
+  }, [product.id, product.measurements]);
+
   const stockQuantity = product.stock_quantity;
   const isOutOfStock = stockQuantity === 0;
 
@@ -207,27 +217,32 @@ export default function ProductDetailInfoSection({
         
         <Divider sx={{ my: 3 }} />
 
-        {/* Selected Quantity */}
-        <Box sx={{ mb: 3 }}>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            fontWeight={600}
-            gutterBottom
-            sx={{ mb: 1.5 }}
-          >
-            Selected Quantity:
-          </Typography>
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-            <Typography variant="subtitle1" fontWeight={600}>
-              {product.unit_value} {measurementLabel}
+        {/* Measurements Selection */}
+        {measurements.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              fontWeight={600}
+              gutterBottom
+              sx={{ mb: 1.5 }}
+            >
+              Select Measurement:
             </Typography>
-
-            <Typography variant="body2" color="text.secondary">
-              • {formattedPricePerUnit}/{measurementLabel}
-            </Typography>
-          </Stack>
-        </Box>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {measurements.map((measurement) => (
+                <Chip
+                  key={measurement.id}
+                  label={` ${measurement.label}`}
+                  onClick={() => setSelectedMeasurementId(measurement.id)}
+                  color={selectedMeasurementId === measurement.id ? "primary" : "default"}
+                  variant={selectedMeasurementId === measurement.id ? "filled" : "outlined"}
+                  disabled={cartQuantity > 0 && selectedMeasurementId !== measurement.id}
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
 
         {/* Offers Section */}
         <Box sx={{ mb: 2 }}>
@@ -279,9 +294,11 @@ export default function ProductDetailInfoSection({
         </Box>
 
         <ProductCartActions
+          measurementId={selectedMeasurementId}
           product={product}
           discountPriceRaw={discountPriceRaw}
           currency={currency}
+          disableAddToCart={measurements.length > 0 && !selectedMeasurementId}
         />
       </Paper>
     </Box>

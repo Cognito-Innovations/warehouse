@@ -15,15 +15,19 @@ import { formatPrice } from "@/utils/priceUtils";
 import { ROUTES } from "@/utils/constants";
 
 interface ProductCartActionsProps {
+    measurementId: string;
     product: EcommerceProduct;
     discountPriceRaw: number;
     currency: string;
+    disableAddToCart?: boolean;
 }
 
 export default function ProductCartActions({
+    measurementId,
     product,
     discountPriceRaw,
     currency,
+    disableAddToCart = false,
 }: ProductCartActionsProps) {
     const router = useRouter();
     const { addProductToCart, removeProductFromCart, cart } = useCartStore();
@@ -37,8 +41,8 @@ export default function ProductCartActions({
     }, [router]);
 
     const handleAddToCartClick = useCallback(() => {
-        addProductToCart(product.id, 1, product.stock_quantity);
-    }, [product]);
+        addProductToCart(product.id, 1, measurementId, product.stock_quantity);
+    }, [product, measurementId]);
 
     return (
         <React.Fragment>
@@ -89,7 +93,7 @@ export default function ProductCartActions({
                             {cartQuantity}
                         </Typography>
                         <IconButton
-                            onClick={() => addProductToCart(product.id, 1, product.stock_quantity)}
+                            onClick={() => addProductToCart(product.id, 1, measurementId, product.stock_quantity)}
                             disabled={isOutOfStock || cartQuantity >= stockQuantity}
                             sx={{
                                 border: "1px solid",
@@ -132,7 +136,7 @@ export default function ProductCartActions({
                     fullWidth
                     size="large"
                     onClick={cartQuantity > 0 ? handleGoToCart : handleAddToCartClick}
-                    disabled={isOutOfStock}
+                    disabled={isOutOfStock || (cartQuantity === 0 && disableAddToCart)}
                     sx={{
                         py: 1.5,
                         borderRadius: 2,
@@ -153,7 +157,9 @@ export default function ProductCartActions({
                         ? "Out of Stock"
                         : cartQuantity > 0
                             ? "Go To Cart"
-                            : "Add to Cart"}
+                            : disableAddToCart
+                                ? "Select a Measurement"
+                                : "Add to Cart"}
                 </Button>
             </Box>
         </React.Fragment>

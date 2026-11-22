@@ -53,7 +53,7 @@ export class ProductsService {
       category_id,
       sub_category_id,
       // country_ids,
-      measurement_id,
+      measurement_ids,
       cargo_option_id,
       ...rest
     } = createProductDto;
@@ -63,7 +63,7 @@ export class ProductsService {
       category: { id: category_id },
       sub_category: { id: sub_category_id },
       // countries: country_ids.map((id) => ({ id }) as Country),
-      measurement: { id: measurement_id },
+      measurements: measurement_ids.map((id) => ({ id })),
       cargo_option: { id: cargo_option_id } as EcommerceCargoOption,
     });
     return await this.productRepository.save(product);
@@ -91,7 +91,7 @@ export class ProductsService {
     if (isAdmin) {
       queryBuilder
         .leftJoinAndSelect('product.sub_category', 'sub_category')
-        .leftJoinAndSelect('product.measurement', 'measurement')
+        .leftJoinAndSelect('product.measurements', 'measurements')
     }
 
     // TODO: Uncomment the country filter when it's required
@@ -203,7 +203,7 @@ export class ProductsService {
       relations: [
         'category',
         'cargo_option',
-        'measurement',
+        'measurements',
         // TODO: Uncomment the country filter when it's required
         // 'countries',
       ],
@@ -253,7 +253,7 @@ export class ProductsService {
       category_id,
       sub_category_id,
       // country_ids,
-      measurement_id,
+      measurement_ids,
       cargo_option_id,
       ...rest
     } = updateEcommerceProductDto;
@@ -270,8 +270,8 @@ export class ProductsService {
     // if (country_ids) {
     //   product.countries = country_ids.map((id) => ({ id }) as Country);
     // }
-    if (measurement_id) {
-      product.measurement = { id: measurement_id } as EcommerceMeasurement;
+    if (measurement_ids) {
+      product.measurements =  measurement_ids.map((id) => ({ id })) as EcommerceMeasurement[];
     }
     if (cargo_option_id) {
       product.cargo_option = { id: cargo_option_id } as EcommerceCargoOption;

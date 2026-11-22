@@ -170,7 +170,7 @@ export class OrderService {
 
     const cartItems = await this.userItemRepository.find({
       where: { user_id: userId, status: UserProductStatus.CART },
-      relations: ['product', 'product.measurement'],
+      relations: ['product', 'product.measurements'],
     });
 
     if (!cartItems.length) {
