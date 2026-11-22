@@ -6,7 +6,7 @@ import {
   IsPositive,
   Min,
   IsBoolean,
-  // IsArray,
+  IsArray,
   // ArrayMinSize,
 } from 'class-validator';
 
@@ -59,8 +59,9 @@ export class CreateEcommerceProductDto {
   @IsBoolean()
   is_active: boolean;
 
-  @IsUUID()
   @IsNotEmpty()
+  @IsArray()
+  @IsUUID('4', { each: true })
   measurement_ids: string[];
 
   @IsUUID()
